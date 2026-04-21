@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter
 from collections.abc import Iterable
 import json
 import logging
@@ -48,6 +48,20 @@ from app.domains.admin.governance_policy_services import (
     merge_review_policy_governance as _governance_merge_review_policy,
     resumir_governanca_release_policy as _governance_resumir_release_policy,
     resumir_governanca_review_policy as _governance_resumir_review_policy,
+)
+from app.domains.admin.governance_rollup_services import (
+    build_catalog_governance_rollup as _governance_build_catalog_rollup,
+    build_release_channel_counter_rows as _governance_build_release_channel_counter_rows,
+    build_release_status_counter_rows as _governance_build_release_status_counter_rows,
+    build_review_mode_counter_rows as _governance_build_review_mode_counter_rows,
+    dominant_release_channel as _governance_dominant_release_channel,
+    dominant_review_mode as _governance_dominant_review_mode,
+    format_review_mode_breakdown as _governance_format_review_mode_breakdown,
+    plan_allowed_for_governance_rollup as _governance_plan_allowed,
+    resolve_governance_rollup_release_mode as _governance_resolve_release_mode,
+    review_mode_display_order as _governance_review_mode_display_order,
+    review_mode_with_cap as _governance_review_mode_with_cap,
+    strictest_review_mode as _governance_strictest_review_mode,
 )
 from app.domains.admin.platform_settings_state import (
     get_platform_default_new_tenant_plan,  # noqa: F401
@@ -1291,17 +1305,15 @@ def _resumir_governanca_release_policy(governance_policy: Any) -> dict[str, Any]
 
 
 def _review_mode_display_order() -> tuple[str, str, str]:
-    return ("mesa_required", "mobile_review_allowed", "mobile_autonomous")
+    return _governance_review_mode_display_order()
 
 
 def _review_mode_with_cap(requested_mode: str, cap_mode: str | None) -> str:
-    if not cap_mode:
-        return requested_mode
-    return sorted(
-        (requested_mode, cap_mode),
-        key=lambda item: _REVIEW_MODE_ORDER[item],
-        reverse=True,
-    )[0]
+    return _governance_review_mode_with_cap(
+        requested_mode,
+        cap_mode,
+        review_mode_order=_REVIEW_MODE_ORDER,
+    )
 
 
 def _plan_allowed_for_governance_rollup(
@@ -1309,40 +1321,32 @@ def _plan_allowed_for_governance_rollup(
     plan_name: str | None,
     allowed_plans: list[str],
 ) -> bool:
-    if not allowed_plans:
-        return True
-    try:
-        normalized_plan = PlanoEmpresa.normalizar(str(plan_name or "").strip())
-    except ValueError:
-        normalized_plan = str(plan_name or "").strip()
-    return normalized_plan.lower() in {item.lower() for item in allowed_plans}
+    return _governance_plan_allowed(
+        plan_name=plan_name,
+        allowed_plans=allowed_plans,
+        normalizar_plano_empresa=PlanoEmpresa.normalizar,
+    )
 
 
 def _strictest_review_mode(counter: Counter[str]) -> str | None:
-    modes = [mode for mode in _review_mode_display_order() if int(counter.get(mode, 0)) > 0]
-    if not modes:
-        return None
-    return sorted(modes, key=lambda item: _REVIEW_MODE_ORDER[item], reverse=True)[0]
+    return _governance_strictest_review_mode(
+        counter,
+        review_mode_order=_REVIEW_MODE_ORDER,
+    )
 
 
 def _dominant_review_mode(counter: Counter[str]) -> str | None:
-    modes = [mode for mode in _review_mode_display_order() if int(counter.get(mode, 0)) > 0]
-    if not modes:
-        return None
-    return sorted(
-        modes,
-        key=lambda item: (int(counter.get(item, 0)), _REVIEW_MODE_ORDER[item]),
-        reverse=True,
-    )[0]
+    return _governance_dominant_review_mode(
+        counter,
+        review_mode_order=_REVIEW_MODE_ORDER,
+    )
 
 
 def _format_review_mode_breakdown(counter: Counter[str]) -> str:
-    partes = [
-        f"{int(counter.get(mode, 0))} {str(_review_mode_label_meta(mode)['label'])}"
-        for mode in _review_mode_display_order()
-        if int(counter.get(mode, 0)) > 0
-    ]
-    return " • ".join(partes)
+    return _governance_format_review_mode_breakdown(
+        counter,
+        review_mode_label_meta=_review_mode_label_meta,
+    )
 
 
 def _release_channel_display_order() -> tuple[str, str, str]:
@@ -1350,18 +1354,11 @@ def _release_channel_display_order() -> tuple[str, str, str]:
 
 
 def _dominant_release_channel(counter: Counter[str], *, fallback: str = "pilot") -> str:
-    channels = [
-        channel
-        for channel in _release_channel_display_order()
-        if int(counter.get(channel, 0)) > 0
-    ]
-    if not channels:
-        return fallback
-    return sorted(
-        channels,
-        key=lambda item: (int(counter.get(item, 0)), RELEASE_CHANNEL_ORDER.get(item, 0)),
-        reverse=True,
-    )[0]
+    return _governance_dominant_release_channel(
+        counter,
+        release_channel_order=RELEASE_CHANNEL_ORDER,
+        fallback=fallback,
+    )
 
 
 def _build_review_mode_counter_rows(
@@ -1371,19 +1368,13 @@ def _build_review_mode_counter_rows(
     tenant_sets: dict[str, set[int]] | None = None,
     family_sets: dict[str, set[str]] | None = None,
 ) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for mode in _review_mode_display_order():
-        count = int(counter.get(mode, 0))
-        rows.append(
-            {
-                "mode": _review_mode_label_meta(mode),
-                "count": count,
-                "share": round((count / total) * 100, 1) if total else 0.0,
-                "tenant_count": len((tenant_sets or {}).get(mode, set())),
-                "family_count": len((family_sets or {}).get(mode, set())),
-            }
-        )
-    return rows
+    return _governance_build_review_mode_counter_rows(
+        counter,
+        total=total,
+        review_mode_label_meta=_review_mode_label_meta,
+        tenant_sets=tenant_sets,
+        family_sets=family_sets,
+    )
 
 
 def _build_release_channel_counter_rows(
@@ -1393,37 +1384,22 @@ def _build_release_channel_counter_rows(
     tenant_sets: dict[str, set[int]] | None = None,
     family_sets: dict[str, set[str]] | None = None,
 ) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for channel in _release_channel_display_order():
-        count = int(counter.get(channel, 0))
-        rows.append(
-            {
-                "channel": release_channel_meta(channel),
-                "count": count,
-                "share": round((count / total) * 100, 1) if total else 0.0,
-                "tenant_count": len((tenant_sets or {}).get(channel, set())),
-                "family_count": len((family_sets or {}).get(channel, set())),
-            }
-        )
-    return rows
+    return _governance_build_release_channel_counter_rows(
+        counter,
+        total=total,
+        release_channel_meta=release_channel_meta,
+        tenant_sets=tenant_sets,
+        family_sets=family_sets,
+    )
 
 
 def _build_release_status_counter_rows(counter: Counter[str], *, total: int) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for status in ("active", "draft", "paused", "expired"):
-        count = int(counter.get(status, 0))
-        rows.append(
-            {
-                "status": _label_catalogo(
-                    _CATALOGO_RELEASE_STATUS_LABELS,
-                    status,
-                    status or "draft",
-                ),
-                "count": count,
-                "share": round((count / total) * 100, 1) if total else 0.0,
-            }
-        )
-    return rows
+    return _governance_build_release_status_counter_rows(
+        counter,
+        total=total,
+        label_catalogo=_label_catalogo,
+        release_status_labels=_CATALOGO_RELEASE_STATUS_LABELS,
+    )
 
 
 def _resolve_governance_rollup_release_mode(
@@ -1432,123 +1408,19 @@ def _resolve_governance_rollup_release_mode(
     release: TenantFamilyReleaseLaudo,
     tenant: Empresa | None,
 ) -> dict[str, Any]:
-    oferta = getattr(family, "oferta_comercial", None)
-    review_policy = (
-        dict(getattr(family, "review_policy_json", None) or {})
-        if isinstance(getattr(family, "review_policy_json", None), dict)
-        else {}
+    return _governance_resolve_release_mode(
+        family=family,
+        release=release,
+        tenant=tenant,
+        normalizar_review_mode=_normalizar_review_mode_governanca,
+        effective_review_mode_cap=_effective_review_mode_cap,
+        normalizar_planos=_normalizar_planos_governanca,
+        summarize_release_contract_governance=summarize_release_contract_governance,
+        offer_lifecycle_resolvido=_offer_lifecycle_resolvido,
+        normalizar_red_flags=_normalizar_red_flags_governanca,
+        normalizar_plano_empresa=PlanoEmpresa.normalizar,
+        review_mode_order=_REVIEW_MODE_ORDER,
     )
-    tenant_entitlements = (
-        dict(review_policy.get("tenant_entitlements") or {})
-        if isinstance(review_policy.get("tenant_entitlements"), dict)
-        else {}
-    )
-    release_policy = (
-        dict(getattr(release, "governance_policy_json", None) or {})
-        if isinstance(getattr(release, "governance_policy_json", None), dict)
-        else {}
-    )
-
-    default_review_mode = (
-        _normalizar_review_mode_governanca(
-            review_policy.get("default_review_mode"),
-            campo="Default review mode",
-        )
-        or "mesa_required"
-    )
-    family_max_review_mode = (
-        _normalizar_review_mode_governanca(
-            review_policy.get("max_review_mode"),
-            campo="Max review mode",
-        )
-        or "mobile_autonomous"
-    )
-    release_force_review_mode = _normalizar_review_mode_governanca(
-        release_policy.get("force_review_mode"),
-        campo="Force review mode",
-    )
-    release_max_review_mode = _normalizar_review_mode_governanca(
-        release_policy.get("max_review_mode"),
-        campo="Release max review mode",
-    )
-    effective_cap = (
-        _effective_review_mode_cap(family_max_review_mode, release_max_review_mode)
-        or family_max_review_mode
-    )
-    requested_review_mode = release_force_review_mode or default_review_mode
-    capped_review_mode = _review_mode_with_cap(requested_review_mode, effective_cap)
-
-    review_allowed_plans = _normalizar_planos_governanca(
-        list(
-            tenant_entitlements.get("mobile_review_allowed_plans")
-            or tenant_entitlements.get("mobile_review_plans")
-            or []
-        ),
-        campo="Planos com revisão mobile",
-    ) or []
-    autonomy_allowed_plans = _normalizar_planos_governanca(
-        list(
-            tenant_entitlements.get("mobile_autonomous_allowed_plans")
-            or tenant_entitlements.get("mobile_autonomous_plans")
-            or []
-        ),
-        campo="Planos com autonomia mobile",
-    ) or []
-
-    review_override = release_policy.get("mobile_review_override")
-    if not isinstance(review_override, bool):
-        review_override = None
-    autonomy_override = release_policy.get("mobile_autonomous_override")
-    if not isinstance(autonomy_override, bool):
-        autonomy_override = None
-
-    tenant_plan = str(getattr(tenant, "plano_ativo", "") or "").strip() or None
-    tenant_blocked = bool(getattr(tenant, "status_bloqueio", False))
-    mobile_review_allowed = _plan_allowed_for_governance_rollup(
-        plan_name=tenant_plan,
-        allowed_plans=review_allowed_plans,
-    )
-    mobile_autonomous_allowed = _plan_allowed_for_governance_rollup(
-        plan_name=tenant_plan,
-        allowed_plans=autonomy_allowed_plans,
-    )
-    if review_override is not None:
-        mobile_review_allowed = review_override
-    if autonomy_override is not None:
-        mobile_autonomous_allowed = autonomy_override
-    if tenant_blocked:
-        mobile_review_allowed = False
-        mobile_autonomous_allowed = False
-    if not mobile_review_allowed:
-        mobile_autonomous_allowed = False
-
-    effective_review_mode = capped_review_mode
-    if effective_review_mode == "mobile_autonomous" and not mobile_autonomous_allowed:
-        effective_review_mode = "mobile_review_allowed" if mobile_review_allowed else "mesa_required"
-    elif effective_review_mode == "mobile_review_allowed" and not mobile_review_allowed:
-        effective_review_mode = "mesa_required"
-
-    commercial = summarize_release_contract_governance(
-        getattr(release, "governance_policy_json", None),
-        offer_flags_payload=getattr(oferta, "flags_json", None) if oferta is not None else None,
-        offer_lifecycle_status=_offer_lifecycle_resolvido(oferta),
-    )
-
-    return {
-        "effective_review_mode": effective_review_mode,
-        "requested_review_mode": requested_review_mode,
-        "effective_cap": effective_cap,
-        "default_review_mode": default_review_mode,
-        "mobile_review_allowed": bool(mobile_review_allowed),
-        "mobile_autonomous_allowed": bool(mobile_autonomous_allowed),
-        "tenant_plan": tenant_plan,
-        "tenant_blocked": tenant_blocked,
-        "effective_release_channel": commercial["effective_release_channel"]["key"],
-        "red_flags_count": len(
-            _normalizar_red_flags_governanca(list(review_policy.get("red_flags") or []))
-            or []
-        ),
-    }
 
 
 def _build_catalog_governance_rollup(
@@ -1556,201 +1428,25 @@ def _build_catalog_governance_rollup(
     *,
     families: list[FamiliaLaudoCatalogo],
 ) -> dict[str, Any]:
-    tenant_ids = {
-        int(getattr(release, "tenant_id", 0) or 0)
-        for family in families
-        for release in list(getattr(family, "tenant_releases", None) or [])
-        if int(getattr(release, "tenant_id", 0) or 0) > 0
-    }
-    tenant_lookup = {
-        int(item.id): item
-        for item in list(
-            db.scalars(
-                select(Empresa).where(
-                    Empresa.id.in_(tenant_ids) if tenant_ids else False,
-                    _tenant_cliente_clause(),
-                )
-            ).all()
-        )
-    } if tenant_ids else {}
-
-    family_default_counter: Counter[str] = Counter()
-    release_status_counter: Counter[str] = Counter()
-    active_release_counter: Counter[str] = Counter()
-    active_channel_counter: Counter[str] = Counter()
-    release_channel_tenants: dict[str, set[int]] = defaultdict(set)
-    release_channel_families: dict[str, set[str]] = defaultdict(set)
-    release_mode_tenants: dict[str, set[int]] = defaultdict(set)
-    release_mode_families: dict[str, set[str]] = defaultdict(set)
-    tenant_mode_counters: dict[int, Counter[str]] = defaultdict(Counter)
-    tenant_meta: dict[int, dict[str, Any]] = {}
-    family_highlights: list[dict[str, Any]] = []
-    family_red_flags_total = 0
-    families_with_red_flags = 0
-
-    for family in families:
-        family_key = str(getattr(family, "family_key", "") or "").strip()
-        family_label = str(getattr(family, "nome_exibicao", "") or family_key)
-        review_policy = (
-            dict(getattr(family, "review_policy_json", None) or {})
-            if isinstance(getattr(family, "review_policy_json", None), dict)
-            else {}
-        )
-        family_default_mode = (
-            _normalizar_review_mode_governanca(
-                review_policy.get("default_review_mode"),
-                campo="Default review mode",
-            )
-            or "mesa_required"
-        )
-        family_default_counter[family_default_mode] += 1
-        red_flags_count = len(
-            _normalizar_red_flags_governanca(list(review_policy.get("red_flags") or []))
-            or []
-        )
-        family_red_flags_total += red_flags_count
-        if red_flags_count > 0:
-            families_with_red_flags += 1
-
-        family_release_counter: Counter[str] = Counter()
-        family_release_channel_counter: Counter[str] = Counter()
-        family_release_tenants: set[int] = set()
-
-        for release in list(getattr(family, "tenant_releases", None) or []):
-            tenant_id = int(getattr(release, "tenant_id", 0) or 0)
-            tenant = tenant_lookup.get(tenant_id)
-            if tenant is None:
-                continue
-
-            release_status = str(getattr(release, "release_status", "") or "draft").strip().lower() or "draft"
-            release_status_counter[release_status] += 1
-            if release_status != "active":
-                continue
-
-            resolved = _resolve_governance_rollup_release_mode(
-                family=family,
-                release=release,
-                tenant=tenant,
-            )
-            effective_mode = str(resolved["effective_review_mode"])
-            effective_channel = str(resolved.get("effective_release_channel") or "pilot")
-            active_release_counter[effective_mode] += 1
-            active_channel_counter[effective_channel] += 1
-            release_mode_tenants[effective_mode].add(tenant_id)
-            release_mode_families[effective_mode].add(family_key)
-            release_channel_tenants[effective_channel].add(tenant_id)
-            release_channel_families[effective_channel].add(family_key)
-            family_release_counter[effective_mode] += 1
-            family_release_channel_counter[effective_channel] += 1
-            family_release_tenants.add(tenant_id)
-            tenant_mode_counters[tenant_id][effective_mode] += 1
-            tenant_meta[tenant_id] = {
-                "tenant_id": tenant_id,
-                "tenant_label": str(getattr(tenant, "nome_fantasia", "") or f"Tenant {tenant_id}"),
-                "plan_label": str(getattr(tenant, "plano_ativo", "") or "Sem plano"),
-                "blocked": bool(getattr(tenant, "status_bloqueio", False)),
-            }
-
-        if sum(int(item) for item in family_release_counter.values()) <= 0:
-            continue
-
-        dominant_mode = _dominant_review_mode(family_release_counter) or family_default_mode
-        family_highlights.append(
-            {
-                "family_key": family_key,
-                "family_label": family_label,
-                "active_release_count": sum(int(item) for item in family_release_counter.values()),
-                "tenant_count": len(family_release_tenants),
-                "red_flags_count": red_flags_count,
-                "default_review_mode": _review_mode_label_meta(family_default_mode),
-                "dominant_mode": _review_mode_label_meta(dominant_mode),
-                "release_channel": release_channel_meta(
-                    _dominant_release_channel(family_release_channel_counter, fallback="pilot")
-                ),
-                "mode_breakdown": _build_review_mode_counter_rows(
-                    family_release_counter,
-                    total=sum(int(item) for item in family_release_counter.values()),
-                ),
-                "mode_breakdown_label": _format_review_mode_breakdown(family_release_counter),
-            }
-        )
-
-    tenant_highlights: list[dict[str, Any]] = []
-    tenant_strictest_counter: Counter[str] = Counter()
-    for tenant_id, counter in tenant_mode_counters.items():
-        strictest_mode = _strictest_review_mode(counter)
-        if strictest_mode is None:
-            continue
-        tenant_strictest_counter[strictest_mode] += 1
-        meta = tenant_meta.get(tenant_id, {})
-        tenant_highlights.append(
-            {
-                "tenant_id": tenant_id,
-                "tenant_label": str(meta.get("tenant_label") or f"Tenant {tenant_id}"),
-                "plan_label": str(meta.get("plan_label") or "Sem plano"),
-                "blocked": bool(meta.get("blocked")),
-                "active_release_count": sum(int(item) for item in counter.values()),
-                "strictest_mode": _review_mode_label_meta(strictest_mode),
-                "mode_breakdown": _build_review_mode_counter_rows(
-                    counter,
-                    total=sum(int(item) for item in counter.values()),
-                ),
-                "mode_breakdown_label": _format_review_mode_breakdown(counter),
-            }
-        )
-
-    tenant_highlights.sort(
-        key=lambda item: (
-            -_REVIEW_MODE_ORDER[str((item["strictest_mode"] or {}).get("key") or "mesa_required")],
-            -int(item["active_release_count"]),
-            str(item["tenant_label"]).lower(),
-        )
+    return _governance_build_catalog_rollup(
+        db,
+        families=families,
+        empresa_model=Empresa,
+        tenant_cliente_clause=_tenant_cliente_clause,
+        normalizar_review_mode=_normalizar_review_mode_governanca,
+        normalizar_red_flags=_normalizar_red_flags_governanca,
+        review_mode_label_meta=_review_mode_label_meta,
+        normalizar_planos=_normalizar_planos_governanca,
+        effective_review_mode_cap=_effective_review_mode_cap,
+        summarize_release_contract_governance=summarize_release_contract_governance,
+        offer_lifecycle_resolvido=_offer_lifecycle_resolvido,
+        normalizar_plano_empresa=PlanoEmpresa.normalizar,
+        release_channel_meta=release_channel_meta,
+        review_mode_order=_REVIEW_MODE_ORDER,
+        release_channel_order=RELEASE_CHANNEL_ORDER,
+        label_catalogo=_label_catalogo,
+        release_status_labels=_CATALOGO_RELEASE_STATUS_LABELS,
     )
-    family_highlights.sort(
-        key=lambda item: (
-            -int(item["active_release_count"]),
-            -_REVIEW_MODE_ORDER[str((item["dominant_mode"] or {}).get("key") or "mesa_required")],
-            str(item["family_label"]).lower(),
-        )
-    )
-
-    total_active_releases = sum(int(item) for item in active_release_counter.values())
-    total_releases = sum(int(item) for item in release_status_counter.values())
-    return {
-        "scope_family_count": len(families),
-        "families_with_active_release_count": len(family_highlights),
-        "families_with_red_flags_count": int(families_with_red_flags),
-        "family_red_flags_total": int(family_red_flags_total),
-        "tenant_count": len(tenant_highlights),
-        "active_release_count": int(total_active_releases),
-        "inactive_release_count": int(total_releases - total_active_releases),
-        "family_default_modes": _build_review_mode_counter_rows(
-            family_default_counter,
-            total=len(families),
-        ),
-        "effective_release_modes": _build_review_mode_counter_rows(
-            active_release_counter,
-            total=total_active_releases,
-            tenant_sets=release_mode_tenants,
-            family_sets=release_mode_families,
-        ),
-        "effective_release_channels": _build_release_channel_counter_rows(
-            active_channel_counter,
-            total=total_active_releases,
-            tenant_sets=release_channel_tenants,
-            family_sets=release_channel_families,
-        ),
-        "tenant_strictest_modes": _build_review_mode_counter_rows(
-            tenant_strictest_counter,
-            total=len(tenant_highlights),
-        ),
-        "release_status_counts": _build_release_status_counter_rows(
-            release_status_counter,
-            total=total_releases,
-        ),
-        "tenant_highlights": tenant_highlights[:6],
-        "family_highlights": family_highlights[:6],
-    }
 
 
 def _repo_root_dir() -> Path:

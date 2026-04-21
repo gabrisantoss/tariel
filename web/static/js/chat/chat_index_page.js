@@ -38,6 +38,7 @@
     const InspectorStateRuntimeSync = window.TarielInspectorStateRuntimeSync || {};
     const InspectorStateNormalization = window.TarielInspectorStateNormalization || {};
     const InspectorHistoryBuilders = window.TarielInspectorHistoryBuilders || {};
+    const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
 
@@ -112,6 +113,7 @@
         "application/pdf",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ]);
+    const WORKSPACE_REISSUE_SUGGESTION_ACTION = 'data-suggestion-action="reissue"';
 
     const COMANDOS_SLASH = [
         {
@@ -2786,402 +2788,148 @@
         }
     }
 
-    function obterListaComandosSlash(query = "") {
-        const termo = String(query || "").trim().toLowerCase();
-        if (!termo) return [...COMANDOS_SLASH];
-        return COMANDOS_SLASH.filter((comando) => {
-            const universo = [
-                comando.id,
-                comando.titulo,
-                comando.descricao,
-                comando.atalho,
-            ].join(" ").toLowerCase();
-            return universo.includes(termo);
-        });
-    }
-
-    function fecharSlashCommandPalette() {
-        estado.slashIndiceAtivo = 0;
-        if (el.slashCommandPalette) {
-            el.slashCommandPalette.hidden = true;
-            el.slashCommandPalette.innerHTML = "";
-        }
-    }
-
-    function renderizarSlashCommandPalette(query = "") {
-        if (!el.slashCommandPalette) return;
-
-        const lista = obterListaComandosSlash(query);
-        if (!lista.length) {
-            el.slashCommandPalette.hidden = false;
-            el.slashCommandPalette.innerHTML = `
-                <div class="slash-command-item is-active">
-                    <div>
-                        <strong>Nenhum comando encontrado</strong>
-                        <p>Tente /resumir, /pendencias, /mesa ou /gerar-conclusao.</p>
-                    </div>
-                    <kbd>Esc</kbd>
-                </div>
-            `;
-            return;
-        }
-
-        estado.slashIndiceAtivo = Math.max(0, Math.min(estado.slashIndiceAtivo, lista.length - 1));
-        el.slashCommandPalette.hidden = false;
-        el.slashCommandPalette.innerHTML = lista
-            .map((comando, index) => `
-                <button
-                    type="button"
-                    class="slash-command-item${index === estado.slashIndiceAtivo ? " is-active" : ""}"
-                    data-slash-command="${escaparHtml(comando.id)}"
-                >
-                    <div>
-                        <strong>${escaparHtml(comando.atalho)}</strong>
-                        <p>${escaparHtml(comando.descricao)}</p>
-                    </div>
-                    <kbd>${escaparHtml(comando.titulo)}</kbd>
-                </button>
-            `)
-            .join("");
-    }
-
-    function definirValorComposer(texto = "", { substituir = true } = {}) {
-        if (!el.campoMensagem) return false;
-
-        const valorNovo = String(texto || "").trim();
-        if (!valorNovo) return false;
-
-        el.campoMensagem.value = substituir
-            ? valorNovo
-            : [String(el.campoMensagem.value || "").trim(), valorNovo].filter(Boolean).join("\n");
-        el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
-
-        try {
-            el.campoMensagem.focus({ preventScroll: true });
-        } catch (_) {
-            el.campoMensagem.focus();
-        }
-
-        if (typeof el.campoMensagem.setSelectionRange === "function") {
-            const fim = el.campoMensagem.value.length;
-            el.campoMensagem.setSelectionRange(fim, fim);
-        }
-
-        return true;
-    }
-
-    async function abrirMesaComContexto(detail = {}) {
-        if (!obterLaudoAtivoIdSeguro()) {
-            avisarMesaExigeInspecao();
-            return;
-        }
-
-        atualizarThreadWorkspace("mesa", {
-            persistirURL: true,
-            replaceURL: true,
-        });
-        await abrirMesaWidget();
-
-        const mensagemId = Number(detail?.mensagemId || 0) || null;
-        const textoBase = String(detail?.texto || "").trim();
-        if (mensagemId && textoBase) {
-            definirReferenciaMesaWidget({
-                id: mensagemId,
-                texto: textoBase,
-            });
-        }
-
-        if (el.mesaWidgetInput) {
-            const mensagem = String(detail?.mensagem || "").trim() || (
-                textoBase
-                    ? `Preciso de validação da mesa sobre este trecho:\n\n"${textoBase}"`
-                    : "Solicito validação da mesa para este laudo."
-            );
-            el.mesaWidgetInput.value = mensagem;
-            el.mesaWidgetInput.dispatchEvent(new Event("input", { bubbles: true }));
-            el.mesaWidgetInput.focus();
-        }
-
-        atualizarStatusChatWorkspace("mesa", "Canal da mesa pronto para revisão.");
-        mostrarToast("Canal da mesa aberto com contexto aplicado.", "sucesso", 1800);
-    }
-
-    function montarMensagemReemissaoWorkspace(detail = {}) {
-        const resumoGovernanca = construirResumoGovernancaHistoricoWorkspace();
-        const partes = ["Solicito revisão para reemissão do documento oficial deste caso."];
-
-        if (resumoGovernanca.visible && resumoGovernanca.detail) {
-            partes.push(resumoGovernanca.detail);
-        }
-
-        const textoBase = String(detail?.texto || "").trim();
-        if (textoBase) {
-            partes.push(`Trecho de apoio:\n\n"${textoBase}"`);
-        }
-
-        return partes.join("\n\n");
-    }
-
-    async function abrirReemissaoWorkspace(detail = {}) {
-        await abrirMesaComContexto({
-            ...detail,
-            mensagem: montarMensagemReemissaoWorkspace(detail),
-        });
-    }
-
-    function obterEntradaReemissaoWorkspace(detail = {}) {
-        const snapshot = obterSnapshotEstadoInspectorAtual();
-        const laudoAtivoId = normalizarLaudoAtualId(snapshot?.laudoAtualId);
-        const resumoGovernanca = construirResumoGovernancaHistoricoWorkspace();
-
-        if (!laudoAtivoId || !estadoRelatorioPossuiContexto(snapshot?.estadoRelatorio) || !resumoGovernanca.visible) {
-            return null;
-        }
-
+    function obterDependenciasWorkspaceComposer() {
         return {
-            ...detail,
-            laudoId: laudoAtivoId,
-            resumoGovernanca,
-            texto: String(detail?.texto || "").trim(),
+            COMANDOS_SLASH,
+            SUGESTOES_ENTRADA_ASSISTENTE,
+            armarPrimeiroEnvioNovoChatPendente,
+            abrirMesaWidget,
+            atualizarStatusChatWorkspace,
+            atualizarThreadWorkspace,
+            avisarMesaExigeInspecao,
+            construirResumoGovernancaHistoricoWorkspace,
+            conversaWorkspaceModoChatAtivo,
+            definirReferenciaMesaWidget,
+            el,
+            escaparHtml,
+            estado,
+            estadoRelatorioPossuiContexto,
+            mostrarToast,
+            montarResumoContextoIAWorkspace,
+            normalizarLaudoAtualId,
+            obterLaudoAtivoIdSeguro,
+            obterSnapshotEstadoInspectorAtual,
+            prepararComposerParaEnvioModoEntrada,
+            resolveWorkspaceView,
         };
     }
 
+    function obterListaComandosSlash(query = "") {
+        return InspectorWorkspaceComposer.obterListaComandosSlash?.(
+            query,
+            obterDependenciasWorkspaceComposer()
+        ) || [];
+    }
+
+    function fecharSlashCommandPalette() {
+        InspectorWorkspaceComposer.fecharSlashCommandPalette?.(
+            obterDependenciasWorkspaceComposer()
+        );
+    }
+
+    function renderizarSlashCommandPalette(query = "") {
+        InspectorWorkspaceComposer.renderizarSlashCommandPalette?.(
+            query,
+            obterDependenciasWorkspaceComposer()
+        );
+    }
+
+    function definirValorComposer(texto = "", { substituir = true } = {}) {
+        return InspectorWorkspaceComposer.definirValorComposer?.(
+            texto,
+            { substituir },
+            obterDependenciasWorkspaceComposer()
+        ) || false;
+    }
+
+    async function abrirMesaComContexto(detail = {}) {
+        await InspectorWorkspaceComposer.abrirMesaComContexto?.(
+            detail,
+            obterDependenciasWorkspaceComposer()
+        );
+    }
+
+    function montarMensagemReemissaoWorkspace(detail = {}) {
+        return InspectorWorkspaceComposer.montarMensagemReemissaoWorkspace?.(
+            detail,
+            obterDependenciasWorkspaceComposer()
+        ) || "";
+    }
+
+    async function abrirReemissaoWorkspace(detail = {}) {
+        await InspectorWorkspaceComposer.abrirReemissaoWorkspace?.(
+            detail,
+            obterDependenciasWorkspaceComposer()
+        );
+    }
+
+    function obterEntradaReemissaoWorkspace(detail = {}) {
+        return InspectorWorkspaceComposer.obterEntradaReemissaoWorkspace?.(
+            detail,
+            obterDependenciasWorkspaceComposer()
+        ) || null;
+    }
+
     function limparComposerWorkspace() {
-        if (!el.campoMensagem) return;
-        el.campoMensagem.value = "";
-        el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
+        definirValorComposer("", { substituir: true });
+        if (el.campoMensagem) {
+            el.campoMensagem.value = "";
+            el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
+        }
     }
 
     function obterTextoDeApoioComposer() {
-        const texto = String(el.campoMensagem?.value || "").trim();
-        if (!texto || texto.startsWith("/")) {
-            return "";
-        }
-        return texto;
+        return InspectorWorkspaceComposer.obterTextoDeApoioComposer?.(
+            obterDependenciasWorkspaceComposer()
+        ) || "";
     }
 
     function redirecionarEntradaParaReemissaoWorkspace(detail = {}) {
-        const entrada = obterEntradaReemissaoWorkspace(detail);
-        if (!entrada) return false;
-
-        if (detail?.limparComposer) {
-            limparComposerWorkspace();
-        }
-
-        abrirReemissaoWorkspace(entrada).catch(() => {});
-        return true;
+        return InspectorWorkspaceComposer.redirecionarEntradaParaReemissaoWorkspace?.(
+            detail,
+            obterDependenciasWorkspaceComposer()
+        ) || false;
     }
 
     function executarComandoSlash(comandoId, { origem = "palette" } = {}) {
-        const comando = COMANDOS_SLASH.find((item) => item.id === comandoId);
-        if (!comando) return false;
-
-        fecharSlashCommandPalette();
-
-        if (comando.id === "mesa") {
-            const redirecionado = redirecionarEntradaParaReemissaoWorkspace({
-                origem: `slash_${origem}`,
-                texto: obterTextoDeApoioComposer(),
-                limparComposer: true,
-            });
-            if (!redirecionado) {
-                abrirMesaComContexto({
-                    mensagem: `Solicito validação da mesa sobre este laudo.\n\n${montarResumoContextoIAWorkspace()}`,
-                }).catch(() => {});
-            }
-            if (el.campoMensagem) {
-                el.campoMensagem.value = "";
-                el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
-            }
-            return true;
-        }
-
-        const aplicado = definirValorComposer(comando.prompt, { substituir: true });
-        if (aplicado && origem !== "atalho") {
-            mostrarToast(`${comando.atalho} aplicado no composer.`, "info", 1800);
-        }
-        return aplicado;
+        return InspectorWorkspaceComposer.executarComandoSlash?.(
+            comandoId,
+            { origem },
+            obterDependenciasWorkspaceComposer()
+        ) || false;
     }
 
     function renderizarSugestoesComposer() {
-        if (!el.composerSuggestions) return;
-
-        if (resolveWorkspaceView() === "assistant_landing") {
-            const sugestoesEntrada = SUGESTOES_ENTRADA_ASSISTENTE.slice(0, 3);
-            el.composerSuggestions.innerHTML = sugestoesEntrada
-                .map((sugestao) => `
-                    <button
-                        type="button"
-                        class="composer-suggestion composer-suggestion--entry"
-                        data-suggestion-text="${escaparHtml(sugestao.prompt)}"
-                        data-suggestion-priority="${escaparHtml(sugestao.prioridade || "secondary")}"
-                    >
-                        <span>${escaparHtml(sugestao.titulo)}</span>
-                    </button>
-                `)
-                .join("");
-            return;
-        }
-
-        if (conversaWorkspaceModoChatAtivo()) {
-            el.composerSuggestions.innerHTML = "";
-            return;
-        }
-
-        const resumoGovernanca = construirResumoGovernancaHistoricoWorkspace();
-        const sugestoes = COMANDOS_SLASH
-            .filter((comando) => comando.sugestao)
-            .filter((comando) => !resumoGovernanca.visible || comando.id !== "mesa")
-            .slice(0, resumoGovernanca.visible ? 2 : 3);
-        const sugestoesMarkup = [];
-
-        if (resumoGovernanca.visible) {
-            sugestoesMarkup.push(`
-                <button
-                    type="button"
-                    class="composer-suggestion composer-suggestion--warning"
-                    data-suggestion-action="reissue"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">warning</span>
-                    <span>${escaparHtml(resumoGovernanca.actionLabel || "Abrir reemissão na Mesa")}</span>
-                </button>
-            `);
-        }
-
-        sugestoesMarkup.push(...sugestoes.map((comando) => `
-                <button
-                    type="button"
-                    class="composer-suggestion"
-                    data-suggestion-command="${escaparHtml(comando.id)}"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">${escaparHtml(comando.icone)}</span>
-                    <span>${escaparHtml(comando.titulo)}</span>
-                </button>
-            `));
-
-        el.composerSuggestions.innerHTML = sugestoesMarkup.join("");
+        InspectorWorkspaceComposer.renderizarSugestoesComposer?.(
+            obterDependenciasWorkspaceComposer()
+        );
     }
 
     function atualizarRecursosComposerWorkspace() {
-        const valor = String(el.campoMensagem?.value || "").trimStart();
-        if (valor.startsWith("/")) {
-            renderizarSlashCommandPalette(valor.slice(1));
-        } else {
-            fecharSlashCommandPalette();
-        }
+        InspectorWorkspaceComposer.atualizarRecursosComposerWorkspace?.(
+            obterDependenciasWorkspaceComposer()
+        );
     }
 
     function registrarPromptHistorico(texto = "") {
-        const valor = String(texto || "").trim();
-        if (!valor) return;
-
-        estado.historicoPrompts = [
-            valor,
-            ...(estado.historicoPrompts || []).filter((item) => item !== valor),
-        ].slice(0, 20);
-        estado.indiceHistoricoPrompt = -1;
-        estado.rascunhoHistoricoPrompt = "";
+        InspectorWorkspaceComposer.registrarPromptHistorico?.(
+            texto,
+            obterDependenciasWorkspaceComposer()
+        );
     }
 
     function navegarHistoricoPrompts(direcao = -1) {
-        const historico = Array.isArray(estado.historicoPrompts) ? estado.historicoPrompts : [];
-        if (!historico.length || !el.campoMensagem) return false;
-
-        if (estado.indiceHistoricoPrompt === -1) {
-            estado.rascunhoHistoricoPrompt = String(el.campoMensagem.value || "");
-        }
-
-        const proximoIndice = estado.indiceHistoricoPrompt + direcao;
-        if (proximoIndice < -1 || proximoIndice >= historico.length) return false;
-
-        estado.indiceHistoricoPrompt = proximoIndice;
-        const proximoValor = proximoIndice === -1
-            ? estado.rascunhoHistoricoPrompt
-            : historico[proximoIndice];
-
-        el.campoMensagem.value = proximoValor;
-        el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
-        return true;
+        return InspectorWorkspaceComposer.navegarHistoricoPrompts?.(
+            direcao,
+            obterDependenciasWorkspaceComposer()
+        ) || false;
     }
 
     function onCampoMensagemWorkspaceKeydown(event) {
-        const valor = String(el.campoMensagem?.value || "").trimStart();
-        const paletteAberto = !el.slashCommandPalette?.hidden && valor.startsWith("/");
-
-        if (paletteAberto) {
-            const lista = obterListaComandosSlash(valor.slice(1));
-
-            if (event.key === "ArrowDown") {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                estado.slashIndiceAtivo = Math.min(
-                    Math.max(lista.length - 1, 0),
-                    estado.slashIndiceAtivo + 1
-                );
-                renderizarSlashCommandPalette(valor.slice(1));
-                return;
-            }
-
-            if (event.key === "ArrowUp") {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                estado.slashIndiceAtivo = Math.max(0, estado.slashIndiceAtivo - 1);
-                renderizarSlashCommandPalette(valor.slice(1));
-                return;
-            }
-
-            if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                const comando = lista[estado.slashIndiceAtivo] || lista[0];
-                if (comando) {
-                    executarComandoSlash(comando.id);
-                }
-                return;
-            }
-
-            if (event.key === "Escape") {
-                fecharSlashCommandPalette();
-                return;
-            }
-        }
-
-        if (event.altKey && event.key === "ArrowUp") {
-            if (navegarHistoricoPrompts(1)) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-            }
-            return;
-        }
-
-        if (event.altKey && event.key === "ArrowDown") {
-            if (navegarHistoricoPrompts(-1)) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-            }
-            return;
-        }
-
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey &&
-            !event.altKey &&
-            !event.ctrlKey &&
-            !event.metaKey
-        ) {
-            const textoComposer = obterTextoDeApoioComposer();
-            if (textoComposer && redirecionarEntradaParaReemissaoWorkspace({
-                origem: "composer_enter",
-                texto: textoComposer,
-                limparComposer: true,
-            })) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                return;
-            }
-            prepararComposerParaEnvioModoEntrada();
-            armarPrimeiroEnvioNovoChatPendente();
-        }
+        InspectorWorkspaceComposer.onCampoMensagemWorkspaceKeydown?.(
+            event,
+            obterDependenciasWorkspaceComposer()
+        );
     }
 
     function prepararComposerParaEnvioModoEntrada() {

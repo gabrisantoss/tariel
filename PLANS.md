@@ -2573,3 +2573,31 @@ Atualizado em `2026-04-21`.
 - `chat_index_page.js` perde mais um bloco coeso sem regressão de bootstrap
 - `admin/services.py` perde mais um bloco de governança sem quebrar testes
 - `tests/test_smoke.py` e o subset do admin continuam verdes
+
+### `PKT-HOTSPOTS-BASELINE-03` — Composer do inspetor e rollup do catálogo
+
+- `status`: em andamento em `2026-04-21`
+
+### Objetivo
+
+- continuar a drenagem dos hotspots por blocos de interface e governança que já tenham fronteira clara
+
+### Escopo
+
+- entra extração do fluxo do composer do workspace para módulo próprio
+- entra extração do rollup de governança de catálogo ativo para serviço dedicado
+- não entra mudança visual do composer
+- não entra mudança de contrato em payload de catálogo
+
+### Passos
+
+1. extrair slash commands, sugestões e reemissão do composer para módulo do inspetor
+2. extrair resolução e agregação do rollup de governança para serviço admin dedicado
+3. validar com smoke, subset admin, sintaxe e lint
+4. reexecutar `make verify` para fechar o pacote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco operacional relevante do workspace
+- `admin/services.py` perde o rollup de governança sem regressão no smoke/admin
+- `make verify` continua verde após o lote

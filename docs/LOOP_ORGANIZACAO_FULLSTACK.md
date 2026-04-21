@@ -2513,3 +2513,49 @@ Próximo passo imediato:
 
 - continuar quebrando `chat_index_page.js` por superfícies fechadas do workspace, priorizando contexto IA/fixados e renderização de cards;
 - depois extrair o rollup de governança de catálogo ativo em `admin/services.py`, que continua sendo o próximo bloco pesado do backend.
+
+## Ciclo 66 — Extração do composer do workspace e do rollup de governança
+
+Status:
+
+- concluído e validado localmente em `2026-04-21`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda retinha todo o fluxo de slash commands, atalhos de reemissão, sugestões do composer e navegação de histórico de prompts, misturando UX do composer com o restante do boot da página;
+- `web/app/domains/admin/services.py` ainda concentrava o rollup de governança de catálogo ativo, incluindo resolução de modo efetivo por release, contadores e highlights por família e tenant;
+- ambos os blocos tinham dependências claras e já podiam sair do hotspot mantendo wrappers compatíveis.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_composer.js` com o fluxo do composer do workspace, incluindo slash palette, reemissão, sugestões e histórico de prompts;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorWorkspaceComposer` por meio de um objeto explícito de dependências do runtime atual;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/governance_rollup_services.py` com a resolução do modo efetivo de governança por release e a construção do rollup consolidado do catálogo;
+- `web/app/domains/admin/services.py` ficou com wrappers finos para esse bloco, mantendo a API interna e os labels/metadados locais.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_composer.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/governance_rollup_services.py`
+- `web/app/domains/admin/services.py`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_composer.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/governance_rollup_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/governance_rollup_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "governance or platform_settings"`
+- resultado:
+  - `41 passed`
+  - `1 passed, 41 deselected`
+
+Próximo passo imediato:
+
+- continuar drenando o workspace do inspetor por um próximo slice fechado, priorizando contexto IA/fixados ou renderização dos cards de histórico;
+- depois revisar se o admin já comporta a próxima extração em leitura/catalog runtime sem reabrir acoplamento transversal.
