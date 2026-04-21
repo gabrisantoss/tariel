@@ -2545,3 +2545,31 @@ Atualizado em `2026-04-21`.
 - quais comandos precisam passar
 - quais comportamentos precisam ser validados
 - qual documento precisa ser atualizado
+
+### `PKT-HOTSPOTS-BASELINE-02` — Continuidade de drenagem dos hotspots web/admin
+
+- `status`: em andamento em `2026-04-21`
+
+### Objetivo
+
+- continuar drenando os dois hotspots principais sem alterar comportamento funcional nem romper o bootstrap atual
+
+### Escopo
+
+- entra extração de slices coesos do histórico do inspetor
+- entra extração de serviços de governança review/release do admin
+- não entra redesign do workspace
+- não entra mudança de contrato de catálogo, tenant ou runtime
+
+### Passos
+
+1. extrair builders do histórico do workspace para módulo próprio com fachada compatível
+2. extrair merge/resumo de governança review/release para módulo admin dedicado
+3. validar com `node --check`, `py_compile`, `pytest` específico e smoke
+4. registrar checkpoint no loop operacional e seguir para o próximo corte pesado
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso sem regressão de bootstrap
+- `admin/services.py` perde mais um bloco de governança sem quebrar testes
+- `tests/test_smoke.py` e o subset do admin continuam verdes

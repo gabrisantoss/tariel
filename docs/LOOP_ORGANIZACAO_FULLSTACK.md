@@ -2467,3 +2467,49 @@ Próximo passo imediato:
 
 - seguir com a validação mais ampla do `web-ci` equivalente no ambiente de recuperação;
 - se não houver falha nova, ampliar a checagem do inspetor para ações mais profundas do workspace e depois reavaliar os próximos hotspots reais desta base.
+
+## Ciclo 65 — Extração segura de histórico do inspetor e governança admin
+
+Status:
+
+- concluído e validado localmente em `2026-04-21`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda concentrava a montagem e a filtragem do histórico do workspace, mantendo parsing de payload, leitura de DOM suplementar e composição de itens em um único arquivo muito grande;
+- `web/app/domains/admin/services.py` ainda acumulava o merge e o resumo das políticas de governança de review/release, o que ampliava o blast radius de qualquer ajuste no admin;
+- os dois blocos já estavam coesos o suficiente para saírem do hotspot sem troca de contrato.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/history_builders.js` com a construção dos itens canônicos/suplementares do histórico e a filtragem por ator/tipo/busca;
+- `web/static/js/chat/chat_index_page.js` passou a consumir `window.TarielInspectorHistoryBuilders` via wrappers compatíveis, preservando o comportamento da página;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/governance_policy_services.py` com as funções de merge e resumo da governança de review/release;
+- `web/app/domains/admin/services.py` ficou como fachada fina para esse bloco, mantendo a API interna existente.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/history_builders.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/governance_policy_services.py`
+- `web/app/domains/admin/services.py`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/history_builders.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/governance_policy_services.py`
+- `git diff --check`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "platform_settings or governance"`
+- resultado:
+  - `41 passed`
+  - `1 passed, 41 deselected`
+
+Próximo passo imediato:
+
+- continuar quebrando `chat_index_page.js` por superfícies fechadas do workspace, priorizando contexto IA/fixados e renderização de cards;
+- depois extrair o rollup de governança de catálogo ativo em `admin/services.py`, que continua sendo o próximo bloco pesado do backend.

@@ -43,6 +43,12 @@ from app.domains.admin.platform_settings_services import (
     apply_platform_settings_update as _apply_platform_settings_update,
     build_admin_platform_settings_console as _build_admin_platform_settings_console,
 )
+from app.domains.admin.governance_policy_services import (
+    merge_release_governance_policy as _governance_merge_release_policy,
+    merge_review_policy_governance as _governance_merge_review_policy,
+    resumir_governanca_release_policy as _governance_resumir_release_policy,
+    resumir_governanca_review_policy as _governance_resumir_review_policy,
+)
 from app.domains.admin.platform_settings_state import (
     get_platform_default_new_tenant_plan,  # noqa: F401
     get_support_exceptional_policy_snapshot,  # noqa: F401
@@ -60,7 +66,6 @@ from app.shared.backend_hotspot_metrics import observe_backend_hotspot
 from app.shared.catalog_commercial_governance import (
     RELEASE_CHANNEL_ORDER,
     merge_offer_commercial_flags as _merge_offer_commercial_flags,
-    merge_release_contract_policy,
     normalize_release_channel,
     release_channel_meta,
     sanitize_commercial_bundle,
@@ -1225,75 +1230,22 @@ def _merge_review_policy_governance(
     mobile_review_allowed_plans: list[str] | None,
     mobile_autonomous_allowed_plans: list[str] | None,
 ) -> dict[str, Any]:
-    review_policy = dict(base_policy or {})
-    tenant_entitlements = (
-        dict(review_policy.get("tenant_entitlements") or {})
-        if isinstance(review_policy.get("tenant_entitlements"), dict)
-        else {}
+    return _governance_merge_review_policy(
+        base_policy,
+        default_review_mode=default_review_mode,
+        max_review_mode=max_review_mode,
+        requires_family_lock=requires_family_lock,
+        block_on_scope_mismatch=block_on_scope_mismatch,
+        block_on_missing_required_evidence=block_on_missing_required_evidence,
+        block_on_critical_field_absent=block_on_critical_field_absent,
+        blocking_conditions=blocking_conditions,
+        non_blocking_conditions=non_blocking_conditions,
+        red_flags=red_flags,
+        requires_release_active=requires_release_active,
+        requires_upload_doc_for_mobile_autonomous=requires_upload_doc_for_mobile_autonomous,
+        mobile_review_allowed_plans=mobile_review_allowed_plans,
+        mobile_autonomous_allowed_plans=mobile_autonomous_allowed_plans,
     )
-
-    managed_keys = {
-        "default_review_mode",
-        "max_review_mode",
-        "requires_family_lock",
-        "block_on_scope_mismatch",
-        "block_on_missing_required_evidence",
-        "block_on_critical_field_absent",
-        "blocking_conditions",
-        "non_blocking_conditions",
-        "red_flags",
-        "tenant_entitlements",
-    }
-    review_policy = {
-        key: value
-        for key, value in review_policy.items()
-        if key not in managed_keys
-    }
-
-    if default_review_mode:
-        review_policy["default_review_mode"] = default_review_mode
-    if max_review_mode:
-        review_policy["max_review_mode"] = max_review_mode
-    review_policy["requires_family_lock"] = bool(requires_family_lock)
-    review_policy["block_on_scope_mismatch"] = bool(block_on_scope_mismatch)
-    review_policy["block_on_missing_required_evidence"] = bool(
-        block_on_missing_required_evidence
-    )
-    review_policy["block_on_critical_field_absent"] = bool(
-        block_on_critical_field_absent
-    )
-    if blocking_conditions:
-        review_policy["blocking_conditions"] = blocking_conditions
-    if non_blocking_conditions:
-        review_policy["non_blocking_conditions"] = non_blocking_conditions
-    if red_flags:
-        review_policy["red_flags"] = red_flags
-
-    tenant_entitlements = {
-        key: value
-        for key, value in tenant_entitlements.items()
-        if key
-        not in {
-            "requires_release_active",
-            "requires_upload_doc_for_mobile_autonomous",
-            "mobile_review_allowed_plans",
-            "mobile_review_plans",
-            "mobile_autonomous_allowed_plans",
-            "mobile_autonomous_plans",
-        }
-    }
-    tenant_entitlements["requires_release_active"] = bool(requires_release_active)
-    tenant_entitlements["requires_upload_doc_for_mobile_autonomous"] = bool(
-        requires_upload_doc_for_mobile_autonomous
-    )
-    if mobile_review_allowed_plans:
-        tenant_entitlements["mobile_review_allowed_plans"] = mobile_review_allowed_plans
-    if mobile_autonomous_allowed_plans:
-        tenant_entitlements["mobile_autonomous_allowed_plans"] = (
-            mobile_autonomous_allowed_plans
-        )
-    review_policy["tenant_entitlements"] = tenant_entitlements
-    return review_policy
 
 
 def _merge_release_governance_policy(
@@ -1306,147 +1258,36 @@ def _merge_release_governance_policy(
     release_channel_override: str | None,
     contract_entitlements: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
-    governance_policy = dict(base_policy or {})
-    managed_keys = {
-        "force_review_mode",
-        "max_review_mode",
-        "mobile_review_override",
-        "mobile_autonomous_override",
-        "release_channel_override",
-        "contract_entitlements",
-    }
-    governance_policy = {
-        key: value
-        for key, value in governance_policy.items()
-        if key not in managed_keys
-    }
-    if force_review_mode:
-        governance_policy["force_review_mode"] = force_review_mode
-    if max_review_mode:
-        governance_policy["max_review_mode"] = max_review_mode
-    if mobile_review_override is not None:
-        governance_policy["mobile_review_override"] = mobile_review_override
-    if mobile_autonomous_override is not None:
-        governance_policy["mobile_autonomous_override"] = mobile_autonomous_override
-    governance_policy = merge_release_contract_policy(
-        governance_policy,
+    return _governance_merge_release_policy(
+        base_policy,
+        force_review_mode=force_review_mode,
+        max_review_mode=max_review_mode,
+        mobile_review_override=mobile_review_override,
+        mobile_autonomous_override=mobile_autonomous_override,
         release_channel_override=release_channel_override,
         contract_entitlements=contract_entitlements,
-    ) or {}
-    return governance_policy or None
+    )
 
 
 def _resumir_governanca_review_policy(review_policy: Any) -> dict[str, Any]:
-    payload = dict(review_policy or {}) if isinstance(review_policy, dict) else {}
-    tenant_entitlements = (
-        dict(payload.get("tenant_entitlements") or {})
-        if isinstance(payload.get("tenant_entitlements"), dict)
-        else {}
+    return _governance_resumir_review_policy(
+        review_policy,
+        normalizar_red_flags=_normalizar_red_flags_governanca,
+        normalizar_lista_textual=_normalizar_lista_textual,
+        normalizar_planos=_normalizar_planos_governanca,
+        review_mode_label_meta=_review_mode_label_meta,
+        red_flag_severity_meta=_red_flag_severity_meta,
     )
-    red_flags = _normalizar_red_flags_governanca(list(payload.get("red_flags") or [])) or []
-    blocking_conditions = _normalizar_lista_textual(
-        json.dumps(list(payload.get("blocking_conditions") or []), ensure_ascii=False),
-        campo="Blocking conditions",
-    ) or []
-    non_blocking_conditions = _normalizar_lista_textual(
-        json.dumps(list(payload.get("non_blocking_conditions") or []), ensure_ascii=False),
-        campo="Non-blocking conditions",
-    ) or []
-    review_plans = _normalizar_planos_governanca(
-        list(
-            tenant_entitlements.get("mobile_review_allowed_plans")
-            or tenant_entitlements.get("mobile_review_plans")
-            or []
-        ),
-        campo="Planos com revisão mobile",
-    ) or []
-    autonomy_plans = _normalizar_planos_governanca(
-        list(
-            tenant_entitlements.get("mobile_autonomous_allowed_plans")
-            or tenant_entitlements.get("mobile_autonomous_plans")
-            or []
-        ),
-        campo="Planos com autonomia mobile",
-    ) or []
-    return {
-        "default_review_mode": _review_mode_label_meta(
-            payload.get("default_review_mode")
-        ),
-        "max_review_mode": _review_mode_label_meta(payload.get("max_review_mode")),
-        "requires_family_lock": bool(payload.get("requires_family_lock")),
-        "block_on_scope_mismatch": bool(payload.get("block_on_scope_mismatch")),
-        "block_on_missing_required_evidence": bool(
-            payload.get("block_on_missing_required_evidence")
-        ),
-        "block_on_critical_field_absent": bool(
-            payload.get("block_on_critical_field_absent")
-        ),
-        "blocking_conditions": blocking_conditions,
-        "non_blocking_conditions": non_blocking_conditions,
-        "red_flags": [
-            {
-                **item,
-                "severity_meta": _red_flag_severity_meta(item.get("severity")),
-            }
-            for item in red_flags
-        ],
-        "red_flags_count": len(red_flags),
-        "tenant_entitlements": {
-            "requires_release_active": bool(
-                tenant_entitlements.get("requires_release_active")
-            ),
-            "requires_upload_doc_for_mobile_autonomous": bool(
-                tenant_entitlements.get("requires_upload_doc_for_mobile_autonomous")
-            ),
-            "mobile_review_allowed_plans": review_plans,
-            "mobile_autonomous_allowed_plans": autonomy_plans,
-        },
-    }
 
 
 def _resumir_governanca_release_policy(governance_policy: Any) -> dict[str, Any]:
-    payload = (
-        dict(governance_policy or {})
-        if isinstance(governance_policy, dict)
-        else {}
+    return _governance_resumir_release_policy(
+        governance_policy,
+        normalizar_review_mode=_normalizar_review_mode_governanca,
+        effective_review_mode_cap=_effective_review_mode_cap,
+        review_mode_label_meta=_review_mode_label_meta,
+        override_choice_label=_override_choice_label,
     )
-    review_override = payload.get("mobile_review_override")
-    autonomy_override = payload.get("mobile_autonomous_override")
-    if not isinstance(review_override, bool):
-        review_override = None
-    if not isinstance(autonomy_override, bool):
-        autonomy_override = None
-    force_review_mode = _normalizar_review_mode_governanca(
-        payload.get("force_review_mode"),
-        campo="Force review mode",
-    )
-    max_review_mode = _normalizar_review_mode_governanca(
-        payload.get("max_review_mode"),
-        campo="Max review mode",
-    )
-    effective_cap = _effective_review_mode_cap(force_review_mode, max_review_mode)
-    commercial = summarize_release_contract_governance(governance_policy)
-    return {
-        "force_review_mode": _review_mode_label_meta(force_review_mode),
-        "max_review_mode": _review_mode_label_meta(max_review_mode),
-        "mobile_review_override": _override_choice_label(review_override),
-        "mobile_autonomous_override": _override_choice_label(autonomy_override),
-        "effective_cap": _review_mode_label_meta(effective_cap),
-        "release_channel_override": commercial["release_channel_override"],
-        "effective_release_channel": commercial["effective_release_channel"],
-        "contract_entitlements_override": commercial["contract_entitlements_override"],
-        "effective_contract_entitlements": commercial["effective_contract_entitlements"],
-        "has_overrides": any(
-            (
-                force_review_mode is not None,
-                max_review_mode is not None,
-                review_override is not None,
-                autonomy_override is not None,
-                commercial["release_channel_override"]["key"] != "inherit",
-                commercial["contract_entitlements_override"]["has_data"],
-            )
-        ),
-    }
 
 
 def _review_mode_display_order() -> tuple[str, str, str]:
