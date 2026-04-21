@@ -63,6 +63,11 @@ from app.domains.admin.governance_rollup_services import (
     review_mode_with_cap as _governance_review_mode_with_cap,
     strictest_review_mode as _governance_strictest_review_mode,
 )
+from app.domains.admin.catalog_read_services import (
+    buscar_catalogo_familia_admin as _catalog_read_buscar_catalogo_familia_admin,
+    listar_metodos_catalogo as _catalog_read_listar_metodos_catalogo,
+    resumir_catalogo_laudos_admin as _catalog_read_resumir_catalogo_laudos_admin,
+)
 from app.domains.admin.platform_settings_state import (
     get_platform_default_new_tenant_plan,  # noqa: F401
     get_support_exceptional_policy_snapshot,  # noqa: F401
@@ -3441,11 +3446,10 @@ def _catalog_row_matches_filters(
 
 
 def listar_metodos_catalogo(db: Session) -> list[MetodoCatalogoInspecao]:
-    stmt = select(MetodoCatalogoInspecao).order_by(
-        MetodoCatalogoInspecao.categoria.asc(),
-        MetodoCatalogoInspecao.nome_exibicao.asc(),
+    return _catalog_read_listar_metodos_catalogo(
+        db,
+        metodo_model=MetodoCatalogoInspecao,
     )
-    return list(db.scalars(stmt).all())
 
 
 def resumir_catalogo_laudos_admin(
@@ -3462,113 +3466,33 @@ def resumir_catalogo_laudos_admin(
     filtro_oferta_ativa: str = "",
     filtro_mode: str = "",
 ) -> dict[str, Any]:
-    familias = listar_catalogo_familias(db, filtro_busca=filtro_busca, filtro_classificacao="family")
-    ofertas_comerciais = listar_ofertas_comerciais_catalogo(db)
-    metodos_catalogo = listar_metodos_catalogo(db)
-    familias_canonicas = listar_family_schemas_canonicos()
-    rows_all = [_serializar_familia_catalogo_row(item) for item in familias]
-    rows = [
-        item
-        for item in rows_all
-        if _catalog_row_matches_filters(
-            item,
-            filtro_macro_categoria=filtro_macro_categoria,
-            filtro_status_tecnico=filtro_status_tecnico,
-            filtro_prontidao=filtro_prontidao,
-            filtro_status_comercial=filtro_status_comercial,
-            filtro_calibracao=filtro_calibracao,
-            filtro_liberacao=filtro_liberacao,
-            filtro_template_default=filtro_template_default,
-            filtro_oferta_ativa=filtro_oferta_ativa,
-            filtro_mode=filtro_mode,
-        )
-    ]
-    family_keys_no_recorte = {
-        str(item["family_key"]).strip().lower()
-        for item in rows
-        if str(item.get("family_key") or "").strip()
-    }
-    familias_no_recorte = [
-        item
-        for item in familias
-        if str(getattr(item, "family_key", "") or "").strip().lower() in family_keys_no_recorte
-    ]
-    rows = _enrich_catalog_rows_with_document_preview(
-        rows=rows,
-        families=familias_no_recorte,
-        metodos_catalogo=metodos_catalogo,
+    return _catalog_read_resumir_catalogo_laudos_admin(
+        db,
+        filtro_busca=filtro_busca,
+        filtro_macro_categoria=filtro_macro_categoria,
+        filtro_status_tecnico=filtro_status_tecnico,
+        filtro_prontidao=filtro_prontidao,
+        filtro_status_comercial=filtro_status_comercial,
+        filtro_calibracao=filtro_calibracao,
+        filtro_liberacao=filtro_liberacao,
+        filtro_template_default=filtro_template_default,
+        filtro_oferta_ativa=filtro_oferta_ativa,
+        filtro_mode=filtro_mode,
+        listar_catalogo_familias=listar_catalogo_familias,
+        listar_ofertas_comerciais_catalogo=listar_ofertas_comerciais_catalogo,
+        listar_metodos_catalogo_fn=listar_metodos_catalogo,
+        listar_family_schemas_canonicos=listar_family_schemas_canonicos,
+        serializar_familia_catalogo_row=_serializar_familia_catalogo_row,
+        catalog_row_matches_filters=_catalog_row_matches_filters,
+        enrich_catalog_rows_with_document_preview=_enrich_catalog_rows_with_document_preview,
+        offer_lifecycle_resolvido=_offer_lifecycle_resolvido,
+        build_template_library_rollup=_build_template_library_rollup,
+        build_material_real_rollup=_build_material_real_rollup,
+        build_commercial_scale_rollup=_build_commercial_scale_rollup,
+        build_calibration_queue_rollup=_build_calibration_queue_rollup,
+        catalog_macro_category_sort_key=_catalog_macro_category_sort_key,
+        build_catalog_governance_rollup=_build_catalog_governance_rollup,
     )
-    total_publicadas = sum(1 for item in rows_all if item["technical_status"]["key"] == "ready")
-    total_rascunho = sum(1 for item in rows_all if item["technical_status"]["key"] == "draft")
-    total_arquivadas = sum(1 for item in rows_all if item["technical_status"]["key"] == "deprecated")
-    total_ofertas_comerciais = len(ofertas_comerciais)
-    total_ofertas_ativas = sum(1 for item in ofertas_comerciais if _offer_lifecycle_resolvido(item) == "active")
-    total_familias_calibradas = sum(1 for item in rows_all if item["calibration_status"]["key"] == "real_calibrated")
-    total_variantes_comerciais = sum(int(item["variant_count"]) for item in rows_all)
-    template_library_rollup = _build_template_library_rollup(rows_all)
-    material_real_rollup = _build_material_real_rollup(rows_all)
-    commercial_scale_rollup = _build_commercial_scale_rollup(rows_all)
-    calibration_queue_rollup = _build_calibration_queue_rollup(rows_all)
-    material_real_priority_rollup = {
-        "priority_modes": material_real_rollup.get("priority_modes", []),
-        "highlights": material_real_rollup.get("priority_highlights", []),
-    }
-    macro_categorias = sorted(
-        {
-            str(item["macro_category"] or "").strip()
-            for item in rows_all
-            if str(item["macro_category"] or "").strip()
-        },
-        key=_catalog_macro_category_sort_key,
-    )
-    template_defaults = sorted(
-        {
-            str(item.get("template_default_code") or "").strip()
-            for item in rows_all
-            if str(item.get("template_default_code") or "").strip()
-        }
-    )
-    return {
-        "familias": familias,
-        "catalog_rows": rows,
-        "catalog_rows_total": len(rows_all),
-        "ofertas_comerciais": ofertas_comerciais,
-        "metodos_catalogo": metodos_catalogo,
-        "familias_canonicas": familias_canonicas,
-        "macro_categorias": macro_categorias,
-        "template_default_options": template_defaults,
-        "governance_rollup": _build_catalog_governance_rollup(
-            db,
-            families=familias_no_recorte,
-        ),
-        "template_library_rollup": template_library_rollup,
-        "material_real_rollup": material_real_rollup,
-        "commercial_scale_rollup": commercial_scale_rollup,
-        "material_real_priority_rollup": material_real_priority_rollup,
-        "calibration_queue_rollup": calibration_queue_rollup,
-        "total_familias": len(rows_all),
-        "total_publicadas": int(total_publicadas),
-        "total_rascunho": int(total_rascunho),
-        "total_arquivadas": int(total_arquivadas),
-        "total_ofertas_comerciais": int(total_ofertas_comerciais),
-        "total_ofertas_ativas": int(total_ofertas_ativas),
-        "total_familias_calibradas": int(total_familias_calibradas),
-        "total_variantes_comerciais": int(total_variantes_comerciais),
-        "total_familias_canonicas": len(familias_canonicas),
-        "total_metodos_catalogados": len(metodos_catalogo),
-        "filtros": {
-            "busca": filtro_busca,
-            "macro_categoria": filtro_macro_categoria,
-            "status_tecnico": filtro_status_tecnico,
-            "prontidao": filtro_prontidao,
-            "status_comercial": filtro_status_comercial,
-            "calibracao": filtro_calibracao,
-            "liberacao": filtro_liberacao,
-            "template_default": filtro_template_default,
-            "oferta_ativa": filtro_oferta_ativa,
-            "mode": filtro_mode,
-        },
-    }
 
 
 def _catalogo_actor_label(actor: Usuario | None, *, fallback: str = "Sistema Tariel") -> str:
@@ -3757,255 +3681,43 @@ def _historico_catalogo_familia(
 
 
 def buscar_catalogo_familia_admin(db: Session, family_key: str) -> dict[str, Any] | None:
-    family_key_norm = _normalizar_chave_catalogo(family_key, campo="Family key", max_len=120)
-    familia = db.scalar(
-        select(FamiliaLaudoCatalogo)
-        .options(
-            selectinload(FamiliaLaudoCatalogo.criado_por),
-            selectinload(FamiliaLaudoCatalogo.oferta_comercial).selectinload(OfertaComercialFamiliaLaudo.criado_por),
-            selectinload(FamiliaLaudoCatalogo.modos_tecnicos).selectinload(ModoTecnicoFamiliaLaudo.criado_por),
-            selectinload(FamiliaLaudoCatalogo.calibracao).selectinload(CalibracaoFamiliaLaudo.criado_por),
-            selectinload(FamiliaLaudoCatalogo.tenant_releases).selectinload(TenantFamilyReleaseLaudo.criado_por),
-        )
-        .where(FamiliaLaudoCatalogo.family_key == family_key_norm)
+    return _catalog_read_buscar_catalogo_familia_admin(
+        db,
+        family_key,
+        familia_model=FamiliaLaudoCatalogo,
+        oferta_model=OfertaComercialFamiliaLaudo,
+        modo_tecnico_model=ModoTecnicoFamiliaLaudo,
+        calibracao_model=CalibracaoFamiliaLaudo,
+        tenant_release_model=TenantFamilyReleaseLaudo,
+        empresa_model=Empresa,
+        normalizar_chave_catalogo=_normalizar_chave_catalogo,
+        offer_lifecycle_resolvido=_offer_lifecycle_resolvido,
+        dict_payload_admin=_dict_payload_admin,
+        summarize_offer_commercial_governance=summarize_offer_commercial_governance,
+        carregar_family_schema_canonico=carregar_family_schema_canonico,
+        catalog_family_artifact_snapshot=_catalog_family_artifact_snapshot,
+        serializar_familia_catalogo_row=_serializar_familia_catalogo_row,
+        build_template_library_rollup=_build_template_library_rollup,
+        build_material_real_workspace_summary=_build_material_real_workspace_summary,
+        catalog_offer_variants=catalog_offer_variants,
+        listar_metodos_catalogo_fn=listar_metodos_catalogo,
+        build_document_preview_summary=_build_document_preview_summary,
+        build_variant_library_summary=_build_variant_library_summary,
+        build_material_real_priority_summary=_build_material_real_priority_summary,
+        build_template_refinement_target=_build_template_refinement_target,
+        serializar_release_catalogo_familia=_serializar_release_catalogo_familia,
+        historico_catalogo_familia=_historico_catalogo_familia,
+        resumir_governanca_review_policy=_resumir_governanca_review_policy,
+        label_catalogo=_label_catalogo,
+        lifecycle_status_labels=_CATALOGO_LIFECYCLE_STATUS_LABELS,
+        calibration_status_labels=_CATALOGO_CALIBRATION_STATUS_LABELS,
+        calibracao_status_resolvido=_calibracao_status_resolvido,
+        catalogo_texto_leitura=_catalogo_texto_leitura,
+        catalogo_actor_label=_catalogo_actor_label,
+        catalogo_modelo_label=_catalogo_modelo_label,
+        formatar_data_admin=_formatar_data_admin,
+        normalizar_datetime_admin=_normalizar_datetime_admin,
     )
-    if familia is None:
-        return None
-
-    oferta = getattr(familia, "oferta_comercial", None)
-    offer_governance = (
-        _dict_payload_admin(
-            summarize_offer_commercial_governance(
-                getattr(oferta, "flags_json", None),
-                offer_lifecycle_status=_offer_lifecycle_resolvido(oferta),
-            )
-        )
-        if oferta is not None
-        else {}
-    )
-    releases = list(
-        db.scalars(
-            select(TenantFamilyReleaseLaudo)
-            .options(selectinload(TenantFamilyReleaseLaudo.criado_por))
-            .where(TenantFamilyReleaseLaudo.family_id == familia.id)
-            .order_by(TenantFamilyReleaseLaudo.tenant_id.asc())
-        ).all()
-    )
-    empresas = list(
-        db.scalars(
-            select(Empresa)
-            .where(Empresa.escopo_plataforma.is_(False))
-            .order_by(Empresa.nome_fantasia.asc())
-        ).all()
-    )
-    empresa_lookup = {int(item.id): item for item in empresas}
-    artifact_snapshot = _catalog_family_artifact_snapshot(str(familia.family_key))
-    row = _serializar_familia_catalogo_row(familia, artifact_snapshot=artifact_snapshot)
-    template_library_rollup = _build_template_library_rollup([row])
-    material_real_workspace = _build_material_real_workspace_summary(str(familia.family_key))
-    try:
-        family_schema = carregar_family_schema_canonico(str(familia.family_key))
-    except ValueError:
-        family_schema = None
-
-    variantes = catalog_offer_variants(familia, oferta)
-    available_variant_tokens = [
-        f"catalog:{str(familia.family_key).strip().lower()}:{str(item.get('variant_key') or '').strip().lower()}"
-        for item in variantes
-        if str(item.get("variant_key") or "").strip()
-    ]
-    family_methods = [
-        {
-            "method_key": str(item.method_key),
-            "display_name": str(item.nome_exibicao),
-            "categoria": str(item.categoria),
-        }
-        for item in listar_metodos_catalogo(db)
-        if str(getattr(item, "method_key", "") or "").strip() in str(familia.family_key)
-    ]
-    calibration_payload = {
-        "status": _label_catalogo(
-            _CATALOGO_CALIBRATION_STATUS_LABELS,
-            _calibracao_status_resolvido(familia, oferta),
-            "Sem calibração",
-        ),
-        "reference_source": str(getattr(getattr(familia, "calibracao", None), "reference_source", "") or "").strip() or None,
-        "reference_source_label": _catalogo_texto_leitura(
-            str(getattr(getattr(familia, "calibracao", None), "reference_source", "") or "").strip() or None,
-            fallback="Sem fonte de referência",
-        ),
-        "summary": str(getattr(getattr(familia, "calibracao", None), "summary_of_adjustments", "") or "").strip() or None,
-        "changed_language_notes": str(getattr(getattr(familia, "calibracao", None), "changed_language_notes", "") or "").strip() or None,
-        "changed_fields": list(getattr(getattr(familia, "calibracao", None), "changed_fields_json", None) or []),
-        "attachments": [
-            {
-                "label": str(item.get("label") or item.get("name") or item.get("path") or "Anexo de calibração").strip(),
-                "path": str(item.get("path") or "").strip() or None,
-            }
-            for item in list(getattr(getattr(familia, "calibracao", None), "attachments_json", None) or [])
-            if isinstance(item, dict)
-        ],
-        "last_calibrated_at_label": _formatar_data_admin(
-            _normalizar_datetime_admin(getattr(getattr(familia, "calibracao", None), "last_calibrated_at", None))
-        ),
-        "actor_label": _catalogo_actor_label(getattr(getattr(familia, "calibracao", None), "criado_por", None)),
-    }
-    document_preview = _build_document_preview_summary(
-        row=row,
-        artifact_snapshot=artifact_snapshot,
-        family_schema=family_schema,
-        offer=(
-            {
-                "offer_name": str(getattr(oferta, "nome_oferta", "") or "").strip() or str(familia.nome_exibicao),
-                "description": str(getattr(oferta, "descricao_comercial", "") or "").strip() or None,
-                "template_default_code": str(getattr(oferta, "template_default_code", "") or "").strip() or None,
-            }
-            if oferta is not None
-            else None
-        ),
-        calibration=calibration_payload,
-        material_real_workspace=material_real_workspace,
-        family_methods=family_methods,
-    )
-    variant_library = _build_variant_library_summary(
-        family_key=str(familia.family_key),
-        offer={
-            "variants": variantes,
-            "offer_name": str(getattr(oferta, "nome_oferta", "") or "").strip() or None,
-        }
-        if oferta is not None
-        else None,
-        artifact_snapshot=artifact_snapshot,
-        active_release_count=int(row.get("active_release_count") or 0),
-    )
-    material_real_priority = _build_material_real_priority_summary(row, material_real_workspace)
-    template_refinement_target = _build_template_refinement_target(
-        family_key=str(familia.family_key),
-        display_name=str(row.get("display_name") or familia.family_key),
-        material_real_priority=material_real_priority,
-        variant_library=variant_library,
-        template_default_code=str(row.get("template_default_code") or "").strip() or None,
-        active_release_count=int(row.get("active_release_count") or 0),
-    )
-    return {
-        "family": row,
-        "family_entity": familia,
-        "review_governance": _resumir_governanca_review_policy(
-            getattr(familia, "review_policy_json", None)
-        ),
-        "family_schema": family_schema,
-        "artifact_snapshot": artifact_snapshot,
-        "template_library": {
-            "registry_path": template_library_rollup.get("registry_path"),
-            "registry_templates": template_library_rollup.get("templates", []),
-            "has_full_canonical_artifact_chain": all(
-                bool(artifact_snapshot.get(key)) for key in (
-                    "has_family_schema",
-                    "has_template_seed",
-                    "has_laudo_output_seed",
-                    "has_laudo_output_exemplo",
-                )
-            ),
-            "missing_artifacts": [
-                label
-                for key, label in (
-                    ("has_family_schema", "Estrutura da família"),
-                    ("has_template_seed", "Modelo base"),
-                    ("has_laudo_output_seed", "Documento base"),
-                    ("has_laudo_output_exemplo", "Exemplo do documento"),
-                )
-                if not bool(artifact_snapshot.get(key))
-            ],
-            "template_default_code": row.get("template_default_code"),
-            "template_default_label": _catalogo_modelo_label(
-                str(row.get("template_default_code") or "").strip() or None
-            ),
-        },
-        "material_real_workspace": material_real_workspace,
-        "technical_modes": [
-            {
-                "id": int(item.id),
-                "mode_key": str(item.mode_key),
-                "display_name": str(item.nome_exibicao),
-                "description": str(getattr(item, "descricao", "") or "").strip() or None,
-                "active": bool(item.ativo),
-                "actor_label": _catalogo_actor_label(getattr(item, "criado_por", None)),
-                "updated_at_label": _formatar_data_admin(
-                    _normalizar_datetime_admin(getattr(item, "atualizado_em", None) or getattr(item, "criado_em", None))
-                ),
-            }
-            for item in list(getattr(familia, "modos_tecnicos", None) or [])
-        ],
-        "offer": (
-            {
-                "id": int(oferta.id),
-                "offer_key": str(getattr(oferta, "offer_key", "") or "").strip() or str(familia.family_key),
-                "offer_name": str(getattr(oferta, "nome_oferta", "") or "").strip() or str(familia.nome_exibicao),
-                "package_name": str(getattr(oferta, "pacote_comercial", "") or "").strip() or None,
-                "description": str(getattr(oferta, "descricao_comercial", "") or "").strip() or None,
-                "release_channel": offer_governance["release_channel"],
-                "commercial_bundle": offer_governance["commercial_bundle"],
-                "contract_entitlements": offer_governance["contract_entitlements"],
-                "lifecycle_status": _label_catalogo(
-                    _CATALOGO_LIFECYCLE_STATUS_LABELS,
-                    _offer_lifecycle_resolvido(oferta) or "draft",
-                    "Draft",
-                ),
-                "material_level": _label_catalogo(
-                    _CATALOGO_CALIBRATION_STATUS_LABELS,
-                    _calibracao_status_resolvido(familia, oferta),
-                    "Sem calibração",
-                ),
-                "showcase_enabled": bool(getattr(oferta, "showcase_enabled", False)),
-                "template_default_code": str(getattr(oferta, "template_default_code", "") or "").strip() or None,
-                "template_display_name": _catalogo_modelo_label(
-                    str(getattr(oferta, "template_default_code", "") or "").strip() or None,
-                    fallback="Modelo principal em definição",
-                ),
-                "scope_items": list(getattr(oferta, "escopo_json", None) or []),
-                "exclusion_items": list(getattr(oferta, "exclusoes_json", None) or []),
-                "minimum_inputs": list(getattr(oferta, "insumos_minimos_json", None) or []),
-                "variants": variantes,
-                "actor_label": _catalogo_actor_label(getattr(oferta, "criado_por", None)),
-                "updated_at_label": _formatar_data_admin(
-                    _normalizar_datetime_admin(getattr(oferta, "atualizado_em", None) or getattr(oferta, "criado_em", None))
-                ),
-            }
-            if oferta is not None
-            else None
-        ),
-        "calibration": calibration_payload,
-        "material_real_priority": material_real_priority,
-        "document_preview": document_preview,
-        "variant_library": variant_library,
-        "template_refinement_target": template_refinement_target,
-        "tenant_releases": [
-            _serializar_release_catalogo_familia(
-                item,
-                empresa_lookup=empresa_lookup,
-                oferta=oferta,
-            )
-            for item in releases
-        ],
-        "tenants": [
-            {
-                "id": int(item.id),
-                "label": str(item.nome_fantasia),
-            }
-            for item in empresas
-        ],
-        "available_variant_tokens": available_variant_tokens,
-        "family_methods": family_methods,
-        "available_methods": [
-            {
-                "method_key": str(item.method_key),
-                "display_name": str(item.nome_exibicao),
-                "categoria": str(item.categoria),
-            }
-            for item in listar_metodos_catalogo(db)
-        ],
-        "history": _historico_catalogo_familia(familia, tenant_releases=releases),
-    }
 
 
 def upsert_tenant_family_release(

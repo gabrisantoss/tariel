@@ -2601,3 +2601,31 @@ Atualizado em `2026-04-21`.
 - `chat_index_page.js` perde mais um bloco operacional relevante do workspace
 - `admin/services.py` perde o rollup de governança sem regressão no smoke/admin
 - `make verify` continua verde após o lote
+
+### `PKT-HOTSPOTS-BASELINE-04` — Histórico/contexto do workspace e leitura do catálogo
+
+- `status`: em andamento em `2026-04-21`
+
+### Objetivo
+
+- seguir reduzindo os hotspots restantes com foco em leitura e apresentação, sem mexer em contratos centrais
+
+### Escopo
+
+- entra extração da renderização do histórico e do contexto IA do workspace
+- entra extração da leitura principal do catálogo admin
+- não entra redesign visual do histórico
+- não entra mudança de schema ou bootstrap funcional do catálogo
+
+### Passos
+
+1. extrair render do histórico e contexto fixado/IA para módulo do inspetor
+2. extrair resumo e detalhe de leitura do catálogo para serviço admin dedicado
+3. validar com smoke, subset admin, lint e sintaxe
+4. fechar com `make verify` e registrar o checkpoint
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco grande de render/contexto do workspace
+- `admin/services.py` perde a leitura principal do catálogo sem regressão funcional
+- `make verify` segue verde

@@ -2559,3 +2559,49 @@ Próximo passo imediato:
 
 - continuar drenando o workspace do inspetor por um próximo slice fechado, priorizando contexto IA/fixados ou renderização dos cards de histórico;
 - depois revisar se o admin já comporta a próxima extração em leitura/catalog runtime sem reabrir acoplamento transversal.
+
+## Ciclo 67 — Extração do histórico/contexto do inspetor e leitura do catálogo admin
+
+Status:
+
+- concluído e validado localmente em `2026-04-21`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda retinha a renderização dos cards do histórico, o armazenamento/local storage do contexto fixado e a síntese/contexto IA do workspace;
+- `web/app/domains/admin/services.py` ainda acumulava a leitura principal do catálogo admin, especialmente o resumo do catálogo e a consulta detalhada de família;
+- esses blocos eram de leitura/apresentação e já tinham dependências claras o suficiente para saírem do hotspot.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_history_context.js` com renderização do histórico, contexto IA, contexto fixado e cópia do resumo operacional;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorWorkspaceHistoryContext` via dependências explícitas do workspace;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/catalog_read_services.py` com listagem de métodos do catálogo, resumo do catálogo admin e busca detalhada de família;
+- `web/app/domains/admin/services.py` ficou responsável apenas por injetar modelos/helpers e preservar a API já usada pelo restante do sistema.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_history_context.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/catalog_read_services.py`
+- `web/app/domains/admin/services.py`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_history_context.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/catalog_read_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/catalog_read_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "catalog or governance or platform_settings"`
+- resultado:
+  - `41 passed`
+  - `14 passed, 28 deselected`
+
+Próximo passo imediato:
+
+- continuar esvaziando `chat_index_page.js` pela camada de status/cards auxiliares do workspace e, depois, por ações do rail/sidebar;
+- no admin, avaliar a próxima extração de escrita/leitura de portfolio/catalog runtime para continuar reduzindo o agregado `services.py`.
