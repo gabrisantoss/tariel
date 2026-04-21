@@ -1,0 +1,6301 @@
+// ==========================================
+// TARIEL CONTROL TOWER — CHAT_INDEX_PAGE.JS
+// Página principal do chat.
+// Responsável por:
+// - modal de nova inspeção
+// - barra de sessão ativa
+// - ações rápidas
+// - destaque visual do textarea
+// - banner de resposta da engenharia
+// - SSE de notificações da página
+// ==========================================
+
+(function () {
+    "use strict";
+
+    const InspectorRuntime = window.TarielInspectorRuntime || null;
+    if (typeof InspectorRuntime?.guardOnce === "function") {
+        if (!InspectorRuntime.guardOnce("chat_index_page")) return;
+    } else {
+        if (window.__TARIEL_CHAT_INDEX_PAGE_WIRED__) return;
+        window.__TARIEL_CHAT_INDEX_PAGE_WIRED__ = true;
+    }
+
+    // =========================================================
+    // CONSTANTES
+    // =========================================================
+    const ROTA_SSE_NOTIFICACOES = "/app/api/notificacoes/sse";
+    const TEMPO_BANNER_MS = 8000;
+    const TEMPO_RECONEXAO_SSE_MS = 5000;
+    const BREAKPOINT_LAYOUT_INSPETOR_COMPACTO = 1199;
+    const sharedGlobals =
+        InspectorRuntime?.resolveSharedGlobals?.() || {
+            perf: window.TarielPerf || window.TarielCore?.TarielPerf || null,
+            caseLifecycle: window.TarielCaseLifecycle,
+        };
+    const InspectorStateSnapshots = window.TarielInspectorStateSnapshots || {};
+    const InspectorStateAuthority = window.TarielInspectorStateAuthority || {};
+    const InspectorStateRuntimeSync = window.TarielInspectorStateRuntimeSync || {};
+    const InspectorStateNormalization = window.TarielInspectorStateNormalization || {};
+    const PERF = sharedGlobals.perf;
+    const CaseLifecycle = sharedGlobals.caseLifecycle;
+
+    if (!CaseLifecycle) {
+        return;
+    }
+
+    PERF?.noteModule?.("chat/chat_index_page.js", {
+        readyState: document.readyState,
+    });
+
+    const NOMES_TEMPLATES = {
+        avcb: "Laudo AVCB (Projeto e Conformidade)",
+        cbmgo: "Checklist Bombeiros GO (CMAR / Estrutura)",
+        nr12maquinas: "Laudo de Adequação NR-12",
+        nr13: "Inspeção NR-13 (Caldeiras e Vasos)",
+        rti: "RTI - Instalações Elétricas",
+        pie: "PIE - Prontuário Elétrico",
+        spda: "Inspeção SPDA — NBR 5419",
+        padrao: "Inspeção Geral",
+    };
+
+    const CONFIG_STATUS_MESA = {
+        pronta: {
+            icone: "support_agent",
+            texto: "Mesa pronta",
+        },
+        canal_ativo: {
+            icone: "alternate_email",
+            texto: "Canal da mesa ativo",
+        },
+        aguardando: {
+            icone: "hourglass_top",
+            texto: "Aguardando mesa",
+        },
+        respondeu: {
+            icone: "mark_chat_read",
+            texto: "Mesa respondeu",
+        },
+        pendencia_aberta: {
+            icone: "assignment_late",
+            texto: "Pendência aberta",
+        },
+        offline: {
+            icone: "wifi_off",
+            texto: "Mesa indisponível",
+        },
+    };
+
+    const CONFIG_CONEXAO_MESA_WIDGET = {
+        conectado: "Conectado",
+        reconectando: "Reconectando",
+        offline: "Offline",
+    };
+
+    const EM_PRODUCAO =
+        window.location.hostname !== "localhost" &&
+        window.location.hostname !== "127.0.0.1";
+    const LIMITE_RECONEXAO_SSE_OFFLINE = 3;
+    const MAX_BYTES_ANEXO_MESA = 12 * 1024 * 1024;
+    const CHAVE_FORCE_HOME_LANDING = "tariel_force_home_landing";
+    const CHAVE_RETOMADA_HOME_PENDENTE = "tariel_workspace_retomada_home_pendente";
+    const CHAVE_CONTEXTO_VISUAL_LAUDOS = "tariel_workspace_contexto_visual_laudos";
+    const LIMITE_CONTEXTO_VISUAL_LAUDOS_STORAGE = 50;
+    const MENSAGEM_MESA_EXIGE_INSPECAO =
+        "A conversa com a mesa avaliadora só é permitida após iniciar uma nova inspeção.";
+    const MIME_ANEXOS_MESA_PERMITIDOS = new Set([
+        "image/png",
+        "image/jpeg",
+        "image/jpg",
+        "image/webp",
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]);
+
+    const COMANDOS_SLASH = [
+        {
+            id: "resumir",
+            titulo: "Resumir coleta",
+            descricao: "Gera um resumo técnico curto com fatos confirmados, lacunas e próximos passos.",
+            prompt: "Resuma a coleta atual em tópicos objetivos, destacando fatos confirmados, riscos observados, lacunas de evidência e próximo passo recomendado.",
+            atalho: "/resumir",
+            sugestao: true,
+            icone: "notes",
+        },
+        {
+            id: "pendencias",
+            titulo: "Mapear pendências",
+            descricao: "Lista o que ainda falta para fechar a inspeção com prioridade operacional.",
+            prompt: "Liste as pendências atuais desta inspeção em ordem de prioridade operacional, indicando o que falta coletar, o motivo e o impacto no envio para a mesa.",
+            atalho: "/pendencias",
+            sugestao: true,
+            icone: "assignment_late",
+        },
+        {
+            id: "proxima-pergunta",
+            titulo: "Próxima pergunta",
+            descricao: "Sugere a melhor próxima pergunta técnica para avançar a coleta.",
+            prompt: "Com base no histórico atual, qual é a próxima pergunta técnica mais útil para avançar esta inspeção com qualidade auditável?",
+            atalho: "/proxima-pergunta",
+            sugestao: true,
+            icone: "help",
+        },
+        {
+            id: "plano-acao",
+            titulo: "Plano de ação",
+            descricao: "Organiza um plano de coleta com sequência prática para o inspetor.",
+            prompt: "Monte um plano de ação curto para concluir esta inspeção, com sequência prática de coleta, anexos necessários e pontos que precisam de validação da mesa.",
+            atalho: "/plano-acao",
+            sugestao: false,
+            icone: "checklist",
+        },
+        {
+            id: "nao-conformidades",
+            titulo: "Não conformidades",
+            descricao: "Extrai potenciais não conformidades e classifica por criticidade.",
+            prompt: "A partir do histórico atual, identifique potenciais não conformidades, classifique por criticidade e aponte quais evidências sustentam cada uma.",
+            atalho: "/nao-conformidades",
+            sugestao: true,
+            icone: "warning",
+        },
+        {
+            id: "gerar-conclusao",
+            titulo: "Gerar conclusão",
+            descricao: "Redige uma conclusão preliminar profissional com ressalvas auditáveis.",
+            prompt: "Redija uma conclusão preliminar profissional desta inspeção, separando condições observadas, limitações de evidência, pendências e recomendação para envio à mesa.",
+            atalho: "/gerar-conclusao",
+            sugestao: true,
+            icone: "article",
+        },
+        {
+            id: "mesa",
+            titulo: "Enviar resumo para a mesa",
+            descricao: "Abre o canal da mesa com uma minuta pronta para validação.",
+            prompt: "",
+            atalho: "/mesa",
+            sugestao: true,
+            icone: "support_agent",
+        },
+    ];
+
+    const SUGESTOES_ENTRADA_ASSISTENTE = Object.freeze([
+        {
+            id: "guided-inspection",
+            titulo: "Iniciar inspeção guiada",
+            prioridade: "primary",
+            prompt: "Quero iniciar uma inspeção guiada. Me ajude a estruturar o contexto inicial e o que devo coletar primeiro.",
+        },
+        {
+            id: "structure-context",
+            titulo: "Estruturar contexto",
+            prioridade: "secondary",
+            prompt: "Vou te passar o contexto do equipamento e do cenário. Estruture a sessão técnica e diga o que preciso observar primeiro.",
+        },
+        {
+            id: "technical-question",
+            titulo: "Dúvida técnica",
+            prioridade: "secondary",
+            prompt: "Tenho uma dúvida técnica. Me responda de forma objetiva, auditável e com os critérios que preciso verificar em campo.",
+        },
+    ]);
+
+    const CONTEXTO_WORKSPACE_ASSISTENTE = Object.freeze({
+        title: "Assistente Tariel IA",
+        subtitle: "Conversa inicial • nenhum laudo ativo",
+        statusBadge: "CHAT LIVRE",
+    });
+
+    const COPY_WORKSPACE_STAGE = Object.freeze({
+        assistant: {
+            eyebrow: "Chat livre",
+            headline: "Novo Chat",
+            description:
+                "Descreva o equipamento, o cenário ou a dúvida técnica. A primeira mensagem abre o contexto do laudo.",
+            placeholder: "Descreva o equipamento, o cenário ou a dúvida técnica",
+            contextTitle: "Envie a primeira mensagem",
+            contextStatus: "A IA organiza o laudo enquanto voce descreve o cenario.",
+        },
+        inspection: {
+            eyebrow: "Sessão técnica em andamento",
+            headline: "Registro Técnico",
+            description:
+                "Documente evidências, anexe arquivos e interaja com o assistente técnico.",
+            placeholder: "Descreva a evidência, anexe arquivos ou use / para comandos",
+        },
+        focusedConversation: {
+            eyebrow: "Chat livre",
+            headline: "Conversa com a IA",
+            description:
+                "Continue a conversa normalmente. O fluxo funcional do laudo segue o comportamento atual em segundo plano.",
+            placeholder: "Escreva a continuação da conversa",
+            contextTitle: "Conversa com a IA",
+            contextStatus: "A conversa segue focada no histórico e no composer.",
+        },
+    });
+
+    // =========================================================
+    // ESTADO LOCAL DA PÁGINA
+    // =========================================================
+    const estado = {
+        tipoTemplateAtivo: "padrao",
+        statusMesa: "pronta",
+        laudoAtualId: null,
+        estadoRelatorio: "sem_relatorio",
+        modoInspecaoUI: "workspace",
+        workspaceStage: "assistant",
+        inspectorScreen: "assistant_landing",
+        inspectorBaseScreen: "assistant_landing",
+        threadTab: "conversa",
+        forceHomeLanding: false,
+        homeActionVisible: false,
+        overlayOwner: "",
+        assistantLandingFirstSendPending: false,
+        freeChatConversationActive: false,
+        workspaceVisualContext: { ...CONTEXTO_WORKSPACE_ASSISTENTE },
+        contextoVisualPorLaudo: {},
+        ultimoStatusRelatorioPayload: null,
+        workspaceRailExpanded: true,
+        workspaceRailAccordionState: Object.create(null),
+        workspaceRailViewKey: "",
+        pendenciasItens: [],
+        carregandoPendencias: false,
+        laudoPendenciasAtual: null,
+        qtdPendenciasAbertas: 0,
+        filtroPendencias: "abertas",
+        paginaPendenciasAtual: 1,
+        tamanhoPaginaPendencias: 25,
+        totalPendenciasFiltradas: 0,
+        totalPendenciasExibidas: 0,
+        temMaisPendencias: false,
+        pendenciasAbortController: null,
+        pendenciasRealCount: 0,
+        pendenciasFilteredCount: 0,
+        pendenciasLoading: false,
+        pendenciasEmpty: false,
+        pendenciasSynthetic: false,
+        pendenciasHonestEmpty: false,
+        pendenciasError: false,
+        fonteSSE: null,
+        timerBanner: null,
+        timerReconexaoSSE: null,
+        ultimoElementoFocado: null,
+        iniciandoInspecao: false,
+        finalizandoInspecao: false,
+        mesaWidgetAberto: false,
+        mesaWidgetCarregando: false,
+        mesaWidgetMensagens: [],
+        mesaWidgetCursor: null,
+        mesaWidgetTemMais: false,
+        mesaWidgetAbortController: null,
+        mesaWidgetReferenciaAtiva: null,
+        mesaWidgetAnexoPendente: null,
+        mesaWidgetNaoLidas: 0,
+        mesaWidgetConexao: "conectado",
+        systemEventsBound: false,
+        tentativasReconexaoSSE: 0,
+        timerFecharMesaWidget: null,
+        retomadaHomePendente: null,
+        modalNovaInspecaoPrePrompt: "",
+        entryModePreferenceDefault: "auto_recommended",
+        entryModeRememberLastCaseMode: false,
+        entryModeLastCaseMode: null,
+        entryModePreference: "auto_recommended",
+        entryModeEffective: "chat_first",
+        entryModeReason: "default_product_fallback",
+        termoBuscaSidebar: "",
+        sidebarLaudosTab: "recentes",
+        chatBuscaTermo: "",
+        chatFiltroTimeline: "todos",
+        historyTypeFilter: "todos",
+        chatResultados: 0,
+        chatStatusIA: {
+            status: "pronto",
+            texto: "Assistente pronto",
+        },
+        atualizandoPainelWorkspaceDerivado: false,
+        atualizarPainelWorkspaceDerivadoPendente: false,
+        contextoFixado: [],
+        historicoPrompts: [],
+        indiceHistoricoPrompt: -1,
+        rascunhoHistoricoPrompt: "",
+        slashIndiceAtivo: 0,
+        historyRealCount: 0,
+        historyEmpty: true,
+        historySynthetic: false,
+        historyHonestEmpty: false,
+        historyRenderedItems: [],
+        historyCanonicalItems: [],
+        snapshotEstadoInspector: null,
+        snapshotEstadoInspectorOrigem: {},
+        divergenciasEstadoInspector: {},
+    };
+
+    // Compatibilidade com trechos legados do projeto.
+    window.tipoTemplateAtivo = estado.tipoTemplateAtivo;
+
+    // =========================================================
+    // REFERÊNCIAS DOS ELEMENTOS DA PÁGINA
+    // =========================================================
+    const el = {
+        modal: document.getElementById("modal-nova-inspecao"),
+        overlayHost: document.getElementById("inspetor-overlay-host"),
+        btnAbrirModal: document.getElementById("btn-abrir-modal-novo"),
+        btnFecharModal: document.querySelector("#modal-nova-inspecao .btn-fechar-modal"),
+        btnConfirmarInspecao: document.getElementById("btn-confirmar-inspecao"),
+        selectTemplate: document.getElementById("select-template-inspecao"),
+        selectTemplateCustom: document.getElementById("select-template-custom"),
+        btnSelectTemplateCustom: document.getElementById("btn-select-template-custom"),
+        valorSelectTemplateCustom: document.getElementById("valor-select-template-custom"),
+        painelSelectTemplateCustom: document.getElementById("painel-select-template-custom"),
+        listaSelectTemplateCustom: document.getElementById("lista-select-template-custom"),
+        inputClienteInspecao: document.getElementById("input-cliente-inspecao"),
+        inputUnidadeInspecao: document.getElementById("input-unidade-inspecao"),
+        inputLocalInspecao: document.getElementById("input-local-inspecao"),
+        textareaObjetivoInspecao: document.getElementById("textarea-objetivo-inspecao"),
+        entryModeInputs: Array.from(document.querySelectorAll('input[name="entry-mode-preference"]')),
+        modalEntryModeSummary: document.getElementById("modal-entry-mode-summary"),
+        previewNomeInspecao: document.getElementById("preview-nome-inspecao"),
+        btnEditarNomeInspecao: document.getElementById("btn-editar-nome-inspecao"),
+        inputNomeInspecao: document.getElementById("input-nome-inspecao"),
+        btnCancelarModalInspecao: document.getElementById("btn-cancelar-modal-inspecao"),
+        modalGateQualidade: document.getElementById("modal-gate-qualidade"),
+        btnFecharModalGateQualidade: document.getElementById("btn-fechar-modal-gate-qualidade"),
+        btnEntendiGateQualidade: document.getElementById("btn-entendi-gate-qualidade"),
+        btnPreencherGateQualidade: document.getElementById("btn-gate-preencher-no-chat"),
+        tituloTemplateGateQualidade: document.getElementById("titulo-gate-template"),
+        textoGateQualidadeResumo: document.getElementById("texto-gate-qualidade-resumo"),
+        blocoGateRoteiroTemplate: document.getElementById("bloco-gate-roteiro-template"),
+        tituloGateRoteiroTemplate: document.getElementById("titulo-gate-roteiro-template"),
+        textoGateRoteiroTemplate: document.getElementById("texto-gate-roteiro-template"),
+        listaGateRoteiroTemplate: document.getElementById("lista-gate-roteiro-template"),
+        listaGateFaltantes: document.getElementById("lista-gate-faltantes"),
+        listaGateChecklist: document.getElementById("lista-gate-checklist"),
+        blocoGateOverrideHumano: document.getElementById("bloco-gate-override-humano"),
+        textoGateOverrideHumano: document.getElementById("texto-gate-override-humano"),
+        listaGateOverrideCasos: document.getElementById("lista-gate-override-casos"),
+        textareaGateOverrideJustificativa: document.getElementById("textarea-gate-override-justificativa"),
+        textoGateOverrideResponsabilidade: document.getElementById("texto-gate-override-responsabilidade"),
+        btnGateOverrideContinuar: document.getElementById("btn-gate-override-continuar"),
+
+        telaBoasVindas: document.getElementById("tela-boas-vindas"),
+        painelChat: document.getElementById("painel-chat"),
+        portalScreenRoot: document.querySelector('[data-screen-root="portal"]'),
+        workspaceScreenRoot: document.querySelector('[data-screen-root="workspace"]'),
+        mesaWidgetScreenRoot: document.querySelector('[data-screen-root="mesa-widget"]'),
+        workspaceAssistantViewRoot: document.querySelector('[data-workspace-view-root="assistant_landing"]'),
+        workspaceHistoryViewRoot: document.querySelector('[data-workspace-view-root="inspection_history"]'),
+        workspaceRecordViewRoot: document.querySelector('[data-workspace-view-root="inspection_record"]'),
+        workspaceConversationViewRoot: document.querySelector('[data-workspace-view-root="inspection_conversation"]'),
+        workspaceMesaViewRoot: document.querySelector('[data-workspace-view-root="inspection_mesa"]'),
+        workspaceHistoryRoot: document.querySelector("[data-workspace-history-root]"),
+        workspaceHeader: document.querySelector("[data-workspace-header]"),
+        chatThreadToolbar: document.querySelector(".chat-thread-toolbar"),
+        threadNav: document.querySelector(".thread-nav"),
+        chatDashboardRail: document.querySelector(".chat-dashboard-rail"),
+        workspaceTituloLaudo: document.getElementById("workspace-titulo-laudo"),
+        workspaceSubtituloLaudo: document.getElementById("workspace-subtitulo-laudo"),
+        workspaceStatusBadge: document.getElementById("workspace-status-badge"),
+        workspaceEyebrow: document.getElementById("workspace-eyebrow"),
+        workspaceHeadline: document.getElementById("workspace-headline"),
+        workspaceDescription: document.getElementById("workspace-description"),
+        workspaceEntryModeNote: document.getElementById("workspace-entry-mode-note"),
+        workspaceSummaryState: document.getElementById("workspace-summary-state"),
+        workspaceSummaryEvidencias: document.getElementById("workspace-summary-evidencias"),
+        workspaceSummaryPendencias: document.getElementById("workspace-summary-pendencias"),
+        workspaceSummaryMesa: document.getElementById("workspace-summary-mesa"),
+        workspacePublicVerification: document.getElementById("workspace-public-verification"),
+        workspacePublicVerificationTitle: document.getElementById("workspace-public-verification-title"),
+        workspacePublicVerificationMeta: document.getElementById("workspace-public-verification-meta"),
+        workspacePublicVerificationLink: document.getElementById("workspace-public-verification-link"),
+        btnWorkspaceCopyVerification: document.getElementById("btn-workspace-copy-verification"),
+        workspaceOfficialIssue: document.getElementById("workspace-official-issue"),
+        workspaceOfficialIssueTitle: document.getElementById("workspace-official-issue-title"),
+        workspaceOfficialIssueMeta: document.getElementById("workspace-official-issue-meta"),
+        workspaceOfficialIssueChip: document.getElementById("workspace-official-issue-chip"),
+        workspaceNavCaption: document.getElementById("workspace-nav-caption"),
+        workspaceNavStatus: document.getElementById("workspace-nav-status"),
+        workspaceAssistantLanding: document.getElementById("workspace-assistant-landing"),
+        workspaceAssistantGovernance: document.getElementById("workspace-assistant-governance"),
+        workspaceAssistantGovernanceTitle: document.getElementById("workspace-assistant-governance-title"),
+        workspaceAssistantGovernanceDetail: document.getElementById("workspace-assistant-governance-detail"),
+        btnAssistantLandingOpenInspecaoModal: document.getElementById("btn-assistant-landing-open-inspecao-modal"),
+        btnSidebarOpenInspecaoModal: document.getElementById("btn-sidebar-open-inspecao-modal"),
+        btnWorkspaceOpenInspecaoModal: document.getElementById("btn-workspace-open-inspecao-modal"),
+        painelPendenciasMesa: document.getElementById("painel-pendencias-mesa"),
+        listaPendenciasMesa: document.getElementById("lista-pendencias-mesa"),
+        estadoLoadingPendenciasMesa: document.getElementById("estado-loading-pendencias-mesa"),
+        textoVazioPendenciasMesa: document.getElementById("texto-vazio-pendencias-mesa"),
+        textoVazioPendenciasMesaTexto: document.querySelector("#texto-vazio-pendencias-mesa [data-pendencias-empty-text]"),
+        estadoErroPendenciasMesa: document.getElementById("estado-erro-pendencias-mesa"),
+        estadoErroPendenciasMesaTexto: document.querySelector("#estado-erro-pendencias-mesa [data-pendencias-error-text]"),
+        resumoPendenciasMesa: document.getElementById("resumo-pendencias-mesa"),
+        acoesPendenciasMesa: document.querySelector("#painel-pendencias-mesa .acoes-pendencias"),
+        filtrosPendenciasMesa: document.querySelector("#painel-pendencias-mesa .filtros-pendencias"),
+        btnExportarPendenciasPdf: document.getElementById("btn-exportar-pendencias-pdf"),
+        btnCarregarMaisPendencias: document.getElementById("btn-carregar-mais-pendencias"),
+        botoesFiltroPendencias: Array.from(document.querySelectorAll("[data-filtro-pendencias]")),
+        btnMarcarPendenciasLidas: document.getElementById("btn-marcar-pendencias-lidas"),
+        btnFecharPendenciasMesa: document.getElementById("btn-fechar-pendencias-mesa"),
+        btnFinalizarInspecao: document.getElementById("btn-finalizar-inspecao"),
+        botoesFinalizarInspecao: Array.from(document.querySelectorAll("[data-finalizar-inspecao]")),
+        btnRailFinalizarInspecao: document.getElementById("btn-rail-finalizar-inspecao"),
+        btnWorkspaceToggleRail: document.getElementById("btn-workspace-toggle-rail"),
+        btnWorkspacePreview: document.getElementById("btn-workspace-preview"),
+        rodapeEntrada: document.querySelector(".rodape-entrada"),
+        areaMensagens: document.getElementById("area-mensagens"),
+        rodapeContextoTitulo: document.getElementById("rodape-contexto-titulo"),
+        rodapeContextoStatus: document.getElementById("rodape-contexto-status"),
+        btnIrFimChat: document.getElementById("btn-ir-fim-chat"),
+        btnHomeVerHistorico: document.getElementById("btn-home-ver-historico"),
+        btnHomeToggleHistoricoCompleto: document.getElementById("btn-home-toggle-historico-completo"),
+        secaoHomeRecentes: document.getElementById("secao-home-recentes"),
+        portalGovernanceSummary: document.getElementById("portal-governance-summary"),
+        portalGovernanceSummaryTitle: document.getElementById("portal-governance-summary-title"),
+        portalGovernanceSummaryDetail: document.getElementById("portal-governance-summary-detail"),
+        historicoHomeExtras: Array.from(document.querySelectorAll("[data-home-historico-extra]")),
+        botoesHomeLaudosRecentes: Array.from(document.querySelectorAll("[data-home-laudo-id]")),
+        botoesAbrirChatLivre: Array.from(document.querySelectorAll('[data-action="open-assistant-chat"]')),
+        inputBuscaHistorico: document.getElementById("busca-historico-input"),
+        sidebarHistoricoLista: document.getElementById("lista-historico"),
+        sidebarBuscaVazio: document.getElementById("estado-vazio-historico"),
+        sidebarLaudosTabButtons: Array.from(document.querySelectorAll("[data-sidebar-laudos-tab-trigger]")),
+
+        campoMensagem: document.getElementById("campo-mensagem"),
+        btnEnviar: document.getElementById("btn-enviar"),
+        btnAnexo: document.getElementById("btn-anexo"),
+        btnFotoRapida: document.getElementById("btn-foto-rapida"),
+        composerAttachmentTriggerButtons: Array.from(document.querySelectorAll("[data-composer-attachment-trigger]")),
+        btnToggleHumano: document.getElementById("btn-toggle-humano"),
+        backdropHighlight: document.getElementById("highlight-backdrop"),
+        pilulaEntrada: document.querySelector(".pilula-entrada"),
+
+        bannerEngenharia: document.getElementById("banner-notificacao-engenharia"),
+        textoBannerEngenharia: document.getElementById("texto-previa-notificacao"),
+        btnFecharBanner: document.querySelector(".btn-fechar-banner"),
+
+        botoesAcoesRapidas: Array.from(document.querySelectorAll(".btn-acao-rapida")),
+
+        btnMesaWidgetToggle: document.getElementById("btn-mesa-widget-toggle"),
+        painelMesaWidget: document.getElementById("painel-mesa-widget"),
+        btnFecharMesaWidget: document.getElementById("btn-fechar-mesa-widget"),
+        statusConexaoMesaWidget: document.getElementById("status-conexao-mesa-widget"),
+        textoConexaoMesaWidget: document.getElementById("texto-conexao-mesa-widget"),
+        mesaWidgetResumo: document.getElementById("mesa-widget-resumo"),
+        mesaWidgetResumoTitulo: document.getElementById("mesa-widget-resumo-titulo"),
+        mesaWidgetResumoTexto: document.getElementById("mesa-widget-resumo-texto"),
+        mesaWidgetChipStatus: document.getElementById("mesa-widget-chip-status"),
+        mesaWidgetChipPendencias: document.getElementById("mesa-widget-chip-pendencias"),
+        mesaWidgetChipNaoLidas: document.getElementById("mesa-widget-chip-nao-lidas"),
+        mesaWidgetLista: document.getElementById("mesa-widget-lista"),
+        mesaWidgetPreviewAnexo: document.getElementById("mesa-widget-preview-anexo"),
+        mesaWidgetInput: document.getElementById("mesa-widget-input"),
+        mesaWidgetBtnAnexo: document.getElementById("mesa-widget-btn-anexo"),
+        mesaWidgetBtnFoto: document.getElementById("mesa-widget-btn-foto"),
+        mesaWidgetInputAnexo: document.getElementById("mesa-widget-input-anexo"),
+        mesaWidgetEnviar: document.getElementById("mesa-widget-enviar"),
+        mesaWidgetCarregarMais: document.getElementById("mesa-widget-carregar-mais"),
+        mesaWidgetRefAtiva: document.getElementById("mesa-widget-ref-ativa"),
+        mesaWidgetRefTitulo: document.getElementById("mesa-widget-ref-titulo"),
+        mesaWidgetRefTexto: document.getElementById("mesa-widget-ref-texto"),
+        mesaWidgetRefLimpar: document.getElementById("mesa-widget-ref-limpar"),
+        workspaceAnexosPanel: document.getElementById("workspace-anexos-panel"),
+        workspaceAnexosGrid: document.getElementById("workspace-anexos-grid"),
+        workspaceAnexosEmpty: document.getElementById("workspace-anexos-empty"),
+        workspaceAnexosCount: document.getElementById("workspace-anexos-count"),
+        workspaceHistoryTimeline: document.querySelector("[data-history-timeline]"),
+        workspaceHistoryEmpty: document.querySelector("[data-history-empty]"),
+        botoesWorkspaceHistoryContinue: Array.from(document.querySelectorAll("[data-history-continue]")),
+        workspaceHistorySource: document.getElementById("workspace-history-source"),
+        workspaceHistoryActiveFilter: document.getElementById("workspace-history-active-filter"),
+        workspaceHistoryTotal: document.getElementById("workspace-history-total"),
+        workspaceHistoryGovernance: document.getElementById("workspace-history-governance"),
+        workspaceHistoryGovernanceTitle: document.getElementById("workspace-history-governance-title"),
+        workspaceHistoryGovernanceDetail: document.getElementById("workspace-history-governance-detail"),
+        btnWorkspaceHistoryReissue: document.getElementById("btn-workspace-history-reissue"),
+        workspaceMesaStage: document.getElementById("workspace-mesa-stage"),
+        workspaceMesaWidgetHost: document.getElementById("workspace-mesa-widget-host"),
+        workspaceMesaStageStatus: document.getElementById("workspace-mesa-stage-status"),
+        workspaceMesaStagePendencias: document.getElementById("workspace-mesa-stage-pendencias"),
+        workspaceMesaStageEvidencias: document.getElementById("workspace-mesa-stage-evidencias"),
+        workspaceMesaStageUnread: document.getElementById("workspace-mesa-stage-unread"),
+        workspaceMesaStageSummary: document.getElementById("workspace-mesa-stage-summary"),
+        workspaceMesaStageNextStep: document.getElementById("workspace-mesa-stage-next-step"),
+        workspaceMesaStageTemplate: document.getElementById("workspace-mesa-stage-template"),
+        workspaceMesaStageOperation: document.getElementById("workspace-mesa-stage-operation"),
+        workspaceMesaStageEquipment: document.getElementById("workspace-mesa-stage-equipment"),
+        workspaceMesaStageLastMovement: document.getElementById("workspace-mesa-stage-last-movement"),
+        workspaceProgressCard: document.getElementById("workspace-progress-card"),
+        workspaceProgressPercent: document.getElementById("workspace-progress-percent"),
+        workspaceProgressBar: document.getElementById("workspace-progress-bar"),
+        workspaceProgressEvidencias: document.getElementById("workspace-progress-evidencias"),
+        workspaceProgressPendencias: document.getElementById("workspace-progress-pendencias"),
+        workspaceActivityList: document.getElementById("workspace-activity-list"),
+        chatThreadSearch: document.querySelector("[data-workspace-history-search]"),
+        chatThreadResults: document.getElementById("chat-thread-results"),
+        workspaceConversationEmpty: document.getElementById("workspace-conversation-empty"),
+        workspaceChannelTabButtons: Array.from(document.querySelectorAll("[data-workspace-channel-tab]")),
+        chatFilterButtons: Array.from(document.querySelectorAll("[data-chat-filter]")),
+        historyTypeFilterButtons: Array.from(document.querySelectorAll("[data-history-type-filter]")),
+        workspaceRailThreadTabButtons: Array.from(document.querySelectorAll("[data-rail-thread-tab]")),
+        workspaceRailToggleButtons: Array.from(document.querySelectorAll("[data-rail-toggle]")),
+        btnWorkspacePreviewRail: document.getElementById("btn-workspace-preview-rail"),
+        composerSuggestions: document.getElementById("composer-suggestions"),
+        slashCommandPalette: document.getElementById("slash-command-palette"),
+        workspaceContextTemplate: document.getElementById("workspace-context-template"),
+        workspaceContextEvidencias: document.getElementById("workspace-context-evidencias"),
+        workspaceContextPendencias: document.getElementById("workspace-context-pendencias"),
+        workspaceContextMesa: document.getElementById("workspace-context-mesa"),
+        workspaceContextEquipment: document.getElementById("workspace-context-equipment"),
+        workspaceContextOperation: document.getElementById("workspace-context-operation"),
+        workspaceContextSummary: document.getElementById("workspace-context-summary"),
+        workspacePinnedCard: document.getElementById("workspace-pinned-card"),
+        workspaceContextPinnedCount: document.getElementById("workspace-context-pinned-count"),
+        workspaceContextPinnedList: document.getElementById("workspace-context-pinned-list"),
+        btnWorkspaceContextCopy: document.getElementById("btn-workspace-context-copy"),
+        btnWorkspaceContextClear: document.getElementById("btn-workspace-context-clear"),
+        workspaceMesaCardText: document.getElementById("workspace-mesa-card-text"),
+        workspaceMesaCardStatus: document.getElementById("workspace-mesa-card-status"),
+        workspaceMesaCardUnread: document.getElementById("workspace-mesa-card-unread"),
+    };
+
+    const avisosEstadoInspector = new Set();
+    const divergenciasEstadoInspector = new Map();
+    let sincronizandoInspectorScreen = false;
+    let sincronizacaoInspectorScreenPendente = false;
+    let syncInspectorScreenRaf = 0;
+    const mesaWidgetDockOriginal = el.painelMesaWidget?.parentElement || null;
+
+    // =========================================================
+    // UTILITÁRIOS
+    // =========================================================
+
+    function mostrarToast(mensagem, tipo = "info", duracao = 3000) {
+        if (typeof window.mostrarToast === "function") {
+            window.mostrarToast(mensagem, tipo, duracao);
+        }
+    }
+
+    function debugRuntime(...args) {
+        if (EM_PRODUCAO) return;
+
+        if (typeof window.TarielCore?.debug === "function") {
+            window.TarielCore.debug(...args);
+            return;
+        }
+    }
+
+    function logOnceRuntime(chave, nivel, ...args) {
+        if (typeof window.TarielCore?.logOnce === "function") {
+            window.TarielCore.logOnce(chave, nivel, ...args);
+            return;
+        }
+
+        const key = String(chave || "").trim();
+        if (!key || avisosEstadoInspector.has(key)) return;
+        avisosEstadoInspector.add(key);
+
+        try {
+            (console?.[nivel] ?? console?.log)?.call(console, "[TARIEL][CHAT_INDEX_PAGE]", ...args);
+        } catch (_) {}
+    }
+
+    function emitirEventoTariel(nome, detail = {}) {
+        if (typeof window.TarielInspectorEvents?.emit === "function") {
+            window.TarielInspectorEvents.emit(nome, detail, {
+                target: document,
+                bubbles: true,
+            });
+            return;
+        }
+
+        document.dispatchEvent(new CustomEvent(nome, {
+            detail,
+            bubbles: true,
+        }));
+    }
+
+    function ouvirEventoTariel(nome, handler) {
+        if (typeof window.TarielInspectorEvents?.on === "function") {
+            return window.TarielInspectorEvents.on(nome, handler, {
+                target: document,
+            });
+        }
+
+        document.addEventListener(nome, handler);
+        return () => {
+            document.removeEventListener(nome, handler);
+        };
+    }
+
+    function obterResumoPerfInspector(snapshot = estado.snapshotEstadoInspector || null) {
+        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
+        return {
+            screen: String(
+                payload.inspectorScreen ||
+                document.body?.dataset?.inspectorScreen ||
+                ""
+            ).trim(),
+            baseScreen: String(
+                payload.inspectorBaseScreen ||
+                document.body?.dataset?.inspectorBaseScreen ||
+                ""
+            ).trim(),
+            modoInspecaoUI: String(
+                payload.modoInspecaoUI ||
+                document.body?.dataset?.inspecaoUi ||
+                ""
+            ).trim(),
+            workspaceStage: String(
+                payload.workspaceStage ||
+                document.body?.dataset?.workspaceStage ||
+                ""
+            ).trim(),
+            threadTab: String(
+                payload.threadTab ||
+                document.body?.dataset?.threadTab ||
+                ""
+            ).trim(),
+            laudoAtualId: Number(
+                payload.laudoAtualId ||
+                document.body?.dataset?.laudoAtualId ||
+                0
+            ) || null,
+        };
+    }
+
+    function reportarProntidaoInspector(snapshot = estado.snapshotEstadoInspector || null) {
+        if (!PERF?.enabled) return;
+
+        const resumo = obterResumoPerfInspector(snapshot);
+        const portalVisivel = !!(
+            el.portalScreenRoot &&
+            !el.portalScreenRoot.hidden &&
+            el.portalScreenRoot.getClientRects().length > 0
+        );
+        const workspaceVisivel = !!(
+            el.workspaceScreenRoot &&
+            !el.workspaceScreenRoot.hidden &&
+            el.workspaceScreenRoot.getClientRects().length > 0
+        );
+        const composerUtilizavel = !!(
+            el.campoMensagem &&
+            !el.campoMensagem.disabled &&
+            el.campoMensagem.getClientRects().length > 0
+        );
+
+        if (portalVisivel) {
+            PERF.markOnce("inspetor.portal.usable", resumo);
+        }
+        if (workspaceVisivel) {
+            PERF.markOnce("inspetor.workspace.usable", resumo);
+        }
+        if (composerUtilizavel) {
+            PERF.markOnce("inspetor.composer.usable", resumo);
+        }
+    }
+
+    function normalizarTipoTemplate(tipo) {
+        const valor = String(tipo || "padrao").trim().toLowerCase();
+
+        if (valor === "nr12" || valor === "nr12_maquinas") return "nr12maquinas";
+        if (valor === "nr13_caldeira") return "nr13";
+        if (valor === "nr10_rti") return "rti";
+        return valor || "padrao";
+    }
+
+    function normalizarContextoVisualSeguro(contexto = null) {
+        if (!contexto || typeof contexto !== "object") return null;
+
+        const title = String(contexto.title || "").trim();
+        const subtitle = String(contexto.subtitle || "").trim();
+        const statusBadge = String(contexto.statusBadge || "").trim();
+
+        if (!title && !subtitle && !statusBadge) return null;
+
+        return {
+            title,
+            subtitle,
+            statusBadge,
+        };
+    }
+
+    const normalizarCaseLifecycleStatusSeguro = (valor) =>
+        CaseLifecycle.normalizarCaseLifecycleStatus(valor);
+
+    function obterBadgeLifecycleCase(valor) {
+        const status = normalizarCaseLifecycleStatusSeguro(valor);
+        if (status === "analise_livre") return "ANÁLISE LIVRE";
+        if (status === "pre_laudo") return "PRÉ-LAUDO";
+        if (status === "laudo_em_coleta") return "EM COLETA";
+        if (status === "aguardando_mesa") return "AGUARDANDO MESA";
+        if (status === "em_revisao_mesa") return "MESA EM REVISÃO";
+        if (status === "devolvido_para_correcao") return "CORREÇÃO";
+        if (status === "aprovado") return "APROVADO";
+        if (status === "emitido") return "EMITIDO";
+        return "";
+    }
+
+    const normalizarActiveOwnerRoleSeguro = (valor) =>
+        CaseLifecycle.normalizarActiveOwnerRole(valor);
+    const normalizarSurfaceActionSeguro = (valor) =>
+        CaseLifecycle.normalizarSurfaceAction(valor);
+    const normalizarAllowedSurfaceActionsSeguro = (valores = []) =>
+        CaseLifecycle.normalizarAllowedSurfaceActions(valores);
+    const normalizarAllowedLifecycleTransitionsSeguro = (valores = []) =>
+        CaseLifecycle.normalizarAllowedLifecycleTransitions(valores);
+
+    function workspaceAllowedSurfaceActions(snapshot = null) {
+        const valores = Array.isArray(snapshot?.allowed_surface_actions)
+            ? snapshot.allowed_surface_actions
+            : Array.isArray(snapshot?.laudo_card?.allowed_surface_actions)
+                ? snapshot.laudo_card.allowed_surface_actions
+                : [];
+        return normalizarAllowedSurfaceActionsSeguro(valores);
+    }
+
+    function workspaceAllowedLifecycleTransitions(snapshot = null) {
+        const valores = Array.isArray(snapshot?.allowed_lifecycle_transitions)
+            ? snapshot.allowed_lifecycle_transitions
+            : Array.isArray(snapshot?.laudo_card?.allowed_lifecycle_transitions)
+                ? snapshot.laudo_card.allowed_lifecycle_transitions
+                : [];
+        return normalizarAllowedLifecycleTransitionsSeguro(valores);
+    }
+
+    function workspaceTemContratoLifecycle(snapshot = null) {
+        const nextStatuses = Array.isArray(snapshot?.allowed_next_lifecycle_statuses)
+            ? snapshot.allowed_next_lifecycle_statuses
+            : Array.isArray(snapshot?.laudo_card?.allowed_next_lifecycle_statuses)
+                ? snapshot.laudo_card.allowed_next_lifecycle_statuses
+                : [];
+
+        return (
+            workspaceAllowedSurfaceActions(snapshot).length > 0 ||
+            workspaceAllowedLifecycleTransitions(snapshot).length > 0 ||
+            nextStatuses.length > 0
+        );
+    }
+
+    function workspaceHasSurfaceAction(snapshot = null, actionKey = "") {
+        const action = normalizarSurfaceActionSeguro(actionKey);
+        return !!action && workspaceAllowedSurfaceActions(snapshot).includes(action);
+    }
+
+    function normalizarPublicVerificationSeguro(payload = null) {
+        if (!payload || typeof payload !== "object") return null;
+
+        const verificationUrl = String(
+            payload.verification_url || payload.verificationUrl || ""
+        ).trim();
+        const hashShort = String(
+            payload.hash_short || payload.hashShort || payload.codigo_hash || ""
+        ).trim();
+        const statusVisualLabel = String(
+            payload.status_visual_label || payload.statusVisualLabel || ""
+        ).trim();
+        const statusRevisao = String(
+            payload.status_revisao || payload.statusRevisao || ""
+        ).trim();
+        const caseLifecycleStatus = String(
+            payload.case_lifecycle_status || payload.caseLifecycleStatus || ""
+        ).trim();
+        const activeOwnerRole = String(
+            payload.active_owner_role || payload.activeOwnerRole || ""
+        ).trim();
+        const statusConformidade = String(
+            payload.status_conformidade || payload.statusConformidade || ""
+        ).trim();
+        const documentOutcome = String(
+            payload.document_outcome || payload.documentOutcome || ""
+        ).trim();
+
+        if (!verificationUrl && !hashShort) return null;
+
+        return {
+            verificationUrl,
+            hashShort,
+            statusVisualLabel,
+            statusRevisao,
+            caseLifecycleStatus,
+            activeOwnerRole,
+            statusConformidade,
+            documentOutcome,
+        };
+    }
+
+    function normalizarEmissaoOficialSeguro(payload = null) {
+        if (!payload || typeof payload !== "object") return null;
+
+        const currentIssue = payload.current_issue && typeof payload.current_issue === "object"
+            ? { ...payload.current_issue }
+            : null;
+        const issueStatus = String(payload.issue_status || "").trim();
+        const issueStatusLabel = String(payload.issue_status_label || "").trim();
+
+        if (!issueStatus && !issueStatusLabel && !currentIssue) return null;
+
+        return {
+            issueStatus,
+            issueStatusLabel,
+            issueActionLabel: String(payload.issue_action_label || "").trim(),
+            blockerCount: Number(payload.blocker_count || 0) || 0,
+            eligibleSignatoryCount: Number(payload.eligible_signatory_count || 0) || 0,
+            readyForIssue: !!payload.ready_for_issue,
+            reissueRecommended: !!payload.reissue_recommended,
+            alreadyIssued: !!payload.already_issued,
+            currentIssue,
+            blockers: Array.isArray(payload.blockers) ? payload.blockers : [],
+        };
+    }
+
+    function clonarPayloadStatusRelatorioWorkspace(payload = null) {
+        if (!payload || typeof payload !== "object") return null;
+
+        return {
+            ...payload,
+            allowed_next_lifecycle_statuses: Array.isArray(payload?.allowed_next_lifecycle_statuses)
+                ? [...payload.allowed_next_lifecycle_statuses]
+                : [],
+            allowed_lifecycle_transitions: Array.isArray(payload?.allowed_lifecycle_transitions)
+                ? payload.allowed_lifecycle_transitions.map((item) =>
+                    item && typeof item === "object" ? { ...item } : item
+                )
+                : [],
+            allowed_surface_actions: Array.isArray(payload?.allowed_surface_actions)
+                ? [...payload.allowed_surface_actions]
+                : [],
+            public_verification:
+                payload?.public_verification && typeof payload.public_verification === "object"
+                    ? { ...payload.public_verification }
+                    : payload?.public_verification ?? null,
+            emissao_oficial:
+                payload?.emissao_oficial && typeof payload.emissao_oficial === "object"
+                    ? { ...payload.emissao_oficial }
+                    : payload?.emissao_oficial ?? null,
+            laudo_card:
+                payload?.laudo_card && typeof payload.laudo_card === "object"
+                    ? {
+                        ...payload.laudo_card,
+                        allowed_next_lifecycle_statuses: Array.isArray(
+                            payload?.laudo_card?.allowed_next_lifecycle_statuses
+                        )
+                            ? [...payload.laudo_card.allowed_next_lifecycle_statuses]
+                            : [],
+                        allowed_lifecycle_transitions: Array.isArray(
+                            payload?.laudo_card?.allowed_lifecycle_transitions
+                        )
+                            ? payload.laudo_card.allowed_lifecycle_transitions.map((item) =>
+                                item && typeof item === "object" ? { ...item } : item
+                            )
+                            : [],
+                        allowed_surface_actions: Array.isArray(
+                            payload?.laudo_card?.allowed_surface_actions
+                        )
+                            ? [...payload.laudo_card.allowed_surface_actions]
+                            : [],
+                    }
+                    : payload?.laudo_card ?? null,
+        };
+    }
+
+    function registrarUltimoPayloadStatusRelatorioWorkspace(payload = null) {
+        estado.ultimoStatusRelatorioPayload = clonarPayloadStatusRelatorioWorkspace(payload);
+        return estado.ultimoStatusRelatorioPayload;
+    }
+
+    function obterPayloadStatusRelatorioWorkspaceAtual() {
+        const snapshot = clonarPayloadStatusRelatorioWorkspace(
+            window.TarielAPI?.obterSnapshotStatusRelatorioAtual?.() || null
+        );
+        const fallback = clonarPayloadStatusRelatorioWorkspace(estado.ultimoStatusRelatorioPayload);
+        const mergedLaudoCard = (
+            snapshot?.laudo_card && typeof snapshot.laudo_card === "object"
+        ) || (
+            fallback?.laudo_card && typeof fallback.laudo_card === "object"
+        )
+            ? {
+                ...(fallback?.laudo_card && typeof fallback.laudo_card === "object"
+                    ? fallback.laudo_card
+                    : {}),
+                ...(snapshot?.laudo_card && typeof snapshot.laudo_card === "object"
+                    ? snapshot.laudo_card
+                    : {}),
+            }
+            : (snapshot?.laudo_card ?? fallback?.laudo_card ?? null);
+
+        if (!snapshot && !fallback) {
+            return {};
+        }
+
+        const allowedNextLifecycleStatuses = (
+            Array.isArray(snapshot?.allowed_next_lifecycle_statuses)
+                ? snapshot.allowed_next_lifecycle_statuses
+                : Array.isArray(snapshot?.laudo_card?.allowed_next_lifecycle_statuses)
+                    ? snapshot.laudo_card.allowed_next_lifecycle_statuses
+                    : Array.isArray(fallback?.allowed_next_lifecycle_statuses)
+                        ? fallback.allowed_next_lifecycle_statuses
+                        : Array.isArray(fallback?.laudo_card?.allowed_next_lifecycle_statuses)
+                            ? fallback.laudo_card.allowed_next_lifecycle_statuses
+                            : []
+        )
+            .map((item) => normalizarCaseLifecycleStatusSeguro(item))
+            .filter(Boolean);
+        const allowedLifecycleTransitions = normalizarAllowedLifecycleTransitionsSeguro(
+            Array.isArray(snapshot?.allowed_lifecycle_transitions)
+                ? snapshot.allowed_lifecycle_transitions
+                : Array.isArray(snapshot?.laudo_card?.allowed_lifecycle_transitions)
+                    ? snapshot.laudo_card.allowed_lifecycle_transitions
+                    : Array.isArray(fallback?.allowed_lifecycle_transitions)
+                        ? fallback.allowed_lifecycle_transitions
+                        : Array.isArray(fallback?.laudo_card?.allowed_lifecycle_transitions)
+                            ? fallback.laudo_card.allowed_lifecycle_transitions
+                            : []
+        );
+        const allowedSurfaceActions = normalizarAllowedSurfaceActionsSeguro(
+            Array.isArray(snapshot?.allowed_surface_actions)
+                ? snapshot.allowed_surface_actions
+                : Array.isArray(snapshot?.laudo_card?.allowed_surface_actions)
+                    ? snapshot.laudo_card.allowed_surface_actions
+                    : Array.isArray(fallback?.allowed_surface_actions)
+                        ? fallback.allowed_surface_actions
+                        : Array.isArray(fallback?.laudo_card?.allowed_surface_actions)
+                            ? fallback.laudo_card.allowed_surface_actions
+                            : []
+        );
+        const caseLifecycleStatus = normalizarCaseLifecycleStatusSeguro(
+            snapshot?.case_lifecycle_status ||
+            snapshot?.laudo_card?.case_lifecycle_status ||
+            fallback?.case_lifecycle_status ||
+            fallback?.laudo_card?.case_lifecycle_status ||
+            ""
+        );
+        const caseWorkflowMode = String(
+            snapshot?.case_workflow_mode ||
+            snapshot?.laudo_card?.case_workflow_mode ||
+            fallback?.case_workflow_mode ||
+            fallback?.laudo_card?.case_workflow_mode ||
+            ""
+        ).trim().toLowerCase();
+        const activeOwnerRole = normalizarActiveOwnerRoleSeguro(
+            snapshot?.active_owner_role ||
+            snapshot?.laudo_card?.active_owner_role ||
+            fallback?.active_owner_role ||
+            fallback?.laudo_card?.active_owner_role ||
+            ""
+        );
+
+        return {
+            ...(fallback || {}),
+            ...(snapshot || {}),
+            public_verification:
+                snapshot?.public_verification ??
+                fallback?.public_verification ??
+                null,
+            emissao_oficial:
+                snapshot?.emissao_oficial ??
+                fallback?.emissao_oficial ??
+                null,
+            laudo_card: mergedLaudoCard
+                ? {
+                    ...mergedLaudoCard,
+                    case_lifecycle_status: caseLifecycleStatus,
+                    case_workflow_mode: caseWorkflowMode,
+                    active_owner_role: activeOwnerRole,
+                    allowed_next_lifecycle_statuses: allowedNextLifecycleStatuses,
+                    allowed_lifecycle_transitions: allowedLifecycleTransitions,
+                    allowed_surface_actions: allowedSurfaceActions,
+                }
+                : null,
+            case_lifecycle_status: caseLifecycleStatus,
+            case_workflow_mode: caseWorkflowMode,
+            active_owner_role: activeOwnerRole,
+            allowed_next_lifecycle_statuses: allowedNextLifecycleStatuses,
+            allowed_lifecycle_transitions: allowedLifecycleTransitions,
+            allowed_surface_actions: allowedSurfaceActions,
+        };
+    }
+
+    function normalizarLaudoAtualId(valor) {
+        return InspectorStateNormalization.normalizarLaudoAtualId(valor);
+    }
+
+    function normalizarModoInspecaoUI(valor) {
+        return InspectorStateNormalization.normalizarModoInspecaoUI(valor);
+    }
+
+    function normalizarWorkspaceStage(valor) {
+        return InspectorStateNormalization.normalizarWorkspaceStage(valor);
+    }
+
+    function normalizarThreadTab(valor) {
+        return InspectorStateNormalization.normalizarThreadTab(valor);
+    }
+
+    function normalizarEntryModePreference(valor, fallback = "auto_recommended") {
+        return InspectorStateNormalization.normalizarEntryModePreference(valor, fallback);
+    }
+
+    function normalizarEntryModeEffective(valor, fallback = "chat_first") {
+        return InspectorStateNormalization.normalizarEntryModeEffective(valor, fallback);
+    }
+
+    function normalizarEntryModeEffectiveOpcional(valor) {
+        return InspectorStateNormalization.normalizarEntryModeEffectiveOpcional(valor);
+    }
+
+    function normalizarEntryModeReason(valor, fallback = "default_product_fallback") {
+        return InspectorStateNormalization.normalizarEntryModeReason(valor, fallback);
+    }
+
+    function normalizarOverlayOwner(valor) {
+        return InspectorStateNormalization.normalizarOverlayOwner(valor);
+    }
+
+    function normalizarBooleanoEstado(valor, fallback = false) {
+        return InspectorStateNormalization.normalizarBooleanoEstado(valor, fallback);
+    }
+
+    function atualizarWorkspaceEntryModeNote() {
+        return ctx.shared.atualizarWorkspaceEntryModeNote?.();
+    }
+
+    function atualizarEstadoModoEntrada(
+        payload = {},
+        { reset = false, atualizarPadrao = false } = {}
+    ) {
+        return runtimeAtualizarEstadoModoEntrada?.(payload, {
+            reset,
+            atualizarPadrao,
+        }) || {
+            preference: estado.entryModePreference,
+            effective: estado.entryModeEffective,
+            reason: estado.entryModeReason,
+        };
+    }
+
+    function modoEntradaEvidenceFirstAtivo() {
+        return !!ctx.shared.modoEntradaEvidenceFirstAtivo?.();
+    }
+
+    function resolverThreadTabInicialPorModoEntrada(payload = {}, fallback = "historico") {
+        return ctx.shared.resolverThreadTabInicialPorModoEntrada?.(payload, fallback)
+            || normalizarThreadTab(fallback);
+    }
+
+    function normalizarRetomadaHomePendenteSeguro(payload = null) {
+        return ctx.shared.normalizarRetomadaHomePendenteSeguro?.(payload) || null;
+    }
+
+    function retomadaHomePendenteEhValida(payload = null) {
+        return !!ctx.shared.retomadaHomePendenteEhValida?.(payload);
+    }
+
+    function sanitizarMapaContextoVisualLaudos(payload = null) {
+        return ctx.shared.sanitizarMapaContextoVisualLaudos?.(payload) || {};
+    }
+
+    function persistirContextoVisualLaudosStorage(payload = null) {
+        return ctx.shared.persistirContextoVisualLaudosStorage?.(payload) || {};
+    }
+
+    function lerContextoVisualLaudosStorage() {
+        return ctx.shared.lerContextoVisualLaudosStorage?.() || {};
+    }
+
+    function registrarContextoVisualLaudo(laudoId, contextoVisual = null) {
+        return ctx.actions.registrarContextoVisualLaudo?.(laudoId, contextoVisual) || null;
+    }
+
+    function obterContextoVisualLaudoRegistrado(laudoId) {
+        return ctx.actions.obterContextoVisualLaudoRegistrado?.(laudoId) || null;
+    }
+
+    function lerRetomadaHomePendenteStorage() {
+        return ctx.shared.lerRetomadaHomePendenteStorage?.() || null;
+    }
+
+    function lerFlagForcaHomeStorage() {
+        return !!ctx.shared.lerFlagForcaHomeStorage?.();
+    }
+
+    estado.contextoVisualPorLaudo = {};
+
+    function paginaSolicitaHomeLandingViaURL() {
+        try {
+            const url = new URL(window.location.href);
+            return url.searchParams.get("home") === "1" && !url.searchParams.get("laudo");
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function obterLaudoIdDaURLInspector() {
+        try {
+            const valor = new URL(window.location.href).searchParams.get("laudo");
+            return normalizarLaudoAtualId(valor);
+        } catch (_) {
+            return null;
+        }
+    }
+
+    function obterThreadTabDaURLInspector() {
+        try {
+            const valor = new URL(window.location.href).searchParams.get("aba");
+            return valor ? normalizarThreadTab(valor) : undefined;
+        } catch (_) {
+            return undefined;
+        }
+    }
+
+    function obterSnapshotCompatCoreInspector() {
+        return InspectorStateSnapshots.obterSnapshotCompatCoreInspector({
+            normalizarLaudoAtualId,
+            normalizarEstadoRelatorio,
+        });
+    }
+
+    function obterSnapshotCompatApiInspector() {
+        return InspectorStateSnapshots.obterSnapshotCompatApiInspector({
+            normalizarLaudoAtualId,
+            normalizarEstadoRelatorio,
+        });
+    }
+
+    function obterSnapshotDatasetInspector() {
+        return InspectorStateSnapshots.obterSnapshotDatasetInspector({
+            body: document.body,
+            painelChat: el.painelChat,
+            normalizarLaudoAtualId,
+            normalizarEstadoRelatorio,
+            normalizarModoInspecaoUI,
+            normalizarWorkspaceStage,
+            normalizarThreadTab,
+            normalizarBooleanoEstado,
+            normalizarOverlayOwner,
+        });
+    }
+
+    function obterSnapshotSSRInspector() {
+        return InspectorStateSnapshots.obterSnapshotSSRInspector({
+            painelChat: el.painelChat,
+            normalizarLaudoAtualId,
+            normalizarEstadoRelatorio,
+            normalizarModoInspecaoUI,
+            normalizarWorkspaceStage,
+        });
+    }
+
+    function obterSnapshotStorageInspector() {
+        return InspectorStateSnapshots.obterSnapshotStorageInspector({
+            normalizarLaudoAtualId,
+            obterLaudoIdDaURLInspector,
+            obterThreadTabDaURLInspector,
+            lerFlagForcaHomeStorage,
+            lerRetomadaHomePendenteStorage,
+            paginaSolicitaHomeLandingViaURL,
+        });
+    }
+
+    function obterSnapshotMemoriaInspector() {
+        return InspectorStateSnapshots.obterSnapshotMemoriaInspector({
+            snapshotEstadoInspector: estado.snapshotEstadoInspector,
+            estadoAtual: estado,
+            normalizarLaudoAtualId,
+            normalizarEstadoRelatorio,
+            normalizarModoInspecaoUI,
+            normalizarWorkspaceStage,
+            normalizarThreadTab,
+            normalizarBooleanoEstado,
+            normalizarOverlayOwner,
+            retomadaHomePendenteEhValida,
+            normalizarRetomadaHomePendenteSeguro,
+        });
+    }
+
+    function obterSnapshotBootstrapInspector() {
+        return InspectorStateSnapshots.obterSnapshotBootstrapInspector({
+            obterSnapshotSSRInspector,
+            obterSnapshotDatasetInspector,
+            obterSnapshotStorageInspector,
+            normalizarLaudoAtualId,
+            normalizarEstadoRelatorio,
+            normalizarModoInspecaoUI,
+            normalizarWorkspaceStage,
+            normalizarThreadTab,
+            retomadaHomePendenteEhValida,
+            normalizarRetomadaHomePendenteSeguro,
+        });
+    }
+
+    function escolherCampoEstadoInspector(candidatos = [], { fallback = null, aceitarNulo = false } = {}) {
+        return InspectorStateSnapshots.escolherCampoEstadoInspector(
+            candidatos,
+            { fallback, aceitarNulo }
+        );
+    }
+
+    function registrarDivergenciaEstadoInspector(campo, mapaFontes = {}, valorEscolhido) {
+        const entradas = Object.entries(mapaFontes)
+            .map(([origem, valor]) => [origem, valor])
+            .filter(([, valor]) => valor !== undefined && valor !== null && valor !== "");
+
+        const valoresDistintos = [...new Set(entradas.map(([, valor]) => JSON.stringify(valor)))];
+        const divergente = valoresDistintos.length > 1;
+
+        if (!divergente) {
+            divergenciasEstadoInspector.delete(campo);
+            return false;
+        }
+
+        if (!EM_PRODUCAO) {
+            const chaveAviso = `${campo}:${valoresDistintos.join("|")}`;
+            const agora = Date.now();
+            const anterior = divergenciasEstadoInspector.get(campo);
+
+            if (!anterior || anterior.key !== chaveAviso) {
+                divergenciasEstadoInspector.set(campo, {
+                    key: chaveAviso,
+                    count: 1,
+                    firstAt: agora,
+                    warned: false,
+                });
+                debugRuntime(`[INSPECTOR_STATE] Divergência transitória detectada em ${campo}.`, {
+                    escolhido: valorEscolhido,
+                    fontes: mapaFontes,
+                });
+                return true;
+            }
+
+            anterior.count += 1;
+
+            if (!anterior.warned && (anterior.count >= 3 || (agora - anterior.firstAt) >= 1200)) {
+                anterior.warned = true;
+                logOnceRuntime(`inspector-state:${chaveAviso}`, "warn", `[INSPECTOR_STATE] Divergência persistente em ${campo}.`, {
+                    escolhido: valorEscolhido,
+                    fontes: mapaFontes,
+                    ocorrencias: anterior.count,
+                    persistenciaMs: agora - anterior.firstAt,
+                });
+            }
+        }
+
+        return divergente;
+    }
+
+    function resolverInspectorBaseScreenPorSnapshot(snapshot = {}) {
+        return InspectorStateSnapshots.resolverInspectorBaseScreenPorSnapshot(snapshot);
+    }
+
+    function resolverEstadoAutoritativoInspector(overrides = {}) {
+        return InspectorStateAuthority.resolverEstadoAutoritativoInspector({
+            overrides,
+            obterSnapshotMemoriaInspector,
+            obterSnapshotCompatCoreInspector,
+            obterSnapshotCompatApiInspector,
+            obterSnapshotDatasetInspector,
+            obterSnapshotSSRInspector,
+            obterSnapshotStorageInspector,
+            obterSnapshotBootstrapInspector,
+            escolherCampoEstadoInspector,
+            normalizarLaudoAtualId,
+            normalizarEstadoRelatorio,
+            normalizarModoInspecaoUI,
+            normalizarWorkspaceStage,
+            normalizarThreadTab,
+            normalizarOverlayOwner,
+            normalizarBooleanoEstado,
+            normalizarRetomadaHomePendenteSeguro,
+            retomadaHomePendenteEhValida,
+            estadoRelatorioPossuiContexto,
+            resolverInspectorBaseScreenPorSnapshot,
+            registrarDivergenciaEstadoInspector,
+            paginaSolicitaHomeLandingViaURL,
+            modalNovaInspecaoEstaAberta,
+        });
+    }
+
+    function espelharEstadoInspectorCompat(snapshot = {}) {
+        return InspectorStateRuntimeSync.espelharEstadoInspectorCompat(snapshot);
+    }
+
+    function espelharEstadoInspectorNoDataset(snapshot = {}) {
+        return InspectorStateRuntimeSync.espelharEstadoInspectorNoDataset({
+            snapshot,
+            body: document.body,
+            painelChat: el.painelChat,
+            overlayHost: el.overlayHost,
+            sincronizarConversationVariantNoDom,
+        });
+    }
+
+    function espelharEstadoInspectorNoStorage(snapshot = {}, opts = {}) {
+        return InspectorStateRuntimeSync.espelharEstadoInspectorNoStorage({
+            snapshot,
+            opts,
+            contextoVisualPorLaudo: estado.contextoVisualPorLaudo,
+            persistirContextoVisualLaudosStorage,
+            chaveForceHomeLanding: CHAVE_FORCE_HOME_LANDING,
+            chaveRetomadaHomePendente: CHAVE_RETOMADA_HOME_PENDENTE,
+        });
+    }
+
+    function emitirEstadoInspectorSincronizado(snapshot = {}) {
+        return InspectorStateRuntimeSync.emitirEstadoInspectorSincronizado({
+            snapshot,
+            emitirEventoTariel,
+        });
+    }
+
+    function aplicarSnapshotEstadoInspector(snapshot = {}, opts = {}) {
+        return InspectorStateRuntimeSync.aplicarSnapshotEstadoInspector({
+            snapshot,
+            opts,
+            estado,
+            setInspectorStateGlobal: (stateSnapshot) => {
+                if (window.TarielInspectorState && typeof window.TarielInspectorState === "object") {
+                    window.TarielInspectorState.state = stateSnapshot;
+                }
+            },
+            espelharEstadoInspectorNoDataset,
+            espelharEstadoInspectorCompat,
+            espelharEstadoInspectorNoStorage,
+            sincronizandoInspectorScreen,
+            syncInspectorScreenRaf,
+            cancelAnimationFrameFn: window.cancelAnimationFrame.bind(window),
+            requestAnimationFrameFn: window.requestAnimationFrame.bind(window),
+            sincronizarInspectorScreen,
+            emitirEstadoInspectorSincronizado,
+            atualizarSyncInspectorScreenRaf: (valor) => {
+                syncInspectorScreenRaf = valor;
+            },
+        });
+    }
+
+    function sincronizarEstadoInspector(overrides = {}, opts = {}) {
+        const snapshot = resolverEstadoAutoritativoInspector(overrides);
+        return aplicarSnapshotEstadoInspector(snapshot, opts);
+    }
+
+    function obterSnapshotEstadoInspectorAtual() {
+        return InspectorStateRuntimeSync.obterSnapshotEstadoInspectorAtual({
+            snapshotEstadoInspector: estado.snapshotEstadoInspector,
+            resolverEstadoAutoritativoInspector,
+        });
+    }
+
+    window.TarielInspectorState = Object.assign(
+        window.TarielInspectorState || {},
+        {
+            resolverEstadoAutoritativoInspector,
+            sincronizarEstadoInspector,
+            obterSnapshotEstadoInspectorAtual,
+            atualizarThreadWorkspace,
+            state: estado.snapshotEstadoInspector ? { ...estado.snapshotEstadoInspector } : null,
+        }
+    );
+
+    function definirRetomadaHomePendente(payload = null) {
+        const snapshot = sincronizarEstadoInspector({
+            retomadaHomePendente: payload ? normalizarRetomadaHomePendenteSeguro(payload) : null,
+        });
+
+        return snapshot.retomadaHomePendente;
+    }
+
+    function obterRetomadaHomePendente() {
+        const snapshot = resolverEstadoAutoritativoInspector();
+        return snapshot.retomadaHomePendente;
+    }
+
+    function normalizarEstadoRelatorio(valor) {
+        const estadoBruto = String(valor || "").trim().toLowerCase();
+
+        if (estadoBruto === "relatorioativo" || estadoBruto === "relatorio_ativo") {
+            return "relatorio_ativo";
+        }
+
+        if (estadoBruto === "semrelatorio" || estadoBruto === "sem_relatorio") {
+            return "sem_relatorio";
+        }
+
+        if (estadoBruto === "aguardando" || estadoBruto === "aguardando_avaliacao") {
+            return "aguardando";
+        }
+
+        if (estadoBruto === "ajustes" || estadoBruto === "aprovado") {
+            return estadoBruto;
+        }
+
+        return estadoBruto || "sem_relatorio";
+    }
+
+    function estadoRelatorioPossuiContexto(valor) {
+        return normalizarEstadoRelatorio(valor) !== "sem_relatorio";
+    }
+
+    function obterContextoVisualAssistente() {
+        return { ...CONTEXTO_WORKSPACE_ASSISTENTE };
+    }
+
+    function landingNovoChatAtivo(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
+        const baseScreen = payload.inspectorBaseScreen || resolverInspectorBaseScreenPorSnapshot(payload);
+
+        return normalizarModoInspecaoUI(payload.modoInspecaoUI) === "workspace"
+            && baseScreen === "assistant_landing";
+    }
+
+    function conversaNovoChatFocadaAtiva(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        if (!normalizarBooleanoEstado(snapshot?.freeChatConversationActive, false)) {
+            return false;
+        }
+
+        return !obterBaseRealConversaNovoChat(snapshot).pronta;
+    }
+
+    function obterTotalMensagensReaisWorkspace(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
+        const totalHistorico = Math.max(
+            0,
+            Number(
+                payload.historyRealCount ??
+                estado.historyRealCount ??
+                document.body?.dataset?.historyRealCount ??
+                0
+            ) || 0
+        );
+
+        return Math.max(totalHistorico, coletarLinhasWorkspace().length);
+    }
+
+    function conversaWorkspaceModoChatAtivo(
+        screen = estado.inspectorScreen || resolveInspectorScreen(),
+        snapshot = obterSnapshotEstadoInspectorAtual()
+    ) {
+        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
+        const screenAtual = screen || payload.inspectorScreen || payload.inspectorBaseScreen || resolveInspectorScreen();
+        const workspaceView = resolveWorkspaceView(screenAtual);
+        const laudoAtivoId = normalizarLaudoAtualId(
+            payload.laudoAtualId ??
+            estado.laudoAtualId ??
+            obterLaudoAtivoIdSeguro()
+        );
+        const estadoRelatorio = normalizarEstadoRelatorio(
+            payload.estadoRelatorio ??
+            estado.estadoRelatorio ??
+            obterEstadoRelatorioAtualSeguro()
+        );
+
+        if (laudoAtivoId || estadoRelatorioPossuiContexto(estadoRelatorio)) {
+            return false;
+        }
+
+        return normalizarModoInspecaoUI(payload.modoInspecaoUI) === "workspace"
+            && workspaceView === "inspection_conversation"
+            && (
+                normalizarBooleanoEstado(payload.freeChatConversationActive, false)
+                || obterTotalMensagensReaisWorkspace(payload) > 0
+            );
+    }
+
+    function fluxoNovoChatFocadoAtivoOuPendente(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        return conversaNovoChatFocadaAtiva(snapshot)
+            || !!normalizarBooleanoEstado(snapshot?.assistantLandingFirstSendPending, false);
+    }
+
+    function conversaNovoChatFocadaVisivel(
+        screen = estado.inspectorScreen || resolveInspectorScreen(),
+        snapshot = obterSnapshotEstadoInspectorAtual()
+    ) {
+        if (!conversaNovoChatFocadaAtiva(snapshot)) {
+            return false;
+        }
+
+        return resolveWorkspaceView(screen) === "inspection_conversation";
+    }
+
+    function resolverConversationVariant(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
+        const screen = payload.inspectorScreen || payload.inspectorBaseScreen || resolverInspectorBaseScreenPorSnapshot(payload);
+        return conversaWorkspaceModoChatAtivo(screen, payload)
+            ? "focused"
+            : "technical";
+    }
+
+    function aplicarConversationVariantElemento(elemento, variant = "technical") {
+        if (!elemento) return;
+        elemento.dataset.conversationVariant = String(variant || "technical");
+    }
+
+    function sincronizarURLConversaFocada(
+        variant = "technical",
+        snapshot = obterSnapshotEstadoInspectorAtual()
+    ) {
+        if (variant !== "focused") {
+            return;
+        }
+
+        try {
+            const url = new URL(window.location.href);
+            const laudoAtivo = normalizarLaudoAtualId(
+                snapshot?.laudoAtualId ??
+                obterLaudoAtivoIdSeguro() ??
+                estado.laudoAtualId
+            );
+            const laudoAtualNaURL = url.searchParams.get("laudo") || "";
+            const abaAtualNaURL = normalizarThreadTab(url.searchParams.get("aba") || "");
+
+            if (!laudoAtivo && !laudoAtualNaURL && !abaAtualNaURL && !url.searchParams.get("home")) {
+                return;
+            }
+
+            if (laudoAtivo) {
+                url.searchParams.set("laudo", String(laudoAtivo));
+                url.searchParams.set("aba", "conversa");
+            } else {
+                url.searchParams.delete("laudo");
+                url.searchParams.delete("aba");
+            }
+            url.searchParams.delete("home");
+
+            history.replaceState({
+                ...(history.state && typeof history.state === "object" ? history.state : {}),
+                laudoId: laudoAtivo,
+                threadTab: "conversa",
+            }, "", url.toString());
+        } catch (_) {
+            // silêncio intencional
+        }
+    }
+
+    function sincronizarConversationVariantNoDom(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const variant = resolverConversationVariant(snapshot);
+
+        aplicarConversationVariantElemento(document.body, variant);
+        aplicarConversationVariantElemento(el.painelChat, variant);
+        aplicarConversationVariantElemento(el.workspaceScreenRoot, variant);
+        aplicarConversationVariantElemento(el.workspaceHeader, variant);
+        aplicarConversationVariantElemento(el.workspaceConversationViewRoot, variant);
+        aplicarConversationVariantElemento(el.chatThreadToolbar, variant);
+        aplicarConversationVariantElemento(el.rodapeEntrada, variant);
+        aplicarConversationVariantElemento(el.areaMensagens || document.getElementById("area-mensagens"), variant);
+        sincronizarURLConversaFocada(variant, snapshot);
+
+        return variant;
+    }
+
+    function podeArmarPrimeiroEnvioNovoChat() {
+        if (!el.campoMensagem || !el.btnEnviar) return false;
+        if (!landingNovoChatAtivo()) return false;
+
+        const texto = String(el.campoMensagem.value || "").trim();
+        const iaRespondendo = document.body?.dataset?.iaRespondendo === "true"
+            || String(el.btnEnviar.dataset?.action || "").trim().toLowerCase() === "stop";
+
+        if (!texto || texto.startsWith("/") || iaRespondendo) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function armarPrimeiroEnvioNovoChatPendente() {
+        if (!podeArmarPrimeiroEnvioNovoChat()) {
+            return false;
+        }
+
+        const snapshot = obterSnapshotEstadoInspectorAtual();
+        if (snapshot.assistantLandingFirstSendPending) {
+            return true;
+        }
+
+        sincronizarEstadoInspector({
+            assistantLandingFirstSendPending: true,
+            freeChatConversationActive: false,
+        }, {
+            persistirStorage: false,
+        });
+
+        return true;
+    }
+
+    function limparFluxoNovoChatFocado() {
+        const snapshot = obterSnapshotEstadoInspectorAtual();
+        if (!snapshot.assistantLandingFirstSendPending && !snapshot.freeChatConversationActive) {
+            return false;
+        }
+
+        sincronizarEstadoInspector({
+            assistantLandingFirstSendPending: false,
+            freeChatConversationActive: false,
+        }, {
+            persistirStorage: false,
+        });
+
+        return true;
+    }
+
+    function obterBaseRealConversaNovoChat(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const totalMensagensReais = coletarLinhasWorkspace().length;
+        const temContextoReal =
+            !!normalizarLaudoAtualId(snapshot?.laudoAtualId) ||
+            estadoRelatorioPossuiContexto(snapshot?.estadoRelatorio);
+
+        return {
+            totalMensagensReais,
+            temContextoReal,
+            pronta: totalMensagensReais > 0 || temContextoReal,
+        };
+    }
+
+    function exibirConversaFocadaNovoChat({ tipoTemplate = estado.tipoTemplateAtivo, focarComposer = false } = {}) {
+        const tipoNormalizado = normalizarTipoTemplate(tipoTemplate);
+        const totalMensagensReais = coletarLinhasWorkspace().length;
+
+        sincronizarResumoHistoricoWorkspace({ totalMensagensReais });
+        sincronizarEstadoInspector({
+            forceHomeLanding: false,
+            modoInspecaoUI: "workspace",
+            workspaceStage: "inspection",
+            threadTab: "conversa",
+            overlayOwner: "",
+            assistantLandingFirstSendPending: false,
+            freeChatConversationActive: true,
+        }, {
+            persistirStorage: false,
+        });
+
+        atualizarNomeTemplateAtivo(tipoNormalizado);
+        atualizarControlesWorkspaceStage();
+        atualizarContextoWorkspaceAtivo();
+        atualizarThreadWorkspace("conversa");
+        renderizarSugestoesComposer();
+        atualizarStatusChatWorkspace(estado.chatStatusIA.status, estado.chatStatusIA.texto);
+
+        if (focarComposer) {
+            focarComposerInspector();
+        }
+
+        return true;
+    }
+
+    function promoverPrimeiraMensagemNovoChatSePronta({ forcar = false, focarComposer = false } = {}) {
+        const snapshot = obterSnapshotEstadoInspectorAtual();
+        if (!fluxoNovoChatFocadoAtivoOuPendente(snapshot)) {
+            return false;
+        }
+
+        const base = obterBaseRealConversaNovoChat(snapshot);
+        if (!forcar && !snapshot.freeChatConversationActive && !base.pronta) {
+            return false;
+        }
+
+        return exibirConversaFocadaNovoChat({ focarComposer });
+    }
+
+    function normalizarFiltroPendencias(valor) {
+        const filtro = String(valor || "").trim().toLowerCase();
+        if (filtro === "abertas" || filtro === "resolvidas" || filtro === "todas") {
+            return filtro;
+        }
+        return "abertas";
+    }
+
+    function obterEstadoRelatorioAtualSeguro() {
+        return normalizarEstadoRelatorio(
+            obterSnapshotEstadoInspectorAtual().estadoRelatorio || "sem_relatorio"
+        );
+    }
+
+    function escaparHtml(texto = "") {
+        return String(texto)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+    }
+
+    function formatarTamanhoBytes(totalBytes) {
+        const valor = Number(totalBytes || 0);
+        if (!Number.isFinite(valor) || valor <= 0) return "0 KB";
+        if (valor >= 1024 * 1024) {
+            return `${(valor / (1024 * 1024)).toFixed(1)} MB`;
+        }
+        return `${Math.max(1, Math.round(valor / 1024))} KB`;
+    }
+
+    function normalizarAnexoMesa(payload = {}) {
+        const id = Number(payload?.id || 0) || null;
+        const nome = String(payload?.nome || "").trim();
+        const mimeType = String(payload?.mime_type || "").trim().toLowerCase();
+        const categoria = String(payload?.categoria || "").trim().toLowerCase();
+        const url = String(payload?.url || "").trim();
+        if (!id || !nome || !url) return null;
+        return {
+            id,
+            nome,
+            mime_type: mimeType,
+            categoria,
+            url,
+            tamanho_bytes: Number(payload?.tamanho_bytes || 0) || 0,
+            eh_imagem: !!payload?.eh_imagem,
+        };
+    }
+
+    function renderizarLinksAnexosMesa(anexos = []) {
+        const itens = Array.isArray(anexos) ? anexos.filter(Boolean) : [];
+        if (!itens.length) return "";
+
+        return `
+            <div class="mesa-widget-anexos">
+                ${itens.map((anexo) => `
+                    <a
+                        class="anexo-mesa-link ${anexo?.eh_imagem ? "imagem" : "documento"}"
+                        href="${escaparHtml(anexo?.url || "#")}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">${anexo?.eh_imagem ? "image" : "description"}</span>
+                        <span class="anexo-mesa-link-texto">
+                            <strong>${escaparHtml(anexo?.nome || "anexo")}</strong>
+                            <small>${escaparHtml(formatarTamanhoBytes(anexo?.tamanho_bytes || 0))}</small>
+                        </span>
+                    </a>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    function pluralizarWorkspace(total, singular, plural) {
+        return Number(total || 0) === 1 ? singular : plural;
+    }
+
+    function obterSecaoSidebarLaudos(tab) {
+        if (tab === "fixados") return document.getElementById("secao-laudos-pinados");
+        if (tab === "recentes") return document.getElementById("secao-laudos-historico");
+        return null;
+    }
+
+    function itemSidebarHistoricoEstaVisivel(item) {
+        return !!item && !item.hidden && item.style.display !== "none";
+    }
+
+    function contarItensVisiveisSecaoSidebar(secao) {
+        if (!secao) return 0;
+
+        return Array.from(secao.querySelectorAll(".item-historico[data-laudo-id]"))
+            .filter((item) => itemSidebarHistoricoEstaVisivel(item))
+            .length;
+    }
+
+    function resolverSidebarLaudosTab(preferida = estado.sidebarLaudosTab) {
+        const pinados = contarItensVisiveisSecaoSidebar(obterSecaoSidebarLaudos("fixados"));
+        const recentes = contarItensVisiveisSecaoSidebar(obterSecaoSidebarLaudos("recentes"));
+
+        if (preferida === "fixados" && pinados > 0) {
+            return {
+                ativa: "fixados",
+                pinados,
+                recentes,
+            };
+        }
+
+        if (preferida === "recentes" && recentes > 0) {
+            return {
+                ativa: "recentes",
+                pinados,
+                recentes,
+            };
+        }
+
+        if (recentes > 0) {
+            return {
+                ativa: "recentes",
+                pinados,
+                recentes,
+            };
+        }
+
+        if (pinados > 0) {
+            return {
+                ativa: "fixados",
+                pinados,
+                recentes,
+            };
+        }
+
+        return {
+            ativa: preferida === "fixados" ? "fixados" : "recentes",
+            pinados,
+            recentes,
+        };
+    }
+
+    function sincronizarSidebarLaudosTabs(preferida = estado.sidebarLaudosTab) {
+        const sidebar = document.getElementById("barra-historico");
+        const secaoPinados = obterSecaoSidebarLaudos("fixados");
+        const secaoRecentes = obterSecaoSidebarLaudos("recentes");
+        const resumo = resolverSidebarLaudosTab(preferida);
+        const ativa = resumo.ativa;
+        const usaAbas = Array.isArray(el.sidebarLaudosTabButtons) && el.sidebarLaudosTabButtons.length > 0;
+        const totalItens = el.sidebarHistoricoLista
+            ? el.sidebarHistoricoLista.querySelectorAll(".item-historico[data-laudo-id]").length
+            : 0;
+
+        estado.sidebarLaudosTab = ativa;
+        if (sidebar && !usaAbas) {
+            sidebar.dataset.sidebarLaudosView = "all";
+        } else if (sidebar) {
+            sidebar.dataset.sidebarLaudosView = ativa;
+        }
+
+        if (!usaAbas) {
+            const totalVisiveis = resumo.pinados + resumo.recentes;
+
+            if (secaoPinados) {
+                secaoPinados.hidden = resumo.pinados === 0;
+            }
+
+            if (secaoRecentes) {
+                secaoRecentes.hidden = resumo.recentes === 0;
+            }
+
+            return {
+                ...resumo,
+                totalItens,
+                visiveisNaAbaAtiva: totalVisiveis,
+            };
+        }
+
+        el.sidebarLaudosTabButtons.forEach((botao) => {
+            const tab = String(botao.dataset.sidebarLaudosTabTrigger || "").trim().toLowerCase();
+            const ativo = tab === ativa;
+            const habilitado = tab === "fixados" ? resumo.pinados > 0 : resumo.recentes > 0;
+            botao.classList.toggle("is-active", ativo);
+            botao.setAttribute("aria-selected", ativo ? "true" : "false");
+            botao.disabled = !habilitado;
+            botao.setAttribute("aria-disabled", habilitado ? "false" : "true");
+        });
+
+        if (secaoPinados) {
+            secaoPinados.hidden = resumo.pinados === 0 || ativa !== "fixados";
+        }
+
+        if (secaoRecentes) {
+            secaoRecentes.hidden = resumo.recentes === 0 || ativa !== "recentes";
+        }
+
+        return {
+            ...resumo,
+            totalItens,
+            visiveisNaAbaAtiva: ativa === "fixados" ? resumo.pinados : resumo.recentes,
+        };
+    }
+
+    function filtrarSidebarHistorico(termo = "") {
+        const termoNormalizado = String(termo || "").trim().toLowerCase();
+        estado.termoBuscaSidebar = termoNormalizado;
+        const itens = el.sidebarHistoricoLista
+            ? Array.from(el.sidebarHistoricoLista.querySelectorAll(".inspetor-sidebar-report, .item-historico"))
+            : [];
+
+        let visiveis = 0;
+        itens.forEach((item) => {
+            const texto = String(item.textContent || "").trim().toLowerCase();
+            const match = !termoNormalizado || texto.includes(termoNormalizado);
+            item.hidden = !match;
+            if (match) {
+                visiveis += 1;
+            }
+        });
+
+        const resumoTabs = sincronizarSidebarLaudosTabs(estado.sidebarLaudosTab);
+
+        if (el.sidebarBuscaVazio) {
+            const semItens = resumoTabs.totalItens === 0;
+            const semResultados = termoNormalizado && resumoTabs.visiveisNaAbaAtiva === 0 && visiveis === 0;
+            el.sidebarBuscaVazio.hidden = !(semItens || semResultados);
+        }
+    }
+
+    function normalizarFiltroChat(valor = "") {
+        const filtro = String(valor || "").trim().toLowerCase();
+        if (["ia", "inspetor", "mesa", "sistema"].includes(filtro)) return filtro;
+        return "todos";
+    }
+
+    function normalizarFiltroTipoHistorico(valor = "") {
+        const filtro = String(valor || "").trim().toLowerCase();
+        if (["mensagens", "eventos", "anexos", "decisoes"].includes(filtro)) return filtro;
+        return "todos";
+    }
+
+    function pluralizarChat(total, singular, plural) {
+        return Number(total || 0) === 1 ? singular : plural;
+    }
+
+    function obterPapelLinhaWorkspace(linha) {
+        const papelDataset = String(linha?.dataset?.messageRole || "").trim().toLowerCase();
+        if (papelDataset) return papelDataset;
+        if (linha?.classList?.contains("mensagem-sistema")) return "sistema";
+        if (linha?.classList?.contains("mensagem-ia")) return "ia";
+        if (linha?.classList?.contains("mensagem-origem-mesa")) return "mesa";
+        return "inspetor";
+    }
+
+    function obterDetalheLinhaWorkspace(linha) {
+        const meta = extrairMetaLinhaWorkspace(linha);
+        const papel = obterPapelLinhaWorkspace(linha);
+        const texto = String(
+            linha?.querySelector(".texto-msg")?.textContent ||
+            linha?.querySelector(".texto-msg-origem")?.textContent ||
+            meta.resumo ||
+            ""
+        ).replace(/\s+/g, " ").trim();
+
+        return {
+            mensagemId: Number(linha?.dataset?.mensagemId || 0) || null,
+            autor: String(linha?.dataset?.messageAuthor || meta.autor || "Registro").trim() || "Registro",
+            papel,
+            tempo: meta.tempo || "",
+            texto,
+        };
+    }
+
+    function obterTextoBuscaLinhaWorkspace(linha) {
+        const detalhe = obterDetalheLinhaWorkspace(linha);
+        const anexos = Array.from(linha.querySelectorAll(".mensagem-anexo-chip"))
+            .map((chip) => String(chip.textContent || "").trim())
+            .filter(Boolean);
+
+        return [
+            detalhe.autor,
+            detalhe.tempo,
+            detalhe.papel,
+            detalhe.texto,
+            ...anexos,
+        ]
+            .join(" ")
+            .toLowerCase();
+    }
+
+    function obterDataLinhaWorkspace(linha) {
+        const datetime = String(
+            linha?.querySelector("time")?.getAttribute("datetime") ||
+            linha?.dataset?.createdAt ||
+            ""
+        ).trim();
+        if (!datetime) return null;
+
+        const data = new Date(datetime);
+        return Number.isNaN(data.getTime()) ? null : data;
+    }
+
+    function obterTipoRegistroHistoricoWorkspace(linha, detalhe = obterDetalheLinhaWorkspace(linha)) {
+        const papel = detalhe.papel || obterPapelLinhaWorkspace(linha);
+        const texto = String(detalhe.texto || "").trim();
+        const possuiAnexos = !!linha?.querySelector?.(".mensagem-anexo-chip, .img-anexo");
+
+        if (papel === "sistema") return "eventos";
+        if (papel === "mesa" && /(aprova|rejeita|ajuste|decis|valid|conclus|parecer)/i.test(texto)) {
+            return "decisoes";
+        }
+        if (possuiAnexos && !texto) return "anexos";
+        return "mensagens";
+    }
+
+    function obterRotuloGrupoHistoricoWorkspace(data = null) {
+        if (!(data instanceof Date) || Number.isNaN(data.getTime())) {
+            return "Registro técnico";
+        }
+
+        const hoje = new Date();
+        const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+        const inicioData = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+        const diffDias = Math.round((inicioHoje - inicioData) / 86400000);
+
+        if (diffDias === 0) return "Hoje";
+        if (diffDias === 1) return "Ontem";
+
+        return new Intl.DateTimeFormat("pt-BR", {
+            day: "numeric",
+            month: "short",
+        }).format(data);
+    }
+
+    function obterIconeHistoricoWorkspace(tipo = "mensagens", papel = "inspetor") {
+        if (tipo === "anexos") return "attach_file";
+        if (tipo === "eventos") return "tune";
+        if (tipo === "decisoes") return "gavel";
+        if (papel === "ia") return "smart_toy";
+        if (papel === "mesa") return "support_agent";
+        if (papel === "sistema") return "settings";
+        return "person";
+    }
+
+    function escaparAtributoHistoricoWorkspace(payload = {}) {
+        return escaparHtml(JSON.stringify(payload));
+    }
+
+    function obterItensCanonicosHistoricoWorkspace() {
+        if (Array.isArray(estado.historyCanonicalItems) && estado.historyCanonicalItems.length) {
+            return estado.historyCanonicalItems.map((item) => ({ ...item }));
+        }
+
+        const viaApi = window.TarielAPI?.obterHistoricoLaudoAtual?.();
+        return Array.isArray(viaApi) ? viaApi.map((item) => ({ ...item })) : [];
+    }
+
+    function obterPapelItemHistoricoCanonico(item = {}) {
+        const papel = String(item?.papel || "").trim().toLowerCase();
+        const tipo = String(item?.tipo || "").trim().toLowerCase();
+
+        if (papel === "assistente") return "ia";
+        if (papel === "engenheiro") return "mesa";
+        if (papel === "usuario") return "inspetor";
+        if (papel === "sistema") return "sistema";
+
+        if (tipo.includes("humano_eng") || tipo.includes("engenheiro")) return "mesa";
+        if (tipo.includes("humano_insp") || tipo === "user" || tipo === "usuario") return "inspetor";
+        if (tipo.includes("system") || tipo.includes("sistema") || tipo.includes("evento")) return "sistema";
+        if (tipo.includes("ia") || tipo.includes("assistant")) return "ia";
+
+        return "ia";
+    }
+
+    function obterAutorItemHistoricoCanonico(item = {}, papel = obterPapelItemHistoricoCanonico(item)) {
+        const candidatos = [
+            item?.autor,
+            item?.autor_nome,
+            item?.nome_autor,
+            item?.remetente_nome,
+            item?.actor_name,
+        ]
+            .map((valor) => String(valor || "").trim())
+            .filter(Boolean);
+
+        if (candidatos.length) {
+            return candidatos[0];
+        }
+
+        if (papel === "mesa") return "Mesa";
+        if (papel === "inspetor") return "Inspetor";
+        if (papel === "sistema") return "Sistema";
+        return "Assistente IA";
+    }
+
+    function extrairAnexosHistoricoCanonico(item = {}) {
+        const anexos = Array.isArray(item?.anexos) ? item.anexos : [];
+        return anexos
+            .map((anexo, index) => {
+                if (!anexo) return null;
+
+                if (typeof anexo === "string") {
+                    const nome = String(anexo || "").trim();
+                    if (!nome) return null;
+                    return {
+                        nome,
+                        url: "",
+                        tipo: "documento",
+                        chave: `str-${index}-${nome}`,
+                    };
+                }
+
+                const nome = String(
+                    anexo?.nome ||
+                    anexo?.filename ||
+                    anexo?.arquivo_nome ||
+                    anexo?.label ||
+                    anexo?.titulo ||
+                    ""
+                ).trim();
+                const url = String(
+                    anexo?.url ||
+                    anexo?.download_url ||
+                    anexo?.href ||
+                    anexo?.path ||
+                    ""
+                ).trim();
+                const tipo = anexo?.eh_imagem ? "imagem" : String(anexo?.tipo || "documento").trim().toLowerCase() || "documento";
+                if (!nome && !url) return null;
+
+                return {
+                    nome: nome || `Anexo ${index + 1}`,
+                    url,
+                    tipo,
+                    chave: String(anexo?.id || anexo?.uuid || `${tipo}-${index}-${nome || url}`),
+                };
+            })
+            .filter(Boolean);
+    }
+
+    function obterDataItemHistoricoCanonico(item = {}) {
+        const bruto = String(
+            item?.criado_em_iso ||
+            item?.created_at ||
+            item?.data_iso ||
+            ""
+        ).trim();
+        if (!bruto) return null;
+
+        const data = new Date(bruto);
+        return Number.isNaN(data.getTime()) ? null : data;
+    }
+
+    function obterTipoRegistroHistoricoCanonico(item = {}, papel = obterPapelItemHistoricoCanonico(item), anexos = extrairAnexosHistoricoCanonico(item)) {
+        const tipoMensagem = String(item?.tipo || "").trim().toLowerCase();
+        const texto = String(item?.texto || "").trim();
+
+        if (papel === "sistema" || tipoMensagem.includes("system") || tipoMensagem.includes("evento")) {
+            return "eventos";
+        }
+
+        if (papel === "mesa" && /(aprova|rejeita|ajuste|decis|valid|conclus|parecer)/i.test(texto)) {
+            return "decisoes";
+        }
+
+        if (anexos.length && !texto) {
+            return "anexos";
+        }
+
+        return "mensagens";
+    }
+
+    function construirResumoBuscaHistoricoCanonico(item = {}, papel = "ia", autor = "", anexos = []) {
+        return [
+            autor,
+            papel,
+            String(item?.tipo || ""),
+            String(item?.texto || ""),
+            String(item?.data || ""),
+            ...anexos.map((anexo) => String(anexo?.nome || "").trim()),
+        ]
+            .join(" ")
+            .toLowerCase();
+    }
+
+    function construirItemHistoricoWorkspaceDoPayload(item = {}, index = 0) {
+        const papel = obterPapelItemHistoricoCanonico(item);
+        const autor = obterAutorItemHistoricoCanonico(item, papel);
+        const anexos = extrairAnexosHistoricoCanonico(item);
+        const data = obterDataItemHistoricoCanonico(item);
+        const tipo = obterTipoRegistroHistoricoCanonico(item, papel, anexos);
+        const texto = String(item?.texto || "").replace(/\s+/g, " ").trim();
+
+        return {
+            index,
+            sortIndex: index,
+            origem: "canonico",
+            mensagemId: Number(item?.id ?? item?.mensagem_id ?? 0) || null,
+            autor,
+            papel,
+            tempo: String(item?.data || "").trim(),
+            texto,
+            anexos,
+            tipo,
+            data,
+            grupo: obterRotuloGrupoHistoricoWorkspace(data),
+            icone: obterIconeHistoricoWorkspace(tipo, papel),
+            resumoBusca: construirResumoBuscaHistoricoCanonico(item, papel, autor, anexos),
+            citacoes: Array.isArray(item?.citacoes) ? item.citacoes : [],
+            confiancaIa: item?.confianca_ia && typeof item.confianca_ia === "object"
+                ? { ...item.confianca_ia }
+                : null,
+        };
+    }
+
+    function construirItemHistoricoWorkspaceDoDom(linha, index = 0) {
+        const detalhe = obterDetalheLinhaWorkspace(linha);
+        const anexos = Array.from(linha.querySelectorAll(".mensagem-anexo-chip"))
+            .map((chip, chipIndex) => {
+                const nome = String(
+                    chip.querySelector("span:last-child")?.textContent ||
+                    chip.textContent ||
+                    ""
+                ).replace(/\s+/g, " ").trim();
+                if (!nome) return null;
+                const url = chip.tagName === "A" ? String(chip.getAttribute("href") || "").trim() : "";
+                return {
+                    nome,
+                    url,
+                    tipo: "documento",
+                    chave: `dom-${index}-${chipIndex}-${nome}`,
+                };
+            })
+            .filter(Boolean);
+        const data = obterDataLinhaWorkspace(linha);
+        const tipo = obterTipoRegistroHistoricoWorkspace(linha, detalhe);
+        const papel = detalhe.papel || obterPapelLinhaWorkspace(linha);
+
+        return {
+            index,
+            sortIndex: 100000 + index,
+            origem: "dom",
+            mensagemId: detalhe.mensagemId,
+            autor: detalhe.autor,
+            papel,
+            tempo: detalhe.tempo || "",
+            texto: detalhe.texto || "",
+            anexos,
+            tipo,
+            data,
+            grupo: obterRotuloGrupoHistoricoWorkspace(data),
+            icone: obterIconeHistoricoWorkspace(tipo, papel),
+            resumoBusca: obterTextoBuscaLinhaWorkspace(linha),
+            citacoes: [],
+            confiancaIa: null,
+        };
+    }
+
+    function coletarItensSuplementaresHistoricoWorkspace(itensCanonicos = []) {
+        const idsCanonicos = new Set(
+            itensCanonicos
+                .map((item) => Number(item?.mensagemId || 0) || null)
+                .filter(Boolean)
+        );
+        const assinaturasCanonicas = new Set(
+            itensCanonicos.map((item) => [
+                item.papel,
+                item.tempo,
+                item.texto,
+                item.anexos.map((anexo) => anexo?.nome || "").join("|"),
+            ].join("::"))
+        );
+
+        return coletarLinhasWorkspace()
+            .map((linha, index) => construirItemHistoricoWorkspaceDoDom(linha, index))
+            .filter((item) => {
+                if (item.papel === "sistema") return true;
+                if (!item.mensagemId) return true;
+                if (!idsCanonicos.has(item.mensagemId)) return true;
+
+                const assinatura = [
+                    item.papel,
+                    item.tempo,
+                    item.texto,
+                    item.anexos.map((anexo) => anexo?.nome || "").join("|"),
+                ].join("::");
+                return !assinaturasCanonicas.has(assinatura);
+            });
+    }
+
+    function construirItensHistoricoWorkspace() {
+        const itensCanonicos = obterItensCanonicosHistoricoWorkspace()
+            .map((item, index) => construirItemHistoricoWorkspaceDoPayload(item, index));
+        const itensSuplementares = coletarItensSuplementaresHistoricoWorkspace(itensCanonicos);
+
+        return [...itensCanonicos, ...itensSuplementares]
+            .sort((a, b) => {
+                const dataA = a.data instanceof Date ? a.data.getTime() : null;
+                const dataB = b.data instanceof Date ? b.data.getTime() : null;
+
+                if (dataA != null && dataB != null && dataA !== dataB) {
+                    return dataA - dataB;
+                }
+                if (dataA != null && dataB == null) return -1;
+                if (dataA == null && dataB != null) return 1;
+                return Number(a.sortIndex || a.index || 0) - Number(b.sortIndex || b.index || 0);
+            })
+            .map((item, index) => ({
+                ...item,
+                index,
+            }));
+    }
+
+    function itemHistoricoWorkspaceAtendeFiltros(item, { termo = "", ator = "todos", tipo = "todos" } = {}) {
+        const matchAtor = ator === "todos" || item.papel === ator;
+        const matchTipo = tipo === "todos" || item.tipo === tipo;
+        const matchBusca = !termo || item.resumoBusca.includes(termo);
+        return matchAtor && matchTipo && matchBusca;
+    }
+
+    function montarAtributosHistoricoWorkspace(item = {}) {
+        const tipo = normalizarFiltroTipoHistorico(item.tipo);
+        const papel = String(item.papel || "sistema").trim().toLowerCase() || "sistema";
+        const atributos = [
+            'class="workspace-history-card"',
+            'data-history-card="true"',
+            `data-history-type="${escaparHtml(tipo)}"`,
+            `data-history-role="${escaparHtml(papel)}"`,
+        ];
+
+        if (Array.isArray(item.anexos) && item.anexos.length) {
+            atributos.push('data-history-has-attachments="true"');
+        }
+        if (String(item.texto || "").trim()) {
+            atributos.push('data-history-has-text="true"');
+        }
+
+        return atributos.join(" ");
+    }
+
+    function montarRotuloTipoHistoricoWorkspace(tipo = "mensagens") {
+        if (tipo === "eventos") return "Evento";
+        if (tipo === "anexos") return "Anexo";
+        if (tipo === "decisoes") return "Decisão";
+        return "Mensagem";
+    }
+
+    function montarMetadadosIaHistoricoWorkspace(item = {}) {
+        const confianca = item?.confiancaIa && typeof item.confiancaIa === "object"
+            ? item.confiancaIa
+            : null;
+        const citacoes = Array.isArray(item?.citacoes) ? item.citacoes : [];
+        const nivel = String(
+            confianca?.nivel ||
+            confianca?.classificacao ||
+            confianca?.faixa ||
+            ""
+        ).trim();
+        const proveniencia = String(
+            confianca?.proveniência ||
+            confianca?.proveniencia ||
+            confianca?.fonte ||
+            ""
+        ).trim();
+
+        if (!nivel && !proveniencia && !citacoes.length) {
+            return "";
+        }
+
+        return `
+            <details class="workspace-history-card__details">
+                <summary>Metadados IA</summary>
+                <div class="workspace-history-card__details-body">
+                    ${nivel ? `<span>${escaparHtml(`Confiança ${nivel}`)}</span>` : ""}
+                    ${proveniencia ? `<span>${escaparHtml(`Proveniência ${proveniencia}`)}</span>` : ""}
+                    ${citacoes.length ? `<span>${escaparHtml(`${citacoes.length} ${citacoes.length === 1 ? "citação" : "citações"}`)}</span>` : ""}
+                </div>
+            </details>
+        `;
+    }
+
+    function sincronizarEstadoVisualHistoricoWorkspace({ vazio = false } = {}) {
+        const estadoVisual = vazio ? "empty" : "ready";
+        [el.workspaceHistoryRoot, el.workspaceHistoryViewRoot, el.workspaceHistoryTimeline, el.workspaceHistoryEmpty]
+            .forEach((node) => {
+                if (node) {
+                    node.dataset.historyState = estadoVisual;
+                }
+            });
+    }
+
+    function renderizarHistoricoWorkspace(itens = [], { totalMensagensReais = 0 } = {}) {
+        estado.historyRenderedItems = Array.isArray(itens) ? itens : [];
+        const resumoGovernanca = construirResumoGovernancaHistoricoWorkspace();
+        const acaoMesaHistorico = resumoGovernanca.visible
+            ? { action: "reissue", label: "Reemissão" }
+            : { action: "mesa", label: "Mesa" };
+
+        if (!el.workspaceHistoryTimeline || !el.workspaceHistoryEmpty) return;
+
+        if (!estado.historyRenderedItems.length) {
+            el.workspaceHistoryTimeline.innerHTML = "";
+            el.workspaceHistoryEmpty.hidden = false;
+            sincronizarEstadoVisualHistoricoWorkspace({ vazio: true });
+            return;
+        }
+
+        el.workspaceHistoryEmpty.hidden = true;
+        sincronizarEstadoVisualHistoricoWorkspace({ vazio: false });
+        const grupos = [];
+        let grupoAtual = null;
+
+        estado.historyRenderedItems.forEach((item, itemIndex) => {
+            if (!grupoAtual || grupoAtual.rotulo !== item.grupo) {
+                grupoAtual = {
+                    rotulo: item.grupo,
+                    itens: [],
+                };
+                grupos.push(grupoAtual);
+            }
+
+            grupoAtual.itens.push({ ...item, renderIndex: itemIndex });
+        });
+
+        el.workspaceHistoryTimeline.innerHTML = grupos
+            .map((grupo) => `
+                <section class="workspace-history-group" data-history-group>
+                    <header class="workspace-history-group__header" data-history-group-header>
+                        <span>${escaparHtml(grupo.rotulo)}</span>
+                    </header>
+                    <div class="workspace-history-group__items" data-history-group-items>
+                        ${grupo.itens.map((item) => `
+                            <article ${montarAtributosHistoricoWorkspace(item)} ${resumoGovernanca.visible ? 'data-history-reissue="true"' : ""}>
+                                <div class="workspace-history-card__icon" aria-hidden="true">
+                                    <span class="material-symbols-rounded">${escaparHtml(item.icone)}</span>
+                                </div>
+                                <div class="workspace-history-card__body">
+                                    <div class="workspace-history-card__meta">
+                                        <div class="workspace-history-card__identity">
+                                            <strong>${escaparHtml(item.autor || "Registro")}</strong>
+                                            <span>${escaparHtml(montarRotuloTipoHistoricoWorkspace(item.tipo))}</span>
+                                        </div>
+                                        <small>${escaparHtml(item.tempo || "")}</small>
+                                    </div>
+                                    ${item.texto ? `<p class="workspace-history-card__text">${escaparHtml(item.texto)}</p>` : ""}
+                                    ${item.anexos.length ? `
+                                        <div class="workspace-history-card__attachments">
+                                            ${item.anexos.map((anexo) => {
+                                                const nome = escaparHtml(String(anexo?.nome || "").trim());
+                                                const url = String(anexo?.url || "").trim();
+                                                return url
+                                                    ? `<a class="workspace-history-card__attachment" href="${escaparHtml(url)}" target="_blank" rel="noreferrer">${nome}</a>`
+                                                    : `<span class="workspace-history-card__attachment">${nome}</span>`;
+                                            }).join("")}
+                                        </div>
+                                    ` : ""}
+                                    ${item.papel === "ia" ? montarMetadadosIaHistoricoWorkspace(item) : ""}
+                                    ${item.papel === "sistema" || item.tipo === "eventos" ? "" : `
+                                        <div class="workspace-history-card__actions">
+                                            <button type="button" class="workspace-history-card__action" data-history-action="copiar" data-history-index="${item.renderIndex}">Copiar</button>
+                                            <button type="button" class="workspace-history-card__action" data-history-action="fixar" data-history-index="${item.renderIndex}">Fixar</button>
+                                            <details class="workspace-history-card__more">
+                                                <summary>Mais</summary>
+                                                <div class="workspace-history-card__more-menu">
+                                                    <button type="button" class="workspace-history-card__action" data-history-action="citar" data-history-index="${item.renderIndex}">Citar</button>
+                                                    <button type="button" class="workspace-history-card__action" data-history-action="${acaoMesaHistorico.action}" data-history-index="${item.renderIndex}">${acaoMesaHistorico.label}</button>
+                                                </div>
+                                            </details>
+                                        </div>
+                                    `}
+                                </div>
+                            </article>
+                        `).join("")}
+                    </div>
+                </section>
+            `)
+            .join("");
+
+        if (totalMensagensReais === 0) {
+            el.workspaceHistoryEmpty.hidden = false;
+        }
+    }
+
+    function resetarFiltrosHistoricoWorkspace() {
+        estado.chatBuscaTermo = "";
+        estado.chatFiltroTimeline = "todos";
+        estado.historyTypeFilter = "todos";
+
+        if (el.chatThreadSearch) {
+            el.chatThreadSearch.value = "";
+        }
+
+        el.chatFilterButtons.forEach((botao) => {
+            const ativo = String(botao.dataset.chatFilter || "") === "todos";
+            botao.setAttribute("aria-pressed", ativo ? "true" : "false");
+        });
+
+        el.historyTypeFilterButtons.forEach((botao) => {
+            const ativo = String(botao.dataset.historyTypeFilter || "") === "todos";
+            botao.setAttribute("aria-pressed", ativo ? "true" : "false");
+        });
+    }
+
+    function obterRotuloFiltroAtorHistoricoWorkspace(filtro = "todos") {
+        if (filtro === "inspetor") return "Inspetor";
+        if (filtro === "ia") return "IA";
+        if (filtro === "mesa") return "Mesa";
+        if (filtro === "sistema") return "Sistema";
+        return "Todos os atores";
+    }
+
+    function obterRotuloFiltroTipoHistoricoWorkspace(filtro = "todos") {
+        if (filtro === "mensagens") return "Mensagens";
+        if (filtro === "eventos") return "Eventos";
+        if (filtro === "anexos") return "Anexos";
+        if (filtro === "decisoes") return "Decisões";
+        return "Todos os tipos";
+    }
+
+    function obterDescricaoFonteHistoricoWorkspace() {
+        const canonicosEmEstado = Array.isArray(estado.historyCanonicalItems) ? estado.historyCanonicalItems.length : 0;
+        const canonicosViaApi = Array.isArray(window.TarielAPI?.obterHistoricoLaudoAtual?.())
+            ? window.TarielAPI.obterHistoricoLaudoAtual().length
+            : 0;
+
+        return (canonicosEmEstado > 0 || canonicosViaApi > 0)
+            ? "Histórico estruturado"
+            : "Registros transitórios";
+    }
+
+    function renderizarMetaHistoricoWorkspace({ filteredCount, totalCount } = {}) {
+        const totalReal = Math.max(0, Number(totalCount ?? estado.historyRealCount ?? 0) || 0);
+        const totalFiltrado = Math.max(0, Number(filteredCount ?? estado.chatResultados ?? totalReal) || 0);
+        const filtroAtor = obterRotuloFiltroAtorHistoricoWorkspace(normalizarFiltroChat(estado.chatFiltroTimeline));
+        const filtroTipo = obterRotuloFiltroTipoHistoricoWorkspace(normalizarFiltroTipoHistorico(estado.historyTypeFilter));
+        const busca = String(estado.chatBuscaTermo || "").trim();
+        const partes = [];
+
+        if (filtroAtor !== "Todos os atores") {
+            partes.push(filtroAtor);
+        }
+        if (filtroTipo !== "Todos os tipos") {
+            partes.push(filtroTipo);
+        }
+        if (busca) {
+            partes.push(`Busca "${busca}"`);
+        }
+
+        if (el.workspaceHistorySource) {
+            el.workspaceHistorySource.textContent = obterDescricaoFonteHistoricoWorkspace();
+        }
+        if (el.workspaceHistoryActiveFilter) {
+            el.workspaceHistoryActiveFilter.textContent = partes.length ? partes.join(" • ") : "Todos os registros";
+        }
+        if (el.workspaceHistoryTotal) {
+            el.workspaceHistoryTotal.textContent = `${totalReal} ${pluralizarChat(totalReal, "registro real", "registros reais")}`;
+        }
+        if (el.chatThreadResults && totalFiltrado > totalReal) {
+            el.chatThreadResults.textContent = `${totalReal} ${pluralizarChat(totalReal, "registro", "registros")}`;
+        }
+    }
+
+    function renderizarResultadosChatWorkspace(total = 0) {
+        if (!el.chatThreadResults) return;
+        const quantidade = Number(total || 0);
+        const tabAtual = normalizarThreadTab(obterSnapshotEstadoInspectorAtual().threadTab);
+        if (estado.workspaceStage === "assistant" && quantidade === 0) {
+            el.chatThreadResults.textContent = "Nova conversa";
+            renderizarMetaHistoricoWorkspace({ filteredCount: quantidade });
+            return;
+        }
+        if (tabAtual === "historico" && Number(estado.historyRealCount || 0) === 0) {
+            el.chatThreadResults.textContent = "Histórico vazio";
+            renderizarMetaHistoricoWorkspace({ filteredCount: quantidade });
+            return;
+        }
+        el.chatThreadResults.textContent = `${quantidade} ${pluralizarChat(quantidade, "registro", "registros")}`;
+        renderizarMetaHistoricoWorkspace({ filteredCount: quantidade });
+    }
+
+    function copiarTextoWorkspace(texto = "") {
+        const valor = String(texto || "").trim();
+        if (!valor) return Promise.reject(new Error("TEXTO_VAZIO"));
+
+        if (navigator.clipboard?.writeText) {
+            return navigator.clipboard.writeText(valor);
+        }
+
+        return new Promise((resolve, reject) => {
+            try {
+                const textarea = document.createElement("textarea");
+                textarea.value = valor;
+                textarea.setAttribute("readonly", "");
+                textarea.style.cssText = "position:fixed;left:-9999px;top:0;";
+                document.body.appendChild(textarea);
+                textarea.select();
+                const copiou = !!document.execCommand?.("copy");
+                document.body.removeChild(textarea);
+                if (copiou) {
+                    resolve();
+                } else {
+                    reject(new Error("COPY_FALHOU"));
+                }
+            } catch (erro) {
+                reject(erro);
+            }
+        });
+    }
+
+    function filtrarTimelineWorkspace() {
+        const termo = String(estado.chatBuscaTermo || "").trim().toLowerCase();
+        const filtro = normalizarFiltroChat(estado.chatFiltroTimeline);
+        const tipo = normalizarFiltroTipoHistorico(estado.historyTypeFilter);
+        const itens = construirItensHistoricoWorkspace();
+        const totalLinhasReais = itens.length;
+        const filtrados = itens.filter((item) => itemHistoricoWorkspaceAtendeFiltros(item, {
+            termo,
+            ator: filtro,
+            tipo,
+        }));
+
+        sincronizarResumoHistoricoWorkspace({
+            totalMensagensReais: totalLinhasReais,
+        });
+        estado.chatResultados = filtrados.length;
+        renderizarResultadosChatWorkspace(filtrados.length);
+        renderizarHistoricoWorkspace(filtrados, {
+            totalMensagensReais: totalLinhasReais,
+        });
+
+        const landingAssistenteAtivo = estado.workspaceStage === "assistant" && filtrados.length === 0;
+        if (el.workspaceAssistantLanding) {
+            el.workspaceAssistantLanding.hidden = !landingAssistenteAtivo;
+        }
+
+        atualizarEmptyStateHonestoConversa();
+        sincronizarInspectorScreen();
+    }
+
+    function obterChaveContextoFixadoWorkspace() {
+        const laudoId = obterLaudoAtivoIdSeguro();
+        return `tariel_workspace_contexto_fixado_${laudoId || "ativo"}`;
+    }
+
+    function persistirContextoFixadoWorkspace() {
+        try {
+            localStorage.setItem(
+                obterChaveContextoFixadoWorkspace(),
+                JSON.stringify(Array.isArray(estado.contextoFixado) ? estado.contextoFixado : [])
+            );
+        } catch (_) {
+            // armazenamento local opcional
+        }
+    }
+
+    function carregarContextoFixadoWorkspace() {
+        try {
+            const bruto = localStorage.getItem(obterChaveContextoFixadoWorkspace());
+            const itens = JSON.parse(bruto || "[]");
+            estado.contextoFixado = Array.isArray(itens) ? itens.filter(Boolean).slice(0, 8) : [];
+        } catch (_) {
+            estado.contextoFixado = [];
+        }
+    }
+
+    function obterResumoSinteseIAWorkspace() {
+        const bruto = String(window.TarielAPI?.obterUltimoDiagnosticoBruto?.() || "").trim();
+        if (bruto) {
+            return resumirTexto(bruto, 180);
+        }
+
+        const linhas = coletarLinhasWorkspace();
+        for (let i = linhas.length - 1; i >= 0; i -= 1) {
+            const linha = linhas[i];
+            if (obterPapelLinhaWorkspace(linha) !== "ia") continue;
+            const texto = obterDetalheLinhaWorkspace(linha).texto;
+            if (texto) return resumirTexto(texto, 180);
+        }
+
+        return "A última resposta consolidada da IA aparecerá aqui.";
+    }
+
+    function obterOperacaoWorkspace() {
+        const subtitulo = String(estado.workspaceVisualContext?.subtitle || "").trim();
+        if (!subtitulo) return "Operação não identificada";
+        return subtitulo.split("•")[0].trim() || subtitulo;
+    }
+
+    function montarResumoContextoIAWorkspace() {
+        const titulo = String(estado.workspaceVisualContext?.title || "Registro Técnico").trim();
+        const operacao = obterOperacaoWorkspace();
+        const modelo = NOMES_TEMPLATES[estado.tipoTemplateAtivo] || NOMES_TEMPLATES.padrao;
+        const evidencias = contarEvidenciasWorkspace();
+        const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
+        const sintese = obterResumoSinteseIAWorkspace();
+        const fixados = (estado.contextoFixado || [])
+            .slice(0, 3)
+            .map((item) => `- ${item.autor}: ${item.texto}`)
+            .join("\n");
+
+        return [
+            `Equipamento: ${titulo}`,
+            `Operação: ${operacao}`,
+            `Modelo: ${modelo}`,
+            `Evidências: ${evidencias}`,
+            `Pendências: ${pendencias}`,
+            `Síntese atual: ${sintese}`,
+            fixados ? `Contexto fixado:\n${fixados}` : "",
+        ]
+            .filter(Boolean)
+            .join("\n");
+    }
+
+    function renderizarContextoIAWorkspace() {
+        const evidencias = contarEvidenciasWorkspace();
+        const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
+        const modelo = NOMES_TEMPLATES[estado.tipoTemplateAtivo] || NOMES_TEMPLATES.padrao;
+        const operacao = obterOperacaoWorkspace();
+        const resumoMesa = obterResumoOperacionalMesa();
+
+        if (el.workspaceContextTemplate) {
+            el.workspaceContextTemplate.textContent = modelo;
+        }
+        if (el.workspaceContextEvidencias) {
+            el.workspaceContextEvidencias.textContent = String(evidencias);
+        }
+        if (el.workspaceContextPendencias) {
+            el.workspaceContextPendencias.textContent = String(pendencias);
+        }
+        if (el.workspaceContextMesa) {
+            el.workspaceContextMesa.textContent = resumoMesa.chipStatus || resumoMesa.titulo;
+        }
+        if (el.workspaceContextEquipment) {
+            el.workspaceContextEquipment.textContent = String(estado.workspaceVisualContext?.title || "Registro Técnico");
+        }
+        if (el.workspaceContextOperation) {
+            el.workspaceContextOperation.textContent = operacao;
+        }
+        if (el.workspaceContextSummary) {
+            el.workspaceContextSummary.textContent = obterResumoSinteseIAWorkspace();
+        }
+
+        const fixados = Array.isArray(estado.contextoFixado) ? estado.contextoFixado : [];
+        if (el.workspacePinnedCard) {
+            const mostrarCardFixado = fixados.length > 0;
+            el.workspacePinnedCard.hidden = !mostrarCardFixado;
+            el.workspacePinnedCard.setAttribute("aria-hidden", String(!mostrarCardFixado));
+        }
+        if (el.workspaceContextPinnedCount) {
+            el.workspaceContextPinnedCount.textContent = `${fixados.length} ${pluralizarChat(fixados.length, "item", "itens")}`;
+        }
+        if (el.workspaceContextPinnedList) {
+            if (!fixados.length) {
+                el.workspaceContextPinnedList.innerHTML = `
+                    <p class="workspace-context-pinned-empty">
+                        Fixe mensagens importantes para manter fatos críticos sempre à vista.
+                    </p>
+                `;
+            } else {
+                el.workspaceContextPinnedList.innerHTML = fixados
+                    .map((item, index) => `
+                        <article class="workspace-context-pin">
+                            <div class="workspace-context-pin__meta">
+                                <strong>${escaparHtml(item.autor || "Registro")}</strong>
+                                <span>${escaparHtml(item.papel || "contexto")}</span>
+                            </div>
+                            <p>${escaparHtml(item.texto || "")}</p>
+                            <button type="button" class="workspace-context-pin__remove" data-context-remove-index="${index}">
+                                Remover
+                            </button>
+                        </article>
+                    `)
+                    .join("");
+            }
+        }
+    }
+
+    function fixarContextoWorkspace(detail = {}) {
+        const textoBase = String(detail?.texto || "").trim() || (
+            Array.isArray(detail?.anexos)
+                ? detail.anexos.map((anexo) => String(anexo?.nome || "").trim()).filter(Boolean).join(" • ")
+                : ""
+        );
+        const texto = resumirTexto(textoBase, 220);
+        if (!texto) return;
+
+        const existente = (estado.contextoFixado || []).find((item) => {
+            const itemId = Number(item?.mensagemId || 0) || null;
+            const alvoId = Number(detail?.mensagemId || 0) || null;
+            return (itemId && alvoId && itemId === alvoId) || String(item?.texto || "") === texto;
+        });
+
+        if (existente) {
+            mostrarToast("Esse contexto já está fixado.", "info", 1800);
+            return;
+        }
+
+        estado.contextoFixado = [
+            {
+                mensagemId: Number(detail?.mensagemId || 0) || null,
+                autor: String(detail?.autor || "Registro").trim() || "Registro",
+                papel: String(detail?.papel || "contexto").trim() || "contexto",
+                texto,
+            },
+            ...(Array.isArray(estado.contextoFixado) ? estado.contextoFixado : []),
+        ].slice(0, 8);
+
+        persistirContextoFixadoWorkspace();
+        renderizarContextoIAWorkspace();
+        mostrarToast("Trecho fixado no contexto da IA.", "sucesso", 1800);
+    }
+
+    function removerContextoFixadoWorkspace(index) {
+        const alvo = Number(index);
+        if (!Number.isFinite(alvo) || alvo < 0) return;
+        estado.contextoFixado = (estado.contextoFixado || []).filter((_, idx) => idx !== alvo);
+        persistirContextoFixadoWorkspace();
+        renderizarContextoIAWorkspace();
+    }
+
+    function limparContextoFixadoWorkspace() {
+        estado.contextoFixado = [];
+        persistirContextoFixadoWorkspace();
+        renderizarContextoIAWorkspace();
+    }
+
+    async function copiarResumoContextoWorkspace() {
+        try {
+            await copiarTextoWorkspace(montarResumoContextoIAWorkspace());
+            mostrarToast("Resumo operacional copiado.", "sucesso", 1800);
+        } catch (_) {
+            mostrarToast("Não foi possível copiar o resumo agora.", "aviso", 2200);
+        }
+    }
+
+    function atualizarStatusChatWorkspace(status = "pronto", texto = "") {
+        const normalizado = ["respondendo", "documento", "interrompido", "erro", "mesa", "pronto"]
+            .includes(String(status || "").trim().toLowerCase())
+            ? String(status).trim().toLowerCase()
+            : "pronto";
+
+        estado.chatStatusIA = {
+            status: normalizado,
+            texto: String(texto || "").trim() || "Assistente pronto",
+        };
+    }
+
+    function renderizarMesaCardWorkspace() {
+        const resumo = obterResumoOperacionalMesa();
+        const evidencias = contarEvidenciasWorkspace();
+        const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
+        const naoLidas = Number(estado.mesaWidgetNaoLidas || 0) || 0;
+        const modelo = NOMES_TEMPLATES[estado.tipoTemplateAtivo] || NOMES_TEMPLATES.padrao;
+        const operacao = obterOperacaoWorkspace();
+        const equipamento = String(estado.workspaceVisualContext?.title || "Registro técnico").trim() || "Registro técnico";
+        const ultimoMovimento = resumo.descricao || "Sem atualização recente.";
+        let proximoPasso = "Use o canal para alinhar dúvidas ou anexar novas evidências.";
+
+        if (pendencias > 0) {
+            proximoPasso = "Responda às pendências abertas para destravar a revisão.";
+        } else if (naoLidas > 0) {
+            proximoPasso = "Leia o retorno mais recente da mesa e ajuste o laudo se necessário.";
+        } else if (resumo.status === "aguardando") {
+            proximoPasso = "Aguarde a resposta da mesa ou complemente o caso com novo contexto.";
+        }
+
+        if (el.workspaceMesaCardText) {
+            el.workspaceMesaCardText.textContent = resumo.descricao;
+        }
+        if (el.workspaceMesaCardStatus) {
+            el.workspaceMesaCardStatus.textContent = resumo.chipStatus || resumo.titulo;
+            el.workspaceMesaCardStatus.dataset.mesaStatus = String(resumo.status || "pronta");
+        }
+        if (el.workspaceMesaCardUnread) {
+            el.workspaceMesaCardUnread.hidden = naoLidas <= 0;
+            el.workspaceMesaCardUnread.textContent = naoLidas > 99 ? "99+ novas" : `${naoLidas} novas`;
+        }
+        if (el.workspaceMesaStageStatus) {
+            el.workspaceMesaStageStatus.textContent = resumo.chipStatus || resumo.titulo;
+        }
+        if (el.workspaceMesaStagePendencias) {
+            el.workspaceMesaStagePendencias.textContent = String(pendencias);
+        }
+        if (el.workspaceMesaStageEvidencias) {
+            el.workspaceMesaStageEvidencias.textContent = String(evidencias);
+        }
+        if (el.workspaceMesaStageUnread) {
+            el.workspaceMesaStageUnread.textContent = String(naoLidas);
+        }
+        if (el.workspaceMesaStageSummary) {
+            el.workspaceMesaStageSummary.textContent = resumo.descricao;
+        }
+        if (el.workspaceMesaStageNextStep) {
+            el.workspaceMesaStageNextStep.textContent = proximoPasso;
+        }
+        if (el.workspaceMesaStageTemplate) {
+            el.workspaceMesaStageTemplate.textContent = modelo;
+        }
+        if (el.workspaceMesaStageOperation) {
+            el.workspaceMesaStageOperation.textContent = operacao;
+        }
+        if (el.workspaceMesaStageEquipment) {
+            el.workspaceMesaStageEquipment.textContent = equipamento;
+        }
+        if (el.workspaceMesaStageLastMovement) {
+            el.workspaceMesaStageLastMovement.textContent = ultimoMovimento;
+        }
+    }
+
+    function obterListaComandosSlash(query = "") {
+        const termo = String(query || "").trim().toLowerCase();
+        if (!termo) return [...COMANDOS_SLASH];
+        return COMANDOS_SLASH.filter((comando) => {
+            const universo = [
+                comando.id,
+                comando.titulo,
+                comando.descricao,
+                comando.atalho,
+            ].join(" ").toLowerCase();
+            return universo.includes(termo);
+        });
+    }
+
+    function fecharSlashCommandPalette() {
+        estado.slashIndiceAtivo = 0;
+        if (el.slashCommandPalette) {
+            el.slashCommandPalette.hidden = true;
+            el.slashCommandPalette.innerHTML = "";
+        }
+    }
+
+    function renderizarSlashCommandPalette(query = "") {
+        if (!el.slashCommandPalette) return;
+
+        const lista = obterListaComandosSlash(query);
+        if (!lista.length) {
+            el.slashCommandPalette.hidden = false;
+            el.slashCommandPalette.innerHTML = `
+                <div class="slash-command-item is-active">
+                    <div>
+                        <strong>Nenhum comando encontrado</strong>
+                        <p>Tente /resumir, /pendencias, /mesa ou /gerar-conclusao.</p>
+                    </div>
+                    <kbd>Esc</kbd>
+                </div>
+            `;
+            return;
+        }
+
+        estado.slashIndiceAtivo = Math.max(0, Math.min(estado.slashIndiceAtivo, lista.length - 1));
+        el.slashCommandPalette.hidden = false;
+        el.slashCommandPalette.innerHTML = lista
+            .map((comando, index) => `
+                <button
+                    type="button"
+                    class="slash-command-item${index === estado.slashIndiceAtivo ? " is-active" : ""}"
+                    data-slash-command="${escaparHtml(comando.id)}"
+                >
+                    <div>
+                        <strong>${escaparHtml(comando.atalho)}</strong>
+                        <p>${escaparHtml(comando.descricao)}</p>
+                    </div>
+                    <kbd>${escaparHtml(comando.titulo)}</kbd>
+                </button>
+            `)
+            .join("");
+    }
+
+    function definirValorComposer(texto = "", { substituir = true } = {}) {
+        if (!el.campoMensagem) return false;
+
+        const valorNovo = String(texto || "").trim();
+        if (!valorNovo) return false;
+
+        el.campoMensagem.value = substituir
+            ? valorNovo
+            : [String(el.campoMensagem.value || "").trim(), valorNovo].filter(Boolean).join("\n");
+        el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
+
+        try {
+            el.campoMensagem.focus({ preventScroll: true });
+        } catch (_) {
+            el.campoMensagem.focus();
+        }
+
+        if (typeof el.campoMensagem.setSelectionRange === "function") {
+            const fim = el.campoMensagem.value.length;
+            el.campoMensagem.setSelectionRange(fim, fim);
+        }
+
+        return true;
+    }
+
+    async function abrirMesaComContexto(detail = {}) {
+        if (!obterLaudoAtivoIdSeguro()) {
+            avisarMesaExigeInspecao();
+            return;
+        }
+
+        atualizarThreadWorkspace("mesa", {
+            persistirURL: true,
+            replaceURL: true,
+        });
+        await abrirMesaWidget();
+
+        const mensagemId = Number(detail?.mensagemId || 0) || null;
+        const textoBase = String(detail?.texto || "").trim();
+        if (mensagemId && textoBase) {
+            definirReferenciaMesaWidget({
+                id: mensagemId,
+                texto: textoBase,
+            });
+        }
+
+        if (el.mesaWidgetInput) {
+            const mensagem = String(detail?.mensagem || "").trim() || (
+                textoBase
+                    ? `Preciso de validação da mesa sobre este trecho:\n\n"${textoBase}"`
+                    : "Solicito validação da mesa para este laudo."
+            );
+            el.mesaWidgetInput.value = mensagem;
+            el.mesaWidgetInput.dispatchEvent(new Event("input", { bubbles: true }));
+            el.mesaWidgetInput.focus();
+        }
+
+        atualizarStatusChatWorkspace("mesa", "Canal da mesa pronto para revisão.");
+        mostrarToast("Canal da mesa aberto com contexto aplicado.", "sucesso", 1800);
+    }
+
+    function montarMensagemReemissaoWorkspace(detail = {}) {
+        const resumoGovernanca = construirResumoGovernancaHistoricoWorkspace();
+        const partes = ["Solicito revisão para reemissão do documento oficial deste caso."];
+
+        if (resumoGovernanca.visible && resumoGovernanca.detail) {
+            partes.push(resumoGovernanca.detail);
+        }
+
+        const textoBase = String(detail?.texto || "").trim();
+        if (textoBase) {
+            partes.push(`Trecho de apoio:\n\n"${textoBase}"`);
+        }
+
+        return partes.join("\n\n");
+    }
+
+    async function abrirReemissaoWorkspace(detail = {}) {
+        await abrirMesaComContexto({
+            ...detail,
+            mensagem: montarMensagemReemissaoWorkspace(detail),
+        });
+    }
+
+    function obterEntradaReemissaoWorkspace(detail = {}) {
+        const snapshot = obterSnapshotEstadoInspectorAtual();
+        const laudoAtivoId = normalizarLaudoAtualId(snapshot?.laudoAtualId);
+        const resumoGovernanca = construirResumoGovernancaHistoricoWorkspace();
+
+        if (!laudoAtivoId || !estadoRelatorioPossuiContexto(snapshot?.estadoRelatorio) || !resumoGovernanca.visible) {
+            return null;
+        }
+
+        return {
+            ...detail,
+            laudoId: laudoAtivoId,
+            resumoGovernanca,
+            texto: String(detail?.texto || "").trim(),
+        };
+    }
+
+    function limparComposerWorkspace() {
+        if (!el.campoMensagem) return;
+        el.campoMensagem.value = "";
+        el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    function obterTextoDeApoioComposer() {
+        const texto = String(el.campoMensagem?.value || "").trim();
+        if (!texto || texto.startsWith("/")) {
+            return "";
+        }
+        return texto;
+    }
+
+    function redirecionarEntradaParaReemissaoWorkspace(detail = {}) {
+        const entrada = obterEntradaReemissaoWorkspace(detail);
+        if (!entrada) return false;
+
+        if (detail?.limparComposer) {
+            limparComposerWorkspace();
+        }
+
+        abrirReemissaoWorkspace(entrada).catch(() => {});
+        return true;
+    }
+
+    function executarComandoSlash(comandoId, { origem = "palette" } = {}) {
+        const comando = COMANDOS_SLASH.find((item) => item.id === comandoId);
+        if (!comando) return false;
+
+        fecharSlashCommandPalette();
+
+        if (comando.id === "mesa") {
+            const redirecionado = redirecionarEntradaParaReemissaoWorkspace({
+                origem: `slash_${origem}`,
+                texto: obterTextoDeApoioComposer(),
+                limparComposer: true,
+            });
+            if (!redirecionado) {
+                abrirMesaComContexto({
+                    mensagem: `Solicito validação da mesa sobre este laudo.\n\n${montarResumoContextoIAWorkspace()}`,
+                }).catch(() => {});
+            }
+            if (el.campoMensagem) {
+                el.campoMensagem.value = "";
+                el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
+            }
+            return true;
+        }
+
+        const aplicado = definirValorComposer(comando.prompt, { substituir: true });
+        if (aplicado && origem !== "atalho") {
+            mostrarToast(`${comando.atalho} aplicado no composer.`, "info", 1800);
+        }
+        return aplicado;
+    }
+
+    function renderizarSugestoesComposer() {
+        if (!el.composerSuggestions) return;
+
+        if (resolveWorkspaceView() === "assistant_landing") {
+            const sugestoesEntrada = SUGESTOES_ENTRADA_ASSISTENTE.slice(0, 3);
+            el.composerSuggestions.innerHTML = sugestoesEntrada
+                .map((sugestao) => `
+                    <button
+                        type="button"
+                        class="composer-suggestion composer-suggestion--entry"
+                        data-suggestion-text="${escaparHtml(sugestao.prompt)}"
+                        data-suggestion-priority="${escaparHtml(sugestao.prioridade || "secondary")}"
+                    >
+                        <span>${escaparHtml(sugestao.titulo)}</span>
+                    </button>
+                `)
+                .join("");
+            return;
+        }
+
+        if (conversaWorkspaceModoChatAtivo()) {
+            el.composerSuggestions.innerHTML = "";
+            return;
+        }
+
+        const resumoGovernanca = construirResumoGovernancaHistoricoWorkspace();
+        const sugestoes = COMANDOS_SLASH
+            .filter((comando) => comando.sugestao)
+            .filter((comando) => !resumoGovernanca.visible || comando.id !== "mesa")
+            .slice(0, resumoGovernanca.visible ? 2 : 3);
+        const sugestoesMarkup = [];
+
+        if (resumoGovernanca.visible) {
+            sugestoesMarkup.push(`
+                <button
+                    type="button"
+                    class="composer-suggestion composer-suggestion--warning"
+                    data-suggestion-action="reissue"
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+                    <span>${escaparHtml(resumoGovernanca.actionLabel || "Abrir reemissão na Mesa")}</span>
+                </button>
+            `);
+        }
+
+        sugestoesMarkup.push(...sugestoes.map((comando) => `
+                <button
+                    type="button"
+                    class="composer-suggestion"
+                    data-suggestion-command="${escaparHtml(comando.id)}"
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">${escaparHtml(comando.icone)}</span>
+                    <span>${escaparHtml(comando.titulo)}</span>
+                </button>
+            `));
+
+        el.composerSuggestions.innerHTML = sugestoesMarkup.join("");
+    }
+
+    function atualizarRecursosComposerWorkspace() {
+        const valor = String(el.campoMensagem?.value || "").trimStart();
+        if (valor.startsWith("/")) {
+            renderizarSlashCommandPalette(valor.slice(1));
+        } else {
+            fecharSlashCommandPalette();
+        }
+    }
+
+    function registrarPromptHistorico(texto = "") {
+        const valor = String(texto || "").trim();
+        if (!valor) return;
+
+        estado.historicoPrompts = [
+            valor,
+            ...(estado.historicoPrompts || []).filter((item) => item !== valor),
+        ].slice(0, 20);
+        estado.indiceHistoricoPrompt = -1;
+        estado.rascunhoHistoricoPrompt = "";
+    }
+
+    function navegarHistoricoPrompts(direcao = -1) {
+        const historico = Array.isArray(estado.historicoPrompts) ? estado.historicoPrompts : [];
+        if (!historico.length || !el.campoMensagem) return false;
+
+        if (estado.indiceHistoricoPrompt === -1) {
+            estado.rascunhoHistoricoPrompt = String(el.campoMensagem.value || "");
+        }
+
+        const proximoIndice = estado.indiceHistoricoPrompt + direcao;
+        if (proximoIndice < -1 || proximoIndice >= historico.length) return false;
+
+        estado.indiceHistoricoPrompt = proximoIndice;
+        const proximoValor = proximoIndice === -1
+            ? estado.rascunhoHistoricoPrompt
+            : historico[proximoIndice];
+
+        el.campoMensagem.value = proximoValor;
+        el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+    }
+
+    function onCampoMensagemWorkspaceKeydown(event) {
+        const valor = String(el.campoMensagem?.value || "").trimStart();
+        const paletteAberto = !el.slashCommandPalette?.hidden && valor.startsWith("/");
+
+        if (paletteAberto) {
+            const lista = obterListaComandosSlash(valor.slice(1));
+
+            if (event.key === "ArrowDown") {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                estado.slashIndiceAtivo = Math.min(
+                    Math.max(lista.length - 1, 0),
+                    estado.slashIndiceAtivo + 1
+                );
+                renderizarSlashCommandPalette(valor.slice(1));
+                return;
+            }
+
+            if (event.key === "ArrowUp") {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                estado.slashIndiceAtivo = Math.max(0, estado.slashIndiceAtivo - 1);
+                renderizarSlashCommandPalette(valor.slice(1));
+                return;
+            }
+
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const comando = lista[estado.slashIndiceAtivo] || lista[0];
+                if (comando) {
+                    executarComandoSlash(comando.id);
+                }
+                return;
+            }
+
+            if (event.key === "Escape") {
+                fecharSlashCommandPalette();
+                return;
+            }
+        }
+
+        if (event.altKey && event.key === "ArrowUp") {
+            if (navegarHistoricoPrompts(1)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+            return;
+        }
+
+        if (event.altKey && event.key === "ArrowDown") {
+            if (navegarHistoricoPrompts(-1)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+            return;
+        }
+
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey &&
+            !event.altKey &&
+            !event.ctrlKey &&
+            !event.metaKey
+        ) {
+            const textoComposer = obterTextoDeApoioComposer();
+            if (textoComposer && redirecionarEntradaParaReemissaoWorkspace({
+                origem: "composer_enter",
+                texto: textoComposer,
+                limparComposer: true,
+            })) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                return;
+            }
+            prepararComposerParaEnvioModoEntrada();
+            armarPrimeiroEnvioNovoChatPendente();
+        }
+    }
+
+    function prepararComposerParaEnvioModoEntrada() {
+        if (!modoEntradaEvidenceFirstAtivo()) return;
+
+        const snapshot = obterSnapshotEstadoInspectorAtual();
+        if (snapshot.workspaceStage !== "inspection") return;
+
+        const viewAtual = resolveWorkspaceView(snapshot.inspectorScreen || resolveInspectorScreen());
+        if (viewAtual !== "inspection_record") return;
+
+        atualizarThreadWorkspace("conversa", {
+            persistirURL: true,
+            replaceURL: true,
+        });
+    }
+
+    function citarMensagemWorkspace(detail = {}) {
+        const texto = String(detail?.texto || "").trim() || (
+            Array.isArray(detail?.anexos)
+                ? detail.anexos.map((anexo) => String(anexo?.nome || "").trim()).filter(Boolean).join(" • ")
+                : ""
+        );
+        if (!texto) return;
+
+        const autor = String(detail?.autor || "Registro").trim() || "Registro";
+        definirValorComposer(`> ${autor}: ${texto}`, { substituir: false });
+        mostrarToast("Trecho citado no composer.", "info", 1800);
+    }
+
+    function normalizarPapelLinhaWorkspace(linha) {
+        if (!linha) return "assistant";
+        if (linha.classList.contains("mensagem-sistema")) return "system";
+        if (linha.classList.contains("mensagem-origem-mesa")) return "mesa";
+        if (linha.classList.contains("mensagem-inspetor") || linha.classList.contains("mensagem-usuario")) return "user";
+        return "assistant";
+    }
+
+    function aplicarModifierLinhaWorkspace(linha, papel = "assistant") {
+        if (!linha) return;
+
+        linha.classList.add("workspace-message-row");
+        linha.classList.remove(
+            "workspace-message-row--assistant",
+            "workspace-message-row--user",
+            "workspace-message-row--mesa",
+            "workspace-message-row--system"
+        );
+
+        if (papel === "user") {
+            linha.classList.add("workspace-message-row--user");
+        } else if (papel === "mesa") {
+            linha.classList.add("workspace-message-row--mesa");
+        } else if (papel === "system") {
+            linha.classList.add("workspace-message-row--system");
+        } else {
+            linha.classList.add("workspace-message-row--assistant");
+        }
+
+        linha.dataset.messageVariant = papel;
+    }
+
+    function normalizarEstruturaLinhaWorkspace(linha) {
+        if (!linha) return { papel: "assistant", corpo: null };
+
+        const papel = normalizarPapelLinhaWorkspace(linha);
+        aplicarModifierLinhaWorkspace(linha, papel);
+
+        const shell = linha.querySelector(".conteudo-mensagem");
+        if (shell) {
+            shell.classList.add("workspace-message-shell");
+        }
+
+        const avatar = linha.querySelector(".avatar");
+        if (avatar) {
+            avatar.classList.add("workspace-message-avatar");
+        }
+
+        const corpo = linha.querySelector(".corpo-texto");
+        if (!corpo) {
+            return { papel, corpo: null };
+        }
+
+        corpo.classList.add("workspace-message-card");
+        corpo.querySelectorAll(".mensagem-meta").forEach((meta) => {
+            meta.classList.add("workspace-message-meta");
+        });
+        corpo.querySelectorAll(".texto-msg, .texto-msg-origem").forEach((blocoTexto) => {
+            blocoTexto.classList.add("workspace-message-body");
+        });
+        corpo.querySelectorAll(".bloco-referencia-chat").forEach((referencia) => {
+            referencia.classList.add("workspace-message-reference");
+        });
+        corpo.querySelectorAll(".mensagem-anexos").forEach((anexos) => {
+            anexos.classList.add("workspace-message-attachments");
+        });
+        corpo.querySelectorAll(".mensagem-anexo-chip").forEach((chip) => {
+            chip.classList.add("workspace-message-attachment");
+        });
+
+        const blocosAcoes = Array.from(linha.querySelectorAll(".acoes-mensagem, .workspace-message-actions"));
+        let blocoPrincipal = null;
+        blocosAcoes.forEach((bloco) => {
+            if (!blocoPrincipal) {
+                blocoPrincipal = bloco;
+                return;
+            }
+            bloco.remove();
+        });
+
+        if (blocoPrincipal) {
+            blocoPrincipal.classList.add("workspace-message-actions");
+            blocoPrincipal.querySelectorAll(".sep-acao").forEach((separador) => {
+                separador.remove();
+            });
+            blocoPrincipal.querySelectorAll(".btn-acao-msg, .workspace-message-action").forEach((botao) => {
+                botao.classList.add("workspace-message-action");
+                const spans = botao.querySelectorAll("span");
+                if (spans.length <= 1) {
+                    botao.classList.add("workspace-message-action--icon-only");
+                }
+            });
+            if (blocoPrincipal.parentElement !== corpo) {
+                corpo.appendChild(blocoPrincipal);
+            }
+        }
+
+        return { papel, corpo };
+    }
+
+    function criarBotaoAcaoWorkspace(icone, rotulo, nomeEvento, detalhe) {
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.className = "workspace-message-action";
+        botao.dataset.workspaceAction = nomeEvento;
+        botao.innerHTML = `
+            <span class="material-symbols-rounded" aria-hidden="true">${icone}</span>
+            <span>${escaparHtml(rotulo)}</span>
+        `;
+        botao.addEventListener("click", () => {
+            document.dispatchEvent(new CustomEvent(`tariel:mensagem-${nomeEvento}`, {
+                detail: detalhe,
+                bubbles: true,
+            }));
+        });
+        return botao;
+    }
+
+    function decorarLinhasWorkspace() {
+        coletarLinhasWorkspace().forEach((linha) => {
+            const { papel, corpo } = normalizarEstruturaLinhaWorkspace(linha);
+            if (!corpo || papel === "assistant" || papel === "system") return;
+            if (linha.querySelector(".workspace-message-actions")) return;
+
+            const detalhe = obterDetalheLinhaWorkspace(linha);
+            if (!detalhe.texto) return;
+
+            const acoes = document.createElement("div");
+            acoes.className = `workspace-message-actions workspace-message-actions--${papel}`;
+            acoes.appendChild(criarBotaoAcaoWorkspace("content_copy", "Copiar", "copiar", detalhe));
+            acoes.appendChild(criarBotaoAcaoWorkspace("format_quote", "Citar", "citar", detalhe));
+            acoes.appendChild(criarBotaoAcaoWorkspace("support_agent", "Mesa", "enviar-mesa", detalhe));
+            acoes.appendChild(criarBotaoAcaoWorkspace("keep", "Fixar", "fixar-contexto", detalhe));
+            corpo.appendChild(acoes);
+        });
+    }
+
+    function coletarLinhasWorkspace() {
+        return Array.from(document.querySelectorAll("#area-mensagens .linha-mensagem"))
+            .filter((linha) => linha.id !== "indicador-digitando");
+    }
+
+    function atualizarThreadWorkspace(tab = "conversa", options = {}) {
+        const { persistirURL = false, replaceURL = false } = options && typeof options === "object"
+            ? options
+            : {};
+        const tabNormalizada = normalizarThreadTab(tab);
+
+        sincronizarEstadoInspector({
+            threadTab: tabNormalizada,
+            ...(tabNormalizada !== "conversa"
+                ? {
+                    assistantLandingFirstSendPending: false,
+                    freeChatConversationActive: false,
+                }
+                : {}),
+        }, { persistirStorage: false });
+
+        if (typeof window.TarielChatPainel?.selecionarThreadTab === "function") {
+            window.TarielChatPainel.selecionarThreadTab(tabNormalizada, { emit: false });
+        }
+        if (persistirURL && typeof window.TarielChatPainel?.definirThreadTabNaURL === "function") {
+            window.TarielChatPainel.definirThreadTabNaURL(tabNormalizada, {
+                replace: replaceURL,
+                laudoId: obterLaudoAtivoIdSeguro() || estado.laudoAtualId || null,
+            });
+        }
+        if (el.workspaceAnexosPanel) {
+            el.workspaceAnexosPanel.setAttribute(
+                "aria-hidden",
+                String(tabNormalizada !== "anexos")
+            );
+        }
+
+        if (tabNormalizada === "anexos") {
+            renderizarAnexosWorkspace();
+        } else if (tabNormalizada === "historico") {
+            filtrarTimelineWorkspace();
+        }
+
+        renderizarResumoNavegacaoWorkspace();
+        sincronizarInspectorScreen();
+        window.requestAnimationFrame(() => {
+            atualizarControlesWorkspaceStage();
+        });
+    }
+
+    function montarDiagnosticoPreviewWorkspace() {
+        const diagnosticoAtual = String(window.TarielAPI?.obterUltimoDiagnosticoBruto?.() || "").trim();
+        if (diagnosticoAtual) {
+            return diagnosticoAtual;
+        }
+
+        const linhas = coletarLinhasWorkspace();
+        if (!linhas.length) {
+            return "";
+        }
+
+        const titulo = String(estado.workspaceVisualContext?.title || "Registro Técnico").trim();
+        const subtitulo = String(estado.workspaceVisualContext?.subtitle || "").trim();
+        const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
+        const evidencias = contarEvidenciasWorkspace();
+        const blocos = [
+            `Registro Técnico: ${titulo}`,
+            subtitulo || "Sem subtítulo operacional disponível.",
+            `Evidências mapeadas: ${evidencias}`,
+            `Pendências abertas: ${pendencias}`,
+            "",
+            "Resumo auditável da sessão:",
+        ];
+
+        linhas.slice(-12).forEach((linha) => {
+            const meta = extrairMetaLinhaWorkspace(linha);
+            const resumo = String(meta.resumo || "").trim();
+            if (!resumo) return;
+
+            const prefixo = [meta.autor, meta.tempo].filter(Boolean).join(" • ");
+            blocos.push(`- ${prefixo ? `${prefixo}: ` : ""}${resumo}`);
+        });
+
+        return blocos.join("\n").trim();
+    }
+
+    async function abrirPreviewWorkspace() {
+        const diagnostico = montarDiagnosticoPreviewWorkspace();
+        if (!diagnostico) {
+            mostrarToast("Ainda não há pré-visualização disponível para este laudo.", "aviso", 2600);
+            return;
+        }
+
+        const laudoId = Number(obterLaudoAtivoIdSeguro() || 0) || null;
+        const response = await fetch("/app/api/gerar_pdf", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: obterHeadersComCSRF({
+                Accept: "application/pdf",
+                "Content-Type": "application/json",
+            }),
+            body: JSON.stringify({
+                diagnostico,
+                inspetor: String(window.TARIEL?.usuario || "Inspetor"),
+                empresa: String(window.TARIEL?.empresa || "Empresa"),
+                setor: "geral",
+                data: new Date().toLocaleDateString("pt-BR"),
+                laudo_id: laudoId,
+                tipo_template: String(estado.tipoTemplateAtivo || "padrao"),
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(await extrairMensagemErroHTTP(response, "Falha ao abrir a pré-visualização."));
+        }
+
+        const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+        if (!contentType.includes("application/pdf")) {
+            throw new Error("Resposta inválida para pré-visualização.");
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const previewTab = window.open(url, "_blank", "noopener,noreferrer");
+
+        if (!previewTab) {
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `preview_laudo_${laudoId || "tariel"}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        window.setTimeout(() => URL.revokeObjectURL(url), 45000);
+    }
+    function obterElementosFocaveis(container) {
+        if (!container) return [];
+
+        return Array.from(
+            container.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            )
+        ).filter((node) =>
+            !node.disabled &&
+            !node.hidden &&
+            !node.classList?.contains("select-proxy-ativo") &&
+            node.getClientRects().length > 0
+        );
+    }
+
+    function limparTimerBanner() {
+        if (!estado.timerBanner) return;
+        window.clearTimeout(estado.timerBanner);
+        estado.timerBanner = null;
+    }
+
+    function limparTimerReconexaoSSE() {
+        if (!estado.timerReconexaoSSE) return;
+        window.clearTimeout(estado.timerReconexaoSSE);
+        estado.timerReconexaoSSE = null;
+    }
+
+    function limparTimerFecharMesaWidget() {
+        if (!estado.timerFecharMesaWidget) return;
+        window.clearTimeout(estado.timerFecharMesaWidget);
+        estado.timerFecharMesaWidget = null;
+    }
+
+    function ehAbortError(erro) {
+        return erro?.name === "AbortError" || erro?.code === DOMException.ABORT_ERR;
+    }
+
+    function cancelarCarregamentoPendenciasMesa() {
+        if (!estado.pendenciasAbortController) return;
+        estado.pendenciasAbortController.abort();
+        estado.pendenciasAbortController = null;
+        estado.carregandoPendencias = false;
+    }
+
+    function cancelarCarregamentoMensagensMesaWidget() {
+        if (!estado.mesaWidgetAbortController) return;
+        estado.mesaWidgetAbortController.abort();
+        estado.mesaWidgetAbortController = null;
+        estado.mesaWidgetCarregando = false;
+    }
+
+    function fecharSSE(fonte = estado.fonteSSE) {
+        if (!fonte) return;
+
+        try {
+            fonte.close();
+        } catch (_) {
+            // silêncio intencional
+        }
+
+        if (estado.fonteSSE === fonte) {
+            estado.fonteSSE = null;
+        }
+    }
+
+    function definirBotaoIniciarCarregando(ativo) {
+        if (!el.btnConfirmarInspecao) return;
+
+        const rotulo = ativo ? "Criando..." : "Criar Inspeção";
+        const alvoTexto = el.btnConfirmarInspecao.querySelector("span:last-child");
+        if (alvoTexto) {
+            alvoTexto.textContent = rotulo;
+        } else {
+            el.btnConfirmarInspecao.textContent = rotulo;
+        }
+        el.btnConfirmarInspecao.setAttribute("aria-busy", String(!!ativo));
+        atualizarEstadoAcaoModalNovaInspecao();
+    }
+
+    function definirBotaoFinalizarCarregando(ativo) {
+        const botoes = el.botoesFinalizarInspecao?.length
+            ? el.botoesFinalizarInspecao
+            : (el.btnFinalizarInspecao ? [el.btnFinalizarInspecao] : []);
+
+        botoes.forEach((botao) => {
+            botao.disabled = !!ativo;
+            botao.setAttribute("aria-busy", String(!!ativo));
+        });
+        sincronizarRotuloAcaoFinalizacaoWorkspace({ carregando: !!ativo });
+    }
+
+    function definirBotaoPreviewCarregando(ativo) {
+        [el.btnWorkspacePreview, el.btnWorkspacePreviewRail].forEach((botao) => {
+            if (!botao) return;
+            botao.disabled = !!ativo;
+            botao.setAttribute("aria-busy", String(!!ativo));
+            botao.textContent = ativo ? "Gerando..." : "Pré-visualizar";
+        });
+    }
+
+    function definirBotaoLaudoCarregando(botao, ativo) {
+        if (!botao) return;
+
+        botao.disabled = !!ativo;
+        botao.setAttribute("aria-busy", String(!!ativo));
+    }
+
+    function normalizarStatusMesa(valor) {
+        const status = String(valor || "").trim().toLowerCase();
+
+        if (!status) return "pronta";
+        if (status === "canal" || status === "ativo") return "canal_ativo";
+        if (status === "pendencia" || status === "pendencia_aberta") return "pendencia_aberta";
+
+        return CONFIG_STATUS_MESA[status] ? status : "pronta";
+    }
+
+    function obterLaudoAtivo() {
+        return Number(window.TarielAPI?.obterLaudoAtualId?.() || 0) || null;
+    }
+
+    function avisarMesaExigeInspecao() {
+        mostrarToast(MENSAGEM_MESA_EXIGE_INSPECAO, "aviso", 3200);
+    }
+
+    function emitirSincronizacaoLaudo(payload = {}, { selecionar = false } = {}) {
+        const laudoId = Number(
+            payload?.laudo_id ??
+            payload?.laudoId ??
+            payload?.laudo_card?.id ??
+            0
+        ) || null;
+        const payloadSincronizado = laudoId
+            ? enriquecerPayloadLaudoComContextoVisual(
+                payload,
+                obterContextoVisualLaudoRegistrado(laudoId)
+            )
+            : payload;
+        registrarUltimoPayloadStatusRelatorioWorkspace(payloadSincronizado);
+
+        if (payloadSincronizado?.laudo_card?.id) {
+            emitirEventoTariel("tariel:laudo-card-sincronizado", {
+                card: payloadSincronizado.laudo_card,
+                selecionar,
+            });
+        }
+
+        if (!payloadSincronizado?.estado) return;
+
+        emitirEventoTariel("tariel:estado-relatorio", {
+            estado: payloadSincronizado.estado,
+            laudo_id: payloadSincronizado.laudo_id ?? payloadSincronizado.laudoId ?? payloadSincronizado?.laudo_card?.id ?? null,
+            permite_reabrir: !!payloadSincronizado.permite_reabrir,
+            permite_edicao: !!payloadSincronizado.permite_edicao,
+            status_card: payloadSincronizado.status_card || payloadSincronizado?.laudo_card?.status_card || "",
+            case_lifecycle_status:
+                payloadSincronizado.case_lifecycle_status ??
+                payloadSincronizado?.laudo_card?.case_lifecycle_status ??
+                "",
+            case_workflow_mode:
+                payloadSincronizado.case_workflow_mode ??
+                payloadSincronizado?.laudo_card?.case_workflow_mode ??
+                "",
+            active_owner_role:
+                payloadSincronizado.active_owner_role ??
+                payloadSincronizado?.laudo_card?.active_owner_role ??
+                "",
+            allowed_next_lifecycle_statuses:
+                payloadSincronizado.allowed_next_lifecycle_statuses ??
+                payloadSincronizado?.laudo_card?.allowed_next_lifecycle_statuses ??
+                [],
+            allowed_lifecycle_transitions:
+                payloadSincronizado.allowed_lifecycle_transitions ??
+                payloadSincronizado?.laudo_card?.allowed_lifecycle_transitions ??
+                [],
+            allowed_surface_actions:
+                payloadSincronizado.allowed_surface_actions ??
+                payloadSincronizado?.laudo_card?.allowed_surface_actions ??
+                [],
+            entry_mode_preference:
+                payloadSincronizado.entry_mode_preference ??
+                payloadSincronizado.entryModePreference ??
+                payloadSincronizado?.laudo_card?.entry_mode_preference ??
+                null,
+            entry_mode_effective:
+                payloadSincronizado.entry_mode_effective ??
+                payloadSincronizado.entryModeEffective ??
+                payloadSincronizado?.laudo_card?.entry_mode_effective ??
+                null,
+            entry_mode_reason:
+                payloadSincronizado.entry_mode_reason ??
+                payloadSincronizado.entryModeReason ??
+                payloadSincronizado?.laudo_card?.entry_mode_reason ??
+                null,
+            public_verification:
+                payloadSincronizado.public_verification ??
+                null,
+            emissao_oficial:
+                payloadSincronizado.emissao_oficial ??
+                null,
+        });
+    }
+
+    function obterTokenCsrf() {
+        return document.querySelector('meta[name="csrf-token"]')?.content || "";
+    }
+
+    function limparEstadoHomeNoCliente() {
+        try {
+            localStorage.removeItem("tariel_laudo_atual");
+        } catch (_) {
+            // silêncio intencional
+        }
+
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("laudo");
+            url.searchParams.delete("aba");
+            history.replaceState({ laudoId: null, threadTab: null }, "", url.toString());
+        } catch (_) {
+            // silêncio intencional
+        }
+
+        sincronizarEstadoInspector({
+            laudoAtualId: null,
+            forceHomeLanding: false,
+        }, {
+            persistirStorage: false,
+        });
+    }
+
+    async function desativarContextoAtivoParaHome() {
+        const laudoAtivo = obterLaudoAtivo();
+        const estadoAtual = obterEstadoRelatorioAtualSeguro();
+
+        if (!laudoAtivo && estadoAtual !== "relatorio_ativo") {
+            return true;
+        }
+
+        try {
+            const resposta = await fetch("/app/api/laudo/desativar", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Accept": "application/json",
+                    "X-CSRF-Token": obterTokenCsrf(),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
+
+            return resposta.ok;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function marcarForcaTelaInicial() {
+        sincronizarEstadoInspector({ forceHomeLanding: true });
+    }
+
+    function paginaSolicitaHomeLanding() {
+        const snapshot = obterSnapshotEstadoInspectorAtual();
+        return !!snapshot.forceHomeLanding || lerFlagForcaHomeStorage() || paginaSolicitaHomeLandingViaURL();
+    }
+
+    function limparForcaTelaInicial() {
+        sincronizarEstadoInspector({ forceHomeLanding: false });
+
+        try {
+            const url = new URL(window.location.href);
+            if (url.searchParams.get("home") === "1") {
+                url.searchParams.delete("home");
+                history.replaceState(history.state || {}, "", url.toString());
+            }
+        } catch (_) {
+            // silêncio intencional
+        }
+    }
+
+    function homeForcadoAtivo() {
+        return !!obterSnapshotEstadoInspectorAtual().forceHomeLanding || paginaSolicitaHomeLandingViaURL();
+    }
+
+    function entradaChatLivreDisponivel(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        return !normalizarLaudoAtualId(snapshot?.laudoAtualId) && !estadoRelatorioPossuiContexto(snapshot?.estadoRelatorio);
+    }
+
+    function origemChatLivreEhPortal(origem = "") {
+        return String(origem || "").trim() === "portal-open-chat";
+    }
+
+    function resolverDisponibilidadeBotaoChatLivre(botao, snapshot = obterSnapshotEstadoInspectorAtual()) {
+        if (!botao) return false;
+
+        if (origemChatLivreEhPortal(botao.dataset.inspectorEntry)) {
+            return true;
+        }
+
+        return entradaChatLivreDisponivel(snapshot);
+    }
+
+    function modoFocoPodePromoverPortalParaChat(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        if (!document.body.classList.contains("modo-foco")) {
+            return false;
+        }
+
+        const screenBase = String(
+            snapshot?.inspectorBaseScreen ||
+            resolveInspectorBaseScreen()
+        ).trim();
+        if (screenBase !== "portal_dashboard") {
+            return false;
+        }
+
+        if (String(snapshot?.overlayOwner || "").trim()) {
+            return false;
+        }
+
+        const laudoId = normalizarLaudoAtualId(
+            snapshot?.laudoAtualId ??
+            estado.laudoAtualId ??
+            obterLaudoAtivoIdSeguro()
+        );
+        const estadoRelatorio = normalizarEstadoRelatorio(
+            snapshot?.estadoRelatorio ??
+            estado.estadoRelatorio ??
+            obterEstadoRelatorioAtualSeguro()
+        );
+        const workspaceStage = normalizarWorkspaceStage(
+            snapshot?.workspaceStage ??
+            estado.workspaceStage
+        );
+
+        return !laudoId
+            && !estadoRelatorioPossuiContexto(estadoRelatorio)
+            && workspaceStage === "assistant";
+    }
+
+    function sincronizarVisibilidadeAcoesChatLivre(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const botoes = Array.isArray(el.botoesAbrirChatLivre) ? el.botoesAbrirChatLivre : [];
+        let algumDisponivel = false;
+
+        botoes.forEach((botao) => {
+            if (!botao) return;
+            const disponivel = resolverDisponibilidadeBotaoChatLivre(botao, snapshot);
+            botao.hidden = !disponivel;
+            botao.disabled = !disponivel;
+            botao.setAttribute("aria-hidden", String(!disponivel));
+            algumDisponivel = algumDisponivel || disponivel;
+        });
+
+        return algumDisponivel;
+    }
+
+    function layoutInspectorCompacto() {
+        return window.innerWidth <= BREAKPOINT_LAYOUT_INSPETOR_COMPACTO;
+    }
+
+    function resolverMatrizVisibilidadeInspector(screen = resolveInspectorScreen(), snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const screenBase = screen === "new_inspection"
+            ? (snapshot.inspectorBaseScreen || resolveInspectorBaseScreen())
+            : (snapshot.inspectorBaseScreen || screen);
+        const overlayAtivo = screen === "new_inspection" || snapshot.overlayOwner === "new_inspection";
+        const compacto = layoutInspectorCompacto();
+        const portalAtivo = screenBase === "portal_dashboard";
+        const assistantAtivo = screenBase === "assistant_landing";
+        const inspectionAtivo = [
+            "inspection_workspace",
+            "inspection_conversation",
+            "inspection_history",
+            "inspection_record",
+            "inspection_mesa",
+        ].includes(screenBase);
+        const workspaceView = resolveWorkspaceView(screen);
+        const laudoAtivoId = normalizarLaudoAtualId(
+            snapshot?.laudoAtualId
+            ?? estado.laudoAtualId
+            ?? obterLaudoAtivoIdSeguro()
+        );
+        const conversaLivreFocada =
+            workspaceView === "inspection_conversation" &&
+            conversaWorkspaceModoChatAtivo(screen, snapshot);
+        const chatLivreDisponivel = entradaChatLivreDisponivel(snapshot);
+        const quickDock = !overlayAtivo && compacto && (
+            assistantAtivo ||
+            (inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada)
+        )
+            ? "visible"
+            : "hidden";
+        const contextRail = inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo && !compacto
+            ? "visible"
+            : "hidden";
+        const mesaEntry = inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo
+            ? (compacto ? "composer" : "rail")
+            : "hidden";
+        const finalizeEntry = inspectionAtivo && workspaceView !== "inspection_mesa" && !overlayAtivo && !!laudoAtivoId
+            ? "header"
+            : "hidden";
+        let novaInspecaoEntry = "hidden";
+        if (portalAtivo && !overlayAtivo) {
+            novaInspecaoEntry = "portal";
+        } else if ((assistantAtivo || inspectionAtivo) && !overlayAtivo) {
+            novaInspecaoEntry = "header";
+        }
+
+        let abrirChatEntry = "hidden";
+        if (portalAtivo && !overlayAtivo) {
+            abrirChatEntry = "portal";
+        } else if (screen === "new_inspection" && chatLivreDisponivel) {
+            abrirChatEntry = "modal";
+        }
+
+        return {
+            screen,
+            screenBase,
+            workspaceView,
+            overlayAtivo,
+            compacto,
+            portalAtivo,
+            assistantAtivo,
+            inspectionAtivo,
+            quickDock,
+            contextRail,
+            mesaWidget: inspectionAtivo && !conversaLivreFocada && !overlayAtivo ? "contextual" : "hidden",
+            novaInspecaoEntry,
+            abrirChatEntry,
+            landingNewInspection: assistantAtivo && !overlayAtivo ? "visible" : "hidden",
+            workspaceHeaderNewInspection: (assistantAtivo || inspectionAtivo) && !overlayAtivo ? "visible" : "hidden",
+            sidebarNewInspection: "hidden",
+            headerFinalize: finalizeEntry === "header" ? "visible" : "hidden",
+            railFinalize: finalizeEntry === "rail" ? "visible" : "hidden",
+            mesaEntry,
+            operationalShortcuts: inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo
+                ? "inspection"
+                : (assistantAtivo && !overlayAtivo ? "assistant" : "hidden"),
+        };
+    }
+
+    function aplicarMatrizVisibilidadeInspector(screen = resolveInspectorScreen(), snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const matriz = resolverMatrizVisibilidadeInspector(screen, snapshot);
+        const body = document.body;
+        const painel = el.painelChat;
+        const mesaEntry = matriz.mesaEntry;
+        const finalizeEntry = matriz.headerFinalize === "visible"
+            ? "header"
+            : (matriz.railFinalize === "visible" ? "rail" : "hidden");
+
+        body.dataset.inspectorCompactLayout = matriz.compacto ? "true" : "false";
+        body.dataset.inspectorQuickDock = matriz.quickDock;
+        body.dataset.inspectorContextRail = matriz.contextRail;
+        body.dataset.inspectorMesaEntry = mesaEntry;
+        body.dataset.inspectorMesaWidgetSurface = matriz.mesaWidget;
+        body.dataset.inspectorFinalizeEntry = finalizeEntry;
+        body.dataset.inspectorNovaInspecaoEntry = matriz.novaInspecaoEntry;
+        body.dataset.inspectorAbrirChatEntry = matriz.abrirChatEntry;
+        body.dataset.inspectorOperationalShortcuts = matriz.operationalShortcuts;
+
+        if (painel) {
+            painel.dataset.inspectorCompactLayout = matriz.compacto ? "true" : "false";
+            painel.dataset.inspectorQuickDock = matriz.quickDock;
+            painel.dataset.inspectorContextRail = matriz.contextRail;
+            painel.dataset.inspectorMesaEntry = mesaEntry;
+            painel.dataset.inspectorMesaWidgetSurface = matriz.mesaWidget;
+            painel.dataset.inspectorFinalizeEntry = finalizeEntry;
+            painel.dataset.inspectorNovaInspecaoEntry = matriz.novaInspecaoEntry;
+            painel.dataset.inspectorAbrirChatEntry = matriz.abrirChatEntry;
+            painel.dataset.inspectorOperationalShortcuts = matriz.operationalShortcuts;
+        }
+
+        if (el.btnSidebarOpenInspecaoModal) {
+            const visivel = matriz.sidebarNewInspection === "visible";
+            el.btnSidebarOpenInspecaoModal.hidden = !visivel;
+            el.btnSidebarOpenInspecaoModal.setAttribute("aria-hidden", String(!visivel));
+        }
+        if (el.btnWorkspaceOpenInspecaoModal) {
+            const visivel = matriz.workspaceHeaderNewInspection === "visible";
+            el.btnWorkspaceOpenInspecaoModal.hidden = !visivel;
+            el.btnWorkspaceOpenInspecaoModal.setAttribute("aria-hidden", String(!visivel));
+        }
+        if (el.btnAssistantLandingOpenInspecaoModal) {
+            const visivel = matriz.landingNewInspection === "visible";
+            el.btnAssistantLandingOpenInspecaoModal.hidden = !visivel;
+            el.btnAssistantLandingOpenInspecaoModal.setAttribute("aria-hidden", String(!visivel));
+        }
+        if (el.btnFinalizarInspecao) {
+            const visivel = matriz.headerFinalize === "visible";
+            el.btnFinalizarInspecao.hidden = !visivel;
+            el.btnFinalizarInspecao.setAttribute("aria-hidden", String(!visivel));
+        }
+        if (el.btnRailFinalizarInspecao) {
+            const visivel = matriz.railFinalize === "visible";
+            el.btnRailFinalizarInspecao.hidden = !visivel;
+            el.btnRailFinalizarInspecao.setAttribute("aria-hidden", String(!visivel));
+        }
+        if (el.btnMesaWidgetToggle) {
+            const visivel = matriz.mesaEntry === "rail";
+            el.btnMesaWidgetToggle.hidden = !visivel;
+            el.btnMesaWidgetToggle.setAttribute("aria-hidden", String(!visivel));
+        }
+        if (el.btnToggleHumano) {
+            const visivel = matriz.mesaEntry === "composer";
+            el.btnToggleHumano.hidden = !visivel;
+            el.btnToggleHumano.setAttribute("aria-hidden", String(!visivel));
+        }
+
+        return matriz;
+    }
+
+    function modalNovaInspecaoEstaAberta() {
+        return Boolean(el.modal && !el.modal.hidden && el.modal.classList.contains("ativo"));
+    }
+
+    function resolveInspectorBaseScreen() {
+        return resolverInspectorBaseScreenPorSnapshot(obterSnapshotEstadoInspectorAtual());
+    }
+
+    function definirRootAtivo(root, ativo) {
+        if (!root) return;
+
+        const deveAtivar = !!ativo;
+        root.dataset.active = deveAtivar ? "true" : "false";
+        root.setAttribute("aria-hidden", String(!deveAtivar));
+
+        if (deveAtivar) {
+            root.removeAttribute("hidden");
+        } else {
+            root.setAttribute("hidden", "");
+        }
+
+        try {
+            root.inert = !deveAtivar;
+        } catch (_) {
+            if (deveAtivar) {
+                root.removeAttribute("inert");
+            } else {
+                root.setAttribute("inert", "");
+            }
+        }
+    }
+
+    function resolveInspectorScreen() {
+        return obterSnapshotEstadoInspectorAtual().inspectorScreen || resolveInspectorBaseScreen();
+    }
+
+    function resolveWorkspaceView(screen = estado.inspectorScreen || resolveInspectorScreen()) {
+        const snapshot = obterSnapshotEstadoInspectorAtual();
+        const screenBase = screen === "new_inspection"
+            ? snapshot.inspectorBaseScreen || resolveInspectorBaseScreen()
+            : screen;
+
+        if (screenBase === "assistant_landing") {
+            return "assistant_landing";
+        }
+
+        if ([
+            "inspection_conversation",
+            "inspection_history",
+            "inspection_record",
+            "inspection_mesa",
+        ].includes(screenBase)) {
+            return screenBase;
+        }
+
+        if (screenBase !== "inspection_workspace") {
+            return "inspection_history";
+        }
+
+        const threadTabAtual = normalizarThreadTab(snapshot.threadTab);
+        if (threadTabAtual === "anexos") return "inspection_record";
+        if (threadTabAtual === "mesa") return "inspection_mesa";
+        if (threadTabAtual === "historico") return "inspection_history";
+        return "inspection_conversation";
+    }
+
+    function workspaceViewSuportaRail(view = resolveWorkspaceView()) {
+        return view === "inspection_history"
+            || view === "inspection_record"
+            || view === "inspection_conversation";
+    }
+
+    function resolveWorkspaceRailVisibility(screen = estado.inspectorScreen || resolveInspectorScreen()) {
+        if (screen === "new_inspection") {
+            return false;
+        }
+
+        const snapshot = obterSnapshotEstadoInspectorAtual();
+        if (conversaWorkspaceModoChatAtivo(screen, snapshot)) {
+            return false;
+        }
+
+        const view = resolveWorkspaceView(screen);
+        return workspaceViewSuportaRail(view) && !!estado.workspaceRailExpanded;
+    }
+
+    function atualizarBotaoWorkspaceRail({
+        chromeTecnicoOperacional = false,
+        layoutCompacto = layoutInspectorCompacto(),
+        view = resolveWorkspaceView(),
+        railVisivel = resolveWorkspaceRailVisibility(),
+    } = {}) {
+        if (!el.btnWorkspaceToggleRail) return;
+
+        const railDisponivel = chromeTecnicoOperacional && !layoutCompacto && workspaceViewSuportaRail(view);
+        const icone = el.btnWorkspaceToggleRail.querySelector(".material-symbols-rounded");
+        const rotulo = el.btnWorkspaceToggleRail.querySelector("span:last-child");
+
+        el.btnWorkspaceToggleRail.hidden = !railDisponivel;
+        el.btnWorkspaceToggleRail.setAttribute("aria-expanded", railVisivel ? "true" : "false");
+
+        if (icone) {
+            icone.textContent = railVisivel ? "right_panel_close" : "right_panel_open";
+        }
+        if (rotulo) {
+            rotulo.textContent = railVisivel ? "Fechar painel" : "Painel";
+        }
+    }
+
+    function resolveMesaWidgetDisponibilidade(screen = estado.inspectorScreen || resolveInspectorScreen()) {
+        if (screen === "new_inspection") {
+            return false;
+        }
+
+        const snapshot = obterSnapshotEstadoInspectorAtual();
+        if (conversaWorkspaceModoChatAtivo(screen, snapshot)) {
+            return false;
+        }
+
+        const laudoId = normalizarLaudoAtualId(
+            snapshot?.laudoAtualId ??
+            estado.laudoAtualId ??
+            obterLaudoAtivoIdSeguro()
+        );
+        if (!laudoId) {
+            return false;
+        }
+
+        const view = resolveWorkspaceView(screen);
+        return [
+            "inspection_history",
+            "inspection_record",
+            "inspection_conversation",
+            "inspection_mesa",
+        ].includes(view);
+    }
+
+    function contextoTecnicoPrecisaRefresh(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const screenBase = snapshot?.inspectorBaseScreen || resolveInspectorBaseScreen();
+        return screenBase === "inspection_workspace";
+    }
+
+    function contextoPrecisaSSE(snapshot = obterSnapshotEstadoInspectorAtual()) {
+        const screenBase = snapshot?.inspectorBaseScreen || resolveInspectorBaseScreen();
+        const laudoId = normalizarLaudoAtualId(
+            snapshot?.laudoAtualId
+            ?? estado.laudoAtualId
+            ?? obterLaudoAtivoIdSeguro()
+        );
+
+        if (!laudoId) {
+            return false;
+        }
+
+        return screenBase === "inspection_workspace";
+    }
+
+    function sincronizarSSEPorContexto(opcoes = {}) {
+        if (!contextoPrecisaSSE()) {
+            fecharSSE();
+            limparTimerReconexaoSSE();
+            PERF?.count?.("inspetor.sse.suprimido_orquestrador", 1, {
+                category: "request_churn",
+                detail: {
+                    laudoId: obterLaudoAtivoIdSeguro(),
+                    screen: resolveInspectorBaseScreen(),
+                },
+            });
+            return false;
+        }
+
+        inicializarNotificacoesSSE(opcoes);
+        return true;
+    }
+
+    function resolverEstadoPadraoAcordeoesRail(view = resolveWorkspaceView()) {
+        if (view === "inspection_history") {
+            return {
+                history: true,
+                progress: false,
+                context: false,
+                pendencias: false,
+                mesa: false,
+                pinned: false,
+            };
+        }
+
+        if (view === "inspection_record") {
+            return {
+                progress: false,
+                context: false,
+                pendencias: false,
+                mesa: false,
+                pinned: false,
+            };
+        }
+
+        if (view === "inspection_mesa") {
+            return {
+                progress: false,
+                context: false,
+                pendencias: false,
+                mesa: true,
+                pinned: false,
+            };
+        }
+
+        return {
+            history: false,
+            progress: false,
+            context: false,
+            pendencias: false,
+            mesa: false,
+            pinned: false,
+        };
+    }
+
+    function sincronizarAcordeoesRailWorkspace(view = resolveWorkspaceView()) {
+        const estadoPadrao = resolverEstadoPadraoAcordeoesRail(view);
+        const mudouView = estado.workspaceRailViewKey !== view;
+        const estadoAtual = (
+            estado.workspaceRailAccordionState &&
+            typeof estado.workspaceRailAccordionState === "object"
+        ) ? estado.workspaceRailAccordionState : Object.create(null);
+        const botoes = Array.isArray(el.workspaceRailToggleButtons) ? el.workspaceRailToggleButtons : [];
+
+        if (mudouView) {
+            estado.workspaceRailAccordionState = { ...estadoPadrao };
+            estado.workspaceRailViewKey = view;
+        } else {
+            estado.workspaceRailAccordionState = {
+                ...estadoPadrao,
+                ...estadoAtual,
+            };
+        }
+
+        botoes.forEach((botao) => {
+            const chave = String(botao?.dataset?.railToggle || "").trim();
+            if (!chave) return;
+
+            const aberto = !!estado.workspaceRailAccordionState?.[chave];
+            aplicarEstadoAcordeaoRailWorkspace(botao, aberto, { persist: false });
+        });
+    }
+
+    function aplicarEstadoAcordeaoRailWorkspace(botao, aberto, { persist = true } = {}) {
+        if (!botao) return;
+
+        const chave = String(botao.dataset.railToggle || "").trim();
+        if (!chave) return;
+
+        const corpo = document.querySelector(`[data-rail-body="${CSS.escape(chave)}"]`);
+        const card = botao.closest(".technical-record-card");
+        const expandido = aberto ? "true" : "false";
+
+        botao.setAttribute("aria-expanded", expandido);
+        botao.dataset.expanded = expandido;
+
+        if (card) {
+            card.dataset.collapsed = aberto ? "false" : "true";
+        }
+        if (corpo) {
+            corpo.hidden = !aberto;
+            corpo.dataset.expanded = expandido;
+        }
+        if (persist) {
+            estado.workspaceRailAccordionState = {
+                ...(estado.workspaceRailAccordionState && typeof estado.workspaceRailAccordionState === "object"
+                    ? estado.workspaceRailAccordionState
+                    : {}),
+                [chave]: !!aberto,
+            };
+        }
+    }
+
+    function sincronizarMesaStageWorkspace(view = resolveWorkspaceView(), mesaWidgetPermitido = resolveMesaWidgetDisponibilidade()) {
+        if (!el.painelMesaWidget) return;
+
+        const hostMesaWorkspace = el.workspaceMesaWidgetHost || el.workspaceMesaStage;
+
+        const embutirNoWorkspace =
+            mesaWidgetPermitido &&
+            view === "inspection_mesa" &&
+            hostMesaWorkspace;
+        const estavaEmbutido = el.painelMesaWidget.dataset.workspaceEmbedded === "true";
+
+        if (embutirNoWorkspace) {
+            if (el.painelMesaWidget.parentElement !== hostMesaWorkspace) {
+                hostMesaWorkspace.appendChild(el.painelMesaWidget);
+            }
+
+            el.painelMesaWidget.dataset.workspaceEmbedded = "true";
+            el.painelMesaWidget.hidden = false;
+            el.painelMesaWidget.classList.remove("fechando");
+            el.painelMesaWidget.classList.add("aberto", "painel-mesa-widget--workspace");
+            estado.mesaWidgetAberto = true;
+            if (el.btnMesaWidgetToggle) {
+                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "true");
+            }
+            atualizarEstadoVisualBotaoMesaWidget();
+
+            if (!estavaEmbutido) {
+                carregarMensagensMesaWidget({ silencioso: true }).catch(() => {});
+            }
+
+            return;
+        }
+
+        if (mesaWidgetDockOriginal && el.painelMesaWidget.parentElement !== mesaWidgetDockOriginal) {
+            mesaWidgetDockOriginal.appendChild(el.painelMesaWidget);
+        }
+
+        el.painelMesaWidget.dataset.workspaceEmbedded = "false";
+        el.painelMesaWidget.classList.remove("painel-mesa-widget--workspace");
+
+        if (estavaEmbutido) {
+            estado.mesaWidgetAberto = false;
+            el.painelMesaWidget.hidden = true;
+            el.painelMesaWidget.classList.remove("aberto", "fechando");
+            if (el.btnMesaWidgetToggle) {
+                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "false");
+            }
+            atualizarEstadoVisualBotaoMesaWidget();
+        }
+    }
+
+    function sincronizarWorkspaceRail(screen = estado.inspectorScreen || resolveInspectorScreen()) {
+        const view = resolveWorkspaceView(screen);
+        const railVisivel = resolveWorkspaceRailVisibility(screen);
+        const layout = railVisivel ? "thread-with-rail" : "thread-only";
+
+        document.body.dataset.workspaceView = view;
+        document.body.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
+
+        if (el.painelChat) {
+            el.painelChat.dataset.workspaceView = view;
+            el.painelChat.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
+        }
+
+        if (el.workspaceScreenRoot) {
+            el.workspaceScreenRoot.dataset.workspaceView = view;
+            el.workspaceScreenRoot.dataset.workspaceLayout = layout;
+            el.workspaceScreenRoot.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
+        }
+
+        if (el.chatDashboardRail) {
+            el.chatDashboardRail.hidden = !railVisivel;
+            el.chatDashboardRail.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
+            el.chatDashboardRail.setAttribute("aria-hidden", String(!railVisivel));
+        }
+
+        sincronizarAcordeoesRailWorkspace(view);
+
+        return railVisivel;
+    }
+
+    function sincronizarWidgetsGlobaisWorkspace(screen = estado.inspectorScreen || resolveInspectorScreen()) {
+        const mesaWidgetPermitido = resolveMesaWidgetDisponibilidade(screen);
+        const view = resolveWorkspaceView(screen);
+        const mesaIncorporada = view === "inspection_mesa";
+
+        document.body.dataset.mesaWidgetVisible = mesaWidgetPermitido ? "true" : "false";
+
+        if (el.painelChat) {
+            el.painelChat.dataset.mesaWidgetVisible = mesaWidgetPermitido ? "true" : "false";
+        }
+
+        if (el.mesaWidgetScreenRoot) {
+            el.mesaWidgetScreenRoot.dataset.widgetAllowed = mesaWidgetPermitido ? "true" : "false";
+            definirRootAtivo(el.mesaWidgetScreenRoot, mesaWidgetPermitido && !mesaIncorporada);
+        }
+
+        if (el.painelMesaWidget) {
+            el.painelMesaWidget.dataset.widgetAllowed = mesaWidgetPermitido ? "true" : "false";
+            const ariaHidden = !mesaWidgetPermitido || el.painelMesaWidget.hidden;
+            el.painelMesaWidget.setAttribute("aria-hidden", String(ariaHidden));
+        }
+
+        sincronizarMesaStageWorkspace(view, mesaWidgetPermitido);
+
+        if (!mesaWidgetPermitido) {
+            if (estado.mesaWidgetAberto || !el.painelMesaWidget?.hidden) {
+                fecharMesaWidget();
+            } else if (el.btnMesaWidgetToggle) {
+                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "false");
+            }
+        }
+
+        sincronizarClasseBodyMesaWidget();
+        return mesaWidgetPermitido;
+    }
+
+    function sincronizarWorkspaceViews(screen = estado.inspectorScreen || resolveInspectorScreen()) {
+        const view = resolveWorkspaceView(screen);
+        const chromeTecnicoVisivel =
+            view !== "assistant_landing" &&
+            !conversaWorkspaceModoChatAtivo(screen, obterSnapshotEstadoInspectorAtual());
+
+        definirRootAtivo(el.workspaceAssistantViewRoot, view === "assistant_landing");
+        definirRootAtivo(el.workspaceHistoryViewRoot, view === "inspection_history");
+        definirRootAtivo(el.workspaceRecordViewRoot, view === "inspection_record");
+        definirRootAtivo(el.workspaceConversationViewRoot, view === "inspection_conversation");
+        definirRootAtivo(el.workspaceMesaViewRoot, view === "inspection_mesa");
+
+        if (!el.threadNav) {
+            el.threadNav = document.querySelector(".thread-nav");
+        }
+
+        if (el.threadNav) {
+            el.threadNav.hidden = !chromeTecnicoVisivel;
+            el.threadNav.setAttribute("aria-hidden", String(!chromeTecnicoVisivel));
+        }
+
+        if (el.workspaceHistoryViewRoot) {
+            el.workspaceHistoryViewRoot.dataset.historyFocus = view === "inspection_history" ? "reading" : "idle";
+        }
+
+        if (el.workspaceHistoryRoot) {
+            el.workspaceHistoryRoot.dataset.historyFocus = view === "inspection_history" ? "reading" : "idle";
+        }
+
+        if (el.workspaceAnexosPanel) {
+            const anexosVisiveis = view === "inspection_record";
+            el.workspaceAnexosPanel.hidden = !anexosVisiveis;
+            el.workspaceAnexosPanel.setAttribute("aria-hidden", String(!anexosVisiveis));
+        }
+
+        atualizarEmptyStateHonestoConversa();
+
+        return view;
+    }
+
+    function sincronizarInspectorScreen() {
+        if (sincronizandoInspectorScreen) {
+            sincronizacaoInspectorScreenPendente = true;
+            return estado.inspectorScreen || resolveInspectorBaseScreen();
+        }
+
+        sincronizandoInspectorScreen = true;
+
+        try {
+            const snapshot = sincronizarEstadoInspector({}, {
+                persistirStorage: false,
+                syncScreen: false,
+            });
+            const screen = snapshot.inspectorScreen;
+            const baseScreen = snapshot.inspectorBaseScreen;
+            const workspaceAtivo = baseScreen !== "portal_dashboard";
+            const overlayOwner = snapshot.overlayOwner;
+
+            definirRootAtivo(el.portalScreenRoot, baseScreen === "portal_dashboard");
+            definirRootAtivo(el.workspaceScreenRoot, workspaceAtivo);
+            sincronizarWorkspaceViews(screen);
+            const railVisible = sincronizarWorkspaceRail(screen);
+            const mesaWidgetVisible = sincronizarWidgetsGlobaisWorkspace(screen);
+            const chatLivreDisponivel = sincronizarVisibilidadeAcoesChatLivre(snapshot);
+            const matrizVisibilidade = aplicarMatrizVisibilidadeInspector(screen, snapshot);
+
+            document.dispatchEvent(new CustomEvent("tariel:screen-synced", {
+                detail: {
+                    screen,
+                    baseScreen,
+                    overlayOwner,
+                    workspaceAtivo,
+                    homeActionVisible: !!snapshot.homeActionVisible,
+                    chatLivreDisponivel,
+                    compactLayout: matrizVisibilidade.compacto,
+                    quickDock: matrizVisibilidade.quickDock,
+                    contextRail: matrizVisibilidade.contextRail,
+                    mesaEntry: matrizVisibilidade.mesaEntry,
+                    finalizeEntry: matrizVisibilidade.headerFinalize === "visible" ? "header" : (
+                        matrizVisibilidade.railFinalize === "visible" ? "rail" : "hidden"
+                    ),
+                    novaInspecaoEntry: matrizVisibilidade.novaInspecaoEntry,
+                    abrirChatEntry: matrizVisibilidade.abrirChatEntry,
+                    railVisible,
+                    mesaWidgetVisible,
+                },
+                bubbles: true,
+            }));
+
+            return screen;
+        } finally {
+            sincronizandoInspectorScreen = false;
+
+            if (sincronizacaoInspectorScreenPendente) {
+                sincronizacaoInspectorScreenPendente = false;
+                window.requestAnimationFrame(() => {
+                    sincronizarInspectorScreen();
+                });
+            }
+        }
+    }
+
+    async function navegarParaHome(destino = "/app/?home=1", { preservarContexto = true } = {}) {
+        const homeDestino = String(destino || "/app/?home=1").trim() || "/app/?home=1";
+        let desativou = true;
+
+        if (!preservarContexto) {
+            desativou = await desativarContextoAtivoParaHome();
+        }
+
+        if (!desativou && !preservarContexto) {
+            mostrarToast(
+                "Não foi possível limpar o contexto ativo. Recarregando a central.",
+                "aviso",
+                2400
+            );
+        }
+
+        definirRetomadaHomePendente(null);
+        limparEstadoHomeNoCliente();
+        if (preservarContexto) {
+            marcarForcaTelaInicial();
+        }
+        window.location.assign(homeDestino);
+    }
+
+    function processarAcaoHome(detail = {}) {
+        const destino = String(detail?.destino || "/app/?home=1").trim() || "/app/?home=1";
+        navegarParaHome(destino, {
+            preservarContexto: detail?.preservarContexto !== false,
+        });
+    }
+
+    function resumirTexto(texto, limite = 140) {
+        const base = String(texto || "").replace(/\s+/g, " ").trim();
+        if (!base) return "Mensagem sem conteúdo";
+        return base.length > limite ? `${base.slice(0, limite)}...` : base;
+    }
+
+    function normalizarConexaoMesaWidget(valor) {
+        const status = String(valor || "").trim().toLowerCase();
+        if (status === "reconectando") return "reconectando";
+        if (status === "offline") return "offline";
+        return "conectado";
+    }
+
+    function pluralizarMesa(total, singular, plural) {
+        return Number(total || 0) === 1 ? singular : (plural || `${singular}s`);
+    }
+
+    function atualizarStatusMesa(status = "pronta", detalhe = "") {
+        const statusNormalizado = normalizarStatusMesa(status);
+        estado.statusMesa = statusNormalizado;
+        estado.statusMesaDescricao = String(detalhe || "").trim();
+    }
+
+    function atualizarStatusMesaPorComposer(modoMarcador) {
+        if (modoMarcador === "insp") {
+            if (estado.statusMesa !== "aguardando" && estado.statusMesa !== "respondeu") {
+                atualizarStatusMesa("canal_ativo");
+            }
+            return;
+        }
+
+        if (estado.statusMesa === "canal_ativo") {
+        }
+    }
+
+    function obterTipoTemplateDoPayload(dados = {}) {
+        return normalizarTipoTemplate(
+            dados?.tipoTemplate ||
+            dados?.tipo_template ||
+            dados?.template ||
+            estado.tipoTemplateAtivo
+        );
+    }
+
+    function inserirTextoNoComposer(texto) {
+        const textoLimpo = String(texto || "").trim();
+
+        if (!el.campoMensagem || !textoLimpo) {
+            return false;
+        }
+
+        const valorAtual = String(el.campoMensagem.value || "").trim();
+        el.campoMensagem.value = valorAtual ? `${valorAtual}\n${textoLimpo}` : textoLimpo;
+
+        el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
+        el.campoMensagem.dispatchEvent(new Event("change", { bubbles: true }));
+        try {
+            el.campoMensagem.focus({ preventScroll: true });
+        } catch (_) {
+            el.campoMensagem.focus();
+        }
+
+        if (typeof el.campoMensagem.setSelectionRange === "function") {
+            const fim = el.campoMensagem.value.length;
+            el.campoMensagem.setSelectionRange(fim, fim);
+        }
+
+        return true;
+    }
+
+    function aplicarPrePromptDaAcaoRapida(botao) {
+        const texto = String(botao?.dataset?.preprompt || "").trim();
+        return inserirTextoNoComposer(texto);
+    }
+
+    function obterLaudoAtivoIdSeguro() {
+        return normalizarLaudoAtualId(obterSnapshotEstadoInspectorAtual().laudoAtualId);
+    }
+
+    function obterHeadersComCSRF(extra = {}) {
+        const base = { Accept: "application/json", ...extra };
+
+        if (window.TarielCore?.comCabecalhoCSRF) {
+            return window.TarielCore.comCabecalhoCSRF(base);
+        }
+
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]')?.content?.trim() || "";
+        return tokenMeta ? { ...base, "X-CSRF-Token": tokenMeta } : base;
+    }
+
+    async function extrairMensagemErroHTTP(resposta, fallback = "") {
+        if (!resposta) return String(fallback || "").trim();
+
+        try {
+            const tipoConteudo = String(resposta.headers?.get("content-type") || "").toLowerCase();
+
+            if (tipoConteudo.includes("application/json")) {
+                const payload = await resposta.json();
+                const detalhe =
+                    payload?.detail ??
+                    payload?.erro ??
+                    payload?.mensagem ??
+                    payload?.message ??
+                    "";
+
+                if (typeof detalhe === "string" && detalhe.trim()) {
+                    return detalhe.trim();
+                }
+
+                if (Array.isArray(detalhe) && detalhe.length > 0) {
+                    return String(
+                        detalhe
+                            .map((item) => String(item?.msg || item || "").trim())
+                            .filter(Boolean)
+                            .join(" | ")
+                    ).trim();
+                }
+            } else {
+                const bruto = String(await resposta.text()).trim();
+                if (bruto) {
+                    return bruto.slice(0, 240);
+                }
+            }
+        } catch (_) {
+            // Fallback silencioso.
+        }
+
+        return String(fallback || `Falha HTTP ${resposta.status || ""}`).trim();
+    }
+
+    // =========================================================
+    // MÓDULOS DO PORTAL DO INSPETOR
+    // =========================================================
+
+    const REGISTROS_MODULOS_INSPETOR = Object.freeze([
+        "registerBootstrap",
+        "registerEntryMode",
+        "registerModals",
+        "registerObservers",
+        "registerPendencias",
+        "registerMesaWidget",
+        "registerNotifications",
+        "registerSystemEvents",
+        "registerUiBindings",
+        "registerGovernance",
+        "registerWorkspaceOverview",
+        "registerWorkspaceDerivatives",
+    ]);
+
+    const noop = () => {};
+    const noopAsync = async () => null;
+    const noopFalse = () => false;
+    const noopNull = () => null;
+
+    function criarResumoMesaPadraoInspetor() {
+        return {
+            status: "pronta",
+            titulo: "Mesa disponível",
+            descricao: "",
+            chipStatus: "",
+            chipPendencias: "",
+            chipNaoLidas: "",
+        };
+    }
+
+    function criarContextoVisualPadraoInspetor() {
+        return {
+            title: "Assistente Tariel IA",
+            subtitle: "Conversa inicial • nenhum laudo ativo",
+            statusBadge: "CHAT LIVRE",
+        };
+    }
+
+    function criarSharedRuntimeInspetor() {
+        return {
+            ROTA_SSE_NOTIFICACOES,
+            TEMPO_BANNER_MS,
+            TEMPO_RECONEXAO_SSE_MS,
+            NOMES_TEMPLATES,
+            COMANDOS_SLASH,
+            CONFIG_STATUS_MESA,
+            CONFIG_CONEXAO_MESA_WIDGET,
+            LIMITE_RECONEXAO_SSE_OFFLINE,
+            MAX_BYTES_ANEXO_MESA,
+            MIME_ANEXOS_MESA_PERMITIDOS,
+            CHAVE_FORCE_HOME_LANDING,
+            CHAVE_RETOMADA_HOME_PENDENTE,
+            CHAVE_CONTEXTO_VISUAL_LAUDOS,
+            LIMITE_CONTEXTO_VISUAL_LAUDOS_STORAGE,
+            CONTEXTO_WORKSPACE_ASSISTENTE,
+            mostrarToast,
+            ouvirEventoTariel,
+            escaparHtml,
+            normalizarTipoTemplate,
+            normalizarContextoVisualSeguro,
+            normalizarFiltroPendencias,
+            normalizarLaudoAtualId,
+            normalizarEstadoRelatorio,
+            normalizarThreadTab,
+            normalizarWorkspaceStage,
+            normalizarEntryModePreference,
+            normalizarEntryModeEffective,
+            normalizarEntryModeEffectiveOpcional,
+            normalizarEntryModeReason,
+            normalizarCaseLifecycleStatusSeguro,
+            normalizarEmissaoOficialSeguro,
+            normalizarPublicVerificationSeguro,
+            estadoRelatorioPossuiContexto,
+            obterLaudoAtivoIdSeguro,
+            obterPayloadStatusRelatorioWorkspaceAtual,
+            obterHeadersComCSRF,
+            extrairMensagemErroHTTP,
+            obterElementosFocaveis,
+            formatarTamanhoBytes,
+            normalizarAnexoMesa,
+            renderizarLinksAnexosMesa,
+            pluralizarMesa,
+            resumirTexto,
+            normalizarConexaoMesaWidget,
+            normalizarStatusMesa,
+            pluralizarWorkspace,
+            obterLaudoAtivo,
+            obterItensCanonicosHistoricoWorkspace,
+            obterTokenCsrf,
+            emitirSincronizacaoLaudo,
+            avisarMesaExigeInspecao,
+            ehAbortError,
+            limparTimerBanner,
+            limparTimerReconexaoSSE,
+            limparTimerFecharMesaWidget,
+            cancelarCarregamentoPendenciasMesa,
+            cancelarCarregamentoMensagensMesaWidget,
+            fecharSSE,
+            workspaceHasSurfaceAction,
+            workspaceTemContratoLifecycle,
+        };
+    }
+
+    function criarAcoesPadraoRuntimeInspetor() {
+        return {
+            aplicarContextoVisualWorkspace: noop,
+            abrirMesaWidget: noop,
+            abrirModalGateQualidade: noop,
+            abrirModalNovaInspecao: noop,
+            abrirNovaInspecaoComScreenSync: noop,
+            atualizarBotoesFiltroPendencias: noop,
+            atualizarConexaoMesaWidget: noop,
+            atualizarEstadoAcaoModalNovaInspecao: noop,
+            atualizarEstadoVisualBotaoMesaWidget: noop,
+            atualizarBadgeMesaWidget: noop,
+            atualizarChatAoVivoComMesa: noop,
+            atualizarEmptyStateHonestoConversa: noop,
+            atualizarPendenciaIndividual: noop,
+            atualizarPainelWorkspaceDerivado: noop,
+            atualizarPreviewNomeInspecao: noop,
+            carregarMensagensMesaWidget: noopAsync,
+            carregarPendenciasMesa: noopAsync,
+            criarContextoVisualDoModal: criarContextoVisualPadraoInspetor,
+            criarContextoVisualPadrao: criarContextoVisualPadraoInspetor,
+            continuarComOverrideHumanoGateQualidade: noopAsync,
+            definirReferenciaMesaWidget: noop,
+            enviarMensagemMesaWidget: noopAsync,
+            exportarPendenciasPdf: noopAsync,
+            extrairContextoVisualWorkspace: criarContextoVisualPadraoInspetor,
+            fecharBannerEngenharia: noop,
+            fecharMesaWidget: noop,
+            fecharModalGateQualidade: noop,
+            fecharModalNovaInspecao: noop,
+            fecharNovaInspecaoComScreenSync: () => true,
+            fecharSelectTemplateCustom: noop,
+            bindEventosNovaInspecao: noop,
+            inicializarNotificacoesSSE: noop,
+            inicializarSelectTemplateCustom: noop,
+            iniciarInspecao: noopAsync,
+            inserirComandoPendenciasNoChat: noop,
+            irParaMensagemPrincipal: noopAsync,
+            limparAnexoMesaWidget: noop,
+            limparPainelPendencias: noop,
+            limparReferenciaMesaWidget: noop,
+            marcarPendenciasComoLidas: noopAsync,
+            modalNovaInspecaoEstaValida: noopFalse,
+            montarResumoContextoModal: () => "",
+            coletarDadosFormularioNovaInspecao: () => ({}),
+            construirMetaVerificacaoPublicaWorkspace: () => "",
+            construirResumoEmissaoOficialWorkspace: () => ({
+                title: "Aguardando governança documental",
+                meta: "A etapa oficial de emissão ainda não começou.",
+                chip: "PENDENTE",
+                tone: "neutral",
+            }),
+            construirResumoGovernancaHistoricoWorkspace: () => ({
+                visible: false,
+                title: "Reemissão recomendada",
+                detail: "PDF emitido divergente detectado no caso atual.",
+                actionLabel: "Abrir reemissão na Mesa",
+            }),
+            lifecyclePermiteVerificacaoPublicaWorkspace: noopFalse,
+            mostrarBannerEngenharia: noop,
+            obterModoEntradaSelecionadoModal: () => "auto_recommended",
+            obterMensagemMesaPorId: noopNull,
+            obterResumoOperacionalMesa: criarResumoMesaPadraoInspetor,
+            obterRotuloAcaoFinalizacaoWorkspace: () => "Enviar para Mesa",
+            renderizarResumoOperacionalMesa: noop,
+            renderizarGovernancaEntradaInspetor: noop,
+            renderizarGovernancaHistoricoWorkspace: noop,
+            renderizarResumoExecutivoWorkspace: noop,
+            renderizarResumoNavegacaoWorkspace: noop,
+            selecionarModoEntradaModal: () => "auto_recommended",
+            selecionarAnexoMesaWidget: noop,
+            selectTemplateCustomEstaAberto: noopFalse,
+            sincronizarClasseBodyMesaWidget: noop,
+            toggleEdicaoNomeInspecao: noop,
+            togglePainelPendencias: noop,
+            toggleMesaWidget: noop,
+            tratarTrapFocoModal: noop,
+            tratarTrapFocoModalGate: noop,
+            atualizarResumoModoEntradaModal: noop,
+            bootInspector: noopAsync,
+            inicializarObservadorSidebarHistorico: noop,
+            inicializarObservadorWorkspace: noop,
+            limparObserversInspector: noop,
+            bindSystemEvents: noop,
+            bindUiBindings: noop,
+            contarEvidenciasWorkspace: () => 0,
+            extrairMetaLinhaWorkspace: () => ({ autor: "", tempo: "", resumo: "" }),
+            renderizarAnexosWorkspace: noop,
+            renderizarAtividadeWorkspace: noop,
+            renderizarWorkspaceOfficialIssue: noop,
+            renderizarWorkspacePublicVerification: noop,
+            renderizarProgressoWorkspace: noop,
+            sincronizarRotuloAcaoFinalizacaoWorkspace: noop,
+            workspacePermiteFinalizacao: noopFalse,
+        };
+    }
+
+    function criarRuntimeInspetor() {
+        return {
+            state: estado,
+            elements: el,
+            shared: criarSharedRuntimeInspetor(),
+            actions: criarAcoesPadraoRuntimeInspetor(),
+        };
+    }
+
+    function registrarModulosInspetor(ctx) {
+        const modulosInspetor = window.TarielInspetorModules || {};
+
+        REGISTROS_MODULOS_INSPETOR.forEach((nomeRegistro) => {
+            const registrar = modulosInspetor[nomeRegistro];
+            if (typeof registrar === "function") {
+                try {
+                    registrar(ctx);
+                } catch (erro) {
+                    logOnceRuntime(`inspetor-modulo-falha:${nomeRegistro}`, "warn", `Falha ao registrar módulo do inspetor: ${nomeRegistro}`, erro);
+                }
+                return;
+            }
+
+            debugRuntime(`Módulo do inspetor não carregado: ${nomeRegistro}`);
+        });
+    }
+
+    const ctx = criarRuntimeInspetor();
+    window.TarielInspetorRuntime = ctx;
+    registrarModulosInspetor(ctx);
+    const runtimeAtualizarEstadoModoEntrada = ctx.actions.atualizarEstadoModoEntrada;
+
+    const {
+        aplicarContextoVisualWorkspace,
+        abrirMesaWidget,
+        abrirModalGateQualidade,
+        abrirModalNovaInspecao,
+        atualizarBotoesFiltroPendencias,
+        atualizarConexaoMesaWidget,
+        atualizarEstadoAcaoModalNovaInspecao,
+        atualizarEstadoVisualBotaoMesaWidget,
+        atualizarBadgeMesaWidget,
+        atualizarChatAoVivoComMesa,
+        atualizarEmptyStateHonestoConversa,
+        atualizarPainelWorkspaceDerivado,
+        atualizarPendenciaIndividual,
+        atualizarPreviewNomeInspecao,
+        carregarMensagensMesaWidget,
+        carregarPendenciasMesa,
+        contarEvidenciasWorkspace,
+        criarContextoVisualDoModal,
+        criarContextoVisualPadrao,
+        construirMetaVerificacaoPublicaWorkspace,
+        construirResumoEmissaoOficialWorkspace,
+        construirResumoGovernancaHistoricoWorkspace,
+        continuarComOverrideHumanoGateQualidade,
+        extrairMetaLinhaWorkspace,
+        definirReferenciaMesaWidget,
+        enviarMensagemMesaWidget,
+        exportarPendenciasPdf,
+        extrairContextoVisualWorkspace,
+        fecharBannerEngenharia,
+        fecharMesaWidget,
+        fecharModalGateQualidade,
+        fecharModalNovaInspecao,
+        fecharSelectTemplateCustom,
+        inicializarNotificacoesSSE,
+        inicializarSelectTemplateCustom,
+        inserirComandoPendenciasNoChat,
+        irParaMensagemPrincipal,
+        lifecyclePermiteVerificacaoPublicaWorkspace,
+        limparAnexoMesaWidget,
+        limparPainelPendencias,
+        limparReferenciaMesaWidget,
+        marcarPendenciasComoLidas,
+        modalNovaInspecaoEstaValida,
+        montarResumoContextoModal,
+        coletarDadosFormularioNovaInspecao,
+        mostrarBannerEngenharia,
+        obterModoEntradaSelecionadoModal,
+        obterMensagemMesaPorId,
+        obterRotuloAcaoFinalizacaoWorkspace,
+        obterResumoOperacionalMesa,
+        renderizarAnexosWorkspace,
+        renderizarAtividadeWorkspace,
+        renderizarGovernancaEntradaInspetor,
+        renderizarGovernancaHistoricoWorkspace,
+        renderizarProgressoWorkspace,
+        renderizarResumoExecutivoWorkspace,
+        renderizarResumoNavegacaoWorkspace,
+        renderizarResumoOperacionalMesa,
+        renderizarWorkspaceOfficialIssue,
+        renderizarWorkspacePublicVerification,
+        selecionarModoEntradaModal,
+        selecionarAnexoMesaWidget,
+        selectTemplateCustomEstaAberto,
+        sincronizarRotuloAcaoFinalizacaoWorkspace,
+        sincronizarResumoHistoricoWorkspace,
+        sincronizarResumoPendenciasWorkspace,
+        sincronizarClasseBodyMesaWidget,
+        toggleEdicaoNomeInspecao,
+        togglePainelPendencias,
+        toggleMesaWidget,
+        tratarTrapFocoModal,
+        tratarTrapFocoModalGate,
+        atualizarResumoModoEntradaModal,
+        workspacePermiteFinalizacao,
+    } = ctx.actions;
+
+    function atualizarNomeTemplateAtivo(tipo) {
+        const tipoNormalizado = normalizarTipoTemplate(tipo);
+
+        estado.tipoTemplateAtivo = tipoNormalizado;
+        window.tipoTemplateAtivo = tipoNormalizado;
+
+        atualizarContextoWorkspaceAtivo();
+    }
+
+    function abrirNovaInspecaoComScreenSync(config = {}) {
+        abrirModalNovaInspecao(config);
+        sincronizarInspectorScreen();
+    }
+
+    function fecharNovaInspecaoComScreenSync(opcoes = {}) {
+        const resultado = fecharModalNovaInspecao(opcoes);
+        sincronizarInspectorScreen();
+        return resultado;
+    }
+
+    function atualizarCopyWorkspaceStage(stage = "inspection") {
+        const copyInspecao = modoEntradaEvidenceFirstAtivo()
+            ? {
+                ...COPY_WORKSPACE_STAGE.inspection,
+                headline: "Registro por evidências",
+                description:
+                    "Priorize anexos, fotos e provas do caso. Use o chat para contextualizar e fechar a narrativa técnica.",
+                placeholder: "Descreva a evidência, o item verificado ou o anexo enviado",
+            }
+            : COPY_WORKSPACE_STAGE.inspection;
+        const copy = stage === "assistant"
+            ? COPY_WORKSPACE_STAGE.assistant
+            : (
+                conversaWorkspaceModoChatAtivo()
+                    ? COPY_WORKSPACE_STAGE.focusedConversation
+                    : copyInspecao
+            );
+
+        if (el.workspaceEyebrow) {
+            el.workspaceEyebrow.textContent = copy.eyebrow;
+        }
+        if (el.workspaceHeadline) {
+            el.workspaceHeadline.textContent = copy.headline;
+        }
+        if (el.workspaceDescription) {
+            el.workspaceDescription.textContent = copy.description;
+        }
+        if (el.campoMensagem) {
+            el.campoMensagem.placeholder = copy.placeholder;
+        }
+        if (stage === "assistant") {
+            if (el.rodapeContextoTitulo) {
+                el.rodapeContextoTitulo.textContent = copy.contextTitle;
+            }
+            if (el.rodapeContextoStatus) {
+                el.rodapeContextoStatus.textContent = copy.contextStatus;
+            }
+        }
+        atualizarWorkspaceEntryModeNote();
+    }
+
+    function atualizarControlesWorkspaceStage() {
+        const screenBase = resolveInspectorBaseScreen();
+        const viewAtual = resolveWorkspaceView(screenBase);
+        const workspaceAtivo = screenBase !== "portal_dashboard";
+        const assistantAtivo = workspaceAtivo && screenBase === "assistant_landing";
+        const inspectionAtivo = workspaceAtivo && [
+            "inspection_workspace",
+            "inspection_conversation",
+            "inspection_history",
+            "inspection_record",
+            "inspection_mesa",
+        ].includes(screenBase);
+        const overlayAtivo = modalNovaInspecaoEstaAberta();
+        const layoutCompacto = layoutInspectorCompacto();
+        const laudoAtivoId = normalizarLaudoAtualId(
+            obterSnapshotEstadoInspectorAtual()?.laudoAtualId
+            ?? estado.laudoAtualId
+            ?? obterLaudoAtivoIdSeguro()
+        );
+        const chromeTecnicoOperacional =
+            workspaceAtivo &&
+            !assistantAtivo &&
+            !overlayAtivo &&
+            !conversaWorkspaceModoChatAtivo(screenBase, obterSnapshotEstadoInspectorAtual());
+        const finalizacaoVisivel =
+            workspaceAtivo &&
+            !assistantAtivo &&
+            !overlayAtivo &&
+            !!laudoAtivoId &&
+            viewAtual !== "inspection_mesa" &&
+            workspacePermiteFinalizacao(obterPayloadStatusRelatorioWorkspaceAtual());
+        const railVisivel = chromeTecnicoOperacional && !layoutCompacto && resolveWorkspaceRailVisibility(screenBase);
+        const composerVisivel =
+            workspaceAtivo &&
+            !overlayAtivo &&
+            (
+                assistantAtivo ||
+                viewAtual === "inspection_conversation" ||
+                (viewAtual === "inspection_record" && modoEntradaEvidenceFirstAtivo())
+            );
+
+        if (el.rodapeEntrada) {
+            el.rodapeEntrada.hidden = !composerVisivel;
+        }
+        if (el.btnIrFimChat) {
+            el.btnIrFimChat.hidden = !chromeTecnicoOperacional || viewAtual !== "inspection_conversation";
+        }
+        if (el.btnMesaWidgetToggle) {
+            el.btnMesaWidgetToggle.hidden = !chromeTecnicoOperacional;
+        }
+        atualizarBotaoWorkspaceRail({
+            chromeTecnicoOperacional,
+            layoutCompacto,
+            view: viewAtual,
+            railVisivel,
+        });
+        if (el.btnWorkspacePreview) {
+            el.btnWorkspacePreview.hidden = !chromeTecnicoOperacional || railVisivel || viewAtual === "inspection_history";
+        }
+        if (el.btnWorkspacePreviewRail) {
+            el.btnWorkspacePreviewRail.hidden = !railVisivel || viewAtual === "inspection_mesa";
+        }
+        if (el.btnFinalizarInspecao) {
+            el.btnFinalizarInspecao.hidden = !finalizacaoVisivel;
+        }
+        sincronizarRotuloAcaoFinalizacaoWorkspace();
+        if (el.btnWorkspaceOpenInspecaoModal) {
+            el.btnWorkspaceOpenInspecaoModal.hidden = !workspaceAtivo || (!assistantAtivo && !inspectionAtivo) || overlayAtivo;
+        }
+        if (el.workspaceAssistantLanding) {
+            el.workspaceAssistantLanding.hidden = !assistantAtivo || coletarLinhasWorkspace().length > 0;
+        }
+        atualizarWorkspaceEntryModeNote();
+
+        sincronizarInspectorScreen();
+    }
+
+    function focarComposerInspector() {
+        if (
+            !(el.campoMensagem instanceof HTMLElement) ||
+            el.campoMensagem.hidden ||
+            el.campoMensagem.closest?.("[hidden], [inert]") ||
+            el.campoMensagem.getClientRects().length === 0
+        ) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+                if (
+                    !(el.campoMensagem instanceof HTMLElement) ||
+                    el.campoMensagem.hidden ||
+                    el.campoMensagem.closest?.("[hidden], [inert]") ||
+                    el.campoMensagem.getClientRects().length === 0
+                ) {
+                    return;
+                }
+
+                try {
+                    el.campoMensagem.focus({ preventScroll: true });
+                } catch (_) {
+                    el.campoMensagem.focus();
+                }
+
+                if (typeof el.campoMensagem.setSelectionRange === "function") {
+                    const fim = el.campoMensagem.value.length;
+                    el.campoMensagem.setSelectionRange(fim, fim);
+                }
+            });
+        });
+    }
+
+    function detailPossuiContextoVisual(detail = {}) {
+        const payload = detail && typeof detail === "object" ? detail : {};
+        const card = payload?.laudo_card || payload?.laudoCard || payload?.card || {};
+
+        return Boolean(
+            payload?.workspaceTitle ||
+            payload?.homeTitle ||
+            payload?.title ||
+            payload?.workspaceSubtitle ||
+            payload?.homeSubtitle ||
+            payload?.subtitle ||
+            payload?.workspaceStatus ||
+            payload?.homeStatus ||
+            payload?.statusBadge ||
+            payload?.case_lifecycle_status ||
+            card?.display_title ||
+            card?.titulo ||
+            card?.display_subtitle ||
+            card?.subtitle ||
+            card?.status_badge ||
+            card?.status_card_label ||
+            card?.case_lifecycle_status
+        );
+    }
+
+    function enriquecerCardLaudoComContextoVisual(card = {}, contextoVisual = null) {
+        const contexto = normalizarContextoVisualSeguro(contextoVisual);
+        const payload = card && typeof card === "object" ? { ...card } : {};
+        if (!contexto) return payload;
+
+        const titulo = String(contexto.title || payload.display_title || payload.titulo || "").trim();
+        const subtitulo = String(contexto.subtitle || payload.display_subtitle || payload.subtitle || "").trim();
+        const badge = String(
+            contexto.statusBadge ||
+            payload.status_badge ||
+            obterBadgeLifecycleCase(payload.case_lifecycle_status) ||
+            payload.status_card_label ||
+            ""
+        ).trim();
+
+        if (titulo) {
+            payload.titulo = titulo;
+            payload.display_title = titulo;
+        }
+        if (subtitulo) {
+            payload.display_subtitle = subtitulo;
+            payload.subtitle = subtitulo;
+            if (!String(payload.preview || "").trim()) {
+                payload.preview = subtitulo;
+            }
+        }
+        if (badge) {
+            payload.status_badge = badge.toUpperCase();
+        }
+
+        return payload;
+    }
+
+    function enriquecerPayloadLaudoComContextoVisual(payload = {}, contextoVisual = null) {
+        const contexto = normalizarContextoVisualSeguro(contextoVisual);
+        const base = payload && typeof payload === "object" ? { ...payload } : {};
+        if (!contexto) return base;
+
+        if (base.laudo_card && typeof base.laudo_card === "object") {
+            base.laudo_card = enriquecerCardLaudoComContextoVisual(base.laudo_card, contexto);
+        }
+
+        if (!base.workspaceTitle) {
+            base.workspaceTitle = contexto.title;
+        }
+        if (!base.workspaceSubtitle) {
+            base.workspaceSubtitle = contexto.subtitle;
+        }
+        if (!base.workspaceStatus) {
+            base.workspaceStatus = contexto.statusBadge;
+        }
+
+        return base;
+    }
+
+    function resolverContextoVisualWorkspace(detail = {}) {
+        const laudoId = Number(
+            detail?.laudo_id ??
+            detail?.laudoId ??
+            detail?.laudo_card?.id ??
+            0
+        ) || null;
+
+        if (detailPossuiContextoVisual(detail)) {
+            return extrairContextoVisualWorkspace(detail);
+        }
+
+        const contextoRegistrado = obterContextoVisualLaudoRegistrado(laudoId);
+        if (contextoRegistrado) {
+            return contextoRegistrado;
+        }
+
+        const retomadaPendente = obterRetomadaHomePendente();
+        return (
+            normalizarContextoVisualSeguro(retomadaPendente?.contextoVisual) ||
+            normalizarContextoVisualSeguro(estado.workspaceVisualContext) ||
+            criarContextoVisualPadrao()
+        );
+    }
+
+    function definirWorkspaceStage(stage = "assistant") {
+        const proximoStage = normalizarWorkspaceStage(stage);
+        sincronizarEstadoInspector({ workspaceStage: proximoStage }, { persistirStorage: false });
+
+        atualizarCopyWorkspaceStage(proximoStage);
+        atualizarControlesWorkspaceStage();
+    }
+
+    function atualizarContextoWorkspaceAtivo() {
+        if (estado.workspaceStage === "assistant") {
+            aplicarContextoVisualWorkspace(obterContextoVisualAssistente());
+            atualizarCopyWorkspaceStage("assistant");
+            atualizarPainelWorkspaceDerivado();
+            return;
+        }
+
+        if (conversaWorkspaceModoChatAtivo()) {
+            aplicarContextoVisualWorkspace();
+            atualizarCopyWorkspaceStage("inspection");
+            atualizarPainelWorkspaceDerivado();
+            return;
+        }
+
+        const nomeTemplate = NOMES_TEMPLATES[estado.tipoTemplateAtivo] || NOMES_TEMPLATES.padrao;
+        const resumoMesa = obterResumoOperacionalMesa();
+        const evidenceFirstAtivo = modoEntradaEvidenceFirstAtivo();
+
+        aplicarContextoVisualWorkspace();
+        atualizarCopyWorkspaceStage("inspection");
+        if (el.rodapeContextoTitulo) {
+            el.rodapeContextoTitulo.textContent = evidenceFirstAtivo
+                ? `Registrar evidências primeiro em ${nomeTemplate}`
+                : `Registrar evidências em ${nomeTemplate}`;
+        }
+        if (el.rodapeContextoStatus) {
+            el.rodapeContextoStatus.textContent = evidenceFirstAtivo
+                ? "Comece por anexos, fotos e provas do caso. O chat segue disponível para justificar a coleta."
+                : resumoMesa.descricao;
+        }
+
+        atualizarPainelWorkspaceDerivado();
+        atualizarWorkspaceEntryModeNote();
+    }
+
+    function definirModoInspecaoUI(modo = "home") {
+        const proximoModo = normalizarModoInspecaoUI(modo);
+        sincronizarEstadoInspector({ modoInspecaoUI: proximoModo }, { persistirStorage: false });
+        atualizarControlesWorkspaceStage();
+
+        if (proximoModo !== "workspace") {
+            if (estado.mesaWidgetAberto || !el.painelMesaWidget?.hidden) {
+                fecharMesaWidget();
+            } else if (el.btnMesaWidgetToggle) {
+                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "false");
+            }
+            limparReferenciaMesaWidget();
+            limparAnexoMesaWidget();
+        }
+
+        atualizarContextoWorkspaceAtivo();
+    }
+
+    function exibirInterfaceInspecaoAtiva(tipo) {
+        limparFluxoNovoChatFocado();
+        definirWorkspaceStage("inspection");
+        atualizarNomeTemplateAtivo(tipo);
+        carregarContextoFixadoWorkspace();
+        definirModoInspecaoUI("workspace");
+        renderizarResumoOperacionalMesa();
+        renderizarSugestoesComposer();
+        atualizarStatusChatWorkspace(estado.chatStatusIA.status, estado.chatStatusIA.texto);
+    }
+
+    function exibirLandingAssistenteIA({ limparTimeline = false } = {}) {
+        definirRetomadaHomePendente(null);
+        limparFluxoNovoChatFocado();
+        atualizarEstadoModoEntrada({}, { reset: true });
+        estado.contextoFixado = [];
+        estado.chatStatusIA = {
+            status: "pronto",
+            texto: "Assistente pronto",
+        };
+
+        if (limparTimeline) {
+            window.TarielAPI?.limparAreaMensagens?.();
+        }
+
+        resetarFiltrosHistoricoWorkspace();
+
+        definirWorkspaceStage("assistant");
+        aplicarContextoVisualWorkspace(obterContextoVisualAssistente());
+        definirModoInspecaoUI("workspace");
+        atualizarThreadWorkspace("conversa");
+        limparPainelPendencias();
+        fecharSlashCommandPalette();
+        renderizarResumoOperacionalMesa();
+        renderizarSugestoesComposer();
+        atualizarStatusChatWorkspace("pronto", "Assistente pronto");
+    }
+
+    function abrirChatLivreInspector({ origem = "chat_free_entry" } = {}) {
+        const origemNormalizada = String(origem || "chat_free_entry").trim() || "chat_free_entry";
+        const snapshotAtual = obterSnapshotEstadoInspectorAtual();
+        if (redirecionarEntradaParaReemissaoWorkspace({ origem: origemNormalizada })) {
+            return false;
+        }
+        const veioDoPortal = origemChatLivreEhPortal(origemNormalizada);
+        if (!veioDoPortal && !entradaChatLivreDisponivel(snapshotAtual)) {
+            sincronizarVisibilidadeAcoesChatLivre(snapshotAtual);
+            mostrarToast("O chat livre só fica disponível quando não existe laudo ativo.", "info", 2200);
+            return false;
+        }
+
+        fecharModalGateQualidade();
+
+        if (modalNovaInspecaoEstaAberta()) {
+            fecharNovaInspecaoComScreenSync({ forcar: true, restaurarFoco: false });
+        }
+
+        limparForcaTelaInicial();
+        sincronizarEstadoInspector({
+            laudoAtualId: null,
+            estadoRelatorio: "sem_relatorio",
+            forceHomeLanding: false,
+            modoInspecaoUI: "workspace",
+            workspaceStage: "assistant",
+            threadTab: "conversa",
+            overlayOwner: "",
+            assistantLandingFirstSendPending: false,
+            freeChatConversationActive: false,
+        }, {
+            persistirStorage: false,
+        });
+        exibirLandingAssistenteIA({ limparTimeline: false });
+
+        const screenFinal = sincronizarInspectorScreen();
+        focarComposerInspector();
+        emitirEventoTariel("tariel:assistant-chat-opened", {
+            origem: origemNormalizada,
+            screen: screenFinal,
+        });
+
+        return screenFinal === "assistant_landing";
+    }
+
+    function promoverPortalParaChatNoModoFoco({ origem = "focus_mode_toggle" } = {}) {
+        const snapshotAtual = obterSnapshotEstadoInspectorAtual();
+        if (!modoFocoPodePromoverPortalParaChat(snapshotAtual)) {
+            return false;
+        }
+
+        return abrirChatLivreInspector({ origem });
+    }
+
+    function restaurarTelaSemRelatorio({ limparTimeline = false } = {}) {
+        if (homeForcadoAtivo()) {
+            resetarInterfaceInspecao();
+            return;
+        }
+
+        exibirLandingAssistenteIA({ limparTimeline });
+    }
+
+    function resetarInterfaceInspecao() {
+        definirRetomadaHomePendente(null);
+        limparFluxoNovoChatFocado();
+        atualizarEstadoModoEntrada({}, { reset: true });
+        estado.contextoFixado = [];
+        estado.chatStatusIA = {
+            status: "pronto",
+            texto: "Assistente pronto",
+        };
+        resetarFiltrosHistoricoWorkspace();
+        definirWorkspaceStage("assistant");
+        definirModoInspecaoUI("home");
+        atualizarThreadWorkspace("conversa");
+        atualizarHistoricoHomeExpandido(false);
+        renderizarResumoOperacionalMesa();
+        limparPainelPendencias();
+        fecharSlashCommandPalette();
+        atualizarStatusChatWorkspace("pronto", "Assistente pronto");
+    }
+
+    function atualizarHistoricoHomeExpandido(expandir = false) {
+        const extras = Array.isArray(el.historicoHomeExtras) ? el.historicoHomeExtras : [];
+        const expandido = !!expandir && extras.length > 0;
+
+        extras.forEach((bloco) => {
+            if (!bloco) return;
+            if (expandido) {
+                bloco.removeAttribute("hidden");
+            } else {
+                bloco.setAttribute("hidden", "");
+            }
+        });
+
+        if (el.btnHomeToggleHistoricoCompleto) {
+            el.btnHomeToggleHistoricoCompleto.setAttribute("aria-expanded", expandido ? "true" : "false");
+            el.btnHomeToggleHistoricoCompleto.textContent = expandido
+                ? "Mostrar menos"
+                : "Ver todos";
+        }
+    }
+
+    function rolarParaHistoricoHome({ expandir = false } = {}) {
+        if (expandir) {
+            atualizarHistoricoHomeExpandido(true);
+        }
+
+        if (!el.secaoHomeRecentes) return;
+
+        try {
+            el.secaoHomeRecentes.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
+        } catch (_) {
+            el.secaoHomeRecentes.scrollIntoView();
+        }
+    }
+
+    async function abrirLaudoPeloHome(
+        laudoId,
+        origem = "home_recent",
+        tipoTemplate = "padrao",
+        contextoVisual = null,
+        threadTabPreferida = "",
+        modoEntradaPayload = null
+    ) {
+        const id = Number(laudoId || 0) || null;
+        if (!id) {
+            mostrarToast("Nenhum laudo recente disponível para continuar.", "aviso", 2600);
+            return false;
+        }
+
+        limparForcaTelaInicial();
+        const tipoNormalizado = normalizarTipoTemplate(tipoTemplate);
+        const payloadModoEntrada = modoEntradaPayload && typeof modoEntradaPayload === "object"
+            ? { ...modoEntradaPayload }
+            : {};
+        const threadTabInicial = String(threadTabPreferida || "").trim()
+            ? normalizarThreadTab(threadTabPreferida)
+            : resolverThreadTabInicialPorModoEntrada(payloadModoEntrada, "historico");
+        definirRetomadaHomePendente({
+            laudoId: id,
+            tipoTemplate: tipoNormalizado,
+            contextoVisual: contextoVisual || null,
+            expiresAt: Date.now() + 6000,
+        });
+        registrarContextoVisualLaudo(id, contextoVisual);
+        aplicarContextoVisualWorkspace(contextoVisual || criarContextoVisualPadrao());
+        atualizarEstadoModoEntrada(payloadModoEntrada);
+        sincronizarEstadoInspector({
+            laudoAtualId: id,
+            forceHomeLanding: false,
+            modoInspecaoUI: "workspace",
+            workspaceStage: "inspection",
+            threadTab: threadTabInicial,
+            overlayOwner: "",
+            assistantLandingFirstSendPending: false,
+            freeChatConversationActive: false,
+        }, {
+            persistirStorage: false,
+        });
+
+        if (typeof window.TarielChatPainel?.selecionarLaudo === "function") {
+            const ok = !!window.TarielChatPainel.selecionarLaudo(id, {
+                atualizarURL: true,
+                origem,
+                threadTab: threadTabInicial,
+                ignorarBloqueioRelatorio: true,
+                ...payloadModoEntrada,
+            });
+            if (ok) {
+                exibirInterfaceInspecaoAtiva(tipoNormalizado);
+                atualizarThreadWorkspace(threadTabInicial, {
+                    persistirURL: true,
+                    replaceURL: true,
+                });
+                carregarPendenciasMesa({ laudoId: id, silencioso: true }).catch(() => {});
+            }
+            return ok;
+        }
+
+        try {
+            if (typeof window.TarielAPI?.carregarLaudo === "function") {
+                await window.TarielAPI.carregarLaudo(id, {
+                    forcar: true,
+                    silencioso: true,
+                });
+            }
+
+            emitirEventoTariel("tariel:laudo-selecionado", {
+                laudoId: id,
+                origem,
+                threadTab: threadTabInicial,
+                ...payloadModoEntrada,
+            });
+            exibirInterfaceInspecaoAtiva(tipoNormalizado);
+            atualizarThreadWorkspace(threadTabInicial, {
+                persistirURL: true,
+                replaceURL: true,
+            });
+            carregarPendenciasMesa({ laudoId: id, silencioso: true }).catch(() => {});
+            return true;
+        } catch (erro) {
+            mostrarToast("Não foi possível abrir esse laudo agora.", "erro", 2800);
+            return false;
+        }
+    }
+
+    async function iniciarInspecao(
+        tipo,
+        { contextoVisual = null, dadosFormulario = null, entryModePreference = null, runtimeTipoTemplate = null } = {}
+    ) {
+        if (estado.iniciandoInspecao) return null;
+
+        const tipoSubmissao = String(tipo || "padrao").trim() || "padrao";
+        const tipoNormalizado = normalizarTipoTemplate(runtimeTipoTemplate || tipoSubmissao);
+        limparForcaTelaInicial();
+
+        if (!window.TarielAPI?.iniciarRelatorio) {
+            mostrarToast("A API do chat ainda não está pronta.", "erro", 3000);
+            return null;
+        }
+
+        estado.iniciandoInspecao = true;
+        definirBotaoIniciarCarregando(true);
+
+        try {
+            const respostaBruta = await window.TarielAPI.iniciarRelatorio(tipoSubmissao, {
+                dadosFormulario,
+                entryModePreference,
+            });
+            const resposta = enriquecerPayloadLaudoComContextoVisual(
+                respostaBruta,
+                contextoVisual
+            );
+
+            if (!resposta) {
+                return null;
+            }
+
+            if (modalNovaInspecaoEstaAberta()) {
+                fecharNovaInspecaoComScreenSync({ forcar: true, restaurarFoco: false });
+            }
+
+            const laudoId = Number(resposta?.laudo_id ?? resposta?.laudoId ?? 0) || null;
+            registrarContextoVisualLaudo(laudoId, contextoVisual);
+            atualizarEstadoModoEntrada(resposta, { atualizarPadrao: true });
+            emitirSincronizacaoLaudo(resposta, { selecionar: true });
+            const threadTabInicial = resolverThreadTabInicialPorModoEntrada(resposta, "historico");
+
+            definirRetomadaHomePendente({
+                laudoId,
+                tipoTemplate: tipoNormalizado,
+                contextoVisual: contextoVisual || null,
+                expiresAt: Date.now() + 15000,
+            });
+
+            if (laudoId) {
+                await abrirLaudoPeloHome(
+                    laudoId,
+                    "new_inspection",
+                    tipoNormalizado,
+                    contextoVisual || null,
+                    threadTabInicial
+                );
+                return resposta;
+            }
+
+            exibirInterfaceInspecaoAtiva(tipoNormalizado);
+            return resposta;
+        } finally {
+            estado.iniciandoInspecao = false;
+            definirBotaoIniciarCarregando(false);
+        }
+    }
+
+    async function finalizarInspecao() {
+        if (estado.finalizandoInspecao) return null;
+
+        if (
+            window.TarielAPI?.estaRespondendo?.() ||
+            document.body?.dataset?.iaRespondendo === "true"
+        ) {
+            mostrarToast("Aguarde a IA terminar antes de enviar para a mesa.", "aviso", 2600);
+            return null;
+        }
+
+        const confirmou = window.confirm(
+            "Deseja encerrar a coleta? O laudo será gerado e enviado para a mesa avaliadora."
+        );
+
+        if (!confirmou) return null;
+
+        estado.finalizandoInspecao = true;
+        definirBotaoFinalizarCarregando(true);
+
+        try {
+            if (typeof window.finalizarInspecaoCompleta === "function") {
+                return await window.finalizarInspecaoCompleta();
+            }
+
+            if (window.TarielAPI?.finalizarRelatorio) {
+                return await window.TarielAPI.finalizarRelatorio({ direto: true });
+            }
+
+            mostrarToast("A finalização do relatório não está disponível.", "erro", 3000);
+            return null;
+        } finally {
+            estado.finalizandoInspecao = false;
+            definirBotaoFinalizarCarregando(false);
+        }
+    }
+
+    // =========================================================
+    // HIGHLIGHT / ESTADO VISUAL DO COMPOSER
+    // =========================================================
+
+    function obterModoMarcador(texto = "") {
+        const valor = String(texto || "").trimStart();
+
+        if (/^@insp\b/i.test(valor)) return "insp";
+        if (/^eng\b/i.test(valor) || /^@eng\b/i.test(valor)) return "eng";
+
+        return "";
+    }
+
+    function atualizarVisualComposer(texto = "") {
+        const modo = obterModoMarcador(texto);
+
+        el.campoMensagem?.classList.toggle("modo-humano-ativo", modo === "insp");
+        el.campoMensagem?.classList.toggle("modo-eng-ativo", modo === "eng");
+
+        el.pilulaEntrada?.classList.toggle("estado-insp", modo === "insp");
+        el.pilulaEntrada?.classList.toggle("estado-eng", modo === "eng");
+
+        atualizarStatusMesaPorComposer(modo);
+    }
+
+    function aplicarHighlightComposer(texto = "") {
+        if (el.backdropHighlight) {
+            el.backdropHighlight.innerHTML = "";
+        }
+        atualizarVisualComposer(texto);
+    }
+
+    function sincronizarScrollBackdrop() {
+        return;
+    }
+
+    // =========================================================
+    // BANNER TEMPORÁRIO DA ENGENHARIA
+    // =========================================================
+
+
+    Object.assign(ctx.actions, {
+        abrirChatLivreInspector,
+        abrirLaudoPeloHome,
+        abrirMesaComContexto,
+        abrirNovaInspecaoComScreenSync,
+        abrirPreviewWorkspace,
+        abrirReemissaoWorkspace,
+        aplicarEstadoAcordeaoRailWorkspace,
+        aplicarMatrizVisibilidadeInspector,
+        aplicarHighlightComposer,
+        aplicarPrePromptDaAcaoRapida,
+        armarPrimeiroEnvioNovoChatPendente,
+        atualizarContextoWorkspaceAtivo,
+        atualizarEstadoModoEntrada,
+        atualizarHistoricoHomeExpandido,
+        atualizarEmptyStateHonestoConversa: ctx.actions.atualizarEmptyStateHonestoConversa,
+        atualizarPainelWorkspaceDerivado: ctx.actions.atualizarPainelWorkspaceDerivado,
+        atualizarRecursosComposerWorkspace,
+        atualizarStatusChatWorkspace,
+        atualizarStatusMesa,
+        atualizarThreadWorkspace,
+        bindEventosModal,
+        bindEventosNovaInspecao: ctx.actions.bindEventosNovaInspecao,
+        bindEventosPagina,
+        bindEventosSistema,
+        bindSystemEvents: ctx.actions.bindSystemEvents,
+        bootInspector: ctx.actions.bootInspector,
+        carregarContextoFixadoWorkspace,
+        fecharNovaInspecaoComScreenSync,
+        filtrarSidebarHistorico,
+        filtrarTimelineWorkspace,
+        finalizarInspecao,
+        fixarContextoWorkspace,
+        focarComposerInspector,
+        iniciarInspecao,
+        inserirTextoNoComposer,
+        citarMensagemWorkspace,
+        coletarLinhasWorkspace,
+        copiarResumoContextoWorkspace,
+        copiarTextoWorkspace,
+        criarContextoVisualPadrao,
+        definirBotaoLaudoCarregando,
+        definirBotaoPreviewCarregando,
+        definirRetomadaHomePendente,
+        definirModoInspecaoUI,
+        definirWorkspaceStage,
+        executarComandoSlash,
+        estadoRelatorioPossuiContexto,
+        exibirConversaFocadaNovoChat,
+        exibirInterfaceInspecaoAtiva,
+        fluxoNovoChatFocadoAtivoOuPendente,
+        homeForcadoAtivo,
+        limparContextoFixadoWorkspace,
+        limparObserversInspector: ctx.actions.limparObserversInspector,
+        montarResumoContextoIAWorkspace,
+        contarEvidenciasWorkspace: ctx.actions.contarEvidenciasWorkspace,
+        decorarLinhasWorkspace,
+        extrairMetaLinhaWorkspace: ctx.actions.extrairMetaLinhaWorkspace,
+        normalizarFiltroChat,
+        normalizarFiltroTipoHistorico,
+        normalizarLaudoAtualId,
+        normalizarEstadoRelatorio,
+        normalizarThreadTab,
+        obterEstadoRelatorioAtualSeguro,
+        obterLaudoIdDaURLInspector,
+        obterRetomadaHomePendente,
+        obterSnapshotEstadoInspectorAtual,
+        obterTextoDeApoioComposer,
+        obterTipoTemplateDoPayload,
+        obterContextoVisualLaudoRegistrado,
+        onCampoMensagemWorkspaceKeydown,
+        prepararComposerParaEnvioModoEntrada,
+        processarAcaoHome,
+        promoverPortalParaChatNoModoFoco,
+        promoverPrimeiraMensagemNovoChatSePronta,
+        registrarPromptHistorico,
+        registrarContextoVisualLaudo,
+        registrarUltimoPayloadStatusRelatorioWorkspace,
+        redirecionarEntradaParaReemissaoWorkspace,
+        removerContextoFixadoWorkspace,
+        renderizarAnexosWorkspace: ctx.actions.renderizarAnexosWorkspace,
+        renderizarAtividadeWorkspace: ctx.actions.renderizarAtividadeWorkspace,
+        renderizarContextoIAWorkspace,
+        renderizarGovernancaEntradaInspetor,
+        renderizarGovernancaHistoricoWorkspace,
+        renderizarMesaCardWorkspace,
+        renderizarProgressoWorkspace: ctx.actions.renderizarProgressoWorkspace,
+        renderizarResumoExecutivoWorkspace,
+        renderizarResumoNavegacaoWorkspace,
+        renderizarSugestoesComposer,
+        renderizarWorkspaceOfficialIssue,
+        renderizarWorkspacePublicVerification,
+        resolverContextoVisualWorkspace,
+        restaurarTelaSemRelatorio,
+        resolveInspectorScreen,
+        resolveWorkspaceView,
+        rolarParaHistoricoHome,
+        resetarInterfaceInspecao,
+        sincronizarInspectorScreen,
+        sincronizarEstadoInspector,
+        sincronizarResumoHistoricoWorkspace: ctx.actions.sincronizarResumoHistoricoWorkspace,
+        sincronizarResumoPendenciasWorkspace: ctx.actions.sincronizarResumoPendenciasWorkspace,
+        sincronizarScrollBackdrop,
+        sincronizarSSEPorContexto,
+        sincronizarSidebarLaudosTabs,
+        sincronizarVisibilidadeAcoesChatLivre,
+        workspaceViewSuportaRail,
+        atualizarVisualComposer,
+        inicializarObservadorSidebarHistorico: ctx.actions.inicializarObservadorSidebarHistorico,
+        inicializarObservadorWorkspace: ctx.actions.inicializarObservadorWorkspace,
+    });
+    function bindEventosModal() {
+        ctx.actions.bindEventosNovaInspecao?.();
+        ctx.actions.bindUiBindings?.();
+    }
+
+    function bindEventosPagina() {
+        ctx.actions.bindUiBindings?.();
+    }
+
+    function bindEventosSistema() {
+        ctx.actions.bindSystemEvents?.();
+
+        const onModoFocoAlterado = (event) => {
+            if (event?.detail?.ativo !== true) {
+                return;
+            }
+
+            promoverPortalParaChatNoModoFoco({ origem: "focus_mode_toggle" });
+        };
+
+        document.addEventListener("tariel:focus-mode-changed", onModoFocoAlterado);
+
+        window.addEventListener("pagehide", () => {
+            fecharSSE();
+            limparTimerReconexaoSSE();
+            limparTimerFecharMesaWidget();
+            limparTimerBanner();
+            cancelarCarregamentoPendenciasMesa();
+            cancelarCarregamentoMensagensMesaWidget();
+            atualizarConexaoMesaWidget("offline");
+            ctx.actions.limparObserversInspector?.();
+        });
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+                fecharSSE();
+                limparTimerReconexaoSSE();
+                return;
+            }
+
+            if (!estado.fonteSSE) {
+                limparTimerReconexaoSSE();
+                sincronizarSSEPorContexto();
+            }
+
+            if (contextoTecnicoPrecisaRefresh()) {
+                carregarPendenciasMesa({ silencioso: true }).catch(() => {});
+            }
+        });
+    }
+
+    if (PERF?.enabled) {
+        const resolverInspectorBaseScreenPorSnapshotOriginal = resolverInspectorBaseScreenPorSnapshot;
+        resolverInspectorBaseScreenPorSnapshot = function resolverInspectorBaseScreenPorSnapshotComPerf(...args) {
+            const snapshot = args[0] && typeof args[0] === "object" ? args[0] : {};
+            return PERF.measureSync(
+                "inspetor.resolverInspectorBaseScreenPorSnapshot",
+                () => resolverInspectorBaseScreenPorSnapshotOriginal.apply(this, args),
+                {
+                    category: "state",
+                    detail: {
+                        modoInspecaoUI: snapshot.modoInspecaoUI || "",
+                        workspaceStage: snapshot.workspaceStage || "",
+                        overlayOwner: snapshot.overlayOwner || "",
+                    },
+                }
+            );
+        };
+
+        const resolverEstadoAutoritativoInspectorOriginal = resolverEstadoAutoritativoInspector;
+        resolverEstadoAutoritativoInspector = function resolverEstadoAutoritativoInspectorComPerf(...args) {
+            const overrides = args[0] && typeof args[0] === "object" ? args[0] : {};
+            return PERF.measureSync(
+                "inspetor.resolverEstadoAutoritativoInspector",
+                () => resolverEstadoAutoritativoInspectorOriginal.apply(this, args),
+                {
+                    category: "state",
+                    detail: {
+                        overrideKeys: Object.keys(overrides),
+                    },
+                }
+            );
+        };
+
+        const espelharEstadoInspectorNoDatasetOriginal = espelharEstadoInspectorNoDataset;
+        espelharEstadoInspectorNoDataset = function espelharEstadoInspectorNoDatasetComPerf(...args) {
+            const snapshot = args[0] && typeof args[0] === "object" ? args[0] : {};
+            PERF.count("inspetor.dataset.sync", 1, {
+                category: "counter",
+                detail: {
+                    screen: snapshot.inspectorScreen || "",
+                    baseScreen: snapshot.inspectorBaseScreen || "",
+                },
+            });
+            return PERF.measureSync(
+                "inspetor.espelharEstadoInspectorNoDataset",
+                () => espelharEstadoInspectorNoDatasetOriginal.apply(this, args),
+                {
+                    category: "state",
+                    detail: {
+                        screen: snapshot.inspectorScreen || "",
+                        baseScreen: snapshot.inspectorBaseScreen || "",
+                    },
+                }
+            );
+        };
+
+        const espelharEstadoInspectorNoStorageOriginal = espelharEstadoInspectorNoStorage;
+        espelharEstadoInspectorNoStorage = function espelharEstadoInspectorNoStorageComPerf(...args) {
+            const snapshot = args[0] && typeof args[0] === "object" ? args[0] : {};
+            const opts = args[1] && typeof args[1] === "object" ? args[1] : {};
+            PERF.count("inspetor.storage.sync", 1, {
+                category: "counter",
+                detail: {
+                    persistirStorage: opts.persistirStorage !== false,
+                },
+            });
+            return PERF.measureSync(
+                "inspetor.espelharEstadoInspectorNoStorage",
+                () => espelharEstadoInspectorNoStorageOriginal.apply(this, args),
+                {
+                    category: "storage",
+                    detail: {
+                        laudoAtualId: snapshot.laudoAtualId || null,
+                        persistirStorage: opts.persistirStorage !== false,
+                    },
+                }
+            );
+        };
+
+        const sincronizarEstadoInspectorOriginal = sincronizarEstadoInspector;
+        sincronizarEstadoInspector = function sincronizarEstadoInspectorComPerf(...args) {
+            const overrides = args[0] && typeof args[0] === "object" ? args[0] : {};
+            const opts = args[1] && typeof args[1] === "object" ? args[1] : {};
+            return PERF.measureSync(
+                "inspetor.sincronizarEstadoInspector",
+                () => {
+                    const snapshot = sincronizarEstadoInspectorOriginal.apply(this, args);
+                    reportarProntidaoInspector(snapshot);
+                    return snapshot;
+                },
+                {
+                    category: "state",
+                    detail: {
+                        overrideKeys: Object.keys(overrides),
+                        persistirStorage: opts.persistirStorage !== false,
+                    },
+                }
+            );
+        };
+
+        if (window.TarielInspectorState) {
+            window.TarielInspectorState.resolverEstadoAutoritativoInspector = resolverEstadoAutoritativoInspector;
+            window.TarielInspectorState.sincronizarEstadoInspector = sincronizarEstadoInspector;
+            window.TarielInspectorState.atualizarThreadWorkspace = atualizarThreadWorkspace;
+        }
+
+        const exibirConversaFocadaNovoChatOriginal = exibirConversaFocadaNovoChat;
+        exibirConversaFocadaNovoChat = function exibirConversaFocadaNovoChatComPerf(...args) {
+            return PERF.measureSync(
+                "inspetor.exibirConversaFocadaNovoChat",
+                () => {
+                    const resultado = exibirConversaFocadaNovoChatOriginal.apply(this, args);
+                    PERF.finish("transition.primeira_mensagem_novo_chat", obterResumoPerfInspector());
+                    reportarProntidaoInspector();
+                    PERF.snapshotDOM?.("inspetor:focused-conversation");
+                    return resultado;
+                },
+                {
+                    category: "transition",
+                    detail: obterResumoPerfInspector(),
+                }
+            );
+        };
+
+        const promoverPrimeiraMensagemNovoChatSeProntaOriginal = promoverPrimeiraMensagemNovoChatSePronta;
+        promoverPrimeiraMensagemNovoChatSePronta = function promoverPrimeiraMensagemNovoChatSeProntaComPerf(...args) {
+            const opcoes = args[0] && typeof args[0] === "object" ? args[0] : {};
+            return PERF.measureSync(
+                "inspetor.promoverPrimeiraMensagemNovoChatSePronta",
+                () => promoverPrimeiraMensagemNovoChatSeProntaOriginal.apply(this, args),
+                {
+                    category: "transition",
+                    detail: {
+                        forcar: opcoes.forcar === true,
+                        focarComposer: opcoes.focarComposer === true,
+                        ...obterResumoPerfInspector(),
+                    },
+                }
+            );
+        };
+
+        const atualizarPainelWorkspaceDerivadoOriginal = atualizarPainelWorkspaceDerivado;
+        atualizarPainelWorkspaceDerivado = function atualizarPainelWorkspaceDerivadoComPerf(...args) {
+            return PERF.measureSync(
+                "inspetor.atualizarPainelWorkspaceDerivado",
+                () => atualizarPainelWorkspaceDerivadoOriginal.apply(this, args),
+                {
+                    category: "render",
+                    detail: obterResumoPerfInspector(),
+                }
+            );
+        };
+
+        const atualizarThreadWorkspaceOriginal = atualizarThreadWorkspace;
+        atualizarThreadWorkspace = function atualizarThreadWorkspaceComPerf(...args) {
+            const tab = String(args[0] || "conversa").trim().toLowerCase() || "conversa";
+            return PERF.measureSync(
+                "inspetor.atualizarThreadWorkspace",
+                () => {
+                    const resultado = atualizarThreadWorkspaceOriginal.apply(this, args);
+                    PERF.finish(`transition.thread_tab.${tab}`, {
+                        tab,
+                        ...obterResumoPerfInspector(),
+                    });
+                    reportarProntidaoInspector();
+                    return resultado;
+                },
+                {
+                    category: "render",
+                    detail: {
+                        tab,
+                        ...obterResumoPerfInspector(),
+                    },
+                }
+            );
+        };
+
+        const aplicarMatrizVisibilidadeInspectorOriginal = aplicarMatrizVisibilidadeInspector;
+        aplicarMatrizVisibilidadeInspector = function aplicarMatrizVisibilidadeInspectorComPerf(...args) {
+            return PERF.measureSync(
+                "inspetor.aplicarMatrizVisibilidadeInspector",
+                () => aplicarMatrizVisibilidadeInspectorOriginal.apply(this, args),
+                {
+                    category: "state",
+                    detail: obterResumoPerfInspector(args[1]),
+                }
+            );
+        };
+
+        const resolveInspectorScreenOriginal = resolveInspectorScreen;
+        resolveInspectorScreen = function resolveInspectorScreenComPerf(...args) {
+            return PERF.measureSync(
+                "inspetor.resolveInspectorScreen",
+                () => resolveInspectorScreenOriginal.apply(this, args),
+                {
+                    category: "state",
+                    detail: obterResumoPerfInspector(),
+                }
+            );
+        };
+
+        const sincronizarWorkspaceRailOriginal = sincronizarWorkspaceRail;
+        sincronizarWorkspaceRail = function sincronizarWorkspaceRailComPerf(...args) {
+            return PERF.measureSync(
+                "inspetor.sincronizarWorkspaceRail",
+                () => sincronizarWorkspaceRailOriginal.apply(this, args),
+                {
+                    category: "state",
+                    detail: obterResumoPerfInspector(),
+                }
+            );
+        };
+
+        const sincronizarWidgetsGlobaisWorkspaceOriginal = sincronizarWidgetsGlobaisWorkspace;
+        sincronizarWidgetsGlobaisWorkspace = function sincronizarWidgetsGlobaisWorkspaceComPerf(...args) {
+            return PERF.measureSync(
+                "inspetor.sincronizarWidgetsGlobaisWorkspace",
+                () => sincronizarWidgetsGlobaisWorkspaceOriginal.apply(this, args),
+                {
+                    category: "state",
+                    detail: obterResumoPerfInspector(),
+                }
+            );
+        };
+
+        const sincronizarInspectorScreenOriginal = sincronizarInspectorScreen;
+        sincronizarInspectorScreen = function sincronizarInspectorScreenComPerf(...args) {
+            return PERF.measureSync(
+                "inspetor.sincronizarInspectorScreen",
+                () => {
+                    const screen = sincronizarInspectorScreenOriginal.apply(this, args);
+                    reportarProntidaoInspector();
+                    PERF.snapshotDOM?.(`inspetor:screen:${String(screen || "unknown")}`);
+                    if (screen === "assistant_landing") {
+                        PERF.finish("transition.novo_chat", {
+                            ...obterResumoPerfInspector(),
+                            screen,
+                        });
+                    }
+                    if (screen === "new_inspection") {
+                        PERF.finish("transition.abrir_nova_inspecao", {
+                            ...obterResumoPerfInspector(),
+                            screen,
+                        });
+                    }
+                    return screen;
+                },
+                {
+                    category: "state",
+                    detail: obterResumoPerfInspector(),
+                }
+            );
+        };
+
+        const abrirChatLivreInspectorOriginal = abrirChatLivreInspector;
+        abrirChatLivreInspector = function abrirChatLivreInspectorComPerf(...args) {
+            const payload = args[0] && typeof args[0] === "object" ? args[0] : {};
+            return PERF.measureSync(
+                "inspetor.abrirChatLivreInspector",
+                () => abrirChatLivreInspectorOriginal.apply(this, args),
+                {
+                    category: "transition",
+                    detail: {
+                        origem: payload.origem || "chat_free_entry",
+                        ...obterResumoPerfInspector(),
+                    },
+                }
+            );
+        };
+
+        const abrirNovaInspecaoComScreenSyncOriginal = abrirNovaInspecaoComScreenSync;
+        abrirNovaInspecaoComScreenSync = function abrirNovaInspecaoComScreenSyncComPerf(...args) {
+            const payload = args[0] && typeof args[0] === "object" ? args[0] : {};
+            return PERF.measureSync(
+                "inspetor.abrirNovaInspecaoComScreenSync",
+                () => abrirNovaInspecaoComScreenSyncOriginal.apply(this, args),
+                {
+                    category: "transition",
+                    detail: {
+                        tipoPrefill: payload.tipoPrefill || "",
+                        possuiPrePrompt: !!String(payload.prePrompt || "").trim(),
+                        ...obterResumoPerfInspector(),
+                    },
+                }
+            );
+        };
+    }
+
+    // =========================================================
+    // BOOT
+    // =========================================================
+
+    async function boot() {
+        await ctx.actions.bootInspector?.();
+    }
+
+    if (PERF?.enabled) {
+        const bootOriginal = boot;
+        boot = async function bootComPerf(...args) {
+            PERF.begin("transition.boot_inspetor", {
+                readyState: document.readyState,
+            });
+            return PERF.measureAsync(
+                "inspetor.boot",
+                async () => {
+                    const resultado = await bootOriginal.apply(this, args);
+                    reportarProntidaoInspector();
+                    PERF.finish("transition.boot_inspetor", obterResumoPerfInspector());
+                    PERF.snapshotDOM?.("inspetor:boot-final");
+                    return resultado;
+                },
+                {
+                    category: "boot",
+                    detail: {
+                        readyState: document.readyState,
+                    },
+                }
+            );
+        };
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", boot, { once: true });
+    } else {
+        boot();
+    }
+})();

@@ -1,0 +1,14 @@
+[Unit]
+Description=Tariel auto sync para Google Drive
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/gabriel/Área de trabalho/tariel-web
+ExecStart=/bin/bash -lc '"/home/gabriel/Área de trabalho/tariel-web/scripts/drive_auto_sync.sh" watch'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
