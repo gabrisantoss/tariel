@@ -2993,3 +2993,57 @@ Próximo passo imediato:
 
 - continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, provavelmente anexos/mesa ou foco do composer;
 - no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando helpers de preview/documentação que ainda ocupam muito volume.
+
+## Ciclo 76 — Extração de anexos da mesa e preview documental do catálogo
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda mantinha o bloco de normalização e renderização de anexos do widget da mesa dentro do runtime principal;
+- `web/app/domains/admin/services.py` ainda carregava a família de helpers de preview documental do catálogo, incluindo status, objetivo, resumo e enriquecimento das linhas do catálogo;
+- esse conjunto ainda representava volume real nos dois hotspots e tinha baixo risco de extração por depender só de leitura e serialização.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_mesa_attachments.js` com `formatarTamanhoBytes`, `normalizarAnexoMesa` e `renderizarLinksAnexosMesa`;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorWorkspaceMesaAttachments`;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/admin_catalog_document_preview_services.py` com status, objetivo, resumo e enriquecimento de preview documental do catálogo;
+- `web/app/domains/admin/services.py` ficou com wrappers finos para esse bloco.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_mesa_attachments.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_catalog_document_preview_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_mesa_attachments.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_document_preview_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_document_preview_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `git diff --check`
+- resultado:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Progresso dos hotspots:
+
+- `web/static/js/chat/chat_index_page.js`: `6368 -> 5045` linhas, redução acumulada de `20.78%`
+- `web/app/domains/admin/services.py`: `5395 -> 3436` linhas, redução acumulada de `36.31%`
+- combinado: `11763 -> 8481` linhas, redução acumulada de `27.90%`
+
+Próximo passo imediato:
+
+- continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo preview/finalização ou foco do composer;
+- no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando biblioteca de variantes e alvo de refinamento template.

@@ -45,6 +45,7 @@
     const InspectorWorkspaceScreen = window.TarielInspectorWorkspaceScreen || {};
     const InspectorWorkspaceUtils = window.TarielInspectorWorkspaceUtils || {};
     const InspectorWorkspaceStage = window.TarielInspectorWorkspaceStage || {};
+    const InspectorWorkspaceMesaAttachments = window.TarielInspectorWorkspaceMesaAttachments || {};
     const InspectorWorkspaceContextFlow = window.TarielInspectorWorkspaceContextFlow || {};
     const InspectorWorkspaceHomeFlow = window.TarielInspectorWorkspaceHomeFlow || {};
     const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
@@ -1729,54 +1730,15 @@
     }
 
     function formatarTamanhoBytes(totalBytes) {
-        const valor = Number(totalBytes || 0);
-        if (!Number.isFinite(valor) || valor <= 0) return "0 KB";
-        if (valor >= 1024 * 1024) {
-            return `${(valor / (1024 * 1024)).toFixed(1)} MB`;
-        }
-        return `${Math.max(1, Math.round(valor / 1024))} KB`;
+        return InspectorWorkspaceMesaAttachments.formatarTamanhoBytes?.(totalBytes) || "0 KB";
     }
 
     function normalizarAnexoMesa(payload = {}) {
-        const id = Number(payload?.id || 0) || null;
-        const nome = String(payload?.nome || "").trim();
-        const mimeType = String(payload?.mime_type || "").trim().toLowerCase();
-        const categoria = String(payload?.categoria || "").trim().toLowerCase();
-        const url = String(payload?.url || "").trim();
-        if (!id || !nome || !url) return null;
-        return {
-            id,
-            nome,
-            mime_type: mimeType,
-            categoria,
-            url,
-            tamanho_bytes: Number(payload?.tamanho_bytes || 0) || 0,
-            eh_imagem: !!payload?.eh_imagem,
-        };
+        return InspectorWorkspaceMesaAttachments.normalizarAnexoMesa?.(payload) || null;
     }
 
     function renderizarLinksAnexosMesa(anexos = []) {
-        const itens = Array.isArray(anexos) ? anexos.filter(Boolean) : [];
-        if (!itens.length) return "";
-
-        return `
-            <div class="mesa-widget-anexos">
-                ${itens.map((anexo) => `
-                    <a
-                        class="anexo-mesa-link ${anexo?.eh_imagem ? "imagem" : "documento"}"
-                        href="${escaparHtml(anexo?.url || "#")}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <span class="material-symbols-rounded" aria-hidden="true">${anexo?.eh_imagem ? "image" : "description"}</span>
-                        <span class="anexo-mesa-link-texto">
-                            <strong>${escaparHtml(anexo?.nome || "anexo")}</strong>
-                            <small>${escaparHtml(formatarTamanhoBytes(anexo?.tamanho_bytes || 0))}</small>
-                        </span>
-                    </a>
-                `).join("")}
-            </div>
-        `;
+        return InspectorWorkspaceMesaAttachments.renderizarLinksAnexosMesa?.(anexos) || "";
     }
 
     function pluralizarWorkspace(total, singular, plural) {

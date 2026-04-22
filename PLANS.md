@@ -2859,3 +2859,31 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de retomada/home
 - `admin/services.py` perde uma fatia grande de material real e filas associadas
 - smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-13` — Anexos da mesa e preview documental do catálogo
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega normalização/renderização de anexos da mesa para `web/static/js/inspetor/workspace_mesa_attachments.js`, `admin/services.py` delega o bloco de preview documental do catálogo para `web/app/domains/admin/admin_catalog_document_preview_services.py`, e o pacote passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por um bloco residual de anexos/mesa no inspetor e por helpers de preview documental do catálogo que ainda ocupavam muito volume no agregado administrativo
+
+### Escopo
+
+- entra extração de `formatarTamanhoBytes`, `normalizarAnexoMesa` e `renderizarLinksAnexosMesa`
+- entra extração de status, objetivo, resumo e enriquecimento de preview documental do catálogo
+- não entra mudança funcional do widget da mesa
+- não entra mudança semântica do preview comercial/documental
+
+### Passos
+
+1. extrair o bloco de anexos/mesa para módulo dedicado do inspetor
+2. extrair a família de helpers de preview documental do catálogo para serviço administrativo dedicado
+3. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de anexos/mesa
+- `admin/services.py` perde mais uma fatia material de preview documental
+- smoke do web e subset focal do admin seguem verdes
