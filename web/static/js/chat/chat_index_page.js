@@ -3191,73 +3191,15 @@
     }
 
     function aplicarMatrizVisibilidadeInspector(screen = resolveInspectorScreen(), snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const matriz = resolverMatrizVisibilidadeInspector(screen, snapshot);
-        const body = document.body;
-        const painel = el.painelChat;
-        const mesaEntry = matriz.mesaEntry;
-        const finalizeEntry = matriz.headerFinalize === "visible"
-            ? "header"
-            : (matriz.railFinalize === "visible" ? "rail" : "hidden");
-
-        body.dataset.inspectorCompactLayout = matriz.compacto ? "true" : "false";
-        body.dataset.inspectorQuickDock = matriz.quickDock;
-        body.dataset.inspectorContextRail = matriz.contextRail;
-        body.dataset.inspectorMesaEntry = mesaEntry;
-        body.dataset.inspectorMesaWidgetSurface = matriz.mesaWidget;
-        body.dataset.inspectorFinalizeEntry = finalizeEntry;
-        body.dataset.inspectorNovaInspecaoEntry = matriz.novaInspecaoEntry;
-        body.dataset.inspectorAbrirChatEntry = matriz.abrirChatEntry;
-        body.dataset.inspectorOperationalShortcuts = matriz.operationalShortcuts;
-
-        if (painel) {
-            painel.dataset.inspectorCompactLayout = matriz.compacto ? "true" : "false";
-            painel.dataset.inspectorQuickDock = matriz.quickDock;
-            painel.dataset.inspectorContextRail = matriz.contextRail;
-            painel.dataset.inspectorMesaEntry = mesaEntry;
-            painel.dataset.inspectorMesaWidgetSurface = matriz.mesaWidget;
-            painel.dataset.inspectorFinalizeEntry = finalizeEntry;
-            painel.dataset.inspectorNovaInspecaoEntry = matriz.novaInspecaoEntry;
-            painel.dataset.inspectorAbrirChatEntry = matriz.abrirChatEntry;
-            painel.dataset.inspectorOperationalShortcuts = matriz.operationalShortcuts;
-        }
-
-        if (el.btnSidebarOpenInspecaoModal) {
-            const visivel = matriz.sidebarNewInspection === "visible";
-            el.btnSidebarOpenInspecaoModal.hidden = !visivel;
-            el.btnSidebarOpenInspecaoModal.setAttribute("aria-hidden", String(!visivel));
-        }
-        if (el.btnWorkspaceOpenInspecaoModal) {
-            const visivel = matriz.workspaceHeaderNewInspection === "visible";
-            el.btnWorkspaceOpenInspecaoModal.hidden = !visivel;
-            el.btnWorkspaceOpenInspecaoModal.setAttribute("aria-hidden", String(!visivel));
-        }
-        if (el.btnAssistantLandingOpenInspecaoModal) {
-            const visivel = matriz.landingNewInspection === "visible";
-            el.btnAssistantLandingOpenInspecaoModal.hidden = !visivel;
-            el.btnAssistantLandingOpenInspecaoModal.setAttribute("aria-hidden", String(!visivel));
-        }
-        if (el.btnFinalizarInspecao) {
-            const visivel = matriz.headerFinalize === "visible";
-            el.btnFinalizarInspecao.hidden = !visivel;
-            el.btnFinalizarInspecao.setAttribute("aria-hidden", String(!visivel));
-        }
-        if (el.btnRailFinalizarInspecao) {
-            const visivel = matriz.railFinalize === "visible";
-            el.btnRailFinalizarInspecao.hidden = !visivel;
-            el.btnRailFinalizarInspecao.setAttribute("aria-hidden", String(!visivel));
-        }
-        if (el.btnMesaWidgetToggle) {
-            const visivel = matriz.mesaEntry === "rail";
-            el.btnMesaWidgetToggle.hidden = !visivel;
-            el.btnMesaWidgetToggle.setAttribute("aria-hidden", String(!visivel));
-        }
-        if (el.btnToggleHumano) {
-            const visivel = matriz.mesaEntry === "composer";
-            el.btnToggleHumano.hidden = !visivel;
-            el.btnToggleHumano.setAttribute("aria-hidden", String(!visivel));
-        }
-
-        return matriz;
+        return InspectorWorkspaceScreen.aplicarMatrizVisibilidadeInspector?.(
+            screen,
+            snapshot,
+            {
+                document,
+                el,
+                resolverMatrizVisibilidadeInspector,
+            }
+        ) || resolverMatrizVisibilidadeInspector(screen, snapshot);
     }
 
     function modalNovaInspecaoEstaAberta() {

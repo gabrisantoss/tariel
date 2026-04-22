@@ -941,3 +941,47 @@ Próximo passo imediato:
 
 - continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo `screen sync` derivado ou outro bloco de orquestração de workspace;
 - no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando rollups de material real/comercial ou agregações de governança ainda volumosas.
+
+## Ciclo R22 — Matriz de visibilidade do workspace e rollups operacional/comercial
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda concentrava a aplicação da matriz de visibilidade do workspace no runtime principal;
+- `web/app/domains/admin/services.py` ainda mantinha os rollups de material real e escala comercial no agregado administrativo;
+- era um corte seguro porque os blocos eram de leitura, serialização e composição de payload.
+
+Corte executado:
+
+- migração de `aplicarMatrizVisibilidadeInspector` para `web/static/js/inspetor/workspace_screen.js`;
+- reapontamento de `web/static/js/chat/chat_index_page.js` para consumir esse bloco via `window.TarielInspectorWorkspaceScreen`;
+- criação do módulo `web/app/domains/admin/admin_catalog_rollup_services.py`;
+- extração das rotinas `build_material_real_rollup` e `build_commercial_scale_rollup`, preservando wrappers compatíveis em `services.py`.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_screen.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/app/domains/admin/admin_catalog_rollup_services.py`
+- `web/app/domains/admin/services.py`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_screen.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_rollup_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_rollup_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo sincronização de rail/widgets ou outro bloco de orquestração ainda local;
+- no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando governança ou template library rollup, que ainda concentram volume real.

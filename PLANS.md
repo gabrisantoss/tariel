@@ -2945,3 +2945,31 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de controle do composer
 - `admin/services.py` perde mais uma fatia material de agregação da fila de calibração
 - smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-16` — Matriz de visibilidade do workspace e rollups operacional/comercial
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega a aplicação da matriz de visibilidade para `web/static/js/inspetor/workspace_screen.js`, `admin/services.py` delega os rollups de material real e escala comercial para `web/app/domains/admin/admin_catalog_rollup_services.py`, e o pacote passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por um bloco residual de visibilidade/orquestração do workspace no inspetor e por rollups administrativos ainda volumosos de operação e escala comercial
+
+### Escopo
+
+- entra migração de `aplicarMatrizVisibilidadeInspector` para `workspace_screen.js`
+- entra extração de `build_material_real_rollup` e `build_commercial_scale_rollup`
+- não entra mudança funcional da matriz visual do inspetor
+- não entra mudança semântica dos indicadores operacionais/comerciais
+
+### Passos
+
+1. mover a aplicação da matriz de visibilidade para `workspace_screen.js`
+2. extrair os rollups operacional/comercial para serviço administrativo dedicado
+3. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de visibilidade de workspace
+- `admin/services.py` perde mais uma fatia material de rollups operacionais/comerciais
+- smoke do web e subset focal do admin seguem verdes

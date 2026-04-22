@@ -3156,3 +3156,55 @@ Próximo passo imediato:
 
 - continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo `screen sync` derivado ou outro bloco de orquestração de workspace;
 - no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando rollups de material real/comercial ou agregações de governança que ainda concentram volume.
+
+## Ciclo 79 — Extração da matriz de visibilidade do workspace e rollups operacional/comercial
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda mantinha a aplicação da matriz de visibilidade do workspace dentro do runtime principal;
+- `web/app/domains/admin/services.py` ainda concentrava os rollups de material real e escala comercial no agregado administrativo;
+- os blocos eram de leitura e serialização, com fronteira clara e baixo risco de extração.
+
+Corte executado:
+
+- `aplicarMatrizVisibilidadeInspector` passou a ser servido por `web/static/js/inspetor/workspace_screen.js`;
+- `web/static/js/chat/chat_index_page.js` ficou com wrapper fino para a aplicação da matriz de visibilidade;
+- extraído `web/app/domains/admin/admin_catalog_rollup_services.py` com `build_material_real_rollup` e `build_commercial_scale_rollup`;
+- `web/app/domains/admin/services.py` ficou com wrappers finos para esses dois rollups.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_screen.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/app/domains/admin/admin_catalog_rollup_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_screen.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_rollup_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_rollup_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `git diff --check`
+- resultado:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Progresso dos hotspots:
+
+- `web/static/js/chat/chat_index_page.js`: `6368 -> 4852` linhas, redução acumulada de `23.81%`
+- `web/app/domains/admin/services.py`: `5395 -> 3082` linhas, redução acumulada de `42.87%`
+- combinado: `11763 -> 7934` linhas, redução acumulada de `32.55%`
+
+Próximo passo imediato:
+
+- continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo sincronização de rail/widgets ou outro bloco de orquestração ainda local;
+- no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando governança ou template library rollup, que ainda concentram volume real.
