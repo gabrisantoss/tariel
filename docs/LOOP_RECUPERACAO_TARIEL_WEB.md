@@ -638,3 +638,59 @@ Próximo passo imediato:
 
 - continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual do workspace, preferindo anexos/mesa ou helpers remanescentes de integração;
 - no backend, seguir para a próxima fatia pequena e coberta ainda remanescente em `web/app/domains/admin/services.py`.
+
+## Ciclo R16 — Stage do workspace e resumo administrativo do catálogo
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda acumulava o bloco de stage/contexto do workspace, incluindo cópia dinâmica, abertura/fechamento da nova inspeção e sincronização dos controles principais;
+- `web/app/domains/admin/services.py` ainda mantinha helpers de prontidão, lifecycle e filtros do catálogo, além da fachada de detalhe do cliente, mantendo o agregado principal maior do que o necessário.
+
+Corte executado:
+
+- criação do módulo `web/static/js/inspetor/workspace_stage.js`;
+- extração das rotinas:
+  - `atualizarNomeTemplateAtivo`
+  - `abrirNovaInspecaoComScreenSync`
+  - `fecharNovaInspecaoComScreenSync`
+  - `atualizarCopyWorkspaceStage`
+  - `atualizarControlesWorkspaceStage`
+  - `atualizarContextoWorkspaceAtivo`
+- reapontamento de `web/static/js/chat/chat_index_page.js` para consumir o helper novo via `window.TarielInspectorWorkspaceStage`;
+- criação do módulo `web/app/domains/admin/admin_client_detail_services.py`;
+- criação do módulo `web/app/domains/admin/admin_catalog_summary_services.py`;
+- criação do módulo `web/app/domains/admin/admin_signatory_services.py`;
+- extração das rotinas de detalhe de cliente, dos helpers de prontidão/lifecycle/filtros do catálogo e do bloco de signatários governados, preservando wrappers compatíveis em `services.py`;
+- ajuste da ordem de carga em `web/templates/index.html` para carregar o helper novo antes do runtime principal.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_stage.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_client_detail_services.py`
+- `web/app/domains/admin/admin_catalog_summary_services.py`
+- `web/app/domains/admin/admin_signatory_services.py`
+- `web/app/domains/admin/services.py`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_stage.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_client_detail_services.py web/app/domains/admin/admin_catalog_summary_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_client_detail_services.py app/domains/admin/admin_catalog_summary_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_deriva_prontidao or catalogo_filtros_principais or buscar_detalhe_cliente or signatario or portfolio"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `5 passed, 37 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo anexos/mesa ou fluxo de chat livre;
+- no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando reduções reais do agregado.

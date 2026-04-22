@@ -2773,3 +2773,33 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de utilidades sem quebrar o runtime principal
 - `admin/services.py` perde o backend de boas-vindas sem quebrar testes de cadastro e aviso operacional
 - smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-10` — Stage do workspace e resumo administrativo do catálogo
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega stage/contexto do workspace para `web/static/js/inspetor/workspace_stage.js`, `admin/services.py` delega detalhe de cliente e helpers de resumo/filtro do catálogo para módulos dedicados, e o pacote passou em sintaxe, `ruff`, smoke e subsets focais do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por um bloco central de stage/contexto do inspetor e por helpers administrativos de catálogo que ainda mantinham volume demais no agregado principal
+
+### Escopo
+
+- entra extração do stage do workspace, cópia dinâmica e controles visuais do inspetor
+- entra extração do detalhe administrativo do cliente para módulo dedicado
+- entra extração dos helpers de prontidão, lifecycle, distribuição por plano e filtros do catálogo admin
+- não entra mudança funcional de onboarding, catálogo ou UI do inspetor
+- não entra redesign visual
+
+### Passos
+
+1. extrair o bloco de stage/contexto do workspace para módulo dedicado
+2. extrair `buscar_detalhe_cliente` para uma fachada de detalhe administrativo
+3. extrair os helpers de resumo/filtro do catálogo para serviço administrativo dedicado
+4. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+5. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de stage/contexto sem quebrar o runtime principal
+- `admin/services.py` perde uma fatia material de resumo/filtro do catálogo e detalhe do cliente
+- smoke do web e subsets focais do admin seguem verdes

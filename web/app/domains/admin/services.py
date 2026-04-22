@@ -105,6 +105,24 @@ from app.domains.admin.admin_welcome_notification_services import (
     aviso_notificacao_boas_vindas as _admin_welcome_notice_message,
     disparar_email_boas_vindas as _admin_dispatch_welcome_notice,
 )
+from app.domains.admin.admin_client_detail_services import (
+    buscar_detalhe_cliente as _admin_client_detail_buscar_detalhe_cliente,
+)
+from app.domains.admin.admin_signatory_services import (
+    normalizar_family_keys_signatario as _admin_signatory_normalizar_family_keys,
+    normalizar_validade_signatario as _admin_signatory_normalizar_validade,
+    serializar_signatario_governado_admin as _admin_signatory_serializar,
+    status_signatario_governado as _admin_signatory_status,
+    upsert_signatario_governado_laudo as _admin_signatory_upsert,
+)
+from app.domains.admin.admin_catalog_summary_services import (
+    calibracao_status_resolvido as _admin_catalog_summary_calibracao_status,
+    catalog_plan_distribution_summary as _admin_catalog_summary_plan_distribution,
+    catalog_row_matches_filters as _admin_catalog_summary_row_matches,
+    derivar_prontidao_catalogo as _admin_catalog_summary_derivar_prontidao,
+    offer_lifecycle_resolvido as _admin_catalog_summary_offer_lifecycle,
+    total_releases_ativas_familia as _admin_catalog_summary_total_releases,
+)
 from app.domains.admin.platform_settings_state import (
     get_platform_default_new_tenant_plan,  # noqa: F401
     get_support_exceptional_policy_snapshot,  # noqa: F401
@@ -2977,41 +2995,19 @@ def _calibracao_status_resolvido(
     familia: FamiliaLaudoCatalogo,
     oferta: OfertaComercialFamiliaLaudo | None,
 ) -> str:
-    calibracao = getattr(familia, "calibracao", None)
-    if calibracao is not None and str(getattr(calibracao, "calibration_status", "") or "").strip():
-        return str(calibracao.calibration_status)
-    material_status = str(getattr(oferta, "material_level", "") or "").strip().lower()
-    if material_status == "real_calibrated":
-        return "real_calibrated"
-    if material_status == "partial":
-        return "partial_real"
-    if material_status == "synthetic":
-        return "synthetic_only"
-    material_status_legacy = str(getattr(oferta, "material_real_status", "") or "").strip().lower()
-    if material_status_legacy == "calibrado":
-        return "real_calibrated"
-    if material_status_legacy == "parcial":
-        return "partial_real"
-    if material_status_legacy == "sintetico":
-        return "synthetic_only"
-    return "none"
+    return _admin_catalog_summary_calibracao_status(
+        familia,
+        oferta,
+        dependencies={},
+    )
 
 
 def _offer_lifecycle_resolvido(oferta: OfertaComercialFamiliaLaudo | None) -> str | None:
-    if oferta is None:
-        return None
-    lifecycle = str(getattr(oferta, "lifecycle_status", "") or "").strip().lower()
-    if lifecycle:
-        return lifecycle
-    return "active" if bool(getattr(oferta, "ativo_comercial", False)) else "draft"
+    return _admin_catalog_summary_offer_lifecycle(oferta)
 
 
 def _total_releases_ativas_familia(familia: FamiliaLaudoCatalogo) -> int:
-    total = 0
-    for item in list(getattr(familia, "tenant_releases", None) or []):
-        if str(getattr(item, "release_status", "") or "").strip().lower() == "active":
-            total += 1
-    return total
+    return _admin_catalog_summary_total_releases(familia)
 
 
 def derivar_prontidao_catalogo(
@@ -3023,92 +3019,27 @@ def derivar_prontidao_catalogo(
     calibration_status: str,
     active_release_count: int,
 ) -> str:
-    tecnico_pronto = str(technical_status or "").strip().lower() == "ready"
-    possui_template = bool(has_template_seed or has_laudo_output_seed)
-    oferta_ativa = str(offer_lifecycle_status or "").strip().lower() == "active"
-    calibracao = str(calibration_status or "").strip().lower()
-
-    if not tecnico_pronto or not possui_template:
-        return "technical_only"
-    if not oferta_ativa:
-        return "technical_only"
-    if active_release_count <= 0:
-        return "partial"
-    if calibracao == "real_calibrated":
-        return "calibrated"
-    if calibracao in {"partial_real", "synthetic_only"}:
-        return "sellable"
-    return "partial"
+    return _admin_catalog_summary_derivar_prontidao(
+        technical_status=technical_status,
+        has_template_seed=has_template_seed,
+        has_laudo_output_seed=has_laudo_output_seed,
+        offer_lifecycle_status=offer_lifecycle_status,
+        calibration_status=calibration_status,
+        active_release_count=active_release_count,
+    )
 
 
 def _catalog_plan_distribution_summary(familia: FamiliaLaudoCatalogo) -> dict[str, Any]:
-    review_summary = _resumir_governanca_review_policy(
-        getattr(familia, "review_policy_json", None)
+    return _admin_catalog_summary_plan_distribution(
+        familia,
+        dependencies={
+            "resumir_governanca_review_policy": _resumir_governanca_review_policy,
+            "plano_empresa": PlanoEmpresa,
+            "catalog_showroom_plan_label": _catalog_showroom_plan_label,
+            "normalizar_chave_catalogo": _normalizar_chave_catalogo,
+            "catalog_human_join": _catalog_human_join,
+        },
     )
-    tenant_entitlements = dict(review_summary.get("tenant_entitlements") or {})
-    review_plans = {
-        str(item).strip()
-        for item in list(tenant_entitlements.get("mobile_review_allowed_plans") or [])
-        if str(item).strip()
-    }
-    autonomy_plans = {
-        str(item).strip()
-        for item in list(tenant_entitlements.get("mobile_autonomous_allowed_plans") or [])
-        if str(item).strip()
-    }
-    has_explicit_plan_rules = bool(review_plans or autonomy_plans)
-    requires_release_active = bool(tenant_entitlements.get("requires_release_active"))
-    items: list[dict[str, Any]] = []
-    enabled_count = 0
-
-    for plan_name in PlanoEmpresa.valores():
-        showroom_label = _catalog_showroom_plan_label(plan_name)
-        enabled = (
-            plan_name in review_plans or plan_name in autonomy_plans
-            if has_explicit_plan_rules
-            else True
-        )
-        access_level = "full" if plan_name in autonomy_plans else "enabled" if enabled else "disabled"
-        items.append(
-            {
-                "key": _normalizar_chave_catalogo(plan_name, campo="Plano", max_len=40),
-                "label": showroom_label["label"],
-                "short_label": showroom_label["short_label"],
-                "support_label": showroom_label["support_label"],
-                "enabled": bool(enabled),
-                "access_level": access_level,
-            }
-        )
-        enabled_count += int(enabled)
-
-    total = len(items)
-    if enabled_count == total and total > 0:
-        summary_label = "Todas as assinaturas"
-    elif enabled_count <= 0:
-        summary_label = "Sem assinatura liberada"
-    else:
-        summary_label = "Distribuicao seletiva"
-
-    enabled_labels = [str(item["short_label"]) for item in items if item["enabled"]]
-
-    summary_hint = (
-        "Assinatura compativel e liberacao ativa."
-        if requires_release_active
-        else "Disponibilidade comercial exibida na vitrine."
-    )
-    if not has_explicit_plan_rules:
-        summary_hint = "Liberado para qualquer assinatura ativa."
-
-    return {
-        "enabled_count": int(enabled_count),
-        "total_count": int(total),
-        "summary_label": summary_label,
-        "summary_hint": summary_hint,
-        "enabled_labels_text": _catalog_human_join(enabled_labels),
-        "requires_release_active": requires_release_active,
-        "has_explicit_plan_rules": has_explicit_plan_rules,
-        "items": items,
-    }
 
 
 def _serializar_familia_catalogo_row(
@@ -3470,57 +3401,23 @@ def _catalog_row_matches_filters(
     filtro_oferta_ativa: str = "",
     filtro_mode: str = "",
 ) -> bool:
-    if filtro_macro_categoria:
-        if str(row["macro_category"]).strip().lower() != str(filtro_macro_categoria).strip().lower():
-            return False
-    if filtro_status_tecnico:
-        if str((row["technical_status"] or {}).get("key") or "") != _normalizar_status_tecnico_catalogo(filtro_status_tecnico):
-            return False
-    if filtro_prontidao:
-        if str((row["readiness"] or {}).get("key") or "") != str(filtro_prontidao).strip().lower():
-            return False
-    if filtro_status_comercial:
-        comparado = str((row["commercial_status"] or {}).get("key") or "")
-        desejado = str(filtro_status_comercial).strip().lower()
-        if desejado == "none":
-            if comparado != "none":
-                return False
-        elif comparado != _normalizar_lifecycle_status_oferta(desejado):
-            return False
-    if filtro_calibracao:
-        if str((row["calibration_status"] or {}).get("key") or "") != _normalizar_status_calibracao_catalogo(filtro_calibracao):
-            return False
-    if filtro_liberacao:
-        desejado = str(filtro_liberacao).strip().lower()
-        ativos = int(row["active_release_count"])
-        if desejado == "active" and ativos <= 0:
-            return False
-        if desejado == "none" and ativos > 0:
-            return False
-    if filtro_template_default:
-        desejado = str(filtro_template_default).strip().lower()
-        template_default = str(row.get("template_default_code") or "").strip().lower()
-        if desejado == "configured" and not (template_default or row["artifact_snapshot"]["has_template_seed"]):
-            return False
-        if desejado == "unconfigured" and (template_default or row["artifact_snapshot"]["has_template_seed"]):
-            return False
-        if desejado not in {"configured", "unconfigured"} and template_default != desejado:
-            return False
-    if filtro_oferta_ativa:
-        desejado = str(filtro_oferta_ativa).strip().lower()
-        ativa = str((row["commercial_status"] or {}).get("key") or "") == "active"
-        if desejado == "true" and not ativa:
-            return False
-        if desejado == "false" and ativa:
-            return False
-    if filtro_mode:
-        desejado = str(filtro_mode).strip().lower()
-        modos = [str(item.get("mode_key") or "").strip().lower() for item in row["modes"]]
-        if desejado == "available" and not modos:
-            return False
-        if desejado not in {"available", ""} and desejado not in modos:
-            return False
-    return True
+    return _admin_catalog_summary_row_matches(
+        row,
+        filtro_macro_categoria=filtro_macro_categoria,
+        filtro_status_tecnico=filtro_status_tecnico,
+        filtro_prontidao=filtro_prontidao,
+        filtro_status_comercial=filtro_status_comercial,
+        filtro_calibracao=filtro_calibracao,
+        filtro_liberacao=filtro_liberacao,
+        filtro_template_default=filtro_template_default,
+        filtro_oferta_ativa=filtro_oferta_ativa,
+        filtro_mode=filtro_mode,
+        dependencies={
+            "normalizar_status_tecnico_catalogo": _normalizar_status_tecnico_catalogo,
+            "normalizar_lifecycle_status_oferta": _normalizar_lifecycle_status_oferta,
+            "normalizar_status_calibracao_catalogo": _normalizar_status_calibracao_catalogo,
+        },
+    )
 
 
 def listar_metodos_catalogo(db: Session) -> list[MetodoCatalogoInspecao]:
@@ -3728,19 +3625,25 @@ def upsert_tenant_family_release(
 
 
 def _normalizar_validade_signatario(valor: str | datetime | None) -> datetime | None:
-    return _catalog_tenant_normalizar_validade_signatario(
+    return _admin_signatory_normalizar_validade(
         valor,
-        normalizar_texto_opcional=_normalizar_texto_opcional,
+        dependencies={
+            "catalog_tenant_normalizar_validade_signatario": _catalog_tenant_normalizar_validade_signatario,
+            "normalizar_texto_opcional": _normalizar_texto_opcional,
+        },
     )
 
 
 def _normalizar_family_keys_signatario(
     family_keys: list[str] | tuple[str, ...] | str | None,
 ) -> list[str]:
-    return _catalog_tenant_normalizar_family_keys_signatario(
+    return _admin_signatory_normalizar_family_keys(
         family_keys,
-        normalizar_lista_json_canonica=_normalizar_lista_json_canonica,
-        normalizar_chave_catalogo=_normalizar_chave_catalogo,
+        dependencies={
+            "catalog_tenant_normalizar_family_keys_signatario": _catalog_tenant_normalizar_family_keys_signatario,
+            "normalizar_lista_json_canonica": _normalizar_lista_json_canonica,
+            "normalizar_chave_catalogo": _normalizar_chave_catalogo,
+        },
     )
 
 
@@ -3749,11 +3652,14 @@ def _status_signatario_governado(
     ativo: bool,
     valid_until: datetime | None,
 ) -> dict[str, str]:
-    return _catalog_tenant_status_signatario(
+    return _admin_signatory_status(
         ativo=ativo,
         valid_until=valid_until,
-        normalizar_datetime_admin=_normalizar_datetime_admin,
-        agora_utc=_agora_utc,
+        dependencies={
+            "catalog_tenant_status_signatario": _catalog_tenant_status_signatario,
+            "normalizar_datetime_admin": _normalizar_datetime_admin,
+            "agora_utc": _agora_utc,
+        },
     )
 
 
@@ -3762,14 +3668,17 @@ def _serializar_signatario_governado_admin(
     *,
     family_labels: dict[str, str],
 ) -> dict[str, Any]:
-    return _catalog_tenant_serializar_signatario(
+    return _admin_signatory_serializar(
         signatario,
         family_labels=family_labels,
-        normalizar_family_keys_signatario_fn=_normalizar_family_keys_signatario,
-        status_signatario_governado_fn=_status_signatario_governado,
-        normalizar_datetime_admin=_normalizar_datetime_admin,
-        formatar_data_admin=_formatar_data_admin,
-        normalizar_texto_opcional=_normalizar_texto_opcional,
+        dependencies={
+            "catalog_tenant_serializar_signatario": _catalog_tenant_serializar_signatario,
+            "normalizar_family_keys_signatario_fn": _normalizar_family_keys_signatario,
+            "status_signatario_governado_fn": _status_signatario_governado,
+            "normalizar_datetime_admin": _normalizar_datetime_admin,
+            "formatar_data_admin": _formatar_data_admin,
+            "normalizar_texto_opcional": _normalizar_texto_opcional,
+        },
     )
 
 
@@ -3787,7 +3696,7 @@ def upsert_signatario_governado_laudo(
     signatario_id: int | None = None,
     criado_por_id: int | None = None,
 ) -> SignatarioGovernadoLaudo:
-    return _catalog_tenant_upsert_signatario(
+    return _admin_signatory_upsert(
         db,
         tenant_id=tenant_id,
         nome=nome,
@@ -3799,14 +3708,17 @@ def upsert_signatario_governado_laudo(
         ativo=ativo,
         signatario_id=signatario_id,
         criado_por_id=criado_por_id,
-        buscar_empresa=_buscar_empresa,
-        signatario_model=SignatarioGovernadoLaudo,
-        normalizar_texto_curto=_normalizar_texto_curto,
-        normalizar_texto_opcional=_normalizar_texto_opcional,
-        normalizar_validade_signatario_fn=_normalizar_validade_signatario,
-        normalizar_family_keys_signatario_fn=_normalizar_family_keys_signatario,
-        flush_ou_rollback_integridade=flush_ou_rollback_integridade,
-        logger_operacao=logger,
+        dependencies={
+            "catalog_tenant_upsert_signatario": _catalog_tenant_upsert_signatario,
+            "buscar_empresa": _buscar_empresa,
+            "signatario_model": SignatarioGovernadoLaudo,
+            "normalizar_texto_curto": _normalizar_texto_curto,
+            "normalizar_texto_opcional": _normalizar_texto_opcional,
+            "normalizar_validade_signatario_fn": _normalizar_validade_signatario,
+            "normalizar_family_keys_signatario_fn": _normalizar_family_keys_signatario,
+            "flush_ou_rollback_integridade": flush_ou_rollback_integridade,
+            "logger_operacao": logger,
+        },
     )
 
 
@@ -3976,14 +3888,17 @@ def buscar_metricas_ia_painel(db: Session) -> dict[str, Any]:
 
 
 def buscar_detalhe_cliente(db: Session, empresa_id: int) -> dict[str, Any] | None:
-    return _tenant_client_read_services.buscar_detalhe_cliente(
+    return _admin_client_detail_buscar_detalhe_cliente(
         db,
         empresa_id,
-        portfolio_summary_fn=resumir_portfolio_catalogo_empresa,
-        tenant_admin_policy_summary_fn=summarize_tenant_admin_policy,
-        user_serializer=_serializar_usuario_admin,
-        first_access_summary_fn=_resumir_primeiro_acesso_empresa,
-        signatory_serializer=_serializar_signatario_governado_admin,
+        dependencies={
+            "tenant_client_read_services": _tenant_client_read_services,
+            "portfolio_summary_fn": resumir_portfolio_catalogo_empresa,
+            "tenant_admin_policy_summary_fn": summarize_tenant_admin_policy,
+            "user_serializer": _serializar_usuario_admin,
+            "first_access_summary_fn": _resumir_primeiro_acesso_empresa,
+            "signatory_serializer": _serializar_signatario_governado_admin,
+        },
     )
 
 

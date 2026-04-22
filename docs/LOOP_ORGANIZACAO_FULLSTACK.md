@@ -2844,3 +2844,56 @@ Próximo passo imediato:
 
 - continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, provavelmente helpers/documentação de mesa ou utilitários de anexos;
 - no backend, seguir com a próxima leitura/mutação administrativa restante em `admin/services.py`, mantendo cortes pequenos e cobertos.
+
+## Ciclo 73 — Extração do stage do workspace e resumo administrativo do catálogo
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda mantinha a lógica de stage/contexto do workspace, cópia dinâmica, abertura/fechamento da nova inspeção e sincronização dos controles principais;
+- `web/app/domains/admin/services.py` ainda concentrava helpers de prontidão, lifecycle e filtros do catálogo, além da fachada de detalhe administrativo do cliente;
+- esse conjunto ainda pesava demais no agregado principal do admin e no runtime do inspetor.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_stage.js` com `atualizarNomeTemplateAtivo`, `abrirNovaInspecaoComScreenSync`, `fecharNovaInspecaoComScreenSync`, `atualizarCopyWorkspaceStage`, `atualizarControlesWorkspaceStage` e `atualizarContextoWorkspaceAtivo`;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorWorkspaceStage`;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/admin_client_detail_services.py` com a fachada de `buscar_detalhe_cliente`;
+- extraído `web/app/domains/admin/admin_catalog_summary_services.py` com os helpers de prontidão, lifecycle, releases ativos, distribuição por plano e filtros do catálogo;
+- extraído `web/app/domains/admin/admin_signatory_services.py` para concentrar a normalização, serialização e persistência dos signatários governados;
+- `web/app/domains/admin/services.py` ficou com wrappers finos para esses blocos, preservando a API pública e o comportamento dos testes.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_stage.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_client_detail_services.py`
+- `web/app/domains/admin/admin_catalog_summary_services.py`
+- `web/app/domains/admin/admin_signatory_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_stage.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_client_detail_services.py web/app/domains/admin/admin_catalog_summary_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_client_detail_services.py app/domains/admin/admin_catalog_summary_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "catalogo_deriva_prontidao or catalogo_filtros_principais or buscar_detalhe_cliente or signatario or portfolio"`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `git diff --check`
+- resultado:
+  - `5 passed, 37 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, provavelmente anexos/mesa ou fluxo de chat livre;
+- no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando cortes que diminuam volume real do agregado.

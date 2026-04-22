@@ -44,6 +44,7 @@
     const InspectorWorkspaceRail = window.TarielInspectorWorkspaceRail || {};
     const InspectorWorkspaceScreen = window.TarielInspectorWorkspaceScreen || {};
     const InspectorWorkspaceUtils = window.TarielInspectorWorkspaceUtils || {};
+    const InspectorWorkspaceStage = window.TarielInspectorWorkspaceStage || {};
     const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
@@ -4125,141 +4126,59 @@
     } = ctx.actions;
 
     function atualizarNomeTemplateAtivo(tipo) {
-        const tipoNormalizado = normalizarTipoTemplate(tipo);
-
-        estado.tipoTemplateAtivo = tipoNormalizado;
-        window.tipoTemplateAtivo = tipoNormalizado;
-
-        atualizarContextoWorkspaceAtivo();
+        InspectorWorkspaceStage.atualizarNomeTemplateAtivo?.(tipo, {
+            normalizarTipoTemplate,
+            estado,
+            atualizarContextoWorkspaceAtivo,
+        });
     }
 
     function abrirNovaInspecaoComScreenSync(config = {}) {
-        abrirModalNovaInspecao(config);
-        sincronizarInspectorScreen();
+        InspectorWorkspaceStage.abrirNovaInspecaoComScreenSync?.(config, {
+            abrirModalNovaInspecao,
+            sincronizarInspectorScreen,
+        });
     }
 
     function fecharNovaInspecaoComScreenSync(opcoes = {}) {
-        const resultado = fecharModalNovaInspecao(opcoes);
-        sincronizarInspectorScreen();
-        return resultado;
+        return InspectorWorkspaceStage.fecharNovaInspecaoComScreenSync?.(opcoes, {
+            fecharModalNovaInspecao,
+            sincronizarInspectorScreen,
+        });
     }
 
     function atualizarCopyWorkspaceStage(stage = "inspection") {
-        const copyInspecao = modoEntradaEvidenceFirstAtivo()
-            ? {
-                ...COPY_WORKSPACE_STAGE.inspection,
-                headline: "Registro por evidências",
-                description:
-                    "Priorize anexos, fotos e provas do caso. Use o chat para contextualizar e fechar a narrativa técnica.",
-                placeholder: "Descreva a evidência, o item verificado ou o anexo enviado",
-            }
-            : COPY_WORKSPACE_STAGE.inspection;
-        const copy = stage === "assistant"
-            ? COPY_WORKSPACE_STAGE.assistant
-            : (
-                conversaWorkspaceModoChatAtivo()
-                    ? COPY_WORKSPACE_STAGE.focusedConversation
-                    : copyInspecao
-            );
-
-        if (el.workspaceEyebrow) {
-            el.workspaceEyebrow.textContent = copy.eyebrow;
-        }
-        if (el.workspaceHeadline) {
-            el.workspaceHeadline.textContent = copy.headline;
-        }
-        if (el.workspaceDescription) {
-            el.workspaceDescription.textContent = copy.description;
-        }
-        if (el.campoMensagem) {
-            el.campoMensagem.placeholder = copy.placeholder;
-        }
-        if (stage === "assistant") {
-            if (el.rodapeContextoTitulo) {
-                el.rodapeContextoTitulo.textContent = copy.contextTitle;
-            }
-            if (el.rodapeContextoStatus) {
-                el.rodapeContextoStatus.textContent = copy.contextStatus;
-            }
-        }
-        atualizarWorkspaceEntryModeNote();
+        InspectorWorkspaceStage.atualizarCopyWorkspaceStage?.(stage, {
+            COPY_WORKSPACE_STAGE,
+            modoEntradaEvidenceFirstAtivo,
+            conversaWorkspaceModoChatAtivo,
+            el,
+            atualizarWorkspaceEntryModeNote,
+        });
     }
 
     function atualizarControlesWorkspaceStage() {
-        const screenBase = resolveInspectorBaseScreen();
-        const viewAtual = resolveWorkspaceView(screenBase);
-        const workspaceAtivo = screenBase !== "portal_dashboard";
-        const assistantAtivo = workspaceAtivo && screenBase === "assistant_landing";
-        const inspectionAtivo = workspaceAtivo && [
-            "inspection_workspace",
-            "inspection_conversation",
-            "inspection_history",
-            "inspection_record",
-            "inspection_mesa",
-        ].includes(screenBase);
-        const overlayAtivo = modalNovaInspecaoEstaAberta();
-        const layoutCompacto = layoutInspectorCompacto();
-        const laudoAtivoId = normalizarLaudoAtualId(
-            obterSnapshotEstadoInspectorAtual()?.laudoAtualId
-            ?? estado.laudoAtualId
-            ?? obterLaudoAtivoIdSeguro()
-        );
-        const chromeTecnicoOperacional =
-            workspaceAtivo &&
-            !assistantAtivo &&
-            !overlayAtivo &&
-            !conversaWorkspaceModoChatAtivo(screenBase, obterSnapshotEstadoInspectorAtual());
-        const finalizacaoVisivel =
-            workspaceAtivo &&
-            !assistantAtivo &&
-            !overlayAtivo &&
-            !!laudoAtivoId &&
-            viewAtual !== "inspection_mesa" &&
-            workspacePermiteFinalizacao(obterPayloadStatusRelatorioWorkspaceAtual());
-        const railVisivel = chromeTecnicoOperacional && !layoutCompacto && resolveWorkspaceRailVisibility(screenBase);
-        const composerVisivel =
-            workspaceAtivo &&
-            !overlayAtivo &&
-            (
-                assistantAtivo ||
-                viewAtual === "inspection_conversation" ||
-                (viewAtual === "inspection_record" && modoEntradaEvidenceFirstAtivo())
-            );
-
-        if (el.rodapeEntrada) {
-            el.rodapeEntrada.hidden = !composerVisivel;
-        }
-        if (el.btnIrFimChat) {
-            el.btnIrFimChat.hidden = !chromeTecnicoOperacional || viewAtual !== "inspection_conversation";
-        }
-        if (el.btnMesaWidgetToggle) {
-            el.btnMesaWidgetToggle.hidden = !chromeTecnicoOperacional;
-        }
-        atualizarBotaoWorkspaceRail({
-            chromeTecnicoOperacional,
-            layoutCompacto,
-            view: viewAtual,
-            railVisivel,
+        InspectorWorkspaceStage.atualizarControlesWorkspaceStage?.({
+            el,
+            estado,
+            resolveInspectorBaseScreen,
+            resolveWorkspaceView,
+            modalNovaInspecaoEstaAberta,
+            layoutInspectorCompacto,
+            normalizarLaudoAtualId,
+            obterSnapshotEstadoInspectorAtual,
+            obterLaudoAtivoIdSeguro,
+            conversaWorkspaceModoChatAtivo,
+            workspacePermiteFinalizacao,
+            obterPayloadStatusRelatorioWorkspaceAtual,
+            resolveWorkspaceRailVisibility,
+            modoEntradaEvidenceFirstAtivo,
+            atualizarBotaoWorkspaceRail,
+            sincronizarRotuloAcaoFinalizacaoWorkspace,
+            coletarLinhasWorkspace,
+            atualizarWorkspaceEntryModeNote,
+            sincronizarInspectorScreen,
         });
-        if (el.btnWorkspacePreview) {
-            el.btnWorkspacePreview.hidden = !chromeTecnicoOperacional || railVisivel || viewAtual === "inspection_history";
-        }
-        if (el.btnWorkspacePreviewRail) {
-            el.btnWorkspacePreviewRail.hidden = !railVisivel || viewAtual === "inspection_mesa";
-        }
-        if (el.btnFinalizarInspecao) {
-            el.btnFinalizarInspecao.hidden = !finalizacaoVisivel;
-        }
-        sincronizarRotuloAcaoFinalizacaoWorkspace();
-        if (el.btnWorkspaceOpenInspecaoModal) {
-            el.btnWorkspaceOpenInspecaoModal.hidden = !workspaceAtivo || (!assistantAtivo && !inspectionAtivo) || overlayAtivo;
-        }
-        if (el.workspaceAssistantLanding) {
-            el.workspaceAssistantLanding.hidden = !assistantAtivo || coletarLinhasWorkspace().length > 0;
-        }
-        atualizarWorkspaceEntryModeNote();
-
-        sincronizarInspectorScreen();
     }
 
     function focarComposerInspector() {
@@ -4411,39 +4330,19 @@
     }
 
     function atualizarContextoWorkspaceAtivo() {
-        if (estado.workspaceStage === "assistant") {
-            aplicarContextoVisualWorkspace(obterContextoVisualAssistente());
-            atualizarCopyWorkspaceStage("assistant");
-            atualizarPainelWorkspaceDerivado();
-            return;
-        }
-
-        if (conversaWorkspaceModoChatAtivo()) {
-            aplicarContextoVisualWorkspace();
-            atualizarCopyWorkspaceStage("inspection");
-            atualizarPainelWorkspaceDerivado();
-            return;
-        }
-
-        const nomeTemplate = NOMES_TEMPLATES[estado.tipoTemplateAtivo] || NOMES_TEMPLATES.padrao;
-        const resumoMesa = obterResumoOperacionalMesa();
-        const evidenceFirstAtivo = modoEntradaEvidenceFirstAtivo();
-
-        aplicarContextoVisualWorkspace();
-        atualizarCopyWorkspaceStage("inspection");
-        if (el.rodapeContextoTitulo) {
-            el.rodapeContextoTitulo.textContent = evidenceFirstAtivo
-                ? `Registrar evidências primeiro em ${nomeTemplate}`
-                : `Registrar evidências em ${nomeTemplate}`;
-        }
-        if (el.rodapeContextoStatus) {
-            el.rodapeContextoStatus.textContent = evidenceFirstAtivo
-                ? "Comece por anexos, fotos e provas do caso. O chat segue disponível para justificar a coleta."
-                : resumoMesa.descricao;
-        }
-
-        atualizarPainelWorkspaceDerivado();
-        atualizarWorkspaceEntryModeNote();
+        InspectorWorkspaceStage.atualizarContextoWorkspaceAtivo?.({
+            el,
+            estado,
+            aplicarContextoVisualWorkspace,
+            obterContextoVisualAssistente,
+            atualizarCopyWorkspaceStage,
+            atualizarPainelWorkspaceDerivado,
+            conversaWorkspaceModoChatAtivo,
+            NOMES_TEMPLATES,
+            obterResumoOperacionalMesa,
+            modoEntradaEvidenceFirstAtivo,
+            atualizarWorkspaceEntryModeNote,
+        });
     }
 
     function definirModoInspecaoUI(modo = "home") {
