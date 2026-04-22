@@ -1598,39 +1598,10 @@
         return variant;
     }
 
-    function podeArmarPrimeiroEnvioNovoChat() {
-        if (!el.campoMensagem || !el.btnEnviar) return false;
-        if (!landingNovoChatAtivo()) return false;
-
-        const texto = String(el.campoMensagem.value || "").trim();
-        const iaRespondendo = document.body?.dataset?.iaRespondendo === "true"
-            || String(el.btnEnviar.dataset?.action || "").trim().toLowerCase() === "stop";
-
-        if (!texto || texto.startsWith("/") || iaRespondendo) {
-            return false;
-        }
-
-        return true;
-    }
-
     function armarPrimeiroEnvioNovoChatPendente() {
-        if (!podeArmarPrimeiroEnvioNovoChat()) {
-            return false;
-        }
-
-        const snapshot = obterSnapshotEstadoInspectorAtual();
-        if (snapshot.assistantLandingFirstSendPending) {
-            return true;
-        }
-
-        sincronizarEstadoInspector({
-            assistantLandingFirstSendPending: true,
-            freeChatConversationActive: false,
-        }, {
-            persistirStorage: false,
-        });
-
-        return true;
+        return InspectorWorkspaceComposer.armarPrimeiroEnvioNovoChatPendente?.(
+            obterDependenciasWorkspaceComposer()
+        ) || false;
     }
 
     function limparFluxoNovoChatFocado() {
@@ -2387,7 +2358,6 @@
         return {
             COMANDOS_SLASH,
             SUGESTOES_ENTRADA_ASSISTENTE,
-            armarPrimeiroEnvioNovoChatPendente,
             abrirMesaWidget,
             atualizarStatusChatWorkspace,
             atualizarThreadWorkspace,
@@ -2401,10 +2371,13 @@
             estadoRelatorioPossuiContexto,
             mostrarToast,
             montarResumoContextoIAWorkspace,
+            modoEntradaEvidenceFirstAtivo,
+            landingNovoChatAtivo,
             normalizarLaudoAtualId,
             obterLaudoAtivoIdSeguro,
+            resolveInspectorScreen,
             obterSnapshotEstadoInspectorAtual,
-            prepararComposerParaEnvioModoEntrada,
+            sincronizarEstadoInspector,
             resolveWorkspaceView,
         };
     }
@@ -2528,18 +2501,9 @@
     }
 
     function prepararComposerParaEnvioModoEntrada() {
-        if (!modoEntradaEvidenceFirstAtivo()) return;
-
-        const snapshot = obterSnapshotEstadoInspectorAtual();
-        if (snapshot.workspaceStage !== "inspection") return;
-
-        const viewAtual = resolveWorkspaceView(snapshot.inspectorScreen || resolveInspectorScreen());
-        if (viewAtual !== "inspection_record") return;
-
-        atualizarThreadWorkspace("conversa", {
-            persistirURL: true,
-            replaceURL: true,
-        });
+        InspectorWorkspaceComposer.prepararComposerParaEnvioModoEntrada?.(
+            obterDependenciasWorkspaceComposer()
+        );
     }
 
     function citarMensagemWorkspace(detail = {}) {

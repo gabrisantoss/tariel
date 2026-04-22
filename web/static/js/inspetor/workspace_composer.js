@@ -134,6 +134,61 @@
         });
     }
 
+    function podeArmarPrimeiroEnvioNovoChat(dependencies = {}) {
+        const el = dependencies.el || {};
+        if (!el.campoMensagem || !el.btnEnviar) return false;
+        if (!dependencies.landingNovoChatAtivo?.()) return false;
+
+        const texto = String(el.campoMensagem.value || "").trim();
+        const iaRespondendo = document.body?.dataset?.iaRespondendo === "true"
+            || String(el.btnEnviar.dataset?.action || "").trim().toLowerCase() === "stop";
+
+        if (!texto || texto.startsWith("/") || iaRespondendo) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function armarPrimeiroEnvioNovoChatPendente(dependencies = {}) {
+        if (!podeArmarPrimeiroEnvioNovoChat(dependencies)) {
+            return false;
+        }
+
+        const snapshot = dependencies.obterSnapshotEstadoInspectorAtual?.();
+        if (snapshot?.assistantLandingFirstSendPending) {
+            return true;
+        }
+
+        dependencies.sincronizarEstadoInspector?.(
+            {
+                assistantLandingFirstSendPending: true,
+                freeChatConversationActive: false,
+            },
+            {
+                persistirStorage: false,
+            }
+        );
+
+        return true;
+    }
+
+    function prepararComposerParaEnvioModoEntrada(dependencies = {}) {
+        if (!dependencies.modoEntradaEvidenceFirstAtivo?.()) return;
+
+        const snapshot = dependencies.obterSnapshotEstadoInspectorAtual?.();
+        if (snapshot?.workspaceStage !== "inspection") return;
+
+        const screenAtual = snapshot?.inspectorScreen || dependencies.resolveInspectorScreen?.();
+        const viewAtual = dependencies.resolveWorkspaceView?.(screenAtual);
+        if (viewAtual !== "inspection_record") return;
+
+        dependencies.atualizarThreadWorkspace?.("conversa", {
+            persistirURL: true,
+            replaceURL: true,
+        });
+    }
+
     async function abrirMesaComContexto(detail = {}, dependencies = {}) {
         const el = dependencies.el || {};
         if (!dependencies.obterLaudoAtivoIdSeguro?.()) {
@@ -486,8 +541,8 @@
                 event.stopImmediatePropagation();
                 return;
             }
-            dependencies.prepararComposerParaEnvioModoEntrada?.();
-            dependencies.armarPrimeiroEnvioNovoChatPendente?.();
+            prepararComposerParaEnvioModoEntrada(dependencies);
+            armarPrimeiroEnvioNovoChatPendente(dependencies);
         }
     }
 
@@ -496,6 +551,7 @@
         {
             abrirMesaComContexto,
             abrirReemissaoWorkspace,
+            armarPrimeiroEnvioNovoChatPendente,
             atualizarRecursosComposerWorkspace,
             definirValorComposer,
             executarComandoSlash,
@@ -507,6 +563,7 @@
             obterListaComandosSlash,
             obterTextoDeApoioComposer,
             onCampoMensagemWorkspaceKeydown,
+            prepararComposerParaEnvioModoEntrada,
             redirecionarEntradaParaReemissaoWorkspace,
             registrarPromptHistorico,
             renderizarSlashCommandPalette,

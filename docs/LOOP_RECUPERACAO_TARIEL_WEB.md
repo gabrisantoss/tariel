@@ -897,3 +897,47 @@ Próximo passo imediato:
 
 - continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo controles do composer/teclado ou bloco de screen sync derivado;
 - no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando o rollup da fila de calibração e outras agregações ainda volumosas.
+
+## Ciclo R21 — Fluxo de primeiro envio do composer e fila de calibração
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda concentrava o primeiro envio do novo chat e o ajuste de thread do composer dentro do runtime principal;
+- `web/app/domains/admin/services.py` ainda mantinha o rollup da fila de calibração no agregado administrativo;
+- era um corte seguro porque os blocos já dependiam de helpers desacoplados e sem mudança de contrato.
+
+Corte executado:
+
+- migração de `armarPrimeiroEnvioNovoChatPendente` e `prepararComposerParaEnvioModoEntrada` para `web/static/js/inspetor/workspace_composer.js`;
+- reapontamento de `web/static/js/chat/chat_index_page.js` para consumir esse bloco via `window.TarielInspectorWorkspaceComposer`;
+- criação do módulo `web/app/domains/admin/admin_catalog_calibration_queue_services.py`;
+- extração da rotina `build_calibration_queue_rollup`, preservando wrapper compatível em `services.py`.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_composer.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/app/domains/admin/admin_catalog_calibration_queue_services.py`
+- `web/app/domains/admin/services.py`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_composer.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_calibration_queue_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_calibration_queue_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo `screen sync` derivado ou outro bloco de orquestração de workspace;
+- no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando rollups de material real/comercial ou agregações de governança ainda volumosas.

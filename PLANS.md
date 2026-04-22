@@ -2917,3 +2917,31 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de delivery/finalização
 - `admin/services.py` perde mais uma fatia material de variantes e refino documental
 - smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-15` — Fluxo de primeiro envio do composer e fila de calibração
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega o primeiro envio e o ajuste de thread do composer para `web/static/js/inspetor/workspace_composer.js`, `admin/services.py` delega o rollup da fila de calibração para `web/app/domains/admin/admin_catalog_calibration_queue_services.py`, e o pacote passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por um bloco residual de controle do composer no inspetor e por uma agregação administrativa ainda pesada da fila de calibração no catálogo
+
+### Escopo
+
+- entra migração de `armarPrimeiroEnvioNovoChatPendente` e `prepararComposerParaEnvioModoEntrada` para o módulo do composer
+- entra extração de `build_calibration_queue_rollup`
+- não entra mudança funcional da UX do composer
+- não entra mudança semântica das prioridades da fila de calibração
+
+### Passos
+
+1. mover o bloco de primeiro envio/ajuste de thread para `workspace_composer.js`
+2. extrair a fila de calibração para serviço administrativo dedicado
+3. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de controle do composer
+- `admin/services.py` perde mais uma fatia material de agregação da fila de calibração
+- smoke do web e subset focal do admin seguem verdes
