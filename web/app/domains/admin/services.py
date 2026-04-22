@@ -123,6 +123,15 @@ from app.domains.admin.admin_catalog_summary_services import (
     offer_lifecycle_resolvido as _admin_catalog_summary_offer_lifecycle,
     total_releases_ativas_familia as _admin_catalog_summary_total_releases,
 )
+from app.domains.admin.admin_catalog_asset_registry_services import (
+    build_template_library_rollup as _admin_catalog_assets_build_template_rollup,
+    find_material_real_workspace as _admin_catalog_assets_find_material_workspace,
+    load_template_library_registry as _admin_catalog_assets_load_template_registry,
+    material_real_workspace_roots as _admin_catalog_assets_material_roots,
+    read_json_if_exists as _admin_catalog_assets_read_json_if_exists,
+    template_library_registry_index as _admin_catalog_assets_registry_index,
+    template_library_registry_path as _admin_catalog_assets_registry_path,
+)
 from app.domains.admin.platform_settings_state import (
     get_platform_default_new_tenant_plan,  # noqa: F401
     get_support_exceptional_policy_snapshot,  # noqa: F401
@@ -1697,110 +1706,63 @@ def _repo_relative_path_label(path: Path | None) -> str | None:
 
 
 def _template_library_registry_path() -> Path:
-    candidate = (_repo_root_dir() / "docs" / "master_templates" / "library_registry.json").resolve()
-    if candidate.exists():
-        return candidate
-    return (resolve_master_templates_dir() / "library_registry.json").resolve()
+    return _admin_catalog_assets_registry_path(
+        dependencies={
+            "repo_root_dir": _repo_root_dir,
+            "resolve_master_templates_dir": resolve_master_templates_dir,
+        },
+    )
 
 
 def _load_template_library_registry() -> dict[str, Any]:
-    path = _template_library_registry_path()
-    if not path.exists():
-        return {"version": 0, "templates": []}
-    payload = _ler_json_arquivo(path, campo="Library registry")
-    templates = payload.get("templates")
-    if not isinstance(templates, list):
-        payload["templates"] = []
-    return payload
+    return _admin_catalog_assets_load_template_registry(
+        dependencies={
+            "template_library_registry_path": _template_library_registry_path,
+            "ler_json_arquivo": _ler_json_arquivo,
+        },
+    )
 
 
 def _build_template_library_rollup(rows_all: list[dict[str, Any]]) -> dict[str, Any]:
-    registry = _load_template_library_registry()
-    templates = [
-        item
-        for item in list(registry.get("templates") or [])
-        if isinstance(item, dict)
-    ]
-    ready_templates = [
-        item for item in templates if str(item.get("status") or "").strip().lower() == "ready"
-    ]
-    families_with_full_artifacts = sum(
-        1
-        for item in rows_all
-        if all(bool(item["artifact_snapshot"].get(key)) for key in (
-            "has_family_schema",
-            "has_template_seed",
-            "has_laudo_output_seed",
-            "has_laudo_output_exemplo",
-        ))
+    return _admin_catalog_assets_build_template_rollup(
+        rows_all,
+        dependencies={
+            "load_template_library_registry": _load_template_library_registry,
+            "repo_relative_path_label": _repo_relative_path_label,
+            "template_library_registry_path": _template_library_registry_path,
+            "label_catalogo": _label_catalogo,
+        },
     )
-    families_with_template_default = sum(
-        1 for item in rows_all if str(item.get("template_default_code") or "").strip()
-    )
-    return {
-        "registry_path": _repo_relative_path_label(_template_library_registry_path()),
-        "registry_version": int(registry.get("version") or 0),
-        "template_count": len(templates),
-        "ready_template_count": len(ready_templates),
-        "demonstration_ready_count": int(families_with_full_artifacts),
-        "families_with_full_artifacts": int(families_with_full_artifacts),
-        "families_with_template_default": int(families_with_template_default),
-        "sellable_family_count": sum(
-            1 for item in rows_all if str((item["readiness"] or {}).get("key") or "") in {"sellable", "calibrated"}
-        ),
-        "templates": [
-            {
-                "master_template_id": str(item.get("master_template_id") or "").strip() or None,
-                "label": str(item.get("label") or "").strip() or "Template premium",
-                "documental_type": str(item.get("documental_type") or "").strip() or None,
-                "status": _label_catalogo(
-                    {"ready": ("Pronto", "active"), "draft": ("Rascunho", "draft")},
-                    str(item.get("status") or "").strip().lower() or "draft",
-                    "Rascunho",
-                ),
-                "artifact_path": str(item.get("artifact_path") or "").strip() or None,
-                "usage": str(item.get("usage") or "").strip() or None,
-            }
-            for item in templates[:6]
-        ],
-    }
 
 
 def _template_library_registry_index() -> dict[str, dict[str, Any]]:
-    registry = _load_template_library_registry()
-    index: dict[str, dict[str, Any]] = {}
-    for item in list(registry.get("templates") or []):
-        if not isinstance(item, dict):
-            continue
-        master_template_id = str(item.get("master_template_id") or "").strip()
-        if not master_template_id:
-            continue
-        index[master_template_id] = item
-    return index
+    return _admin_catalog_assets_registry_index(
+        dependencies={
+            "load_template_library_registry": _load_template_library_registry,
+        },
+    )
 
 
 def _material_real_workspace_roots() -> list[Path]:
-    docs_dir = (_repo_root_dir() / "docs").resolve()
-    return sorted(path for path in docs_dir.glob("portfolio_empresa_*_material_real") if path.is_dir())
+    return _admin_catalog_assets_material_roots(
+        dependencies={
+            "repo_root_dir": _repo_root_dir,
+        },
+    )
 
 
 def _find_material_real_workspace(family_key: str) -> Path | None:
-    family_key_norm = _normalizar_chave_catalogo(family_key, campo="Family key", max_len=120)
-    for root in _material_real_workspace_roots():
-        candidate = (root / family_key_norm).resolve()
-        if candidate.exists() and candidate.is_dir():
-            return candidate
-    return None
+    return _admin_catalog_assets_find_material_workspace(
+        family_key,
+        dependencies={
+            "normalizar_chave_catalogo": _normalizar_chave_catalogo,
+            "material_real_workspace_roots": _material_real_workspace_roots,
+        },
+    )
 
 
 def _read_json_if_exists(path: Path) -> dict[str, Any] | None:
-    if not path.exists() or not path.is_file():
-        return None
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    return payload if isinstance(payload, dict) else None
+    return _admin_catalog_assets_read_json_if_exists(path)
 
 
 def _build_material_real_workspace_summary(family_key: str) -> dict[str, Any] | None:

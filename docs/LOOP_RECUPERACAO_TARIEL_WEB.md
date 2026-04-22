@@ -694,3 +694,59 @@ Próximo passo imediato:
 
 - continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo anexos/mesa ou fluxo de chat livre;
 - no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando reduções reais do agregado.
+
+## Ciclo R17 — Contexto visual do workspace e registry de ativos do catálogo
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda concentrava o bloco de contexto visual do workspace, landing do assistente, chat livre e reset da interface;
+- `web/app/domains/admin/services.py` ainda mantinha helpers de registry da biblioteca de templates e descoberta/leitura dos workspaces de material real do catálogo.
+
+Corte executado:
+
+- criação do módulo `web/static/js/inspetor/workspace_context_flow.js`;
+- extração das rotinas:
+  - `detailPossuiContextoVisual`
+  - `enriquecerCardLaudoComContextoVisual`
+  - `enriquecerPayloadLaudoComContextoVisual`
+  - `resolverContextoVisualWorkspace`
+  - `definirModoInspecaoUI`
+  - `exibirInterfaceInspecaoAtiva`
+  - `exibirLandingAssistenteIA`
+  - `abrirChatLivreInspector`
+  - `promoverPortalParaChatNoModoFoco`
+  - `restaurarTelaSemRelatorio`
+  - `resetarInterfaceInspecao`
+- reapontamento de `web/static/js/chat/chat_index_page.js` para consumir o helper novo via `window.TarielInspectorWorkspaceContextFlow`;
+- criação do módulo `web/app/domains/admin/admin_catalog_asset_registry_services.py`;
+- extração dos helpers de registry da biblioteca de templates e descoberta/leitura de workspaces de material real, preservando wrappers compatíveis em `services.py`;
+- ajuste da ordem de carga em `web/templates/index.html` para carregar o helper novo antes do runtime principal.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_context_flow.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_catalog_asset_registry_services.py`
+- `web/app/domains/admin/services.py`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_context_flow.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_asset_registry_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_asset_registry_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "buscar_catalogo_familia_admin or catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- resultados:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo anexos/mesa ou fluxo de retomada home;
+- no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando reduções reais do agregado.

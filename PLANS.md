@@ -2803,3 +2803,31 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de stage/contexto sem quebrar o runtime principal
 - `admin/services.py` perde uma fatia material de resumo/filtro do catálogo e detalhe do cliente
 - smoke do web e subsets focais do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-11` — Contexto visual do workspace e registry de ativos do catálogo
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega contexto visual/chat livre para `web/static/js/inspetor/workspace_context_flow.js`, `admin/services.py` delega helpers de registry/material real para `web/app/domains/admin/admin_catalog_asset_registry_services.py`, e o pacote passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por blocos de contexto do inspetor e por helpers de leitura documental do catálogo que ainda ocupavam volume demais no agregado admin
+
+### Escopo
+
+- entra extração do fluxo de contexto visual, landing do assistente e chat livre do inspetor
+- entra extração de helpers de registry de templates e workspaces de material real do catálogo
+- não entra mudança de comportamento funcional do chat livre
+- não entra mudança de contrato do catálogo
+
+### Passos
+
+1. extrair o bloco de contexto visual/chat livre para módulo dedicado do inspetor
+2. extrair os helpers de registry/material real para serviço administrativo dedicado
+3. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de contexto visual/chat livre
+- `admin/services.py` perde mais uma fatia material de helpers de leitura documental
+- smoke do web e subset focal do admin seguem verdes

@@ -45,6 +45,7 @@
     const InspectorWorkspaceScreen = window.TarielInspectorWorkspaceScreen || {};
     const InspectorWorkspaceUtils = window.TarielInspectorWorkspaceUtils || {};
     const InspectorWorkspaceStage = window.TarielInspectorWorkspaceStage || {};
+    const InspectorWorkspaceContextFlow = window.TarielInspectorWorkspaceContextFlow || {};
     const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
@@ -4217,108 +4218,44 @@
     }
 
     function detailPossuiContextoVisual(detail = {}) {
-        const payload = detail && typeof detail === "object" ? detail : {};
-        const card = payload?.laudo_card || payload?.laudoCard || payload?.card || {};
-
-        return Boolean(
-            payload?.workspaceTitle ||
-            payload?.homeTitle ||
-            payload?.title ||
-            payload?.workspaceSubtitle ||
-            payload?.homeSubtitle ||
-            payload?.subtitle ||
-            payload?.workspaceStatus ||
-            payload?.homeStatus ||
-            payload?.statusBadge ||
-            payload?.case_lifecycle_status ||
-            card?.display_title ||
-            card?.titulo ||
-            card?.display_subtitle ||
-            card?.subtitle ||
-            card?.status_badge ||
-            card?.status_card_label ||
-            card?.case_lifecycle_status
-        );
+        return InspectorWorkspaceContextFlow.detailPossuiContextoVisual?.(detail) || false;
     }
 
     function enriquecerCardLaudoComContextoVisual(card = {}, contextoVisual = null) {
-        const contexto = normalizarContextoVisualSeguro(contextoVisual);
-        const payload = card && typeof card === "object" ? { ...card } : {};
-        if (!contexto) return payload;
-
-        const titulo = String(contexto.title || payload.display_title || payload.titulo || "").trim();
-        const subtitulo = String(contexto.subtitle || payload.display_subtitle || payload.subtitle || "").trim();
-        const badge = String(
-            contexto.statusBadge ||
-            payload.status_badge ||
-            obterBadgeLifecycleCase(payload.case_lifecycle_status) ||
-            payload.status_card_label ||
-            ""
-        ).trim();
-
-        if (titulo) {
-            payload.titulo = titulo;
-            payload.display_title = titulo;
-        }
-        if (subtitulo) {
-            payload.display_subtitle = subtitulo;
-            payload.subtitle = subtitulo;
-            if (!String(payload.preview || "").trim()) {
-                payload.preview = subtitulo;
+        return InspectorWorkspaceContextFlow.enriquecerCardLaudoComContextoVisual?.(
+            card,
+            contextoVisual,
+            {
+                normalizarContextoVisualSeguro,
+                obterBadgeLifecycleCase,
             }
-        }
-        if (badge) {
-            payload.status_badge = badge.toUpperCase();
-        }
-
-        return payload;
+        ) || (card && typeof card === "object" ? { ...card } : {});
     }
 
     function enriquecerPayloadLaudoComContextoVisual(payload = {}, contextoVisual = null) {
-        const contexto = normalizarContextoVisualSeguro(contextoVisual);
-        const base = payload && typeof payload === "object" ? { ...payload } : {};
-        if (!contexto) return base;
-
-        if (base.laudo_card && typeof base.laudo_card === "object") {
-            base.laudo_card = enriquecerCardLaudoComContextoVisual(base.laudo_card, contexto);
-        }
-
-        if (!base.workspaceTitle) {
-            base.workspaceTitle = contexto.title;
-        }
-        if (!base.workspaceSubtitle) {
-            base.workspaceSubtitle = contexto.subtitle;
-        }
-        if (!base.workspaceStatus) {
-            base.workspaceStatus = contexto.statusBadge;
-        }
-
-        return base;
+        return InspectorWorkspaceContextFlow.enriquecerPayloadLaudoComContextoVisual?.(
+            payload,
+            contextoVisual,
+            {
+                normalizarContextoVisualSeguro,
+                enriquecerCardLaudoComContextoVisual,
+            }
+        ) || (payload && typeof payload === "object" ? { ...payload } : {});
     }
 
     function resolverContextoVisualWorkspace(detail = {}) {
-        const laudoId = Number(
-            detail?.laudo_id ??
-            detail?.laudoId ??
-            detail?.laudo_card?.id ??
-            0
-        ) || null;
-
-        if (detailPossuiContextoVisual(detail)) {
-            return extrairContextoVisualWorkspace(detail);
-        }
-
-        const contextoRegistrado = obterContextoVisualLaudoRegistrado(laudoId);
-        if (contextoRegistrado) {
-            return contextoRegistrado;
-        }
-
-        const retomadaPendente = obterRetomadaHomePendente();
-        return (
-            normalizarContextoVisualSeguro(retomadaPendente?.contextoVisual) ||
-            normalizarContextoVisualSeguro(estado.workspaceVisualContext) ||
-            criarContextoVisualPadrao()
-        );
+        return InspectorWorkspaceContextFlow.resolverContextoVisualWorkspace?.(
+            detail,
+            {
+                detailPossuiContextoVisual,
+                extrairContextoVisualWorkspace,
+                obterContextoVisualLaudoRegistrado,
+                obterRetomadaHomePendente,
+                normalizarContextoVisualSeguro,
+                estado,
+                criarContextoVisualPadrao,
+            }
+        ) || criarContextoVisualPadrao();
     }
 
     function definirWorkspaceStage(stage = "assistant") {
@@ -4346,142 +4283,117 @@
     }
 
     function definirModoInspecaoUI(modo = "home") {
-        const proximoModo = normalizarModoInspecaoUI(modo);
-        sincronizarEstadoInspector({ modoInspecaoUI: proximoModo }, { persistirStorage: false });
-        atualizarControlesWorkspaceStage();
-
-        if (proximoModo !== "workspace") {
-            if (estado.mesaWidgetAberto || !el.painelMesaWidget?.hidden) {
-                fecharMesaWidget();
-            } else if (el.btnMesaWidgetToggle) {
-                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "false");
-            }
-            limparReferenciaMesaWidget();
-            limparAnexoMesaWidget();
-        }
-
-        atualizarContextoWorkspaceAtivo();
+        InspectorWorkspaceContextFlow.definirModoInspecaoUI?.(modo, {
+            normalizarModoInspecaoUI,
+            sincronizarEstadoInspector,
+            atualizarControlesWorkspaceStage,
+            estado,
+            el,
+            fecharMesaWidget,
+            limparReferenciaMesaWidget,
+            limparAnexoMesaWidget,
+            atualizarContextoWorkspaceAtivo,
+        });
     }
 
     function exibirInterfaceInspecaoAtiva(tipo) {
-        limparFluxoNovoChatFocado();
-        definirWorkspaceStage("inspection");
-        atualizarNomeTemplateAtivo(tipo);
-        carregarContextoFixadoWorkspace();
-        definirModoInspecaoUI("workspace");
-        renderizarResumoOperacionalMesa();
-        renderizarSugestoesComposer();
-        atualizarStatusChatWorkspace(estado.chatStatusIA.status, estado.chatStatusIA.texto);
+        InspectorWorkspaceContextFlow.exibirInterfaceInspecaoAtiva?.(tipo, {
+            limparFluxoNovoChatFocado,
+            definirWorkspaceStage,
+            atualizarNomeTemplateAtivo,
+            carregarContextoFixadoWorkspace,
+            definirModoInspecaoUI,
+            renderizarResumoOperacionalMesa,
+            renderizarSugestoesComposer,
+            atualizarStatusChatWorkspace,
+            estado,
+        });
     }
 
     function exibirLandingAssistenteIA({ limparTimeline = false } = {}) {
-        definirRetomadaHomePendente(null);
-        limparFluxoNovoChatFocado();
-        atualizarEstadoModoEntrada({}, { reset: true });
-        estado.contextoFixado = [];
-        estado.chatStatusIA = {
-            status: "pronto",
-            texto: "Assistente pronto",
-        };
-
-        if (limparTimeline) {
-            window.TarielAPI?.limparAreaMensagens?.();
-        }
-
-        resetarFiltrosHistoricoWorkspace();
-
-        definirWorkspaceStage("assistant");
-        aplicarContextoVisualWorkspace(obterContextoVisualAssistente());
-        definirModoInspecaoUI("workspace");
-        atualizarThreadWorkspace("conversa");
-        limparPainelPendencias();
-        fecharSlashCommandPalette();
-        renderizarResumoOperacionalMesa();
-        renderizarSugestoesComposer();
-        atualizarStatusChatWorkspace("pronto", "Assistente pronto");
+        InspectorWorkspaceContextFlow.exibirLandingAssistenteIA?.(
+            { limparTimeline },
+            {
+                definirRetomadaHomePendente,
+                limparFluxoNovoChatFocado,
+                atualizarEstadoModoEntrada,
+                estado,
+                resetarFiltrosHistoricoWorkspace,
+                definirWorkspaceStage,
+                aplicarContextoVisualWorkspace,
+                obterContextoVisualAssistente,
+                definirModoInspecaoUI,
+                atualizarThreadWorkspace,
+                limparPainelPendencias,
+                fecharSlashCommandPalette,
+                renderizarResumoOperacionalMesa,
+                renderizarSugestoesComposer,
+                atualizarStatusChatWorkspace,
+            }
+        );
     }
 
     function abrirChatLivreInspector({ origem = "chat_free_entry" } = {}) {
-        const origemNormalizada = String(origem || "chat_free_entry").trim() || "chat_free_entry";
-        const snapshotAtual = obterSnapshotEstadoInspectorAtual();
-        if (redirecionarEntradaParaReemissaoWorkspace({ origem: origemNormalizada })) {
-            return false;
-        }
-        const veioDoPortal = origemChatLivreEhPortal(origemNormalizada);
-        if (!veioDoPortal && !entradaChatLivreDisponivel(snapshotAtual)) {
-            sincronizarVisibilidadeAcoesChatLivre(snapshotAtual);
-            mostrarToast("O chat livre só fica disponível quando não existe laudo ativo.", "info", 2200);
-            return false;
-        }
-
-        fecharModalGateQualidade();
-
-        if (modalNovaInspecaoEstaAberta()) {
-            fecharNovaInspecaoComScreenSync({ forcar: true, restaurarFoco: false });
-        }
-
-        limparForcaTelaInicial();
-        sincronizarEstadoInspector({
-            laudoAtualId: null,
-            estadoRelatorio: "sem_relatorio",
-            forceHomeLanding: false,
-            modoInspecaoUI: "workspace",
-            workspaceStage: "assistant",
-            threadTab: "conversa",
-            overlayOwner: "",
-            assistantLandingFirstSendPending: false,
-            freeChatConversationActive: false,
-        }, {
-            persistirStorage: false,
-        });
-        exibirLandingAssistenteIA({ limparTimeline: false });
-
-        const screenFinal = sincronizarInspectorScreen();
-        focarComposerInspector();
-        emitirEventoTariel("tariel:assistant-chat-opened", {
-            origem: origemNormalizada,
-            screen: screenFinal,
-        });
-
-        return screenFinal === "assistant_landing";
+        return InspectorWorkspaceContextFlow.abrirChatLivreInspector?.(
+            { origem },
+            {
+                obterSnapshotEstadoInspectorAtual,
+                redirecionarEntradaParaReemissaoWorkspace,
+                origemChatLivreEhPortal,
+                entradaChatLivreDisponivel,
+                sincronizarVisibilidadeAcoesChatLivre,
+                mostrarToast,
+                fecharModalGateQualidade,
+                modalNovaInspecaoEstaAberta,
+                fecharNovaInspecaoComScreenSync,
+                limparForcaTelaInicial,
+                sincronizarEstadoInspector,
+                exibirLandingAssistenteIA,
+                sincronizarInspectorScreen,
+                focarComposerInspector,
+                emitirEventoTariel,
+            }
+        ) || false;
     }
 
     function promoverPortalParaChatNoModoFoco({ origem = "focus_mode_toggle" } = {}) {
-        const snapshotAtual = obterSnapshotEstadoInspectorAtual();
-        if (!modoFocoPodePromoverPortalParaChat(snapshotAtual)) {
-            return false;
-        }
-
-        return abrirChatLivreInspector({ origem });
+        return InspectorWorkspaceContextFlow.promoverPortalParaChatNoModoFoco?.(
+            { origem },
+            {
+                obterSnapshotEstadoInspectorAtual,
+                modoFocoPodePromoverPortalParaChat,
+                abrirChatLivreInspector,
+            }
+        ) || false;
     }
 
     function restaurarTelaSemRelatorio({ limparTimeline = false } = {}) {
-        if (homeForcadoAtivo()) {
-            resetarInterfaceInspecao();
-            return;
-        }
-
-        exibirLandingAssistenteIA({ limparTimeline });
+        InspectorWorkspaceContextFlow.restaurarTelaSemRelatorio?.(
+            { limparTimeline },
+            {
+                homeForcadoAtivo,
+                resetarInterfaceInspecao,
+                exibirLandingAssistenteIA,
+            }
+        );
     }
 
     function resetarInterfaceInspecao() {
-        definirRetomadaHomePendente(null);
-        limparFluxoNovoChatFocado();
-        atualizarEstadoModoEntrada({}, { reset: true });
-        estado.contextoFixado = [];
-        estado.chatStatusIA = {
-            status: "pronto",
-            texto: "Assistente pronto",
-        };
-        resetarFiltrosHistoricoWorkspace();
-        definirWorkspaceStage("assistant");
-        definirModoInspecaoUI("home");
-        atualizarThreadWorkspace("conversa");
-        atualizarHistoricoHomeExpandido(false);
-        renderizarResumoOperacionalMesa();
-        limparPainelPendencias();
-        fecharSlashCommandPalette();
-        atualizarStatusChatWorkspace("pronto", "Assistente pronto");
+        InspectorWorkspaceContextFlow.resetarInterfaceInspecao?.({
+            definirRetomadaHomePendente,
+            limparFluxoNovoChatFocado,
+            atualizarEstadoModoEntrada,
+            estado,
+            resetarFiltrosHistoricoWorkspace,
+            definirWorkspaceStage,
+            definirModoInspecaoUI,
+            atualizarThreadWorkspace,
+            atualizarHistoricoHomeExpandido,
+            renderizarResumoOperacionalMesa,
+            limparPainelPendencias,
+            fecharSlashCommandPalette,
+            atualizarStatusChatWorkspace,
+        });
     }
 
     function atualizarHistoricoHomeExpandido(expandir = false) {
