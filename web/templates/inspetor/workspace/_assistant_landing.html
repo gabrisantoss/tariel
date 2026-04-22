@@ -6,16 +6,14 @@
 >
     <div class="workspace-assistant-landing__shell">
         <div class="workspace-assistant-landing__hero">
-            <span class="workspace-assistant-landing__eyebrow">Assistente Tariel IA</span>
+            <span
+                id="workspace-assistant-greeting-name"
+                data-workspace-user-greeting-name
+                hidden
+            >{{ (usuario_nome or "Inspetor").split(" ")[0] }}</span>
             <h1 class="workspace-assistant-landing__headline">
-                <span class="workspace-assistant-landing__headline-greeting">
-                    Olá,
-                    <span
-                        id="workspace-assistant-greeting-name"
-                        data-workspace-user-greeting-name
-                    >{{ (usuario_nome or "Inspetor").split(" ")[0] }}</span>
-                </span>
-                <span class="workspace-assistant-landing__headline-question">Por onde começamos?</span>
+                <span class="workspace-assistant-landing__headline-legacy" hidden>Por onde começamos?</span>
+                <span class="workspace-assistant-landing__headline-question">No que você está pensando hoje?</span>
             </h1>
 
             <section

@@ -993,14 +993,27 @@
         }
     }
 
+    function urlSolicitaLaudo() {
+        try {
+            const valor = new URL(window.location.href).searchParams.get("laudo");
+            const id = Number(valor || 0);
+            return Number.isFinite(id) && id > 0;
+        } catch (_) {
+            return false;
+        }
+    }
+
     function consumirFlagTelaInicial() {
         let viaUrl = false;
         let viaSessao = false;
+        const viaLaudo = urlSolicitaLaudo();
 
         try {
             viaUrl = urlSolicitaTelaInicial();
-            viaSessao = sessionStorage.getItem("tariel_force_home_landing") === "1";
+            viaSessao = !viaLaudo && sessionStorage.getItem("tariel_force_home_landing") === "1";
             if (viaSessao) {
+                sessionStorage.removeItem("tariel_force_home_landing");
+            } else if (viaLaudo) {
                 sessionStorage.removeItem("tariel_force_home_landing");
             }
         } catch (_) {

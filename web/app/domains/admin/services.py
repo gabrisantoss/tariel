@@ -149,6 +149,7 @@ from app.domains.admin.tenant_user_services import (
 )
 from app.shared.catalog_commercial_governance import (
     merge_offer_commercial_flags as _merge_offer_commercial_flags,
+    summarize_release_contract_governance as _summarize_release_contract_governance,
     summarize_offer_commercial_governance as _summarize_offer_commercial_governance,
 )
 from app.shared.backend_hotspot_metrics import (
@@ -369,6 +370,7 @@ _normalizar_texto_opcional = __normalizar_texto_opcional
 logger = logging.getLogger("tariel.saas")
 merge_offer_commercial_flags = _merge_offer_commercial_flags
 summarize_offer_commercial_governance = _summarize_offer_commercial_governance
+summarize_release_contract_governance = _summarize_release_contract_governance
 catalog_offer_variants = _catalog_offer_variants
 resolve_master_template_id_for_family = _resolve_master_template_id_for_family
 criar_usuario_empresa = _criar_usuario_empresa

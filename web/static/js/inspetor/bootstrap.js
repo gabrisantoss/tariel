@@ -127,7 +127,8 @@
                 const estadoAtual = normalizarEstadoRelatorio(snapshotAtual?.estadoRelatorio);
                 const laudoAtual = normalizarLaudoAtualId(snapshotAtual?.laudoAtualId);
                 const laudoIdEfetivo = laudoId || laudoAtual || laudoUrlSolicitado;
-                const contextoAutoritativoAtivo = !!laudoIdEfetivo || estadoRelatorioPossuiContexto(estadoRelatorio);
+                const contextoAutoritativoAtivo =
+                    !!(laudoId || laudoAtual) || estadoRelatorioPossuiContexto(estadoRelatorio);
 
                 if (!contextoAutoritativoAtivo && laudoUrlSolicitado && !homeForcadoAtivo()) {
                     const threadTabBoot = abaUrlSolicitada || snapshotAtual?.threadTab || "historico";

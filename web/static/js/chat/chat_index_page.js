@@ -229,12 +229,12 @@
     const COPY_WORKSPACE_STAGE = Object.freeze({
         assistant: {
             eyebrow: "Chat livre",
-            headline: "Novo Chat",
+            headline: "No que voce esta pensando hoje?",
             description:
-                "Descreva o equipamento, o cenário ou a dúvida técnica. A primeira mensagem abre o contexto do laudo.",
-            placeholder: "Descreva o equipamento, o cenário ou a dúvida técnica",
+                "Use o assistente para iniciar uma conversa, estruturar contexto ou abrir uma inspeção quando fizer sentido.",
+            placeholder: "Pergunte alguma coisa",
             contextTitle: "Envie a primeira mensagem",
-            contextStatus: "A IA organiza o laudo enquanto voce descreve o cenario.",
+            contextStatus: "O assistente responde e ajuda a estruturar o proximo passo.",
         },
         inspection: {
             eyebrow: "Sessão técnica em andamento",
@@ -618,7 +618,7 @@
     }
 
     function modoEntradaEvidenceFirstAtivo() {
-        return !!ctx.shared.modoEntradaEvidenceFirstAtivo?.();
+        return !!window.TarielInspetorRuntime?.shared?.modoEntradaEvidenceFirstAtivo?.();
     }
 
     function resolverThreadTabInicialPorModoEntrada(payload = {}, fallback = "historico") {
@@ -627,23 +627,84 @@
     }
 
     function normalizarRetomadaHomePendenteSeguro(payload = null) {
-        return ctx.shared.normalizarRetomadaHomePendenteSeguro?.(payload) || null;
+        const helper = window.TarielInspetorRuntime?.shared?.normalizarRetomadaHomePendenteSeguro;
+        if (typeof helper === "function") {
+            return helper(payload) || null;
+        }
+        if (!payload || typeof payload !== "object") return null;
+
+        const contextoVisual = normalizarContextoVisualSeguro(payload?.contextoVisual);
+        const expiresAt = Number(payload?.expiresAt || 0) || (Date.now() + 10000);
+
+        return {
+            laudoId: normalizarLaudoAtualId(payload?.laudoId),
+            tipoTemplate: normalizarTipoTemplate(payload?.tipoTemplate || estado.tipoTemplateAtivo),
+            contextoVisual,
+            expiresAt,
+        };
     }
 
     function retomadaHomePendenteEhValida(payload = null) {
-        return !!ctx.shared.retomadaHomePendenteEhValida?.(payload);
+        const helper = window.TarielInspetorRuntime?.shared?.retomadaHomePendenteEhValida;
+        if (typeof helper === "function") {
+            return !!helper(payload);
+        }
+        return !!payload && Number(payload?.expiresAt || 0) > Date.now();
     }
 
     function sanitizarMapaContextoVisualLaudos(payload = null) {
-        return ctx.shared.sanitizarMapaContextoVisualLaudos?.(payload) || {};
+        const helper = window.TarielInspetorRuntime?.shared?.sanitizarMapaContextoVisualLaudos;
+        if (typeof helper === "function") {
+            return helper(payload) || {};
+        }
+        if (!payload || typeof payload !== "object") return {};
+
+        const entradas = Object.entries(payload)
+            .map(([laudoId, contextoVisual]) => {
+                const id = normalizarLaudoAtualId(laudoId);
+                const contexto = normalizarContextoVisualSeguro(contextoVisual);
+                if (!id || !contexto) return null;
+                return [String(id), contexto];
+            })
+            .filter(Boolean)
+            .sort((atual, proximo) => Number(proximo[0]) - Number(atual[0]))
+            .slice(0, LIMITE_CONTEXTO_VISUAL_LAUDOS_STORAGE);
+
+        return Object.fromEntries(entradas);
     }
 
     function persistirContextoVisualLaudosStorage(payload = null) {
-        return ctx.shared.persistirContextoVisualLaudosStorage?.(payload) || {};
+        const helper = window.TarielInspetorRuntime?.shared?.persistirContextoVisualLaudosStorage;
+        if (typeof helper === "function") {
+            return helper(payload) || {};
+        }
+        const mapa = sanitizarMapaContextoVisualLaudos(payload);
+
+        try {
+            if (Object.keys(mapa).length) {
+                sessionStorage.setItem(CHAVE_CONTEXTO_VISUAL_LAUDOS, JSON.stringify(mapa));
+            } else {
+                sessionStorage.removeItem(CHAVE_CONTEXTO_VISUAL_LAUDOS);
+            }
+        } catch (_) {
+            // armazenamento opcional
+        }
+
+        return mapa;
     }
 
     function lerContextoVisualLaudosStorage() {
-        return ctx.shared.lerContextoVisualLaudosStorage?.() || {};
+        const helper = window.TarielInspetorRuntime?.shared?.lerContextoVisualLaudosStorage;
+        if (typeof helper === "function") {
+            return helper() || {};
+        }
+        try {
+            const bruto = sessionStorage.getItem(CHAVE_CONTEXTO_VISUAL_LAUDOS);
+            if (!bruto) return {};
+            return sanitizarMapaContextoVisualLaudos(JSON.parse(bruto));
+        } catch (_) {
+            return {};
+        }
     }
 
     function registrarContextoVisualLaudo(laudoId, contextoVisual = null) {
@@ -655,11 +716,29 @@
     }
 
     function lerRetomadaHomePendenteStorage() {
-        return ctx.shared.lerRetomadaHomePendenteStorage?.() || null;
+        const helper = window.TarielInspetorRuntime?.shared?.lerRetomadaHomePendenteStorage;
+        if (typeof helper === "function") {
+            return helper() || null;
+        }
+        try {
+            const bruto = sessionStorage.getItem(CHAVE_RETOMADA_HOME_PENDENTE);
+            if (!bruto) return null;
+            return normalizarRetomadaHomePendenteSeguro(JSON.parse(bruto));
+        } catch (_) {
+            return null;
+        }
     }
 
     function lerFlagForcaHomeStorage() {
-        return !!ctx.shared.lerFlagForcaHomeStorage?.();
+        const helper = window.TarielInspetorRuntime?.shared?.lerFlagForcaHomeStorage;
+        if (typeof helper === "function") {
+            return !!helper();
+        }
+        try {
+            return sessionStorage.getItem(CHAVE_FORCE_HOME_LANDING) === "1";
+        } catch (_) {
+            return false;
+        }
     }
 
     estado.contextoVisualPorLaudo = {};
@@ -2694,6 +2773,12 @@
         ) || { Accept: "application/json", ...extra };
     }
 
+    function obterTokenCsrf() {
+        return InspectorWorkspaceUtils.obterTokenCsrf?.({ document })
+            || document.querySelector('meta[name="csrf-token"]')?.content
+            || "";
+    }
+
     async function extrairMensagemErroHTTP(resposta, fallback = "") {
         return InspectorWorkspaceUtils.extrairMensagemErroHTTP?.(resposta, fallback) || String(fallback || "").trim();
     }
@@ -3525,7 +3610,7 @@
         await InspectorWorkspacePageBoot.boot?.({ ctx });
     }
 
-    const perfInstrumentation = InspectorWorkspacePerf.instrument?.({
+    const perfInstrumentation = window.TarielInspectorWorkspacePerf?.instrument?.({
         PERF,
         windowRef: window,
         documentRef: document,

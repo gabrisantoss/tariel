@@ -88,7 +88,11 @@
                 </section>
             </div>
 
-            <footer class="rodape-entrada" data-conversation-variant="technical" hidden>
+            <footer
+                class="rodape-entrada"
+                data-conversation-variant="technical"
+                {% if not workspace_assistant_inicial %}hidden{% endif %}
+            >
                 <div class="rodape-entrada__contexto">
                     <div class="rodape-entrada__contexto-copy">
                         <span class="rodape-entrada__eyebrow">Primeiro passo</span>
@@ -164,7 +168,7 @@
                                     autocomplete="off"
                                     aria-label="Campo de mensagem"
                                     aria-multiline="true"
-                                    placeholder="Descreva o equipamento, cenário ou dúvida técnica"
+                                    placeholder="Pergunte alguma coisa"
                                 ></textarea>
                             </div>
 
