@@ -2744,3 +2744,32 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso do screen sync sem quebrar o bootstrap do inspetor
 - `admin/services.py` perde a leitura agregada do painel sem regressão em métricas e rollups
 - smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-09` — Utilidades do workspace e backend de boas-vindas
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega utilitários de home/composer/HTTP para `web/static/js/inspetor/workspace_utils.js`, `admin/services.py` delega o backend de boas-vindas para `web/app/domains/admin/admin_welcome_notification_services.py`, e o recorte passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por helpers utilitários do runtime do inspetor e serviços operacionais pequenos do admin sem alterar contratos públicos
+
+### Escopo
+
+- entra extração de navegação para home, resumo textual, helpers de composer, CSRF e parsing de erro HTTP
+- entra extração do backend operacional de boas-vindas `log|noop|strict`
+- entra preservação da fachada `_disparar_email_boas_vindas` em `admin/services.py` para manter monkeypatch e rotas
+- não entra mudança de UX no home do inspetor
+- não entra mudança de fluxo de onboarding
+
+### Passos
+
+1. extrair os utilitários remanescentes do workspace para módulo dedicado
+2. extrair o backend de boas-vindas para serviço admin pequeno e autocontido
+3. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de utilidades sem quebrar o runtime principal
+- `admin/services.py` perde o backend de boas-vindas sem quebrar testes de cadastro e aviso operacional
+- smoke do web e subset focal do admin seguem verdes

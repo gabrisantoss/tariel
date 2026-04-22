@@ -582,3 +582,59 @@ Próximo passo imediato:
 
 - continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime do workspace, preferindo utilitários de navegação/home ou contexto residual;
 - no backend, seguir com a próxima fatia isolada de leitura ou mutação administrativa ainda remanescente em `web/app/domains/admin/services.py`.
+
+## Ciclo R15 — Utilidades do workspace e backend de boas-vindas
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda acumulava utilitários de navegação/home, resumo textual, composer, CSRF e parsing de erro HTTP, mesmo após as extrações anteriores do runtime do workspace;
+- `web/app/domains/admin/services.py` ainda mantinha a implementação inteira do backend operacional de boas-vindas, apesar de esse bloco ser pequeno e já testado de forma direta.
+
+Corte executado:
+
+- criação do módulo `web/static/js/inspetor/workspace_utils.js`;
+- extração das rotinas:
+  - `navegarParaHome`
+  - `processarAcaoHome`
+  - `resumirTexto`
+  - `normalizarConexaoMesaWidget`
+  - `pluralizarMesa`
+  - `obterTipoTemplateDoPayload`
+  - `inserirTextoNoComposer`
+  - `aplicarPrePromptDaAcaoRapida`
+  - `obterLaudoAtivoIdSeguro`
+  - `obterHeadersComCSRF`
+  - `extrairMensagemErroHTTP`
+- reapontamento de `web/static/js/chat/chat_index_page.js` para consumir o helper novo via `window.TarielInspectorWorkspaceUtils`;
+- criação do módulo `web/app/domains/admin/admin_welcome_notification_services.py`;
+- extração das rotinas `aviso_notificacao_boas_vindas()` e `disparar_email_boas_vindas(...)`, preservando wrappers compatíveis em `services.py`;
+- ajuste da ordem de carga em `web/templates/index.html` para carregar o helper novo antes do runtime principal.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_utils.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_welcome_notification_services.py`
+- `web/app/domains/admin/services.py`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_utils.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_welcome_notification_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_welcome_notification_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "boas_vindas or registrar_novo_cliente"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- resultados:
+  - `6 passed, 36 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual do workspace, preferindo anexos/mesa ou helpers remanescentes de integração;
+- no backend, seguir para a próxima fatia pequena e coberta ainda remanescente em `web/app/domains/admin/services.py`.

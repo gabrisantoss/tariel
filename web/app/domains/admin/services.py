@@ -101,6 +101,10 @@ from app.domains.admin.tenant_onboarding_services import (
 from app.domains.admin.admin_dashboard_services import (
     buscar_metricas_ia_painel as _admin_dashboard_buscar_metricas_ia_painel,
 )
+from app.domains.admin.admin_welcome_notification_services import (
+    aviso_notificacao_boas_vindas as _admin_welcome_notice_message,
+    disparar_email_boas_vindas as _admin_dispatch_welcome_notice,
+)
 from app.domains.admin.platform_settings_state import (
     get_platform_default_new_tenant_plan,  # noqa: F401
     get_support_exceptional_policy_snapshot,  # noqa: F401
@@ -3989,39 +3993,14 @@ def buscar_detalhe_cliente(db: Session, empresa_id: int) -> dict[str, Any] | Non
 
 
 def _aviso_notificacao_boas_vindas() -> str:
-    return "Entrega automática de boas-vindas não configurada. Compartilhe a credencial por canal seguro."
+    return _admin_welcome_notice_message()
 
 
 def _disparar_email_boas_vindas(email: str, empresa: str, senha: str) -> str | None:
-    """
-    Backend operacional mínimo para onboarding:
-    - `log`: registra metadados redigidos e devolve aviso para o operador.
-    - `noop`: não tenta enviar, mas devolve aviso explícito para o operador.
-    - `strict`: falha explicitamente para não mascarar ausência de entrega.
-    """
-    if _BACKEND_NOTIFICACAO_BOAS_VINDAS == "log":
-        logger.info(
-            "\n=========================================\n"
-            "[BACKEND LOG] BOAS-VINDAS INTERCEPTADO\n"
-            f"Empresa: {empresa}\n"
-            f"E-mail:  {email}\n"
-            "Credencial temporaria: [REDACTED]\n"
-            "Acao:    compartilhe a credencial por canal seguro.\n"
-            "=========================================\n"
-        )
-        return _aviso_notificacao_boas_vindas()
-
-    if _BACKEND_NOTIFICACAO_BOAS_VINDAS == "noop":
-        logger.info(
-            "Entrega automatica de boas-vindas desativada | empresa=%s | email=%s",
-            empresa,
-            email,
-        )
-        return _aviso_notificacao_boas_vindas()
-
-    if _BACKEND_NOTIFICACAO_BOAS_VINDAS == "strict":
-        raise RuntimeError(_aviso_notificacao_boas_vindas())
-
-    raise RuntimeError(
-        "Backend de boas-vindas inválido. Use ADMIN_WELCOME_NOTIFICATION_BACKEND=log|noop|strict."
+    return _admin_dispatch_welcome_notice(
+        email,
+        empresa,
+        senha,
+        backend=_BACKEND_NOTIFICACAO_BOAS_VINDAS,
+        logger=logger,
     )

@@ -43,6 +43,7 @@
     const InspectorSidebarHistory = window.TarielInspectorSidebarHistory || {};
     const InspectorWorkspaceRail = window.TarielInspectorWorkspaceRail || {};
     const InspectorWorkspaceScreen = window.TarielInspectorWorkspaceScreen || {};
+    const InspectorWorkspaceUtils = window.TarielInspectorWorkspaceUtils || {};
     const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
@@ -3714,51 +3715,36 @@
     }
 
     async function navegarParaHome(destino = "/app/?home=1", { preservarContexto = true } = {}) {
-        const homeDestino = String(destino || "/app/?home=1").trim() || "/app/?home=1";
-        let desativou = true;
-
-        if (!preservarContexto) {
-            desativou = await desativarContextoAtivoParaHome();
-        }
-
-        if (!desativou && !preservarContexto) {
-            mostrarToast(
-                "Não foi possível limpar o contexto ativo. Recarregando a central.",
-                "aviso",
-                2400
-            );
-        }
-
-        definirRetomadaHomePendente(null);
-        limparEstadoHomeNoCliente();
-        if (preservarContexto) {
-            marcarForcaTelaInicial();
-        }
-        window.location.assign(homeDestino);
+        return InspectorWorkspaceUtils.navegarParaHome?.(
+            destino,
+            { preservarContexto },
+            {
+                windowRef: window,
+                desativarContextoAtivoParaHome,
+                mostrarToast,
+                definirRetomadaHomePendente,
+                limparEstadoHomeNoCliente,
+                marcarForcaTelaInicial,
+            }
+        );
     }
 
     function processarAcaoHome(detail = {}) {
-        const destino = String(detail?.destino || "/app/?home=1").trim() || "/app/?home=1";
-        navegarParaHome(destino, {
-            preservarContexto: detail?.preservarContexto !== false,
+        return InspectorWorkspaceUtils.processarAcaoHome?.(detail, {
+            navegarParaHome,
         });
     }
 
     function resumirTexto(texto, limite = 140) {
-        const base = String(texto || "").replace(/\s+/g, " ").trim();
-        if (!base) return "Mensagem sem conteúdo";
-        return base.length > limite ? `${base.slice(0, limite)}...` : base;
+        return InspectorWorkspaceUtils.resumirTexto?.(texto, limite) || "Mensagem sem conteúdo";
     }
 
     function normalizarConexaoMesaWidget(valor) {
-        const status = String(valor || "").trim().toLowerCase();
-        if (status === "reconectando") return "reconectando";
-        if (status === "offline") return "offline";
-        return "conectado";
+        return InspectorWorkspaceUtils.normalizarConexaoMesaWidget?.(valor) || "conectado";
     }
 
     function pluralizarMesa(total, singular, plural) {
-        return Number(total || 0) === 1 ? singular : (plural || `${singular}s`);
+        return InspectorWorkspaceUtils.pluralizarMesa?.(total, singular, plural) || singular;
     }
 
     function atualizarStatusMesa(status = "pronta", detalhe = "") {
@@ -3777,98 +3763,51 @@
     }
 
     function obterTipoTemplateDoPayload(dados = {}) {
-        return normalizarTipoTemplate(
-            dados?.tipoTemplate ||
-            dados?.tipo_template ||
-            dados?.template ||
-            estado.tipoTemplateAtivo
+        return InspectorWorkspaceUtils.obterTipoTemplateDoPayload?.(
+            dados,
+            {
+                normalizarTipoTemplate,
+                estado,
+            }
         );
     }
 
     function inserirTextoNoComposer(texto) {
-        const textoLimpo = String(texto || "").trim();
-
-        if (!el.campoMensagem || !textoLimpo) {
-            return false;
-        }
-
-        const valorAtual = String(el.campoMensagem.value || "").trim();
-        el.campoMensagem.value = valorAtual ? `${valorAtual}\n${textoLimpo}` : textoLimpo;
-
-        el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
-        el.campoMensagem.dispatchEvent(new Event("change", { bubbles: true }));
-        try {
-            el.campoMensagem.focus({ preventScroll: true });
-        } catch (_) {
-            el.campoMensagem.focus();
-        }
-
-        if (typeof el.campoMensagem.setSelectionRange === "function") {
-            const fim = el.campoMensagem.value.length;
-            el.campoMensagem.setSelectionRange(fim, fim);
-        }
-
-        return true;
+        return InspectorWorkspaceUtils.inserirTextoNoComposer?.(
+            texto,
+            {
+                el,
+            }
+        ) || false;
     }
 
     function aplicarPrePromptDaAcaoRapida(botao) {
-        const texto = String(botao?.dataset?.preprompt || "").trim();
-        return inserirTextoNoComposer(texto);
+        return InspectorWorkspaceUtils.aplicarPrePromptDaAcaoRapida?.(
+            botao,
+            {
+                inserirTextoNoComposer,
+            }
+        ) || false;
     }
 
     function obterLaudoAtivoIdSeguro() {
-        return normalizarLaudoAtualId(obterSnapshotEstadoInspectorAtual().laudoAtualId);
+        return InspectorWorkspaceUtils.obterLaudoAtivoIdSeguro?.(
+            {
+                obterSnapshotEstadoInspectorAtual,
+                normalizarLaudoAtualId,
+            }
+        );
     }
 
     function obterHeadersComCSRF(extra = {}) {
-        const base = { Accept: "application/json", ...extra };
-
-        if (window.TarielCore?.comCabecalhoCSRF) {
-            return window.TarielCore.comCabecalhoCSRF(base);
-        }
-
-        const tokenMeta = document.querySelector('meta[name="csrf-token"]')?.content?.trim() || "";
-        return tokenMeta ? { ...base, "X-CSRF-Token": tokenMeta } : base;
+        return InspectorWorkspaceUtils.obterHeadersComCSRF?.(
+            extra,
+            { document }
+        ) || { Accept: "application/json", ...extra };
     }
 
     async function extrairMensagemErroHTTP(resposta, fallback = "") {
-        if (!resposta) return String(fallback || "").trim();
-
-        try {
-            const tipoConteudo = String(resposta.headers?.get("content-type") || "").toLowerCase();
-
-            if (tipoConteudo.includes("application/json")) {
-                const payload = await resposta.json();
-                const detalhe =
-                    payload?.detail ??
-                    payload?.erro ??
-                    payload?.mensagem ??
-                    payload?.message ??
-                    "";
-
-                if (typeof detalhe === "string" && detalhe.trim()) {
-                    return detalhe.trim();
-                }
-
-                if (Array.isArray(detalhe) && detalhe.length > 0) {
-                    return String(
-                        detalhe
-                            .map((item) => String(item?.msg || item || "").trim())
-                            .filter(Boolean)
-                            .join(" | ")
-                    ).trim();
-                }
-            } else {
-                const bruto = String(await resposta.text()).trim();
-                if (bruto) {
-                    return bruto.slice(0, 240);
-                }
-            }
-        } catch (_) {
-            // Fallback silencioso.
-        }
-
-        return String(fallback || `Falha HTTP ${resposta.status || ""}`).trim();
+        return InspectorWorkspaceUtils.extrairMensagemErroHTTP?.(resposta, fallback) || String(fallback || "").trim();
     }
 
     // =========================================================

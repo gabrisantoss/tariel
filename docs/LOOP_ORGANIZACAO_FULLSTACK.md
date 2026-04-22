@@ -2796,3 +2796,51 @@ Próximo passo imediato:
 
 - continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime do workspace, provavelmente navegação/home helpers ou utilitários remanescentes de contexto;
 - no backend, atacar a próxima leitura/mutação administrativa ainda concentrada em `admin/services.py`, preferindo cortes pequenos com cobertura já existente.
+
+## Ciclo 72 — Extração das utilidades do workspace e backend de boas-vindas
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda mantinha helpers utilitários de home, composer, CSRF e parsing de erro HTTP no mesmo arquivo do runtime principal;
+- `web/app/domains/admin/services.py` ainda carregava a implementação completa do backend operacional de boas-vindas, apesar de esse bloco ser pequeno, autocontido e já ter cobertura dedicada;
+- os dois cortes eram coesos e pouco arriscados, bons para continuar drenando os hotspots sem tocar em contratos públicos.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_utils.js` com `navegarParaHome`, `processarAcaoHome`, `resumirTexto`, `normalizarConexaoMesaWidget`, `pluralizarMesa`, utilitários de composer e helpers de CSRF/erro HTTP;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorWorkspaceUtils`;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/admin_welcome_notification_services.py` com a implementação do backend `log|noop|strict` das boas-vindas;
+- `web/app/domains/admin/services.py` ficou com wrappers finos em `_aviso_notificacao_boas_vindas` e `_disparar_email_boas_vindas`, preservando compatibilidade de monkeypatch nos testes.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_utils.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_welcome_notification_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_utils.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_welcome_notification_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_welcome_notification_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "boas_vindas or registrar_novo_cliente"`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- resultado:
+  - `6 passed, 36 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, provavelmente helpers/documentação de mesa ou utilitários de anexos;
+- no backend, seguir com a próxima leitura/mutação administrativa restante em `admin/services.py`, mantendo cortes pequenos e cobertos.
