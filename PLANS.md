@@ -2686,3 +2686,32 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de sidebar/home sem regressão de navegação
 - `admin/services.py` perde mais uma fatia de apresentação administrativa sem quebrar o suite do admin
 - `make verify` fecha verde no workspace inteiro
+
+### `PKT-HOTSPOTS-BASELINE-07` — Rail do workspace e onboarding de tenant
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega visibilidade/estado do rail para `web/static/js/inspetor/workspace_rail.js`, `admin/services.py` delega o onboarding de tenant para `web/app/domains/admin/tenant_onboarding_services.py`, e o recorte passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por blocos de navegação do workspace e fluxos operacionais grandes do admin sem romper as fachadas atuais
+
+### Escopo
+
+- entra extração da visibilidade, acordeões e sincronização de layout do rail do workspace
+- entra extração do onboarding de tenant com provisionamento inicial de usuários operacionais
+- entra preservação da compatibilidade de monkeypatch em `admin/services.py` para o disparo de boas-vindas
+- não entra mudança visual do rail
+- não entra mudança funcional nas rotas admin-cliente/admin-ceo
+
+### Passos
+
+1. extrair helpers do rail do workspace para módulo do inspetor com dependências explícitas
+2. extrair `registrar_novo_cliente` para serviço dedicado de onboarding tenant
+3. validar com `node --check`, `py_compile`, `ruff`, smoke e subset focal de `test_admin_services.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de navegação/rail sem regressão de bootstrap
+- `admin/services.py` perde o fluxo de onboarding sem quebrar testes de cadastro e boas-vindas
+- smoke do web e testes focais do admin seguem verdes

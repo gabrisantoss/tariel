@@ -41,6 +41,7 @@
     const InspectorWorkspaceHistoryContext = window.TarielInspectorWorkspaceHistoryContext || {};
     const InspectorWorkspaceMesaStatus = window.TarielInspectorWorkspaceMesaStatus || {};
     const InspectorSidebarHistory = window.TarielInspectorSidebarHistory || {};
+    const InspectorWorkspaceRail = window.TarielInspectorWorkspaceRail || {};
     const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
@@ -3440,17 +3441,17 @@
     }
 
     function resolveWorkspaceRailVisibility(screen = estado.inspectorScreen || resolveInspectorScreen()) {
-        if (screen === "new_inspection") {
-            return false;
-        }
-
-        const snapshot = obterSnapshotEstadoInspectorAtual();
-        if (conversaWorkspaceModoChatAtivo(screen, snapshot)) {
-            return false;
-        }
-
-        const view = resolveWorkspaceView(screen);
-        return workspaceViewSuportaRail(view) && !!estado.workspaceRailExpanded;
+        return InspectorWorkspaceRail.resolveWorkspaceRailVisibility?.(
+            screen,
+            {
+                estado,
+                resolveInspectorScreen,
+                resolveWorkspaceView,
+                workspaceViewSuportaRail,
+                obterSnapshotEstadoInspectorAtual,
+                conversaWorkspaceModoChatAtivo,
+            }
+        ) || false;
     }
 
     function atualizarBotaoWorkspaceRail({
@@ -3459,21 +3460,21 @@
         view = resolveWorkspaceView(),
         railVisivel = resolveWorkspaceRailVisibility(),
     } = {}) {
-        if (!el.btnWorkspaceToggleRail) return;
-
-        const railDisponivel = chromeTecnicoOperacional && !layoutCompacto && workspaceViewSuportaRail(view);
-        const icone = el.btnWorkspaceToggleRail.querySelector(".material-symbols-rounded");
-        const rotulo = el.btnWorkspaceToggleRail.querySelector("span:last-child");
-
-        el.btnWorkspaceToggleRail.hidden = !railDisponivel;
-        el.btnWorkspaceToggleRail.setAttribute("aria-expanded", railVisivel ? "true" : "false");
-
-        if (icone) {
-            icone.textContent = railVisivel ? "right_panel_close" : "right_panel_open";
-        }
-        if (rotulo) {
-            rotulo.textContent = railVisivel ? "Fechar painel" : "Painel";
-        }
+        InspectorWorkspaceRail.atualizarBotaoWorkspaceRail?.(
+            {
+                chromeTecnicoOperacional,
+                layoutCompacto,
+                view,
+                railVisivel,
+            },
+            {
+                el,
+                layoutInspectorCompacto,
+                resolveWorkspaceView,
+                resolveWorkspaceRailVisibility,
+                workspaceViewSuportaRail,
+            }
+        );
     }
 
     function resolveMesaWidgetDisponibilidade(screen = estado.inspectorScreen || resolveInspectorScreen()) {
@@ -3543,38 +3544,7 @@
     }
 
     function resolverEstadoPadraoAcordeoesRail(view = resolveWorkspaceView()) {
-        if (view === "inspection_history") {
-            return {
-                history: true,
-                progress: false,
-                context: false,
-                pendencias: false,
-                mesa: false,
-                pinned: false,
-            };
-        }
-
-        if (view === "inspection_record") {
-            return {
-                progress: false,
-                context: false,
-                pendencias: false,
-                mesa: false,
-                pinned: false,
-            };
-        }
-
-        if (view === "inspection_mesa") {
-            return {
-                progress: false,
-                context: false,
-                pendencias: false,
-                mesa: true,
-                pinned: false,
-            };
-        }
-
-        return {
+        return InspectorWorkspaceRail.resolverEstadoPadraoAcordeoesRail?.(view) || {
             history: false,
             progress: false,
             context: false,
@@ -3585,61 +3555,29 @@
     }
 
     function sincronizarAcordeoesRailWorkspace(view = resolveWorkspaceView()) {
-        const estadoPadrao = resolverEstadoPadraoAcordeoesRail(view);
-        const mudouView = estado.workspaceRailViewKey !== view;
-        const estadoAtual = (
-            estado.workspaceRailAccordionState &&
-            typeof estado.workspaceRailAccordionState === "object"
-        ) ? estado.workspaceRailAccordionState : Object.create(null);
-        const botoes = Array.isArray(el.workspaceRailToggleButtons) ? el.workspaceRailToggleButtons : [];
-
-        if (mudouView) {
-            estado.workspaceRailAccordionState = { ...estadoPadrao };
-            estado.workspaceRailViewKey = view;
-        } else {
-            estado.workspaceRailAccordionState = {
-                ...estadoPadrao,
-                ...estadoAtual,
-            };
-        }
-
-        botoes.forEach((botao) => {
-            const chave = String(botao?.dataset?.railToggle || "").trim();
-            if (!chave) return;
-
-            const aberto = !!estado.workspaceRailAccordionState?.[chave];
-            aplicarEstadoAcordeaoRailWorkspace(botao, aberto, { persist: false });
-        });
+        InspectorWorkspaceRail.sincronizarAcordeoesRailWorkspace?.(
+            view,
+            {
+                estado,
+                el,
+                resolveWorkspaceView,
+                resolverEstadoPadraoAcordeoesRail,
+                aplicarEstadoAcordeaoRailWorkspace,
+            }
+        );
     }
 
     function aplicarEstadoAcordeaoRailWorkspace(botao, aberto, { persist = true } = {}) {
-        if (!botao) return;
-
-        const chave = String(botao.dataset.railToggle || "").trim();
-        if (!chave) return;
-
-        const corpo = document.querySelector(`[data-rail-body="${CSS.escape(chave)}"]`);
-        const card = botao.closest(".technical-record-card");
-        const expandido = aberto ? "true" : "false";
-
-        botao.setAttribute("aria-expanded", expandido);
-        botao.dataset.expanded = expandido;
-
-        if (card) {
-            card.dataset.collapsed = aberto ? "false" : "true";
-        }
-        if (corpo) {
-            corpo.hidden = !aberto;
-            corpo.dataset.expanded = expandido;
-        }
-        if (persist) {
-            estado.workspaceRailAccordionState = {
-                ...(estado.workspaceRailAccordionState && typeof estado.workspaceRailAccordionState === "object"
-                    ? estado.workspaceRailAccordionState
-                    : {}),
-                [chave]: !!aberto,
-            };
-        }
+        InspectorWorkspaceRail.aplicarEstadoAcordeaoRailWorkspace?.(
+            botao,
+            aberto,
+            { persist },
+            {
+                estado,
+                document,
+                CSS,
+            }
+        );
     }
 
     function sincronizarMesaStageWorkspace(view = resolveWorkspaceView(), mesaWidgetPermitido = resolveMesaWidgetDisponibilidade()) {
@@ -3694,33 +3632,18 @@
     }
 
     function sincronizarWorkspaceRail(screen = estado.inspectorScreen || resolveInspectorScreen()) {
-        const view = resolveWorkspaceView(screen);
-        const railVisivel = resolveWorkspaceRailVisibility(screen);
-        const layout = railVisivel ? "thread-with-rail" : "thread-only";
-
-        document.body.dataset.workspaceView = view;
-        document.body.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
-
-        if (el.painelChat) {
-            el.painelChat.dataset.workspaceView = view;
-            el.painelChat.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
-        }
-
-        if (el.workspaceScreenRoot) {
-            el.workspaceScreenRoot.dataset.workspaceView = view;
-            el.workspaceScreenRoot.dataset.workspaceLayout = layout;
-            el.workspaceScreenRoot.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
-        }
-
-        if (el.chatDashboardRail) {
-            el.chatDashboardRail.hidden = !railVisivel;
-            el.chatDashboardRail.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
-            el.chatDashboardRail.setAttribute("aria-hidden", String(!railVisivel));
-        }
-
-        sincronizarAcordeoesRailWorkspace(view);
-
-        return railVisivel;
+        return InspectorWorkspaceRail.sincronizarWorkspaceRail?.(
+            screen,
+            {
+                el,
+                document,
+                estado,
+                resolveInspectorScreen,
+                resolveWorkspaceView,
+                resolveWorkspaceRailVisibility,
+                sincronizarAcordeoesRailWorkspace,
+            }
+        ) || false;
     }
 
     function sincronizarWidgetsGlobaisWorkspace(screen = estado.inspectorScreen || resolveInspectorScreen()) {

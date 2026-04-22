@@ -2700,3 +2700,50 @@ Próximo passo imediato:
 
 - continuar drenando `chat_index_page.js` pelos blocos remanescentes de navegação/resumo/rail do workspace;
 - no backend, atacar a próxima fatia de orquestração/payload ainda concentrada em `admin/services.py`, priorizando o que ainda mistura leitura, mutação e apresentação no mesmo agregado.
+
+## Ciclo 70 — Extração do rail do workspace e onboarding de tenant
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda mantinha no arquivo central a visibilidade do rail, o estado dos acordeões e a sincronização do layout do workspace;
+- `web/app/domains/admin/services.py` ainda carregava o fluxo inteiro de onboarding do tenant, incluindo empresa, admin-cliente, provisionamento operacional e disparo de boas-vindas;
+- esses dois blocos eram operacionais, coesos e já tinham fronteira clara para sair do hotspot sem alterar contrato público.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_rail.js` com resolução de visibilidade do rail, estado padrão dos acordeões, aplicação do estado aberto/fechado e sincronização do layout `thread-only/thread-with-rail`;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorWorkspaceRail` via dependências explícitas do runtime atual;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/tenant_onboarding_services.py` com o fluxo de `registrar_novo_cliente`, incluindo provisionamento opcional de inspetor/revisor e envio de aviso de boas-vindas;
+- `web/app/domains/admin/services.py` ficou como fachada compatível e continua repassando o `_disparar_email_boas_vindas` atual, preservando monkeypatch nos testes.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_rail.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/tenant_onboarding_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_rail.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/tenant_onboarding_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/tenant_onboarding_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "registrar_novo_cliente or buscar_detalhe_cliente or boas_vindas"`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- resultado:
+  - `6 passed, 36 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar reduzindo `chat_index_page.js` pelos blocos remanescentes de widgets globais/screen sync do workspace;
+- no backend, atacar a próxima fatia de `admin/services.py` que ainda mistura métricas, leitura agregada e mutações administrativas no mesmo agregado.
