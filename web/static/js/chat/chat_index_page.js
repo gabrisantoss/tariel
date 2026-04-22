@@ -3034,7 +3034,6 @@
         atualizarBadgeMesaWidget,
         atualizarChatAoVivoComMesa,
         atualizarEmptyStateHonestoConversa,
-        atualizarPainelWorkspaceDerivado,
         atualizarPendenciaIndividual,
         atualizarPreviewNomeInspecao,
         carregarMensagensMesaWidget,
@@ -3098,6 +3097,7 @@
         atualizarResumoModoEntradaModal,
         workspacePermiteFinalizacao,
     } = ctx.actions;
+    let atualizarPainelWorkspaceDerivado = ctx.actions.atualizarPainelWorkspaceDerivado;
 
     function atualizarNomeTemplateAtivo(tipo) {
         InspectorWorkspaceStage.atualizarNomeTemplateAtivo?.(tipo, {
