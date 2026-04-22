@@ -98,6 +98,42 @@
         return true;
     }
 
+    function focarComposerInspector(dependencies = {}) {
+        const el = dependencies.el || {};
+        if (
+            !(el.campoMensagem instanceof HTMLElement) ||
+            el.campoMensagem.hidden ||
+            el.campoMensagem.closest?.("[hidden], [inert]") ||
+            el.campoMensagem.getClientRects().length === 0
+        ) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+                if (
+                    !(el.campoMensagem instanceof HTMLElement) ||
+                    el.campoMensagem.hidden ||
+                    el.campoMensagem.closest?.("[hidden], [inert]") ||
+                    el.campoMensagem.getClientRects().length === 0
+                ) {
+                    return;
+                }
+
+                try {
+                    el.campoMensagem.focus({ preventScroll: true });
+                } catch (_) {
+                    el.campoMensagem.focus();
+                }
+
+                if (typeof el.campoMensagem.setSelectionRange === "function") {
+                    const fim = el.campoMensagem.value.length;
+                    el.campoMensagem.setSelectionRange(fim, fim);
+                }
+            });
+        });
+    }
+
     async function abrirMesaComContexto(detail = {}, dependencies = {}) {
         const el = dependencies.el || {};
         if (!dependencies.obterLaudoAtivoIdSeguro?.()) {
@@ -464,6 +500,7 @@
             definirValorComposer,
             executarComandoSlash,
             fecharSlashCommandPalette,
+            focarComposerInspector,
             montarMensagemReemissaoWorkspace,
             navegarHistoricoPrompts,
             obterEntradaReemissaoWorkspace,

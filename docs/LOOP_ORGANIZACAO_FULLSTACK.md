@@ -3047,3 +3047,60 @@ Próximo passo imediato:
 
 - continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo preview/finalização ou foco do composer;
 - no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando biblioteca de variantes e alvo de refinamento template.
+
+## Ciclo 77 — Extração do delivery flow do workspace e variantes do catálogo
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda mantinha preview/finalização do workspace e o foco do composer no mesmo runtime principal;
+- `web/app/domains/admin/services.py` ainda carregava o bloco de biblioteca de variantes e o alvo de refinamento template, usados na leitura detalhada do catálogo e na fila de calibração;
+- o conjunto continuava com fronteira clara e baixo risco de extração porque era majoritariamente serialização, orquestração leve e chamada de APIs já existentes.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_delivery_flow.js` com `abrirPreviewWorkspace` e `finalizarInspecao`;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorWorkspaceDeliveryFlow`;
+- `focarComposerInspector` saiu do hotspot principal e passou a ser servido por `web/static/js/inspetor/workspace_composer.js`;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/admin_catalog_variant_services.py` com `build_variant_library_summary` e `build_template_refinement_target`;
+- `web/app/domains/admin/services.py` ficou com wrappers finos para esse bloco.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_delivery_flow.js`
+- `web/static/js/inspetor/workspace_composer.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_catalog_variant_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_composer.js`
+- `node --check web/static/js/inspetor/workspace_delivery_flow.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_variant_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_variant_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `git diff --check`
+- resultado:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Progresso dos hotspots:
+
+- `web/static/js/chat/chat_index_page.js`: `6368 -> 4946` linhas, redução acumulada de `22.33%`
+- `web/app/domains/admin/services.py`: `5395 -> 3340` linhas, redução acumulada de `38.09%`
+- combinado: `11763 -> 8286` linhas, redução acumulada de `29.56%`
+
+Próximo passo imediato:
+
+- continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo controles do composer/teclado ou bloco de screen sync derivado;
+- no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando o rollup da fila de calibração e blocos de agregação que ainda consomem volume real.

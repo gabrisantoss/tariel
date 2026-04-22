@@ -2887,3 +2887,33 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de anexos/mesa
 - `admin/services.py` perde mais uma fatia material de preview documental
 - smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-14` — Delivery flow do workspace e variantes do catálogo
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega preview/finalização para `web/static/js/inspetor/workspace_delivery_flow.js`, o foco do composer passa a sair de `web/static/js/inspetor/workspace_composer.js`, `admin/services.py` delega biblioteca de variantes e alvo de refinamento para `web/app/domains/admin/admin_catalog_variant_services.py`, e o pacote passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por um bloco residual de ações de entrega do workspace no inspetor e por helpers administrativos de variantes/refino documental ainda concentrados no agregado principal
+
+### Escopo
+
+- entra extração de `abrirPreviewWorkspace` e `finalizarInspecao`
+- entra migração de `focarComposerInspector` para o módulo do composer
+- entra extração de `build_variant_library_summary` e `build_template_refinement_target`
+- não entra mudança funcional de geração de PDF ou envio para a mesa
+- não entra mudança semântica da estratégia comercial/documental
+
+### Passos
+
+1. extrair preview/finalização para módulo dedicado do inspetor
+2. mover o foco do composer para o módulo já responsável pelo composer
+3. extrair variantes/refino para serviço administrativo dedicado
+4. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+5. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de delivery/finalização
+- `admin/services.py` perde mais uma fatia material de variantes e refino documental
+- smoke do web e subset focal do admin seguem verdes

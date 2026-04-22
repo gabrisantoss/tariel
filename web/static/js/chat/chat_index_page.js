@@ -49,6 +49,7 @@
     const InspectorWorkspaceContextFlow = window.TarielInspectorWorkspaceContextFlow || {};
     const InspectorWorkspaceHomeFlow = window.TarielInspectorWorkspaceHomeFlow || {};
     const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
+    const InspectorWorkspaceDeliveryFlow = window.TarielInspectorWorkspaceDeliveryFlow || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
 
@@ -2778,54 +2779,14 @@
     }
 
     async function abrirPreviewWorkspace() {
-        const diagnostico = montarDiagnosticoPreviewWorkspace();
-        if (!diagnostico) {
-            mostrarToast("Ainda não há pré-visualização disponível para este laudo.", "aviso", 2600);
-            return;
-        }
-
-        const laudoId = Number(obterLaudoAtivoIdSeguro() || 0) || null;
-        const response = await fetch("/app/api/gerar_pdf", {
-            method: "POST",
-            credentials: "same-origin",
-            headers: obterHeadersComCSRF({
-                Accept: "application/pdf",
-                "Content-Type": "application/json",
-            }),
-            body: JSON.stringify({
-                diagnostico,
-                inspetor: String(window.TARIEL?.usuario || "Inspetor"),
-                empresa: String(window.TARIEL?.empresa || "Empresa"),
-                setor: "geral",
-                data: new Date().toLocaleDateString("pt-BR"),
-                laudo_id: laudoId,
-                tipo_template: String(estado.tipoTemplateAtivo || "padrao"),
-            }),
+        return InspectorWorkspaceDeliveryFlow.abrirPreviewWorkspace?.({
+            montarDiagnosticoPreviewWorkspace,
+            mostrarToast,
+            obterLaudoAtivoIdSeguro,
+            obterHeadersComCSRF,
+            extrairMensagemErroHTTP,
+            estado,
         });
-
-        if (!response.ok) {
-            throw new Error(await extrairMensagemErroHTTP(response, "Falha ao abrir a pré-visualização."));
-        }
-
-        const contentType = String(response.headers.get("content-type") || "").toLowerCase();
-        if (!contentType.includes("application/pdf")) {
-            throw new Error("Resposta inválida para pré-visualização.");
-        }
-
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const previewTab = window.open(url, "_blank", "noopener,noreferrer");
-
-        if (!previewTab) {
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `preview_laudo_${laudoId || "tariel"}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        }
-
-        window.setTimeout(() => URL.revokeObjectURL(url), 45000);
     }
     function obterElementosFocaveis(container) {
         if (!container) return [];
@@ -4146,38 +4107,7 @@
     }
 
     function focarComposerInspector() {
-        if (
-            !(el.campoMensagem instanceof HTMLElement) ||
-            el.campoMensagem.hidden ||
-            el.campoMensagem.closest?.("[hidden], [inert]") ||
-            el.campoMensagem.getClientRects().length === 0
-        ) {
-            return;
-        }
-
-        window.requestAnimationFrame(() => {
-            window.requestAnimationFrame(() => {
-                if (
-                    !(el.campoMensagem instanceof HTMLElement) ||
-                    el.campoMensagem.hidden ||
-                    el.campoMensagem.closest?.("[hidden], [inert]") ||
-                    el.campoMensagem.getClientRects().length === 0
-                ) {
-                    return;
-                }
-
-                try {
-                    el.campoMensagem.focus({ preventScroll: true });
-                } catch (_) {
-                    el.campoMensagem.focus();
-                }
-
-                if (typeof el.campoMensagem.setSelectionRange === "function") {
-                    const fim = el.campoMensagem.value.length;
-                    el.campoMensagem.setSelectionRange(fim, fim);
-                }
-            });
-        });
+        InspectorWorkspaceComposer.focarComposerInspector?.({ el });
     }
 
     function detailPossuiContextoVisual(detail = {}) {
@@ -4477,40 +4407,11 @@
     }
 
     async function finalizarInspecao() {
-        if (estado.finalizandoInspecao) return null;
-
-        if (
-            window.TarielAPI?.estaRespondendo?.() ||
-            document.body?.dataset?.iaRespondendo === "true"
-        ) {
-            mostrarToast("Aguarde a IA terminar antes de enviar para a mesa.", "aviso", 2600);
-            return null;
-        }
-
-        const confirmou = window.confirm(
-            "Deseja encerrar a coleta? O laudo será gerado e enviado para a mesa avaliadora."
-        );
-
-        if (!confirmou) return null;
-
-        estado.finalizandoInspecao = true;
-        definirBotaoFinalizarCarregando(true);
-
-        try {
-            if (typeof window.finalizarInspecaoCompleta === "function") {
-                return await window.finalizarInspecaoCompleta();
-            }
-
-            if (window.TarielAPI?.finalizarRelatorio) {
-                return await window.TarielAPI.finalizarRelatorio({ direto: true });
-            }
-
-            mostrarToast("A finalização do relatório não está disponível.", "erro", 3000);
-            return null;
-        } finally {
-            estado.finalizandoInspecao = false;
-            definirBotaoFinalizarCarregando(false);
-        }
+        return InspectorWorkspaceDeliveryFlow.finalizarInspecao?.({
+            estado,
+            mostrarToast,
+            definirBotaoFinalizarCarregando,
+        }) || null;
     }
 
     // =========================================================
