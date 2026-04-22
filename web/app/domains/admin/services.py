@@ -18,8 +18,6 @@ import re
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
-from urllib.parse import urlencode
-
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -42,6 +40,19 @@ from app.domains.chat.catalog_document_contract import (
 from app.domains.admin.platform_settings_services import (
     apply_platform_settings_update as _apply_platform_settings_update,
     build_admin_platform_settings_console as _build_admin_platform_settings_console,
+)
+from app.domains.admin import platform_settings_services as _platform_settings_services_module
+from app.domains.admin.platform_settings_console_overview import (
+    build_platform_settings_console_overview as _build_platform_settings_console_overview_export,
+)
+from app.domains.admin.platform_settings_console_sections import (
+    build_platform_settings_console_sections as _build_platform_settings_console_sections_export,
+)
+from app.domains.admin.platform_settings_setting_descriptors import (
+    build_access_setting_descriptors as _build_access_setting_descriptors_export,
+    build_defaults_setting_descriptors as _build_defaults_setting_descriptors_export,
+    build_rollout_setting_descriptors as _build_rollout_setting_descriptors_export,
+    build_support_setting_descriptors as _build_support_setting_descriptors_export,
 )
 from app.domains.admin.governance_policy_services import (
     merge_release_governance_policy as _governance_merge_release_policy,
@@ -81,10 +92,19 @@ from app.domains.admin.catalog_tenant_management_services import (
     upsert_signatario_governado_laudo as _catalog_tenant_upsert_signatario,
     upsert_tenant_family_release as _catalog_tenant_upsert_release,
 )
+from app.domains.admin.admin_presentation_services import (
+    resumir_primeiro_acesso_empresa as _admin_presentation_first_access_summary,
+    serializar_usuario_admin as _admin_presentation_user_serializer,
+)
 from app.domains.admin.platform_settings_state import (
     get_platform_default_new_tenant_plan,  # noqa: F401
     get_support_exceptional_policy_snapshot,  # noqa: F401
     get_tenant_exceptional_support_state,  # noqa: F401
+)
+from app.domains.admin.runtime_settings_descriptors import (
+    build_access_runtime_descriptors as _build_access_runtime_descriptors_export,
+    build_document_runtime_descriptors as _build_document_runtime_descriptors_export,
+    build_observability_runtime_descriptors as _build_observability_runtime_descriptors_export,
 )
 from app.domains.admin import tenant_user_services as _tenant_user_services
 from app.domains.admin.tenant_user_services import (
@@ -138,6 +158,15 @@ from app.shared.security import (
 )
 logger = logging.getLogger("tariel.saas")
 merge_offer_commercial_flags = _merge_offer_commercial_flags
+build_platform_settings_console_overview = _build_platform_settings_console_overview_export
+build_platform_settings_console_sections = _build_platform_settings_console_sections_export
+build_access_setting_descriptors = _build_access_setting_descriptors_export
+build_defaults_setting_descriptors = _build_defaults_setting_descriptors_export
+build_rollout_setting_descriptors = _build_rollout_setting_descriptors_export
+build_support_setting_descriptors = _build_support_setting_descriptors_export
+build_access_runtime_descriptors = _build_access_runtime_descriptors_export
+build_document_runtime_descriptors = _build_document_runtime_descriptors_export
+build_observability_runtime_descriptors = _build_observability_runtime_descriptors_export
 
 _MODO_DEV = not get_settings().em_producao
 _BACKEND_NOTIFICACAO_BOAS_VINDAS = env_str(
@@ -165,6 +194,33 @@ def apply_platform_settings_update(
 
 
 def build_admin_platform_settings_console(banco: Session) -> dict[str, Any]:
+    _platform_settings_services_module.build_platform_settings_console_overview = (
+        build_platform_settings_console_overview
+    )
+    _platform_settings_services_module.build_platform_settings_console_sections = (
+        build_platform_settings_console_sections
+    )
+    _platform_settings_services_module.build_access_setting_descriptors = (
+        build_access_setting_descriptors
+    )
+    _platform_settings_services_module.build_support_setting_descriptors = (
+        build_support_setting_descriptors
+    )
+    _platform_settings_services_module.build_rollout_setting_descriptors = (
+        build_rollout_setting_descriptors
+    )
+    _platform_settings_services_module.build_defaults_setting_descriptors = (
+        build_defaults_setting_descriptors
+    )
+    _platform_settings_services_module.build_access_runtime_descriptors = (
+        build_access_runtime_descriptors
+    )
+    _platform_settings_services_module.build_document_runtime_descriptors = (
+        build_document_runtime_descriptors
+    )
+    _platform_settings_services_module.build_observability_runtime_descriptors = (
+        build_observability_runtime_descriptors
+    )
     return _build_admin_platform_settings_console(banco)
 
 UI_AUDIT_TENANT_PREFIX = _tenant_client_cleanup_services.UI_AUDIT_TENANT_PREFIX
@@ -3777,24 +3833,14 @@ def _serializar_usuario_admin(
     *,
     sessoes_usuario: list[SessaoAtiva],
 ) -> dict[str, Any]:
-    ultimo_acesso_em = _max_datetime_admin(
-        _normalizar_datetime_admin(getattr(sessao, "ultima_atividade_em", None))
-        for sessao in sessoes_usuario
+    return _admin_presentation_user_serializer(
+        usuario,
+        sessoes_usuario=sessoes_usuario,
+        max_datetime_admin=_max_datetime_admin,
+        normalizar_datetime_admin=_normalizar_datetime_admin,
+        role_label=_role_label,
+        formatar_data_admin=_formatar_data_admin,
     )
-    return {
-        "id": int(usuario.id),
-        "nome_completo": str(getattr(usuario, "nome_completo", "") or ""),
-        "email": str(getattr(usuario, "email", "") or ""),
-        "nivel_acesso": int(getattr(usuario, "nivel_acesso", 0) or 0),
-        "role_label": _role_label(int(getattr(usuario, "nivel_acesso", 0) or 0)),
-        "ativo": bool(getattr(usuario, "ativo", False)),
-        "status_bloqueio": bool(getattr(usuario, "status_bloqueio", False)),
-        "senha_temporaria_ativa": bool(getattr(usuario, "senha_temporaria_ativa", False)),
-        "crea": str(getattr(usuario, "crea", "") or ""),
-        "session_count": len(sessoes_usuario),
-        "ultimo_acesso_em": ultimo_acesso_em,
-        "ultimo_acesso_label": _formatar_data_admin(ultimo_acesso_em),
-    }
 
 
 def _resumir_primeiro_acesso_empresa(
@@ -3802,56 +3848,10 @@ def _resumir_primeiro_acesso_empresa(
     empresa: Empresa,
     admins_cliente: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    admin_referencia = next(
-        (item for item in admins_cliente if bool(item.get("senha_temporaria_ativa"))),
-        admins_cliente[0] if admins_cliente else None,
+    return _admin_presentation_first_access_summary(
+        empresa=empresa,
+        admins_cliente=admins_cliente,
     )
-    login_base_url = "/cliente/login"
-    if admin_referencia is None:
-        return {
-            "has_admin": False,
-            "status_key": "missing_admin",
-            "status_label": "Primeiro acesso ainda nao preparado",
-            "login_base_url": login_base_url,
-            "login_prefill_url": login_base_url,
-            "copy_text": (
-                f"Empresa: {str(getattr(empresa, 'nome_fantasia', '') or '').strip()}\n"
-                "Portal da empresa: /cliente/login\n"
-                "Nenhum acesso inicial foi configurado ainda."
-            ),
-        }
-
-    email = str(admin_referencia.get("email") or "").strip().lower()
-    prefill_query = urlencode({"email": email, "primeiro_acesso": "1"}) if email else "primeiro_acesso=1"
-    status_key = (
-        "password_reset_required"
-        if bool(admin_referencia.get("senha_temporaria_ativa"))
-        else "active"
-    )
-    status_label = (
-        "Primeiro acesso pendente"
-        if status_key == "password_reset_required"
-        else "Acesso inicial ja concluido"
-    )
-    copy_lines = [
-        f"Empresa: {str(getattr(empresa, 'nome_fantasia', '') or '').strip()}",
-        "Portal da empresa: /cliente/login",
-    ]
-    if email:
-        copy_lines.append(f"E-mail de acesso: {email}")
-    copy_lines.append("Senha: use a senha temporaria enviada em canal seguro.")
-    copy_lines.append("No primeiro acesso, o sistema vai pedir a definicao de uma nova senha.")
-    return {
-        "has_admin": True,
-        "status_key": status_key,
-        "status_label": status_label,
-        "admin_name": str(admin_referencia.get("nome_completo") or "").strip() or "Responsavel da empresa",
-        "admin_email": email,
-        "requires_password_reset": status_key == "password_reset_required",
-        "login_base_url": login_base_url,
-        "login_prefill_url": f"{login_base_url}?{prefill_query}",
-        "copy_text": "\n".join(copy_lines),
-    }
 
 
 # =========================================================

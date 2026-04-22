@@ -2651,3 +2651,52 @@ Próximo passo imediato:
 
 - continuar reduzindo `chat_index_page.js` pelos blocos remanescentes de navegação/resumo/rail do workspace;
 - no backend, atacar o que ainda restar de orquestração ampla em `admin/services.py`, principalmente áreas onde leitura e escrita ainda dividem o mesmo agregado.
+
+## Ciclo 69 — Extração da sidebar do workspace e apresentação admin
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda concentrava a sincronização das abas da sidebar, a filtragem textual do histórico e o expand/collapse do histórico da home;
+- `web/app/domains/admin/services.py` ainda mantinha serialização de usuários administrativos e o resumo de primeiro acesso do tenant, misturando apresentação com o restante do agregado;
+- a extração anterior do console de platform settings também deixou um ponto frágil de compatibilidade, porque a suíte do admin ainda monkeypatcha símbolos expostos por `services.py`.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/sidebar_history.js` com sincronização das abas `fixados/recentes`, filtro textual da sidebar e controle do histórico expandido da home;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorSidebarHistory` por meio de dependências explícitas do runtime;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/admin_presentation_services.py` com serialização de usuário admin e resumo do primeiro acesso da empresa;
+- `web/app/domains/admin/services.py` virou fachada fina também para esse bloco e passou a reexportar/injetar explicitamente os builders do console de platform settings para preservar a compatibilidade dos testes existentes.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/sidebar_history.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_presentation_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/sidebar_history.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_presentation_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_presentation_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "admin or catalog or governance or platform_settings"`
+- `make verify`
+- resultado:
+  - `41 passed`
+  - `42 passed`
+  - `make verify` verde
+
+Próximo passo imediato:
+
+- continuar drenando `chat_index_page.js` pelos blocos remanescentes de navegação/resumo/rail do workspace;
+- no backend, atacar a próxima fatia de orquestração/payload ainda concentrada em `admin/services.py`, priorizando o que ainda mistura leitura, mutação e apresentação no mesmo agregado.

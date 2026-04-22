@@ -2,7 +2,7 @@
 
 Arquivo de trabalho para tarefas longas, confusas ou multissuperfície.
 
-Atualizado em `2026-04-21`.
+Atualizado em `2026-04-22`.
 
 ## Quando usar
 
@@ -2657,3 +2657,32 @@ Atualizado em `2026-04-21`.
 - `chat_index_page.js` perde mais um bloco operacional do workspace
 - `admin/services.py` perde mais uma fatia de gestão tenant/catálogo
 - `make verify` continua verde
+
+### `PKT-HOTSPOTS-BASELINE-06` — Sidebar do workspace e apresentação admin
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega a sincronização/filtragem da sidebar e o expand/collapse do histórico home para `web/static/js/inspetor/sidebar_history.js`, `admin/services.py` delega serialização de usuários/admin-cliente e resumo de primeiro acesso para `web/app/domains/admin/admin_presentation_services.py`, e o pacote fechou com `make verify` verde
+
+### Objetivo
+
+- continuar drenando os hotspots restantes por blocos de apresentação e navegação do workspace/admin sem reabrir contratos centrais
+
+### Escopo
+
+- entra extração das ações de tabs, busca e rolagem do histórico/sidebar do inspetor
+- entra extração da apresentação administrativa de usuários e primeiro acesso do tenant
+- entra preservação explícita da compatibilidade de monkeypatch do console de platform settings em `admin/services.py`
+- não entra redesign visual da sidebar
+- não entra mudança de contrato de login cliente ou plataforma
+
+### Passos
+
+1. extrair sincronização, busca e expansão do histórico/sidebar para módulo do inspetor
+2. extrair serialização de usuário admin e resumo de primeiro acesso para serviço dedicado
+3. restaurar compatibilidade de testes do console de platform settings via fachada de `admin/services.py`
+4. validar com `node --check`, `py_compile`, `ruff`, `pytest` focal e `make verify`
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de sidebar/home sem regressão de navegação
+- `admin/services.py` perde mais uma fatia de apresentação administrativa sem quebrar o suite do admin
+- `make verify` fecha verde no workspace inteiro
