@@ -354,6 +354,13 @@
                 });
             });
             el.btnWorkspaceHistoryReissue?.addEventListener("click", () => {
+                const acao = String(el.btnWorkspaceHistoryReissue?.dataset.historyGovernanceAction || "").trim();
+                if (acao === "mesa") {
+                    abrirMesaComContexto({
+                        origem: "history_governance_card",
+                    }).catch(() => {});
+                    return;
+                }
                 abrirReemissaoWorkspace().catch(() => {});
             });
             el.workspaceHistoryTimeline?.addEventListener("click", async (event) => {
@@ -430,12 +437,19 @@
                     return;
                 }
                 const botaoAcao = event.target?.closest?.("[data-suggestion-action]");
-                if (botaoAcao && String(botaoAcao.dataset.suggestionAction || "").trim() === "reissue") {
+                const acaoSugestao = String(botaoAcao?.dataset.suggestionAction || "").trim();
+                if (acaoSugestao === "reissue") {
                     redirecionarEntradaParaReemissaoWorkspace({
                         origem: "composer_suggestion_reissue",
                         texto: obterTextoDeApoioComposer(),
                         limparComposer: true,
                     });
+                    return;
+                }
+                if (acaoSugestao === "mesa") {
+                    abrirMesaComContexto({
+                        origem: "composer_suggestion_mesa",
+                    }).catch(() => {});
                     return;
                 }
                 const botao = event.target?.closest?.("[data-suggestion-command]");

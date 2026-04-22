@@ -134,6 +134,40 @@
         });
     }
 
+    function obterModoMarcador(texto = "") {
+        const valor = String(texto || "").trimStart();
+
+        if (/^@insp\b/i.test(valor)) return "insp";
+        if (/^eng\b/i.test(valor) || /^@eng\b/i.test(valor)) return "eng";
+
+        return "";
+    }
+
+    function atualizarVisualComposer(texto = "", dependencies = {}) {
+        const el = dependencies.el || {};
+        const modo = obterModoMarcador(texto);
+
+        el.campoMensagem?.classList.toggle("modo-humano-ativo", modo === "insp");
+        el.campoMensagem?.classList.toggle("modo-eng-ativo", modo === "eng");
+
+        el.pilulaEntrada?.classList.toggle("estado-insp", modo === "insp");
+        el.pilulaEntrada?.classList.toggle("estado-eng", modo === "eng");
+
+        dependencies.atualizarStatusMesaPorComposer?.(modo);
+    }
+
+    function aplicarHighlightComposer(texto = "", dependencies = {}) {
+        const el = dependencies.el || {};
+        if (el.backdropHighlight) {
+            el.backdropHighlight.innerHTML = "";
+        }
+        atualizarVisualComposer(texto, dependencies);
+    }
+
+    function sincronizarScrollBackdrop() {
+        return;
+    }
+
     function podeArmarPrimeiroEnvioNovoChat(dependencies = {}) {
         const el = dependencies.el || {};
         if (!el.campoMensagem || !el.btnEnviar) return false;
@@ -191,7 +225,8 @@
 
     async function abrirMesaComContexto(detail = {}, dependencies = {}) {
         const el = dependencies.el || {};
-        if (!dependencies.obterLaudoAtivoIdSeguro?.()) {
+        const laudoAtivoId = dependencies.obterLaudoAtivoIdSeguro?.();
+        if (!laudoAtivoId) {
             dependencies.avisarMesaExigeInspecao?.();
             return;
         }
@@ -210,6 +245,10 @@
                 texto: textoBase,
             });
         }
+        dependencies.definirContextoOperacionalMesaWidget?.({
+            laudoId: Number(detail?.laudoId || laudoAtivoId) || laudoAtivoId,
+            ...detail?.contextoOperacionalMesa,
+        });
 
         if (el.mesaWidgetInput) {
             const mensagem = String(detail?.mensagem || "").trim() || (
@@ -226,12 +265,97 @@
         dependencies.mostrarToast?.("Canal da mesa aberto com contexto aplicado.", "sucesso", 1800);
     }
 
+    function coletarContextoCanonicoReemissaoWorkspace(dependencies = {}) {
+        const snapshot = dependencies.obterPayloadStatusRelatorioWorkspaceAtual?.() || {};
+        const normalizarEmissaoOficialSeguro =
+            dependencies.normalizarEmissaoOficialSeguro || ((payload) => payload || null);
+        const officialIssue = normalizarEmissaoOficialSeguro(snapshot?.emissao_oficial);
+        const currentIssue = officialIssue?.currentIssue && typeof officialIssue.currentIssue === "object"
+            ? officialIssue.currentIssue
+            : null;
+        const reopenSummary = snapshot?.laudo_card?.issued_document_reopen_summary
+            && typeof snapshot.laudo_card.issued_document_reopen_summary === "object"
+            ? snapshot.laudo_card.issued_document_reopen_summary
+            : null;
+
+        return {
+            issueNumber: String(currentIssue?.issue_number || officialIssue?.issueStatusLabel || "").trim(),
+            reissueReasonSummary: String(
+                currentIssue?.reissue_reason_summary
+                || (officialIssue?.reissueRecommended ? "Reemissão motivada por divergência do PDF principal." : "")
+            ).trim(),
+            primaryPdfDiverged: !!(
+                currentIssue?.primary_pdf_diverged ||
+                String(currentIssue?.primary_pdf_comparison_status || "").trim().toLowerCase() === "diverged"
+            ),
+            previousDocumentName: String(reopenSummary?.file_name || "").trim(),
+            previousDocumentVersion: String(reopenSummary?.storage_version || "").trim(),
+            previousDocumentVisibleInCase: reopenSummary?.visible_in_active_case === true,
+            previousDocumentHiddenFromCase: reopenSummary?.visible_in_active_case === false,
+        };
+    }
+
+    function construirContextoOperacionalMesaReemissao(detail = {}, dependencies = {}) {
+        const contextoCanonico = coletarContextoCanonicoReemissaoWorkspace(dependencies);
+        const laudoId = Number(detail?.laudoId || 0) || null;
+        if (!laudoId) return null;
+
+        const linhas = [];
+        if (contextoCanonico.issueNumber) {
+            linhas.push(`Emissão ${contextoCanonico.issueNumber} em revisão.`);
+        }
+        if (contextoCanonico.reissueReasonSummary) {
+            linhas.push(contextoCanonico.reissueReasonSummary);
+        }
+        if (contextoCanonico.previousDocumentVisibleInCase) {
+            linhas.push("Documento anterior ainda visível no caso atual.");
+        } else if (contextoCanonico.previousDocumentHiddenFromCase) {
+            linhas.push("Documento anterior preservado apenas no histórico interno.");
+        }
+
+        return {
+            kind: "reissue",
+            laudoId,
+            title: "Reemissão oficial em preparação",
+            detail: linhas.filter(Boolean).join(" "),
+            chipStatus: "Reemissão",
+        };
+    }
+
     function montarMensagemReemissaoWorkspace(detail = {}, dependencies = {}) {
         const resumoGovernanca = dependencies.construirResumoGovernancaHistoricoWorkspace?.() || {};
+        const contextoCanonico = coletarContextoCanonicoReemissaoWorkspace(dependencies);
         const partes = ["Solicito revisão para reemissão do documento oficial deste caso."];
+        const linhasContexto = [];
+
+        if (contextoCanonico.issueNumber) {
+            linhasContexto.push(`Emissão atual: ${contextoCanonico.issueNumber}`);
+        }
+        if (contextoCanonico.reissueReasonSummary) {
+            linhasContexto.push(`Motivo canônico: ${contextoCanonico.reissueReasonSummary}`);
+        } else if (contextoCanonico.primaryPdfDiverged) {
+            linhasContexto.push("Motivo canônico: PDF principal divergente em relação ao emitido.");
+        }
+        if (contextoCanonico.previousDocumentName || contextoCanonico.previousDocumentVersion) {
+            linhasContexto.push(
+                `Documento emitido anterior: ${[
+                    contextoCanonico.previousDocumentName,
+                    contextoCanonico.previousDocumentVersion,
+                ].filter(Boolean).join(" • ")}`
+            );
+        }
+        if (contextoCanonico.previousDocumentVisibleInCase) {
+            linhasContexto.push("Política de reabertura: o PDF emitido anterior continua visível no caso atual.");
+        } else if (contextoCanonico.previousDocumentHiddenFromCase) {
+            linhasContexto.push("Política de reabertura: o PDF emitido anterior segue preservado apenas no histórico interno.");
+        }
+
+        if (linhasContexto.length) {
+            partes.push(linhasContexto.join("\n"));
+        }
 
         if (resumoGovernanca.visible && resumoGovernanca.detail) {
-            partes.push(resumoGovernanca.detail);
+            partes.push(`Resumo operacional: ${resumoGovernanca.detail}`);
         }
 
         const textoBase = String(detail?.texto || "").trim();
@@ -246,6 +370,7 @@
         await abrirMesaComContexto(
             {
                 ...detail,
+                contextoOperacionalMesa: construirContextoOperacionalMesaReemissao(detail, dependencies),
                 mensagem: montarMensagemReemissaoWorkspace(detail, dependencies),
             },
             dependencies
@@ -379,21 +504,26 @@
         }
 
         const resumoGovernanca = dependencies.construirResumoGovernancaHistoricoWorkspace?.() || {};
+        const governancaActionKey = String(resumoGovernanca.actionKey || "").trim();
+        const classeSugestaoGovernanca = [
+            "composer-suggestion",
+            governancaActionKey === "reissue" ? "composer-suggestion--warning" : "",
+        ].filter(Boolean).join(" ");
         const sugestoes = comandos
             .filter((comando) => comando.sugestao)
-            .filter((comando) => !resumoGovernanca.visible || comando.id !== "mesa")
+            .filter((comando) => governancaActionKey !== "mesa" || comando.id !== "mesa")
             .slice(0, resumoGovernanca.visible ? 2 : 3);
         const sugestoesMarkup = [];
 
-        if (resumoGovernanca.visible) {
+        if (resumoGovernanca.visible && governancaActionKey) {
             sugestoesMarkup.push(`
                 <button
                     type="button"
-                    class="composer-suggestion composer-suggestion--warning"
-                    data-suggestion-action="reissue"
+                    class="${escaparHtml(classeSugestaoGovernanca)}"
+                    data-suggestion-action="${escaparHtml(governancaActionKey)}"
                 >
-                    <span class="material-symbols-rounded" aria-hidden="true">warning</span>
-                    <span>${escaparHtml(resumoGovernanca.actionLabel || "Abrir reemissão na Mesa")}</span>
+                    <span class="material-symbols-rounded" aria-hidden="true">${governancaActionKey === "reissue" ? "warning" : "policy"}</span>
+                    <span>${escaparHtml(resumoGovernanca.actionLabel || "Abrir Mesa")}</span>
                 </button>
             `);
         }
@@ -551,8 +681,10 @@
         {
             abrirMesaComContexto,
             abrirReemissaoWorkspace,
+            aplicarHighlightComposer,
             armarPrimeiroEnvioNovoChatPendente,
             atualizarRecursosComposerWorkspace,
+            atualizarVisualComposer,
             definirValorComposer,
             executarComandoSlash,
             fecharSlashCommandPalette,
@@ -561,6 +693,7 @@
             navegarHistoricoPrompts,
             obterEntradaReemissaoWorkspace,
             obterListaComandosSlash,
+            obterModoMarcador,
             obterTextoDeApoioComposer,
             onCampoMensagemWorkspaceKeydown,
             prepararComposerParaEnvioModoEntrada,
@@ -568,6 +701,7 @@
             registrarPromptHistorico,
             renderizarSlashCommandPalette,
             renderizarSugestoesComposer,
+            sincronizarScrollBackdrop,
         }
     );
 })();

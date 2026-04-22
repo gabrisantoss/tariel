@@ -14,6 +14,7 @@ from app.domains.chat.catalog_pdf_templates import (
     ResolvedPdfTemplateRef,
     materialize_runtime_document_editor_json,
 )
+from app.domains.chat.catalog_document_view_model import build_universal_document_editor
 from nucleo.template_editor_word import MODO_EDITOR_RICO
 
 
@@ -78,6 +79,8 @@ def test_build_document_contract_and_control_payloads_expose_master_model() -> N
 
     assert contract["id"] == "controlled_permit"
     assert "riscos_e_controles" in contract["section_order"]
+    assert contract["evidence_governance"]["issued_photo_projection_mode"] == "explicit_selection_only"
+    assert contract["evidence_governance"]["issued_photo_target_field"] == "registros_fotograficos"
     assert control["document_code"] == "PET-NR33-00077"
     assert control["revision"] == "v3"
     assert control["master_template_id"] == "controlled_permit"
@@ -164,3 +167,23 @@ def test_materialize_runtime_document_editor_json_injeta_bloco_visual_do_cliente
     assert content[1]["type"] == "paragraph"
     assert "Cliente XPTO" in str(content[1]["content"])
     assert content[2]["type"] == "horizontalRule"
+
+
+def test_build_universal_document_editor_materializa_shell_minimo_em_contingencia() -> None:
+    document = build_universal_document_editor(
+        {
+            "modeled": False,
+            "eyebrow": "Tariel | Documento Tecnico",
+            "title": "Laudo Tecnico Tariel",
+            "subtitle": "",
+            "identity_items": [],
+            "opening_text": "Documento tecnico gerado em modo de contingencia.",
+            "sections": [],
+        }
+    )
+
+    assert document is not None
+    content = document["doc"]["content"]
+    assert content[0]["type"] == "section"
+    assert "Laudo Tecnico Tariel" in str(content[0])
+    assert "modo de contingencia" in str(content[0])

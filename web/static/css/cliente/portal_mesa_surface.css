@@ -37,6 +37,34 @@
         rgba(9, 14, 20, 0.58);
 }
 
+.panel--mesa .item-case-signals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.panel--mesa .item-case-signal {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 28px;
+    padding: 4px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--cliente-text-soft);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+.panel--mesa .item-case-signal--focus {
+    border-color: rgba(132, 216, 155, 0.16);
+    background: rgba(132, 216, 155, 0.12);
+    color: #dff9e7;
+}
+
 .panel--mesa #mesa-contexto .empty-state,
 .panel--mesa #mesa-mensagens .empty-state {
     min-height: 180px;

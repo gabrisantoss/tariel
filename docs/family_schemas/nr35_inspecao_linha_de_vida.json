@@ -126,6 +126,50 @@
         "min_items": 0,
         "binding_path": "nao_conformidades_ou_lacunas.evidencias",
         "purpose": "Registrar visualmente ou documentalmente os pontos de atencao do servico."
+      },
+      {
+        "slot_id": "foto_panoramica_contexto",
+        "label": "Foto panoramica de contexto",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": false,
+        "min_items": 0,
+        "binding_path": "registros_fotograficos",
+        "purpose": "Registrar o contexto geral ampliado da area inspecionada quando a vista geral principal nao for suficiente."
+      },
+      {
+        "slot_id": "foto_tag_identificacao",
+        "label": "Foto da tag de identificacao",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": false,
+        "min_items": 0,
+        "binding_path": "registros_fotograficos",
+        "purpose": "Vincular a tag, placa ou identificacao fisica do sistema quando isso reforcar a rastreabilidade do laudo."
+      },
+      {
+        "slot_id": "foto_contexto_restricao_acesso",
+        "label": "Foto do contexto de restricao de acesso",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": false,
+        "min_items": 0,
+        "binding_path": "registros_fotograficos",
+        "purpose": "Registrar visualmente a restricao de acesso, obstrucao ou limitacao de inspeção em casos pendentes ou parciais."
+      },
+      {
+        "slot_id": "foto_detalhe_achado_principal",
+        "label": "Foto do detalhe do achado principal",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": false,
+        "min_items": 0,
+        "binding_path": "nao_conformidades_ou_lacunas.evidencias",
+        "purpose": "Registrar em close o achado principal, dano, montagem incorreta ou outro ponto tecnico que sustente a conclusao."
       }
     ],
     "checklist_groups": [
@@ -244,7 +288,7 @@
     ]
   },
   "document_blueprint": {
-    "opening_statement": "Template governado para inspecao de linha de vida, estruturado para identificacao do sistema, checklist de componentes, evidencias e conclusao tecnica auditavel.",
+    "opening_statement": "Laudo tecnico governado para inspecao de linha de vida, estruturado conforme o esqueleto recorrente observado no material real: identificacao documental, identificacao da vistoria, objeto da inspecao, registros fotograficos, metodologia, conclusao, proxima inspecao periodica e observacoes.",
     "section_order": [
       "controle_documental_sumario",
       "resumo_executivo",
@@ -294,7 +338,9 @@
       "findings": 4
     },
     "section_intros": {
-      "checklist_tecnico": "Quadro-base para fixacoes, cabo, terminais, suportes, identificacao e demais itens sensiveis do sistema."
+      "checklist_tecnico": "Quadro-base para fixacoes, cabo, terminais, suportes, identificacao e demais itens sensiveis do sistema.",
+      "evidencias_registros_fotograficos": "Sequencia de registros do inicio, termino e pontos relevantes da linha, com espaco para contexto panoramico, tag de identificacao, restricao de acesso e detalhe do achado principal.",
+      "conclusao": "Fechamento tecnico do laudo com status final, motivo do enquadramento, proxima inspecao periodica e observacoes complementares."
     },
     "field_semantics": {
       "checklist_componentes": "instance_fill",
@@ -524,6 +570,15 @@
             "source_hint": "Descricao das lacunas, pontos de atencao ou ausencia declarada."
           },
           {
+            "field_id": "limitacoes_de_inspecao",
+            "label": "Limitacoes de inspecao",
+            "type": "textarea",
+            "required": false,
+            "critical": false,
+            "binding_path": "nao_conformidades_ou_lacunas.limitacoes_de_inspecao",
+            "source_hint": "Restricoes de acesso, vistoria parcial ou limites relevantes para a conclusao."
+          },
+          {
             "field_id": "evidencias",
             "label": "Evidencias relacionadas",
             "type": "image_slot",
@@ -581,6 +636,42 @@
             "critical": false,
             "binding_path": "conclusao.justificativa",
             "source_hint": "Sintese das evidencias e fundamentos da conclusao."
+          },
+          {
+            "field_id": "motivo_status",
+            "label": "Motivo do status",
+            "type": "textarea",
+            "required": false,
+            "critical": false,
+            "binding_path": "conclusao.motivo_status",
+            "source_hint": "Motivo resumido do status final atribuido ao sistema."
+          },
+          {
+            "field_id": "liberado_para_uso",
+            "label": "Liberado para uso",
+            "type": "enum",
+            "required": false,
+            "critical": false,
+            "binding_path": "conclusao.liberado_para_uso",
+            "source_hint": "Indica se o sistema esta liberado, nao liberado ou nao avaliavel."
+          },
+          {
+            "field_id": "acao_requerida",
+            "label": "Acao requerida",
+            "type": "text",
+            "required": false,
+            "critical": false,
+            "binding_path": "conclusao.acao_requerida",
+            "source_hint": "Encaminhamento operacional principal apos a conclusao."
+          },
+          {
+            "field_id": "condicao_para_reinspecao",
+            "label": "Condicao para reinspecao",
+            "type": "textarea",
+            "required": false,
+            "critical": false,
+            "binding_path": "conclusao.condicao_para_reinspecao",
+            "source_hint": "Pre-condicao ou gatilho para nova inspeção quando aplicavel."
           }
         ]
       }
@@ -627,9 +718,13 @@
       "documentacao_e_registros.documentos_disponiveis",
       "documentacao_e_registros.documentos_emitidos",
       "nao_conformidades_ou_lacunas.descricao",
+      "nao_conformidades_ou_lacunas.limitacoes_de_inspecao",
       "recomendacoes.texto",
       "conclusao.status",
-      "conclusao.conclusao_tecnica"
+      "conclusao.conclusao_tecnica",
+      "conclusao.motivo_status",
+      "conclusao.acao_requerida",
+      "conclusao.condicao_para_reinspecao"
     ],
     "expected_image_slots": [
       "referencia_principal",

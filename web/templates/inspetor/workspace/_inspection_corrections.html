@@ -1,0 +1,170 @@
+<section
+    id="workspace-corrections-stage"
+    class="workspace-corrections-stage"
+    aria-label="Correções estruturadas do laudo"
+>
+    <header class="workspace-corrections-stage__hero">
+        <div class="workspace-corrections-stage__hero-copy">
+            <span class="workspace-corrections-stage__eyebrow">Modo de correção</span>
+            <h3 id="workspace-corrections-title">Corrigir o laudo sem sair do workspace</h3>
+            <p id="workspace-corrections-subtitle">
+                Revise o documento atual por blocos, prepare alterações pendentes e só depois aplique a nova versão.
+                Esta superfície evita misturar coleta livre do chat com edição documental.
+            </p>
+        </div>
+
+        <div class="workspace-corrections-stage__hero-actions">
+            <button
+                type="button"
+                id="btn-workspace-corrections-reopen"
+                class="technical-record-btn technical-record-btn--ghost"
+                disabled
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">lock_open</span>
+                <span>Reabrir para correção</span>
+            </button>
+
+            <button
+                type="button"
+                class="technical-record-btn technical-record-btn--outline"
+                data-workspace-channel-tab="historico"
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">history</span>
+                <span>Voltar ao histórico</span>
+            </button>
+
+            <button
+                type="button"
+                class="technical-record-btn technical-record-btn--primary"
+                data-workspace-channel-tab="anexos"
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">attach_file</span>
+                <span>Revisar anexos</span>
+            </button>
+        </div>
+    </header>
+
+    <section class="workspace-corrections-stage__summary" aria-label="Meta do documento em correção">
+        <article class="workspace-corrections-card workspace-corrections-card--state">
+            <span class="workspace-corrections-card__eyebrow">Versão ativa</span>
+            <strong id="workspace-corrections-version-title">Laudo estruturado pronto para revisão</strong>
+            <p id="workspace-corrections-version-detail">Use esta aba para ajustar foto, checklist, conclusão e observações sem reabrir o fluxo principal do chat.</p>
+        </article>
+
+        <article class="workspace-corrections-card">
+            <span class="workspace-corrections-card__eyebrow">Estado do caso</span>
+            <strong id="workspace-corrections-lifecycle-title">Rascunho antes, nova versão depois</strong>
+            <p id="workspace-corrections-lifecycle-detail">Antes da emissão, a correção atualiza o rascunho. Depois da emissão, a correção precisa reabrir e reemitir.</p>
+        </article>
+
+        <article class="workspace-corrections-card">
+            <span class="workspace-corrections-card__eyebrow">Radar operacional</span>
+            <strong id="workspace-corrections-radar-title">Comando natural com aplicação guiada</strong>
+            <p id="workspace-corrections-radar-detail">Você pode pedir a correção em linguagem natural, mas a mudança final sempre precisa aparecer como alteração pendente.</p>
+        </article>
+    </section>
+
+    <section class="workspace-corrections-shell" aria-label="Edição e apoio da correção">
+        <article class="workspace-corrections-document" aria-label="Documento atual para edição">
+            <header class="workspace-corrections-panel__header">
+                <div>
+                    <span class="workspace-corrections-panel__eyebrow">Documento atual</span>
+                    <h4>Editar o laudo por blocos estruturados</h4>
+                </div>
+                <span class="workspace-corrections-chip">Foco principal</span>
+            </header>
+
+            <section class="workspace-corrections-grid" aria-label="Blocos corrigíveis do laudo">
+                <article class="workspace-correction-block">
+                    <header class="workspace-correction-block__header">
+                        <div>
+                            <span class="workspace-correction-block__eyebrow">Registros fotográficos</span>
+                            <h4>Substituir, adicionar ou reclassificar evidências</h4>
+                        </div>
+                        <button type="button" class="technical-inline-action" disabled>
+                            <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+                            <span>Editar bloco</span>
+                        </button>
+                    </header>
+                    <ul class="workspace-correction-block__list">
+                        <li>Trocar foto borrada ou inadequada</li>
+                        <li>Adicionar evidência faltante por slot</li>
+                        <li>Reclassificar imagem para tag, contexto ou achado principal</li>
+                    </ul>
+                </article>
+
+                <article class="workspace-correction-block">
+                    <header class="workspace-correction-block__header">
+                        <div>
+                            <span class="workspace-correction-block__eyebrow">Checklist técnico</span>
+                            <h4>Ajustar condição, observação e leitura do item</h4>
+                        </div>
+                        <button type="button" class="technical-inline-action" disabled>
+                            <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
+                            <span>Editar checklist</span>
+                        </button>
+                    </header>
+                    <ul class="workspace-correction-block__list">
+                        <li>Mudar item para <code>C</code>, <code>NC</code> ou <code>N/A</code></li>
+                        <li>Corrigir observação de componente</li>
+                        <li>Refletir acesso parcial antes da emissão</li>
+                    </ul>
+                </article>
+
+                <article class="workspace-correction-block">
+                    <header class="workspace-correction-block__header">
+                        <div>
+                            <span class="workspace-correction-block__eyebrow">Conclusão</span>
+                            <h4>Revisar status, motivo e condição para reinspeção</h4>
+                        </div>
+                        <button type="button" class="technical-inline-action" disabled>
+                            <span class="material-symbols-rounded" aria-hidden="true">rule</span>
+                            <span>Editar conclusão</span>
+                        </button>
+                    </header>
+                    <ul class="workspace-correction-block__list">
+                        <li>Mudar de aprovado para pendente ou reprovado</li>
+                        <li>Ajustar motivo do status final</li>
+                        <li>Reemitir nova versão quando o laudo já estiver emitido</li>
+                    </ul>
+                </article>
+            </section>
+        </article>
+
+        <aside class="workspace-corrections-console" aria-label="Fila de correções e assistente">
+            <article class="workspace-corrections-panel">
+                <header class="workspace-corrections-panel__header">
+                    <div>
+                        <span class="workspace-corrections-panel__eyebrow">Alterações pendentes</span>
+                        <h4 id="workspace-corrections-queue-title">Nenhuma alteração aplicada ainda</h4>
+                    </div>
+                    <span id="workspace-corrections-queue-chip" class="workspace-corrections-chip">Scaffold inicial</span>
+                </header>
+
+                <div id="workspace-corrections-queue-empty" class="workspace-corrections-empty">
+                    <span class="material-symbols-rounded" aria-hidden="true">playlist_add_check</span>
+                    <p id="workspace-corrections-queue-detail">As próximas interações desta aba devem aparecer aqui como operações estruturadas antes da reemissão.</p>
+                </div>
+            </article>
+
+            <article class="workspace-corrections-panel">
+                <header class="workspace-corrections-panel__header">
+                    <div>
+                        <span class="workspace-corrections-panel__eyebrow">Assistente de correção</span>
+                        <h4>Comandos naturais, aplicação guiada</h4>
+                    </div>
+                </header>
+
+                <div class="workspace-corrections-command-box" role="status" aria-live="polite">
+                    <p><strong>Exemplos:</strong></p>
+                    <ul>
+                        <li><code>substitua a foto do ponto superior por esta</code></li>
+                        <li><code>adicione uma foto do ponto inferior</code></li>
+                        <li><code>mude o status para pendente por acesso parcial</code></li>
+                        <li><code>corrija a conclusão e gere nova versão</code></li>
+                    </ul>
+                </div>
+            </article>
+        </aside>
+    </section>
+</section>

@@ -69,6 +69,10 @@ def _compare_queue_item_fields(
         ):
             if _normalize_text(legacy_item.get(field_name)) != _normalize_text(projected_item.get(field_name)):
                 divergences.append(f"queue_sections.{section_name}[{index}].{field_name}")
+        legacy_reopen = legacy_item.get("issued_document_reopen_summary")
+        projected_reopen = projected_item.get("issued_document_reopen_summary")
+        if bool(legacy_reopen) != bool(projected_reopen):
+            divergences.append(f"queue_sections.{section_name}[{index}].issued_document_reopen_summary")
         for field_name in ("allowed_next_lifecycle_statuses", "allowed_surface_actions"):
             if _normalize_text_list(legacy_item.get(field_name)) != _normalize_text_list(
                 projected_item.get(field_name)

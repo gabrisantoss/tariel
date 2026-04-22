@@ -15,10 +15,10 @@ from app.core.settings import env_str
 from app.domains.chat.catalog_pdf_templates import (
     RENDER_MODE_CLIENT_PDF_FILLED,
     ResolvedPdfTemplateRef,
-    build_catalog_pdf_payload,
     has_viable_legacy_preview_overlay_for_pdf_template,
     materialize_runtime_document_editor_json,
     materialize_runtime_style_json_for_pdf_template,
+    resolve_template_preview_payload,
     resolve_runtime_assets_for_pdf_template,
     resolve_runtime_field_mapping_for_pdf_template,
     should_use_rich_runtime_preview_for_pdf_template,
@@ -458,15 +458,11 @@ async def preview_template_laudo(
                     template=template,
                     family_key=getattr(laudo_preview, "catalog_family_key", None),
                 )
-                preview_payload = (
-                    build_catalog_pdf_payload(
-                        laudo=laudo_preview,
-                        template_ref=template_ref,
-                        source_payload=dados_formulario,
-                        render_mode=RENDER_MODE_CLIENT_PDF_FILLED,
-                    )
-                    if template_ref.family_key and laudo_preview is not None
-                    else dados_formulario
+                preview_payload = resolve_template_preview_payload(
+                    laudo=laudo_preview,
+                    template_ref=template_ref,
+                    source_payload=dados_formulario,
+                    render_mode=RENDER_MODE_CLIENT_PDF_FILLED,
                 )
                 modo_editor = normalizar_modo_editor(getattr(template, "modo_editor", None))
                 hotspot.detail["editor_mode"] = modo_editor
@@ -516,7 +512,7 @@ async def preview_template_laudo(
                             else template.mapeamento_campos_json or {}
                         ),
                         dados_formulario=(
-                            preview_payload if isinstance(preview_payload, dict) else dados_formulario
+                            preview_payload or dados_formulario
                         ),
                     )
                     hotspot.outcome = "legacy_template_preview"

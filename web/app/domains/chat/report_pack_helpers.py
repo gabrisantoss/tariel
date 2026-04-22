@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from typing import Any
+from copy import deepcopy
+from datetime import datetime, timezone
 
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
@@ -92,11 +94,127 @@ def _resolved_catalog_family_key_for_laudo(laudo: Laudo, *, template_key: str) -
     )
 
 
+def _normalize_report_pack_photo_selection_key(item: Any) -> str | None:
+    if not isinstance(item, dict):
+        return None
+    message_id = int(item.get("message_id") or 0)
+    if message_id > 0:
+        return f"msg:{message_id}"
+    reference = _pick_first_nonempty_text(
+        item.get("reference"),
+        item.get("original_name"),
+        limit=180,
+    )
+    if reference:
+        return f"ref:{reference.casefold()}"
+    return None
+
+
+def _build_selected_report_pack_photo_records(
+    photo_evidence: list[dict[str, Any]],
+    *,
+    selected_keys: list[str],
+) -> list[dict[str, Any]]:
+    if not photo_evidence or not selected_keys:
+        return []
+    by_key = {
+        key: deepcopy(item)
+        for item in photo_evidence
+        if isinstance(item, dict)
+        for key in [_normalize_report_pack_photo_selection_key(item)]
+        if key
+    }
+    selected_records: list[dict[str, Any]] = []
+    for key in selected_keys:
+        item = by_key.get(str(key or "").strip())
+        if item is None:
+            continue
+        selected_records.append(item)
+    return selected_records
+
+
+def _preservar_curadoria_report_pack(
+    *,
+    draft_atual: dict[str, Any] | None,
+    novo_draft: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if not isinstance(novo_draft, dict):
+        return novo_draft
+    if not isinstance(draft_atual, dict):
+        return novo_draft
+
+    analysis_basis_atual = (
+        dict(draft_atual.get("analysis_basis") or {})
+        if isinstance(draft_atual.get("analysis_basis"), dict)
+        else {}
+    )
+    analysis_basis_nova = (
+        dict(novo_draft.get("analysis_basis") or {})
+        if isinstance(novo_draft.get("analysis_basis"), dict)
+        else {}
+    )
+    photo_evidence = [
+        deepcopy(item)
+        for item in list(analysis_basis_nova.get("photo_evidence") or [])
+        if isinstance(item, dict)
+    ]
+    if not photo_evidence:
+        return novo_draft
+
+    selection_meta = (
+        dict(analysis_basis_atual.get("issued_photo_selection") or {})
+        if isinstance(analysis_basis_atual.get("issued_photo_selection"), dict)
+        else {}
+    )
+    selected_keys = [
+        str(item or "").strip()
+        for item in list(selection_meta.get("selected_keys") or [])
+        if str(item or "").strip()
+    ]
+    if not selected_keys:
+        fallback_selection = (
+            list(analysis_basis_atual.get("selected_photo_evidence") or [])
+            or list(analysis_basis_atual.get("issued_photo_evidence") or [])
+            or list(analysis_basis_atual.get("final_pdf_photo_evidence") or [])
+        )
+        selected_keys = [
+            key
+            for item in fallback_selection
+            for key in [_normalize_report_pack_photo_selection_key(item)]
+            if key
+        ]
+
+    selected_records = _build_selected_report_pack_photo_records(
+        photo_evidence,
+        selected_keys=selected_keys,
+    )
+    if not selected_records and not selection_meta:
+        return novo_draft
+
+    analysis_basis_nova["selected_photo_evidence"] = selected_records
+    analysis_basis_nova["issued_photo_evidence"] = deepcopy(selected_records)
+    selection_meta["selected_keys"] = [
+        key
+        for item in selected_records
+        for key in [_normalize_report_pack_photo_selection_key(item)]
+        if key
+    ]
+    selection_meta["selected_count"] = len(selected_records)
+    analysis_basis_nova["issued_photo_selection"] = selection_meta
+    novo_draft["analysis_basis"] = analysis_basis_nova
+    return novo_draft
+
+
 def build_report_pack_draft_for_laudo(
     *,
     banco: Session,
     laudo: Laudo,
 ) -> dict[str, Any] | None:
+    draft_atual = (
+        deepcopy(getattr(laudo, "report_pack_draft_json", None))
+        if isinstance(getattr(laudo, "report_pack_draft_json", None), dict)
+        else None
+    )
     template_key = normalizar_tipo_template(getattr(laudo, "tipo_template", "padrao"))
     resolved_family_key = _resolved_catalog_family_key_for_laudo(
         laudo,
@@ -118,7 +236,9 @@ def build_report_pack_draft_for_laudo(
     visual_message_ids = set(visual_attachment_by_message_id)
 
     if template_key == "nr35_linha_vida":
-        return _attach_pre_laudo_views(
+        return _preservar_curadoria_report_pack(
+            draft_atual=draft_atual,
+            novo_draft=_attach_pre_laudo_views(
             draft=_build_nr35_report_pack_draft(
                 laudo=laudo,
                 user_messages=user_messages,
@@ -127,8 +247,11 @@ def build_report_pack_draft_for_laudo(
             ),
             laudo=laudo,
         )
+        )
     if template_key == "nr35_ponto_ancoragem":
-        return _attach_pre_laudo_views(
+        return _preservar_curadoria_report_pack(
+            draft_atual=draft_atual,
+            novo_draft=_attach_pre_laudo_views(
             draft=_build_nr35_anchor_report_pack_draft(
                 laudo=laudo,
                 user_messages=user_messages,
@@ -137,8 +260,11 @@ def build_report_pack_draft_for_laudo(
             ),
             laudo=laudo,
         )
+        )
     if template_key == "nr13" and resolved_family_key == _NR13_VASO_PRESSAO_FAMILY:
-        return _attach_pre_laudo_views(
+        return _preservar_curadoria_report_pack(
+            draft_atual=draft_atual,
+            novo_draft=_attach_pre_laudo_views(
             draft=_build_nr13_vaso_pressao_report_pack_draft(
                 laudo=laudo,
                 user_messages=user_messages,
@@ -147,8 +273,11 @@ def build_report_pack_draft_for_laudo(
             ),
             laudo=laudo,
         )
+        )
     if template_key == "nr13" and resolved_family_key == _NR13_CALDEIRA_FAMILY:
-        return _attach_pre_laudo_views(
+        return _preservar_curadoria_report_pack(
+            draft_atual=draft_atual,
+            novo_draft=_attach_pre_laudo_views(
             draft=_build_nr13_caldeira_report_pack_draft(
                 laudo=laudo,
                 user_messages=user_messages,
@@ -157,8 +286,11 @@ def build_report_pack_draft_for_laudo(
             ),
             laudo=laudo,
         )
+        )
     if resolved_family_key == _NR20_PRONTUARIO_FAMILY:
-        return _attach_pre_laudo_views(
+        return _preservar_curadoria_report_pack(
+            draft_atual=draft_atual,
+            novo_draft=_attach_pre_laudo_views(
             draft=_build_nr20_prontuario_report_pack_draft(
                 laudo=laudo,
                 user_messages=user_messages,
@@ -167,8 +299,11 @@ def build_report_pack_draft_for_laudo(
             ),
             laudo=laudo,
         )
+        )
     if resolved_family_key == _NR10_PRONTUARIO_FAMILY:
-        return _attach_pre_laudo_views(
+        return _preservar_curadoria_report_pack(
+            draft_atual=draft_atual,
+            novo_draft=_attach_pre_laudo_views(
             draft=_build_nr10_prontuario_report_pack_draft(
                 laudo=laudo,
                 user_messages=user_messages,
@@ -177,8 +312,11 @@ def build_report_pack_draft_for_laudo(
             ),
             laudo=laudo,
         )
+        )
     if template_key == "cbmgo":
-        return _attach_pre_laudo_views(
+        return _preservar_curadoria_report_pack(
+            draft_atual=draft_atual,
+            novo_draft=_attach_pre_laudo_views(
             draft=_build_cbmgo_report_pack_draft(
                 laudo=laudo,
                 guided_draft=_normalize_guided_draft(
@@ -190,11 +328,14 @@ def build_report_pack_draft_for_laudo(
             ),
             laudo=laudo,
         )
+        )
     if (
         _looks_like_catalog_structured_payload(laudo)
         or bool(resolver_familia_padrao_template(template_key).get("family_key"))
     ):
-        return _attach_pre_laudo_views(
+        return _preservar_curadoria_report_pack(
+            draft_atual=draft_atual,
+            novo_draft=_attach_pre_laudo_views(
             draft=_build_catalog_backed_report_pack_draft(
                 laudo=laudo,
                 user_messages=user_messages,
@@ -203,8 +344,11 @@ def build_report_pack_draft_for_laudo(
             ),
             laudo=laudo,
         )
+        )
 
-    return _attach_pre_laudo_views(
+    return _preservar_curadoria_report_pack(
+        draft_atual=draft_atual,
+        novo_draft=_attach_pre_laudo_views(
         draft=build_unmodeled_report_pack_draft(
             laudo=laudo,
             template_key=template_key,
@@ -212,6 +356,7 @@ def build_report_pack_draft_for_laudo(
             visual_message_ids=visual_message_ids,
         ),
         laudo=laudo,
+    )
     )
 
 
@@ -267,10 +412,65 @@ def atualizar_final_validation_mode_report_pack(
     return draft
 
 
+def atualizar_selecao_fotos_emissao_report_pack(
+    *,
+    laudo: Laudo,
+    selected_photo_keys: list[str],
+    actor_user_id: int | None = None,
+    actor_name: str | None = None,
+    selection_source: str = "inspetor_workspace",
+) -> dict[str, Any] | None:
+    draft = obter_report_pack_draft_laudo(laudo)
+    if draft is None:
+        return None
+
+    analysis_basis = (
+        dict(draft.get("analysis_basis") or {})
+        if isinstance(draft.get("analysis_basis"), dict)
+        else {}
+    )
+    photo_evidence = [
+        deepcopy(item)
+        for item in list(analysis_basis.get("photo_evidence") or [])
+        if isinstance(item, dict)
+    ]
+    if not photo_evidence:
+        return None
+
+    normalized_keys = [
+        str(item or "").strip()
+        for item in selected_photo_keys
+        if str(item or "").strip()
+    ]
+    selected_records = _build_selected_report_pack_photo_records(
+        photo_evidence,
+        selected_keys=normalized_keys,
+    )
+    analysis_basis["selected_photo_evidence"] = selected_records
+    analysis_basis["issued_photo_evidence"] = deepcopy(selected_records)
+    analysis_basis["issued_photo_selection"] = {
+        "selected_keys": [
+            key
+            for item in selected_records
+            for key in [_normalize_report_pack_photo_selection_key(item)]
+            if key
+        ],
+        "selected_count": len(selected_records),
+        "selection_source": str(selection_source or "").strip() or "inspetor_workspace",
+        "selected_at": datetime.now(timezone.utc).isoformat(),
+        "actor_user_id": int(actor_user_id) if actor_user_id else None,
+        "actor_name": _pick_first_nonempty_text(actor_name, limit=160) or None,
+    }
+    draft["analysis_basis"] = analysis_basis
+    laudo.report_pack_draft_json = draft
+    return draft
+
+
 __all__ = [
     "build_pre_laudo_prompt_context",
     "build_pre_laudo_summary",
     "atualizar_final_validation_mode_report_pack",
+    "atualizar_selecao_fotos_emissao_report_pack",
     "atualizar_report_pack_draft_laudo",
     "build_report_pack_draft_for_laudo",
     "obter_dados_formulario_candidate_report_pack",

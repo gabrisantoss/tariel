@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 
@@ -86,6 +87,26 @@ def template_library_registry_index(*, dependencies: dict[str, Any]) -> dict[str
             continue
         index[master_template_id] = item
     return index
+
+
+def catalog_model_label(
+    codigo: str | None,
+    *,
+    fallback: str | None = None,
+    dependencies: dict[str, Any],
+) -> str | None:
+    codigo_norm = str(codigo or "").strip()
+    if not codigo_norm:
+        return fallback
+    contract = dict(dependencies["master_template_registry"].get(codigo_norm) or {})
+    if not contract:
+        contract = dict(dependencies["template_library_registry_index"]().get(codigo_norm) or {})
+    label = str(contract.get("label") or "").strip()
+    if label:
+        return label
+    if re.fullmatch(r"[a-z]{2,4}", codigo_norm.lower()):
+        return codigo_norm.upper()
+    return dependencies["humanizar_slug"](codigo_norm) or fallback or codigo_norm
 
 
 def material_real_workspace_roots(*, dependencies: dict[str, Any]) -> list[Path]:

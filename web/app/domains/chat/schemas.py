@@ -160,6 +160,32 @@ class DadosPin(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class DadosIssuedPhotoSelection(BaseModel):
+    selected_photo_keys: list[str] = Field(default_factory=list, max_length=20)
+    selection_source: str = Field(default="inspetor_workspace", max_length=80)
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
+
+    @field_validator("selected_photo_keys", mode="before")
+    @classmethod
+    def validar_selected_photo_keys(cls, valor: object) -> list[str]:
+        if not isinstance(valor, list):
+            return []
+        itens: list[str] = []
+        vistos: set[str] = set()
+        for item in valor:
+            chave = " ".join(str(item or "").strip().split())
+            if not chave:
+                continue
+            chave = chave[:180]
+            lowered = chave.lower()
+            if lowered in vistos:
+                continue
+            vistos.add(lowered)
+            itens.append(chave)
+        return itens
+
+
 class GuidedInspectionChecklistItemPayload(BaseModel):
     id: str = Field(..., min_length=1, max_length=80)
     title: str = Field(..., min_length=1, max_length=120)

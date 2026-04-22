@@ -131,6 +131,54 @@ def test_publicar_template_editor_rico_expoe_mesmo_envelope_minimo_e_auditoria(a
         assert (registro.payload_json or {}).get("status_template") == "ativo"
 
 
+def test_publicar_template_editor_rico_de_familia_conhecida_usa_shell_blank_governado(
+    ambiente_critico,
+    monkeypatch,
+) -> None:
+    client = ambiente_critico["client"]
+    csrf = _login_revisor(client, "revisor@empresa-a.test")
+    captured: dict[str, object] = {}
+
+    resposta_template = client.post(
+        "/revisao/api/templates-laudo/editor",
+        headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+        json={
+            "nome": "Word NR13 VP",
+            "codigo_template": "nr13_inspecao_vaso_pressao",
+            "versao": 1,
+            "origem_modo": "a4",
+        },
+    )
+    assert resposta_template.status_code == 201
+    template_id = int(resposta_template.json()["id"])
+
+    async def _fake_render_editor_rico(**kwargs):
+        captured["dados_formulario"] = kwargs["dados_formulario"]
+        return b"%PDF-1.4\n%publish-shell\n"
+
+    def _fake_save_snapshot_editor_como_pdf_base(**kwargs):
+        return "/tmp/publish_shell_snapshot.pdf"
+
+    monkeypatch.setattr(
+        "app.domains.revisor.templates_laudo_management_routes.gerar_pdf_editor_rico_bytes",
+        _fake_render_editor_rico,
+    )
+    monkeypatch.setattr(
+        "app.domains.revisor.templates_laudo_management_routes.salvar_snapshot_editor_como_pdf_base",
+        _fake_save_snapshot_editor_como_pdf_base,
+    )
+
+    resposta_publicar = client.post(
+        f"/revisao/api/templates-laudo/editor/{template_id}/publicar",
+        headers={"X-CSRF-Token": csrf},
+        data={"csrf_token": csrf},
+    )
+
+    assert resposta_publicar.status_code == 200
+    assert captured["dados_formulario"]["family_key"] == "nr13_inspecao_vaso_pressao"
+    assert captured["dados_formulario"]["schema_type"] == "laudo_output"
+
+
 def test_publicar_template_bloqueado_expoe_erro_estruturado_sem_ativar_template(
     ambiente_critico,
     monkeypatch,

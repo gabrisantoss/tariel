@@ -952,6 +952,12 @@ def build_anexo_pack_summary(
     total_present = sum(1 for item in items if item["present"])
     missing_required = [item for item in items if item["required"] and not item["present"]]
     ready_for_issue = not missing_required
+    reopen_history = [
+        dict(item)
+        for item in list(report_pack_draft.get("reopen_issued_document_history") or [])
+        if isinstance(item, dict)
+    ]
+    last_reopened_issued_document = reopen_history[-1] if reopen_history else None
 
     document_count = sum(
         1 for item in items if item["present"] and item["category"] in {"document", "pdf", "required_document"}
@@ -989,6 +995,8 @@ def build_anexo_pack_summary(
         "pdf_present": bool(items[0]["present"]),
         "public_verification_present": bool(items[1]["present"]),
         "delivery_manifest": delivery_manifest,
+        "reopen_issued_document_history_count": len(reopen_history),
+        "last_reopened_issued_document": last_reopened_issued_document,
     }
 
 
@@ -1092,6 +1100,35 @@ def _build_official_issue_audit_trail(
         recorded_at=base_recorded_at,
         blocking=not annex_ready,
     )
+    reopened_document = (
+        dict(anexo_summary.get("last_reopened_issued_document") or {})
+        if isinstance(anexo_summary.get("last_reopened_issued_document"), dict)
+        else {}
+    )
+    reopened_document_event = None
+    if reopened_document:
+        reopened_recorded_at = _normalize_dt(reopened_document.get("reopened_at")) or base_recorded_at
+        reopened_file_name = _clean_text(reopened_document.get("file_name"), limit=180) or "PDF emitido anterior"
+        reopened_policy = _clean_text(reopened_document.get("issued_document_policy"), limit=40) or "keep_visible"
+        reopened_storage_version = _clean_text(
+            ((reopened_document.get("pdf_artifact") or {}) if isinstance(reopened_document.get("pdf_artifact"), dict) else {}).get("storage_version"),
+            limit=32,
+        )
+        visibility_summary = (
+            "O documento emitido anterior segue visível na superfície ativa do caso."
+            if bool(reopened_document.get("visible_in_active_case"))
+            else "O documento emitido anterior foi removido da superfície ativa e preservado apenas como histórico interno."
+        )
+        reopened_document_event = _trail_status_payload(
+            status="attention",
+            title="Documento emitido reaberto",
+            summary=(
+                f"{reopened_file_name} foi reaberto com política {reopened_policy}."
+                + (f" Versão registrada: {reopened_storage_version}." if reopened_storage_version else "")
+                + f" {visibility_summary}"
+            ),
+            recorded_at=reopened_recorded_at,
+        )
 
     if signature_status == "ready":
         signatory_event = _trail_status_payload(
@@ -1116,13 +1153,16 @@ def _build_official_issue_audit_trail(
             blocking=True,
         )
 
-    return [
+    events = [
         {"event_key": "review_approval", **review_event},
         {"event_key": "primary_pdf", **pdf_event},
         {"event_key": "public_verification", **verification_event},
         {"event_key": "annex_pack", **annex_event},
         {"event_key": "governed_signatory", **signatory_event},
     ]
+    if reopened_document_event is not None:
+        events.append({"event_key": "reopened_issued_document", **reopened_document_event})
+    return events
 
 
 def _signatory_effective_status(signatory: SignatarioGovernadoLaudo) -> tuple[str, str]:

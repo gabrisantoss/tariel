@@ -28,6 +28,56 @@
     {% set acompanhamento_count = totais_operacao.get("aguardando_inspetor", 0) + totais_operacao.get("acompanhamento", 0) %}
     {% set historico_count = laudos_avaliados|length %}
     {% macro render_mesa_queue_item(laudo) %}
+    {% set lifecycle_status = laudo.case_lifecycle_status | default('', true) %}
+    {% set owner_role = laudo.active_owner_role | default('', true) %}
+    {% set allowed_surface_actions = laudo.allowed_surface_actions | default([], true) %}
+    {% set lifecycle_label = 'Fluxo legado' %}
+    {% if lifecycle_status == 'analise_livre' %}
+        {% set lifecycle_label = 'Analise livre' %}
+    {% elif lifecycle_status == 'pre_laudo' %}
+        {% set lifecycle_label = 'Pre-laudo' %}
+    {% elif lifecycle_status == 'laudo_em_coleta' %}
+        {% set lifecycle_label = 'Laudo guiado' %}
+    {% elif lifecycle_status == 'aguardando_mesa' %}
+        {% set lifecycle_label = 'Aguardando mesa' %}
+    {% elif lifecycle_status == 'em_revisao_mesa' %}
+        {% set lifecycle_label = 'Em revisao na mesa' %}
+    {% elif lifecycle_status == 'devolvido_para_correcao' %}
+        {% set lifecycle_label = 'Devolvido para correcao' %}
+    {% elif lifecycle_status == 'aprovado' %}
+        {% set lifecycle_label = 'Aprovado' %}
+    {% elif lifecycle_status == 'emitido' %}
+        {% set lifecycle_label = 'Emitido' %}
+    {% endif %}
+    {% set owner_label = 'Responsavel nao definido' %}
+    {% if owner_role == 'inspetor' %}
+        {% set owner_label = 'Campo' %}
+    {% elif owner_role == 'mesa' %}
+        {% set owner_label = 'Mesa' %}
+    {% elif owner_role == 'none' %}
+        {% set owner_label = 'Conclusao' %}
+    {% endif %}
+    {% set flow_summary_key = 'case_monitoring' %}
+    {% set flow_summary_label = 'Monitorar caso' %}
+    {% set issued_reopen = laudo.issued_document_reopen_summary | default(None, true) %}
+    {% set issued_reopen_visible = issued_reopen and issued_reopen.visible_in_active_case %}
+    {% set issued_reopen_hidden = issued_reopen and (issued_reopen.visible_in_active_case is sameas false) %}
+    {% if 'mesa_approve' in allowed_surface_actions or 'mesa_return' in allowed_surface_actions %}
+        {% set flow_summary_key = 'decision_ready' %}
+        {% set flow_summary_label = 'Decisao disponivel' %}
+    {% elif 'chat_finalize' in allowed_surface_actions %}
+        {% set flow_summary_key = 'waiting_field_send' %}
+        {% set flow_summary_label = 'Aguardando envio do campo' %}
+    {% elif owner_role == 'inspetor' %}
+        {% set flow_summary_key = 'field_owner' %}
+        {% set flow_summary_label = 'Campo em acao' %}
+    {% elif owner_role == 'mesa' %}
+        {% set flow_summary_key = 'mesa_owner' %}
+        {% set flow_summary_label = 'Mesa em acao' %}
+    {% elif lifecycle_status == 'emitido' %}
+        {% set flow_summary_key = 'issued' %}
+        {% set flow_summary_label = 'Caso emitido' %}
+    {% endif %}
     <article class="item-lista mesa-queue-item js-item-laudo" data-id="{{ laudo.id }}"
         data-whispers-nao-lidos="{{ laudo.whispers_nao_lidos or 0 }}"
         data-pendencias-abertas="{{ laudo.pendencias_abertas or 0 }}"
@@ -43,6 +93,8 @@
         data-setor-industrial="{{ laudo.setor_industrial | default('', true) | e }}"
         data-tempo-em-campo="{{ laudo.tempo_em_campo | default('', true) | e }}"
         data-proxima-acao="{{ laudo.proxima_acao | default('', true) | e }}"
+        data-issued-document-reopen-summary='{{ laudo.issued_document_reopen_summary | default(None, true) | tojson | forceescape }}'
+        data-case-flow-summary="{{ flow_summary_key | e }}"
         tabindex="0" role="button" aria-label="Abrir laudo #{{ laudo.hash_curto | default(laudo.id, true) }}">
         <div class="item-topo">
             <span class="item-hash">#{{ laudo.hash_curto | default(laudo.id, true) | e }}</span>
@@ -58,6 +110,21 @@
             {% endif %}
         </div>
         <div class="item-proxima-acao js-proxima-acao">Próxima: {{ laudo.proxima_acao | default('Abrir caso e definir o próximo passo', true) | e }}</div>
+        <div class="item-case-signals" aria-label="Sinais canonicos do caso">
+            <span class="item-case-signal">Fluxo {{ lifecycle_label | e }}</span>
+            <span class="item-case-signal">Owner {{ owner_label | e }}</span>
+            <span class="item-case-signal item-case-signal--focus">{{ flow_summary_label | e }}</span>
+            {% if issued_reopen_visible %}
+            <span class="item-case-signal">Reemissão · PDF anterior visível</span>
+            {% elif issued_reopen_hidden %}
+            <span class="item-case-signal">Reemissão · histórico interno</span>
+            {% endif %}
+            {% if lifecycle_status == 'aprovado' %}
+            <span class="item-case-signal">Pronto para emissao</span>
+            {% elif lifecycle_status == 'emitido' %}
+            <span class="item-case-signal">Emissao concluida</span>
+            {% endif %}
+        </div>
         <div class="item-meta-rodape">
             <div class="item-indicadores">
                 <span class="badge indicador-whisper js-indicador-whispers">{{ laudo.whispers_nao_lidos or 0 }} chamado(s)</span>

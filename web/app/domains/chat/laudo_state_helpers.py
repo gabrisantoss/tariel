@@ -256,6 +256,46 @@ def laudo_possui_historico_visivel(
     return bool(possui_historico)
 
 
+def serializar_resumo_reabertura_documento_emitido(
+    laudo: Laudo | object,
+) -> dict[str, Any] | None:
+    report_pack_draft = getattr(laudo, "report_pack_draft_json", None)
+    if not isinstance(report_pack_draft, dict):
+        return None
+
+    historico = report_pack_draft.get("reopen_issued_document_history")
+    if not isinstance(historico, list) or not historico:
+        return None
+
+    ultimo_item = historico[-1]
+    if not isinstance(ultimo_item, dict):
+        return None
+
+    pdf_artifact = ultimo_item.get("pdf_artifact")
+    pdf_artifact_payload = pdf_artifact if isinstance(pdf_artifact, dict) else {}
+    policy = str(ultimo_item.get("issued_document_policy") or "").strip().lower()
+    file_name = str(ultimo_item.get("file_name") or "").strip()
+    reopened_at = str(ultimo_item.get("reopened_at") or "").strip()
+    storage_version = str(pdf_artifact_payload.get("storage_version") or "").strip()
+    source = str(pdf_artifact_payload.get("source") or "").strip()
+
+    return {
+        "has_history": True,
+        "file_name": file_name or None,
+        "issued_document_policy": policy or None,
+        "visible_in_active_case": bool(ultimo_item.get("visible_in_active_case")),
+        "internal_learning_candidate": bool(ultimo_item.get("internal_learning_candidate")),
+        "reopened_at": reopened_at or None,
+        "source_kind": str(ultimo_item.get("source_kind") or "").strip() or None,
+        "actor_user_id": int(ultimo_item.get("actor_user_id") or 0) or None,
+        "storage_version": storage_version or None,
+        "storage_version_number": int(pdf_artifact_payload.get("storage_version_number") or 0) or None,
+        "storage_path": str(pdf_artifact_payload.get("storage_path") or "").strip() or None,
+        "sha256_present": bool(str(pdf_artifact_payload.get("sha256") or "").strip()),
+        "pdf_artifact_source": source or None,
+    }
+
+
 def obter_status_card_laudo(
     banco: Session,
     laudo: Laudo,
@@ -854,6 +894,7 @@ def serializar_card_laudo(
         "permite_exclusao": laudo_permite_exclusao_inspetor(banco, laudo, cache=cache),
         "permite_reabrir": laudo_permite_reabrir(banco, laudo, cache=cache),
         "possui_historico": status_card != "oculto",
+        "issued_document_reopen_summary": serializar_resumo_reabertura_documento_emitido(laudo),
         **obter_contexto_modo_entrada_laudo(laudo),
     }
     payload.update(
@@ -907,6 +948,7 @@ __all__ = [
     "resolver_autoridade_mutacao_caso_tecnico",
     "resolver_snapshot_leitura_caso_tecnico",
     "resolver_alvo_reabertura_manual_laudo",
+    "serializar_resumo_reabertura_documento_emitido",
     "sinalizar_reabertura_pendente_por_feedback_mesa",
     "laudo_permite_reabrir",
     "obter_contexto_modo_entrada_laudo",

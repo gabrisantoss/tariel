@@ -453,6 +453,57 @@ def test_nr12_risk_visual_qa_materializes_primary_matrix_from_payload() -> None:
     assert "Protecoes laterais fixas e parada de emergencia frontal." in serialized
 
 
+def test_partial_structured_payload_visual_qa_materializes_public_blocks_in_runtime_editor() -> None:
+    template_ref = _template_ref(
+        family_key="nr13_inspecao_vaso_pressao",
+        template_code="nr13_inspecao_vaso_pressao",
+    )
+    payload = build_catalog_pdf_payload(
+        laudo=SimpleNamespace(
+            id=779,
+            empresa_id=12,
+            catalog_family_key="nr13_inspecao_vaso_pressao",
+            catalog_family_label="NR13 · Vaso de Pressao",
+            catalog_variant_label="Premium campo",
+            status_revisao=StatusRevisao.RASCUNHO.value,
+            setor_industrial="utilidades",
+            parecer_ia="",
+            primeira_mensagem="",
+            motivo_rejeicao=None,
+            dados_formulario=None,
+        ),
+        template_ref=template_ref,
+        source_payload={
+            "identificacao": {
+                "identificacao_do_vaso": "Vaso vertical VP-779",
+                "localizacao": "Casa de utilidades - Linha 9",
+            },
+            "conclusao": {
+                "conclusao_tecnica": "Equipamento apto com monitoramento localizado.",
+            },
+            "recomendacoes": {
+                "texto": "Monitorar a corrosao superficial no proximo ciclo.",
+            },
+        },
+        inspetor="Gabriel Santos",
+        empresa="Empresa Teste NR13",
+        data="09/04/2026",
+    )
+
+    document = materialize_runtime_document_editor_json(template_ref=template_ref, payload=payload)
+    html = montar_html_documento_editor(
+        documento_editor_json=document,
+        estilo_json={},
+        assets_json=[],
+        dados_formulario=payload,
+    )
+
+    assert "Vaso vertical VP-779" in html
+    assert "Casa de utilidades - Linha 9" in html
+    assert "Equipamento apto com monitoramento localizado." in html
+    assert "Monitorar a corrosao superficial no proximo ciclo." in html
+
+
 @pytest.mark.parametrize(("family_key", "expected_headings", "content_markers"), NR12_COMPARATIVE_VISUAL_MATRIX)
 def test_nr12_comparative_visual_qa_for_promoted_families(
     family_key: str,

@@ -1,6 +1,6 @@
 {
   "family_key": "nr35_inspecao_linha_de_vida",
-  "status_refino": "baseline_sintetica_externa_validada",
+  "status_refino": "contrato_nr35_alinhado_localmente",
   "material_recebido": [
     "base_sintetica_local_consolidada",
     "pacote_referencia/manifest.json",
@@ -8,7 +8,10 @@
     "pacote_referencia/assets/",
     "pacote_referencia/pdf/",
     "coleta_entrada/referencia_sintetica_externa/nr35_inspecao_linha_de_vida.zip",
-    "coleta_entrada/referencia_sintetica_externa/nr35_inspecao_linha_de_vida_referencia_sintetica.pdf"
+    "coleta_entrada/referencia_sintetica_externa/nr35_inspecao_linha_de_vida_referencia_sintetica.pdf",
+    "3 exemplos reais externos em xlsx + fotos",
+    "NR35 (TRABALHO EM ALTURA).pdf",
+    "checklist_estrutura_real.md"
   ],
   "artefatos_externos_validados": [
     {
@@ -25,12 +28,16 @@
     }
   ],
   "lacunas_abertas": [
-    "Aguardando modelo atual vazio da empresa.",
-    "Aguardando documentos finais reais para consolidar linguagem, capa e paginação recorrente.",
-    "Aguardando evidencias reais associadas para calibrar blocos fotograficos e anexos do laudo."
+    "Consolidar linguagem final e blueprint PDF com mais documentos reais da empresa."
   ],
-  "proximo_passo": "Usar a baseline sintetica externa validada para calibrar capa, checklist, blocos fotograficos e conclusao, e depois complementar com material real.",
+  "proximo_passo": "Usar a familia NR35 ja alinhada localmente como baseline operacional, com matriz explicita de cobertura para aprovado, pendente por acesso parcial e reprovado por irregularidade material, e complementar com mais documentos reais da empresa antes de novo ajuste editorial do PDF final.",
   "base_sintetica_disponivel": true,
   "pacote_referencia_sintetico_disponivel": true,
-  "baseline_sintetica_externa_validada": true
+  "baseline_sintetica_externa_validada": true,
+  "estrutura_real_consolidada_em_checklist": true,
+  "schema_ia_alinhado_ao_contrato_real": true,
+  "report_pack_alinhado_ao_status_pendente": true,
+  "laudo_output_alinhado_ao_contrato_real": true,
+  "slots_fotograficos_opcionais_alinhados_ao_material_real": true,
+  "matriz_operacional_aprovado_pendente_reprovado_validada": true
 }

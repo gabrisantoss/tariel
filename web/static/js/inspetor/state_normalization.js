@@ -19,6 +19,13 @@
         if (normalizado === "chat" || normalizado === "conversa") return "conversa";
         if (normalizado === "history" || normalizado === "historico") return "historico";
         if (normalizado === "attachments" || normalizado === "anexos") return "anexos";
+        if (
+            normalizado === "correcoes" ||
+            normalizado === "correção" ||
+            normalizado === "correcao" ||
+            normalizado === "correction" ||
+            normalizado === "corrections"
+        ) return "correcoes";
         if (normalizado === "mesa") return "mesa";
         return "conversa";
     }

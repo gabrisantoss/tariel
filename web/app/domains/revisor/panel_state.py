@@ -12,6 +12,7 @@ from app.domains.chat.laudo_state_helpers import (
     criar_cache_resumo_laudos,
     precarregar_interacoes_laudos,
     resolver_snapshot_leitura_caso_tecnico,
+    serializar_resumo_reabertura_documento_emitido,
 )
 from app.domains.revisor.base import (
     _contar_mensagens_nao_lidas_por_laudo,
@@ -512,6 +513,7 @@ def build_review_panel_state(
             "pendencias_abertas": pendencias_abertas,
             "aprendizados_pendentes": aprendizados_pendentes,
             "collaboration_summary": collaboration_summary.model_dump(mode="python"),
+            "issued_document_reopen_summary": serializar_resumo_reabertura_documento_emitido(laudo),
             "tempo_em_campo": tempo_label,
             "tempo_em_campo_status": tempo_status,
             "_minutos_em_campo": minutos_em_campo,

@@ -128,6 +128,38 @@ def build_review_panel_template_context(
     }
 
 
+def resolve_review_panel_template_context(
+    *,
+    request: Request,
+    usuario: Usuario,
+    panel_state: ReviewPanelState,
+) -> dict[str, Any]:
+    queue_projection_shadow = None
+    try:
+        queue_projection_shadow = registrar_shadow_review_queue_dashboard(
+            request=request,
+            usuario=usuario,
+            panel_state=panel_state,
+        )
+    except Exception:
+        request.state.v2_review_queue_projection_error = "review_queue_projection_failed"
+
+    try:
+        return build_review_panel_template_context(
+            request=request,
+            usuario=usuario,
+            panel_state=panel_state,
+            shadow_result=queue_projection_shadow,
+        )
+    except Exception:
+        request.state.v2_review_queue_projection_prefer_error = "review_queue_projection_prefer_failed"
+        request.state.v2_review_queue_projection_preferred = False
+        return panel_state.to_template_context(
+            request=request,
+            usuario=usuario,
+        )
+
+
 def registrar_shadow_review_queue_dashboard(
     *,
     request: Request,
@@ -172,4 +204,5 @@ __all__ = [
     "build_review_panel_template_context",
     "build_review_panel_projection_template_overrides",
     "registrar_shadow_review_queue_dashboard",
+    "resolve_review_panel_template_context",
 ]

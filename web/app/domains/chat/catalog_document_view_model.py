@@ -1539,7 +1539,7 @@ def _signature_block_node(items: list[dict[str, Any]]) -> dict[str, Any]:
 def build_universal_document_editor(
     view_model: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
-    if not isinstance(view_model, dict) or not bool(view_model.get("modeled")):
+    if not isinstance(view_model, dict):
         return None
 
     cover_content: list[dict[str, Any]] = [

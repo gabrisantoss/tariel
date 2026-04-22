@@ -75,6 +75,17 @@
                 >
                     {% include "inspetor/workspace/_inspection_mesa.html" %}
                 </section>
+
+                <section
+                    class="workspace-view-root workspace-view-root--corrections"
+                    data-workspace-view-root="inspection_corrections"
+                    data-active="false"
+                    aria-hidden="true"
+                    hidden
+                    inert
+                >
+                    {% include "inspetor/workspace/_inspection_corrections.html" %}
+                </section>
             </div>
 
             <footer class="rodape-entrada" data-conversation-variant="technical" hidden>

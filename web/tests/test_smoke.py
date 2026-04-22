@@ -238,6 +238,12 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     home_html = (raiz / "templates" / "inspetor" / "_portal_home.html").read_text(encoding="utf-8")
     gate_modal_html = (raiz / "templates" / "inspetor" / "modals" / "_gate_qualidade.html").read_text(encoding="utf-8")
     nova_inspecao_html = (raiz / "templates" / "inspetor" / "modals" / "_nova_inspecao.html").read_text(encoding="utf-8")
+    chat_index_js = (raiz / "static" / "js" / "chat" / "chat_index_page.js").read_text(encoding="utf-8")
+    workspace_page_elements_js = (raiz / "static" / "js" / "inspetor" / "workspace_page_elements.js").read_text(encoding="utf-8")
+    workspace_overview_js = (raiz / "static" / "js" / "inspetor" / "workspace_overview.js").read_text(encoding="utf-8")
+    workspace_status_payload_js = (raiz / "static" / "js" / "inspetor" / "workspace_status_payload.js").read_text(encoding="utf-8")
+    workspace_mesa_status_js = (raiz / "static" / "js" / "inspetor" / "workspace_mesa_status.js").read_text(encoding="utf-8")
+    workspace_states_css = (raiz / "static" / "css" / "inspetor" / "workspace_states.css").read_text(encoding="utf-8")
 
     assert not (raiz / "templates" / "base.html").exists()
     assert 'id="btn-toggle-ui"' in inspetor_base_html
@@ -279,6 +285,9 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="workspace-official-issue"' in workspace_header_html
     assert 'id="workspace-official-issue-title"' in workspace_header_html
     assert 'id="workspace-official-issue-chip"' in workspace_header_html
+    assert 'id="workspace-readiness"' in workspace_header_html
+    assert 'id="workspace-readiness-title"' in workspace_header_html
+    assert 'id="workspace-readiness-chip"' in workspace_header_html
     assert 'id="btn-workspace-open-inspecao-modal"' in workspace_header_html
     assert 'class="thread-nav"' in workspace_toolbar_html
     assert 'id="workspace-nav-caption"' in workspace_toolbar_html
@@ -315,11 +324,19 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="workspace-history-governance-title"' in workspace_history_html
     assert 'id="workspace-history-governance-detail"' in workspace_history_html
     assert 'id="btn-workspace-history-reissue"' in workspace_history_html
+    assert 'id="workspace-history-readiness"' in workspace_history_html
+    assert 'id="workspace-history-readiness-title"' in workspace_history_html
+    assert 'id="workspace-history-readiness-chip"' in workspace_history_html
     assert 'id="workspace-anexos-panel"' in workspace_record_html
     assert 'id="workspace-anexos-grid"' in workspace_record_html
     assert 'id="area-mensagens"' in workspace_conversation_html
     assert 'id="btn-ir-fim-chat"' in workspace_conversation_html
     assert 'id="workspace-mesa-stage"' in workspace_mesa_html
+    assert 'id="workspace-mesa-stage-status-visual"' in workspace_mesa_html
+    assert 'id="workspace-mesa-stage-lifecycle"' in workspace_mesa_html
+    assert 'id="workspace-mesa-stage-owner"' in workspace_mesa_html
+    assert 'id="workspace-mesa-stage-moment"' in workspace_mesa_html
+    assert 'id="workspace-mesa-stage-moment-detail"' in workspace_mesa_html
     assert 'id="btn-mesa-widget-toggle"' in workspace_rail_html
     assert 'data-mesa-toggle-label' in workspace_rail_html
     assert 'data-rail-toggle="progress"' in workspace_rail_html
@@ -349,17 +366,50 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "modal-runtime-compat" not in nova_inspecao_html
     assert "data-preprompt=" in home_html
     assert 'id="banner-notificacao-engenharia"' in portal_main_html
+    assert '/static/js/inspetor/workspace_status_payload.js' in index_html
+    assert 'documentRef.getElementById("workspace-mesa-stage-status-visual")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-readiness")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-readiness-chip")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-history-readiness")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-history-readiness-chip")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-mesa-stage-lifecycle")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-mesa-stage-owner")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-mesa-stage-moment")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-mesa-stage-moment-detail")' in workspace_page_elements_js
+    assert "function renderizarWorkspaceReadiness()" in workspace_overview_js
+    governance_js = (raiz / "static" / "js" / "inspetor" / "governance.js").read_text(encoding="utf-8")
+    assert "function construirResumoReadinessWorkspace(snapshot = {})" in governance_js
+    assert "function renderizarReadinessHistoricoWorkspace()" in governance_js
+    assert "function obterPayloadStatusRelatorioWorkspaceAtual(" in workspace_status_payload_js
+    assert "normalizarPublicVerificationSeguro" in workspace_status_payload_js
+    assert "TarielInspectorWorkspaceStatusPayload" in workspace_status_payload_js
+    assert "TarielInspectorWorkspaceStatusPayload?.obterPayloadStatusRelatorioWorkspaceAtual" in chat_index_js
+    assert "Pronto para emissão oficial" in governance_js
+    assert "Completar prontidão antes de emitir" in governance_js
+    assert "function resumirMomentoCanonicoMesaInspector(context = {})" in workspace_mesa_status_js
+    assert "workspaceMesaStageMomentDetail" in workspace_mesa_status_js
+    assert ".workspace-mesa-signals" in workspace_states_css
+    assert ".workspace-mesa-signal--focus" in workspace_states_css
 
 
 def test_workspace_chat_oferece_atalho_de_reemissao_no_composer() -> None:
     raiz = Path(__file__).resolve().parents[1]
     chat_index_js = (raiz / "static" / "js" / "chat" / "chat_index_page.js").read_text(encoding="utf-8")
     ui_bindings_js = (raiz / "static" / "js" / "inspetor" / "ui_bindings.js").read_text(encoding="utf-8")
+    workspace_composer_js = (raiz / "static" / "js" / "inspetor" / "workspace_composer.js").read_text(encoding="utf-8")
     workspace_states_css = (raiz / "static" / "css" / "inspetor" / "workspace_states.css").read_text(encoding="utf-8")
 
     assert 'data-suggestion-action="reissue"' in chat_index_js
     assert "composer_suggestion_reissue" in ui_bindings_js
     assert "redirecionarEntradaParaReemissaoWorkspace" in chat_index_js
+    assert "coletarContextoCanonicoReemissaoWorkspace" in workspace_composer_js
+    assert "construirContextoOperacionalMesaReemissao" in workspace_composer_js
+    assert "Motivo canônico:" in workspace_composer_js
+    assert "Política de reabertura:" in workspace_composer_js
+    assert 'title: "Reemissão oficial em preparação"' in workspace_composer_js
+    mesa_widget_js = (raiz / "static" / "js" / "inspetor" / "mesa_widget.js").read_text(encoding="utf-8")
+    assert "definirContextoOperacionalMesaWidget" in mesa_widget_js
+    assert "obterContextoOperacionalMesaWidgetAtivo" in mesa_widget_js
     assert "composer-suggestion--warning" in workspace_states_css
 
 
@@ -574,6 +624,7 @@ def test_template_revisor_aponta_websocket_com_prefixo_revisao() -> None:
     assert "/revisao/api/laudo/${state.laudoAtivoId}/responder-anexo" in painel_revisor_html
     assert "js-btn-pacote-json" in painel_revisor_html
     assert "js-btn-pacote-pdf" in painel_revisor_html
+    assert "data-issued-document-reopen-summary=" in painel_revisor_html
     assert 'id="modal-pacote"' in painel_revisor_html
     assert 'id="mesa-operacao-painel"' in painel_revisor_html
     assert 'id="mesa-operacao-conteudo"' in painel_revisor_html
@@ -590,6 +641,13 @@ def test_template_revisor_aponta_websocket_com_prefixo_revisao() -> None:
     assert 'id="btn-anexo-resposta"' in painel_revisor_html
     assert 'id="input-anexo-resposta"' in painel_revisor_html
     assert 'id="preview-resposta-anexo"' in painel_revisor_html
+    revisor_operacao_js = (raiz / "static" / "js" / "revisor" / "revisor_painel_operacao.js").read_text(encoding="utf-8")
+    revisor_page_js = (raiz / "static" / "js" / "revisor" / "painel_revisor_page.js").read_text(encoding="utf-8")
+    revisor_governanca_js = (raiz / "static" / "js" / "revisor" / "revisor_painel_governanca.js").read_text(encoding="utf-8")
+    assert "extrairResumoReaberturaDocumentoEmitidoMesa" in revisor_operacao_js
+    assert "Reemissão em andamento" in revisor_operacao_js
+    assert "view-case-summary-alert" in revisor_page_js
+    assert "Política de reabertura" in revisor_governanca_js
 
 
 def test_ci_principal_roda_smoke_e2e_da_mesa_web() -> None:
@@ -1278,6 +1336,9 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "window.TarielClientePortalPriorities" in portal_priorities_js
     assert "window.TarielClientePortalAdminSurface" in portal_admin_surface_js
     assert 'aria-current", ativa ? "page" : "false"' in portal_admin_surface_js
+    assert "function resumirMomentoCanonicoTenantAdmin()" in portal_admin_surface_js
+    assert "Momento canonico do tenant" in portal_admin_surface_js
+    assert "Momento canonico:" in portal_admin_surface_js
     assert "window.TarielClientePainelPage" in painel_page_js
     assert "window.TarielClientePortalAdmin" in portal_admin_js
     assert "window.TarielClientePortalChatSurface" in portal_chat_surface_js
@@ -1286,6 +1347,9 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "window.TarielClientePortalChat" in portal_chat_js
     assert "window.TarielClientePortalMesaSurface" in portal_mesa_surface_js
     assert 'aria-current", ativa ? "page" : "false"' in portal_mesa_surface_js
+    assert "function resumirMomentoCanonicoMesa(laudo)" in portal_mesa_surface_js
+    assert 'data-case-flow-summary="${escapeAttr(resumirMomentoCanonicoMesa(laudo).key)}"' in portal_mesa_surface_js
+    assert "Momento canônico do caso" in portal_mesa_surface_js
     assert "window.TarielClienteMesaPage" in mesa_page_js
     assert "window.TarielClientePortalMesa" in portal_mesa_js
     assert "window.TarielClientePortalSharedHelpers" in portal_shared_helpers_js
@@ -1310,6 +1374,28 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "plano_sugerido" in portal_shared_helpers_js
     assert "tenant_admin_projection" in portal_shell_js
     assert "tenant_admin_projection" in portal_admin_bundle_js
+    dashboard_admin = (raiz / "templates" / "admin" / "dashboard.html").read_text(encoding="utf-8")
+    clientes_admin = (raiz / "templates" / "admin" / "clientes.html").read_text(encoding="utf-8")
+    admin_dashboard_css = (raiz / "static" / "css" / "admin" / "admin_dashboard.css").read_text(encoding="utf-8")
+    admin_clients_css = (raiz / "static" / "css" / "admin" / "admin_clients.css").read_text(encoding="utf-8")
+    assert "Momento canônico da plataforma" in dashboard_admin
+    assert 'data-platform-flow-summary="{{ _platform_moment_key | e }}"' in dashboard_admin
+    assert "Owner predominante" in dashboard_admin
+    assert "Prioridades executivas da plataforma" in dashboard_admin
+    assert "Abrir bloqueios" in dashboard_admin
+    assert ".governance-signals" in admin_dashboard_css
+    assert ".governance-signal--focus" in admin_dashboard_css
+    assert ".executive-priorities" in admin_dashboard_css
+    assert ".executive-priority-card" in admin_dashboard_css
+    assert "Momento canônico" in clientes_admin
+    assert 'data-tenant-flow-summary="{{ _tenant_moment_key | e }}"' in clientes_admin
+    assert "Owner {{ _tenant_owner_label | e }}" in clientes_admin
+    assert "Triagem executiva da carteira" in clientes_admin
+    assert "Filtrar bloqueios" in clientes_admin
+    assert ".tenant-flow-summary" in admin_clients_css
+    assert ".tenant-flow-summary__detail" in admin_clients_css
+    assert ".tenant-triage-strip" in admin_clients_css
+    assert ".tenant-triage-card" in admin_clients_css
     assert "visibility_policy" in portal_admin_bundle_js
     assert "usuario-capacidade-nota" in portal_admin_bundle_js
     assert "admin-planos-historico" in portal_admin_bundle_js
@@ -1396,6 +1482,8 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert ".panel--chat .workspace-box--thread" in portal_chat_surface_css
     assert ".workspace-radar-grid--mesa" in portal_mesa_surface_css
     assert ".panel--mesa .workspace-box--thread" in portal_mesa_surface_css
+    assert ".panel--mesa .item-case-signals" in portal_mesa_surface_css
+    assert ".panel--mesa .item-case-signal--focus" in portal_mesa_surface_css
 
 
 def test_logins_e_blueprint_nao_reintroduzem_autofill_dev() -> None:

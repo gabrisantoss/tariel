@@ -311,6 +311,12 @@ def build_document_contract_payload(
     master_template_id = resolve_master_template_id_for_family(family_key)
     base = deepcopy(MASTER_TEMPLATE_REGISTRY[master_template_id])
     normalized_family_key = normalizar_codigo_template(str(family_key or "").strip().lower())[:120]
+    primary_evidence_mode = _clean_text(base.get("primary_evidence_mode")) or "foto_texto_documento"
+    supports_public_photo_register = primary_evidence_mode in {
+        "foto_texto_documento",
+        "medicoes_mais_fotos",
+        "medicoes_autorizacoes",
+    }
     base.update(
         {
             "family_key": normalized_family_key,
@@ -321,6 +327,16 @@ def build_document_contract_payload(
             "blocking_rules": list(UNIVERSAL_BLOCKING_RULES),
             "tenant_brand_fields": list(TENANT_BRAND_FIELDS),
             "branding_logo_asset_id": "tenant_logo",
+            "evidence_governance": {
+                "analysis_basis_visibility_default": "internal_audit_only",
+                "issued_photo_projection_mode": (
+                    "explicit_selection_only" if supports_public_photo_register else "not_applicable"
+                ),
+                "issued_photo_target_field": (
+                    "registros_fotograficos" if supports_public_photo_register else None
+                ),
+                "supports_public_photo_register": supports_public_photo_register,
+            },
         }
     )
     return base

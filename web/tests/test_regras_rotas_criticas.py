@@ -352,10 +352,16 @@ def test_revisor_preview_template_laudo_promove_legado_fraco_para_preview_editor
             codigo_hash=uuid.uuid4().hex,
             catalog_family_key="nr13_inspecao_vaso_pressao",
             dados_formulario={
-                "identificacao": {"identificacao_do_vaso": "Vaso vertical VP-204"},
+                "identificacao": {
+                    "identificacao_do_vaso": "Vaso vertical VP-204",
+                    "localizacao": "Casa de utilidades - Linha 4",
+                },
                 "conclusao": {
                     "status": "ajuste",
                     "conclusao_tecnica": "Equipamento apto com acompanhamento.",
+                },
+                "recomendacoes": {
+                    "texto": "Monitorar a corrosao superficial no proximo ciclo.",
                 },
             },
         )
@@ -397,6 +403,10 @@ def test_revisor_preview_template_laudo_promove_legado_fraco_para_preview_editor
     serialized_document = json.dumps(captured["documento_editor_json"], ensure_ascii=False)
     assert "Resumo Executivo" in serialized_document
     assert "Conclusao Tecnica" in serialized_document
+    assert "Vaso vertical VP-204" in serialized_document
+    assert "Casa de utilidades - Linha 4" in serialized_document
+    assert "Equipamento apto com acompanhamento." in serialized_document
+    assert "Monitorar a corrosao superficial no proximo ciclo." in serialized_document
     style = captured["estilo_json"]
     assert isinstance(style, dict)
     assert "Tariel" in str(style.get("cabecalho_texto") or "")
@@ -3882,6 +3892,65 @@ def test_iniciar_relatorio_catalogado_persiste_snapshot_imutavel_no_laudo(ambien
         assert isinstance(laudo.pdf_template_snapshot_json, dict)
         assert laudo.pdf_template_snapshot_json["template_ref"]["codigo_template"]
         assert laudo.pdf_template_snapshot_json["template_ref"]["versao"] >= 1
+
+
+def test_iniciar_relatorio_catalogado_materializa_payload_por_instancia_sem_contaminar_seed(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        admin_services.upsert_familia_catalogo(
+            banco,
+            family_key="nr13_inspecao_vaso_pressao",
+            nome_exibicao="NR13 · Vaso de Pressao",
+            macro_categoria="NR13",
+            status_catalogo="publicado",
+            criado_por_id=ids["admin_a"],
+        )
+        admin_services.upsert_oferta_comercial_familia(
+            banco,
+            family_key="nr13_inspecao_vaso_pressao",
+            nome_oferta="NR13 Premium · Vaso",
+            pacote_comercial="Premium",
+            ativo_comercial=True,
+            variantes_comerciais_text="premium_campo | Premium campo | nr13_vaso_premium | Campo técnico",
+            criado_por_id=ids["admin_a"],
+        )
+        admin_services.sincronizar_portfolio_catalogo_empresa(
+            banco,
+            empresa_id=ids["empresa_a"],
+            selection_tokens=["catalog:nr13_inspecao_vaso_pressao:premium_campo"],
+            admin_id=ids["admin_a"],
+        )
+        banco.commit()
+
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.post(
+        "/app/api/laudo/iniciar",
+        data={
+            "tipo_template": "catalog:nr13_inspecao_vaso_pressao:premium_campo",
+            "local_inspecao": "Casa de utilidades - Linha 12",
+            "nome_inspecao": "Vaso VP-912",
+        },
+        headers={"X-CSRF-Token": csrf},
+    )
+
+    assert resposta.status_code == 200
+    laudo_id = int(resposta.json()["laudo_id"])
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        assert isinstance(laudo.dados_formulario, dict)
+        assert laudo.dados_formulario["schema_type"] == "laudo_output"
+        assert laudo.dados_formulario["identificacao"]["localizacao"] == "Casa de utilidades - Linha 12"
+        seed_snapshot = laudo.catalog_snapshot_json["artifacts"]["laudo_output_seed"]
+        assert seed_snapshot["identificacao"]["localizacao"] in ("", None)
+        laudo.dados_formulario["identificacao"]["localizacao"] = "ALTERADO NO CASO"
+        assert seed_snapshot["identificacao"]["localizacao"] in ("", None)
 
 
 def test_pdf_governado_permanece_emitivel_com_snapshot_apos_mudanca_no_catalogo(
@@ -7840,6 +7909,11 @@ def test_laudo_emitido_pode_ser_reaberto_para_novo_ciclo(ambiente_critico) -> No
     assert corpo_reabrir["had_previous_issued_document"] is True
     assert corpo_reabrir["previous_issued_document_visible_in_case"] is True
     assert corpo_reabrir["internal_learning_candidate_registered"] is True
+    resumo_reabertura = corpo_reabrir["laudo_card"]["issued_document_reopen_summary"]
+    assert resumo_reabertura is not None
+    assert resumo_reabertura["visible_in_active_case"] is True
+    assert resumo_reabertura["issued_document_policy"] == "keep_visible"
+    assert resumo_reabertura["file_name"] == "laudo_emitido_final.pdf"
 
     with SessionLocal() as banco:
         laudo = banco.get(Laudo, laudo_id)
@@ -7856,6 +7930,7 @@ def test_laudo_emitido_pode_ser_reaberto_para_novo_ciclo(ambiente_critico) -> No
         assert historico[-1]["file_name"] == "laudo_emitido_final.pdf"
         assert historico[-1]["issued_document_policy"] == "keep_visible"
         assert historico[-1]["internal_learning_candidate"] is True
+        assert historico[-1]["pdf_artifact"]["source"] is not None
 
 
 def test_laudo_emitido_reaberto_pode_ocultar_pdf_da_superficie_ativa(ambiente_critico) -> None:
@@ -7889,6 +7964,11 @@ def test_laudo_emitido_reaberto_pode_ocultar_pdf_da_superficie_ativa(ambiente_cr
     assert corpo_reabrir["had_previous_issued_document"] is True
     assert corpo_reabrir["previous_issued_document_visible_in_case"] is False
     assert corpo_reabrir["internal_learning_candidate_registered"] is True
+    resumo_reabertura = corpo_reabrir["laudo_card"]["issued_document_reopen_summary"]
+    assert resumo_reabertura is not None
+    assert resumo_reabertura["visible_in_active_case"] is False
+    assert resumo_reabertura["issued_document_policy"] == "hide_from_case"
+    assert resumo_reabertura["file_name"] == "laudo_emitido_ocultavel.pdf"
 
     with SessionLocal() as banco:
         laudo = banco.get(Laudo, laudo_id)
@@ -7901,6 +7981,7 @@ def test_laudo_emitido_reaberto_pode_ocultar_pdf_da_superficie_ativa(ambiente_cr
         assert historico[-1]["file_name"] == "laudo_emitido_ocultavel.pdf"
         assert historico[-1]["issued_document_policy"] == "hide_from_case"
         assert historico[-1]["visible_in_active_case"] is False
+        assert "pdf_artifact" in historico[-1]
 
 
 def test_revisor_whisper_responder_rejeita_destinatario_diferente_do_responsavel(ambiente_critico) -> None:

@@ -129,6 +129,7 @@
     "ha_pontos_de_atencao": null,
     "ha_pontos_de_atencao_texto": null,
     "descricao": null,
+    "limitacoes_de_inspecao": null,
     "evidencias": {
       "disponivel": null,
       "referencias": [],
@@ -145,6 +146,10 @@
     "status_operacional": null,
     "conclusao_tecnica": null,
     "justificativa": null,
+    "motivo_status": null,
+    "liberado_para_uso": null,
+    "acao_requerida": null,
+    "condicao_para_reinspecao": null,
     "proxima_inspecao_periodica": null,
     "observacoes": null
   },

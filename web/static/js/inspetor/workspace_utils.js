@@ -158,17 +158,111 @@
         return String(fallback || `Falha HTTP ${resposta.status || ""}`).trim();
     }
 
+    function obterTokenCsrf(dependencies = {}) {
+        const docRef = dependencies.document || global.document;
+        return docRef?.querySelector?.('meta[name="csrf-token"]')?.content || "";
+    }
+
+    function limparEstadoHomeNoCliente(dependencies = {}) {
+        try {
+            global.localStorage?.removeItem?.("tariel_laudo_atual");
+        } catch (_) {
+            // silêncio intencional
+        }
+
+        try {
+            const url = new URL(global.location.href);
+            url.searchParams.delete("laudo");
+            url.searchParams.delete("aba");
+            global.history.replaceState({ laudoId: null, threadTab: null }, "", url.toString());
+        } catch (_) {
+            // silêncio intencional
+        }
+
+        dependencies.sincronizarEstadoInspector?.(
+            {
+                laudoAtualId: null,
+                forceHomeLanding: false,
+            },
+            {
+                persistirStorage: false,
+            }
+        );
+    }
+
+    async function desativarContextoAtivoParaHome(dependencies = {}) {
+        const laudoAtivo = dependencies.obterLaudoAtivo?.();
+        const estadoAtual = dependencies.obterEstadoRelatorioAtualSeguro?.();
+
+        if (!laudoAtivo && estadoAtual !== "relatorio_ativo") {
+            return true;
+        }
+
+        try {
+            const resposta = await global.fetch("/app/api/laudo/desativar", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    Accept: "application/json",
+                    "X-CSRF-Token": obterTokenCsrf(dependencies),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
+
+            return resposta.ok;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function marcarForcaTelaInicial(dependencies = {}) {
+        dependencies.sincronizarEstadoInspector?.({ forceHomeLanding: true });
+    }
+
+    function paginaSolicitaHomeLanding(dependencies = {}) {
+        const snapshot = dependencies.obterSnapshotEstadoInspectorAtual?.() || {};
+        return !!snapshot.forceHomeLanding
+            || dependencies.lerFlagForcaHomeStorage?.()
+            || dependencies.paginaSolicitaHomeLandingViaURL?.();
+    }
+
+    function limparForcaTelaInicial(dependencies = {}) {
+        dependencies.sincronizarEstadoInspector?.({ forceHomeLanding: false });
+
+        try {
+            const url = new URL(global.location.href);
+            if (url.searchParams.get("home") === "1") {
+                url.searchParams.delete("home");
+                global.history.replaceState(global.history.state || {}, "", url.toString());
+            }
+        } catch (_) {
+            // silêncio intencional
+        }
+    }
+
+    function homeForcadoAtivo(dependencies = {}) {
+        return !!dependencies.obterSnapshotEstadoInspectorAtual?.()?.forceHomeLanding
+            || dependencies.paginaSolicitaHomeLandingViaURL?.();
+    }
+
     global.TarielInspectorWorkspaceUtils = {
+        desativarContextoAtivoParaHome,
         navegarParaHome,
+        limparEstadoHomeNoCliente,
+        limparForcaTelaInicial,
+        homeForcadoAtivo,
+        aplicarPrePromptDaAcaoRapida,
+        extrairMensagemErroHTTP,
+        inserirTextoNoComposer,
+        marcarForcaTelaInicial,
+        normalizarConexaoMesaWidget,
+        obterHeadersComCSRF,
+        obterLaudoAtivoIdSeguro,
+        obterTipoTemplateDoPayload,
+        obterTokenCsrf,
+        paginaSolicitaHomeLanding,
+        pluralizarMesa,
         processarAcaoHome,
         resumirTexto,
-        normalizarConexaoMesaWidget,
-        pluralizarMesa,
-        obterTipoTemplateDoPayload,
-        inserirTextoNoComposer,
-        aplicarPrePromptDaAcaoRapida,
-        obterLaudoAtivoIdSeguro,
-        obterHeadersComCSRF,
-        extrairMensagemErroHTTP,
     };
 })(window);

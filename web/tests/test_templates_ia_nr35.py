@@ -104,6 +104,70 @@ def test_relatorio_nr35_linha_vida_suporta_fotos_e_status_aprovado() -> None:
     assert relatorio.conclusao.status == "Aprovado"
 
 
+def test_relatorio_nr35_linha_vida_aceita_bloco_estrutural_rico() -> None:
+    payload = {
+        "informacoes_gerais": {
+            "unidade": "Rio Verde - GO",
+            "local": "Rio Verde - GO",
+            "contratante": "Cliente Exemplo",
+            "contratada": "ATY Service LTDA",
+            "data_vistoria": "2026-04-22",
+        },
+        "objeto_inspecao": {
+            "identificacao_linha_vida": "LV-001 - Caixa d'agua",
+            "tipo_linha_vida": "Horizontal",
+            "escopo_inspecao": "Inspecao periodica visual da linha de vida principal.",
+        },
+        "componentes_inspecionados": {
+            "fixacao_dos_pontos": _item("NC", "Suporte com desgaste aparente."),
+            "condicao_cabo_aco": _item(),
+            "condicao_esticador": _item(),
+            "condicao_sapatilha": _item(),
+            "condicao_olhal": _item(),
+            "condicao_grampos": _item(),
+        },
+        "metodologia_e_recursos": {
+            "metodologia": "Inspecao visual em campo com apoio fotografico.",
+            "instrumentos_utilizados": "Camera, trena e EPIs.",
+            "aviso_importante": "Acesso parcial ao trecho final da linha.",
+        },
+        "documentacao_e_registros": {
+            "documentos_disponiveis": "ART 123, fotos do inicio e fim da linha.",
+            "documentos_emitidos": "Laudo preliminar de campo.",
+            "proxima_inspecao_planejada": "2027-04",
+            "observacoes_documentais": "Documentacao recebida sem croqui complementar.",
+        },
+        "nao_conformidades_ou_lacunas": {
+            "ha_pontos_de_atencao": True,
+            "descricao": "Suporte com desgaste e necessidade de ajuste.",
+            "limitacoes_de_inspecao": "Trecho final sem acesso integral.",
+        },
+        "recomendacoes": {
+            "texto": "Regularizar o suporte e repetir a vistoria.",
+            "acao_prioritaria": "corrigir_e_revalidar",
+        },
+        "conclusao": {
+            "status": "Reprovado",
+            "proxima_inspecao_periodica": "2027-04",
+            "observacoes": "Linha sem condicao segura de uso.",
+            "status_operacional": "bloqueio",
+            "motivo_status": "Desgaste no suporte principal.",
+            "liberado_para_uso": "nao",
+            "acao_requerida": "corrigir_e_revalidar",
+            "condicao_para_reinspecao": "Executar correcao estrutural antes da reinspecao.",
+        },
+        "resumo_executivo": "Linha reprovada por nao conformidade estrutural no suporte principal.",
+    }
+
+    relatorio = RelatorioNR35LinhaVida(**payload)
+
+    assert relatorio.metodologia_e_recursos.instrumentos_utilizados == "Camera, trena e EPIs."
+    assert relatorio.documentacao_e_registros.proxima_inspecao_planejada == "2027-04"
+    assert relatorio.nao_conformidades_ou_lacunas.ha_pontos_de_atencao is True
+    assert relatorio.recomendacoes.acao_prioritaria == "corrigir_e_revalidar"
+    assert relatorio.conclusao.status_operacional == "bloqueio"
+
+
 def test_obter_schema_template_ia_resolve_aliases_nr35() -> None:
     assert obter_schema_template_ia("nr35") is RelatorioNR35LinhaVida
     assert obter_schema_template_ia("nr35_linha_vida") is RelatorioNR35LinhaVida
@@ -119,5 +183,9 @@ def test_mapa_nr35_cobre_campos_do_schema() -> None:
         "informacoes_gerais",
         "objeto_inspecao",
         "componentes_inspecionados",
+        "metodologia_e_recursos",
+        "documentacao_e_registros",
+        "nao_conformidades_ou_lacunas",
+        "recomendacoes",
         "conclusao",
     }

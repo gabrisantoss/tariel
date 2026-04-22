@@ -14,6 +14,33 @@ Atualizado em `2026-04-22`.
 
 ## Estado atual
 
+### `PKT-WEB-HOTSPOTS-03` - Inspetor runtime, admin rollups, bridge cliente e mesa SSR
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` perdeu mais dois blocos de composição para `web/static/js/inspetor/workspace_runtime_registry.js` e `web/static/js/inspetor/workspace_page_elements.js`, `admin/services.py` drenou o bloco coeso de governança/rollups para `web/app/domains/admin/admin_catalog_rollup_runtime_services.py`, depois drenou a normalização/contrato comercial do catálogo para `web/app/domains/admin/admin_catalog_contract_normalization_services.py`, `web/app/domains/cliente/portal_bridge.py` virou agregador fino sobre `portal_bridge_chat.py` e `portal_bridge_review.py`, e `web/app/domains/revisor/panel.py` simplificou a resolução SSR/shadow sem reabrir o contrato da mesa
+
+### Objetivo
+
+- reduzir mais um ciclo de custo estrutural no runtime do inspetor web
+- continuar drenando `admin/services.py` sem reintroduzir acoplamento
+- afinar a fronteira técnica do `admin-cliente` com `chat` e `mesa`
+- simplificar a composição SSR da mesa preservando compatibilidade de testes e rollout
+
+### Escopo
+
+- entra extração de registry/runtime globals e cache de elementos da página do inspetor
+- entra extração do bloco de governança e rollups do catálogo/admin para módulo próprio
+- entra fatiamento do `portal_bridge` em chat e revisão, mantendo um agregador compatível
+- entra helper mais simples de composição do painel SSR da mesa
+- nao entra mudança de contrato funcional do caso técnico, catálogo ou fluxo de revisão
+
+### Criterio de pronto
+
+- `chat_index_page.js` perde mais um bloco grande de wiring mecânico
+- `admin/services.py` deixa de concentrar o bloco de governança/rollups
+- `portal_bridge.py` deixa de carregar todas as integrações concretas em um único arquivo
+- `panel.py` reduz o ruído de shadow/projection sem quebrar a compatibilidade atual
+- `node --check`, `py_compile`, `ruff`, `tests/test_v2_review_queue_projection.py`, `tests/test_reviewer_panel_boot_hotfix.py`, `tests/test_cliente_portal_critico.py` e `tests/test_smoke.py` ficam verdes
+
 ### `PKT-HOTSPOTS-BASELINE-01` - Baseline local + primeiros cortes nos hotspots web/admin
 
 - `status`: concluído localmente em `2026-04-21`; lint do `admin/services.py` voltou a ficar verde, a normalização de estado do inspetor saiu de `chat_index_page.js` para `web/static/js/inspetor/state_normalization.js`, o console de settings da plataforma saiu de `admin/services.py` para `web/app/domains/admin/platform_settings_services.py`, e o `make verify` ficou verde sob `Node v22.22.2`
@@ -115,6 +142,12 @@ Atualizado em `2026-04-22`.
 ### `PKT-LAUDOS-01` - Espinha semantica para preenchimento correto de laudos oficiais
 
 - `status`: em andamento em `2026-04-06`; `Fase A`, `Fase B` e `Fase C` da entrada configuravel ja implementadas; `Fase D` fechada no fluxo atual com retomada/alternancia do mesmo caso, persistencia canonica do draft guiado por `laudo`, round-trip em `status/mensagens`, sync mobile, `evidence_refs` ligados a `message_id` da thread e `mesa_handoff` no draft canonico; `Fase E` e `Fase F` agora estao implementadas para as familias modeladas `nr35_linha_vida` e `cbmgo`, com `report_pack_draft_json`, `image_slots`, faltas de evidencia, candidato estruturado incremental, gates semanticos e liberacao `mobile_autonomous` allowlisted na finalizacao quando o caso fecha completo, sem nao conformidade impeditiva e sem conflito relevante; `Fase G` tambem entrou no backend com allowlist por template/tenant e agregacao operacional local de rollout, cobrindo preferencia do usuario x modo efetivo, troca de modo, gaps de evidencia e divergencia IA-humano; isso conclui o `full automatico` das familias modeladas atuais, nao a liberacao ampla para todas as familias; ponto de retomada em `docs/restructuring-roadmap/131_dual_entry_resume_checkpoint.md`; proximo slice passa para expansao segura de familias/modelagem e eventual superficie de consulta operacional; plano executivo em `docs/restructuring-roadmap/127_semantic_report_pack_execution_plan.md`, governanca normativa em `docs/restructuring-roadmap/128_normative_override_and_learning_governance.md`, entrada configuravel em `docs/restructuring-roadmap/129_dual_entry_configurable_inspection_roadmap.md` e checklist em `docs/restructuring-roadmap/130_dual_entry_implementation_checklist.md`
+- `checkpoint 2026-04-22`: contrato documental e `delivery_package` agora distinguem formalmente `analysis_basis` interno de fotos explicitamente selecionadas para emissao; `build_catalog_pdf_payload` passou a promover apenas `selected_photo_evidence`/`issued_photo_evidence`/`final_pdf_photo_evidence` para `registros_fotograficos` quando a familia suporta anexo fotografico publico, preservando o default `internal_audit_only` para a trilha bruta da IA
+- `checkpoint 2026-04-22`: `NR35 linha de vida` agora usa no schema da IA um bloco estrutural mais proximo do laudo real recebido (`metodologia_e_recursos`, `documentacao_e_registros`, `nao_conformidades_ou_lacunas` e `recomendacoes`), e o `report pack` passou a tratar `Pendente` como estado final valido para `mesa_required`, sem marcar ausencia artificial de conclusao; validacao local com `ruff`, `py_compile`, `tests/test_templates_ia_nr35.py`, `tests/test_semantic_report_pack_nr35_autonomy.py`, `tests/test_catalog_nr35_overlay.py` e `tests/test_smoke.py`
+- `checkpoint 2026-04-22`: o caminho `family_schema -> laudo_output -> catalog_pdf_projection -> template_master_seed` da familia `nr35_inspecao_linha_de_vida` agora materializa tambem `limitacoes_de_inspecao`, `motivo_status`, `liberado_para_uso`, `acao_requerida` e `condicao_para_reinspecao`, com conclusao tecnica e justificativa mais especificas para `Reprovado` e `Pendente`; validacao local com `py_compile`, `ruff`, `tests/test_catalog_pdf_templates.py -k 'nr35_linha_de_vida or normaliza_status_legado_nr35'`, `tests/test_catalog_nr35_overlay.py` e `tests/test_smoke.py`
+- `checkpoint 2026-04-22`: a familia `nr35_inspecao_linha_de_vida` agora explicita no `family_schema` os slots fotograficos opcionais recorrentes do material real (`foto_panoramica_contexto`, `foto_tag_identificacao`, `foto_contexto_restricao_acesso` e `foto_detalhe_achado_principal`), sem reabrir os slots obrigatorios nem o fluxo de emissao; validacao local com `json.tool`, `tests/test_catalog_nr35_overlay.py` e `tests/test_smoke.py`
+- `checkpoint 2026-04-22`: a cobertura operacional da `NR35 linha de vida` ficou explicitada em uma matriz dedicada para `Aprovado`, `Pendente` por acesso parcial e `Reprovado` por irregularidade material, ligando material real, artefato canonico e testes de runtime sem multiplicar `laudo_output_exemplo`; validacao local com `json.tool`, `tests/test_catalog_nr35_overlay.py` e `tests/test_smoke.py`
+- `checkpoint 2026-04-22`: a direção de produto para tenants sem `Mesa` agora foi registrada em `docs/restructuring-roadmap/133_inspetor_correcoes_sem_mesa.md` e `web/docs/correcao_sem_mesa.md`, consolidando a aba `Correções` como superfície separada do `Chat`, sem `Word livre` e sem segundo chat genérico; validacao local documental
 
 ### Objetivo
 
@@ -2973,3 +3006,855 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de visibilidade de workspace
 - `admin/services.py` perde mais uma fatia material de rollups operacionais/comerciais
 - smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-17` — Mesa widget do workspace e registry documental do catálogo
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega a disponibilidade e o embutimento do Mesa widget para `web/static/js/inspetor/workspace_screen.js`, `admin/services.py` delega a resolução de rótulo documental para `web/app/domains/admin/admin_catalog_asset_registry_services.py`, e o pacote passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por um bloco residual de sincronização do workspace no inspetor e por um helper ainda acoplado ao registry documental do catálogo
+
+### Escopo
+
+- entra migração de `resolveMesaWidgetDisponibilidade` e `sincronizarMesaStageWorkspace` para `workspace_screen.js`
+- entra extração de `catalog_model_label` para `admin_catalog_asset_registry_services.py`
+- não entra mudança funcional da UX do Mesa widget
+- não entra mudança semântica do catálogo documental
+
+### Passos
+
+1. mover a disponibilidade e o encaixe do Mesa widget para `workspace_screen.js`
+2. extrair a resolução de label documental para o módulo de asset registry do admin
+3. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de screen sync derivado
+- `admin/services.py` perde mais um helper ligado ao registry documental
+- smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-18` — Thread do workspace e leitura textual do catálogo
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega a troca de canal do workspace para `web/static/js/inspetor/workspace_thread.js`, `admin/services.py` delega a leitura/resumo textual de releases e histórico para `web/app/domains/admin/catalog_tenant_management_services.py`, e o pacote passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por um bloco residual de navegação do workspace no inspetor e por helpers textuais ainda acoplados ao agregado administrativo do catálogo
+
+### Escopo
+
+- entra migração de `atualizarThreadWorkspace` para `workspace_thread.js`
+- entra extração de `catalogo_texto_leitura` e `catalogo_scope_summary_label` para `catalog_tenant_management_services.py`
+- não entra mudança funcional da navegação do inspetor
+- não entra mudança semântica no histórico/liberação do catálogo
+
+### Passos
+
+1. mover a troca de canal do workspace para um módulo dedicado do inspetor
+2. extrair os helpers textuais de histórico/liberação para o módulo de tenant management
+3. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de navegação do workspace
+- `admin/services.py` perde mais helpers ligados ao histórico/liberação do catálogo
+- smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-19` — Runtime core do inspetor e superfícies de aplicação do admin
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega runtime state, runtime screen, orquestração do workspace e ciclo de vida básico de página para `web/static/js/inspetor/workspace_{runtime_state,runtime_screen,orchestration,page_boot}.js`, enquanto `admin/services.py` passa a delegar composições de catálogo e operações do painel para `web/app/domains/admin/admin_{catalog,operations}_application_services.py`; o pacote passou em sintaxe, `ruff`, subset focal do admin e `tests/test_smoke.py`
+
+### Objetivo
+
+- reduzir o papel arquitetural do entrypoint do inspetor, separando composition root de runtime core
+- reorganizar o agregado administrativo por superfícies de aplicação antes de continuar drenando helpers residuais
+
+### Escopo
+
+- entra extração do runtime de estado/tela do inspetor para módulos dedicados
+- entra extração da orquestração de stage/contexto/home/finalização do workspace
+- entra extração do wiring de eventos/boot básico da página
+- entra criação de superfícies de aplicação para catálogo e operações do admin
+- não entra desglobalização total do inspetor
+- não entra remoção completa das compat layers restantes do admin
+
+### Passos
+
+1. mover estado/tela, orquestração e boot do inspetor para módulos dedicados
+2. religar `chat_index_page.js` como delegador fino sobre esses módulos
+3. criar superfícies de aplicação do admin para catálogo e operações do painel
+4. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+5. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` deixa de concentrar o runtime core do inspetor
+- `admin/services.py` deixa de montar diretamente parte relevante das superfícies de catálogo e operações
+- smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-20` — Tenant/catalog application slice do admin
+
+- `status`: concluído localmente em `2026-04-22`; `web/app/domains/admin/services.py` passou a reexportar diretamente writers já extraídos e delegar o slice de detalhe/liberação/signatário/portfolio do catálogo para `web/app/domains/admin/admin_catalog_tenant_application_services.py`, reduzindo o agregado principal sem alterar contratos públicos; o pacote passou em sintaxe, `ruff`, subset focal do admin e `tests/test_smoke.py`
+
+### Objetivo
+
+- cortar volume real de `admin/services.py` depois da reorganização por superfícies de aplicação
+- isolar o slice tenant/catalog que ainda misturava detalhe administrativo, releases e signatários
+
+### Escopo
+
+- entra criação do módulo `admin_catalog_tenant_application_services.py`
+- entra reexportação direta, em `services.py`, de writers/importadores já segregados
+- entra migração de detalhe de família, release tenant, signatário governado e portfolio para a nova superfície
+- não entra refactor de governança review nem onboarding/dashboard adicionais
+- não entra revisão do contrato HTTP do admin
+
+### Passos
+
+1. reexportar diretamente writers/readers já extraídos para remover wrappers redundantes
+2. mover o slice tenant/catalog residual para um módulo de aplicação dedicado
+3. religar `services.py` como fachada fina desse pacote
+4. validar com `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+5. registrar o checkpoint e revisar o próximo centro de gravidade
+
+### Critério de pronto
+
+- `admin/services.py` perde wrappers redundantes e boa parte do bloco tenant/catalog residual
+- detalhe de família, release e signatário passam a ter superfície própria no domínio admin
+- smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-21` — Governança e resumo do catálogo no admin
+
+- `status`: concluído localmente em `2026-04-22`; `web/app/domains/admin/services.py` passou a delegar a governança de review e a fachada de resumo do catálogo para `web/app/domains/admin/admin_catalog_governance_application_services.py`, preservando a API pública enquanto reduz o agregado principal; o pacote passou em sintaxe, `ruff`, subset focal do admin com governança e `tests/test_smoke.py`
+
+### Objetivo
+
+- atacar o próximo centro de gravidade residual do agregado administrativo após o corte tenant/catalog
+- retirar de `admin/services.py` a composição de governança review e o resumo principal do catálogo
+
+### Escopo
+
+- entra criação do módulo `admin_catalog_governance_application_services.py`
+- entra migração de `upsert_governanca_review_familia`
+- entra migração de `listar_metodos_catalogo` e `resumir_catalogo_laudos_admin`
+- entra manutenção explícita do contrato interno `flush_ou_rollback_integridade` no agregado principal
+- não entra refactor dos serializers/document previews remanescentes
+- não entra mudança de contratos HTTP ou de fixtures
+
+### Passos
+
+1. mover governança review e a fachada de resumo do catálogo para módulo próprio
+2. religar `services.py` como superfície fina/reexport do novo pacote
+3. preservar exports internos ainda consumidos pelos módulos de escrita já extraídos
+4. validar com `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+5. registrar o checkpoint e recalcular o hotspot remanescente
+
+### Critério de pronto
+
+- `admin/services.py` deixa de carregar a orquestração de governança review e do resumo do catálogo
+- os cenários de governança, release, detalhe e rollup continuam verdes
+- smoke do web segue verde após o corte
+
+### `PKT-HOTSPOTS-BASELINE-22` — Apresentação documental do catálogo no admin
+
+- `status`: concluído localmente em `2026-04-22`; `web/app/domains/admin/services.py` passou a delegar snapshots de artefatos, preview documental, material-real workspace/priority, variant library, template refinement e serialização de linha para `web/app/domains/admin/admin_catalog_presentation_services.py`, mantendo apenas aliases privados de compatibilidade; o pacote passou em sintaxe, `ruff`, subset focal do admin e `tests/test_smoke.py`
+
+### Objetivo
+
+- reduzir o último bloco denso de composição documental e de summaries do catálogo no agregado administrativo
+- separar a camada de apresentação/catalog view-model da camada de superfície pública do domínio admin
+
+### Escopo
+
+- entra criação do módulo `admin_catalog_presentation_services.py`
+- entra migração de snapshot de artefatos, template library rollup, material-real workspace/priority, preview documental, variant library, template refinement e serialização da linha do catálogo
+- entra preservação explícita dos aliases privados usados pelos módulos já extraídos
+- não entra refactor do bloco de sync/bootstrap canônico
+- não entra alteração de contratos HTTP ou de testes
+
+### Passos
+
+1. mover helpers de apresentação documental e summaries do catálogo para módulo dedicado
+2. religar `services.py` com aliases privados de compatibilidade para os módulos de governança e tenant
+3. reexpor no agregado apenas os símbolos internos ainda usados por slices já extraídos
+4. validar com `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+5. registrar o checkpoint e recalcular o hotspot remanescente
+
+### Critério de pronto
+
+- `admin/services.py` deixa de concentrar o bloco de apresentação/documentação do catálogo
+- detalhe e rollup do catálogo seguem verdes com o novo módulo
+- smoke do web segue verde após o corte
+
+### `PKT-HOTSPOTS-BASELINE-23` — Base canônica e sync helpers do catálogo
+
+- `status`: concluído localmente em `2026-04-22`; `web/app/domains/admin/services.py` passou a delegar paths canônicos, carga de schemas, busca de família e bootstrap de métodos sugeridos para `web/app/domains/admin/admin_catalog_foundation_services.py`, preservando monkeypatch/compat via aliases no agregado; o pacote passou em sintaxe, `ruff`, subset focal do admin e `tests/test_smoke.py`
+
+### Objetivo
+
+- drenar do agregado administrativo o bloco residual de base canônica do catálogo
+- estabilizar a compat layer interna usada por bootstrap/sync e pelos módulos já extraídos
+
+### Escopo
+
+- entra criação do módulo `admin_catalog_foundation_services.py`
+- entra migração de `_repo_root_dir`, `_family_schemas_dir`, `_family_schema_file_path`, `_family_artifact_file_path`, `_ler_json_arquivo`, `listar_family_schemas_canonicos`, `carregar_family_schema_canonico`, `_buscar_familia_catalogo_por_chave`, `_metodos_sugeridos_para_familia` e `_upsert_metodos_catalogo_para_familia`
+- entra preservação explícita dos aliases usados por monkeypatch e por slices já extraídos
+- não entra refactor do sync/bootstrap em si
+- não entra redução da compat layer pública do admin abaixo do necessário para a suite atual
+
+### Passos
+
+1. mover a base canônica do catálogo para módulo dedicado
+2. religar `services.py` com aliases internos compatíveis com bootstrap/sync e monkeypatch de testes
+3. validar os cenários focais de detalhe/rollup e os smoke de bootstrap canônico
+4. registrar o checkpoint e recalcular o que ainda vale extrair
+
+### Critério de pronto
+
+- `admin/services.py` deixa de carregar a base canônica e o bootstrap de métodos sugeridos
+- smoke de bootstrap canônico segue verde
+- detalhe/rollup do catálogo seguem verdes após o corte
+
+### `PKT-HOTSPOTS-BASELINE-24` — Operações administrativas reapontadas para superfície dedicada
+
+- `status`: concluído localmente em `2026-04-22`; `web/app/domains/admin/admin_operations_application_services.py` passou a montar diretamente onboarding, dashboard e detalhe de cliente, enquanto `web/app/domains/admin/services.py` ficou como fachada fina para essas operações e preservou apenas os aliases privados necessários; o pacote passou em sintaxe, `ruff`, subset focal do admin e `tests/test_smoke.py`
+
+### Objetivo
+
+- reduzir mais um bloco operacional coeso do agregado administrativo
+- concentrar onboarding/dashboard/detalhe no módulo de operações em vez de manter montagem de dependências espalhada em `services.py`
+
+### Escopo
+
+- entra expansão de `admin_operations_application_services.py` para montar dependências reais de onboarding, dashboard e detalhe
+- entra remoção, de `services.py`, de helpers operacionais locais e dos wrappers extensos dessas superfícies
+- entra preservação dos reexports públicos e aliases privados ainda consumidos por rotas e slices internos
+- não entra refactor de plataforma/settings
+- não entra redução agressiva da compat layer restante
+
+### Passos
+
+1. mover a montagem de dependências de onboarding/dashboard/detalhe para o módulo de operações
+2. reapontar `services.py` como fachada fina
+3. restaurar os aliases privados/publicos realmente consumidos por outras superfícies
+4. validar com `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+5. registrar o checkpoint e reavaliar o retorno marginal dos próximos cortes
+
+### Critério de pronto
+
+- `admin/services.py` deixa de montar diretamente onboarding, dashboard e detalhe de cliente
+- rotas e slices internos continuam consumindo as mesmas entradas públicas/privadas necessárias
+- smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-25` — Fachada de platform settings reapontada para módulo de aplicação
+
+- `status`: concluído localmente em `2026-04-22`; `web/app/domains/admin/admin_platform_settings_application_services.py` passou a concentrar a orquestração pública de `platform/settings`, enquanto `web/app/domains/admin/services.py` ficou apenas como fachada compatível para rotas e monkeypatches da suíte; o pacote passou em sintaxe, `ruff`, subset focal de `platform_settings` e `tests/test_smoke.py`
+
+### Objetivo
+
+- retirar de `admin/services.py` mais um bloco coeso de orquestração pública ligado à plataforma
+- preservar a compatibilidade da suíte que monkeypatcha os builders do console administrativo em cima da fachada histórica
+
+### Escopo
+
+- entra criação do módulo `admin_platform_settings_application_services.py`
+- entra migração da orquestração pública de `apply_platform_settings_update` e `build_admin_platform_settings_console`
+- entra preservação explícita da indireção via `admin/services.py` para manter monkeypatch de `build_platform_settings_console_overview`, `build_platform_settings_console_sections` e descritores/runtime builders
+- não entra refactor do núcleo de `platform_settings_services.py`
+- não entra remoção dos aliases de compatibilidade ainda usados por rotas e testes
+
+### Passos
+
+1. criar o módulo de aplicação para `platform/settings`
+2. reapontar `services.py` para wrappers finos sobre esse módulo
+3. preservar a injeção dos builders via fachada histórica do admin
+4. validar com `py_compile`, `ruff`, subset focal de `platform_settings` e `tests/test_smoke.py`
+5. registrar o checkpoint e reavaliar o que ainda faz sentido drenar do hotspot
+
+### Critério de pronto
+
+- `admin/services.py` deixa de carregar a orquestração pública de `platform/settings`
+- os testes que monkeypatcham os builders do console continuam verdes
+- smoke do web segue verde após o corte
+
+### `PKT-HOTSPOTS-BASELINE-26` — Estado visual do composer reapontado para módulo dedicado
+
+- `status`: concluído localmente em `2026-04-22`; `web/static/js/inspetor/workspace_composer.js` passou a concentrar o highlight e o estado visual do composer, enquanto `web/static/js/chat/chat_index_page.js` ficou apenas como fachada fina para o boot e os bindings existentes; o pacote passou em `node --check`, `tests/test_smoke.py` e `git diff --check`
+
+### Objetivo
+
+- reduzir mais um resíduo local do root do inspetor sem alterar o contrato de carregamento da página
+- fazer `bootstrap` e `ui_bindings` dependerem do módulo de composer também para o estado visual da entrada
+
+### Escopo
+
+- entra migração de `obterModoMarcador`, `atualizarVisualComposer`, `aplicarHighlightComposer` e `sincronizarScrollBackdrop` para `workspace_composer.js`
+- entra reapontamento de `chat_index_page.js` para wrappers finos sobre `InspectorWorkspaceComposer`
+- não entra mudança de template, seletores DOM ou eventos do composer
+- não entra refactor maior da compat layer do inspetor
+
+### Passos
+
+1. mover o estado visual do composer para o módulo já responsável pelo composer
+2. reapontar o root do chat para wrappers finos
+3. validar com `node --check`, `tests/test_smoke.py` e `git diff --check`
+4. registrar o checkpoint e reavaliar o próximo slice frontend com melhor retorno
+
+### Critério de pronto
+
+- `chat_index_page.js` deixa de carregar a lógica local de highlight/estado visual do composer
+- `bootstrap` e `ui_bindings` continuam usando as mesmas actions sem regressão
+- smoke do web e checagens de sintaxe seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-27` — Instrumentação PERF do inspetor reapontada para módulo dedicado
+
+- `status`: concluído localmente em `2026-04-22`; `web/static/js/inspetor/workspace_perf.js` passou a concentrar a instrumentação `PERF` do workspace do inspetor, enquanto `web/static/js/chat/chat_index_page.js` ficou responsável apenas por fornecer os bindings instrumentáveis e reaplicar os wrappers retornados; o pacote passou em `node --check`, `tests/test_smoke.py` e `git diff --check`
+
+### Objetivo
+
+- retirar do root do inspetor um bloco volumoso, transversal e claramente isolável de observabilidade/performance
+- preservar a mesma instrumentação de boot, state sync, thread, screen e transições sem acoplar esse código ao composition root
+
+### Escopo
+
+- entra criação de `workspace_perf.js`
+- entra migração do bloco de wrappers `PERF` de `chat_index_page.js`
+- entra inclusão do novo script em `web/templates/index.html` antes do root do chat
+- não entra alteração de comportamento do produto ou do boot principal
+- não entra refactor das regras de `PERF` em `shared/api-core.js`
+
+### Passos
+
+1. criar módulo dedicado para instrumentação do workspace
+2. reapontar `chat_index_page.js` para pedir wrappers a esse módulo
+3. incluir o novo script no template do inspetor
+4. validar com `node --check`, `tests/test_smoke.py` e `git diff --check`
+5. registrar o checkpoint e reavaliar o próximo slice com melhor retorno marginal
+
+### Critério de pronto
+
+- `chat_index_page.js` deixa de concentrar o bloco de instrumentação `PERF`
+- o boot e as transições continuam instrumentados com a mesma semântica
+- smoke do web e checagens de sintaxe seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-28` — Navegação home e disponibilidade de chat livre reapontadas para módulos utilitários/runtime
+
+- `status`: concluído localmente em `2026-04-22`; `web/static/js/inspetor/workspace_utils.js` passou a concentrar helpers de navegação/home state, `web/static/js/inspetor/workspace_runtime_screen.js` passou a concentrar a disponibilidade e promoção do chat livre, e `web/static/js/chat/chat_index_page.js` ficou como fachada fina para essas rotinas; o pacote passou em `node --check`, `tests/test_smoke.py` e `git diff --check`
+
+### Objetivo
+
+- drenar do root do inspetor um bloco misto de navegação/home/chat livre que já tinha destino claro em módulos de utilitários e runtime de tela
+- continuar reduzindo o root sem mexer no contrato visual ou no fluxo principal de boot
+
+### Escopo
+
+- entra migração de `obterTokenCsrf`, limpeza/desativação de contexto home e flags de `forceHomeLanding` para `workspace_utils.js`
+- entra migração da disponibilidade/promoção do chat livre para `workspace_runtime_screen.js`
+- entra reapontamento de `chat_index_page.js` para wrappers finos sobre esses módulos
+- não entra alteração de rotas, template ou contratos de `bootstrap`
+- não entra refactor do fluxo principal de `workspace_context_flow`
+
+### Passos
+
+1. mover os helpers de home/navigation para `workspace_utils.js`
+2. mover os helpers de disponibilidade/promoção do chat livre para `workspace_runtime_screen.js`
+3. reapontar `chat_index_page.js` para wrappers finos
+4. validar com `node --check`, `tests/test_smoke.py` e `git diff --check`
+5. registrar o checkpoint e reavaliar a próxima fatia do root do inspetor
+
+### Critério de pronto
+
+- `chat_index_page.js` deixa de concentrar o bloco local de navegação/home/chat livre
+- boot e fluxos de transição continuam consumindo as mesmas actions sem regressão
+- smoke do web e checagens de sintaxe seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-29` — Resolução de abas e visibilidade da sidebar reapontadas para módulo dedicado
+
+- `status`: concluído localmente em `2026-04-22`; `web/static/js/inspetor/sidebar_history.js` passou a concentrar a resolução de abas, contagem e visibilidade da sidebar de histórico, enquanto `web/static/js/chat/chat_index_page.js` ficou apenas montando dependências mínimas para esse módulo; o pacote passou em `node --check`, `tests/test_smoke.py` e `git diff --check`
+
+### Objetivo
+
+- retirar do root do inspetor mais um bloco local de sidebar/history que já tinha módulo de destino claro
+- seguir reduzindo o composition root sem mexer na navegação, seletores ou comportamento visual do histórico
+
+### Escopo
+
+- entra migração de `obterSecaoSidebarLaudos`, contagem de itens visíveis e resolução de aba ativa para `sidebar_history.js`
+- entra reapontamento de `chat_index_page.js` para fornecer apenas `document`, `el` e `estado`
+- não entra mudança de markup da sidebar
+- não entra refactor do timeline/histórico canônico do workspace
+
+### Passos
+
+1. mover a lógica local de tabs/contagem da sidebar para `sidebar_history.js`
+2. simplificar o root do chat para dependências mínimas
+3. validar com `node --check`, `tests/test_smoke.py` e `git diff --check`
+4. registrar o checkpoint e reavaliar o próximo slice residual do root
+
+### Critério de pronto
+
+- `chat_index_page.js` deixa de carregar a resolução local de abas e visibilidade da sidebar
+- a sidebar continua alternando entre fixados/recentes sem regressão
+- smoke do web e checagens de sintaxe seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-30` — Filtros, meta e render do timeline reapontados para módulo de histórico
+
+- `status`: concluído localmente em `2026-04-22`; `web/static/js/inspetor/workspace_history_context.js` passou a concentrar reset de filtros, meta do histórico, resultados do timeline e a filtragem principal do workspace, enquanto `web/static/js/chat/chat_index_page.js` ficou como fachada fina para esse bloco; o pacote passou em `node --check`, `tests/test_smoke.py` e `git diff --check`
+
+### Objetivo
+
+- retirar do root do inspetor um bloco real de timeline/histórico que já pertencia semanticamente ao módulo de contexto do histórico
+- continuar reduzindo o composition root sem alterar o comportamento de filtros, contadores e empty states do timeline
+
+### Escopo
+
+- entra migração de `resetarFiltrosHistoricoWorkspace`, labels de filtro, meta/resultados do histórico e `filtrarTimelineWorkspace` para `workspace_history_context.js`
+- entra ampliação das dependências do módulo de histórico para consumir builders, estado e sincronizações já existentes
+- não entra mudança do markup do timeline
+- não entra refactor dos builders canônicos em `history_builders.js`
+
+### Passos
+
+1. mover o bloco de meta/filtros/render do timeline para `workspace_history_context.js`
+2. reapontar `chat_index_page.js` para wrappers finos
+3. validar com `node --check`, `tests/test_smoke.py` e `git diff --check`
+4. registrar o checkpoint e reavaliar o próximo slice residual do root
+
+### Critério de pronto
+
+- `chat_index_page.js` deixa de carregar a lógica local de meta/filtros/render do timeline
+- histórico e empty states continuam funcionando sem regressão
+- smoke do web e checagens de sintaxe seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-31` — Fluxo de thread/conversation focada reapontado para módulo dedicado
+
+- `status`: concluído localmente em `2026-04-22`; `web/static/js/inspetor/workspace_thread.js` passou a concentrar a lógica de conversa focada, variante de conversa, sync de URL e promoção da primeira mensagem do novo chat, enquanto `web/static/js/chat/chat_index_page.js` ficou como fachada fina para esse fluxo; o pacote passou em `node --check`, `tests/test_smoke.py` e `git diff --check`
+
+### Objetivo
+
+- retirar do root do inspetor mais um bloco real de thread/conversation que já pertencia semanticamente ao módulo de thread
+- preservar o comportamento atual de conversa focada, sync de aba/URL e promoção do primeiro envio
+
+### Escopo
+
+- entra migração de `landingNovoChatAtivo`, `conversaWorkspaceModoChatAtivo`, `resolverConversationVariant`, `sincronizarConversationVariantNoDom`, `limparFluxoNovoChatFocado`, `exibirConversaFocadaNovoChat` e `promoverPrimeiraMensagemNovoChatSePronta` para `workspace_thread.js`
+- entra reapontamento de `chat_index_page.js` para wrappers finos sobre `InspectorWorkspaceThread`
+- não entra mudança do contrato de `state_runtime_sync`, `system_events` ou `observers`
+- não entra refactor do boot principal
+
+### Passos
+
+1. mover o fluxo de thread/conversation focada para `workspace_thread.js`
+2. reapontar o root do chat para wrappers finos
+3. validar com `node --check`, `tests/test_smoke.py` e `git diff --check`
+4. registrar o checkpoint e reavaliar o próximo slice residual do root
+
+### Critério de pronto
+
+- `chat_index_page.js` deixa de carregar o bloco local de thread/conversation focada
+- sync de URL, conversa focada e promoção do primeiro envio seguem sem regressão
+- smoke do web e checagens de sintaxe seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-32` — Diagnóstico de preview reapontado para delivery flow
+
+- `status`: concluído localmente em `2026-04-22`; `web/static/js/inspetor/workspace_delivery_flow.js` passou a concentrar a montagem do diagnóstico auditável usado na pré-visualização, enquanto `web/static/js/chat/chat_index_page.js` ficou apenas repassando estado e dependências operacionais; o pacote passou em `node --check`, `tests/test_smoke.py` e `git diff --check`
+
+### Objetivo
+
+- fechar o último corte frontend com retorno claro no root do inspetor sem entrar em redistribuição artificial de wrappers
+- consolidar a lógica de preview no módulo de delivery, onde ela já fazia parte da mesma responsabilidade funcional
+
+### Escopo
+
+- entra migração de `montarDiagnosticoPreviewWorkspace` para `workspace_delivery_flow.js`
+- entra reapontamento de `chat_index_page.js` para passar `estado`, linhas, metadados e contagem de evidências
+- não entra refactor do boot principal nem de `finalizarInspecao`
+- não entra nova rodada de micro-extrações no composition root
+
+### Passos
+
+1. mover a montagem do diagnóstico de preview para `workspace_delivery_flow.js`
+2. simplificar o root do chat para um wrapper fino de preview
+3. validar com `node --check`, `tests/test_smoke.py` e `git diff --check`
+4. registrar o checkpoint e reavaliar se ainda existe algum corte frontend com retorno real
+
+### Critério de pronto
+
+- `chat_index_page.js` deixa de montar localmente o diagnóstico auditável do preview
+- a pré-visualização continua funcional sem regressão
+- smoke do web e checagens de sintaxe seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-33` — Decisão final do laudo extraída para módulo temático
+
+- `status`: concluído localmente em `2026-04-22`; a camada de decisão final, revisão mobile e reabertura saiu de `web/app/domains/chat/laudo_service.py` para `web/app/domains/chat/laudo_decision_services.py`, mantendo `laudo_service.py` como suporte neutro do ciclo de laudo; o pacote passou em `ruff`, `python -m py_compile`, `tests/test_v2_document_hard_gate.py`, `tests/test_smoke.py` e `git diff --check`
+
+### Objetivo
+
+- retirar de `laudo_service.py` o bloco de casos de uso mais acoplado do ciclo do laudo
+- separar regras de finalização, revisão mobile e reabertura em um módulo de aplicação com fronteira explícita
+- preparar o hotspot backend remanescente para nova análise sem seguir cortando o frontend por inércia
+
+### Escopo
+
+- entra extração de `_preparar_laudo_para_decisao_final`, `_persistir_decisao_final_laudo`, `finalizar_relatorio_resposta`, `executar_comando_revisao_mobile_resposta` e `reabrir_laudo_resposta`
+- entra reapontamento de `web/app/domains/chat/laudo.py` e `web/app/domains/cliente/portal_bridge.py` para o novo módulo
+- não entra mudança de contrato HTTP nem ajuste funcional de produto
+- não entra nova rodada em `chat_index_page.js`
+
+### Passos
+
+1. criar `web/app/domains/chat/laudo_decision_services.py` com o bloco coeso de decisão final/revisão/reabertura
+2. remover o bloco correspondente de `web/app/domains/chat/laudo_service.py`
+3. reapontar rotas e bridge para o novo módulo
+4. validar com `ruff`, `python -m py_compile`, `tests/test_v2_document_hard_gate.py`, `tests/test_smoke.py` e `git diff --check`
+
+### Critério de pronto
+
+- `laudo_service.py` deixa de concentrar os casos de uso de decisão final do laudo
+- rotas do inspetor e portal cliente seguem respondendo pelo mesmo contrato
+- hard gate documental e smoke do web seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-34` — Pipeline documental endurecido do fallback ao preview real
+
+- `status`: concluído localmente em `2026-04-22`; o pipeline `document_view_model -> editor -> render` passou a materializar shell mínimo de contingência, alinhar a promoção de preview rico com a capacidade real do editor universal, preservar blocos estruturados de payload parcial e validar a travessia desses dados até a rota real de preview do revisor; o pacote passou em `ruff`, `python -m py_compile`, `tests/test_catalog_document_contract.py`, `tests/test_catalog_pdf_templates.py`, `tests/test_catalog_pdf_visual_qa.py`, subset de `tests/test_regras_rotas_criticas.py`, `tests/test_smoke.py` e `git diff --check`
+
+### Objetivo
+
+- reduzir preview rico “genérico demais” quando o payload chega vazio ou parcial
+- fortalecer o fallback documental sem depender de payload canônico completo
+- fechar a cadeia de garantia do pipeline até o endpoint real de preview do revisor
+
+### Escopo
+
+- entra endurecimento de `build_universal_document_editor` para contingência
+- entra ajuste de `should_use_rich_runtime_preview_for_pdf_template` para refletir a capacidade real do shell universal
+- entra preservação de blocos estruturados públicos em `build_catalog_pdf_payload`
+- entra ampliação da cobertura de contrato, visual QA e rota crítica de preview
+- não entra mudança de contrato HTTP
+- não entra redesign visual do documento
+
+### Passos
+
+1. materializar shell mínimo de contingência no editor universal
+2. alinhar a seleção de preview rico com a materialização real do editor
+3. preservar blocos estruturados parciais em `build_catalog_pdf_payload`
+4. validar `payload -> editor -> html` e também a rota real de preview do revisor
+5. rodar smoke do web e registrar o pacote
+
+### Critério de pronto
+
+- payload vazio ou parcial não degrada para preview rico fraco sem shell mínimo
+- preview legado fraco pode ser promovido para editor rico com blocos públicos preservados
+- QA visual e rota crítica do revisor confirmam a presença do conteúdo no documento gerado
+- smoke do web e checagens de sintaxe seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-35` — Baseline ampla reavaliada com bloqueio isolado no toolchain mobile
+
+- `status`: em andamento em `2026-04-22`; a baseline ampla do web fechou verde (`ruff` completo + `246 passed` no pacote largo do web + `6 passed` em `tests/test_tenant_access.py`), mas o fechamento de `make verify` continua bloqueado no `android` por resolução incompleta da cadeia Babel/React Native durante o Jest; o ciclo também explicitou o requisito de `Node 22.13.1` no `android`, adicionou `android/.nvmrc`, `android/babel.config.js` e um runner dedicado no `Makefile` para o Jest mobile
+
+### Objetivo
+
+- fechar a validação mais ampla do pacote atual sem supor que o mobile ainda estava saudável
+- separar regressão de código de problema de toolchain/ambiente
+- deixar o bloqueio mobile explícito e reproduzível antes de seguir para novas melhorias de produto
+
+### Escopo
+
+- entra execução de `make verify` e leitura do primeiro ponto de quebra real
+- entra alinhamento operacional do workspace mobile para `Node 22.13.1`
+- entra documentação mínima do requisito no `android`
+- não entra mudança funcional do app mobile
+- não entra caça cega de novos hotspots estruturais
+
+### Passos
+
+1. rodar a baseline ampla do repositório
+2. confirmar se a quebra restante é web, mobile ou higiene
+3. alinhar a automação do Jest mobile com `Node 22.13.1`
+4. registrar o bloqueio residual do Babel/React Native caso a suíte continue falhando antes de executar os testes
+
+### Critério de pronto
+
+- a baseline ampla do web segue verde
+- o requisito operacional do mobile fica explícito no repositório
+- o bloqueio residual do mobile deixa de parecer regressão de produto e passa a ficar documentado como problema de toolchain/dependency graph
+
+### `PKT-HOTSPOTS-BASELINE-36` — Núcleo compartilhado do ciclo de laudo separado do service neutro
+
+- `status`: concluído localmente em `2026-04-22`; o pseudo-core privado importado por `laudo_decision_services.py` e `report_finalize_stream_shadow.py` saiu de `web/app/domains/chat/laudo_service.py` para `web/app/domains/chat/laudo_workflow_support.py`, reduzindo `laudo_service.py` de `1085` para `658` linhas e eliminando a dependência estrutural de helpers privados espalhados
+
+### Objetivo
+
+- parar de usar `laudo_service.py` como compat layer implícita para helpers compartilhados
+- separar o support code de workflow do caso de uso neutro de status/início/gate
+- deixar o próximo hotspot backend mais legível antes de decidir nova extração
+
+### Escopo
+
+- entra extração do bloco compartilhado de `quality gate override`, `document gate`, `case lifecycle response fields`, `request/base_url` e helpers de binding/review mode
+- entra reapontamento de `laudo_decision_services.py` e `report_finalize_stream_shadow.py`
+- entra validação focada do ciclo de laudo e smoke do inspetor
+- não entra mudança de contrato HTTP
+- não entra ajuste funcional em `admin/services.py`
+
+### Passos
+
+1. criar `web/app/domains/chat/laudo_workflow_support.py` com o bloco compartilhado do workflow
+2. remover os helpers equivalentes de `web/app/domains/chat/laudo_service.py`
+3. reapontar os módulos de decisão final e shadow para o novo support module
+4. validar com `ruff`, `python -m py_compile`, `tests/test_regras_rotas_criticas.py` e `tests/test_smoke.py`
+
+### Critério de pronto
+
+- `laudo_service.py` volta a concentrar apenas status, início e gate neutro do portal inspetor
+- `laudo_decision_services.py` e `report_finalize_stream_shadow.py` deixam de importar helpers privados do service neutro
+- o recorte de chat passa em lint, `py_compile` e smoke relevante
+
+### `PKT-HOTSPOTS-BASELINE-37` — Leitura/status do laudo extraída para módulo próprio
+
+- `status`: concluído localmente em `2026-04-22`; o fluxo de leitura/status do inspetor saiu de `web/app/domains/chat/laudo_service.py` para `web/app/domains/chat/laudo_status_response_services.py`, isolando a montagem do payload público, provenance, projeção V2, facade documental e `shadow` do caso sem alterar o contrato HTTP; o pacote passou em `ruff`, `python -m py_compile`, `tests/test_regras_rotas_criticas.py` e `tests/test_smoke.py`
+
+### Objetivo
+
+- retirar de `laudo_service.py` o bloco de leitura/projeção mais volumoso do ciclo do laudo
+- separar o caso de uso de status do bootstrap de criação, do draft guiado mobile e do gate neutro
+- fechar o pacote estrutural do hotspot antes de pivotar para correções e melhorias de produto
+
+### Escopo
+
+- entra extração de `obter_status_relatorio_resposta` e helpers internos de payload base/provenance para `web/app/domains/chat/laudo_status_response_services.py`
+- entra reapontamento de `web/app/domains/chat/laudo_service.py` para atuar como fachada fina do novo módulo
+- entra validação focal do ciclo do inspetor via smoke e regras críticas
+- não entra mudança de contrato HTTP
+- não entra nova rodada em `admin/services.py` nem no frontend do inspetor
+
+### Passos
+
+1. criar `web/app/domains/chat/laudo_status_response_services.py` com a montagem de status/projeção do inspetor
+2. remover o bloco equivalente de `web/app/domains/chat/laudo_service.py`
+3. manter `laudo_service.py` como fachada fina para rotas legadas do ciclo de laudo
+4. validar com `ruff`, `python -m py_compile`, `tests/test_regras_rotas_criticas.py` e `tests/test_smoke.py`
+
+### Critério de pronto
+
+- `laudo_service.py` deixa de concentrar a leitura/status projetada do inspetor
+- a resposta pública de status continua compatível para o portal atual
+- provenance, projeção V2 e `shadow` seguem ativos no mesmo fluxo
+- o pacote passa em lint, `py_compile` e na baseline web focal
+
+### `PKT-PRODUTO-OBSERVABILITY-01` — Observabilidade do ciclo principal do laudo
+
+- `status`: concluído localmente em `2026-04-22`; as rotas principais do ciclo do laudo no inspetor passaram a registrar hotspots operacionais para `status`, `início`, `gate de qualidade`, `finalização`, `reabertura` e comando de revisão mobile, com cobertura dedicada no sumário administrativo de backend hotspots; o pacote passou em `ruff`, `python -m py_compile`, `tests/test_backend_hotspot_metrics.py` e `tests/test_smoke.py`
+
+### Objetivo
+
+- tornar mensurável o ciclo principal do laudo sem alterar contrato HTTP
+- incluir o fluxo de status/início/finalização do inspetor no sumário operacional já usado no admin
+- ganhar base factual para decidir as próximas correções e melhorias de produto
+
+### Escopo
+
+- entra instrumentação com `observe_backend_hotspot` em `web/app/domains/chat/laudo.py`
+- entra cobertura de teste para `GET /app/api/laudo/status` e `POST /app/api/laudo/iniciar`
+- entra validação de smoke do web após a mudança
+- não entra redesign de payload nem mudança funcional do ciclo do laudo
+- não entra nova rodada estrutural em `chat_index_page.js` ou `admin/services.py`
+
+### Passos
+
+1. instrumentar as rotas principais do ciclo do laudo com endpoint, surface, status e outcome
+2. estender `tests/test_backend_hotspot_metrics.py` para cobrir status e início do laudo
+3. validar com `ruff`, `python -m py_compile`, `tests/test_backend_hotspot_metrics.py` e `tests/test_smoke.py`
+
+### Critério de pronto
+
+- o admin passa a enxergar o ciclo principal do laudo no sumário de backend hotspots
+- status e início do laudo ficam cobertos por teste de observabilidade dedicado
+- a mudança não altera o contrato público do inspetor
+
+### `PKT-PRODUTO-MOBILE-CONTRACT-01` — Fallback canônico de grants mobile via tenant access policy
+
+- `status`: concluído localmente em `2026-04-22`; o envelope mobile do backend passou a ficar formalmente coberto por `tenant_access_policy` nos testes web, e o Android passou a usar essa política como fallback canônico para `allowed_portals`, labels e links de troca de portal quando os campos explícitos não vierem preenchidos; o pacote passou em `pytest` focal do contrato web e `jest` focal do helper mobile
+
+### Objetivo
+
+- reduzir regressão silenciosa entre backend e Android na leitura de grants multiportal
+- tratar `tenant_access_policy` como contrato canônico de fallback, sem depender só de campos achatados no envelope do usuário
+- reforçar a fronteira web/mobile antes de abrir novas melhorias de produto
+
+### Escopo
+
+- entra tipagem de `tenant_access_policy` em `android/src/types/mobile.ts`
+- entra fallback em `android/src/features/common/mobileUserAccess.ts` para grants, labels e links padrão por portal
+- entra reforço do contrato web em `web/tests/test_multiportal_bootstrap_contracts.py`
+- não entra mudança de rota ou alteração do payload do backend
+- não entra redesign de superfícies mobile
+
+### Passos
+
+1. tipar `tenant_access_policy` no contrato mobile
+2. usar a política como fallback canônico no helper de acesso do Android
+3. reforçar o teste web do envelope mobile para explicitar esse campo
+4. validar com `pytest` focal e `jest` focal
+
+### Critério de pronto
+
+- o Android consegue reconstruir grants multiportal a partir de `tenant_access_policy`
+- o contrato web explicita a presença desse campo no login/bootstrap mobile
+- a melhoria preserva o comportamento atual quando `allowed_portals` já vier preenchido
+
+### `PKT-PRODUTO-MOBILE-CONTRACT-02` — Entry mode canônico preservado no estado local do app
+
+- `status`: concluído localmente em `2026-04-22`; o Android passou a preservar `entry_mode_preference`, `entry_mode_effective` e `entry_mode_reason` no `ChatState`, usando fallback do envelope principal quando o `laudoCard` vier nulo ou parcial; o pacote passou em `jest` focal do chat mobile
+
+### Objetivo
+
+- reduzir drift entre o contrato mobile já exposto pelo backend e o estado efetivamente usado pelo app
+- evitar perda silenciosa de `entry_mode_*` durante bootstrap, hidratação parcial e resposta de envio do chat
+- reforçar as decisões de UI que dependem do modo efetivo do caso sem exigir mudança de rota
+
+### Escopo
+
+- entra promoção de `entry_mode_*` para `android/src/features/chat/types.ts`
+- entra fallback no estado/consumidores do chat em `conversationStateHelpers`, `inspectorChatMessageController`, `buildThreadContextState` e `buildAuthenticatedLayoutSections`
+- entra cobertura dedicada em `conversationHelpers.test.ts`, `buildThreadContextState.test.ts`, `useInspectorChatController.entryMode.test.ts` e `caseLifecycle.test.ts`
+- não entra mudança de payload no backend
+- não entra redesign da experiência de entrada no app
+
+### Passos
+
+1. promover `entry_mode_*` para o `ChatState`
+2. preservar os campos vindos do envelope principal na normalização e na resposta do chat
+3. usar fallback top-level nas decisões de workflow e contexto visual da thread
+4. validar com `jest` focal e `git diff --check`
+
+### Critério de pronto
+
+- o app mantém `entry_mode_*` mesmo quando o `laudoCard` estiver ausente ou parcial
+- retomada guiada, workflow formal e contexto visual continuam corretos em hidratação parcial
+- a mudança não exige alteração no contrato HTTP do backend
+
+### `PKT-PRODUTO-MOBILE-HISTORY-01` — Radar do histórico com sinais operacionais de retomada
+
+- `status`: concluído localmente em `2026-04-22`; o drawer de histórico do Android passou a resumir também casos guiados e reemissões recomendadas no card “Radar da operação”, aproveitando sinais já presentes no contrato dos cards e sem mudar backend; o pacote passou em `jest` focal do histórico/layout
+
+### Objetivo
+
+- aumentar o valor operacional do histórico na retomada de caso no mobile
+- destacar, já no resumo lateral, quantos casos estão em coleta guiada e quantos pedem reemissão
+- reutilizar sinais canônicos já presentes nos cards do histórico sem ampliar payload ou regra de domínio
+
+### Escopo
+
+- entra agregação de `entry_mode_effective` e `official_issue_summary.primary_pdf_diverged` no resumo de `android/src/features/history/HistoryDrawerPanel.tsx`
+- entra enriquecimento do texto de busca com esses sinais quando houver match relevante
+- entra cobertura dedicada em `android/src/features/history/HistoryDrawerPanel.test.tsx`
+- não entra mudança de backend
+- não entra redesign estrutural do histórico
+
+### Passos
+
+1. agregar sinais operacionais já presentes nos cards do histórico
+2. exibir pills/resumo textual para guiados e reemissões recomendadas
+3. validar com `jest` focal do histórico/layout e `git diff --check`
+
+### Critério de pronto
+
+- o “Radar da operação” do histórico passa a resumir guiados e reemissões quando existirem
+- a busca do histórico também aproveita esses sinais sem perder a leitura atual
+- a melhoria não altera contrato HTTP nem classificação canônica do lifecycle
+
+### `PKT-PRODUTO-MOBILE-OFFLINE-01` — Resumo operacional mais acionável da fila offline
+
+- `status`: concluído localmente em `2026-04-22`; o resumo da fila offline no Android passou a priorizar impacto operacional real, destacando criação de caso, finalização e respostas à mesa antes do detalhe técnico de pronto/falha/backoff; o pacote passou em `jest` focal de fila, derived state, modais e settings
+
+### Objetivo
+
+- tornar a fila offline mais útil para retomada e priorização em campo
+- reduzir o texto genérico de “envios pendentes” quando a fila na prática concentra criação de caso, finalização ou resposta técnica
+- reaproveitar a mesma leitura curta em chat, modais e configurações sem duplicar lógica
+
+### Escopo
+
+- entra helper de resumo operacional em `android/src/features/offline/offlineQueueHelpers.ts`
+- entra reapontamento de `buildInspectorBaseDerivedStateSections.ts` para usar esse resumo compartilhado
+- entra cobertura dedicada em `offlineQueueHelpers.test.ts` e reforço no teste do derived state
+- não entra mudança de backend
+- não entra redesign da UI da fila offline
+
+### Passos
+
+1. classificar a fila por impacto operacional principal
+2. combinar esse impacto com o estado técnico atual da fila
+3. reaproveitar o resumo em derived state já consumido por thread, modais e settings
+4. validar com `jest` focal e `git diff --check`
+
+### Critério de pronto
+
+- o app deixa de resumir a fila só como “N envios pendentes” quando houver impacto mais relevante para o operador
+- criação de caso, finalização e resposta à mesa aparecem explicitamente no resumo curto
+- a melhoria preserva a leitura de falha, pronto para reenvio e backoff
+
+### `PKT-PRODUTO-MOBILE-FINALIZATION-01` — Bloqueios de emissão mais legíveis no fechamento
+
+- `status`: concluído localmente em `2026-04-22`; a finalização do caso e o quality gate do Android passaram a resumir a composição dos bloqueios de emissão com mais clareza, diferenciando bloqueios documentais, pendências do pré-laudo e pontos de atenção sem alterar a lógica de aprovação; o pacote passou em `jest` focal do fluxo de fechamento
+
+### Objetivo
+
+- deixar mais clara a resposta para “o que está segurando a emissão agora”
+- reduzir leitura opaca de contadores genéricos no fechamento do caso
+- reaproveitar os contadores já existentes no `reportPackSummary` e no `reviewPackage`
+
+### Escopo
+
+- entra breakdown curto dos bloqueios em `threadContextFinalization.ts`
+- entra narrativa de bloqueio no `QualityGateModal`/`QualityGateModalSections`
+- entra cobertura dedicada em `QualityGateModal.test.tsx` e reforço em `buildThreadContextState.test.ts`
+- não entra mudança de backend
+- não entra redesign do fluxo de quality gate
+
+### Passos
+
+1. compor o resumo curto dos bloqueios do fechamento
+2. exibir esse breakdown no card de finalização e no quality gate
+3. validar com `jest` focal e `git diff --check`
+
+### Critério de pronto
+
+- o fechamento do caso passa a mostrar composição legível dos bloqueios
+- quality gate e card final conversam na mesma linguagem de priorização
+- a melhoria não altera regras de emissão nem contratos HTTP
+
+### `PKT-PRODUTO-MOBILE-ACTIVITY-01` — Central de atividade com priorização operacional
+
+- `status`: concluído localmente em `2026-04-22`; a central de atividade do Android passou a priorizar alertas críticos e eventos de mesa acima de status comuns, além de mostrar um rótulo curto de categoria operacional por item; o pacote passou em `jest` focal de helpers, modal e controller
+
+### Objetivo
+
+- transformar a central de atividade em uma fila de atenção real, não só em uma lista cronológica
+- destacar primeiro o que exige ação do inspetor
+- tornar cada item mais legível com categoria curta e destino explícito
+
+### Escopo
+
+- entra priorização das notificações em `android/src/features/activity/activityNotificationHelpers.ts`
+- entra rótulo de categoria e hint de destino na `ActivityCenterModal`
+- entra cobertura dedicada em `activityNotificationHelpers.test.ts` e `OperationalModals.test.tsx`
+- não entra mudança de backend
+- não entra novo tipo de evento
+
+### Passos
+
+1. ordenar notificações por urgência operacional
+2. exibir categoria curta e hint de abertura por item
+3. validar com `jest` focal e `git diff --check`
+
+### Critério de pronto
+
+- a central de atividade deixa de depender só da ordenação por tempo
+- alertas críticos e reaberturas da mesa sobem na lista
+- cada item comunica categoria e destino com leitura mais rápida

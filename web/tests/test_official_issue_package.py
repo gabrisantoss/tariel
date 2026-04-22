@@ -576,6 +576,25 @@ def test_emitir_oficialmente_transacional_congela_bundle_e_reaproveita_registro(
             assert segunda["download_storage_path"] == caminho_congelado
 
             laudo.reaberto_em = datetime.now(timezone.utc)
+            laudo.report_pack_draft_json = {
+                **dict(laudo.report_pack_draft_json or {}),
+                "reopen_issued_document_history": [
+                    {
+                        "reopened_at": datetime.now(timezone.utc).isoformat(),
+                        "file_name": "laudo_nr13_emitido.pdf",
+                        "issued_document_policy": "hide_from_case",
+                        "visible_in_active_case": False,
+                        "internal_learning_candidate": True,
+                        "pdf_artifact": {
+                            "storage_version": "v0003",
+                            "storage_version_number": 3,
+                            "storage_path": str(caminho_pdf_emitido),
+                            "sha256": hashlib.sha256(payload_pdf_emitido).hexdigest(),
+                            "source": "storage_scan",
+                        },
+                    }
+                ],
+            }
             banco.flush()
 
             _anexo_pack_reaberto, emissao_reaberta = build_official_issue_package(
@@ -590,6 +609,10 @@ def test_emitir_oficialmente_transacional_congela_bundle_e_reaproveita_registro(
             assert emissao_reaberta["status_visual_label"] == "Devolvido para correcao / Responsavel: campo"
             assert emissao_reaberta["audit_trail"][0]["event_key"] == "official_issue_record"
             assert emissao_reaberta["audit_trail"][0]["status"] == "attention"
+            assert any(
+                item["event_key"] == "reopened_issued_document"
+                for item in emissao_reaberta["audit_trail"]
+            )
             assert {item["code"] for item in emissao_reaberta["blockers"]} >= {"review_not_approved"}
 
             with pytest.raises(ValueError, match="aprovação governada"):

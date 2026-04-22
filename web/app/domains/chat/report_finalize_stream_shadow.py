@@ -10,11 +10,14 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.domains.chat.app_context import logger
-from app.domains.chat.catalog_pdf_templates import materialize_catalog_payload_for_laudo
+from app.domains.chat.catalog_pdf_templates import (
+    materialize_catalog_payload_for_laudo,
+    persist_case_instance_payload_for_laudo,
+)
 from app.domains.chat.core_helpers import agora_utc, evento_sse
 from app.domains.chat.gate_helpers import garantir_gate_qualidade_laudo
 from app.domains.chat.ia_runtime import obter_cliente_ia_ativo
-from app.domains.chat.laudo_service import _avaliar_gate_documental_finalizacao
+from app.domains.chat.laudo_workflow_support import avaliar_gate_documental_finalizacao
 from app.domains.chat.laudo_state_helpers import (
     aplicar_finalizacao_inspetor_ao_laudo,
     serializar_card_laudo,
@@ -177,7 +180,10 @@ async def processar_finalizacao_stream_documental(
                 dados_imagem=dados_imagem_payload,
                 texto_documento=texto_documento,
             )
-            laudo.dados_formulario = dados_json
+            persist_case_instance_payload_for_laudo(
+                laudo=laudo,
+                source_payload=dados_json if isinstance(dados_json, dict) else None,
+            )
         except Exception:
             logger.error(
                 "Falha ao gerar JSON estruturado do template %s.",
@@ -222,7 +228,7 @@ async def processar_finalizacao_stream_documental(
     hard_gate_result = None
     if shadow_scope_enabled:
         try:
-            _, hard_gate_result = _avaliar_gate_documental_finalizacao(
+            _, hard_gate_result = avaliar_gate_documental_finalizacao(
                 request=request,
                 usuario=usuario,
                 banco=banco,

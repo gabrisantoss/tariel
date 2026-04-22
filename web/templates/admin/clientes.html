@@ -218,6 +218,42 @@
                 <span>{{ _paginacao.get("total_items", 0) | int }} empresas encontradas</span>
             </div>
 
+            <section class="tenant-triage-strip" aria-label="Triagem executiva da carteira">
+                <article class="tenant-triage-card">
+                    <div class="tenant-triage-card__header">
+                        <small>Bloqueios</small>
+                        <span class="badge {% if _totais.get('bloqueados', 0) | int > 0 %}critico{% else %}conforme{% endif %}">
+                            {{ 'Ação imediata' if _totais.get('bloqueados', 0) | int > 0 else 'Sem bloqueio' }}
+                        </span>
+                    </div>
+                    <strong>{{ _totais.get("bloqueados", 0) | int }}</strong>
+                    <span>tenants com acesso suspenso e dependentes de revisão explícita.</span>
+                    <a href="{{ request.url.include_query_params(status='bloqueado', pagina=1) }}" class="link-acao-tabela">Filtrar bloqueios</a>
+                </article>
+                <article class="tenant-triage-card">
+                    <div class="tenant-triage-card__header">
+                        <small>Alertas</small>
+                        <span class="badge {% if _totais.get('alerta', 0) | int > 0 %}atencao{% else %}conforme{% endif %}">
+                            {{ 'Acompanhamento' if _totais.get('alerta', 0) | int > 0 else 'Sem alerta' }}
+                        </span>
+                    </div>
+                    <strong>{{ _totais.get("alerta", 0) | int }}</strong>
+                    <span>empresas com sinal operacional que merece follow-up antes de virar incidente.</span>
+                    <a href="{{ request.url.include_query_params(saude='alerta', pagina=1) }}" class="link-acao-tabela">Filtrar alertas</a>
+                </article>
+                <article class="tenant-triage-card">
+                    <div class="tenant-triage-card__header">
+                        <small>Sem atividade</small>
+                        <span class="badge {% if _totais.get('sem_atividade', 0) | int > 0 %}info{% else %}conforme{% endif %}">
+                            {{ 'Reativação' if _totais.get('sem_atividade', 0) | int > 0 else 'Uso ativo' }}
+                        </span>
+                    </div>
+                    <strong>{{ _totais.get("sem_atividade", 0) | int }}</strong>
+                    <span>tenants pedindo retomada, onboarding ou leitura comercial antes de esfriar o uso.</span>
+                    <a href="{{ request.url.include_query_params(atividade='sem_atividade', pagina=1) }}" class="link-acao-tabela">Filtrar inativos</a>
+                </article>
+            </section>
+
             <div class="box-tabela">
                 <table class="tabela-admin clientes-tabela" aria-label="Lista de empresas assinantes">
                     <thead>
@@ -235,12 +271,58 @@
                     <tbody>
                         {% for c in clientes %}
                         {% set _bloqueado = c.status_value == 'bloqueado' %}
-                        <tr>
+                        {% set _saude_badge = c.saude_badge_class | default('', true) %}
+                        {% set _uso_label_lower = c.uso_label | default('', true) | lower %}
+                        {% set _ultimo_acesso_lower = c.ultimo_acesso_label | default('', true) | lower %}
+                        {% set _tenant_moment_key = 'tenant_stable' %}
+                        {% set _tenant_moment_label = 'Operação estável' %}
+                        {% set _tenant_moment_detail = 'Empresa com acesso ativo e sem sinal operacional mais forte no recorte atual.' %}
+                        {% set _tenant_moment_badge = 'conforme' %}
+                        {% set _tenant_owner_label = 'Admin-cliente' %}
+                        {% if _bloqueado %}
+                        {% set _tenant_moment_key = 'tenant_blocked' %}
+                        {% set _tenant_moment_label = 'Tenant bloqueado' %}
+                        {% set _tenant_moment_detail = 'Acesso suspenso até revisão administrativa explícita do bloqueio.' %}
+                        {% set _tenant_moment_badge = 'critico' %}
+                        {% set _tenant_owner_label = 'Admin-CEO' %}
+                        {% elif _saude_badge == 'critico' %}
+                        {% set _tenant_moment_key = 'tenant_critical' %}
+                        {% set _tenant_moment_label = 'Risco operacional' %}
+                        {% set _tenant_moment_detail = c.saude_razao | default('A operação exige intervenção administrativa prioritária.', true) %}
+                        {% set _tenant_moment_badge = 'critico' %}
+                        {% set _tenant_owner_label = 'Admin-CEO + Admin-cliente' %}
+                        {% elif _saude_badge in ['atencao', 'info'] %}
+                        {% set _tenant_moment_key = 'tenant_follow_up' %}
+                        {% set _tenant_moment_label = 'Acompanhamento ativo' %}
+                        {% set _tenant_moment_detail = c.saude_razao | default('Há sinais que pedem acompanhamento, mas sem suspensão imediata da operação.', true) %}
+                        {% set _tenant_moment_badge = 'atencao' %}
+                        {% set _tenant_owner_label = 'Admin-cliente + suporte' %}
+                        {% elif 'sem atividade' in _uso_label_lower or 'sem atividade' in _ultimo_acesso_lower or 'nenhum acesso' in _ultimo_acesso_lower or 'nunca' in _ultimo_acesso_lower %}
+                        {% set _tenant_moment_key = 'tenant_idle' %}
+                        {% set _tenant_moment_label = 'Tenant ocioso' %}
+                        {% set _tenant_moment_detail = 'Sem atividade recente relevante; o foco é reativação, onboarding ou retomada da rotina.' %}
+                        {% set _tenant_moment_badge = 'info' %}
+                        {% elif (c.sessoes_ativas_total | int) > 0 %}
+                        {% set _tenant_moment_key = 'tenant_live' %}
+                        {% set _tenant_moment_label = 'Operação em curso' %}
+                        {% set _tenant_moment_detail = 'Há sessão ativa no tenant e o portal está em uso neste recorte.' %}
+                        {% set _tenant_moment_badge = 'conforme' %}
+                        {% elif (c.usuarios_total | int) <= 0 %}
+                        {% set _tenant_moment_key = 'tenant_onboarding' %}
+                        {% set _tenant_moment_label = 'Onboarding estrutural' %}
+                        {% set _tenant_moment_detail = 'Tenant provisionado sem equipe materializada; o próximo passo é fechar a ativação operacional.' %}
+                        {% set _tenant_moment_badge = 'info' %}
+                        {% endif %}
+                        <tr data-tenant-flow-summary="{{ _tenant_moment_key | e }}">
                             <td class="empresa-cell">
                                 <strong>{{ c.nome_fantasia | e }}</strong>
                                 <div class="meta-stack">
                                     <span class="empresa-codigo">Código {{ c.empresa_id | int }}</span>
                                     <span>CNPJ {{ c.cnpj | e }}</span>
+                                    <span class="tenant-flow-summary">
+                                        <span class="badge {{ _tenant_moment_badge | e }}">Momento canônico</span>
+                                        {{ _tenant_moment_label | e }}
+                                    </span>
                                 </div>
                             </td>
                             <td>
@@ -263,6 +345,8 @@
                                 <div class="uso-stack">
                                     <strong>{{ c.uso_label | e }}</strong>
                                     <span class="meta-stack">{{ c.sessoes_ativas_total | int }} sessões ativas</span>
+                                    <span class="tenant-flow-summary__detail">Owner {{ _tenant_owner_label | e }}</span>
+                                    <span class="tenant-flow-summary__detail">{{ _tenant_moment_detail | e }}</span>
                                 </div>
                             </td>
                             <td>{{ c.ultimo_acesso_label | e }}</td>

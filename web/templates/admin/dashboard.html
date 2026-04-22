@@ -38,6 +38,44 @@
     {% set _governanca = dados.governance_rollup | default({}) %}
     {% set _fila_calibracao = dados.calibration_queue_rollup | default({}) %}
     {% set _escala_comercial = dados.commercial_scale_rollup | default({}) %}
+    {% set _clientes_dashboard = dados.clientes | default([]) %}
+    {% set _platform_moment_key = 'operacao_estavel' %}
+    {% set _platform_moment_label = 'Operação estável' %}
+    {% set _platform_moment_detail = 'Governança ativa com carteira distribuída e sem fila crítica dominante no momento.' %}
+    {% set _platform_moment_badge = 'conforme' %}
+    {% set _platform_owner_label = 'Admin-CEO' %}
+    {% set _tenants_bloqueados_dashboard = namespace(total=0) %}
+    {% for cliente in _clientes_dashboard %}
+    {% if cliente.status_bloqueio %}
+    {% set _tenants_bloqueados_dashboard.total = _tenants_bloqueados_dashboard.total + 1 %}
+    {% endif %}
+    {% endfor %}
+    {% set _tenants_sem_governanca = _qtd_clientes - (_governanca.tenant_count | default(0) | int) %}
+    {% if _tenants_sem_governanca < 0 %}
+    {% set _tenants_sem_governanca = 0 %}
+    {% endif %}
+    {% if (_fila_calibracao.queue_count | default(0) | int) > 0 %}
+    {% set _platform_moment_key = 'calibracao_prioritaria' %}
+    {% set _platform_moment_label = 'Calibração prioritária' %}
+    {% set _platform_moment_detail = 'Famílias com material real acionável pedem rodada operacional de calibração antes de ampliar rollout.' %}
+    {% set _platform_moment_badge = 'atencao' %}
+    {% set _platform_owner_label = 'Admin-CEO + catálogo' %}
+    {% elif (_governanca.tenant_count | default(0) | int) <= 0 %}
+    {% set _platform_moment_key = 'governanca_vazia' %}
+    {% set _platform_moment_label = 'Carteira ainda vazia' %}
+    {% set _platform_moment_detail = 'A plataforma ainda não materializou tenants com regra ativa suficiente para leitura operacional contínua.' %}
+    {% set _platform_moment_badge = 'info' %}
+    {% elif (_governanca.active_release_count | default(0) | int) <= 0 %}
+    {% set _platform_moment_key = 'governanca_sem_release' %}
+    {% set _platform_moment_label = 'Governança sem liberação ativa' %}
+    {% set _platform_moment_detail = 'Existem empresas no plano, mas a malha oficial de famílias e liberações ainda não domina a operação.' %}
+    {% set _platform_moment_badge = 'atencao' %}
+    {% elif (_escala_comercial.release_channels | default([])) %}
+    {% set _platform_moment_key = 'expansao_governada' %}
+    {% set _platform_moment_label = 'Expansão governada' %}
+    {% set _platform_moment_detail = 'Os pacotes já estão em circulação e o foco executivo é sustentar rollout, cobertura e postura de revisão.' %}
+    {% set _platform_moment_badge = 'conforme' %}
+    {% endif %}
 
     <div class="admin-layout">
         <aside class="sidebar" aria-label="Menu administrativo">
@@ -167,6 +205,23 @@
                             <small>{{ _governanca.tenant_count | default(0) | int }} empresas com regra ativa</small>
                         </div>
                     </div>
+                    <div class="governance-signals" data-platform-flow-summary="{{ _platform_moment_key | e }}">
+                        <article class="governance-signal governance-signal--focus">
+                            <small>Momento canônico da plataforma</small>
+                            <strong>{{ _platform_moment_label | e }}</strong>
+                            <span>{{ _platform_moment_detail | e }}</span>
+                        </article>
+                        <article class="governance-signal">
+                            <small>Owner predominante</small>
+                            <strong>{{ _platform_owner_label | e }}</strong>
+                            <span>Leitura executiva alinhada com catálogo, governança e rollout comercial.</span>
+                        </article>
+                        <article class="governance-signal">
+                            <small>Fluxo dominante</small>
+                            <strong>{{ _platform_moment_key | replace('_', ' ') | title | e }}</strong>
+                            <span class="badge {{ _platform_moment_badge | e }}">Momento canônico</span>
+                        </article>
+                    </div>
                     <div class="governance-mode-cards">
                         {% for item in _governanca.tenant_strictest_modes | default([]) %}
                         <article class="governance-mode-card">
@@ -179,6 +234,42 @@
                         {% endfor %}
                     </div>
                 </div>
+            </section>
+
+            <section class="executive-priorities" aria-label="Prioridades executivas da plataforma">
+                <article class="executive-priority-card">
+                    <div class="executive-priority-card__header">
+                        <small>Prioridade imediata</small>
+                        <span class="badge {% if _tenants_bloqueados_dashboard.total > 0 %}critico{% else %}conforme{% endif %}">
+                            {{ 'Revisão urgente' if _tenants_bloqueados_dashboard.total > 0 else 'Sob controle' }}
+                        </span>
+                    </div>
+                    <strong>{{ _tenants_bloqueados_dashboard.total }}</strong>
+                    <span>tenants bloqueados no recorte atual da carteira monitorada.</span>
+                    <a href="/admin/clientes?status=bloqueado" class="link-acao-tabela">Abrir bloqueios</a>
+                </article>
+                <article class="executive-priority-card">
+                    <div class="executive-priority-card__header">
+                        <small>Fronteira de governança</small>
+                        <span class="badge {% if _tenants_sem_governanca > 0 %}atencao{% else %}conforme{% endif %}">
+                            {{ 'Cobertura parcial' if _tenants_sem_governanca > 0 else 'Cobertura ativa' }}
+                        </span>
+                    </div>
+                    <strong>{{ _tenants_sem_governanca }}</strong>
+                    <span>empresas ainda fora da malha ativa de governança e liberação oficial.</span>
+                    <a href="/admin/clientes" class="link-acao-tabela">Abrir carteira</a>
+                </article>
+                <article class="executive-priority-card">
+                    <div class="executive-priority-card__header">
+                        <small>Rollout e catálogo</small>
+                        <span class="badge {% if (_fila_calibracao.queue_count | default(0) | int) > 0 %}atencao{% else %}conforme{% endif %}">
+                            {{ 'Fila acionável' if (_fila_calibracao.queue_count | default(0) | int) > 0 else 'Sem fila crítica' }}
+                        </span>
+                    </div>
+                    <strong>{{ _fila_calibracao.queue_count | default(0) | int }}</strong>
+                    <span>famílias na fila de calibração pedindo priorização de material real e refinamento.</span>
+                    <a href="/admin/catalogo-laudos" class="link-acao-tabela">Abrir catálogo</a>
+                </article>
             </section>
 
             <section class="area-dados" aria-label="Análise de laudos e clientes">

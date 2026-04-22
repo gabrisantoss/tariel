@@ -348,6 +348,34 @@ def test_admin_cliente_respeita_governanca_de_casos_do_tenant(ambiente_critico) 
     assert resposta_responder_read_only.status_code == 403
 
 
+@pytest.mark.parametrize("rota_superficie", ["/cliente/chat", "/cliente/mesa"])
+def test_rotas_html_do_portal_cliente_recuam_para_admin_quando_superficie_esta_bloqueada(
+    ambiente_critico,
+    rota_superficie: str,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "case_visibility_mode": "summary_only",
+            "case_action_mode": "read_only",
+        }
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta = client.get(rota_superficie)
+
+    assert resposta.status_code == 200
+    assert 'data-cliente-tab-inicial="admin"' in resposta.text
+    assert 'data-cliente-tab-inicial="chat"' not in resposta.text
+    assert 'data-cliente-tab-inicial="mesa"' not in resposta.text
+
+
 def test_admin_cliente_nao_altera_plano_diretamente_e_preserva_outra_empresa(ambiente_critico) -> None:
     client = ambiente_critico["client"]
     SessionLocal = ambiente_critico["SessionLocal"]

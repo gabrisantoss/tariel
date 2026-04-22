@@ -468,9 +468,12 @@
                 ctx.actions.renderizarMesaCardWorkspace?.();
                 ctx.actions.renderizarWorkspacePublicVerification?.();
                 ctx.actions.renderizarWorkspaceOfficialIssue?.();
+                ctx.actions.renderizarWorkspaceReadiness?.();
+                ctx.actions.renderizarPainelCorrecoesWorkspace?.();
                 ctx.actions.renderizarResumoExecutivoWorkspace?.();
                 ctx.actions.renderizarGovernancaEntradaInspetor?.();
                 ctx.actions.renderizarGovernancaHistoricoWorkspace?.();
+                ctx.actions.renderizarReadinessHistoricoWorkspace?.();
                 ctx.actions.renderizarResumoNavegacaoWorkspace?.();
                 ctx.actions.filtrarTimelineWorkspace?.();
             } finally {

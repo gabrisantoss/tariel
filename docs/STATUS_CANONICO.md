@@ -53,6 +53,7 @@ Ele está na fase de:
 - o caso pode operar em `análise livre`, `laudo guiado` e `laudo com mesa`;
 - o ownership do caso é híbrido por estado;
 - em fluxo guiado, a correção deve acontecer por checkpoint e campos, sem um segundo chat redundante;
+- quando a `Mesa` estiver ausente por política do tenant, o inspetor web deve usar uma aba dedicada de `Correções`, separada do `Chat`, com edição estruturada por bloco e assistente textual apenas como apoio;
 - a aprovação final humana continua obrigatória.
 - a IA pode preencher pré-laudo e sugerir correções, mas sua atuação principal fica na trilha interna do caso;
 - se um humano insistir em manter algo fora do padrão da NR ou do template, o sistema deve alertar a divergência, mostrar a orientação correta e pedir confirmação explícita;

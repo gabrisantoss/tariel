@@ -892,9 +892,28 @@ def _deep_fill_missing_dict(base: dict[str, Any], fallback: dict[str, Any]) -> d
         if isinstance(current, dict) and isinstance(value, dict):
             _deep_fill_missing_dict(current, value)
             continue
-        if key in base:
+        if current not in (None, "", []):
             continue
         base[key] = deepcopy(value) if isinstance(value, (dict, list)) else value
+    return base
+
+
+def _deep_fill_missing_selected_blocks(
+    base: dict[str, Any],
+    fallback: dict[str, Any],
+    *,
+    block_keys: tuple[str, ...],
+) -> dict[str, Any]:
+    for key in block_keys:
+        fallback_value = fallback.get(key)
+        if fallback_value is None:
+            continue
+        base_value = base.get(key)
+        if isinstance(base_value, dict) and isinstance(fallback_value, dict):
+            _deep_fill_missing_dict(base_value, fallback_value)
+            continue
+        if key not in base:
+            base[key] = deepcopy(fallback_value) if isinstance(fallback_value, (dict, list)) else fallback_value
     return base
 
 
@@ -1237,6 +1256,77 @@ def _analysis_basis_internal_summary(analysis_basis: dict[str, Any] | None) -> s
     )
 
 
+def _has_public_photo_register_support(document_contract: dict[str, Any] | None) -> bool:
+    governance = document_contract.get("evidence_governance") if isinstance(document_contract, dict) else None
+    return bool((governance or {}).get("supports_public_photo_register"))
+
+
+def _normalize_selected_photo_record(item: Any) -> dict[str, str] | None:
+    if not isinstance(item, dict):
+        return None
+    title = _pick_first_text(item.get("titulo"), item.get("title"), item.get("label"))
+    caption = _pick_first_text(item.get("legenda"), item.get("caption"), item.get("descricao"), item.get("description"))
+    reference = _pick_first_text(
+        item.get("referencia_anexo"),
+        item.get("reference"),
+        item.get("original_name"),
+        item.get("resolved_evidence_id"),
+    )
+    if not any((title, caption, reference)):
+        return None
+    return {
+        "titulo": title or "Registro fotografico",
+        "legenda": caption or "",
+        "referencia_anexo": reference or "",
+    }
+
+
+def _extract_selected_issued_photo_records(
+    *,
+    source_payload: dict[str, Any] | None,
+    analysis_basis: dict[str, Any] | None,
+    document_contract: dict[str, Any] | None,
+) -> list[dict[str, str]]:
+    if not _has_public_photo_register_support(document_contract):
+        return []
+    if _value_by_path(source_payload or {}, "registros_fotograficos") not in (None, [], {}):
+        return []
+    if not isinstance(analysis_basis, dict):
+        return []
+
+    explicit_selected = (
+        analysis_basis.get("selected_photo_evidence")
+        or analysis_basis.get("issued_photo_evidence")
+        or analysis_basis.get("final_pdf_photo_evidence")
+    )
+    if not isinstance(explicit_selected, list):
+        return []
+
+    records: list[dict[str, str]] = []
+    for item in explicit_selected:
+        normalized = _normalize_selected_photo_record(item)
+        if normalized is None:
+            continue
+        records.append(normalized)
+    return records[:8]
+
+
+def _summarize_selected_issued_photo_records(records: list[dict[str, str]]) -> str | None:
+    if not records:
+        return None
+    parts: list[str] = []
+    for item in records[:3]:
+        label = _pick_first_text(item.get("titulo"), item.get("legenda"), item.get("referencia_anexo"))
+        reference = _pick_first_text(item.get("referencia_anexo"))
+        if label and reference and label != reference:
+            parts.append(f"{label}: {reference}")
+            continue
+        if label:
+            parts.append(label)
+    summary = "; ".join(parts)
+    return summary or f"{len(records)} registro(s) fotografico(s) selecionado(s) para emissao."
+
+
 def _normalize_execution_mode(value: Any) -> str | None:
     text = _normalize_signal_text(value)
     if not text:
@@ -1309,6 +1399,8 @@ def build_catalog_pdf_payload(
         payload["mesa_review"] = mesa_review
 
     location_hint = _pick_first_text(
+        _value_by_path(existing_payload or {}, "identificacao.localizacao"),
+        _value_by_path(existing_payload or {}, "objeto_inspecao.localizacao"),
         _value_by_path(existing_payload or {}, "informacoes_gerais.local_inspecao"),
         _value_by_path(existing_payload or {}, "local_inspecao"),
         _value_by_path(existing_payload or {}, "unidade"),
@@ -1390,6 +1482,11 @@ def build_catalog_pdf_payload(
         document_control=document_control,
         render_mode=render_mode_norm,
     )
+    selected_issued_photo_records = _extract_selected_issued_photo_records(
+        source_payload=existing_payload if isinstance(existing_payload, dict) else None,
+        analysis_basis=analysis_basis,
+        document_contract=document_contract,
+    )
     if analysis_basis is not None:
         payload["analysis_basis"] = analysis_basis
         payload["delivery_package"]["analysis_basis_available"] = True
@@ -1464,6 +1561,52 @@ def build_catalog_pdf_payload(
         recommendation_hint=recommendation_hint,
         title_hint=title_hint,
     )
+    existing_photo_register = _value_by_path(payload, "registros_fotograficos")
+    if selected_issued_photo_records and (
+        existing_photo_register in (None, [], {})
+        or (
+            isinstance(existing_photo_register, dict)
+            and not _has_meaningful_payload_content(existing_photo_register)
+        )
+    ):
+        payload["registros_fotograficos"] = deepcopy(selected_issued_photo_records)
+    if isinstance(existing_payload, dict) and not _looks_like_canonical_payload(existing_payload, family_key=family_key):
+        _deep_fill_missing_selected_blocks(
+            payload,
+            existing_payload,
+            block_keys=(
+                "identificacao",
+                "escopo_servico",
+                "execucao_servico",
+                "documentacao_e_registros",
+                "evidencias_e_anexos",
+                "nao_conformidades",
+                "nao_conformidades_ou_lacunas",
+                "recomendacoes",
+                "conclusao",
+            ),
+        )
+    final_photo_register = _value_by_path(payload, "registros_fotograficos")
+    payload["delivery_package"]["issued_photo_evidence_available"] = _has_meaningful_payload_content(
+        final_photo_register
+    )
+    if isinstance(final_photo_register, list) and final_photo_register:
+        payload["delivery_package"]["issued_photo_evidence_source"] = (
+            "analysis_basis_selected"
+            if selected_issued_photo_records and final_photo_register == selected_issued_photo_records
+            else "canonical_payload"
+        )
+        payload["document_projection"]["issued_photo_summary"] = _summarize_selected_issued_photo_records(
+            [
+                item
+                for item in final_photo_register
+                if isinstance(item, dict)
+            ]
+        )
+    elif isinstance(final_photo_register, dict) and _has_meaningful_payload_content(final_photo_register):
+        payload["delivery_package"]["issued_photo_evidence_source"] = "canonical_payload"
+    else:
+        payload["delivery_package"]["issued_photo_evidence_source"] = "absent"
 
     if render_mode_norm == RENDER_MODE_CLIENT_PDF_FILLED:
         _prune_empty_client_pdf_blocks(payload)
@@ -1748,10 +1891,11 @@ def should_use_rich_runtime_preview_for_pdf_template(
         payload=payload,
         render_mode=render_mode_norm,
     )
-    return bool(view_model.get("modeled"))
+    universal_document = build_universal_document_editor(view_model)
+    return universal_document is not None
 
 
-def materialize_catalog_payload_for_laudo(
+def materialize_catalog_instance_payload_for_laudo(
     *,
     laudo: Laudo | None,
     source_payload: dict[str, Any] | None = None,
@@ -1813,9 +1957,90 @@ def materialize_catalog_payload_for_laudo(
     )
     if isinstance(existing_payload, dict):
         _deep_fill_missing_dict(payload, existing_payload)
-    if isinstance(laudo, Laudo):
+    if laudo is not None:
         laudo.dados_formulario = payload
     return payload
+
+
+def persist_case_instance_payload_for_laudo(
+    *,
+    laudo: Laudo | None,
+    source_payload: dict[str, Any] | None = None,
+    diagnostico: str = "",
+    inspetor: str = "",
+    empresa: str = "",
+    data: str = "",
+) -> dict[str, Any] | None:
+    if not isinstance(source_payload, dict):
+        if laudo is not None:
+            laudo.dados_formulario = None
+        return None
+
+    family_key = _normalize_catalog_family_key(
+        getattr(laudo, "catalog_family_key", None)
+        or (((_extract_catalog_snapshot(laudo) or {}).get("family") or {}).get("key"))
+    )
+    if family_key:
+        return materialize_catalog_instance_payload_for_laudo(
+            laudo=laudo,
+            source_payload=source_payload,
+            diagnostico=diagnostico,
+            inspetor=inspetor,
+            empresa=empresa,
+            data=data,
+        )
+
+    payload = deepcopy(source_payload)
+    if laudo is not None:
+        laudo.dados_formulario = payload
+    return payload
+
+
+def resolve_template_preview_payload(
+    *,
+    template_ref: ResolvedPdfTemplateRef,
+    source_payload: dict[str, Any] | None = None,
+    laudo: Laudo | None = None,
+    diagnostico: str = "",
+    inspetor: str = "",
+    empresa: str = "",
+    data: str = "",
+    render_mode: str | None = None,
+) -> dict[str, Any]:
+    payload_base = deepcopy(source_payload) if isinstance(source_payload, dict) else {}
+    if not str(template_ref.family_key or "").strip():
+        return payload_base
+
+    payload = build_catalog_pdf_payload(
+        laudo=laudo,
+        template_ref=template_ref,
+        source_payload=payload_base,
+        diagnostico=diagnostico,
+        inspetor=inspetor,
+        empresa=empresa,
+        data=data,
+        render_mode=render_mode,
+    )
+    return payload if isinstance(payload, dict) else {}
+
+
+def materialize_catalog_payload_for_laudo(
+    *,
+    laudo: Laudo | None,
+    source_payload: dict[str, Any] | None = None,
+    diagnostico: str = "",
+    inspetor: str = "",
+    empresa: str = "",
+    data: str = "",
+) -> dict[str, Any] | None:
+    return materialize_catalog_instance_payload_for_laudo(
+        laudo=laudo,
+        source_payload=source_payload,
+        diagnostico=diagnostico,
+        inspetor=inspetor,
+        empresa=empresa,
+        data=data,
+    )
 
 
 __all__ = [
@@ -1825,6 +2050,9 @@ __all__ = [
     "RENDER_MODE_TEMPLATE_PREVIEW_BLANK",
     "build_catalog_pdf_payload",
     "capture_catalog_snapshot_for_laudo",
+    "persist_case_instance_payload_for_laudo",
+    "resolve_template_preview_payload",
+    "materialize_catalog_instance_payload_for_laudo",
     "materialize_runtime_document_editor_json",
     "materialize_runtime_style_json_for_pdf_template",
     "materialize_catalog_payload_for_laudo",

@@ -1,8 +1,44 @@
 (function attachTarielInspectorWorkspaceDeliveryFlow(global) {
     "use strict";
 
+    function montarDiagnosticoPreviewWorkspace(dependencies = {}) {
+        const diagnosticoAtual = String(global.TarielAPI?.obterUltimoDiagnosticoBruto?.() || "").trim();
+        if (diagnosticoAtual) {
+            return diagnosticoAtual;
+        }
+
+        const linhas = dependencies.coletarLinhasWorkspace?.() || [];
+        if (!linhas.length) {
+            return "";
+        }
+
+        const titulo = String(dependencies.estado?.workspaceVisualContext?.title || "Registro Técnico").trim();
+        const subtitulo = String(dependencies.estado?.workspaceVisualContext?.subtitle || "").trim();
+        const pendencias = Number(dependencies.estado?.qtdPendenciasAbertas || 0) || 0;
+        const evidencias = dependencies.contarEvidenciasWorkspace?.() || 0;
+        const blocos = [
+            `Registro Técnico: ${titulo}`,
+            subtitulo || "Sem subtítulo operacional disponível.",
+            `Evidências mapeadas: ${evidencias}`,
+            `Pendências abertas: ${pendencias}`,
+            "",
+            "Resumo auditável da sessão:",
+        ];
+
+        linhas.slice(-12).forEach((linha) => {
+            const meta = dependencies.extrairMetaLinhaWorkspace?.(linha) || {};
+            const resumo = String(meta.resumo || "").trim();
+            if (!resumo) return;
+
+            const prefixo = [meta.autor, meta.tempo].filter(Boolean).join(" • ");
+            blocos.push(`- ${prefixo ? `${prefixo}: ` : ""}${resumo}`);
+        });
+
+        return blocos.join("\n").trim();
+    }
+
     async function abrirPreviewWorkspace(dependencies = {}) {
-        const diagnostico = dependencies.montarDiagnosticoPreviewWorkspace?.();
+        const diagnostico = montarDiagnosticoPreviewWorkspace(dependencies);
         if (!diagnostico) {
             dependencies.mostrarToast?.(
                 "Ainda não há pré-visualização disponível para este laudo.",
@@ -109,5 +145,6 @@
     global.TarielInspectorWorkspaceDeliveryFlow = {
         abrirPreviewWorkspace,
         finalizarInspecao,
+        montarDiagnosticoPreviewWorkspace,
     };
 })(window);

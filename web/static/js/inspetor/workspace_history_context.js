@@ -83,8 +83,15 @@
         const escaparHtml = dependencies.escaparHtml || ((v) => String(v || ""));
         const resumoGovernanca = dependencies.construirResumoGovernancaHistoricoWorkspace?.() || {};
         const totalMensagensReais = Number(options?.totalMensagensReais || 0) || 0;
-        const acaoMesaHistorico = resumoGovernanca.visible
-            ? { action: "reissue", label: "Reemissão" }
+        const governancaActionKey = String(resumoGovernanca.actionKey || "").trim();
+        const atributoGovernancaHistorico = governancaActionKey
+            ? `data-history-governance="${escaparHtml(governancaActionKey)}"`
+            : "";
+        const acaoGovernancaHistorico = resumoGovernanca.visible && governancaActionKey
+            ? {
+                action: governancaActionKey,
+                label: String(resumoGovernanca.actionLabel || "").trim() || "Mesa",
+            }
             : { action: "mesa", label: "Mesa" };
 
         estado.historyRenderedItems = Array.isArray(itens) ? itens : [];
@@ -123,7 +130,7 @@
                     </header>
                     <div class="workspace-history-group__items" data-history-group-items>
                         ${grupo.itens.map((item) => `
-                            <article ${montarAtributosHistoricoWorkspace(item, dependencies)} ${resumoGovernanca.visible ? 'data-history-reissue="true"' : ""}>
+                            <article ${montarAtributosHistoricoWorkspace(item, dependencies)} ${atributoGovernancaHistorico}>
                                 <div class="workspace-history-card__icon" aria-hidden="true">
                                     <span class="material-symbols-rounded">${escaparHtml(item.icone)}</span>
                                 </div>
@@ -156,7 +163,7 @@
                                                 <summary>Mais</summary>
                                                 <div class="workspace-history-card__more-menu">
                                                     <button type="button" class="workspace-history-card__action" data-history-action="citar" data-history-index="${item.renderIndex}">Citar</button>
-                                                    <button type="button" class="workspace-history-card__action" data-history-action="${acaoMesaHistorico.action}" data-history-index="${item.renderIndex}">${acaoMesaHistorico.label}</button>
+                                                    <button type="button" class="workspace-history-card__action" data-history-action="${acaoGovernancaHistorico.action}" data-history-index="${item.renderIndex}">${acaoGovernancaHistorico.label}</button>
                                                 </div>
                                             </details>
                                         </div>
@@ -172,6 +179,154 @@
         if (totalMensagensReais === 0) {
             el.workspaceHistoryEmpty.hidden = false;
         }
+    }
+
+    function resetarFiltrosHistoricoWorkspace(dependencies = {}) {
+        const estado = dependencies.estado || {};
+        const el = dependencies.el || {};
+        estado.chatBuscaTermo = "";
+        estado.chatFiltroTimeline = "todos";
+        estado.historyTypeFilter = "todos";
+
+        if (el.chatThreadSearch) {
+            el.chatThreadSearch.value = "";
+        }
+
+        (el.chatFilterButtons || []).forEach((botao) => {
+            const ativo = String(botao.dataset.chatFilter || "") === "todos";
+            botao.setAttribute("aria-pressed", ativo ? "true" : "false");
+        });
+
+        (el.historyTypeFilterButtons || []).forEach((botao) => {
+            const ativo = String(botao.dataset.historyTypeFilter || "") === "todos";
+            botao.setAttribute("aria-pressed", ativo ? "true" : "false");
+        });
+    }
+
+    function obterRotuloFiltroAtorHistoricoWorkspace(filtro = "todos") {
+        if (filtro === "inspetor") return "Inspetor";
+        if (filtro === "ia") return "IA";
+        if (filtro === "mesa") return "Mesa";
+        if (filtro === "sistema") return "Sistema";
+        return "Todos os atores";
+    }
+
+    function obterRotuloFiltroTipoHistoricoWorkspace(filtro = "todos") {
+        if (filtro === "mensagens") return "Mensagens";
+        if (filtro === "eventos") return "Eventos";
+        if (filtro === "anexos") return "Anexos";
+        if (filtro === "decisoes") return "Decisões";
+        return "Todos os tipos";
+    }
+
+    function obterDescricaoFonteHistoricoWorkspace(dependencies = {}) {
+        const estado = dependencies.estado || {};
+        const canonicosEmEstado = Array.isArray(estado.historyCanonicalItems)
+            ? estado.historyCanonicalItems.length
+            : 0;
+        const viaApi = dependencies.obterHistoricoLaudoAtual?.();
+        const canonicosViaApi = Array.isArray(viaApi) ? viaApi.length : 0;
+
+        return (canonicosEmEstado > 0 || canonicosViaApi > 0)
+            ? "Histórico estruturado"
+            : "Registros transitórios";
+    }
+
+    function renderizarMetaHistoricoWorkspace(options = {}, dependencies = {}) {
+        const estado = dependencies.estado || {};
+        const el = dependencies.el || {};
+        const pluralizarChat = dependencies.pluralizarChat || ((n, a, b) => (n === 1 ? a : b));
+        const totalReal = Math.max(0, Number(options.totalCount ?? estado.historyRealCount ?? 0) || 0);
+        const totalFiltrado = Math.max(0, Number(options.filteredCount ?? estado.chatResultados ?? totalReal) || 0);
+        const filtroAtor = obterRotuloFiltroAtorHistoricoWorkspace(
+            dependencies.normalizarFiltroChat?.(estado.chatFiltroTimeline)
+        );
+        const filtroTipo = obterRotuloFiltroTipoHistoricoWorkspace(
+            dependencies.normalizarFiltroTipoHistorico?.(estado.historyTypeFilter)
+        );
+        const busca = String(estado.chatBuscaTermo || "").trim();
+        const partes = [];
+
+        if (filtroAtor !== "Todos os atores") {
+            partes.push(filtroAtor);
+        }
+        if (filtroTipo !== "Todos os tipos") {
+            partes.push(filtroTipo);
+        }
+        if (busca) {
+            partes.push(`Busca "${busca}"`);
+        }
+
+        if (el.workspaceHistorySource) {
+            el.workspaceHistorySource.textContent = obterDescricaoFonteHistoricoWorkspace(dependencies);
+        }
+        if (el.workspaceHistoryActiveFilter) {
+            el.workspaceHistoryActiveFilter.textContent = partes.length ? partes.join(" • ") : "Todos os registros";
+        }
+        if (el.workspaceHistoryTotal) {
+            el.workspaceHistoryTotal.textContent = `${totalReal} ${pluralizarChat(totalReal, "registro real", "registros reais")}`;
+        }
+        if (el.chatThreadResults && totalFiltrado > totalReal) {
+            el.chatThreadResults.textContent = `${totalReal} ${pluralizarChat(totalReal, "registro", "registros")}`;
+        }
+    }
+
+    function renderizarResultadosChatWorkspace(total = 0, dependencies = {}) {
+        const estado = dependencies.estado || {};
+        const el = dependencies.el || {};
+        const quantidade = Number(total || 0);
+        if (!el.chatThreadResults) return;
+
+        const tabAtual = dependencies.normalizarThreadTab?.(
+            dependencies.obterSnapshotEstadoInspectorAtual?.()?.threadTab
+        );
+        if (estado.workspaceStage === "assistant" && quantidade === 0) {
+            el.chatThreadResults.textContent = "Nova conversa";
+            renderizarMetaHistoricoWorkspace({ filteredCount: quantidade }, dependencies);
+            return;
+        }
+        if (tabAtual === "historico" && Number(estado.historyRealCount || 0) === 0) {
+            el.chatThreadResults.textContent = "Histórico vazio";
+            renderizarMetaHistoricoWorkspace({ filteredCount: quantidade }, dependencies);
+            return;
+        }
+        el.chatThreadResults.textContent = `${quantidade} ${dependencies.pluralizarChat?.(quantidade, "registro", "registros") || "registros"}`;
+        renderizarMetaHistoricoWorkspace({ filteredCount: quantidade }, dependencies);
+    }
+
+    function filtrarTimelineWorkspace(dependencies = {}) {
+        const estado = dependencies.estado || {};
+        const el = dependencies.el || {};
+        const termo = String(estado.chatBuscaTermo || "").trim().toLowerCase();
+        const filtro = dependencies.normalizarFiltroChat?.(estado.chatFiltroTimeline) || "todos";
+        const tipo = dependencies.normalizarFiltroTipoHistorico?.(estado.historyTypeFilter) || "todos";
+        const itens = dependencies.construirItensHistoricoWorkspace?.() || [];
+        const totalLinhasReais = itens.length;
+        const filtrados = itens.filter((item) => dependencies.itemHistoricoWorkspaceAtendeFiltros?.(
+            item,
+            {
+                termo,
+                ator: filtro,
+                tipo,
+            }
+        ) ?? true);
+
+        dependencies.sincronizarResumoHistoricoWorkspace?.({
+            totalMensagensReais: totalLinhasReais,
+        });
+        estado.chatResultados = filtrados.length;
+        renderizarResultadosChatWorkspace(filtrados.length, dependencies);
+        renderizarHistoricoWorkspace(filtrados, {
+            totalMensagensReais: totalLinhasReais,
+        }, dependencies);
+
+        const landingAssistenteAtivo = estado.workspaceStage === "assistant" && filtrados.length === 0;
+        if (el.workspaceAssistantLanding) {
+            el.workspaceAssistantLanding.hidden = !landingAssistenteAtivo;
+        }
+
+        dependencies.atualizarEmptyStateHonestoConversa?.();
+        dependencies.sincronizarInspectorScreen?.();
     }
 
     function obterChaveContextoFixadoWorkspace(dependencies = {}) {
@@ -390,15 +545,22 @@
         {
             carregarContextoFixadoWorkspace,
             copiarResumoContextoWorkspace,
+            filtrarTimelineWorkspace,
             fixarContextoWorkspace,
             limparContextoFixadoWorkspace,
             montarResumoContextoIAWorkspace,
+            obterDescricaoFonteHistoricoWorkspace,
             obterOperacaoWorkspace,
+            obterRotuloFiltroAtorHistoricoWorkspace,
+            obterRotuloFiltroTipoHistoricoWorkspace,
             obterResumoSinteseIAWorkspace,
             persistirContextoFixadoWorkspace,
+            renderizarMetaHistoricoWorkspace,
             removerContextoFixadoWorkspace,
             renderizarContextoIAWorkspace,
             renderizarHistoricoWorkspace,
+            renderizarResultadosChatWorkspace,
+            resetarFiltrosHistoricoWorkspace,
         }
     );
 })();

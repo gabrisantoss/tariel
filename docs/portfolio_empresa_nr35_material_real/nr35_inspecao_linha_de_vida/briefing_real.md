@@ -81,3 +81,9 @@ Usar material real da empresa para ajustar linguagem, estrutura efetiva, capa, c
 Nao adaptar o template final direto a partir de um PDF isolado. Primeiro fechar este pacote de coleta real, depois consolidar o blueprint/fill_reference e so entao revisar template e linguagem final.
 
 Descricao canonica da familia: Execucao do servico inspecao linha de vida no contexto da norma trabalho em altura, com consolidacao de evidencias, registros de campo ou base documental e conclusao tecnica auditavel.
+
+## Checkpoint de estrutura real
+
+- checklist estrutural consolidado em `checklist_estrutura_real.md`
+- a estrutura real ja pode ser tratada como referencia forte de contrato para `NR35`
+- proximo passo tecnico recomendado: alinhar schema da IA, report pack e `laudo_output` a esse checklist

@@ -88,6 +88,24 @@ class ReviewQueueCollaborationSummaryPayload(BaseModel):
     requires_reviewer_attention: bool = False
 
 
+class ReviewQueueIssuedDocumentReopenSummaryPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    has_history: bool = False
+    file_name: str | None = None
+    issued_document_policy: str | None = None
+    visible_in_active_case: bool = False
+    internal_learning_candidate: bool = False
+    reopened_at: str | None = None
+    source_kind: str | None = None
+    actor_user_id: int | None = None
+    storage_version: str | None = None
+    storage_version_number: int | None = None
+    storage_path: str | None = None
+    sha256_present: bool = False
+    pdf_artifact_source: str | None = None
+
+
 class ReviewQueueItemPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -104,6 +122,7 @@ class ReviewQueueItemPayload(BaseModel):
     pendencias_abertas: int = 0
     aprendizados_pendentes: int = 0
     collaboration_summary: ReviewQueueCollaborationSummaryPayload | None = None
+    issued_document_reopen_summary: ReviewQueueIssuedDocumentReopenSummaryPayload | None = None
     tempo_em_campo: str = ""
     tempo_em_campo_status: str = ""
     fila_operacional: str
@@ -177,6 +196,11 @@ def _serialize_queue_item(
         collaboration_summary=(
             ReviewQueueCollaborationSummaryPayload.model_validate(collaboration_summary)
             if isinstance(collaboration_summary, dict)
+            else None
+        ),
+        issued_document_reopen_summary=(
+            ReviewQueueIssuedDocumentReopenSummaryPayload.model_validate(item.get("issued_document_reopen_summary"))
+            if isinstance(item.get("issued_document_reopen_summary"), dict)
             else None
         ),
         tempo_em_campo=str(item.get("tempo_em_campo") or ""),

@@ -196,6 +196,100 @@
             return laudoAllowedSurfaceActions(laudo).includes(texto(actionKey).trim());
         }
 
+        function resumirMomentoCanonicoMesa(laudo) {
+            const lifecycleStatus = texto(laudo?.case_lifecycle_status).trim().toLowerCase();
+            const ownerRole = texto(laudo?.active_owner_role).trim().toLowerCase();
+            const statusVisualLabel = texto(
+                laudo?.status_visual_label
+                || laudo?.status_revisao
+                || laudo?.status_card_label
+                || "Em revisao"
+            ).trim();
+
+            const base = {
+                key: "case_monitoring",
+                label: "Monitorar caso",
+                detail: "Caso em acompanhamento operacional.",
+                tone: "aguardando",
+                lifecycleLabel: humanizarLifecycleStatus(lifecycleStatus),
+                ownerLabel: humanizarOwnerRole(ownerRole),
+                statusVisualLabel,
+            };
+
+            if (laudoHasSurfaceAction(laudo, "mesa_approve") || laudoHasSurfaceAction(laudo, "mesa_return")) {
+                return {
+                    ...base,
+                    key: "decision_ready",
+                    label: "Decisao disponivel",
+                    detail: "A mesa ja pode aprovar ou devolver com orientacao objetiva.",
+                    tone: "aprovado",
+                };
+            }
+
+            if (laudoHasSurfaceAction(laudo, "chat_finalize")) {
+                return {
+                    ...base,
+                    key: "waiting_field_send",
+                    label: "Aguardando envio do campo",
+                    detail: "A coleta ficou pronta, mas o caso ainda depende do envio formal para a mesa.",
+                    tone: "aguardando",
+                };
+            }
+
+            if (ownerRole === "inspetor") {
+                return {
+                    ...base,
+                    key: "field_owner",
+                    label: "Campo em acao",
+                    detail: "O caso esta com o inspetor e pede retorno, evidencia ou novo envio.",
+                    tone: lifecycleStatus === "devolvido_para_correcao" ? "ajustes" : "aberto",
+                };
+            }
+
+            if (ownerRole === "mesa") {
+                return {
+                    ...base,
+                    key: "mesa_owner",
+                    label: "Mesa em acao",
+                    detail: "A validacao humana da mesa segue como proximo passo do caso.",
+                    tone: "aberto",
+                };
+            }
+
+            if (lifecycleStatus === "aprovado") {
+                return {
+                    ...base,
+                    key: "issue_ready",
+                    label: "Pronto para emissao",
+                    detail: "O caso ja foi aprovado e aguarda a etapa final documental.",
+                    tone: "aprovado",
+                };
+            }
+
+            if (lifecycleStatus === "emitido") {
+                return {
+                    ...base,
+                    key: "issued",
+                    label: "Emissao concluida",
+                    detail: "O caso ja fechou o ciclo atual com documento emitido.",
+                    tone: "aprovado",
+                };
+            }
+
+            return base;
+        }
+
+        function renderMesaCaseSignals(laudo) {
+            const resumo = resumirMomentoCanonicoMesa(laudo);
+            return `
+                <div class="item-case-signals" aria-label="Sinais canônicos do caso">
+                    <span class="item-case-signal">Fluxo ${escapeHtml(resumo.lifecycleLabel)}</span>
+                    <span class="item-case-signal">Owner ${escapeHtml(resumo.ownerLabel)}</span>
+                    <span class="item-case-signal item-case-signal--focus">${escapeHtml(resumo.label)}</span>
+                </div>
+            `;
+        }
+
         function mesaVisibilityPolicy() {
             return state.bootstrap?.tenant_admin_projection?.payload?.visibility_policy || {};
         }
@@ -318,12 +412,13 @@
             }
 
             lista.innerHTML = laudos.map((laudo) => `
-                <article class="item ${Number(state.mesa.laudoId) === Number(laudo.id) ? "active" : ""}" data-mesa="${laudo.id}" tabindex="0">
+                <article class="item ${Number(state.mesa.laudoId) === Number(laudo.id) ? "active" : ""}" data-mesa="${laudo.id}" data-case-flow-summary="${escapeAttr(resumirMomentoCanonicoMesa(laudo).key)}" tabindex="0">
                     <div class="item-head">
                         <strong>${escapeHtml(laudo.titulo)}</strong>
                         ${laudoBadge(laudo.status_card_label, laudo.status_card)}
                     </div>
                     <div class="item-preview">${escapeHtml(laudo.preview || "Sem resumo registrado.")}</div>
+                    ${renderMesaCaseSignals(laudo)}
                     <div class="item-footer">
                         <span class="pill" data-kind="priority" data-status="${prioridadeMesa(laudo).tone}">${escapeHtml(prioridadeMesa(laudo).badge)}</span>
                         <span class="hero-chip">${formatarInteiro(laudo.pendencias_abertas || 0)} pendencias</span>
@@ -458,6 +553,7 @@
             }
 
             const prioridade = prioridadeMesa(alvo);
+            const momentoCanonico = resumirMomentoCanonicoMesa(alvo);
             const canApprove = caseActionsEnabled && laudoHasSurfaceAction(alvo, "mesa_approve");
             const canReturn = caseActionsEnabled && laudoHasSurfaceAction(alvo, "mesa_return");
             $("mesa-titulo").textContent = alvo.titulo || "Laudo selecionado";
@@ -493,6 +589,12 @@
                             <strong>${escapeHtml(`${humanizarLifecycleStatus(alvo.case_lifecycle_status)} / ${humanizarOwnerRole(alvo.active_owner_role)}`)}</strong>
                         </div>
                     </div>
+                    <div class="item-case-signals" aria-label="Sinais canônicos do caso">
+                        <span class="item-case-signal">Status ${escapeHtml(momentoCanonico.statusVisualLabel)}</span>
+                        <span class="item-case-signal">Fluxo ${escapeHtml(momentoCanonico.lifecycleLabel)}</span>
+                        <span class="item-case-signal">Owner ${escapeHtml(momentoCanonico.ownerLabel)}</span>
+                        <span class="item-case-signal item-case-signal--focus">${escapeHtml(momentoCanonico.label)}</span>
+                    </div>
                     <div class="context-guidance" data-tone="${prioridade.tone}">
                         <div class="context-guidance-copy">
                             <small>Proximo passo recomendado</small>
@@ -500,6 +602,14 @@
                             <p>${escapeHtml(prioridade.acao)}</p>
                         </div>
                         <span class="pill" data-kind="priority" data-status="${prioridade.tone}">${escapeHtml(prioridade.badge)}</span>
+                    </div>
+                    <div class="context-guidance" data-tone="${momentoCanonico.tone}">
+                        <div class="context-guidance-copy">
+                            <small>Momento canônico do caso</small>
+                            <strong>${escapeHtml(momentoCanonico.label)}</strong>
+                            <p>${escapeHtml(momentoCanonico.detail)}</p>
+                        </div>
+                        <span class="pill" data-kind="priority" data-status="${momentoCanonico.tone}">${escapeHtml(momentoCanonico.lifecycleLabel)}</span>
                     </div>
                     ${renderMesaHumanOverrideNotice(alvo)}
                     ${laudoMesaParado(alvo) ? `
@@ -523,15 +633,14 @@
             const laudos = state.bootstrap?.mesa?.laudos || [];
             const selecionado = obterLaudoMesaSelecionado();
             const prioridade = selecionado ? prioridadeMesa(selecionado) : null;
+            const momentoSelecionado = selecionado ? resumirMomentoCanonicoMesa(selecionado) : null;
             if (!container) return;
 
             const comAcaoAgora = laudos.filter((item) => Number(item.pendencias_abertas || 0) > 0 || Number(item.whispers_nao_lidos || 0) > 0).length;
             const totalPendencias = laudos.reduce((acc, item) => acc + Number(item.pendencias_abertas || 0), 0);
             const totalWhispers = laudos.reduce((acc, item) => acc + Number(item.whispers_nao_lidos || 0), 0);
-            const prontosParaRevisar = laudos.filter((item) => {
-                const status = variantStatusLaudo(item.status_card);
-                return status === "aguardando" && Number(item.pendencias_abertas || 0) === 0 && Number(item.whispers_nao_lidos || 0) === 0;
-            }).length;
+            const prontosParaRevisar = laudos.filter((item) => resumirMomentoCanonicoMesa(item).key === "decision_ready").length;
+            const emCampo = laudos.filter((item) => resumirMomentoCanonicoMesa(item).key === "field_owner").length;
 
             container.innerHTML = `
                 <article class="metric-card" data-accent="attention">
@@ -545,14 +654,14 @@
                     <span class="metric-meta">${formatarInteiro(totalWhispers)} chamados ainda aguardam leitura da mesa.</span>
                 </article>
                 <article class="metric-card" data-accent="live">
-                    <small>Prontos para revisar</small>
+                    <small>Decisao disponivel</small>
                     <strong>${formatarInteiro(prontosParaRevisar)}</strong>
-                    <span class="metric-meta">Laudos sem gargalo tecnico, prontos para aprovacao ou devolucao objetiva.</span>
+                    <span class="metric-meta">${formatarInteiro(emCampo)} caso(s) ainda estao com o campo como owner ativo.</span>
                 </article>
-                <article class="metric-card" data-accent="${prioridade ? prioridade.tone : "done"}">
+                <article class="metric-card" data-accent="${momentoSelecionado ? momentoSelecionado.tone : (prioridade ? prioridade.tone : "done")}">
                     <small>Foco do laudo selecionado</small>
-                    <strong>${escapeHtml(prioridade ? prioridade.badge : "Sem selecao")}</strong>
-                    <span class="metric-meta">${escapeHtml(prioridade ? prioridade.acao : "Escolha um laudo da fila para ver a acao recomendada.")}</span>
+                    <strong>${escapeHtml(momentoSelecionado ? momentoSelecionado.label : (prioridade ? prioridade.badge : "Sem selecao"))}</strong>
+                    <span class="metric-meta">${escapeHtml(momentoSelecionado ? momentoSelecionado.detail : "Escolha um laudo da fila para ver a acao recomendada.")}</span>
                 </article>
             `;
             atualizarResumoSecaoMesa();

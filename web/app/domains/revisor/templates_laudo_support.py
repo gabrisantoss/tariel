@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 import logging
 import re
@@ -905,9 +906,9 @@ def obter_dados_formulario_preview(
     dados_payload = getattr(dados, "dados_formulario", None)
     if laudo_id:
         laudo = _obter_laudo_empresa(banco, int(laudo_id), usuario.empresa_id)
-        dados_formulario = laudo.dados_formulario or {}
+        dados_formulario = deepcopy(laudo.dados_formulario or {})
     elif isinstance(dados_payload, dict):
-        dados_formulario = dados_payload
+        dados_formulario = deepcopy(dados_payload)
     if not dados_formulario and env_str("SCHEMATHESIS_TEST_HINTS", "0").strip() == "1":
         return {
             "informacoes_gerais": {

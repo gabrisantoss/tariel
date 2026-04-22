@@ -215,6 +215,109 @@
             };
         }
 
+        function resumirMomentoCanonicoTenantAdmin() {
+            const tenantAdmin = obterTenantAdminPayload() || {};
+            const caseCounts = tenantAdmin?.case_counts || {};
+            const reviewCounts = tenantAdmin?.review_counts || {};
+            const documentCounts = tenantAdmin?.document_counts || {};
+            const observedCaseIds = Array.isArray(tenantAdmin?.observed_case_ids)
+                ? tenantAdmin.observed_case_ids
+                : [];
+            const totalCases = Number(caseCounts?.total_cases || 0);
+            const openCases = Number(caseCounts?.open_cases || 0);
+            const pendingReview = Number(reviewCounts?.pending_review || 0);
+            const inReview = Number(reviewCounts?.in_review || 0);
+            const sentBack = Number(reviewCounts?.sent_back_for_adjustment || 0);
+            const issuedDocuments = Number(documentCounts?.issued_documents || 0);
+
+            const base = {
+                key: "tenant_monitoring",
+                label: "Monitorar tenant",
+                detail: "A operacao segue distribuida sem um gargalo canonico dominante neste momento.",
+                tone: "aguardando",
+                ownerLabel: "Leitura distribuida",
+                observedCount: observedCaseIds.length,
+                chips: [
+                    `${formatarInteiro(openCases)} abertos`,
+                    `${formatarInteiro(pendingReview + inReview)} em mesa`,
+                    `${formatarInteiro(issuedDocuments)} emitidos`,
+                ],
+            };
+
+            if (sentBack > 0) {
+                return {
+                    ...base,
+                    key: "tenant_sent_back",
+                    label: "Casos devolvidos ao campo",
+                    detail: `${formatarInteiro(sentBack)} caso(s) voltaram para ajuste e pedem retomada do time operacional.`,
+                    tone: "ajustes",
+                    ownerLabel: "Owner predominante: campo",
+                };
+            }
+
+            if (inReview > 0) {
+                return {
+                    ...base,
+                    key: "tenant_in_review",
+                    label: "Mesa em andamento",
+                    detail: `${formatarInteiro(inReview)} caso(s) estao com validacao humana em curso na mesa.`,
+                    tone: "aberto",
+                    ownerLabel: "Owner predominante: mesa",
+                };
+            }
+
+            if (pendingReview > 0) {
+                return {
+                    ...base,
+                    key: "tenant_pending_review",
+                    label: "Decisao pendente",
+                    detail: `${formatarInteiro(pendingReview)} caso(s) aguardam decisao objetiva da mesa.`,
+                    tone: "aguardando",
+                    ownerLabel: "Owner predominante: mesa",
+                };
+            }
+
+            if (openCases > 0) {
+                return {
+                    ...base,
+                    key: "tenant_field_open",
+                    label: "Campo em andamento",
+                    detail: `${formatarInteiro(openCases)} caso(s) seguem em coleta ou consolidacao antes da revisao humana.`,
+                    tone: "aberto",
+                    ownerLabel: "Owner predominante: campo",
+                };
+            }
+
+            if (issuedDocuments > 0) {
+                return {
+                    ...base,
+                    key: "tenant_issued",
+                    label: "Emissao concluida",
+                    detail: `${formatarInteiro(issuedDocuments)} documento(s) ja fecharam o ciclo canonico recente do tenant.`,
+                    tone: "aprovado",
+                    ownerLabel: "Owner predominante: conclusao",
+                };
+            }
+
+            if (totalCases <= 0) {
+                return {
+                    ...base,
+                    key: "tenant_empty",
+                    label: "Sem casos observados",
+                    detail: "Ainda nao ha casos suficientes na projecao para destacar um momento canonico do tenant.",
+                    tone: "aguardando",
+                    ownerLabel: "Owner predominante: indisponivel",
+                    chips: [
+                        "0 abertos",
+                        "0 em mesa",
+                        "0 emitidos",
+                    ],
+                };
+            }
+
+            return base;
+        }
+
         function marcarEstadoStage(stage, status) {
             const node = $(STAGE_IDS[stage]);
             if (!node) return;
@@ -934,6 +1037,7 @@
             const totalAuditoria = auditoria.length;
             const auditoriaResumo = state.bootstrap?.auditoria?.resumo || {};
             const categorias = auditoriaResumo.categories || {};
+            const momentoCanonico = resumirMomentoCanonicoTenantAdmin();
             const supportModeLabels = {
                 disabled: "desabilitado",
                 approval_required: "com aprovacao previa",
@@ -972,6 +1076,9 @@
                 )}</span>
                 <span>Modelo operacional: ${escapeHtml(governance.operatingModelLabel)}</span>
                 <span>Continuidade prevista: ${escapeHtml(governance.surfacesSummary)}</span>
+                <span>Momento canonico: ${escapeHtml(momentoCanonico.label)}</span>
+                <span>${escapeHtml(momentoCanonico.ownerLabel)}</span>
+                <span>Casos observados: ${escapeHtml(formatarInteiro(momentoCanonico.observedCount))}</span>
                 <span>Escopo maximo de suporte: ${escapeHtml(
                     supportScopeLabels[visibilityPolicy?.exceptional_support_scope_level] || "nao definido"
                 )}</span>
@@ -989,6 +1096,11 @@
 
             if (policyContainer) {
                 policyContainer.innerHTML = `
+                    <article class="support-policy-card">
+                        <small>Momento canonico do tenant</small>
+                        <strong>${escapeHtml(momentoCanonico.label)}</strong>
+                        <span>${escapeHtml(momentoCanonico.detail)}</span>
+                    </article>
                     <article class="support-policy-card">
                         <small>Visibilidade tecnica</small>
                         <strong>${escapeHtml(technicalAccessLabels[visibilityPolicy?.technical_access_mode] || "nao definida")}</strong>
@@ -1027,6 +1139,7 @@
                         )}</p>
                     </div>
                     <div class="support-protocol__status">
+                        <span class="pill" data-kind="priority" data-status="${escapeAttr(momentoCanonico.tone)}">${escapeHtml(momentoCanonico.label)}</span>
                         <span class="pill" data-kind="priority" data-status="${visibilityPolicy?.exceptional_support_access === "disabled" ? "ajustes" : "aberto"}">${escapeHtml(
                             visibilityPolicy?.exceptional_support_step_up_required ? "step-up exigido" : "step-up opcional"
                         )}</span>

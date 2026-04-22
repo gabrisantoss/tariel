@@ -1,13 +1,66 @@
 (function () {
     "use strict";
 
+    function obterSecaoSidebarLaudos(tab, dependencies = {}) {
+        const documentRef = dependencies.document || document;
+        if (tab === "fixados") return documentRef.getElementById("secao-laudos-pinados");
+        if (tab === "recentes") return documentRef.getElementById("secao-laudos-historico");
+        return null;
+    }
+
+    function itemSidebarHistoricoEstaVisivel(item) {
+        return !!item && !item.hidden && item.style.display !== "none";
+    }
+
+    function contarItensVisiveisSecaoSidebar(secao) {
+        if (!secao) return 0;
+
+        return Array.from(secao.querySelectorAll(".item-historico[data-laudo-id]"))
+            .filter((item) => itemSidebarHistoricoEstaVisivel(item))
+            .length;
+    }
+
+    function resolverSidebarLaudosTab(preferida, dependencies = {}) {
+        const estado = dependencies.estado || {};
+        const preferencia = preferida || estado.sidebarLaudosTab;
+        const pinados = contarItensVisiveisSecaoSidebar(
+            obterSecaoSidebarLaudos("fixados", dependencies)
+        );
+        const recentes = contarItensVisiveisSecaoSidebar(
+            obterSecaoSidebarLaudos("recentes", dependencies)
+        );
+
+        if (preferencia === "fixados" && pinados > 0) {
+            return { ativa: "fixados", pinados, recentes };
+        }
+
+        if (preferencia === "recentes" && recentes > 0) {
+            return { ativa: "recentes", pinados, recentes };
+        }
+
+        if (recentes > 0) {
+            return { ativa: "recentes", pinados, recentes };
+        }
+
+        if (pinados > 0) {
+            return { ativa: "fixados", pinados, recentes };
+        }
+
+        return {
+            ativa: preferencia === "fixados" ? "fixados" : "recentes",
+            pinados,
+            recentes,
+        };
+    }
+
     function sincronizarSidebarLaudosTabs(preferida, dependencies = {}) {
         const estado = dependencies.estado || {};
         const el = dependencies.el || {};
-        const sidebar = document.getElementById("barra-historico");
-        const secaoPinados = dependencies.obterSecaoSidebarLaudos?.("fixados");
-        const secaoRecentes = dependencies.obterSecaoSidebarLaudos?.("recentes");
-        const resumo = dependencies.resolverSidebarLaudosTab?.(preferida) || {
+        const documentRef = dependencies.document || document;
+        const sidebar = documentRef.getElementById("barra-historico");
+        const secaoPinados = obterSecaoSidebarLaudos("fixados", dependencies);
+        const secaoRecentes = obterSecaoSidebarLaudos("recentes", dependencies);
+        const resumo = resolverSidebarLaudosTab(preferida, dependencies) || {
             ativa: "recentes",
             pinados: 0,
             recentes: 0,
@@ -141,8 +194,12 @@
         window.TarielInspectorSidebarHistory || {},
         {
             atualizarHistoricoHomeExpandido,
+            contarItensVisiveisSecaoSidebar,
             filtrarSidebarHistorico,
+            itemSidebarHistoricoEstaVisivel,
+            obterSecaoSidebarLaudos,
             rolarParaHistoricoHome,
+            resolverSidebarLaudosTab,
             sincronizarSidebarLaudosTabs,
         }
     );

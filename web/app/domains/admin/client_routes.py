@@ -22,12 +22,12 @@ from app.domains.admin.auditoria import (
 from app.domains.chat.catalog_pdf_templates import (
     RENDER_MODE_TEMPLATE_PREVIEW_BLANK,
     ResolvedPdfTemplateRef,
-    build_catalog_pdf_payload,
     has_viable_legacy_preview_overlay_for_pdf_template,
     materialize_runtime_document_editor_json,
     materialize_runtime_style_json_for_pdf_template,
-    resolve_runtime_field_mapping_for_pdf_template,
     resolve_runtime_assets_for_pdf_template,
+    resolve_runtime_field_mapping_for_pdf_template,
+    resolve_template_preview_payload,
     should_use_rich_runtime_preview_for_pdf_template,
 )
 from app.domains.admin.portal_support import (
@@ -1184,7 +1184,7 @@ async def preview_catalogo_familia_admin(
     )
     family = _dict_payload(detalhe.get("family"))
     family_label = str(family.get("display_name") or family_key).strip() or family_key
-    preview_payload = build_catalog_pdf_payload(
+    preview_payload = resolve_template_preview_payload(
         laudo=None,
         template_ref=template_ref,
         source_payload=source_payload,

@@ -20,13 +20,13 @@ from app.domains.chat.chat_service import obter_mensagens_laudo_payload, process
 from app.domains.chat.core_helpers import resposta_json_ok
 from app.domains.chat.catalog_pdf_templates import (
     RENDER_MODE_CLIENT_PDF_FILLED,
-    build_catalog_pdf_payload,
     has_viable_legacy_preview_overlay_for_pdf_template,
     materialize_runtime_document_editor_json,
     materialize_runtime_style_json_for_pdf_template,
     resolve_runtime_field_mapping_for_pdf_template,
     resolve_runtime_assets_for_pdf_template,
     resolve_pdf_template_for_laudo,
+    resolve_template_preview_payload,
     should_use_rich_runtime_preview_for_pdf_template,
 )
 from app.domains.chat.laudo_access_helpers import obter_laudo_do_inspetor
@@ -524,9 +524,10 @@ async def rota_pdf(
         try:
             if resolved_template is not None:
                 dados_formulario_template = (
-                    build_catalog_pdf_payload(
+                    resolve_template_preview_payload(
                         laudo=laudo,
                         template_ref=resolved_template,
+                        source_payload=dados_formulario_laudo,
                         diagnostico=str(dados.diagnostico or ""),
                         inspetor=str(dados.inspetor or ""),
                         empresa=str(dados.empresa or ""),

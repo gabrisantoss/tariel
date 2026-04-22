@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import re
 from typing import Any, Callable
 
 from sqlalchemy import select
@@ -15,6 +16,41 @@ def catalogo_actor_label(actor: Any, *, fallback: str = "Sistema Tariel") -> str
         return nome
     actor_id = getattr(actor, "id", None)
     return f"Usuário #{int(actor_id)}" if actor_id else fallback
+
+
+def catalogo_texto_leitura(
+    valor: str | None,
+    *,
+    fallback: str | None = None,
+    humanizar_slug: Callable[[str], str],
+) -> str | None:
+    texto = str(valor or "").strip()
+    if not texto:
+        return fallback
+    if re.search(r"[_-]", texto):
+        return humanizar_slug(texto)
+    return texto
+
+
+def catalogo_scope_summary_label(
+    *,
+    allowed_modes: list[str] | None,
+    allowed_templates: list[str] | None,
+    allowed_variants: list[str] | None,
+) -> str:
+    modos = len(list(allowed_modes or []))
+    modelos = len(list(allowed_templates or []))
+    opcoes = len(list(allowed_variants or []))
+    if modos == 0 and modelos == 0 and opcoes == 0:
+        return "Sem recortes extras. A empresa segue a família completa."
+    partes: list[str] = []
+    if modos:
+        partes.append(f"{modos} forma(s) de uso")
+    if modelos:
+        partes.append(f"{modelos} modelo(s) específico(s)")
+    if opcoes:
+        partes.append(f"{opcoes} opção(ões) liberada(s)")
+    return " • ".join(partes)
 
 
 def serializar_release_catalogo_familia(

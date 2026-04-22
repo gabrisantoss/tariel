@@ -324,6 +324,58 @@ def test_finalizacao_nr35_mobile_autonomous_aprova_direto(
             laudo.dados_formulario["componentes_inspecionados"]["fixacao_dos_pontos"]["condicao"]
             == "C"
         )
-        assert (
-            laudo.dados_formulario["conclusao"]["status"] == "Aprovado"
+        assert laudo.dados_formulario["conclusao"]["status"] == "conforme"
+        assert laudo.dados_formulario["conclusao"]["status_operacional"] == "conforme"
+
+
+def test_gate_nr35_trata_pendente_como_status_valido_mas_nao_autonomo(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    laudo_id = _criar_laudo_nr35_guiado(ambiente_critico, com_fotos=True)
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        guided = dict(laudo.guided_inspection_draft_json or {})
+        refs = list(guided.get("evidence_refs") or [])
+        conclusao_ref = next(
+            ref
+            for ref in refs
+            if str(ref.get("step_id") or "").strip() == "conclusao"
         )
+        mensagem = banco.get(MensagemLaudo, int(conclusao_ref["message_id"]))
+        assert mensagem is not None
+        mensagem.conteudo = (
+            "Status: Pendente. Observacoes finais: linha sem acesso integral ao trecho "
+            "inferior, com inspecao parcial e necessidade de reinspecao."
+        )
+        banco.commit()
+
+    resposta = client.get(
+        f"/app/api/laudo/{laudo_id}/gate-qualidade",
+        headers={"X-CSRF-Token": csrf},
+    )
+
+    assert resposta.status_code == 422
+    corpo = resposta.json()
+    report_pack = corpo["report_pack_draft"]
+    missing_codes = {
+        item["code"] for item in report_pack["quality_gates"]["missing_evidence"]
+    }
+
+    assert report_pack["structured_data_candidate"]["conclusao"]["status"] == "Pendente"
+    assert (
+        report_pack["structured_data_candidate"]["conclusao"]["status_operacional"]
+        == "aguardando_reinspecao"
+    )
+    assert (
+        report_pack["structured_data_candidate"]["conclusao"]["liberado_para_uso"]
+        == "nao_avaliavel"
+    )
+    assert "nr35_conclusion_status_pending" not in missing_codes
+    assert "nr35_conclusion_status_missing" not in missing_codes
+    assert report_pack["quality_gates"]["autonomy_ready"] is False
+    assert report_pack["quality_gates"]["final_validation_mode"] == "mesa_required"

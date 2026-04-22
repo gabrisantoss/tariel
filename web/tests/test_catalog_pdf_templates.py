@@ -5,13 +5,17 @@ from types import SimpleNamespace
 
 import app.domains.chat.catalog_pdf_templates as catalog_pdf_templates
 from app.domains.chat.catalog_pdf_templates import (
+    RENDER_MODE_CLIENT_PDF_FILLED,
     RENDER_MODE_TEMPLATE_PREVIEW_BLANK,
     ResolvedPdfTemplateRef,
     build_catalog_pdf_payload,
     has_viable_legacy_preview_overlay_for_pdf_template,
+    materialize_catalog_instance_payload_for_laudo,
     materialize_catalog_payload_for_laudo,
     materialize_runtime_document_editor_json,
     materialize_runtime_style_json_for_pdf_template,
+    persist_case_instance_payload_for_laudo,
+    resolve_template_preview_payload,
     resolve_runtime_field_mapping_for_pdf_template,
     resolve_pdf_template_for_laudo,
     should_use_rich_runtime_preview_for_pdf_template,
@@ -688,6 +692,26 @@ def test_should_use_rich_runtime_preview_respeita_overlay_legado_quando_viavel()
     )
 
 
+def test_should_use_rich_runtime_preview_usa_shell_de_contingencia_quando_overlay_legado_e_fraco() -> None:
+    template_ref = _template_ref(
+        family_key="nr13_inspecao_vaso_pressao",
+        template_code="nr13_legado_fraco_sem_payload",
+        source_kind="tenant_template",
+        modo_editor="legado_pdf",
+        arquivo_pdf_base="/tmp/nr13_legado_fraco_sem_payload.pdf",
+        mapeamento_campos_json={},
+    )
+
+    assert has_viable_legacy_preview_overlay_for_pdf_template(template_ref=template_ref) is False
+    assert (
+        should_use_rich_runtime_preview_for_pdf_template(
+            template_ref=template_ref,
+            payload={},
+        )
+        is True
+    )
+
+
 def test_materialize_runtime_document_editor_json_blank_preview_oculta_termos_internos() -> None:
     payload = {
         "schema_type": "laudo_output",
@@ -741,6 +765,21 @@ def test_materialize_runtime_document_editor_json_blank_preview_oculta_termos_in
     assert "Status Mesa" not in serialized
     assert "Empresa Demo" not in serialized
     assert "Template pre-pronto" in serialized
+
+
+def test_materialize_runtime_document_editor_json_materializa_shell_minimo_para_payload_vazio() -> None:
+    runtime_document = materialize_runtime_document_editor_json(
+        template_ref=_template_ref(
+            family_key="nr10_inspecao_instalacoes_eletricas",
+            template_code="nr10_inspecao_instalacoes_eletricas",
+            documento_editor_json={},
+        ),
+        payload={},
+    )
+
+    serialized = str(runtime_document)
+    assert "Laudo Tecnico Tariel" in serialized
+    assert "modo de contingencia" in serialized
 
 
 def test_materialize_runtime_style_json_for_blank_preview_sanitiza_header_e_footer() -> None:
@@ -2245,6 +2284,7 @@ def test_build_catalog_pdf_payload_materializa_nr35_linha_de_vida_estruturada() 
                 "status": "Reprovado",
                 "proxima_inspecao_periodica": "2026-07",
                 "observacoes": "Substituir o trecho comprometido do cabo e reinspecionar o sistema.",
+                "motivo_status": "Nao conformidade confirmada no cabo de aco com necessidade de bloqueio imediato.",
             },
             "resumo_executivo": "Linha de vida vertical com corrosao inicial no cabo de aco e necessidade de bloqueio para correcoes.",
         },
@@ -2302,11 +2342,90 @@ def test_build_catalog_pdf_payload_materializa_nr35_linha_de_vida_estruturada() 
     assert payload["nao_conformidades_ou_lacunas"]["ha_pontos_de_atencao_texto"] == "Sim"
     assert payload["conclusao"]["status"] == "Reprovado"
     assert payload["conclusao"]["status_operacional"] == "bloqueio"
+    assert "nao deve permanecer liberado" in str(payload["conclusao"]["conclusao_tecnica"])
+    assert "IMG_701" in str(payload["conclusao"]["justificativa"])
+    assert payload["conclusao"]["motivo_status"] == "Nao conformidade confirmada no cabo de aco com necessidade de bloqueio imediato."
+    assert payload["conclusao"]["liberado_para_uso"] == "nao"
+    assert payload["conclusao"]["acao_requerida"] == "corrigir_e_revalidar"
+    assert "Substituir o trecho comprometido" in str(payload["conclusao"]["condicao_para_reinspecao"])
     assert payload["conclusao"]["proxima_inspecao_periodica"] == "2026-07"
     assert "reinspecionar o sistema" in str(payload["conclusao"]["observacoes"])
     assert payload["case_context"]["tipo_inspecao"] == "Inspecao Periodica"
     assert payload["case_context"]["local_documento"] == "Orizona - GO"
     assert payload["case_context"]["data_execucao"] == "2026-04-09"
+
+
+def test_build_catalog_pdf_payload_materializa_nr35_linha_de_vida_pendente_com_limitacoes() -> None:
+    laudo = SimpleNamespace(
+        id=732,
+        catalog_family_key="nr35_inspecao_linha_de_vida",
+        catalog_family_label="NR35 · Linha de vida",
+        catalog_variant_label="Prime altura",
+        status_revisao=StatusRevisao.RASCUNHO.value,
+        setor_industrial="usina",
+        parecer_ia="Linha de vida com avaliacao parcial por falta de acesso ao trecho inferior.",
+        primeira_mensagem="Inspecao NR35 em linha de vida horizontal dentro de moega com acesso parcial.",
+        motivo_rejeicao=None,
+        dados_formulario={
+            "informacoes_gerais": {
+                "unidade": "Usina Rio Verde",
+                "local": "Rio Verde - GO",
+                "tipo_inspecao": "Inspecao Periodica",
+                "contratante": "Cliente Pendente",
+                "contratada": "ATY Service LTDA",
+                "numero_laudo_inspecao": "AT-IN-RV-014-04-26",
+                "data_vistoria": "2026-04-18",
+            },
+            "objeto_inspecao": {
+                "identificacao_linha_vida": "LV-014 Linha de vida horizontal da moega 02",
+                "tipo_linha_vida": "Horizontal",
+                "escopo_inspecao": "Inspecao visual da linha de vida horizontal da moega 02.",
+            },
+            "componentes_inspecionados": {
+                "fixacao_dos_pontos": {"condicao": "N/A", "observacao": "Trecho inferior sem acesso."},
+                "condicao_cabo_aco": {"condicao": "N/A", "observacao": "Trecho parcialmente encoberto por graos."},
+                "condicao_esticador": {"condicao": "N/A", "observacao": "Sem alcance seguro para verificacao integral."},
+                "condicao_sapatilha": {"condicao": "N/A", "observacao": "Sem alcance seguro para verificacao integral."},
+                "condicao_olhal": {"condicao": "N/A", "observacao": "Sem alcance seguro para verificacao integral."},
+                "condicao_grampos": {"condicao": "N/A", "observacao": "Sem alcance seguro para verificacao integral."},
+            },
+            "registros_fotograficos": [
+                {
+                    "titulo": "Vista geral",
+                    "legenda": "Linha horizontal observada apenas no trecho superior da moega.",
+                    "referencia_anexo": "IMG_900 - vista_geral.png",
+                }
+            ],
+            "nao_conformidades_ou_lacunas": {
+                "limitacoes_de_inspecao": "Trecho inferior sem acesso por acumulo de graos na moega.",
+            },
+            "conclusao": {
+                "status": "Pendente",
+                "observacoes": "Inspecao parcial sem acesso ao trecho inferior da linha de vida.",
+            },
+            "resumo_executivo": "Linha de vida pendente por inspecao parcial e impossibilidade de avaliar o trecho inferior.",
+        },
+    )
+
+    payload = build_catalog_pdf_payload(
+        laudo=laudo,
+        template_ref=_template_ref(
+            family_key="nr35_inspecao_linha_de_vida",
+            template_code="nr35_inspecao_linha_de_vida",
+        ),
+        diagnostico="Caso pendente por acesso parcial na moega.",
+        inspetor="Gabriel Santos",
+        empresa="Empresa Teste NR35",
+        data="22/04/2026",
+    )
+
+    assert payload["conclusao"]["status"] == "Pendente"
+    assert payload["conclusao"]["status_operacional"] == "avaliacao_complementar"
+    assert payload["conclusao"]["liberado_para_uso"] == "nao_avaliavel"
+    assert payload["conclusao"]["acao_requerida"] == "complementar_inspecao"
+    assert "reinspecao" in str(payload["conclusao"]["conclusao_tecnica"]).lower()
+    assert "Trecho inferior sem acesso" in str(payload["nao_conformidades_ou_lacunas"]["limitacoes_de_inspecao"])
+    assert "graos na moega" in str(payload["conclusao"]["condicao_para_reinspecao"])
 
 
 def test_build_catalog_pdf_payload_mantem_analysis_basis_apenas_na_trilha_interna() -> None:
@@ -2396,6 +2515,106 @@ def test_build_catalog_pdf_payload_mantem_analysis_basis_apenas_na_trilha_intern
     assert "msg:701" not in str(payload.get("registros_fotograficos") or [])
     assert "Fotos:" not in str((payload.get("execucao_servico") or {}).get("evidencia_execucao") or {})
     assert "Contexto:" not in str((payload.get("execucao_servico") or {}).get("evidencia_execucao") or {})
+
+
+def test_build_catalog_pdf_payload_promove_apenas_fotos_selecionadas_para_emissao() -> None:
+    laudo = SimpleNamespace(
+        id=734,
+        catalog_family_key="nr35_inspecao_linha_de_vida",
+        catalog_family_label="NR35 · Linha de vida",
+        catalog_variant_label="Prime altura",
+        status_revisao=StatusRevisao.APROVADO.value,
+        setor_industrial="usina",
+        parecer_ia="Linha de vida com ponto de corrosao localizado no trecho superior.",
+        primeira_mensagem="Inspecao NR35 com fotos de linha de vida na escada de acesso.",
+        motivo_rejeicao=None,
+        report_pack_draft_json={
+            "analysis_basis": {
+                "coverage_summary": "3 foto(s), 2 mensagem(ns) de contexto, 1 documento(s) complementar(es).",
+                "photo_evidence": [
+                    {
+                        "message_id": 701,
+                        "reference": "msg:701",
+                        "label": "Vista geral",
+                        "caption": "Linha de vida vertical na escada de acesso",
+                    },
+                    {
+                        "message_id": 702,
+                        "reference": "msg:702",
+                        "label": "Ponto superior",
+                        "caption": "Corrosao inicial no cabo proximo ao topo",
+                    },
+                ],
+                "selected_photo_evidence": [
+                    {
+                        "message_id": 701,
+                        "reference": "IMG_701 - vista_geral.png",
+                        "label": "Vista geral",
+                        "caption": "Linha de vida vertical na escada de acesso",
+                    },
+                    {
+                        "message_id": 702,
+                        "reference": "IMG_702 - ponto_superior.png",
+                        "label": "Ponto superior",
+                        "caption": "Corrosao inicial no cabo proximo ao topo",
+                    },
+                ],
+            }
+        },
+        dados_formulario={
+            "informacoes_gerais": {
+                "unidade": "Usina Orizona",
+                "local": "Orizona - GO",
+                "contratante": "Caramuru Alimentos S/A",
+                "contratada": "ATY Service LTDA",
+                "engenheiro_responsavel": "Gabriel Santos",
+                "inspetor_lider": "Marcel Renato Silva",
+                "numero_laudo_fabricante": "MC-CRMR-0032",
+                "numero_laudo_inspecao": "AT-IN-OZ-001-01-26",
+                "art_numero": "ART 2026-00077",
+                "data_vistoria": "2026-01-29",
+            },
+            "objeto_inspecao": {
+                "identificacao_linha_vida": "MC-CRMRSS-0977 Escada de acesso ao elevador 01",
+                "tipo_linha_vida": "Vertical",
+                "escopo_inspecao": "Diagnostico geral da linha de vida vertical da escada de acesso.",
+            },
+            "componentes_inspecionados": {
+                "fixacao_dos_pontos": {"condicao": "C", "observacao": "Fixacao integra."},
+                "condicao_cabo_aco": {
+                    "condicao": "NC",
+                    "observacao": "Corrosao inicial proxima ao ponto superior.",
+                },
+            },
+            "conclusao": {
+                "status": "Reprovado",
+                "proxima_inspecao_periodica": "2026-07",
+                "observacoes": "Substituir o trecho comprometido do cabo e reinspecionar o sistema.",
+            },
+        },
+    )
+
+    payload = build_catalog_pdf_payload(
+        laudo=laudo,
+        template_ref=_template_ref(
+            family_key="nr35_inspecao_linha_de_vida",
+            template_code="nr35_inspecao_linha_de_vida",
+        ),
+        diagnostico="Resumo executivo do caso piloto NR35 para linha de vida vertical.",
+        inspetor="Gabriel Santos",
+        empresa="Empresa Teste NR35",
+        data="09/04/2026",
+    )
+
+    assert payload["delivery_package"]["analysis_basis_visibility"] == "internal_audit_only"
+    assert payload["delivery_package"]["issued_photo_evidence_available"] is True
+    assert payload["delivery_package"]["issued_photo_evidence_source"] == "analysis_basis_selected"
+    assert payload["registros_fotograficos"][0]["titulo"] == "Vista geral"
+    assert payload["registros_fotograficos"][0]["referencia_anexo"] == "IMG_701 - vista_geral.png"
+    assert payload["registros_fotograficos"][1]["titulo"] == "Ponto superior"
+    assert payload["document_projection"]["issued_photo_summary"] == (
+        "Vista geral: IMG_701 - vista_geral.png; Ponto superior: IMG_702 - ponto_superior.png"
+    )
 
 
 def test_build_catalog_pdf_payload_materializa_nr35_ponto_ancoragem() -> None:
@@ -2497,6 +2716,206 @@ def test_materialize_catalog_payload_for_laudo_usa_source_payload_contextual() -
     assert payload["identificacao"]["identificacao_do_vaso"] == "Vaso vertical VP-777"
     assert payload["identificacao"]["localizacao"] == "Casa de utilidades - Linha 7"
     assert payload["documentacao_e_registros"]["prontuario"]["referencias_texto"] == "DOC_777 - prontuario_vp777.pdf"
+
+
+def test_materialize_catalog_instance_payload_for_laudo_nao_contamina_seed_compartilhado() -> None:
+    snapshot_seed = {
+        "schema_type": "laudo_output",
+        "family_key": "nr13_inspecao_vaso_pressao",
+        "identificacao": {
+            "identificacao_do_vaso": "",
+            "localizacao": "",
+        },
+        "conclusao": {
+            "conclusao_tecnica": "",
+        },
+    }
+    laudo = SimpleNamespace(
+        id=879,
+        catalog_family_key="nr13_inspecao_vaso_pressao",
+        dados_formulario=None,
+        catalog_snapshot_json={
+            "family": {"key": "nr13_inspecao_vaso_pressao"},
+            "artifacts": {
+                "laudo_output_seed": snapshot_seed,
+                "template_master_seed": {
+                    "template_code": "nr13_inspecao_vaso_pressao",
+                    "modo_editor": MODO_EDITOR_RICO,
+                },
+            },
+        },
+        pdf_template_snapshot_json=None,
+    )
+
+    payload = materialize_catalog_instance_payload_for_laudo(
+        laudo=laudo,
+        source_payload={
+            "identificacao": {
+                "identificacao_do_vaso": "VP-879",
+                "localizacao": "Casa de utilidades - Linha 9",
+            },
+            "conclusao": {
+                "conclusao_tecnica": "Equipamento apto com monitoramento localizado.",
+            },
+        },
+    )
+
+    assert payload is not None
+    payload["identificacao"]["identificacao_do_vaso"] = "ALTERADO NA INSTANCIA"
+    payload["conclusao"]["conclusao_tecnica"] = "Somente o caso deve mudar."
+    assert snapshot_seed["identificacao"]["identificacao_do_vaso"] == ""
+    assert snapshot_seed["conclusao"]["conclusao_tecnica"] == ""
+
+
+def test_materialize_catalog_instance_payload_for_laudo_persiste_copia_no_laudo() -> None:
+    source_payload = {
+        "local_inspecao": "Casa de utilidades - Linha 10",
+        "nome_equipamento": "Vaso vertical VP-880",
+    }
+    laudo = SimpleNamespace(
+        id=880,
+        catalog_family_key="nr13_inspecao_vaso_pressao",
+        catalog_family_label="NR13 · Vaso de Pressao",
+        catalog_variant_label="Premium campo",
+        status_revisao=StatusRevisao.RASCUNHO.value,
+        setor_industrial="utilidades",
+        parecer_ia="",
+        primeira_mensagem="",
+        motivo_rejeicao=None,
+        criado_em=None,
+        atualizado_em=None,
+        encerrado_pelo_inspetor_em=None,
+        dados_formulario=None,
+        catalog_snapshot_json=None,
+        pdf_template_snapshot_json=None,
+    )
+
+    payload = materialize_catalog_instance_payload_for_laudo(
+        laudo=laudo,
+        source_payload=source_payload,
+    )
+
+    assert payload is not None
+    assert payload is laudo.dados_formulario
+    assert laudo.dados_formulario == payload
+    payload["identificacao"]["identificacao_do_vaso"] = "ALTERADO APENAS NO RETORNO"
+    assert laudo.dados_formulario["identificacao"]["identificacao_do_vaso"] == "ALTERADO APENAS NO RETORNO"
+    assert source_payload["nome_equipamento"] == "Vaso vertical VP-880"
+
+
+def test_persist_case_instance_payload_for_laudo_legado_isola_payload_de_entrada() -> None:
+    source_payload = {
+        "cliente": "Metal Forte",
+        "equipamento": "Caldeira B-204",
+        "tokens": {"documento_titulo": "Laudo Mestre"},
+    }
+    laudo = SimpleNamespace(
+        id=881,
+        catalog_family_key=None,
+        dados_formulario=None,
+        catalog_snapshot_json=None,
+    )
+
+    payload = persist_case_instance_payload_for_laudo(
+        laudo=laudo,
+        source_payload=source_payload,
+    )
+
+    assert payload == source_payload
+    assert payload is laudo.dados_formulario
+    payload["tokens"]["documento_titulo"] = "Alterado na instancia"
+    assert source_payload["tokens"]["documento_titulo"] == "Laudo Mestre"
+
+
+def test_resolve_template_preview_payload_legado_isola_payload_bruto() -> None:
+    source_payload = {
+        "cliente": "Metal Forte",
+        "tokens": {"documento_titulo": "Preview legado"},
+    }
+
+    payload = resolve_template_preview_payload(
+        template_ref=_template_ref(
+            family_key="",
+            template_code="template_legado_preview",
+        ),
+        source_payload=source_payload,
+    )
+
+    assert payload == source_payload
+    payload["tokens"]["documento_titulo"] = "Alterado no preview"
+    assert source_payload["tokens"]["documento_titulo"] == "Preview legado"
+
+
+def test_resolve_template_preview_payload_catalogado_promove_payload_temporario_sem_mutar_origem() -> None:
+    source_payload = {
+        "local_inspecao": "Casa de utilidades - Linha 11",
+        "nome_equipamento": "Vaso vertical VP-811",
+    }
+
+    payload = resolve_template_preview_payload(
+        template_ref=_template_ref(
+            family_key="nr13_inspecao_vaso_pressao",
+            template_code="nr13_inspecao_vaso_pressao",
+        ),
+        source_payload=source_payload,
+        laudo=SimpleNamespace(
+            id=811,
+            catalog_family_key="nr13_inspecao_vaso_pressao",
+            catalog_family_label="NR13 · Vaso de Pressao",
+            catalog_variant_label="Premium campo",
+            status_revisao=StatusRevisao.RASCUNHO.value,
+            setor_industrial="utilidades",
+            parecer_ia="",
+            primeira_mensagem="",
+            motivo_rejeicao=None,
+        ),
+        render_mode=RENDER_MODE_CLIENT_PDF_FILLED,
+    )
+
+    assert payload["schema_type"] == "laudo_output"
+    assert payload["identificacao"]["identificacao_do_vaso"] == "Vaso vertical VP-811"
+    payload["identificacao"]["identificacao_do_vaso"] = "Alterado no preview"
+    assert source_payload["nome_equipamento"] == "Vaso vertical VP-811"
+
+
+def test_build_catalog_pdf_payload_preserva_blocos_estruturados_de_source_payload_parcial() -> None:
+    payload = build_catalog_pdf_payload(
+        laudo=SimpleNamespace(
+            id=778,
+            catalog_family_key="nr13_inspecao_vaso_pressao",
+            catalog_family_label="NR13 · Vaso de Pressao",
+            catalog_variant_label="Premium campo",
+            status_revisao=StatusRevisao.RASCUNHO.value,
+            setor_industrial="utilidades",
+            parecer_ia="",
+            primeira_mensagem="",
+            motivo_rejeicao=None,
+        ),
+        template_ref=_template_ref(
+            family_key="nr13_inspecao_vaso_pressao",
+            template_code="nr13_inspecao_vaso_pressao",
+        ),
+        source_payload={
+            "identificacao": {
+                "identificacao_do_vaso": "Vaso vertical VP-778",
+                "localizacao": "Casa de utilidades - Linha 8",
+            },
+            "conclusao": {
+                "conclusao_tecnica": "Equipamento apto com monitoramento localizado.",
+            },
+            "recomendacoes": {
+                "texto": "Monitorar a corrosao superficial no proximo ciclo.",
+            },
+        },
+        inspetor="Gabriel Santos",
+        empresa="Empresa Teste NR13",
+        data="09/04/2026",
+    )
+
+    assert payload["identificacao"]["identificacao_do_vaso"] == "Vaso vertical VP-778"
+    assert payload["identificacao"]["localizacao"] == "Casa de utilidades - Linha 8"
+    assert payload["conclusao"]["conclusao_tecnica"] == "Equipamento apto com monitoramento localizado."
+    assert payload["recomendacoes"]["texto"] == "Monitorar a corrosao superficial no proximo ciclo."
 
 
 def test_resolve_pdf_template_for_laudo_prefere_snapshot_ao_runtime(monkeypatch) -> None:

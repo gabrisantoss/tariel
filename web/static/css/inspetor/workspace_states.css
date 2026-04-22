@@ -1146,6 +1146,32 @@ body.pagina-chat-dashboard-v2 .workspace-mesa-checklist li + li {
     margin-top: 8px;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-mesa-signals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-signal {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 6px 10px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 999px;
+    background: rgba(248, 251, 253, 0.96);
+    color: var(--vf-text-soft) !important;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-signal--focus {
+    border-color: rgba(31, 94, 142, 0.14);
+    background: rgba(226, 239, 250, 0.9);
+    color: var(--vf-accent) !important;
+}
+
 body.pagina-chat-dashboard-v2 .workspace-channel-stage--mesa {
     gap: 16px;
     width: min(100%, 1048px);

@@ -28,7 +28,7 @@ def _sample_report_pack_case(*, tenant_id: int) -> Laudo:
     )
     laudo.report_pack_draft_json = {
         "template_key": "nr35_linha_vida",
-        "family": "nr35_periodica_linha_vida",
+        "family": "nr35_inspecao_linha_de_vida",
         "structured_data_candidate": {
             "componentes_inspecionados": {
                 "fixacao_dos_pontos": {"condicao": "C"},

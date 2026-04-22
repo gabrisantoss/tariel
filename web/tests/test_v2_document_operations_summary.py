@@ -78,7 +78,7 @@ def test_admin_summary_document_operations_permanece_local_only_e_agrega_perf(
         }
         report_pack_draft = {
             "template_key": "nr35_linha_vida",
-            "family": "nr35_periodica_linha_vida",
+            "family": "nr35_inspecao_linha_de_vida",
             "structured_data_candidate": {
                 "componentes_inspecionados": {
                     "fixacao_dos_pontos": {"condicao": "C"},

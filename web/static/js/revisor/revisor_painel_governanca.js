@@ -341,6 +341,10 @@
         const currentIssue = officialIssue.current_issue && typeof officialIssue.current_issue === "object"
             ? officialIssue.current_issue
             : null;
+        const reopenedIssuedDocument = officialIssue.last_reopened_issued_document
+            && typeof officialIssue.last_reopened_issued_document === "object"
+            ? officialIssue.last_reopened_issued_document
+            : null;
         const reissueOriginNumber = String(currentIssue?.reissue_of_issue_number || "").trim();
         const reissueReasonSummary = String(currentIssue?.reissue_reason_summary || "").trim();
         const documentIntegrity = construirResumoIntegridadePdfOficialMesa(currentIssue);
@@ -436,6 +440,24 @@
                                                 <span>${escapeHtml(reissueReasonSummary)}</span>
                                             </div>
                                         ` : ""}
+                                    </li>
+                                ` : ""}
+                                ${reopenedIssuedDocument ? `
+                                    <li class="mesa-operacao-coverage-item attention">
+                                        <div class="mesa-operacao-item-topo">
+                                            <strong>Política de reabertura</strong>
+                                            <span class="mesa-operacao-chip attention">Reemissão em andamento</span>
+                                        </div>
+                                        <p>${escapeHtml(
+                                            reopenedIssuedDocument.visible_in_active_case === true
+                                                ? "O PDF emitido anterior continua visível no caso enquanto a nova revisão avança."
+                                                : "O PDF emitido anterior saiu da superfície ativa e segue preservado no histórico interno."
+                                        )}</p>
+                                        <div class="mesa-operacao-meta">
+                                            ${reopenedIssuedDocument.file_name ? `<span>${escapeHtml(String(reopenedIssuedDocument.file_name))}</span>` : ""}
+                                            ${reopenedIssuedDocument.pdf_artifact?.storage_version ? `<span>${escapeHtml(String(reopenedIssuedDocument.pdf_artifact.storage_version))}</span>` : ""}
+                                            ${reopenedIssuedDocument.reopened_at ? `<span>${escapeHtml(formatarDataHora(reopenedIssuedDocument.reopened_at))}</span>` : ""}
+                                        </div>
                                     </li>
                                 ` : ""}
                                 ${genericReissueWarning ? `

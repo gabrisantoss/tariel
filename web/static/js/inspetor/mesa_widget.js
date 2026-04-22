@@ -115,6 +115,39 @@
         }
     }
 
+    function normalizarContextoOperacionalMesaWidget(contexto) {
+        if (!contexto || typeof contexto !== "object") return null;
+
+        const laudoId = Number(contexto?.laudoId || 0) || null;
+        if (!laudoId) return null;
+
+        return {
+            kind: String(contexto?.kind || "").trim().toLowerCase() || "generic",
+            laudoId,
+            title: String(contexto?.title || "").trim(),
+            detail: String(contexto?.detail || "").trim(),
+            chipStatus: String(contexto?.chipStatus || "").trim(),
+        };
+    }
+
+    function obterContextoOperacionalMesaWidgetAtivo() {
+        const contexto = normalizarContextoOperacionalMesaWidget(estado.mesaWidgetContextoOperacional);
+        if (!contexto) return null;
+        if (contexto.laudoId !== obterLaudoAtivoIdSeguro?.()) return null;
+        return contexto;
+    }
+
+    function definirContextoOperacionalMesaWidget(contexto) {
+        estado.mesaWidgetContextoOperacional = normalizarContextoOperacionalMesaWidget(contexto);
+        renderizarResumoOperacionalMesa();
+    }
+
+    function limparContextoOperacionalMesaWidget() {
+        if (!estado.mesaWidgetContextoOperacional) return;
+        estado.mesaWidgetContextoOperacional = null;
+        renderizarResumoOperacionalMesa();
+    }
+
     function renderizarPreviewAnexoMesaWidget() {
         if (!el.mesaWidgetPreviewAnexo) return;
 
@@ -246,6 +279,7 @@
         const ultimaMensagemResumo = resumirMensagemOperacionalMesa(ultimaMensagem);
         const ultimaMensagemData = String(ultimaMensagem?.data || "").trim();
         const sufixoData = ultimaMensagemData ? ` Última interação: ${ultimaMensagemData}.` : "";
+        const contextoOperacional = obterContextoOperacionalMesaWidgetAtivo();
 
         if (conexao === "offline") {
             return {
@@ -305,6 +339,17 @@
                     ? `Último envio do campo: ${ultimaMensagemResumo}.${sufixoData}`
                     : `O último movimento veio do campo; a mesa ainda não respondeu.${sufixoData}`,
                 chipStatus: "Aguardando mesa",
+                chipPendencias: "",
+                chipNaoLidas: "",
+            };
+        }
+
+        if (contextoOperacional && widgetAberto) {
+            return {
+                status: "canal_ativo",
+                titulo: contextoOperacional.title || "Canal da revisão aberto",
+                descricao: contextoOperacional.detail || "Use este espaço para alinhar dúvidas, anexos e pendências com a mesa.",
+                chipStatus: contextoOperacional.chipStatus || "Canal ativo",
                 chipPendencias: "",
                 chipNaoLidas: "",
             };
@@ -1031,6 +1076,7 @@
             el.mesaWidgetInput.value = "";
             limparReferenciaMesaWidget();
             limparAnexoMesaWidget();
+            limparContextoOperacionalMesaWidget();
 
             if (obterLaudoAtivo() === laudoId) {
                 await carregarMensagensMesaWidget({ laudoId, silencioso: false, forcarRede: true });
@@ -1236,6 +1282,8 @@
 
         Object.assign(ctx.actions, {
             limparAnexoMesaWidget,
+            definirContextoOperacionalMesaWidget,
+            limparContextoOperacionalMesaWidget,
             renderizarPreviewAnexoMesaWidget,
             selecionarAnexoMesaWidget,
             obterUltimaMensagemMesaOperacional,

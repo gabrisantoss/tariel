@@ -8,6 +8,12 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
+from app.core.paths import resolve_family_schemas_dir
+from app.domains.chat.catalog_pdf_templates import (
+    RENDER_MODE_TEMPLATE_PREVIEW_BLANK,
+    ResolvedPdfTemplateRef,
+    resolve_template_preview_payload,
+)
 from app.domains.revisor.common import _validar_csrf
 from app.domains.revisor.template_publish_shadow import (
     build_template_publish_shadow_scope_payload,
@@ -40,13 +46,17 @@ from app.shared.database import TemplateLaudo, Usuario, obter_banco
 from app.shared.security import exigir_revisor
 from app.v2.document.hard_gate import build_document_hard_gate_block_detail
 from nucleo.template_editor_word import (
+    MODO_EDITOR_LEGADO,
     MODO_EDITOR_RICO,
     documento_editor_padrao,
     estilo_editor_padrao,
     gerar_pdf_editor_rico_bytes,
+    normalizar_documento_editor,
+    normalizar_estilo_editor,
     normalizar_modo_editor,
     salvar_snapshot_editor_como_pdf_base,
 )
+from nucleo.template_laudos import normalizar_codigo_template
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +93,30 @@ class DadosExcluirTemplateLote(BaseModel):
     template_ids: list[int] = Field(..., min_length=1, max_length=100)
 
     model_config = ConfigDict(extra="ignore")
+
+
+def _resolve_template_publish_family_key(template: TemplateLaudo) -> str | None:
+    candidate = normalizar_codigo_template(getattr(template, "codigo_template", None))[:120]
+    if not candidate:
+        return None
+    schema_path = (resolve_family_schemas_dir() / f"{candidate}.json").resolve()
+    return candidate if schema_path.is_file() else None
+
+
+def _build_publish_template_ref(template: TemplateLaudo) -> ResolvedPdfTemplateRef:
+    return ResolvedPdfTemplateRef(
+        source_kind="tenant_template_publish",
+        family_key=_resolve_template_publish_family_key(template),
+        template_id=int(getattr(template, "id", 0) or 0) or None,
+        codigo_template=normalizar_codigo_template(getattr(template, "codigo_template", None)) or "template",
+        versao=max(1, int(getattr(template, "versao", 1) or 1)),
+        modo_editor=normalizar_modo_editor(getattr(template, "modo_editor", None) or MODO_EDITOR_LEGADO),
+        arquivo_pdf_base=str(getattr(template, "arquivo_pdf_base", "") or "").strip(),
+        documento_editor_json=normalizar_documento_editor(getattr(template, "documento_editor_json", None)),
+        estilo_json=normalizar_estilo_editor(getattr(template, "estilo_json", None)),
+        assets_json=list(getattr(template, "assets_json", None) or []),
+        mapeamento_campos_json={},
+    )
 
 
 @roteador_templates_laudo_management.post(
@@ -268,11 +302,17 @@ async def _publicar_template_laudo_impl(
     modo_editor = normalizar_modo_editor(getattr(template, "modo_editor", None))
     if modo_editor == MODO_EDITOR_RICO:
         try:
+            template_ref = _build_publish_template_ref(template)
+            preview_payload = resolve_template_preview_payload(
+                template_ref=template_ref,
+                source_payload={},
+                render_mode=RENDER_MODE_TEMPLATE_PREVIEW_BLANK,
+            )
             pdf_snapshot = await gerar_pdf_editor_rico_bytes(
                 documento_editor_json=template.documento_editor_json or documento_editor_padrao(),
                 estilo_json=template.estilo_json or estilo_editor_padrao(),
                 assets_json=template.assets_json or [],
-                dados_formulario={},
+                dados_formulario=preview_payload or {},
             )
             caminho_snapshot = salvar_snapshot_editor_como_pdf_base(
                 pdf_bytes=pdf_snapshot,

@@ -37,6 +37,9 @@
             } else if (tab === "anexos") {
                 caption = "Evidências e anexos do laudo";
                 status = "Arquivos e provas em foco";
+            } else if (tab === "correcoes") {
+                caption = "Correções estruturadas do laudo";
+                status = "Revisão, ajuste e reemissão guiadas";
             } else if (tab === "mesa") {
                 caption = "Canal Mesa Avaliadora";
                 status = "Validação e retorno técnico";
@@ -62,7 +65,10 @@
             el.workspaceChannelTabButtons.forEach((botao) => {
                 const alvo = normalizarThreadTab(botao.dataset.workspaceChannelTab || "conversa");
                 const ativo = alvo === tab;
-                const desabilitado = alvo === "mesa" && (!mesaDisponivel || mesaGovernada);
+                const desabilitado = (
+                    (alvo === "mesa" && (!mesaDisponivel || mesaGovernada))
+                    || (alvo === "correcoes" && !mesaDisponivel)
+                );
                 botao.classList.toggle("is-active", ativo);
                 botao.setAttribute("aria-selected", ativo ? "true" : "false");
                 botao.disabled = desabilitado;
@@ -70,6 +76,10 @@
                 if (alvo === "mesa") {
                     botao.title = mesaGovernada
                         ? "A conversa com a Mesa Avaliadora está desabilitada para esta empresa pelo Admin-CEO."
+                        : "";
+                } else if (alvo === "correcoes") {
+                    botao.title = !mesaDisponivel
+                        ? "As correções ficam disponíveis quando houver um laudo ativo no workspace."
                         : "";
                 }
             });
@@ -196,6 +206,39 @@
             el.workspaceOfficialIssueChip.classList.toggle("warning", resumo.tone === "warning");
         }
 
+        function renderizarWorkspaceReadiness() {
+            if (
+                !el.workspaceReadiness ||
+                !el.workspaceReadinessTitle ||
+                !el.workspaceReadinessMeta ||
+                !el.workspaceReadinessChip
+            ) {
+                return;
+            }
+
+            const stage = normalizarWorkspaceStage((ctx.actions.obterSnapshotEstadoInspectorAtual?.() || {}).workspaceStage);
+            const snapshot = obterPayloadStatusRelatorioWorkspaceAtual();
+            const resumo = ctx.actions.construirResumoReadinessWorkspace?.(snapshot) || null;
+            const podeExibir = stage !== "assistant" && !!resumo?.visible;
+
+            if (!podeExibir) {
+                el.workspaceReadiness.hidden = true;
+                el.workspaceReadinessTitle.textContent = "Pronto para revisão humana";
+                el.workspaceReadinessMeta.textContent =
+                    "Evidências, pré-laudo e validação humana ainda não foram consolidados.";
+                el.workspaceReadinessChip.textContent = "PENDENTE";
+                el.workspaceReadinessChip.classList.remove("accepted", "warning");
+                return;
+            }
+
+            el.workspaceReadiness.hidden = false;
+            el.workspaceReadinessTitle.textContent = resumo.title || "";
+            el.workspaceReadinessMeta.textContent = resumo.detail || "";
+            el.workspaceReadinessChip.textContent = resumo.chip || "";
+            el.workspaceReadinessChip.classList.toggle("accepted", resumo.tone === "accepted");
+            el.workspaceReadinessChip.classList.toggle("warning", resumo.tone === "warning");
+        }
+
         function sincronizarRotuloAcaoFinalizacaoWorkspace({ carregando = false } = {}) {
             const botoes = el.botoesFinalizarInspecao?.length
                 ? el.botoesFinalizarInspecao
@@ -224,6 +267,7 @@
             renderizarResumoNavegacaoWorkspace,
             renderizarWorkspaceOfficialIssue,
             renderizarWorkspacePublicVerification,
+            renderizarWorkspaceReadiness,
             sincronizarRotuloAcaoFinalizacaoWorkspace,
         });
     };

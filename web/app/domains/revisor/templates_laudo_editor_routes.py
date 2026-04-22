@@ -10,7 +10,12 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool
 from sqlalchemy.orm import Session
 
 from app.core.settings import env_str
-from app.domains.revisor.common import _validar_csrf
+from app.domains.chat.catalog_pdf_templates import (
+    RENDER_MODE_CLIENT_PDF_FILLED,
+    ResolvedPdfTemplateRef,
+    resolve_template_preview_payload,
+)
+from app.domains.revisor.common import _obter_laudo_empresa, _validar_csrf
 from app.domains.revisor.templates_laudo_support import (
     STATUS_TEMPLATE_RASCUNHO,
     label_status_template as _label_status_template,
@@ -27,6 +32,7 @@ from app.shared.database import TemplateLaudo, Usuario, obter_banco
 from app.shared.security import exigir_revisor
 from nucleo.template_laudos import normalizar_codigo_template
 from nucleo.template_editor_word import (
+    MODO_EDITOR_LEGADO,
     MODO_EDITOR_RICO,
     documento_editor_padrao,
     estilo_editor_padrao,
@@ -75,6 +81,26 @@ RESPOSTA_OK_ASSET_EDITOR = {
         },
     },
 }
+
+
+def _build_editor_preview_template_ref(
+    *,
+    template: TemplateLaudo,
+    family_key: str | None = None,
+) -> ResolvedPdfTemplateRef:
+    return ResolvedPdfTemplateRef(
+        source_kind="tenant_template",
+        family_key=str(family_key or "").strip() or None,
+        template_id=int(getattr(template, "id", 0) or 0) or None,
+        codigo_template=normalizar_codigo_template(getattr(template, "codigo_template", None)) or "template",
+        versao=max(1, int(getattr(template, "versao", 1) or 1)),
+        modo_editor=normalizar_modo_editor(getattr(template, "modo_editor", None) or MODO_EDITOR_LEGADO),
+        arquivo_pdf_base=str(getattr(template, "arquivo_pdf_base", "") or "").strip(),
+        documento_editor_json=normalizar_documento_editor(getattr(template, "documento_editor_json", None)),
+        estilo_json=normalizar_estilo_editor(getattr(template, "estilo_json", None)),
+        assets_json=list(getattr(template, "assets_json", None) or []),
+        mapeamento_campos_json={},
+    )
 
 
 class DadosPreviewTemplateLaudo(BaseModel):
@@ -395,10 +421,25 @@ async def preview_template_editor_laudo(
     if normalizar_modo_editor(getattr(template, "modo_editor", None)) != MODO_EDITOR_RICO:
         raise HTTPException(status_code=409, detail="Template não está no modo editor rico.")
 
+    laudo_preview = (
+        _obter_laudo_empresa(banco, int(dados.laudo_id), usuario.empresa_id)
+        if getattr(dados, "laudo_id", None) is not None
+        else None
+    )
     dados_formulario = _obter_dados_formulario_preview(
         banco=banco,
         usuario=usuario,
         dados=dados,
+    )
+    template_ref = _build_editor_preview_template_ref(
+        template=template,
+        family_key=getattr(laudo_preview, "catalog_family_key", None),
+    )
+    preview_payload = resolve_template_preview_payload(
+        laudo=laudo_preview,
+        template_ref=template_ref,
+        source_payload=dados_formulario,
+        render_mode=RENDER_MODE_CLIENT_PDF_FILLED,
     )
 
     try:
@@ -409,7 +450,7 @@ async def preview_template_editor_laudo(
                 documento_editor_json=template.documento_editor_json or documento_editor_padrao(),
                 estilo_json=template.estilo_json or estilo_editor_padrao(),
                 assets_json=template.assets_json or [],
-                dados_formulario=dados_formulario or {},
+                dados_formulario=preview_payload or {},
             )
     except Exception:
         logger.error(

@@ -99,6 +99,35 @@ def test_revisor_painel_renderiza_ssr_por_padrao(ambiente_critico) -> None:
     assert "painel_revisor" in resposta.text
 
 
+def test_revisor_painel_ssr_expoe_sinais_canonicos_do_caso_na_fila(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    _login_revisor(client, "revisor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.primeira_mensagem = "Caso pronto para decisao da mesa."
+        banco.commit()
+
+    resposta = client.get("/revisao/painel", follow_redirects=False)
+
+    assert resposta.status_code == 200
+    assert 'data-case-flow-summary="decision_ready"' in resposta.text
+    assert "Fluxo Aguardando mesa" in resposta.text
+    assert "Owner Mesa" in resposta.text
+    assert "Decisao disponivel" in resposta.text
+
+
 @pytest.mark.parametrize(
     "legacy_query",
     [

@@ -191,6 +191,30 @@
             || ""
         ).trim() || "Em analise";
         const criadoEm = String(dados?.criado_em || "").trim() || formatarDataHora(new Date());
+        let issuedDocumentReopenSummary = null;
+        try {
+            issuedDocumentReopenSummary = origem?.dataset?.issuedDocumentReopenSummary
+                ? JSON.parse(origem.dataset.issuedDocumentReopenSummary)
+                : null;
+        } catch (_) {
+            issuedDocumentReopenSummary = null;
+        }
+        if (
+            !issuedDocumentReopenSummary
+            && dados?.issued_document_reopen_summary
+            && typeof dados.issued_document_reopen_summary === "object"
+        ) {
+            issuedDocumentReopenSummary = dados.issued_document_reopen_summary;
+        }
+        const reopenFileLabel = String(issuedDocumentReopenSummary?.file_name || "").trim();
+        const reopenVersionLabel = String(issuedDocumentReopenSummary?.storage_version || "").trim();
+        const reopenVisibilityLabel = issuedDocumentReopenSummary
+            ? (
+                issuedDocumentReopenSummary.visible_in_active_case === true
+                    ? "PDF anterior ainda visível no caso"
+                    : "PDF anterior preservado no histórico interno"
+            )
+            : "";
 
         els.viewCaseSummary.innerHTML = `
             <div class="view-case-summary-head">
@@ -225,6 +249,20 @@
                     <strong>${escapeHtml(String(aprendizados))}</strong>
                 </article>
             </div>
+            ${issuedDocumentReopenSummary ? `
+                <div class="view-case-summary-alert" data-summary-tone="attention">
+                    <span class="material-symbols-rounded" aria-hidden="true">history</span>
+                    <div>
+                        <strong>Reemissão em andamento</strong>
+                        <p>
+                            ${escapeHtml(reopenVisibilityLabel)}
+                            ${(reopenFileLabel || reopenVersionLabel)
+                                ? ` • ${escapeHtml([reopenFileLabel, reopenVersionLabel].filter(Boolean).join(" • "))}`
+                                : ""}
+                        </p>
+                    </div>
+                </div>
+            ` : ""}
         `;
     };
 

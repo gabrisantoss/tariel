@@ -189,6 +189,51 @@
             font-size: 13px;
         }
 
+        .tenant-triage-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .tenant-triage-card {
+            display: grid;
+            gap: 8px;
+            padding: 18px;
+            border: 1px solid var(--tariel-border);
+            border-radius: var(--tariel-radius-md);
+            background: linear-gradient(180deg, rgba(255, 255, 255, .99), rgba(248, 250, 252, .96));
+            box-shadow: 0 10px 24px rgba(16, 32, 51, .05);
+        }
+
+        .tenant-triage-card__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .tenant-triage-card__header small {
+            color: var(--tariel-text-soft);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .tenant-triage-card strong {
+            color: var(--tariel-text);
+            font-size: 28px;
+            line-height: 1;
+            letter-spacing: -0.04em;
+        }
+
+        .tenant-triage-card span {
+            color: var(--tariel-text-soft);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
         .badge {
             display: inline-flex;
             align-items: center;
@@ -233,9 +278,26 @@
             line-height: 1.5;
         }
 
+        .tenant-flow-summary {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            color: var(--tariel-text);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
         .uso-stack {
             display: grid;
             gap: 3px;
+        }
+
+        .tenant-flow-summary__detail {
+            color: var(--tariel-text-soft);
+            font-size: 11.5px;
+            line-height: 1.5;
         }
 
         .acoes-tabela {
@@ -521,6 +583,12 @@
         }
 
         @media (max-width: 960px) {
+            .tenant-triage-strip,
+            .resumo-listagem,
+            .pagination {
+                grid-template-columns: 1fr;
+            }
+
             .resumo-listagem,
             .pagination {
                 flex-direction: column;

@@ -82,10 +82,24 @@
         if (bruto === "chat" || bruto === "conversa") return "conversa";
         if (bruto === "history" || bruto === "historico") return "historico";
         if (bruto === "attachments" || bruto === "anexos") return "anexos";
+        if (
+            bruto === "correcoes" ||
+            bruto === "correção" ||
+            bruto === "correcao" ||
+            bruto === "correction" ||
+            bruto === "corrections"
+        ) return "correcoes";
         if (bruto === "mesa") return "mesa";
         const fallbackNormalizado = String(fallback || "").trim().toLowerCase();
         if (fallbackNormalizado === "chat" || fallbackNormalizado === "conversa") return "conversa";
         if (fallbackNormalizado === "attachments" || fallbackNormalizado === "anexos") return "anexos";
+        if (
+            fallbackNormalizado === "correcoes" ||
+            fallbackNormalizado === "correção" ||
+            fallbackNormalizado === "correcao" ||
+            fallbackNormalizado === "correction" ||
+            fallbackNormalizado === "corrections"
+        ) return "correcoes";
         if (fallbackNormalizado === "mesa") return "mesa";
         return "historico";
     }
@@ -925,7 +939,13 @@
             bruto === "chat" ? "conversa"
                 : bruto === "history" ? "historico"
                     : bruto === "attachments" ? "anexos"
-                        : bruto;
+                        : ([
+                            "correcoes",
+                            "correção",
+                            "correcao",
+                            "correction",
+                            "corrections",
+                        ].includes(bruto) ? "correcoes" : bruto);
         const nav = garantirThreadNav();
         const tabs = nav?.querySelectorAll(".thread-tab[data-tab]") || [];
 

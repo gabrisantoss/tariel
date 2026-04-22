@@ -28,7 +28,7 @@ def test_report_pack_rollout_metrics_agregam_gate_finalizacao_e_divergencia() ->
     )
     laudo.report_pack_draft_json = {
         "template_key": "nr35_linha_vida",
-        "family": "nr35_periodica_linha_vida",
+        "family": "nr35_inspecao_linha_de_vida",
         "structured_data_candidate": {
             "componentes_inspecionados": {
                 "fixacao_dos_pontos": {"condicao": "C"},

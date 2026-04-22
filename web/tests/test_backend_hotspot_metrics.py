@@ -305,3 +305,51 @@ def test_backend_hotspot_metrics_cobrem_paineis_e_operacoes_documentais_pesadas(
         "inspector_pdf_generation",
         "review_template_preview",
     }
+
+
+def test_backend_hotspot_metrics_cobrem_status_e_inicio_do_ciclo_do_laudo(
+    ambiente_critico,
+) -> None:
+    clear_backend_hotspot_metrics_for_tests()
+    client = ambiente_critico["client"]
+
+    csrf_inspetor = _login_app_inspetor(client, "inspetor@empresa-a.test")
+
+    resposta_status = client.get("/app/api/laudo/status")
+    assert resposta_status.status_code == 200
+    payload_status = resposta_status.json()
+    assert payload_status["estado"] in {"sem_relatorio", "em_andamento", "rascunho"}
+
+    resposta_iniciar = client.post(
+        "/app/api/laudo/iniciar",
+        headers={"X-CSRF-Token": csrf_inspetor},
+        data={
+            "tipo_template": "padrao",
+            "cliente": "Empresa Observability",
+            "unidade": "Unidade Norte",
+            "local_inspecao": "Area industrial 01",
+            "objetivo": "Validar observabilidade do ciclo de laudo",
+            "nome_inspecao": "Inspecao Observability",
+        },
+    )
+    assert resposta_iniciar.status_code == 200
+    payload_iniciar = resposta_iniciar.json()
+    assert payload_iniciar["success"] is True
+    assert int(payload_iniciar["laudo_id"]) > 0
+
+    _login_admin(client, "admin@empresa-a.test")
+    resposta_summary = client.get("/admin/api/backend-hotspots/summary")
+    assert resposta_summary.status_code == 200
+    payload_summary = resposta_summary.json()
+    endpoints = {row["endpoint"]: row for row in payload_summary["by_endpoint"]}
+
+    assert endpoints["inspector_case_status"]["success"] >= 1
+    assert endpoints["inspector_case_start"]["success"] >= 1
+    assert any(
+        item["endpoint"] == "inspector_case_status" and item["outcome"] in {"idle_workspace", "active_case"}
+        for item in payload_summary["recent_events"]
+    )
+    assert any(
+        item["endpoint"] == "inspector_case_start" and item["outcome"] == "case_started"
+        for item in payload_summary["recent_events"]
+    )

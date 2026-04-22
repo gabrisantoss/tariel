@@ -153,6 +153,7 @@ def test_android_mobile_auth_e_bootstrap_expoem_envelope_minimo_estavel(ambiente
         "identity_runtime_note",
         "portal_switch_links",
         "admin_ceo_governed",
+        "tenant_access_policy",
     }
 
     assert set(corpo_login).issuperset(campos_login)
@@ -165,6 +166,11 @@ def test_android_mobile_auth_e_bootstrap_expoem_envelope_minimo_estavel(ambiente
     assert corpo_login["usuario"]["empresa_nome"] == "Empresa A"
     assert corpo_login["usuario"]["allowed_portals"] == ["inspetor"]
     assert corpo_login["usuario"]["allowed_portal_labels"] == [
+        "Area de campo"
+    ]
+    assert corpo_login["usuario"]["tenant_access_policy"]["governed_by_admin_ceo"] is True
+    assert corpo_login["usuario"]["tenant_access_policy"]["allowed_portals"] == ["inspetor"]
+    assert corpo_login["usuario"]["tenant_access_policy"]["allowed_portal_labels"] == [
         "Area de campo"
     ]
     assert corpo_login["usuario"]["commercial_operating_model"] == "standard"
@@ -238,6 +244,17 @@ def test_android_mobile_bootstrap_expoe_grants_multiportal_do_tenant(ambiente_cr
     )
     assert usuario_mobile["identity_runtime_mode"] == "tenant_scoped_portal_grants"
     assert "Admin-CEO" in usuario_mobile["identity_runtime_note"]
+    assert usuario_mobile["tenant_access_policy"]["governed_by_admin_ceo"] is True
+    assert usuario_mobile["tenant_access_policy"]["allowed_portals"] == [
+        "inspetor",
+        "revisor",
+        "cliente",
+    ]
+    assert usuario_mobile["tenant_access_policy"]["allowed_portal_labels"] == [
+        "Area de campo",
+        "Area de analise",
+        "Portal da empresa",
+    ]
     assert usuario_mobile["portal_switch_links"] == [
         {
             "portal": "inspetor",

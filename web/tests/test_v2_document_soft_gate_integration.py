@@ -384,6 +384,9 @@ def test_rota_pdf_promove_template_legado_fraco_para_preview_editor_rico(
         assert response.media_type == "application/pdf"
         with open(str(getattr(response, "path", "") or ""), "rb") as arquivo_saida:
             assert arquivo_saida.read().startswith(b"%PDF-1.4")
+        assert captured["dados_formulario"]["schema_type"] == "laudo_output"
+        assert captured["dados_formulario"]["family_key"] == "nr13_inspecao_vaso_pressao"
+        assert captured["dados_formulario"]["identificacao"]["identificacao_do_vaso"] == "Vaso vertical VP-204"
         serialized_document = json.dumps(captured["documento_editor_json"], ensure_ascii=False)
         assert "Resumo Executivo" in serialized_document
         assert "Conclusao Tecnica" in serialized_document

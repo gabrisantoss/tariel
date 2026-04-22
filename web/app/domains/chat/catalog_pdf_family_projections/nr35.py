@@ -144,6 +144,127 @@ def _resolve_nr35_operational_status(*values: Any, has_nonconformity: bool | Non
     return None
 
 
+def _derive_nr35_liberado_para_uso(
+    explicit_value: Any,
+    *,
+    resolved_status: str | None,
+    resolved_operational_status: str | None,
+) -> str | None:
+    explicit = _pick_first_text(explicit_value)
+    if explicit:
+        return explicit
+    status_text = _normalize_signal_text(resolved_status)
+    operational_text = _normalize_signal_text(resolved_operational_status)
+    if "pendente" in status_text or "avaliacao_complementar" in operational_text:
+        return "nao_avaliavel"
+    if "reprov" in status_text or "bloqueio" in operational_text or "ajuste" in operational_text:
+        return "nao"
+    if "aprov" in status_text or "conforme" in operational_text:
+        return "sim"
+    return None
+
+
+def _derive_nr35_acao_requerida(
+    explicit_value: Any,
+    *,
+    resolved_status: str | None,
+    resolved_operational_status: str | None,
+) -> str | None:
+    explicit = _pick_first_text(explicit_value)
+    if explicit:
+        return explicit
+    status_text = _normalize_signal_text(resolved_status)
+    operational_text = _normalize_signal_text(resolved_operational_status)
+    if "pendente" in status_text or "avaliacao_complementar" in operational_text:
+        return "complementar_inspecao"
+    if "reprov" in status_text or "bloqueio" in operational_text:
+        return "corrigir_e_revalidar"
+    if "aprov" in status_text or "conforme" in operational_text:
+        return "manter_inspecao_periodica"
+    return None
+
+
+def _derive_nr35_conclusao_tecnica(
+    explicit_value: Any,
+    *,
+    object_hint: str | None,
+    resolved_status: str | None,
+    resolved_operational_status: str | None,
+    attention_description: str | None,
+    limitation_text: str | None,
+    recommendation_hint: str | None,
+    conclusion_note: str | None,
+) -> str | None:
+    explicit = _pick_first_text(explicit_value)
+    if explicit:
+        return explicit
+    object_label = _pick_first_text(object_hint, "O sistema avaliado") or "O sistema avaliado"
+    status_text = _normalize_signal_text(resolved_status)
+    operational_text = _normalize_signal_text(resolved_operational_status)
+    if "pendente" in status_text or "avaliacao_complementar" in operational_text:
+        return (
+            f"{object_label} permanece com avaliacao inconclusiva e exige reinspecao apos "
+            f"superacao das limitacoes registradas."
+        )
+    if "reprov" in status_text or "bloqueio" in operational_text:
+        reason = _pick_first_text(attention_description, recommendation_hint, conclusion_note)
+        if reason:
+            return f"{object_label} nao deve permanecer liberado para uso ate a correcao das irregularidades observadas: {reason}"
+        return f"{object_label} nao deve permanecer liberado para uso ate a correcao das irregularidades observadas e reinspecao formal."
+    if "aprov" in status_text or "conforme" in operational_text:
+        return f"{object_label} apresenta condicao compativel com uso nas evidencias avaliadas, mantida a rotina de inspecao periodica."
+    fallback = _pick_first_text(conclusion_note, attention_description, limitation_text)
+    return fallback
+
+
+def _derive_nr35_justificativa(
+    explicit_value: Any,
+    *,
+    attention_description: str | None,
+    limitation_text: str | None,
+    photo_reference_text: str | None,
+    document_summary: str | None,
+    conclusion_note: str | None,
+) -> str | None:
+    explicit = _pick_first_text(explicit_value)
+    if explicit:
+        return explicit
+    parts = [
+        _pick_first_text(attention_description),
+        _pick_first_text(limitation_text),
+        f"Evidencias principais: {photo_reference_text}" if photo_reference_text else None,
+        f"Rastreabilidade documental: {document_summary}" if document_summary else None,
+        _pick_first_text(conclusion_note),
+    ]
+    normalized_parts: list[str] = []
+    for part in parts:
+        text = _pick_first_text(part)
+        if not text:
+            continue
+        if text not in normalized_parts:
+            normalized_parts.append(text)
+    return " ".join(normalized_parts) or None
+
+
+def _should_replace_nr35_conclusion_field(
+    current_value: Any,
+    *,
+    generic_candidates: list[str | None],
+) -> bool:
+    current = _pick_first_text(current_value)
+    if not current:
+        return True
+    normalized_current = _normalize_signal_text(current)
+    if not normalized_current:
+        return True
+    normalized_candidates = {
+        _normalize_signal_text(candidate)
+        for candidate in generic_candidates
+        if _normalize_signal_text(candidate)
+    }
+    return normalized_current in normalized_candidates
+
+
 def apply_nr35_projection(
     *,
     payload: dict[str, Any],
@@ -317,6 +438,20 @@ def apply_nr35_projection(
     next_inspection = _pick_text_by_paths(existing_payload, payload, paths=["conclusao.proxima_inspecao_periodica", "proxima_inspecao_periodica"])
     explicit_conclusion_status = _pick_text_by_paths(existing_payload, payload, paths=["conclusao.status", "status_conclusao", "status"])
     conclusion_note = _pick_text_by_paths(existing_payload, payload, paths=["conclusao.observacoes", "observacoes_finais", "observacoes"])
+    explicit_conclusion_reason = _pick_text_by_paths(existing_payload, {}, paths=["conclusao.motivo_status", "motivo_status"])
+    explicit_release_status = _pick_text_by_paths(existing_payload, {}, paths=["conclusao.liberado_para_uso", "liberado_para_uso"])
+    explicit_required_action = _pick_text_by_paths(existing_payload, {}, paths=["conclusao.acao_requerida", "acao_requerida"])
+    explicit_reinspection_condition = _pick_text_by_paths(
+        existing_payload,
+        {},
+        paths=["conclusao.condicao_para_reinspecao", "condicao_para_reinspecao"],
+    )
+    explicit_conclusao_tecnica = _pick_text_by_paths(existing_payload, {}, paths=["conclusao.conclusao_tecnica", "conclusao_tecnica"])
+    explicit_justificativa = _pick_text_by_paths(existing_payload, {}, paths=["conclusao.justificativa", "justificativa"])
+    executive_summary_text = _pick_first_text(
+        _pick_text_by_paths(existing_payload, payload, paths=["resumo_executivo"]),
+        summary_hint,
+    )
     linked_art = _pick_first_text(_pick_text_by_paths(existing_payload, payload, paths=["identificacao.vinculado_art", "vinculado_art"]), art_number)
     system_type = _pick_first_text(
         _pick_text_by_paths(existing_payload, payload, paths=["identificacao.tipo_sistema", "tipo_sistema"]),
@@ -588,6 +723,20 @@ def apply_nr35_projection(
             elif "reprov" in normalized_status:
                 has_attention_points = True
 
+    limitation_text = _pick_first_text(
+        _pick_text_by_paths(
+            existing_payload,
+            payload,
+            paths=[
+                "nao_conformidades_ou_lacunas.limitacoes_de_inspecao",
+                "limitacoes_de_inspecao",
+                "limitacoes_inspecao",
+                "restricoes_de_acesso",
+            ],
+        ),
+        conclusion_note if _normalize_signal_text(explicit_conclusion_status) == "pendente" else None,
+    )
+
     attention_evidence_text = _pick_first_text(
         _pick_text_by_paths(
             existing_payload,
@@ -691,6 +840,7 @@ def apply_nr35_projection(
         "Sim" if has_attention_points is True else "Nao" if has_attention_points is False else None,
     )
     _set_path_if_blank(payload, "nao_conformidades_ou_lacunas.descricao", attention_description)
+    _set_path_if_blank(payload, "nao_conformidades_ou_lacunas.limitacoes_de_inspecao", limitation_text)
     _set_block_fields_if_blank(
         payload,
         block_path="nao_conformidades_ou_lacunas.evidencias",
@@ -717,6 +867,46 @@ def apply_nr35_projection(
         summary_hint,
         has_nonconformity=has_attention_points,
     )
+    resolved_release_status = _derive_nr35_liberado_para_uso(
+        explicit_release_status,
+        resolved_status=resolved_conclusion_status,
+        resolved_operational_status=resolved_operational_status,
+    )
+    resolved_required_action = _derive_nr35_acao_requerida(
+        explicit_required_action,
+        resolved_status=resolved_conclusion_status,
+        resolved_operational_status=resolved_operational_status,
+    )
+    resolved_conclusion_reason = _pick_first_text(
+        explicit_conclusion_reason,
+        attention_description,
+        limitation_text,
+        conclusion_note,
+    )
+    resolved_reinspection_condition = _pick_first_text(
+        explicit_reinspection_condition,
+        limitation_text if _normalize_signal_text(resolved_conclusion_status) == "pendente" else None,
+        conclusion_note if _normalize_signal_text(resolved_operational_status) in {"bloqueio", "ajuste"} else None,
+        recommendation_hint if _normalize_signal_text(resolved_operational_status) in {"bloqueio", "ajuste"} else None,
+    )
+    resolved_conclusao_tecnica = _derive_nr35_conclusao_tecnica(
+        explicit_conclusao_tecnica,
+        object_hint=object_hint,
+        resolved_status=resolved_conclusion_status,
+        resolved_operational_status=resolved_operational_status,
+        attention_description=attention_description,
+        limitation_text=limitation_text,
+        recommendation_hint=recommendation_hint,
+        conclusion_note=conclusion_note,
+    )
+    resolved_justificativa = _derive_nr35_justificativa(
+        explicit_justificativa,
+        attention_description=attention_description,
+        limitation_text=limitation_text,
+        photo_reference_text=photo_reference_text,
+        document_summary=document_summary,
+        conclusion_note=conclusion_note,
+    )
     if resolved_conclusion_status:
         conclusion_block = payload.get("conclusao")
         if not isinstance(conclusion_block, dict):
@@ -730,6 +920,34 @@ def apply_nr35_projection(
             payload["conclusao"] = conclusion_block
         if conclusion_block.get("status_operacional") in (None, "", []):
             conclusion_block["status_operacional"] = resolved_operational_status
+    conclusion_block = payload.get("conclusao")
+    if not isinstance(conclusion_block, dict):
+        conclusion_block = {}
+        payload["conclusao"] = conclusion_block
+    if resolved_conclusao_tecnica and _should_replace_nr35_conclusion_field(
+        conclusion_block.get("conclusao_tecnica"),
+        generic_candidates=[
+            executive_summary_text,
+            summary_hint,
+            conclusion_note,
+            recommendation_hint,
+        ],
+    ):
+        conclusion_block["conclusao_tecnica"] = resolved_conclusao_tecnica
+    if resolved_justificativa and _should_replace_nr35_conclusion_field(
+        conclusion_block.get("justificativa"),
+        generic_candidates=[
+            executive_summary_text,
+            summary_hint,
+            conclusion_note,
+            recommendation_hint,
+        ],
+    ):
+        conclusion_block["justificativa"] = resolved_justificativa
+    _set_path_if_blank(payload, "conclusao.motivo_status", resolved_conclusion_reason)
+    _set_path_if_blank(payload, "conclusao.liberado_para_uso", resolved_release_status)
+    _set_path_if_blank(payload, "conclusao.acao_requerida", resolved_required_action)
+    _set_path_if_blank(payload, "conclusao.condicao_para_reinspecao", resolved_reinspection_condition)
     _set_path_if_blank(payload, "conclusao.proxima_inspecao_periodica", next_inspection)
     _set_path_if_blank(payload, "conclusao.observacoes", conclusion_note)
 

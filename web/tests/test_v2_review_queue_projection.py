@@ -179,6 +179,7 @@ def test_shape_da_projecao_canonica_da_fila_da_mesa() -> None:
         "chat_finalize"
     ]
     assert dumped["payload"]["queue_sections"]["em_andamento"][0]["collaboration_summary"]["unread_whisper_count"] == 1
+    assert dumped["payload"]["queue_sections"]["em_andamento"][0]["issued_document_reopen_summary"] is None
     assert dumped["payload"]["template_operation_summary"]["total_templates"] == 3
 
 
@@ -440,6 +441,21 @@ def test_painel_revisor_pode_promover_projecao_canonica_da_fila_no_contexto_ssr(
                                 "active_owner_role": "inspetor",
                                 "allowed_next_lifecycle_statuses": ["aguardando_mesa"],
                                 "allowed_surface_actions": ["chat_finalize"],
+                                "issued_document_reopen_summary": {
+                                    "has_history": True,
+                                    "file_name": "laudo_emitido_proj.pdf",
+                                    "issued_document_policy": "hide_from_case",
+                                    "visible_in_active_case": False,
+                                    "internal_learning_candidate": True,
+                                    "reopened_at": "2026-04-02T10:30:00+00:00",
+                                    "source_kind": "issued_pdf_previous_cycle",
+                                    "actor_user_id": 77,
+                                    "storage_version": "v0003",
+                                    "storage_version_number": 3,
+                                    "storage_path": "/tmp/laudo_emitido_proj.pdf",
+                                    "sha256_present": True,
+                                    "pdf_artifact_source": "official_issue_package",
+                                },
                             }
                         ],
                         "aguardando_avaliacao": [],
@@ -476,6 +492,7 @@ def test_painel_revisor_pode_promover_projecao_canonica_da_fila_no_contexto_ssr(
     assert captured_context["laudos_em_andamento"][0]["id"] == 90
     assert captured_context["laudos_em_andamento"][0]["case_lifecycle_status"] == "laudo_em_coleta"
     assert captured_context["laudos_em_andamento"][0]["active_owner_role"] == "inspetor"
+    assert captured_context["laudos_em_andamento"][0]["issued_document_reopen_summary"]["visible_in_active_case"] is False
 
 
 def test_painel_revisor_nao_promove_projecao_incompativel_no_contexto_ssr(

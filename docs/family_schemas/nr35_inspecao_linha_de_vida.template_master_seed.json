@@ -3,7 +3,7 @@
   "template_code": "nr35_inspecao_linha_de_vida",
   "nome_template": "NR35 - Inspecao linha de vida - Template Profissional",
   "modo_editor": "editor_rico",
-  "observacoes": "Overlay premium da familia NR35 para linha de vida, com capa controlada, checklist tecnico dos componentes, registros fotograficos, conclusao com proxima inspecao e governanca da Mesa.",
+  "observacoes": "Laudo tecnico governado da familia NR35 para linha de vida, com capa controlada, identificacao da vistoria, checklist tecnico dos componentes, registros fotograficos, conclusao com proxima inspecao periodica e governanca da Mesa.",
   "estilo_json": {
     "pagina": {
       "size": "A4",
@@ -46,7 +46,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Tariel | Overlay Premium Governado"
+              "text": "Laudo tecnico governado | NR35"
             }
           ],
           "attrs": {
@@ -70,7 +70,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Overlay profissional da familia NR35 para linha de vida, calibrado para inspeção periodica com capa controlada, checklist dos componentes, registros fotograficos, conclusao auditavel e proxima inspecao vinculada."
+              "text": "Laudo tecnico da familia NR35 para linha de vida, calibrado a partir do padrao recorrente dos materiais reais: identificacao documental, identificacao da vistoria, objeto da inspecao, registros fotograficos, metodologia, conclusao auditavel e proxima inspecao periodica."
             }
           ],
           "attrs": {
@@ -189,6 +189,43 @@
                       "content": [
                         {
                           "type": "text",
+                          "text": "Limitacoes da inspecao"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "nao_conformidades_ou_lacunas.limitacoes_de_inspecao",
+                            "raw": "json_path:nao_conformidades_ou_lacunas.limitacoes_de_inspecao"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
                           "text": "Registros fotograficos"
                         }
                       ]
@@ -277,6 +314,117 @@
                       "content": [
                         {
                           "type": "text",
+                          "text": "Motivo do status"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "conclusao.motivo_status",
+                            "raw": "json_path:conclusao.motivo_status"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Liberado para uso"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "conclusao.liberado_para_uso",
+                            "raw": "json_path:conclusao.liberado_para_uso"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Acao requerida"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "conclusao.acao_requerida",
+                            "raw": "json_path:conclusao.acao_requerida"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
                           "text": "Escopo da inspecao"
                         }
                       ]
@@ -295,6 +443,43 @@
                             "mode": "json_path",
                             "key": "objeto_inspecao.descricao_escopo",
                             "raw": "json_path:objeto_inspecao.descricao_escopo"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Condicao para reinspecao"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "conclusao.condicao_para_reinspecao",
+                            "raw": "json_path:conclusao.condicao_para_reinspecao"
                           }
                         }
                       ]
@@ -754,7 +939,7 @@
           "content": [
             {
               "type": "text",
-              "text": "2. Controle Documental / Ficha da Inspecao"
+              "text": "2. Controle Documental, Sumario e Identificacao da Vistoria"
             }
           ]
         },
@@ -1323,7 +1508,7 @@
           "content": [
             {
               "type": "text",
-              "text": "4. Metodologia, Condicoes da Vistoria e Equipe"
+              "text": "4. Metodologia, Instrumentos Utilizados e Aviso Importante"
             }
           ]
         },
@@ -2495,7 +2680,7 @@
           "content": [
             {
               "type": "text",
-              "text": "8. Nao Conformidades, Restricoes e Providencias"
+              "text": "8. Nao Conformidades, Restricoes de Acesso e Providencias"
             }
           ]
         },
@@ -2696,7 +2881,7 @@
           "content": [
             {
               "type": "text",
-              "text": "9. Conclusao, Proxima Inspecao e Observacoes"
+              "text": "9. Conclusao, Proxima Inspecao Periodica e Observacoes"
             }
           ]
         },

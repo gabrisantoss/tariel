@@ -37,7 +37,7 @@ from app.domains.chat.templates_ai import MAPA_COMPONENTES_NR35_LINHA_VIDA
 from app.shared.database import Laudo, MensagemLaudo
 from nucleo.inspetor.confianca_ia import estimar_conflict_score_normativo
 
-_NR35_FAMILY = "nr35_periodica_linha_vida"
+_NR35_FAMILY = "nr35_inspecao_linha_de_vida"
 _NR35_ANCHOR_FAMILY = "nr35_inspecao_ponto_ancoragem"
 _NR13_VASO_PRESSAO_FAMILY = "nr13_inspecao_vaso_pressao"
 _NR13_CALDEIRA_FAMILY = "nr13_inspecao_caldeira"
@@ -223,6 +223,79 @@ def _extract_nr35_conclusion_status(texts: list[str]) -> str:
         if "pendente" in normalized:
             return "Pendente"
     return "Não informado"
+
+
+def _derive_nr35_operational_status(status: str) -> str:
+    if status == "Aprovado":
+        return "liberado"
+    if status == "Reprovado":
+        return "bloqueio"
+    if status == "Pendente":
+        return "aguardando_reinspecao"
+    return ""
+
+
+def _derive_nr35_release_status(status: str) -> str:
+    if status == "Aprovado":
+        return "sim"
+    if status == "Reprovado":
+        return "nao"
+    if status == "Pendente":
+        return "nao_avaliavel"
+    return ""
+
+
+def _derive_nr35_required_action(status: str) -> str:
+    if status == "Aprovado":
+        return "manter_inspecao_periodica"
+    if status == "Reprovado":
+        return "corrigir_e_revalidar"
+    if status == "Pendente":
+        return "complementar_inspecao"
+    return ""
+
+
+def _derive_nr35_reinspection_condition(status: str, conclusion_note: str) -> str:
+    if status != "Pendente":
+        return ""
+    note = conclusion_note.strip()
+    if note:
+        return note[:280]
+    return "Concluir a inspecao com acesso integral e evidencias suficientes do ativo."
+
+
+def _summarize_nr35_component_findings(
+    component_items: list[dict[str, Any]],
+) -> tuple[bool | None, str, str]:
+    nonconforming = [
+        str(item.get("titulo") or item.get("item_codigo") or "").strip()
+        for item in component_items
+        if item.get("veredito_ia_normativo") == "NC"
+    ]
+    pending = [
+        str(item.get("titulo") or item.get("item_codigo") or "").strip()
+        for item in component_items
+        if item.get("veredito_ia_normativo") == "pendente"
+    ]
+    observed = [
+        str(item.get("observacoes") or "").strip()
+        for item in component_items
+        if str(item.get("observacoes") or "").strip()
+    ]
+    detail_parts = observed[:2]
+    if nonconforming:
+        detail_parts.insert(
+            0,
+            "Nao conformidades identificadas em: " + ", ".join(nonconforming[:4]) + ".",
+        )
+        return True, " ".join(part for part in detail_parts if part).strip(), ""
+    if pending:
+        return (
+            True,
+            "A leitura normativa ainda tem lacunas em: " + ", ".join(pending[:4]) + ".",
+            "Inspecao parcial ou sem evidencia suficiente para todos os componentes.",
+        )
+    return False, "Sem nao conformidades relevantes identificadas na leitura guiada.", ""
 
 
 def _materialize_catalog_candidate_without_mutation(
@@ -791,6 +864,18 @@ def _build_nr35_structured_candidate(
 
     status_conclusao = _extract_nr35_conclusion_status(conclusao_texts)
     observacao_conclusao = " ".join(text for text in conclusao_texts if text).strip()[:400]
+    status_operacional = _derive_nr35_operational_status(status_conclusao)
+    liberado_para_uso = _derive_nr35_release_status(status_conclusao)
+    acao_requerida = _derive_nr35_required_action(status_conclusao)
+    condicao_para_reinspecao = _derive_nr35_reinspection_condition(
+        status_conclusao,
+        observacao_conclusao,
+    )
+    (
+        ha_pontos_de_atencao,
+        descricao_pontos_de_atencao,
+        limitacoes_inspecao,
+    ) = _summarize_nr35_component_findings(component_items)
     registros_fotograficos = [
         {
             "titulo": str(slot.get("title") or slot.get("slot") or "").strip(),
@@ -800,6 +885,9 @@ def _build_nr35_structured_candidate(
         for slot in image_slots
         if slot.get("status") == "resolved"
     ]
+    photo_reference_summary = ", ".join(
+        registro["titulo"] for registro in registros_fotograficos if registro["titulo"]
+    )
     resumo = (
         f"Draft incremental {nome_template_humano('nr35_linha_vida')} com "
         f"{len([item for item in component_items if item.get('veredito_ia_normativo') != 'pendente'])} "
@@ -885,11 +973,48 @@ def _build_nr35_structured_candidate(
             }
             for item in component_items
         },
+        "metodologia_e_recursos": {
+            "metodologia": "Inspecao visual guiada com consolidacao semantica do caso.",
+            "instrumentos_utilizados": "",
+            "aviso_importante": (
+                "A vistoria exige confirmacao humana final e pode depender de acesso integral ao ativo."
+            ),
+        },
+        "documentacao_e_registros": {
+            "documentos_disponiveis": photo_reference_summary,
+            "documentos_emitidos": "",
+            "proxima_inspecao_planejada": "",
+            "observacoes_documentais": observacao_conclusao,
+        },
+        "nao_conformidades_ou_lacunas": {
+            "ha_pontos_de_atencao": ha_pontos_de_atencao,
+            "descricao": descricao_pontos_de_atencao,
+            "limitacoes_de_inspecao": (
+                limitacoes_inspecao if status_conclusao == "Pendente" else ""
+            ),
+        },
+        "recomendacoes": {
+            "texto": (
+                "Manter a rastreabilidade da inspecao periodica."
+                if status_conclusao == "Aprovado"
+                else "Corrigir as irregularidades observadas e reinspecionar o sistema."
+                if status_conclusao == "Reprovado"
+                else "Concluir a inspecao do trecho nao verificado antes da deliberacao final."
+                if status_conclusao == "Pendente"
+                else ""
+            ),
+            "acao_prioritaria": acao_requerida,
+        },
         "registros_fotograficos": registros_fotograficos,
         "conclusao": {
             "status": status_conclusao,
             "proxima_inspecao_periodica": "",
             "observacoes": observacao_conclusao,
+            "status_operacional": status_operacional,
+            "motivo_status": observacao_conclusao,
+            "liberado_para_uso": liberado_para_uso,
+            "acao_requerida": acao_requerida,
+            "condicao_para_reinspecao": condicao_para_reinspecao,
         },
         "resumo_executivo": resumo,
     }
@@ -1268,12 +1393,12 @@ def _build_nr35_report_pack_draft(
                 "message": f"Falta evidencia fotografica obrigatoria para {slot_code}.",
             }
         )
-    if conclusion_status not in {"Aprovado", "Reprovado"}:
+    if conclusion_status == "Não informado":
         missing_evidence.append(
             {
-                "code": "nr35_conclusion_status_pending",
+                "code": "nr35_conclusion_status_missing",
                 "kind": "conclusion",
-                "message": "A conclusao final ainda nao definiu aprovado ou reprovado.",
+                "message": "A conclusao final ainda nao definiu o status do laudo.",
             }
         )
 

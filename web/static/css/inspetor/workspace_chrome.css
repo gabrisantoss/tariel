@@ -224,6 +224,47 @@ body.pagina-chat-dashboard-v2 .workspace-official-issue__copy p {
     line-height: 1.45;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-readiness {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-width: 0;
+    padding: 14px 16px;
+    border: 1px solid rgba(15, 23, 42, 0.09) !important;
+    border-radius: var(--vf-radius-lg) !important;
+    background:
+        linear-gradient(135deg, rgba(198, 151, 63, 0.08), rgba(255, 255, 255, 0.94)) !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-readiness__copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-readiness__eyebrow {
+    color: #8a5b14 !important;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-readiness__copy strong {
+    color: var(--vf-text) !important;
+    font-size: 15px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-readiness__copy p {
+    margin: 0;
+    color: var(--vf-text-muted) !important;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
 body.pagina-chat-dashboard-v2 .technical-record-status-pill--neutral {
     border-color: rgba(15, 23, 42, 0.08) !important;
     background: rgba(241, 245, 249, 0.92) !important;
@@ -295,6 +336,10 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread
     }
 
     body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread-with-rail"] .workspace-official-issue {
+        margin-top: 12px;
+    }
+
+    body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread-with-rail"] .workspace-readiness {
         margin-top: 12px;
     }
 
@@ -481,6 +526,11 @@ body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-stage="assistant"] .te
     }
 
     body.pagina-chat-dashboard-v2 .workspace-official-issue {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    body.pagina-chat-dashboard-v2 .workspace-readiness {
         flex-direction: column;
         align-items: flex-start;
     }

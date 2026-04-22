@@ -188,6 +188,26 @@
         };
     };
 
+    const extrairResumoReaberturaDocumentoEmitidoMesa = (pacote) => {
+        const officialIssue = pacote?.emissao_oficial;
+        if (!officialIssue || typeof officialIssue !== "object") {
+            return null;
+        }
+        const reopened = officialIssue.last_reopened_issued_document;
+        if (!reopened || typeof reopened !== "object") {
+            return null;
+        }
+        const pdfArtifact = reopened.pdf_artifact && typeof reopened.pdf_artifact === "object"
+            ? reopened.pdf_artifact
+            : null;
+        return {
+            fileName: String(reopened.file_name || "").trim(),
+            visibleInActiveCase: reopened.visible_in_active_case === true,
+            hiddenFromActiveCase: reopened.visible_in_active_case === false,
+            storageVersion: String(pdfArtifact?.storage_version || "").trim(),
+        };
+    };
+
     const renderizarPainelMesaOperacional = (pacote) => {
         medirSync("revisor.renderizarPainelMesaOperacional", () => {
             if (!els.mesaOperacaoPainel || !els.mesaOperacaoConteudo) return;
@@ -211,6 +231,7 @@
             });
             const totalWhispers = collaboration.recentWhisperCount;
             const statusOperacional = obterResumoStatusOperacaoMesa(collaboration);
+            const reopenSummary = extrairResumoReaberturaDocumentoEmitidoMesa(pacote);
             atualizarIndicadoresListaLaudo(state.laudoAtivoId, {
                 collaborationSummary: pacote?.collaboration?.summary || {
                     open_pendency_count: collaboration.openPendencyCount,
@@ -235,6 +256,24 @@
                         <span>${escapeHtml(statusOperacional.rotulo)}</span>
                     </span>
                 </div>
+
+                ${reopenSummary ? `
+                    <div class="mesa-operacao-inline-tags">
+                        <span class="mesa-operacao-inline-tag attention">Reemissão em andamento</span>
+                        <span class="mesa-operacao-inline-tag">
+                            ${escapeHtml(
+                                reopenSummary.visibleInActiveCase
+                                    ? "PDF anterior ainda visível no caso"
+                                    : "PDF anterior preservado em histórico interno"
+                            )}
+                        </span>
+                        ${(reopenSummary.fileName || reopenSummary.storageVersion)
+                            ? `<span class="mesa-operacao-inline-tag neutra">${escapeHtml(
+                                [reopenSummary.fileName, reopenSummary.storageVersion].filter(Boolean).join(" • ")
+                            )}</span>`
+                            : ""}
+                    </div>
+                ` : ""}
 
                 <div class="mesa-operacao-resumo">
                     <article class="mesa-operacao-kpi">

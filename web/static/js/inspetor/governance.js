@@ -24,6 +24,52 @@
                 .replace(/\b\w/g, (letra) => letra.toUpperCase());
         }
 
+        function obterAcoesSuperficieWorkspace(snapshot = null) {
+            const valores = Array.isArray(snapshot?.allowed_surface_actions)
+                ? snapshot.allowed_surface_actions
+                : Array.isArray(snapshot?.laudo_card?.allowed_surface_actions)
+                    ? snapshot.laudo_card.allowed_surface_actions
+                    : [];
+            return valores
+                .map((item) => String(item || "").trim())
+                .filter(Boolean);
+        }
+
+        function obterTransicoesLifecycleWorkspace(snapshot = null) {
+            const valores = Array.isArray(snapshot?.allowed_lifecycle_transitions)
+                ? snapshot.allowed_lifecycle_transitions
+                : Array.isArray(snapshot?.laudo_card?.allowed_lifecycle_transitions)
+                    ? snapshot.laudo_card.allowed_lifecycle_transitions
+                    : [];
+            return valores.filter((item) => item && typeof item === "object");
+        }
+
+        function humanizarAcaoSuperficieWorkspace(actionKey = "") {
+            const chave = String(actionKey || "").trim().toLowerCase();
+            if (chave === "chat_finalize") return "Enviar para Mesa";
+            if (chave === "mesa_approve") return "Aprovar";
+            if (chave === "mesa_return") return "Devolver para correção";
+            if (chave === "review_approve") return "Aprovar revisão";
+            return humanizarMarcadorWorkspace(chave);
+        }
+
+        function resumirAcoesSuperficieWorkspace(snapshot = null) {
+            return obterAcoesSuperficieWorkspace(snapshot)
+                .slice(0, 3)
+                .map((item) => humanizarAcaoSuperficieWorkspace(item));
+        }
+
+        function resumirProximasTransicoesWorkspace(snapshot = null) {
+            return obterTransicoesLifecycleWorkspace(snapshot)
+                .slice(0, 2)
+                .map((item) => {
+                    const label = String(item?.label || "").trim();
+                    const targetStatus = String(item?.target_status || "").trim();
+                    return label || humanizarMarcadorWorkspace(targetStatus);
+                })
+                .filter(Boolean);
+        }
+
         function lifecyclePermiteVerificacaoPublicaWorkspace(valor = "") {
             const status = normalizarCaseLifecycleStatusSeguro(valor);
             return status === "aprovado" || status === "emitido";
@@ -148,6 +194,136 @@
             };
         }
 
+        function contarFotosSelecionadasParaEmissaoWorkspace(reportPackDraft = null) {
+            const analysisBasis = reportPackDraft?.analysis_basis;
+            const selectedPhotoEvidence = Array.isArray(analysisBasis?.selected_photo_evidence)
+                ? analysisBasis.selected_photo_evidence
+                : [];
+            const issuedPhotoSelection = analysisBasis?.issued_photo_selection;
+            const selectedCount = Number(issuedPhotoSelection?.selected_count || 0) || 0;
+            return Math.max(selectedPhotoEvidence.length, selectedCount, 0);
+        }
+
+        function formatarModoValidacaoWorkspace(valor = "") {
+            const modo = String(valor || "").trim().toLowerCase();
+            if (!modo) return "";
+            if (modo === "mesa_required") return "Mesa obrigatória";
+            if (modo === "mobile_autonomous") return "Autonomia assistida";
+            if (modo === "human_override") return "Override humano";
+            return modo.replace(/[_-]+/g, " ");
+        }
+
+        function construirResumoReadinessWorkspace(snapshot = {}) {
+            const reportPackDraft = snapshot?.report_pack_draft && typeof snapshot.report_pack_draft === "object"
+                ? snapshot.report_pack_draft
+                : {};
+            const preLaudoSummary = snapshot?.pre_laudo_summary && typeof snapshot.pre_laudo_summary === "object"
+                ? snapshot.pre_laudo_summary
+                : {};
+            const qualityGates = reportPackDraft?.quality_gates && typeof reportPackDraft.quality_gates === "object"
+                ? reportPackDraft.quality_gates
+                : {};
+            const missingEvidence = Array.isArray(qualityGates?.missing_evidence)
+                ? qualityGates.missing_evidence
+                : [];
+            const missingEvidenceCount = missingEvidence.length;
+            const missingFieldCount = Number(preLaudoSummary?.missing_field_count || 0) || 0;
+            const selectedPhotoCount = contarFotosSelecionadasParaEmissaoWorkspace(reportPackDraft);
+            const humanValidationRequired = !!snapshot?.human_validation_required;
+            const officialIssue = normalizarEmissaoOficialSeguro(snapshot?.emissao_oficial);
+            const readinessMode = formatarModoValidacaoWorkspace(
+                preLaudoSummary?.final_validation_mode || qualityGates?.final_validation_mode
+            );
+            const reissueSummary = snapshot?.laudo_card?.issued_document_reopen_summary;
+            const reissueRecommended = !!(
+                officialIssue?.reissueRecommended ||
+                reissueSummary?.reissue_recommended
+            );
+            const readyForFinalization = !!preLaudoSummary?.ready_for_finalization;
+            const readyForIssue = !!officialIssue?.readyForIssue;
+            const autonomyReady = !!qualityGates?.autonomy_ready;
+
+            const metaParts = [];
+            if (missingEvidenceCount > 0) {
+                metaParts.push(
+                    missingEvidenceCount === 1
+                        ? "1 evidência obrigatória pendente"
+                        : `${missingEvidenceCount} evidências obrigatórias pendentes`
+                );
+            } else {
+                metaParts.push("Evidências obrigatórias completas");
+            }
+            if (missingFieldCount > 0) {
+                metaParts.push(
+                    missingFieldCount === 1
+                        ? "1 campo crítico pendente"
+                        : `${missingFieldCount} campos críticos pendentes`
+                );
+            } else if (readyForFinalization) {
+                metaParts.push("Pré-laudo consistente");
+            }
+            if (selectedPhotoCount > 0) {
+                metaParts.push(
+                    selectedPhotoCount === 1
+                        ? "1 foto curada para emissão"
+                        : `${selectedPhotoCount} fotos curadas para emissão`
+                );
+            }
+            if (readinessMode) {
+                metaParts.push(readinessMode);
+            }
+            if (reissueRecommended) {
+                metaParts.push("Reemissão recomendada");
+            }
+
+            if (readyForIssue) {
+                return {
+                    visible: true,
+                    title: "Pronto para emissão oficial",
+                    detail: metaParts.join(" • ") || "Checklist documental consolidado para emissão.",
+                    chip: "PRONTO",
+                    tone: "accepted",
+                };
+            }
+
+            if (readyForFinalization && humanValidationRequired) {
+                return {
+                    visible: true,
+                    title: "Pronto para revisão humana",
+                    detail: metaParts.join(" • ") || "Pré-laudo consolidado aguardando validação humana.",
+                    chip: "REVISAR",
+                    tone: reissueRecommended ? "warning" : "accepted",
+                };
+            }
+
+            if (readyForFinalization && autonomyReady) {
+                return {
+                    visible: true,
+                    title: "Checklist documental consolidado",
+                    detail: metaParts.join(" • ") || "Laudo pronto para avançar sem pendências estruturais.",
+                    chip: "PRONTO",
+                    tone: "accepted",
+                };
+            }
+
+            const hasSignals = !!(
+                snapshot?.report_pack_draft ||
+                snapshot?.pre_laudo_summary ||
+                snapshot?.emissao_oficial ||
+                snapshot?.human_validation_required ||
+                snapshot?.case_lifecycle_status ||
+                snapshot?.laudo_card?.case_lifecycle_status
+            );
+
+            return {
+                visible: hasSignals,
+                title: "Completar prontidão antes de emitir",
+                detail: metaParts.join(" • ") || "Ainda há pendências documentais para consolidar o laudo.",
+                chip: "PENDENTE",
+                tone: reissueRecommended ? "warning" : "neutral",
+            };
+        }
+
         function resumirReemissaoRecomendadaPortal(total = 0) {
             const quantidade = Number(total || 0);
             return quantidade === 1
@@ -209,41 +385,151 @@
             const snapshot = obterPayloadStatusRelatorioWorkspaceAtual();
             const officialIssue = normalizarEmissaoOficialSeguro(snapshot?.emissao_oficial);
             const currentIssue = officialIssue?.currentIssue;
+            const reopenSummary = snapshot?.laudo_card?.issued_document_reopen_summary
+                && typeof snapshot.laudo_card.issued_document_reopen_summary === "object"
+                ? snapshot.laudo_card.issued_document_reopen_summary
+                : null;
             const primaryPdfDiverged = !!(
                 currentIssue?.primary_pdf_diverged ||
                 String(currentIssue?.primary_pdf_comparison_status || "").trim().toLowerCase() === "diverged"
             );
+            const lifecycleStatus = normalizarCaseLifecycleStatusSeguro(
+                snapshot?.case_lifecycle_status ?? snapshot?.laudo_card?.case_lifecycle_status
+            );
+            const reviewModeFinal = String(snapshot?.review_mode_final || snapshot?.laudo_card?.review_mode_final || "").trim();
+            const verification = snapshot?.public_verification && typeof snapshot.public_verification === "object"
+                ? snapshot.public_verification
+                : null;
+            const documentVisibilityDetail = reopenSummary
+                ? (
+                    reopenSummary.visible_in_active_case
+                        ? "O PDF emitido anterior continua visível no caso atual."
+                        : "O PDF emitido anterior segue preservado apenas no histórico interno."
+                )
+                : "";
+            const reopenedDocumentLabel = String(reopenSummary?.file_name || "").trim();
+            const reopenedDocumentMeta = [
+                reopenedDocumentLabel,
+                String(reopenSummary?.storage_version || "").trim(),
+            ].filter(Boolean).join(" • ");
 
-            if (!primaryPdfDiverged) {
+            if (primaryPdfDiverged) {
+                const frozenVersion = String(currentIssue?.primary_pdf_storage_version || "").trim();
+                const currentVersion = String(currentIssue?.current_primary_pdf_storage_version || "").trim();
+                const versionSummary = (
+                    frozenVersion && currentVersion && frozenVersion !== currentVersion
+                        ? `${frozenVersion} → ${currentVersion}`
+                        : currentVersion && currentVersion !== frozenVersion
+                            ? `Atual ${currentVersion}`
+                            : frozenVersion
+                                ? `Emitido ${frozenVersion}`
+                                : ""
+                );
+
                 return {
-                    visible: false,
+                    visible: true,
                     title: "Reemissão recomendada",
-                    detail: "PDF emitido divergente detectado no caso atual.",
+                    detail: [
+                        "PDF emitido divergente",
+                        versionSummary,
+                        documentVisibilityDetail,
+                        reopenedDocumentMeta,
+                        String(currentIssue?.issue_number || "").trim(),
+                    ].filter(Boolean).join(" • "),
                     actionLabel: "Abrir reemissão na Mesa",
+                    actionKey: "reissue",
                 };
             }
 
-            const frozenVersion = String(currentIssue?.primary_pdf_storage_version || "").trim();
-            const currentVersion = String(currentIssue?.current_primary_pdf_storage_version || "").trim();
-            const versionSummary = (
-                frozenVersion && currentVersion && frozenVersion !== currentVersion
-                    ? `${frozenVersion} → ${currentVersion}`
-                    : currentVersion && currentVersion !== frozenVersion
-                        ? `Atual ${currentVersion}`
-                        : frozenVersion
-                            ? `Emitido ${frozenVersion}`
-                            : ""
-            );
+            if (reopenSummary) {
+                return {
+                    visible: true,
+                    title: reopenSummary.visible_in_active_case
+                        ? "Documento emitido anterior ainda visível"
+                        : "Documento emitido anterior preservado em histórico",
+                    detail: [
+                        documentVisibilityDetail,
+                        reopenedDocumentMeta,
+                        "Nova revisão em andamento",
+                    ].filter(Boolean).join(" • "),
+                    actionLabel: "Abrir Mesa",
+                    actionKey: "mesa",
+                };
+            }
+
+            if (workspaceTemContratoLifecycle(snapshot)) {
+                const resumoAcoes = resumirAcoesSuperficieWorkspace(snapshot);
+                const resumoTransicoes = resumirProximasTransicoesWorkspace(snapshot);
+                const validacaoHumanaObrigatoria = snapshot?.human_validation_required !== false;
+
+                if (workspaceHasSurfaceAction(snapshot, "chat_finalize")) {
+                    return {
+                        visible: true,
+                        title: "Caso pronto para próximo handoff",
+                        detail: [
+                            humanizarMarcadorWorkspace(lifecycleStatus),
+                            resumoTransicoes[0] || "Próximo passo humano disponível",
+                            validacaoHumanaObrigatoria ? "Validação humana obrigatória" : "",
+                        ].filter(Boolean).join(" • "),
+                        actionLabel: "Abrir Mesa",
+                        actionKey: "mesa",
+                    };
+                }
+
+                if (
+                    workspaceHasSurfaceAction(snapshot, "mesa_approve") ||
+                    workspaceHasSurfaceAction(snapshot, "mesa_return")
+                ) {
+                    return {
+                        visible: true,
+                        title: "Mesa com decisão pendente",
+                        detail: [
+                            humanizarMarcadorWorkspace(lifecycleStatus),
+                            resumoAcoes.join(" • "),
+                            resumoTransicoes[0] || "",
+                        ].filter(Boolean).join(" • "),
+                        actionLabel: "Abrir Mesa",
+                        actionKey: "mesa",
+                    };
+                }
+
+                if (reviewModeFinal || resumoTransicoes.length) {
+                    return {
+                        visible: true,
+                        title: "Contrato canônico do caso ativo",
+                        detail: [
+                            humanizarMarcadorWorkspace(lifecycleStatus),
+                            reviewModeFinal ? `Revisão ${humanizarMarcadorWorkspace(reviewModeFinal)}` : "",
+                            resumoTransicoes.join(" • "),
+                        ].filter(Boolean).join(" • "),
+                        actionLabel: "",
+                        actionKey: "",
+                    };
+                }
+            }
+
+            if (verification && (lifecycleStatus === "aprovado" || lifecycleStatus === "emitido")) {
+                return {
+                    visible: true,
+                    title: lifecycleStatus === "emitido"
+                        ? "Entrega verificável disponível"
+                        : "Verificação pública pronta",
+                    detail: [
+                        String(verification.hashShort || "").trim(),
+                        String(verification.statusVisualLabel || "").trim(),
+                        String(verification.statusConformidade || "").trim(),
+                    ].filter(Boolean).join(" • "),
+                    actionLabel: "",
+                    actionKey: "",
+                };
+            }
 
             return {
-                visible: true,
-                title: "Reemissão recomendada",
-                detail: [
-                    "PDF emitido divergente",
-                    versionSummary,
-                    String(currentIssue?.issue_number || "").trim(),
-                ].filter(Boolean).join(" • "),
-                actionLabel: "Abrir reemissão na Mesa",
+                visible: false,
+                title: "Governança do caso",
+                detail: "Os sinais canônicos do caso aparecerão aqui conforme o fluxo evoluir.",
+                actionLabel: "",
+                actionKey: "",
             };
         }
 
@@ -261,7 +547,37 @@
             }
             if (el.btnWorkspaceHistoryReissue) {
                 el.btnWorkspaceHistoryReissue.textContent = resumo.actionLabel;
+                el.btnWorkspaceHistoryReissue.hidden = !resumo.visible || !String(resumo.actionLabel || "").trim();
+                el.btnWorkspaceHistoryReissue.dataset.historyGovernanceAction = String(resumo.actionKey || "").trim();
             }
+        }
+
+        function renderizarReadinessHistoricoWorkspace() {
+            if (
+                !el.workspaceHistoryReadiness ||
+                !el.workspaceHistoryReadinessTitle ||
+                !el.workspaceHistoryReadinessDetail ||
+                !el.workspaceHistoryReadinessChip
+            ) {
+                return;
+            }
+
+            const snapshot = obterPayloadStatusRelatorioWorkspaceAtual();
+            const resumo = construirResumoReadinessWorkspace(snapshot);
+            el.workspaceHistoryReadiness.hidden = !resumo.visible;
+            el.workspaceHistoryReadinessTitle.textContent = resumo.title || "";
+            el.workspaceHistoryReadinessDetail.textContent = resumo.detail || "";
+            el.workspaceHistoryReadinessChip.textContent = resumo.chip || "";
+            el.workspaceHistoryReadiness.classList.toggle(
+                "workspace-history-insight--accepted",
+                resumo.tone === "accepted"
+            );
+            el.workspaceHistoryReadiness.classList.toggle(
+                "workspace-history-insight--warning",
+                resumo.tone === "warning"
+            );
+            el.workspaceHistoryReadinessChip.classList.toggle("accepted", resumo.tone === "accepted");
+            el.workspaceHistoryReadinessChip.classList.toggle("warning", resumo.tone === "warning");
         }
 
         Object.assign(ctx.actions, {
@@ -270,9 +586,11 @@
             workspacePermiteFinalizacao,
             construirMetaVerificacaoPublicaWorkspace,
             construirResumoEmissaoOficialWorkspace,
+            construirResumoReadinessWorkspace,
             construirResumoGovernancaHistoricoWorkspace,
             renderizarGovernancaEntradaInspetor,
             renderizarGovernancaHistoricoWorkspace,
+            renderizarReadinessHistoricoWorkspace,
         });
     };
 })();

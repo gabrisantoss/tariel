@@ -11,7 +11,10 @@ from typing import Any, Iterable
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.domains.chat.laudo_state_helpers import resolver_snapshot_leitura_caso_tecnico
+from app.domains.chat.laudo_state_helpers import (
+    resolver_snapshot_leitura_caso_tecnico,
+    serializar_resumo_reabertura_documento_emitido,
+)
 from app.domains.chat.learning_helpers import listar_aprendizados_laudo, serializar_aprendizado_visual
 from app.domains.chat.media_helpers import safe_remove_file
 from app.domains.mesa.service import montar_pacote_mesa_laudo
@@ -114,6 +117,7 @@ def carregar_laudo_completo_revisor(
             lifecycle_status=case_snapshot.case_lifecycle_status,
             active_owner_role=case_snapshot.active_owner_role,
         ),
+        "issued_document_reopen_summary": serializar_resumo_reabertura_documento_emitido(laudo),
         "tipo_template": getattr(laudo, "tipo_template", "padrao"),
         "criado_em": laudo.criado_em.strftime("%d/%m/%Y %H:%M"),
         **carregar_complementos_legado_laudo_revisor(

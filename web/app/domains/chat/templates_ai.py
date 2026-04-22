@@ -68,6 +68,10 @@ TITULOS_SECOES_NR35_LINHA_VIDA: dict[str, str] = {
     "informacoes_gerais": "IDENTIFICACAO E CONTEXTO DA VISTORIA",
     "objeto_inspecao": "OBJETO DA INSPECAO",
     "componentes_inspecionados": "COMPONENTES / ACESSORIOS INSPECIONADOS",
+    "metodologia_e_recursos": "METODOLOGIA, RECURSOS E AVISOS",
+    "documentacao_e_registros": "DOCUMENTACAO, REGISTROS E RASTREABILIDADE",
+    "nao_conformidades_ou_lacunas": "NAO CONFORMIDADES, LACUNAS E LIMITACOES",
+    "recomendacoes": "RECOMENDACOES E ENCAMINHAMENTOS",
     "conclusao": "CONCLUSAO E ENCAMINHAMENTO",
 }
 
@@ -282,6 +286,82 @@ class RegistroFotograficoNR35LinhaVida(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class MetodologiaRecursosNR35LinhaVida(BaseModel):
+    """Metodologia executada, recursos e avisos importantes da inspeção."""
+
+    metodologia: str = Field(
+        default="",
+        description="Método resumido aplicado na inspeção, ex: inspeção visual em campo.",
+    )
+    instrumentos_utilizados: str = Field(
+        default="",
+        description="Instrumentos, recursos ou meios de acesso utilizados na vistoria.",
+    )
+    aviso_importante: str = Field(
+        default="",
+        description="Aviso importante, ressalva de acesso ou observação operacional relevante.",
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class DocumentacaoRegistrosNR35LinhaVida(BaseModel):
+    """Resumo da documentação e dos registros vinculados ao laudo NR35."""
+
+    documentos_disponiveis: str = Field(
+        default="",
+        description="Síntese curta dos documentos, fotos ou registros considerados.",
+    )
+    documentos_emitidos: str = Field(
+        default="",
+        description="Laudos, ARTs ou documentos emitidos/relacionados ao caso.",
+    )
+    proxima_inspecao_planejada: str = Field(
+        default="",
+        description="Janela ou data prevista para a próxima inspeção planejada.",
+    )
+    observacoes_documentais: str = Field(
+        default="",
+        description="Observações documentais, limitações de registro ou rastreabilidade.",
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class NaoConformidadesOuLacunasNR35LinhaVida(BaseModel):
+    """Bloco consolidado de pontos de atenção, lacunas e restrições da inspeção."""
+
+    ha_pontos_de_atencao: bool | None = Field(
+        default=None,
+        description="Indica se existem não conformidades, lacunas ou pontos de atenção relevantes.",
+    )
+    descricao: str = Field(
+        default="",
+        description="Descrição técnica resumida das não conformidades ou lacunas observadas.",
+    )
+    limitacoes_de_inspecao: str = Field(
+        default="",
+        description="Restrições de acesso, inspeção parcial ou condições que limitaram a vistoria.",
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class RecomendacoesNR35LinhaVida(BaseModel):
+    """Encaminhamentos e recomendações após a inspeção NR35."""
+
+    texto: str = Field(
+        default="",
+        description="Recomendação técnica principal resultante da vistoria.",
+    )
+    acao_prioritaria: str = Field(
+        default="",
+        description="Ação prioritária resumida para o responsável pelo ativo.",
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class ConclusaoNR35LinhaVida(BaseModel):
     """Conclusão final do laudo NR35."""
 
@@ -297,6 +377,26 @@ class ConclusaoNR35LinhaVida(BaseModel):
         default="",
         description="Observações finais e justificativa técnica da conclusão.",
     )
+    status_operacional: str = Field(
+        default="",
+        description="Leitura operacional derivada da conclusão, ex: liberado, bloqueio ou aguardando_reinspecao.",
+    )
+    motivo_status: str = Field(
+        default="",
+        description="Motivo técnico resumido que explica o status final adotado.",
+    )
+    liberado_para_uso: str = Field(
+        default="",
+        description="Indica se o sistema está liberado para uso: sim, nao ou nao_avaliavel.",
+    )
+    acao_requerida: str = Field(
+        default="",
+        description="Ação requerida após a conclusão, como manter inspeção, corrigir ou reinspecionar.",
+    )
+    condicao_para_reinspecao: str = Field(
+        default="",
+        description="Condição ou pré-requisito para reinspeção quando aplicável.",
+    )
 
     model_config = ConfigDict(extra="ignore")
 
@@ -311,6 +411,18 @@ class RelatorioNR35LinhaVida(BaseModel):
         default_factory=ObjetoInspecaoNR35LinhaVida
     )
     componentes_inspecionados: ComponentesInspecionadosNR35LinhaVida
+    metodologia_e_recursos: MetodologiaRecursosNR35LinhaVida = Field(
+        default_factory=MetodologiaRecursosNR35LinhaVida
+    )
+    documentacao_e_registros: DocumentacaoRegistrosNR35LinhaVida = Field(
+        default_factory=DocumentacaoRegistrosNR35LinhaVida
+    )
+    nao_conformidades_ou_lacunas: NaoConformidadesOuLacunasNR35LinhaVida = Field(
+        default_factory=NaoConformidadesOuLacunasNR35LinhaVida
+    )
+    recomendacoes: RecomendacoesNR35LinhaVida = Field(
+        default_factory=RecomendacoesNR35LinhaVida
+    )
     registros_fotograficos: list[RegistroFotograficoNR35LinhaVida] = Field(
         default_factory=list,
         description="Lista ordenada de evidências fotográficas com legenda curta.",

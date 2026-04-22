@@ -123,10 +123,51 @@ body.pagina-chat-dashboard-v2 .workspace-history-insight p {
     line-height: 1.5;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-history-insight__headline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-insight__chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid rgba(15, 23, 42, 0.08) !important;
+    border-radius: 999px;
+    background: rgba(241, 245, 249, 0.92) !important;
+    color: var(--vf-text-muted) !important;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 body.pagina-chat-dashboard-v2 .workspace-history-insight--warning {
     border-color: rgba(160, 108, 35, 0.16) !important;
     background:
         linear-gradient(180deg, rgba(255, 249, 239, 0.98), rgba(255, 252, 246, 0.96)) !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-insight--accepted {
+    border-color: rgba(38, 130, 93, 0.14) !important;
+    background:
+        linear-gradient(180deg, rgba(240, 252, 247, 0.98), rgba(247, 253, 250, 0.96)) !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-insight__chip.accepted {
+    border-color: rgba(38, 130, 93, 0.14) !important;
+    background: rgba(38, 130, 93, 0.12) !important;
+    color: #1f7f5b !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-insight__chip.warning {
+    border-color: rgba(160, 108, 35, 0.16) !important;
+    background: rgba(160, 108, 35, 0.12) !important;
+    color: #9a6520 !important;
 }
 
 body.pagina-chat-dashboard-v2 .workspace-history-insight__action {
@@ -271,10 +312,17 @@ body.pagina-chat-dashboard-v2 .workspace-history-card[data-history-type="decisoe
         linear-gradient(180deg, rgba(252, 248, 241, 0.98), rgba(255, 252, 246, 0.98));
 }
 
-body.pagina-chat-dashboard-v2 .workspace-history-card[data-history-reissue="true"] {
+body.pagina-chat-dashboard-v2 .workspace-history-card[data-history-governance="reissue"] {
     border-color: rgba(160, 108, 35, 0.18);
     background:
         linear-gradient(180deg, rgba(255, 248, 236, 0.98), rgba(255, 252, 245, 0.98));
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card[data-history-governance="mesa"] {
+    border-color: rgba(31, 94, 142, 0.16);
+    background:
+        radial-gradient(circle at top left, rgba(31, 94, 142, 0.06), transparent 34%),
+        linear-gradient(180deg, rgba(246, 250, 253, 0.98), rgba(255, 255, 255, 0.98));
 }
 
 body.pagina-chat-dashboard-v2 .workspace-history-card[data-history-role="sistema"],
@@ -501,6 +549,11 @@ body.pagina-chat-dashboard-v2 .workspace-history-card__more-menu {
 
     body.pagina-chat-dashboard-v2 .workspace-history-tools__meta {
         justify-content: flex-start;
+    }
+
+    body.pagina-chat-dashboard-v2 .workspace-history-insight__headline {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     body.pagina-chat-dashboard-v2 .workspace-history-filter-shell,

@@ -985,3 +985,1076 @@ Próximo passo imediato:
 
 - continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo sincronização de rail/widgets ou outro bloco de orquestração ainda local;
 - no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando governança ou template library rollup, que ainda concentram volume real.
+
+## Ciclo R23 — Mesa widget do workspace e registry documental do catálogo
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda concentrava a disponibilidade do Mesa widget e o encaixe do painel dentro do stage `inspection_mesa`, mesmo depois da extração de `workspace_screen.js`;
+- `web/app/domains/admin/services.py` ainda mantinha a resolução de rótulo documental do catálogo acoplada ao hotspot principal, embora o registry e o rollup já estivessem em módulo dedicado;
+- era um corte seguro porque os blocos eram de orquestração leve e leitura de registry, sem mudança de contrato.
+
+Corte executado:
+
+- migração de `resolveMesaWidgetDisponibilidade` e `sincronizarMesaStageWorkspace` para `web/static/js/inspetor/workspace_screen.js`;
+- reapontamento de `web/static/js/chat/chat_index_page.js` para consumir esse bloco via `window.TarielInspectorWorkspaceScreen`;
+- extração de `catalog_model_label` para `web/app/domains/admin/admin_catalog_asset_registry_services.py`;
+- preservação do wrapper compatível em `web/app/domains/admin/services.py`.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_screen.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/app/domains/admin/admin_catalog_asset_registry_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_screen.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_asset_registry_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_asset_registry_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo algum resíduo de sincronização entre rail, tabs e overview que ainda esteja no entrypoint;
+- no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando governança ou o restante da infraestrutura da template library que ainda esteja acoplado ao agregado principal.
+
+## Ciclo R24 — Thread do workspace e leitura textual do catálogo
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda mantinha a troca de canal do workspace (`conversa`, `histórico`, `anexos`, `mesa`) dentro do entrypoint principal;
+- `web/app/domains/admin/services.py` ainda concentrava helpers textuais usados pelo histórico e pela leitura de liberação do catálogo, embora esse contexto já estivesse em `catalog_tenant_management_services.py`;
+- era um corte seguro porque os blocos eram de navegação local e serialização textual, sem mudança de contrato.
+
+Corte executado:
+
+- criação do módulo `web/static/js/inspetor/workspace_thread.js`;
+- migração de `atualizarThreadWorkspace` para esse módulo e reapontamento de `web/static/js/chat/chat_index_page.js` para consumi-lo por delegação;
+- carregamento do novo módulo em `web/templates/index.html` antes do entrypoint principal;
+- extração de `catalogo_texto_leitura` e `catalogo_scope_summary_label` para `web/app/domains/admin/catalog_tenant_management_services.py`, preservando wrappers compatíveis em `services.py`.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_thread.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/catalog_tenant_management_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_thread.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/catalog_tenant_management_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/catalog_tenant_management_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo algum resíduo de controle de stage/overview ainda preso ao entrypoint;
+- no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando governança ou helpers documentais/serialização que ainda orbitam o agregado principal.
+
+## Ciclo R25 — Runtime core do inspetor e superfícies de aplicação do admin
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda acumulava o runtime core do inspetor, misturando resolução de estado, espelhamento, cálculo de screen/view, orquestração do workspace e boot/event wiring no mesmo entrypoint;
+- `web/app/domains/admin/services.py` seguia como barramento de composições de catálogo e operações do painel, mesmo depois de vários recortes temáticos;
+- os dois hotspots já não eram apenas grandes por volume, mas por papel arquitetural misturado.
+
+Corte executado:
+
+- criação dos módulos `web/static/js/inspetor/workspace_runtime_state.js` e `web/static/js/inspetor/workspace_runtime_screen.js` para o runtime core do inspetor;
+- criação do módulo `web/static/js/inspetor/workspace_orchestration.js` para stage/contexto/home/finalização;
+- criação do módulo `web/static/js/inspetor/workspace_page_boot.js` para boot/event wiring básico da página;
+- reapontamento de `web/static/js/chat/chat_index_page.js` para operar como delegador fino desses blocos, preservando compatibilidade e hooks de performance;
+- criação dos módulos `web/app/domains/admin/admin_catalog_application_services.py` e `web/app/domains/admin/admin_operations_application_services.py`;
+- reapontamento de `web/app/domains/admin/services.py` para delegar a esses módulos as superfícies de catálogo, onboarding, dashboard e detalhe administrativo do cliente.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_runtime_state.js`
+- `web/static/js/inspetor/workspace_runtime_screen.js`
+- `web/static/js/inspetor/workspace_orchestration.js`
+- `web/static/js/inspetor/workspace_page_boot.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_catalog_application_services.py`
+- `web/app/domains/admin/admin_operations_application_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_runtime_state.js`
+- `node --check web/static/js/inspetor/workspace_runtime_screen.js`
+- `node --check web/static/js/inspetor/workspace_orchestration.js`
+- `node --check web/static/js/inspetor/workspace_page_boot.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_application_services.py web/app/domains/admin/admin_operations_application_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_application_services.py app/domains/admin/admin_operations_application_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- no inspetor, revisar se vale um último corte para reduzir `window.*` e a compat layer de `window.TarielInspectorState` sem abrir refactor transversal maior do que o branch atual pede;
+- no admin, seguir esvaziando `web/app/domains/admin/services.py` por helpers residuais de catálogo/governança ou decidir se o próximo passo já pede mover a compatibilidade pública para os módulos de aplicação recém-criados.
+
+## R26. Tenant/catalog application slice no admin
+
+Resumo:
+
+- removi wrappers redundantes de escrita/importação em `web/app/domains/admin/services.py`, reapontando `upsert_familia_catalogo`, `upsert_oferta_comercial_familia`, `upsert_modo_tecnico_familia`, `upsert_calibracao_familia` e importadores canônicos para reexports diretos dos módulos já extraídos;
+- criei `web/app/domains/admin/admin_catalog_tenant_application_services.py` para concentrar detalhe de família, release tenant, signatário governado e sincronização/resumo de portfolio;
+- religuei `web/app/domains/admin/services.py` para expor essas superfícies como fachada fina, preservando a API pública do domínio e reduzindo o agregado principal;
+- corrigi o acoplamento interno do novo módulo para depender diretamente das superfícies e helpers necessários, evitando reexposição artificial de aliases privados em `services.py`.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/admin_catalog_tenant_application_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_tenant_application_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_tenant_application_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Impacto observado:
+
+- `web/app/domains/admin/services.py`: `3109 -> 2622` linhas no estado atual do branch após este ciclo, com o slice tenant/catalog separado e os reexports redundantes removidos.
+
+Próximo passo imediato:
+
+- no admin, o centro de gravidade restante fica em governança/review policy e em resíduos de composição documental do catálogo; o próximo corte mais limpo é levar `upsert_governanca_review_familia` e eventuais serializers/document previews correlatos para uma superfície própria;
+- no frontend, só vale novo corte se houver intenção explícita de reduzir a compat layer global do inspetor (`window.*`) sem abrir refactor transversal maior.
+
+## R27. Governança e resumo do catálogo no admin
+
+Resumo:
+
+- criei `web/app/domains/admin/admin_catalog_governance_application_services.py` para concentrar a superfície de governança de review e a fachada principal de resumo do catálogo;
+- removi de `web/app/domains/admin/services.py` a implementação de `upsert_governanca_review_familia`, `listar_metodos_catalogo` e `resumir_catalogo_laudos_admin`, mantendo o agregado como reexport fino dessas superfícies;
+- preservei explicitamente a exportação de `flush_ou_rollback_integridade` no agregado principal, porque os módulos de escrita já extraídos ainda dependem desse contrato interno;
+- corrigi os acoplamentos ocultos do novo módulo para importar diretamente o reader de resumo do catálogo em vez de depender de aliases privados removidos.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/admin_catalog_governance_application_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_governance_application_services.py web/app/domains/admin/admin_catalog_tenant_application_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_governance_application_services.py app/domains/admin/admin_catalog_tenant_application_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or catalogo_governanca_review_e_release_structured or admin_rollup_de_governanca_agrega_catalogo_e_dashboard or signatario_governado_do_tenant_salva_escopo_e_aparece_no_detalhe"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `5 passed, 37 deselected`
+  - `41 passed`
+
+Impacto observado:
+
+- `web/app/domains/admin/services.py`: `2622 -> 2468` linhas no estado atual do branch após este ciclo, com governança e resumo do catálogo saindo do agregado principal.
+
+Próximo passo imediato:
+
+- no admin, o hotspot remanescente mais claro agora está em serializers/helpers de composição documental e de variant/material summary usados no detalhe e no rollup do catálogo; esse é o próximo corte estrutural mais seguro;
+- no frontend, ainda não vale novo corte sem intenção explícita de atacar a compat layer global do inspetor.
+
+## R28. Apresentação documental do catálogo no admin
+
+Resumo:
+
+- criei `web/app/domains/admin/admin_catalog_presentation_services.py` para concentrar snapshots de artefatos, rollup de template library, leitura de material real, preview documental, variant library, template refinement e serialização da linha do catálogo;
+- removi esse bloco de `web/app/domains/admin/services.py`, deixando o agregado principal apenas com aliases privados de compatibilidade para os módulos de governança e tenant já extraídos;
+- preservei explicitamente no agregado os símbolos internos ainda usados por esses slices, como `summarize_offer_commercial_governance`, `catalog_offer_variants`, `resolve_master_template_id_for_family` e `_template_library_registry_index`;
+- corrigi os acoplamentos residuais do novo módulo para depender diretamente dos serviços-base de asset/document/material em vez de aliases privados apagados do agregado.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/admin_catalog_presentation_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_presentation_services.py web/app/domains/admin/admin_catalog_governance_application_services.py web/app/domains/admin/admin_catalog_tenant_application_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_presentation_services.py app/domains/admin/admin_catalog_governance_application_services.py app/domains/admin/admin_catalog_tenant_application_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or catalogo_governanca_review_e_release_structured or admin_rollup_de_governanca_agrega_catalogo_e_dashboard or signatario_governado_do_tenant_salva_escopo_e_aparece_no_detalhe"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- resultados:
+  - `5 passed, 37 deselected`
+  - `41 passed`
+
+Impacto observado:
+
+- `web/app/domains/admin/services.py`: `2468 -> 2009` linhas no estado atual do branch após este ciclo, com a apresentação documental do catálogo extraída.
+
+Próximo passo imediato:
+
+- no admin, o centro de gravidade remanescente mais claro fica em bootstrap/sync canônico e em alguns helpers transversais de catálogo ainda usados como compat layer interna; esse é o próximo corte mais natural se a ideia for continuar drenando o agregado;
+- no frontend, ainda não faz sentido novo corte sem decidir explicitamente atacar a compat layer global do inspetor.
+
+## R29. Base canônica e sync helpers do catálogo
+
+Resumo:
+
+- criei `web/app/domains/admin/admin_catalog_foundation_services.py` para concentrar paths canônicos, descoberta/carregamento de schemas, busca de família e bootstrap de métodos sugeridos do catálogo;
+- removi esse bloco de `web/app/domains/admin/services.py`, mantendo aliases explícitos para preservar os contratos internos usados por `catalog_*_write_services`, pelos módulos de apresentação/governança/tenant e pelos testes que fazem monkeypatch de `_repo_root_dir` e `_family_schemas_dir`;
+- corrigi a propagação desses monkeypatches no módulo novo, fazendo os loaders e file-path helpers passarem pela alias pública do agregado, para manter os smoke de bootstrap canônico e os cenários de artifact chain coerentes;
+- com isso, o agregado principal ficou abaixo de `2k` linhas sem romper a compatibilidade interna atual.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/admin_catalog_foundation_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_foundation_services.py web/app/domains/admin/admin_catalog_presentation_services.py web/app/domains/admin/admin_catalog_governance_application_services.py web/app/domains/admin/admin_catalog_tenant_application_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_foundation_services.py app/domains/admin/admin_catalog_presentation_services.py app/domains/admin/admin_catalog_governance_application_services.py app/domains/admin/admin_catalog_tenant_application_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or catalogo_governanca_review_e_release_structured or admin_rollup_de_governanca_agrega_catalogo_e_dashboard or signatario_governado_do_tenant_salva_escopo_e_aparece_no_detalhe"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- resultados:
+  - `5 passed, 37 deselected`
+  - `41 passed`
+
+Impacto observado:
+
+- `web/app/domains/admin/services.py`: `2009 -> 1945` linhas no estado atual do branch após este ciclo, com a base canônica e os helpers de sync retirados do agregado.
+
+Próximo passo imediato:
+
+- no admin, o que resta agora é majoritariamente compat layer, alguns helpers transversais de catálogo e blocos operacionais de onboarding/dashboard/plataforma; o próximo corte útil depende de decidir se vale continuar drenando aliases internos ou mudar o foco para outra superfície;
+- no frontend, continua não valendo novo corte sem intenção explícita de atacar a compat layer global do inspetor.
+
+## R30. Operações administrativas reapontadas para superfície dedicada
+
+Resumo:
+
+- reescrevi `web/app/domains/admin/admin_operations_application_services.py` para que ele próprio monte as dependências de onboarding, dashboard e detalhe de cliente, em vez de depender de wrappers inchados no agregado principal;
+- reduzi `web/app/domains/admin/services.py` removendo os helpers locais de serialização operacional e os blocos extensos de montagem dessas superfícies, mantendo só as fachadas públicas e os aliases privados realmente consumidos;
+- preservei os contratos que outras rotas e slices ainda importam de `services.py`, como `criar_usuario_empresa` e `_serializar_signatario_governado_admin`, para não quebrar a malha atual;
+- com isso, o agregado administrativo caiu mais um degrau e ficou mais próximo de um composition root fino do que de um módulo monolítico operacional.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/admin_operations_application_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_operations_application_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_operations_application_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or catalogo_governanca_review_e_release_structured or admin_rollup_de_governanca_agrega_catalogo_e_dashboard or signatario_governado_do_tenant_salva_escopo_e_aparece_no_detalhe"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- resultados:
+  - `5 passed, 37 deselected`
+  - `41 passed`
+
+Impacto observado:
+
+- `web/app/domains/admin/services.py`: `1945 -> 1816` linhas no estado atual do branch após este ciclo, com onboarding/dashboard/detalhe reapontados para a superfície operacional dedicada.
+
+Próximo passo imediato:
+
+- no admin, o retorno marginal de continuar extraindo `services.py` caiu bastante; o que sobra é majoritariamente compat layer e algumas superfícies de plataforma/configuração;
+- se a meta continuar sendo organização estrutural, o próximo corte com melhor sinal tende a ser plataforma/settings ou então voltar para o frontend e atacar a compat layer do inspetor.
+
+## R31. Fachada de platform settings reapontada para módulo de aplicação
+
+Resumo:
+
+- criei `web/app/domains/admin/admin_platform_settings_application_services.py` para concentrar a orquestração pública de `apply_platform_settings_update` e `build_admin_platform_settings_console`;
+- reduzi `web/app/domains/admin/services.py` a uma fachada fina para `platform/settings`, preservando a passagem explícita dos builders e descritores que a suíte monkeypatcha no agregado histórico;
+- mantive a indireção sobre `build_platform_settings_console_overview`, `build_platform_settings_console_sections` e builders de descriptors/runtime para não quebrar os testes de compatibilidade do console administrativo;
+- com isso, o hotspot administrativo perdeu mais um bloco coeso sem mexer no núcleo de `platform_settings_services.py`.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/admin_platform_settings_application_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_platform_settings_application_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_platform_settings_application_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "platform_settings or review_ui_canonical"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- resultados:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Impacto observado:
+
+- `web/app/domains/admin/services.py`: `1816 -> 1801` linhas no estado atual do branch após este ciclo, com a fachada pública de `platform/settings` reapontada para superfície dedicada.
+
+Próximo passo imediato:
+
+- no admin, o hotspot remanescente agora é majoritariamente compat layer e alguns helpers transversais; o próximo corte só vale a pena se ainda remover volume real ou isolamento de risco mensurável;
+- se a meta continuar sendo organização estrutural com melhor retorno marginal, o melhor próximo passo tende a voltar ao frontend e atacar o restante da compat layer/orquestração residual do inspetor.
+
+## R32. Estado visual do composer reapontado para módulo dedicado
+
+Resumo:
+
+- movi o highlight e o estado visual do composer para `web/static/js/inspetor/workspace_composer.js`, consolidando nesse módulo tudo o que já era responsabilidade do composer;
+- reduzi `web/static/js/chat/chat_index_page.js` a uma fachada fina para `aplicarHighlightComposer`, `atualizarVisualComposer` e `sincronizarScrollBackdrop`, preservando o mesmo contrato usado por `bootstrap.js` e `ui_bindings.js`;
+- com isso, o root do inspetor perdeu mais um bloco local que não precisava mais ficar acoplado ao boot principal;
+- o corte é pequeno em linhas, mas melhora a coerência modular e prepara a próxima rodada de drenagem da compat layer residual.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_composer.js`
+- `web/static/js/chat/chat_index_page.js`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_composer.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `41 passed`
+  - único aviso conhecido de `CRLF` em `web/static/js/chat/chat_index_page.js`
+
+Impacto observado:
+
+- `web/static/js/chat/chat_index_page.js`: `4561 -> 4547` linhas no estado atual do branch após este ciclo, com o estado visual do composer drenado do root.
+
+Próximo passo imediato:
+
+- no frontend, o próximo corte com melhor retorno continua sendo a compat layer residual do inspetor, priorizando wrappers locais ainda presos ao root que já possuem módulo de destino claro;
+- entre os candidatos imediatos, o melhor sinal agora tende a estar na família de wrappers de `page boot`/`sidebar history` ou em outro bloco residual de UI do workspace que ainda não foi consolidado no módulo correspondente.
+
+## R33. Instrumentação PERF do inspetor reapontada para módulo dedicado
+
+Resumo:
+
+- criei `web/static/js/inspetor/workspace_perf.js` para concentrar os wrappers de instrumentação `PERF` do workspace do inspetor;
+- removi de `web/static/js/chat/chat_index_page.js` o bloco grande de observabilidade/performance, mantendo no root apenas a montagem dos bindings e a reaplicação dos wrappers retornados;
+- atualizei `web/templates/index.html` para carregar o novo módulo antes de `chat_index_page.js`, preservando a ordem necessária para o root usar a API de instrumentação sem conversão para modules ES;
+- com isso, o composition root do inspetor perdeu mais uma responsabilidade transversal e ficou mais próximo de um root de montagem do que de um arquivo misturado com telemetria.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_perf.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_perf.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `41 passed`
+  - único aviso conhecido de `CRLF` em `web/static/js/chat/chat_index_page.js`
+
+Impacto observado:
+
+- `web/static/js/chat/chat_index_page.js`: `4547 -> 4273` linhas no estado atual do branch após este ciclo, com a instrumentação `PERF` drenada do root.
+
+Próximo passo imediato:
+
+- no frontend, o hotspot remanescente continua no root do inspetor, mas agora com perfil mais claro de compat layer e wrappers de composição;
+- o próximo corte com melhor retorno tende a atacar wrappers residuais de `page boot`/`sidebar history` ou outra família local já delegada a módulo próprio, desde que o ganho siga vindo com baixo risco de boot.
+
+## R34. Navegação home e disponibilidade de chat livre reapontadas para módulos utilitários/runtime
+
+Resumo:
+
+- movi para `web/static/js/inspetor/workspace_utils.js` os helpers de navegação/home state, incluindo limpeza/desativação de contexto ativo, resolução de `forceHomeLanding` e leitura do token CSRF;
+- movi para `web/static/js/inspetor/workspace_runtime_screen.js` a disponibilidade/promoção do chat livre e a sincronização de visibilidade dos botões associados;
+- reduzi `web/static/js/chat/chat_index_page.js` a wrappers finos para esse bloco, preservando o mesmo contrato usado por `bootstrap`, `workspace_orchestration` e `workspace_context_flow`;
+- com isso, o root do inspetor perdeu mais uma faixa local que já não precisava carregar diretamente.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_utils.js`
+- `web/static/js/inspetor/workspace_runtime_screen.js`
+- `web/static/js/chat/chat_index_page.js`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_utils.js`
+- `node --check web/static/js/inspetor/workspace_runtime_screen.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `41 passed`
+  - único aviso conhecido de `CRLF` em `web/static/js/chat/chat_index_page.js`
+
+Impacto observado:
+
+- `web/static/js/chat/chat_index_page.js`: `4273 -> 4216` linhas no estado atual do branch após este ciclo, com o bloco de navegação/home/chat livre drenado do root.
+
+Próximo passo imediato:
+
+- no frontend, o root do inspetor agora está cada vez mais concentrado em compat layer e composição;
+- o próximo corte com melhor retorno tende a cair em wrappers residuais de `page boot`, `sidebar history` ou outra família local que ainda mantenha alguma lógica própria e já tenha módulo de destino definido.
+
+## R35. Resolução de abas e visibilidade da sidebar reapontadas para módulo dedicado
+
+Resumo:
+
+- movi para `web/static/js/inspetor/sidebar_history.js` a resolução de seção ativa, contagem de itens visíveis e escolha da aba `fixados/recentes` da sidebar do histórico;
+- reduzi `web/static/js/chat/chat_index_page.js` a uma camada fina que só fornece `document`, `el` e `estado` para o módulo de sidebar;
+- com isso, o root do inspetor perdeu mais um bloco local de sidebar/history sem mexer no template ou na UX da barra lateral;
+- o corte mantém o mesmo desenho URL-first e não altera a malha de eventos já usada por `ui_bindings`.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/sidebar_history.js`
+- `web/static/js/chat/chat_index_page.js`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/sidebar_history.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `41 passed`
+  - único aviso conhecido de `CRLF` em `web/static/js/chat/chat_index_page.js`
+
+Impacto observado:
+
+- `web/static/js/chat/chat_index_page.js`: `4216 -> 4154` linhas no estado atual do branch após este ciclo, com a resolução local de abas/visibilidade da sidebar drenada do root.
+
+Próximo passo imediato:
+
+- no frontend, o composition root do inspetor segue reduzindo e o que sobra está cada vez mais próximo de compat layer real;
+- o próximo corte com melhor retorno tende a ficar em wrappers residuais de `page boot` ou em alguma família local do timeline/contexto ainda parcialmente espalhada entre o root e `workspace_history_context.js`.
+
+## R36. Filtros, meta e render do timeline reapontados para módulo de histórico
+
+Resumo:
+
+- movi para `web/static/js/inspetor/workspace_history_context.js` o reset de filtros, os rótulos/meta do histórico, os resultados do timeline e a filtragem principal do workspace;
+- reduzi `web/static/js/chat/chat_index_page.js` a uma fachada fina para esse bloco, passando apenas as dependências de builders, estado e sincronização já disponíveis no root;
+- com isso, o root do inspetor perdeu mais uma fatia de lógica real do timeline, e não apenas wrappers de compatibilidade;
+- o corte mantém intactos os filtros por ator/tipo, os contadores de registros e os empty states já exibidos na UI.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_history_context.js`
+- `web/static/js/chat/chat_index_page.js`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_history_context.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `41 passed`
+  - único aviso conhecido de `CRLF` em `web/static/js/chat/chat_index_page.js`
+
+Impacto observado:
+
+- `web/static/js/chat/chat_index_page.js`: `4154 -> 4076` linhas no estado atual do branch após este ciclo, com meta/filtros/render do timeline drenados do root.
+
+Próximo passo imediato:
+
+- no frontend, o root do inspetor agora está muito mais próximo de composition root e compat layer real;
+- o próximo corte com melhor retorno tende a ficar em `page boot` ou em algum bloco residual de conversa/thread ainda local, desde que continue removendo lógica de verdade em vez de apenas trocar aliases.
+
+## R37. Fluxo de thread/conversation focada reapontado para módulo dedicado
+
+Resumo:
+
+- movi para `web/static/js/inspetor/workspace_thread.js` a lógica de conversa focada, variante de conversa, sync de URL e promoção da primeira mensagem do novo chat;
+- reduzi `web/static/js/chat/chat_index_page.js` a wrappers finos para esse fluxo, preservando as mesmas entradas usadas por `state_runtime_sync`, `system_events` e `observers`;
+- com isso, o root do inspetor perdeu mais um bloco de lógica real de thread/conversation, e não apenas alias de compatibilidade;
+- o comportamento de conversa focada e a sincronização de aba/URL permaneceram encapsulados no módulo de thread, que é onde essa responsabilidade já fazia mais sentido.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_thread.js`
+- `web/static/js/chat/chat_index_page.js`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_thread.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `41 passed`
+  - único aviso conhecido de `CRLF` em `web/static/js/chat/chat_index_page.js`
+
+Impacto observado:
+
+- `web/static/js/chat/chat_index_page.js`: `4076 -> 4030` linhas no estado atual do branch após este ciclo, com o fluxo local de thread/conversation focada drenado do root.
+
+Próximo passo imediato:
+
+- no frontend, o root do inspetor está cada vez mais próximo de composition root real;
+- o próximo corte com melhor retorno tende a ficar em `page boot` ou em algum bloco residual de utilitários/cleanup do runtime, mas só vale seguir se continuar removendo lógica coesa e não apenas redistribuindo wrappers mínimos.
+
+## R38. Diagnóstico de preview reapontado para delivery flow
+
+Resumo:
+
+- movi para `web/static/js/inspetor/workspace_delivery_flow.js` a montagem do diagnóstico auditável usado na pré-visualização do laudo;
+- reduzi `web/static/js/chat/chat_index_page.js` a uma camada fina que só repassa estado, linhas do workspace, metadados resumidos e contagem de evidências para o módulo de delivery;
+- com isso, fechei o último corte frontend que ainda tinha retorno claro no root do inspetor sem cair em redistribuição artificial de wrappers;
+- a responsabilidade de preview ficou mais coerente, concentrando geração e preparação do payload no mesmo módulo de delivery.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_delivery_flow.js`
+- `web/static/js/chat/chat_index_page.js`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_delivery_flow.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `41 passed`
+  - único aviso conhecido de `CRLF` em `web/static/js/chat/chat_index_page.js`
+
+Impacto observado:
+
+- `web/static/js/chat/chat_index_page.js`: `4030 -> 3996` linhas no estado atual do branch após este ciclo, com o diagnóstico auditável do preview drenado do root.
+
+Próximo passo imediato:
+
+- no frontend, o root do inspetor entrou em zona de retorno marginal baixo: o que sobra é majoritariamente composition root, compat layer e utilitários transversais;
+- a recomendação operacional agora é parar a drenagem de `chat_index_page.js` por enquanto e voltar para outro hotspot com retorno real, em vez de continuar fragmentando o root em cortes mínimos.
+
+## R39. Decisão final do laudo extraída para módulo temático
+
+Resumo:
+
+- extraí de `web/app/domains/chat/laudo_service.py` o bloco de decisão final, revisão mobile e reabertura para `web/app/domains/chat/laudo_decision_services.py`;
+- reapontei `web/app/domains/chat/laudo.py` e `web/app/domains/cliente/portal_bridge.py` para o novo módulo, preservando o contrato HTTP existente;
+- o recorte isolou o trecho de maior acoplamento restante no backend do ciclo de laudo, deixando `laudo_service.py` mais próximo de um módulo de suporte neutro;
+- com isso, o hotspot backend saiu de um monólito misto para uma separação mais clara entre suporte de ciclo e casos de uso de decisão.
+
+Arquivos do ciclo:
+
+- `web/app/domains/chat/laudo_decision_services.py`
+- `web/app/domains/chat/laudo_service.py`
+- `web/app/domains/chat/laudo.py`
+- `web/app/domains/cliente/portal_bridge.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `ruff check web/app/domains/chat/laudo_service.py web/app/domains/chat/laudo_decision_services.py web/app/domains/chat/laudo.py web/app/domains/cliente/portal_bridge.py`
+- `python -m py_compile web/app/domains/chat/laudo_service.py web/app/domains/chat/laudo_decision_services.py web/app/domains/chat/laudo.py web/app/domains/cliente/portal_bridge.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_v2_document_hard_gate.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `3 passed`
+  - `41 passed`
+  - apenas avisos conhecidos de `CRLF` em arquivos já modificados no branch
+
+Impacto observado:
+
+- `web/app/domains/chat/laudo_service.py`: `2082 -> 1085` linhas no estado atual do branch após este ciclo;
+- `web/app/domains/chat/laudo_decision_services.py`: novo módulo com `1035` linhas concentrando somente os casos de uso de decisão final do laudo;
+- o próximo passo já não é continuar drenando o frontend raiz, e sim reavaliar se ainda existe outro hotspot backend com retorno estrutural comparável ou se o branch deve pivotar para correções e melhorias de produto.
+
+## R40. Pipeline documental endurecido do fallback ao preview real
+
+Resumo:
+
+- endureci o fallback do pipeline documental para que o editor universal materialize shell mínimo também em contingência;
+- alinhei a política de promoção para preview rico com a capacidade real do editor universal, evitando que template legado fraco fique preso a um preview pobre quando o shell rico já consegue responder;
+- `build_catalog_pdf_payload` passou a preservar melhor blocos estruturados públicos de payload parcial, como `identificacao`, `conclusao` e `recomendacoes`, em vez de depender só de payload canônico completo ou de projeções por família;
+- fechei a cadeia de garantia com testes em quatro níveis: contrato, templates, visual QA e rota crítica real do revisor.
+
+Arquivos do ciclo:
+
+- `web/app/domains/chat/catalog_document_view_model.py`
+- `web/app/domains/chat/catalog_pdf_templates.py`
+- `web/tests/test_catalog_document_contract.py`
+- `web/tests/test_catalog_pdf_templates.py`
+- `web/tests/test_catalog_pdf_visual_qa.py`
+- `web/tests/test_regras_rotas_criticas.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `ruff check web/app/domains/chat/catalog_document_view_model.py web/app/domains/chat/catalog_pdf_templates.py web/tests/test_catalog_document_contract.py web/tests/test_catalog_pdf_templates.py web/tests/test_catalog_pdf_visual_qa.py web/tests/test_regras_rotas_criticas.py`
+- `python -m py_compile web/app/domains/chat/catalog_document_view_model.py web/app/domains/chat/catalog_pdf_templates.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_catalog_document_contract.py tests/test_catalog_pdf_templates.py tests/test_catalog_pdf_visual_qa.py tests/test_regras_rotas_criticas.py -q -k 'promove_legado_fraco_para_preview_editor_rico or partial_structured_payload or contingencia or shell_minimo or rich_runtime_preview_usa_shell_de_contingencia or materializa_shell_minimo_para_payload_vazio'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `5 passed, 260 deselected`
+  - `41 passed`
+  - apenas avisos conhecidos de `CRLF` em arquivos já modificados no branch
+
+Impacto observado:
+
+- o pipeline documental ficou menos dependente de payload “perfeito” e responde melhor a payload vazio, parcial e template legado fraco;
+- a garantia agora cobre desde a montagem do `view_model` até a rota real de preview no revisor;
+- o próximo passo mais útil tende a sair da infraestrutura do pipeline e voltar para alguma correção funcional ou superfície de produto com retorno direto.
+
+## R41. Baseline ampla reavaliada com bloqueio isolado no toolchain mobile
+
+Resumo:
+
+- executei a baseline ampla depois do pacote documental e do ajuste de garantias no portal cliente;
+- o lado web fechou verde em escopo amplo: `ruff` completo no `web`, `246 passed` no pacote largo (`tests/test_smoke.py`, `tests/test_regras_rotas_criticas.py`, `tests/test_inspetor_comandos_dominio.py`, `tests/test_inspetor_confianca_dominio.py`, `tests/test_operational_memory.py`) e `6 passed` em `tests/test_tenant_access.py`;
+- o fechamento de `make verify` continuou bloqueado no `android`, mas agora o problema ficou isolado como falha de toolchain/dependency graph do Jest/Babel/React Native, não como regressão do pacote web desta rodada;
+- deixei explícito no repositório que o workspace mobile exige `Node 22.13.1`, com `android/.nvmrc`, nota no `android/README.md` e `mobile-test` do `Makefile` rodando Jest com `npx -y node@22.13.1`.
+
+Arquivos do ciclo:
+
+- `Makefile`
+- `android/.nvmrc`
+- `android/README.md`
+- `android/babel.config.js`
+- `android/package.json`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `make verify`
+- `cd android && npx -y node@22.13.1 ./node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand src/config/mobileV2Config.test.ts`
+- `cd android && npx -y node@22.13.1 ./node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand src/settings/repository/settingsRemoteAdapter.test.ts src/settings/migrations/migrateSettingsDocument.test.ts src/features/settings/SettingsExperienceAiSection.test.tsx`
+- `git diff --check`
+- resultados:
+  - baseline ampla do `web` verde
+  - `src/config/mobileV2Config.test.ts`: `1 passed`
+  - suíte mobile ampla ainda falha antes de executar a maioria dos testes, com resolução incompleta de módulos da cadeia Babel/RN como `@babel/helper-compilation-targets`, `@babel/plugin-proposal-export-default-from` e `@react-native/codegen/lib/parsers/typescript/parser`
+  - `git diff --check` sem erro estrutural, só avisos conhecidos de `CRLF` em arquivos já sujos do branch
+
+Impacto observado:
+
+- o branch já tem baseline web ampla suficiente para seguir em superfícies de produto sem medo de regressão escondida no pacote atual;
+- o próximo bloqueio real a tratar, se a prioridade continuar sendo baseline total do repositório, é o dependency graph/toolchain do mobile;
+- se a prioridade voltar para produto web, a recomendação é não abrir nova frente estrutural agora e tratar primeiro correções/melhorias funcionais pequenas com o web já estabilizado.
+
+## R42. Núcleo compartilhado do ciclo de laudo extraído para support module
+
+Resumo:
+
+- extraí de `web/app/domains/chat/laudo_service.py` o bloco compartilhado que já vinha sendo consumido como pseudo-API privada por `laudo_decision_services.py` e `report_finalize_stream_shadow.py`;
+- o novo módulo `web/app/domains/chat/laudo_workflow_support.py` passou a concentrar helpers de `quality gate override`, `document gate`, `review mode`, `binding` de família e campos de resposta de lifecycle;
+- `laudo_service.py` ficou focado novamente em `status`, `início` e `gate` neutro do portal inspetor, enquanto os casos de uso de decisão e o shadow importam o suporte compartilhado pelo lugar certo;
+- com isso, o hotspot backend deixou de esconder um segundo “compat root” dentro do service neutro do laudo.
+
+Arquivos do ciclo:
+
+- `web/app/domains/chat/laudo_service.py`
+- `web/app/domains/chat/laudo_workflow_support.py`
+- `web/app/domains/chat/laudo_decision_services.py`
+- `web/app/domains/chat/report_finalize_stream_shadow.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/laudo_service.py app/domains/chat/laudo_workflow_support.py app/domains/chat/laudo_decision_services.py app/domains/chat/report_finalize_stream_shadow.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/chat/laudo_service.py app/domains/chat/laudo_workflow_support.py app/domains/chat/laudo_decision_services.py app/domains/chat/report_finalize_stream_shadow.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_regras_rotas_criticas.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- resultado adicional:
+  - um recorte mais amplo com `tests/test_cliente_portal_critico.py` caiu em vermelho por `admin/services.py` não expor mais `gerar_senha_fortificada`, fora do escopo desta extração
+
+Impacto observado:
+
+- `web/app/domains/chat/laudo_service.py`: `1085 -> 658` linhas no estado atual do branch;
+- `web/app/domains/chat/laudo_workflow_support.py`: novo módulo com `464` linhas para o núcleo compartilhado do workflow do laudo;
+- o próximo passo coerente agora é reavaliar se ainda existe um corte backend de retorno comparável ou se vale pivotar para correções e melhorias de produto, já com o ciclo de laudo bem mais legível.
+
+## R43. Leitura/status do laudo extraída para módulo próprio
+
+Resumo:
+
+- extraí de `web/app/domains/chat/laudo_service.py` o fluxo de leitura/status do inspetor, que misturava montagem do payload público, provenance, projeção V2, facade documental e `shadow` do caso;
+- o novo módulo `web/app/domains/chat/laudo_status_response_services.py` passou a concentrar esse caso de uso de leitura, com helpers locais para payload base e provenance;
+- `laudo_service.py` ficou reduzido ao bootstrap de início do laudo, persistência do draft guiado mobile e gate neutro, atuando também como fachada fina para o status legado;
+- com isso, o pacote estrutural atual do ciclo de laudo ficou fechado sem reabrir contratos HTTP nem espalhar nova compatibilidade implícita.
+
+Arquivos do ciclo:
+
+- `web/app/domains/chat/laudo_service.py`
+- `web/app/domains/chat/laudo_status_response_services.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/laudo_service.py app/domains/chat/laudo_status_response_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/chat/laudo_service.py app/domains/chat/laudo_status_response_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_regras_rotas_criticas.py tests/test_smoke.py`
+- resultados:
+  - `ruff` verde
+  - `py_compile` verde
+  - `227 passed`
+
+Impacto observado:
+
+- `web/app/domains/chat/laudo_service.py`: `658 -> 427` linhas no estado atual do branch;
+- `web/app/domains/chat/laudo_status_response_services.py`: novo módulo com `292` linhas concentrando somente a leitura/status projetada do inspetor;
+- o retorno marginal da drenagem estrutural em `laudo_service.py` caiu bastante; o próximo passo coerente passa a ser pivotar para correções e melhorias de produto, usando o hotspot já estabilizado como base mais legível.
+
+## R44. Observabilidade do ciclo principal do laudo no inspetor
+
+Resumo:
+
+- instrumentei as rotas principais do ciclo do laudo em `web/app/domains/chat/laudo.py` com `observe_backend_hotspot`, cobrindo `status`, `início`, `gate de qualidade`, `finalização`, `reabertura` e comando de revisão mobile;
+- a mudança não alterou o contrato HTTP do inspetor, mas passou a registrar `endpoint`, `surface`, `outcome`, `response_status_code` e detalhes leves suficientes para leitura operacional;
+- também ampliei `web/tests/test_backend_hotspot_metrics.py` para provar que `GET /app/api/laudo/status` e `POST /app/api/laudo/iniciar` entram no sumário administrativo de backend hotspots;
+- com isso, o ciclo principal do laudo deixou de ser um ponto cego no painel de observabilidade leve já existente no projeto.
+
+Arquivos do ciclo:
+
+- `web/app/domains/chat/laudo.py`
+- `web/tests/test_backend_hotspot_metrics.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/laudo.py tests/test_backend_hotspot_metrics.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/chat/laudo.py tests/test_backend_hotspot_metrics.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_backend_hotspot_metrics.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `git diff --check`
+- resultados:
+  - `ruff` verde
+  - `py_compile` verde
+  - `4 passed`
+  - `41 passed`
+  - apenas avisos conhecidos de `CRLF` em arquivos antigos já sujos no branch
+
+Impacto observado:
+
+- o sumário administrativo de backend hotspots agora passa a refletir também o ciclo principal do laudo do inspetor, não só chat, painel, bootstrap e operações documentais;
+- o time ganha base factual para decidir se o próximo passo de produto deve cair em lifecycle, documento ou multiportal a partir de volume e outcome reais;
+- o próximo pacote coerente de melhorias tende a continuar em observabilidade/contrato de produto ou então atacar uma correção funcional do inspetor já guiada por esses sinais.
+
+## R45. Contrato mobile reforçado com fallback canônico de tenant access policy
+
+Resumo:
+
+- reforcei o contrato web/mobile do envelope do inspetor sem mudar rotas: `tenant_access_policy`, que já vinha do backend, passou a ficar explicitamente coberto nos testes web de login/bootstrap mobile;
+- no Android, `android/src/types/mobile.ts` passou a tipar essa política, e `android/src/features/common/mobileUserAccess.ts` passou a usá-la como fallback canônico para `allowed_portals`, labels e links de troca de portal quando os campos achatados não vierem preenchidos;
+- isso preserva o comportamento atual quando `allowed_portals` já vem do backend, mas reduz a chance de drift silencioso entre o payload canônico e os helpers do app;
+- também adicionei cobertura dedicada no Jest do helper mobile para garantir a reconstrução de grants, labels e links a partir da política do tenant.
+
+Arquivos do ciclo:
+
+- `android/src/types/mobile.ts`
+- `android/src/features/common/mobileUserAccess.ts`
+- `android/src/features/common/mobileUserAccess.test.ts`
+- `web/tests/test_multiportal_bootstrap_contracts.py`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `cd web && PYTHONPATH=. python -m py_compile tests/test_multiportal_bootstrap_contracts.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_multiportal_bootstrap_contracts.py`
+- `cd android && npx -y node@22.13.1 ./node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand src/features/common/mobileUserAccess.test.ts`
+- `git diff --check`
+- resultados:
+  - `5 passed`
+  - `7 passed`
+  - apenas avisos conhecidos de `CRLF` em arquivos antigos já sujos no branch
+
+Impacto observado:
+
+- o backend mobile passa a ter contrato mais explícito para grants multiportal, sem depender de inferência implícita no app;
+- o Android fica mais robusto a envelopes parciais ou transicionais, porque consegue reconstruir acesso e links a partir de `tenant_access_policy`;
+- o próximo passo coerente nessa trilha é continuar fechando contratos canônicos consumidos pelo mobile, agora preferindo `status/lifecycle/actions` do caso técnico ou então seguir para uma correção funcional já protegida por esse reforço contratual.
+
+## R46. Entry mode do caso preservado no estado local do Android
+
+Resumo:
+
+- promovi `entry_mode_preference`, `entry_mode_effective` e `entry_mode_reason` para o `ChatState` do app, porque o backend já expõe esses campos no envelope principal e o runtime do chat ainda dependia demais do `laudoCard` para enxergá-los;
+- com isso, a normalização inicial da conversa, a atualização de resumo do laudo e a resposta do envio do chat agora preservam o `entry mode` mesmo quando o `laudoCard` vier nulo ou parcial;
+- também ajustei os consumidores que tomam decisão visual/operacional com base nisso, em especial `buildThreadContextState`, `caseLifecycle` e `buildAuthenticatedLayoutSections`, para usarem fallback top-level antes de cair no card;
+- fechei a trilha com testes dedicados do helper de conversa, do contexto da thread, do controller de chat e do helper de workflow formal.
+
+Arquivos do ciclo:
+
+- `android/src/features/chat/types.ts`
+- `android/src/features/chat/conversationStateHelpers.ts`
+- `android/src/features/chat/inspectorChatMessageController.ts`
+- `android/src/features/chat/buildThreadContextState.ts`
+- `android/src/features/chat/caseLifecycle.ts`
+- `android/src/features/common/buildAuthenticatedLayoutSections.ts`
+- `android/src/features/chat/conversationHelpers.test.ts`
+- `android/src/features/chat/buildThreadContextState.test.ts`
+- `android/src/features/chat/useInspectorChatController.entryMode.test.ts`
+
+Validação local executada:
+
+- `cd android && npx -y node@22.13.1 ./node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand src/features/chat/conversationHelpers.test.ts src/features/chat/buildThreadContextState.test.ts src/features/chat/useInspectorChatController.entryMode.test.ts src/features/chat/caseLifecycle.test.ts`
+- `git diff --check`
+- resultados:
+  - `49 passed`
+  - apenas avisos conhecidos de `CRLF` em arquivos antigos já sujos no branch
+
+Impacto observado:
+
+- o Android deixa de perder `entry_mode_*` em envelopes parciais, especialmente em bootstrap/transições onde o `laudoCard` nem sempre é a única fonte de verdade;
+- a retomada guiada e a leitura de workflow formal ficam alinhadas com o contrato mobile já existente no backend, sem depender de duplicação silenciosa no card;
+- o próximo passo coerente nessa frente é continuar endurecendo o consumo mobile dos campos canônicos do caso técnico apenas onde ainda houver risco real de envelope parcial, e então voltar a melhorias funcionais maiores.
+
+## R47. Histórico mobile com radar operacional de guiados e reemissões
+
+Resumo:
+
+- melhorei o card “Radar da operação” no drawer de histórico do Android para resumir não só andamento/mesa/concluídos, mas também quantos casos visíveis estão em `coleta guiada` e quantos já carregam `reemissão recomendada`;
+- a melhoria reaproveita sinais já presentes nos cards do histórico (`entry_mode_effective` e `official_issue_summary.primary_pdf_diverged`), sem mexer em backend ou contrato;
+- também enriqueci o texto de busca quando os resultados encontrados carregarem esses sinais, para a leitura rápida não depender só da contagem bruta de casos;
+- a cobertura ficou concentrada em `HistoryDrawerPanel.test.tsx`, mantendo o pacote pequeno e claramente funcional.
+
+Arquivos do ciclo:
+
+- `android/src/features/history/HistoryDrawerPanel.tsx`
+- `android/src/features/history/HistoryDrawerPanel.test.tsx`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `cd android && npx -y node@22.13.1 ./node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand src/features/history/HistoryDrawerPanel.test.tsx src/features/history/historyHelpers.test.ts src/features/InspectorAuthenticatedLayout.test.tsx`
+- `cd android && npx prettier --check src/features/history/HistoryDrawerPanel.tsx src/features/history/HistoryDrawerPanel.test.tsx`
+- `git diff --check`
+- resultados:
+  - `12 passed`
+  - `prettier` verde
+  - apenas avisos conhecidos de `CRLF` em arquivos antigos já sujos no branch
+
+Impacto observado:
+
+- o histórico do app fica mais útil como painel rápido de retomada, porque já expõe o volume de casos guiados e de reemissões sem obrigar o inspetor a abrir item por item;
+- a melhoria aproveita contratos já estabilizados no branch e reforça valor funcional sem abrir nova dependência entre mobile e backend;
+- o próximo passo coerente nessa trilha é continuar em melhorias pequenas de produto que usem sinais canônicos já existentes, preferindo superfícies de retomada, fila offline ou finalização.
+
+## R48. Fila offline com resumo operacional mais acionável
+
+Resumo:
+
+- melhorei o resumo curto da fila offline no Android para priorizar o impacto operacional da fila, não apenas o volume bruto de envios;
+- o app agora destaca explicitamente quando a fila contém `criação de caso`, `finalização` e `respostas à mesa`, combinando isso com o detalhe técnico já existente de falha, itens prontos para reenvio ou backoff;
+- fiz isso criando um helper compartilhado em `offlineQueueHelpers.ts` e reapontando o derived state principal do app, o que espalha a melhoria para thread, modais e settings sem duplicar regra;
+- a mudança ficou totalmente no mobile, sem tocar contrato HTTP nem backend.
+
+Arquivos do ciclo:
+
+- `android/src/features/offline/offlineQueueHelpers.ts`
+- `android/src/features/offline/offlineQueueHelpers.test.ts`
+- `android/src/features/common/buildInspectorBaseDerivedStateSections.ts`
+- `android/src/features/common/buildInspectorBaseDerivedStateSections.test.ts`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `cd android && npx -y node@22.13.1 ./node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand src/features/offline/offlineQueueHelpers.test.ts src/features/common/buildInspectorBaseDerivedStateSections.test.ts src/features/chat/buildThreadContextState.test.ts src/features/common/buildInspectorSessionModalsSections.test.ts src/features/settings/buildInspectorRootSettingsDrawerProps.test.ts`
+- `cd android && npx prettier --check src/features/offline/offlineQueueHelpers.ts src/features/offline/offlineQueueHelpers.test.ts src/features/common/buildInspectorBaseDerivedStateSections.ts src/features/common/buildInspectorBaseDerivedStateSections.test.ts`
+- `git diff --check`
+- resultados:
+  - `42 passed`
+  - `prettier` verde
+  - apenas avisos conhecidos de `CRLF` em arquivos antigos já sujos no branch
+
+Impacto observado:
+
+- a fila offline fica mais priorizável no uso real, porque o inspetor passa a enxergar rapidamente se há criação de caso travada, finalização pendente ou resposta técnica parada;
+- o mesmo resumo curto agora circula por mais de uma superfície do app sem derivação paralela nem texto genérico demais;
+- o próximo passo coerente nessa trilha é seguir para finalização/quality gate, já que retomada e fila offline ficaram mais legíveis.
+
+## R49. Finalização do caso com bloqueios de emissão mais legíveis
+
+Resumo:
+
+- melhorei a leitura dos bloqueios na etapa de finalização do Android, para o app parar de responder só com contadores genéricos e passar a dizer com clareza se o problema está em `bloqueios documentais`, `pendências do pré-laudo` ou apenas `pontos de atenção`;
+- essa composição agora aparece tanto no card final do contexto da thread quanto no `QualityGateModal`, mantendo a mesma linguagem de priorização nas duas superfícies;
+- a mudança reaproveita `document_blockers`, `pendingBlocks`, `missingEvidenceCount` e `attentionBlocks`, sem tocar na lógica de aprovação, override ou backend;
+- a cobertura ficou em testes focais do quality gate e do resumo de finalização.
+
+Arquivos do ciclo:
+
+- `android/src/features/chat/threadContextFinalization.ts`
+- `android/src/features/chat/qualityGateModalHelpers.ts`
+- `android/src/features/chat/QualityGateModalSections.tsx`
+- `android/src/features/chat/QualityGateModal.tsx`
+- `android/src/features/chat/QualityGateModal.test.tsx`
+- `android/src/features/chat/buildThreadContextState.test.ts`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `cd android && npx -y node@22.13.1 ./node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand src/features/chat/QualityGateModal.test.tsx src/features/chat/buildThreadContextState.test.ts src/features/chat/ThreadContextCard.test.tsx`
+- `cd android && npx prettier --check src/features/chat/threadContextFinalization.ts src/features/chat/qualityGateModalHelpers.ts src/features/chat/QualityGateModalSections.tsx src/features/chat/QualityGateModal.tsx src/features/chat/QualityGateModal.test.tsx src/features/chat/buildThreadContextState.test.ts`
+- `git diff --check`
+- resultados:
+  - `27 passed`
+  - `prettier` verde
+  - apenas avisos conhecidos de `CRLF` em arquivos antigos já sujos no branch
+
+Impacto observado:
+
+- o usuário passa a entender melhor por que a emissão ainda não pode seguir, sem precisar decodificar vários blocos separados do quality gate;
+- finalização e quality gate agora falam a mesma linguagem curta de bloqueio, reduzindo ruído cognitivo numa etapa crítica do app;
+- o próximo passo coerente nessa trilha é continuar em melhorias pequenas de produto no mobile, preferindo pontos onde já exista sinal canônico forte e pouca necessidade de mexer em backend.
+
+## R50. Central de atividade com priorização operacional
+
+Resumo:
+
+- melhorei a central de atividade do Android para ela se comportar mais como uma fila curta de atenção do inspetor do que como uma lista puramente cronológica;
+- os itens agora são ordenados por prioridade operacional, com alertas críticos e reaberturas da mesa vindo antes de status comuns, e cada notificação ganhou um rótulo curto de categoria e um hint de destino mais explícito;
+- a mudança ficou concentrada em helpers de atividade e na `ActivityCenterModal`, sem tocar no backend nem criar novos tipos de evento;
+- a cobertura passou por helper, modal e controller, para garantir que a priorização continue estável.
+
+Arquivos do ciclo:
+
+- `android/src/features/activity/activityNotificationHelpers.ts`
+- `android/src/features/activity/activityNotificationHelpers.test.ts`
+- `android/src/features/common/OperationalModals.tsx`
+- `android/src/features/common/OperationalModals.test.tsx`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `cd android && npx -y node@22.13.1 ./node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand src/features/activity/activityNotificationHelpers.test.ts src/features/common/OperationalModals.test.tsx src/features/activity/useActivityCenterController.test.ts`
+- `cd android && npx prettier --check src/features/activity/activityNotificationHelpers.ts src/features/activity/activityNotificationHelpers.test.ts src/features/common/OperationalModals.tsx src/features/common/OperationalModals.test.tsx`
+- `git diff --check`
+- resultados:
+  - `11 passed`
+  - `prettier` verde
+  - apenas avisos conhecidos de `CRLF` em arquivos antigos já sujos no branch
+
+Impacto observado:
+
+- a central de atividade ficou mais útil para triagem rápida, porque o inspetor passa a ver primeiro o que tende a exigir ação imediata;
+- os itens ficaram mais autoexplicativos sem depender de backend novo, o que fecha bem a sequência de melhorias recentes em histórico, fila offline e finalização;
+- o próximo passo coerente agora é decidir se vale continuar lapidando essa trilha operacional do mobile ou se o melhor retorno já volta para outra superfície do produto.
+
+## R51. Fechamento do pacote web para promoção no Render
+
+Resumo:
+
+- consolidei um pacote coerente de promoção focado apenas no serviço web desta árvore, deixando a frente Android fora do deploy;
+- o pacote reúne a nova rodada de drenagem dos hotspots do inspetor e do admin, a consolidação da família `NR35 linha de vida` no pipeline documental e a base inicial da aba `Correções` para tenants sem `Mesa`;
+- a intenção deste ciclo não foi abrir comportamento novo de produto ponta a ponta, mas deixar o conjunto web grande o suficiente para promoção e pequeno o suficiente para depuração caso o deploy do Render aponte regressão;
+- a baseline de promoção foi validada pelo gate oficial do web antes do staging seletivo.
+
+Arquivos e superfícies do ciclo:
+
+- `web/app/domains/admin/*`
+- `web/app/domains/chat/*`
+- `web/app/domains/cliente/*`
+- `web/app/domains/revisor/*`
+- `web/app/shared/official_issue_package.py`
+- `web/app/v2/*`
+- `web/static/js/**/*`
+- `web/static/css/**/*`
+- `web/templates/**/*`
+- `web/tests/**/*`
+- `web/docs/correcao_sem_mesa.md`
+- `docs/STATUS_CANONICO.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+- `docs/family_schemas/nr35_inspecao_linha_de_vida*`
+- `docs/portfolio_empresa_nr35_material_real/nr35_inspecao_linha_de_vida/*`
+- `docs/restructuring-roadmap/133_inspetor_correcoes_sem_mesa.md`
+- `PLANS.md`
+- `PROJECT_MAP.md`
+
+Validação local executada:
+
+- `git diff --check`
+- `make hygiene-check`
+- `make web-ci`
+- resultados:
+  - `workspace hygiene` verde
+  - `web-ci` verde com `247 passed`
+  - sem falha de sintaxe ou regressão detectada no pacote web preparado para promoção
+
+Impacto observado:
+
+- o pacote web fica promovível sem arrastar o ruído atual do mobile;
+- a preparação para o Render passa a ter fronteira explícita entre o que é serviço web e o que é frente paralela Android;
+- o próximo passo coerente é commitar apenas o pacote web/docs, fazer `push` para o GitHub e acompanhar o deploy automático do Render.

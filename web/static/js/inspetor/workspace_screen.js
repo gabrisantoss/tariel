@@ -1,6 +1,105 @@
 (function attachTarielInspectorWorkspaceScreen(global) {
     "use strict";
 
+    function resolveMesaWidgetDisponibilidade(screen, dependencies = {}) {
+        const {
+            estado = {},
+            resolveInspectorScreen,
+            obterSnapshotEstadoInspectorAtual,
+            conversaWorkspaceModoChatAtivo,
+            normalizarLaudoAtualId,
+            obterLaudoAtivoIdSeguro,
+            resolveWorkspaceView,
+        } = dependencies;
+        const screenAtual = screen || estado.inspectorScreen || resolveInspectorScreen?.();
+        if (screenAtual === "new_inspection") {
+            return false;
+        }
+
+        const snapshot = obterSnapshotEstadoInspectorAtual?.();
+        if (conversaWorkspaceModoChatAtivo?.(screenAtual, snapshot)) {
+            return false;
+        }
+
+        const laudoId = normalizarLaudoAtualId?.(
+            snapshot?.laudoAtualId ??
+            estado.laudoAtualId ??
+            obterLaudoAtivoIdSeguro?.()
+        );
+        if (!laudoId) {
+            return false;
+        }
+
+        const view = resolveWorkspaceView?.(screenAtual);
+        return [
+            "inspection_history",
+            "inspection_record",
+            "inspection_conversation",
+            "inspection_mesa",
+        ].includes(view);
+    }
+
+    function sincronizarMesaStageWorkspace(view, mesaWidgetPermitido, dependencies = {}) {
+        const {
+            estado = {},
+            el = {},
+            resolveWorkspaceView,
+            resolveMesaWidgetDisponibilidade: resolveAvailability,
+            mesaWidgetDockOriginal,
+            atualizarEstadoVisualBotaoMesaWidget,
+            carregarMensagensMesaWidget,
+        } = dependencies;
+        if (!el.painelMesaWidget) return;
+
+        const viewAtual = view || resolveWorkspaceView?.();
+        const widgetPermitido = mesaWidgetPermitido ?? resolveAvailability?.();
+        const hostMesaWorkspace = el.workspaceMesaWidgetHost || el.workspaceMesaStage;
+        const embutirNoWorkspace =
+            widgetPermitido &&
+            viewAtual === "inspection_mesa" &&
+            hostMesaWorkspace;
+        const estavaEmbutido = el.painelMesaWidget.dataset.workspaceEmbedded === "true";
+
+        if (embutirNoWorkspace) {
+            if (el.painelMesaWidget.parentElement !== hostMesaWorkspace) {
+                hostMesaWorkspace.appendChild(el.painelMesaWidget);
+            }
+
+            el.painelMesaWidget.dataset.workspaceEmbedded = "true";
+            el.painelMesaWidget.hidden = false;
+            el.painelMesaWidget.classList.remove("fechando");
+            el.painelMesaWidget.classList.add("aberto", "painel-mesa-widget--workspace");
+            estado.mesaWidgetAberto = true;
+            if (el.btnMesaWidgetToggle) {
+                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "true");
+            }
+            atualizarEstadoVisualBotaoMesaWidget?.();
+
+            if (!estavaEmbutido) {
+                carregarMensagensMesaWidget?.({ silencioso: true })?.catch?.(() => {});
+            }
+
+            return;
+        }
+
+        if (mesaWidgetDockOriginal && el.painelMesaWidget.parentElement !== mesaWidgetDockOriginal) {
+            mesaWidgetDockOriginal.appendChild(el.painelMesaWidget);
+        }
+
+        el.painelMesaWidget.dataset.workspaceEmbedded = "false";
+        el.painelMesaWidget.classList.remove("painel-mesa-widget--workspace");
+
+        if (estavaEmbutido) {
+            estado.mesaWidgetAberto = false;
+            el.painelMesaWidget.hidden = true;
+            el.painelMesaWidget.classList.remove("aberto", "fechando");
+            if (el.btnMesaWidgetToggle) {
+                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "false");
+            }
+            atualizarEstadoVisualBotaoMesaWidget?.();
+        }
+    }
+
     function aplicarMatrizVisibilidadeInspector(screen, snapshot, dependencies = {}) {
         const matriz = dependencies.resolverMatrizVisibilidadeInspector?.(screen, snapshot) || {};
         const body = dependencies.document?.body || global.document?.body;
@@ -148,6 +247,7 @@
         definirRootAtivo?.(el.workspaceRecordViewRoot, view === "inspection_record");
         definirRootAtivo?.(el.workspaceConversationViewRoot, view === "inspection_conversation");
         definirRootAtivo?.(el.workspaceMesaViewRoot, view === "inspection_mesa");
+        definirRootAtivo?.(el.workspaceCorrectionsViewRoot, view === "inspection_corrections");
 
         if (!el.threadNav) {
             el.threadNav = docRef?.querySelector?.(".thread-nav");
@@ -252,6 +352,8 @@
     }
 
     global.TarielInspectorWorkspaceScreen = {
+        resolveMesaWidgetDisponibilidade,
+        sincronizarMesaStageWorkspace,
         aplicarMatrizVisibilidadeInspector,
         sincronizarWidgetsGlobaisWorkspace,
         sincronizarWorkspaceViews,

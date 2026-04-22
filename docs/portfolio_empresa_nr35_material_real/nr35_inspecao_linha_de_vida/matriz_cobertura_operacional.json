@@ -1,0 +1,87 @@
+{
+  "family_key": "nr35_inspecao_linha_de_vida",
+  "validated_at": "2026-04-22",
+  "objetivo": "Registrar de forma explicita a cobertura operacional dos tres cenarios recorrentes da NR35 linha de vida a partir do material real consolidado e dos artefatos canonicos/testes do repositorio.",
+  "cenarios": [
+    {
+      "scenario_id": "aprovado_conforme",
+      "status": "Aprovado",
+      "descricao": "Linha de vida em conformidade, com acessorios necessarios presentes e condicao segura de uso.",
+      "tipo_linha": "vertical_ou_horizontal",
+      "semantica_esperada": {
+        "status_operacional": "conforme",
+        "liberado_para_uso": "sim",
+        "acao_requerida": "manter_inspecao_periodica"
+      },
+      "cobertura_repositorio": [
+        {
+          "kind": "semantic_report_pack_test",
+          "path": "web/tests/test_semantic_report_pack_nr35_autonomy.py",
+          "reference": "status aprovado com checklist C e autonomia pronta quando o caso fecha completo"
+        },
+        {
+          "kind": "catalog_pdf_test",
+          "path": "web/tests/test_catalog_pdf_templates.py",
+          "reference": "normalizacao de alias legado para vocabulario final Aprovado"
+        }
+      ]
+    },
+    {
+      "scenario_id": "pendente_acesso_parcial",
+      "status": "Pendente",
+      "descricao": "Inspecao inconclusiva por impossibilidade de acesso integral ao sistema, sem base para aprovar ou reprovar.",
+      "tipo_linha": "horizontal_com_acesso_parcial",
+      "semantica_esperada": {
+        "status_operacional": "avaliacao_complementar",
+        "liberado_para_uso": "nao_avaliavel",
+        "acao_requerida": "complementar_inspecao"
+      },
+      "cobertura_repositorio": [
+        {
+          "kind": "catalog_pdf_test",
+          "path": "web/tests/test_catalog_pdf_templates.py",
+          "reference": "caso pendente na moega com limitacao por acumulo de graos e reinspecao requerida"
+        },
+        {
+          "kind": "semantic_report_pack_test",
+          "path": "web/tests/test_semantic_report_pack_nr35_autonomy.py",
+          "reference": "pendente tratado como estado final valido para mesa_required, sem falta artificial de conclusao"
+        }
+      ]
+    },
+    {
+      "scenario_id": "reprovado_irregularidade_material",
+      "status": "Reprovado",
+      "descricao": "Irregularidade material confirmada em componente critico, exigindo bloqueio ate correcao e reinspecao.",
+      "tipo_linha": "vertical_com_nao_conformidade",
+      "semantica_esperada": {
+        "status_operacional": "bloqueio",
+        "liberado_para_uso": "nao",
+        "acao_requerida": "corrigir_e_revalidar"
+      },
+      "cobertura_repositorio": [
+        {
+          "kind": "family_example",
+          "path": "docs/family_schemas/nr35_inspecao_linha_de_vida.laudo_output_exemplo.json",
+          "reference": "exemplo canonico atual da familia em reprovacao por nao conformidade no cabo de aco"
+        },
+        {
+          "kind": "catalog_pdf_test",
+          "path": "web/tests/test_catalog_pdf_templates.py",
+          "reference": "materializacao de conclusao, bloqueio e condicao para reinspecao"
+        },
+        {
+          "kind": "overlay_test",
+          "path": "web/tests/test_catalog_nr35_overlay.py",
+          "reference": "renderizacao do overlay profissional com os campos finais do caso reprovado"
+        }
+      ]
+    }
+  ],
+  "conclusao": {
+    "todos_os_tres_estados_operacionais_estao_cobertos": true,
+    "exemplo_canonico_publicado_permanece_em_reprovado": true,
+    "aprovado_e_pendente_estao_cobertos_por_testes_e_contrato": true,
+    "observacao": "Para a familia oficial basta manter um exemplo canonico principal no laudo_output_exemplo; os demais cenarios ficam formalizados nesta matriz e protegidos pelos testes de runtime."
+  }
+}

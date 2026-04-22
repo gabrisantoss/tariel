@@ -3098,6 +3098,32 @@
             gap: 12px;
         }
 
+        .view-case-summary-alert {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+            align-items: start;
+            padding: 12px 14px;
+            border: 1px solid rgba(193, 122, 18, 0.16);
+            border-radius: 16px;
+            background: rgba(255, 247, 237, 0.92);
+        }
+
+        .view-case-summary-alert .material-symbols-rounded {
+            color: #b45309;
+        }
+
+        .view-case-summary-alert strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--tariel-ink-900);
+        }
+
+        .view-case-summary-alert p {
+            margin: 0;
+            color: var(--tariel-text-muted);
+        }
+
         .view-case-summary-card {
             display: grid;
             gap: 6px;
@@ -3345,6 +3371,33 @@
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
+        }
+
+        body.mesa-shell .item-case-signals {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        body.mesa-shell .item-case-signal {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 9px;
+            border: 1px solid rgba(18, 35, 60, 0.1);
+            border-radius: 999px;
+            background: rgba(248, 250, 252, 0.92);
+            color: var(--texto-fraco);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .01em;
+        }
+
+        body.mesa-shell .item-case-signal--focus {
+            border-color: rgba(36, 92, 147, 0.14);
+            background: rgba(226, 239, 250, 0.92);
+            color: #184873;
         }
 
         body.mesa-shell .mesa-queue-empty {

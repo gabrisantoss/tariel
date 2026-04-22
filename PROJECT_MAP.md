@@ -13,6 +13,7 @@ Referencias locais atuais:
 - `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
 - `docs/roadmap_execucao_funcional_web_mobile.md`
 - `docs/restructuring-roadmap/131_dual_entry_resume_checkpoint.md`
+- `docs/restructuring-roadmap/133_inspetor_correcoes_sem_mesa.md`
 
 Observação para esta cópia recuperada:
 
@@ -126,6 +127,7 @@ make verify
 - `docs/tariel_visual_system.md`
 - `docs/full-system-audit/README.md`
 - `web/docs/inspector-understanding-packet/README.md`
+- `web/docs/correcao_sem_mesa.md`
 - `android/README.md`
 
 ## Regras de navegação

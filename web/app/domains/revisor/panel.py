@@ -23,6 +23,37 @@ from app.shared.security import exigir_revisor
 logger = logging.getLogger("tariel.revisor.panel")
 
 
+def _resolve_review_panel_template_context(
+    *,
+    request: Request,
+    usuario: Usuario,
+    panel_state,
+):
+    queue_projection_shadow = None
+    try:
+        queue_projection_shadow = registrar_shadow_review_queue_dashboard(
+            request=request,
+            usuario=usuario,
+            panel_state=panel_state,
+        )
+    except Exception:
+        logger.debug("Falha ao registrar review queue projection em shadow mode.", exc_info=True)
+        request.state.v2_review_queue_projection_error = "review_queue_projection_failed"
+
+    try:
+        return build_review_panel_template_context(
+            request=request,
+            usuario=usuario,
+            panel_state=panel_state,
+            shadow_result=queue_projection_shadow,
+        )
+    except Exception:
+        logger.debug("Falha ao promover review queue projection para o contexto SSR.", exc_info=True)
+        request.state.v2_review_queue_projection_prefer_error = "review_queue_projection_prefer_failed"
+        request.state.v2_review_queue_projection_preferred = False
+        return panel_state.to_template_context(request=request, usuario=usuario)
+
+
 @roteador_revisor.get("/painel", response_class=HTMLResponse)
 async def painel_revisor(
     request: Request,
@@ -51,32 +82,16 @@ async def painel_revisor(
             usuario=usuario,
             banco=banco,
         )
-        queue_projection_shadow = None
         try:
-            queue_projection_shadow = registrar_shadow_review_queue_dashboard(
+            template_context = _resolve_review_panel_template_context(
                 request=request,
                 usuario=usuario,
                 panel_state=panel_state,
             )
         except Exception:
-            logger.debug("Falha ao registrar review queue projection em shadow mode.", exc_info=True)
-            request.state.v2_review_queue_projection_error = "review_queue_projection_failed"
-
-        try:
-            template_context = build_review_panel_template_context(
-                request=request,
-                usuario=usuario,
-                panel_state=panel_state,
-                shadow_result=queue_projection_shadow,
-            )
-        except Exception:
-            logger.debug("Falha ao promover review queue projection para o contexto SSR.", exc_info=True)
-            request.state.v2_review_queue_projection_prefer_error = "review_queue_projection_prefer_failed"
+            logger.debug("Falha ao resolver contexto SSR do painel da mesa.", exc_info=True)
             request.state.v2_review_queue_projection_preferred = False
-            template_context = panel_state.to_template_context(
-                request=request,
-                usuario=usuario,
-            )
+            template_context = panel_state.to_template_context(request=request, usuario=usuario)
 
         hotspot.outcome = "render_panel"
         hotspot.response_status_code = 200

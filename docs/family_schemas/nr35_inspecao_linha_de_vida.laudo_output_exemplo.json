@@ -141,6 +141,7 @@
     "ha_pontos_de_atencao": true,
     "ha_pontos_de_atencao_texto": "Sim",
     "descricao": "Corrosao inicial localizada no cabo de aco proximo ao ponto superior, exigindo bloqueio do sistema ate correcao e reinspecao.",
+    "limitacoes_de_inspecao": "A avaliacao foi limitada ao escopo visual e dimensional nas condicoes de acesso presentes na vistoria.",
     "evidencias": {
       "disponivel": true,
       "referencias": [
@@ -159,8 +160,12 @@
     "status_operacional": "bloqueio",
     "conclusao_tecnica": "A linha de vida vertical nao deve permanecer liberada para uso ate a substituicao do trecho comprometido do cabo de aco e a reinspecao formal do sistema.",
     "justificativa": "A conclusao considera a nao conformidade localizada no cabo de aco, a evidencia fotografica principal, o contexto de trabalho em altura e a necessidade de rastreabilidade tecnica sem lacunas criticas.",
+    "motivo_status": "Nao conformidade confirmada no cabo de aco com necessidade de bloqueio imediato.",
+    "liberado_para_uso": "nao",
+    "acao_requerida": "corrigir_e_revalidar",
+    "condicao_para_reinspecao": "Substituir o trecho comprometido do cabo de aco e repetir a inspecao formal do sistema.",
     "proxima_inspecao_periodica": "2026-07",
-    "observacoes": "Substituir o trecho comprometido do cabo e reinspectar o sistema antes da liberacao."
+    "observacoes": "Substituir o trecho comprometido do cabo e reinspecionar o sistema antes da liberacao."
   },
   "checklist_componentes": {
     "fixacao_dos_pontos": {

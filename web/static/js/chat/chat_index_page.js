@@ -28,28 +28,35 @@
     const TEMPO_BANNER_MS = 8000;
     const TEMPO_RECONEXAO_SSE_MS = 5000;
     const BREAKPOINT_LAYOUT_INSPETOR_COMPACTO = 1199;
+    const resolvedRuntimeModules =
+        window.TarielInspectorWorkspaceRuntimeRegistry?.resolveInspectorRuntimeModules?.(InspectorRuntime) || {};
     const sharedGlobals =
-        InspectorRuntime?.resolveSharedGlobals?.() || {
+        resolvedRuntimeModules.sharedGlobals || {
             perf: window.TarielPerf || window.TarielCore?.TarielPerf || null,
             caseLifecycle: window.TarielCaseLifecycle,
         };
-    const InspectorStateSnapshots = window.TarielInspectorStateSnapshots || {};
-    const InspectorStateAuthority = window.TarielInspectorStateAuthority || {};
-    const InspectorStateRuntimeSync = window.TarielInspectorStateRuntimeSync || {};
-    const InspectorStateNormalization = window.TarielInspectorStateNormalization || {};
-    const InspectorHistoryBuilders = window.TarielInspectorHistoryBuilders || {};
-    const InspectorWorkspaceHistoryContext = window.TarielInspectorWorkspaceHistoryContext || {};
-    const InspectorWorkspaceMesaStatus = window.TarielInspectorWorkspaceMesaStatus || {};
-    const InspectorSidebarHistory = window.TarielInspectorSidebarHistory || {};
-    const InspectorWorkspaceRail = window.TarielInspectorWorkspaceRail || {};
-    const InspectorWorkspaceScreen = window.TarielInspectorWorkspaceScreen || {};
-    const InspectorWorkspaceUtils = window.TarielInspectorWorkspaceUtils || {};
-    const InspectorWorkspaceStage = window.TarielInspectorWorkspaceStage || {};
-    const InspectorWorkspaceMesaAttachments = window.TarielInspectorWorkspaceMesaAttachments || {};
-    const InspectorWorkspaceContextFlow = window.TarielInspectorWorkspaceContextFlow || {};
-    const InspectorWorkspaceHomeFlow = window.TarielInspectorWorkspaceHomeFlow || {};
-    const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
-    const InspectorWorkspaceDeliveryFlow = window.TarielInspectorWorkspaceDeliveryFlow || {};
+    const InspectorStateSnapshots = resolvedRuntimeModules.InspectorStateSnapshots || {};
+    const InspectorStateAuthority = resolvedRuntimeModules.InspectorStateAuthority || {};
+    const InspectorStateRuntimeSync = resolvedRuntimeModules.InspectorStateRuntimeSync || {};
+    const InspectorStateNormalization = resolvedRuntimeModules.InspectorStateNormalization || {};
+    const InspectorHistoryBuilders = resolvedRuntimeModules.InspectorHistoryBuilders || {};
+    const InspectorWorkspaceHistoryContext = resolvedRuntimeModules.InspectorWorkspaceHistoryContext || {};
+    const InspectorWorkspaceMesaStatus = resolvedRuntimeModules.InspectorWorkspaceMesaStatus || {};
+    const InspectorSidebarHistory = resolvedRuntimeModules.InspectorSidebarHistory || {};
+    const InspectorWorkspaceRail = resolvedRuntimeModules.InspectorWorkspaceRail || {};
+    const InspectorWorkspaceRuntimeState = resolvedRuntimeModules.InspectorWorkspaceRuntimeState || {};
+    const InspectorWorkspaceRuntimeScreen = resolvedRuntimeModules.InspectorWorkspaceRuntimeScreen || {};
+    const InspectorWorkspaceScreen = resolvedRuntimeModules.InspectorWorkspaceScreen || {};
+    const InspectorWorkspaceThread = resolvedRuntimeModules.InspectorWorkspaceThread || {};
+    const InspectorWorkspaceUtils = resolvedRuntimeModules.InspectorWorkspaceUtils || {};
+    const InspectorWorkspaceStage = resolvedRuntimeModules.InspectorWorkspaceStage || {};
+    const InspectorWorkspaceMesaAttachments = resolvedRuntimeModules.InspectorWorkspaceMesaAttachments || {};
+    const InspectorWorkspaceContextFlow = resolvedRuntimeModules.InspectorWorkspaceContextFlow || {};
+    const InspectorWorkspaceHomeFlow = resolvedRuntimeModules.InspectorWorkspaceHomeFlow || {};
+    const InspectorWorkspaceComposer = resolvedRuntimeModules.InspectorWorkspaceComposer || {};
+    const InspectorWorkspaceDeliveryFlow = resolvedRuntimeModules.InspectorWorkspaceDeliveryFlow || {};
+    const InspectorWorkspaceOrchestration = resolvedRuntimeModules.InspectorWorkspaceOrchestration || {};
+    const InspectorWorkspacePageBoot = resolvedRuntimeModules.InspectorWorkspacePageBoot || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
 
@@ -350,227 +357,8 @@
     // =========================================================
     // REFERÊNCIAS DOS ELEMENTOS DA PÁGINA
     // =========================================================
-    const el = {
-        modal: document.getElementById("modal-nova-inspecao"),
-        overlayHost: document.getElementById("inspetor-overlay-host"),
-        btnAbrirModal: document.getElementById("btn-abrir-modal-novo"),
-        btnFecharModal: document.querySelector("#modal-nova-inspecao .btn-fechar-modal"),
-        btnConfirmarInspecao: document.getElementById("btn-confirmar-inspecao"),
-        selectTemplate: document.getElementById("select-template-inspecao"),
-        selectTemplateCustom: document.getElementById("select-template-custom"),
-        btnSelectTemplateCustom: document.getElementById("btn-select-template-custom"),
-        valorSelectTemplateCustom: document.getElementById("valor-select-template-custom"),
-        painelSelectTemplateCustom: document.getElementById("painel-select-template-custom"),
-        listaSelectTemplateCustom: document.getElementById("lista-select-template-custom"),
-        inputClienteInspecao: document.getElementById("input-cliente-inspecao"),
-        inputUnidadeInspecao: document.getElementById("input-unidade-inspecao"),
-        inputLocalInspecao: document.getElementById("input-local-inspecao"),
-        textareaObjetivoInspecao: document.getElementById("textarea-objetivo-inspecao"),
-        entryModeInputs: Array.from(document.querySelectorAll('input[name="entry-mode-preference"]')),
-        modalEntryModeSummary: document.getElementById("modal-entry-mode-summary"),
-        previewNomeInspecao: document.getElementById("preview-nome-inspecao"),
-        btnEditarNomeInspecao: document.getElementById("btn-editar-nome-inspecao"),
-        inputNomeInspecao: document.getElementById("input-nome-inspecao"),
-        btnCancelarModalInspecao: document.getElementById("btn-cancelar-modal-inspecao"),
-        modalGateQualidade: document.getElementById("modal-gate-qualidade"),
-        btnFecharModalGateQualidade: document.getElementById("btn-fechar-modal-gate-qualidade"),
-        btnEntendiGateQualidade: document.getElementById("btn-entendi-gate-qualidade"),
-        btnPreencherGateQualidade: document.getElementById("btn-gate-preencher-no-chat"),
-        tituloTemplateGateQualidade: document.getElementById("titulo-gate-template"),
-        textoGateQualidadeResumo: document.getElementById("texto-gate-qualidade-resumo"),
-        blocoGateRoteiroTemplate: document.getElementById("bloco-gate-roteiro-template"),
-        tituloGateRoteiroTemplate: document.getElementById("titulo-gate-roteiro-template"),
-        textoGateRoteiroTemplate: document.getElementById("texto-gate-roteiro-template"),
-        listaGateRoteiroTemplate: document.getElementById("lista-gate-roteiro-template"),
-        listaGateFaltantes: document.getElementById("lista-gate-faltantes"),
-        listaGateChecklist: document.getElementById("lista-gate-checklist"),
-        blocoGateOverrideHumano: document.getElementById("bloco-gate-override-humano"),
-        textoGateOverrideHumano: document.getElementById("texto-gate-override-humano"),
-        listaGateOverrideCasos: document.getElementById("lista-gate-override-casos"),
-        textareaGateOverrideJustificativa: document.getElementById("textarea-gate-override-justificativa"),
-        textoGateOverrideResponsabilidade: document.getElementById("texto-gate-override-responsabilidade"),
-        btnGateOverrideContinuar: document.getElementById("btn-gate-override-continuar"),
-
-        telaBoasVindas: document.getElementById("tela-boas-vindas"),
-        painelChat: document.getElementById("painel-chat"),
-        portalScreenRoot: document.querySelector('[data-screen-root="portal"]'),
-        workspaceScreenRoot: document.querySelector('[data-screen-root="workspace"]'),
-        mesaWidgetScreenRoot: document.querySelector('[data-screen-root="mesa-widget"]'),
-        workspaceAssistantViewRoot: document.querySelector('[data-workspace-view-root="assistant_landing"]'),
-        workspaceHistoryViewRoot: document.querySelector('[data-workspace-view-root="inspection_history"]'),
-        workspaceRecordViewRoot: document.querySelector('[data-workspace-view-root="inspection_record"]'),
-        workspaceConversationViewRoot: document.querySelector('[data-workspace-view-root="inspection_conversation"]'),
-        workspaceMesaViewRoot: document.querySelector('[data-workspace-view-root="inspection_mesa"]'),
-        workspaceHistoryRoot: document.querySelector("[data-workspace-history-root]"),
-        workspaceHeader: document.querySelector("[data-workspace-header]"),
-        chatThreadToolbar: document.querySelector(".chat-thread-toolbar"),
-        threadNav: document.querySelector(".thread-nav"),
-        chatDashboardRail: document.querySelector(".chat-dashboard-rail"),
-        workspaceTituloLaudo: document.getElementById("workspace-titulo-laudo"),
-        workspaceSubtituloLaudo: document.getElementById("workspace-subtitulo-laudo"),
-        workspaceStatusBadge: document.getElementById("workspace-status-badge"),
-        workspaceEyebrow: document.getElementById("workspace-eyebrow"),
-        workspaceHeadline: document.getElementById("workspace-headline"),
-        workspaceDescription: document.getElementById("workspace-description"),
-        workspaceEntryModeNote: document.getElementById("workspace-entry-mode-note"),
-        workspaceSummaryState: document.getElementById("workspace-summary-state"),
-        workspaceSummaryEvidencias: document.getElementById("workspace-summary-evidencias"),
-        workspaceSummaryPendencias: document.getElementById("workspace-summary-pendencias"),
-        workspaceSummaryMesa: document.getElementById("workspace-summary-mesa"),
-        workspacePublicVerification: document.getElementById("workspace-public-verification"),
-        workspacePublicVerificationTitle: document.getElementById("workspace-public-verification-title"),
-        workspacePublicVerificationMeta: document.getElementById("workspace-public-verification-meta"),
-        workspacePublicVerificationLink: document.getElementById("workspace-public-verification-link"),
-        btnWorkspaceCopyVerification: document.getElementById("btn-workspace-copy-verification"),
-        workspaceOfficialIssue: document.getElementById("workspace-official-issue"),
-        workspaceOfficialIssueTitle: document.getElementById("workspace-official-issue-title"),
-        workspaceOfficialIssueMeta: document.getElementById("workspace-official-issue-meta"),
-        workspaceOfficialIssueChip: document.getElementById("workspace-official-issue-chip"),
-        workspaceNavCaption: document.getElementById("workspace-nav-caption"),
-        workspaceNavStatus: document.getElementById("workspace-nav-status"),
-        workspaceAssistantLanding: document.getElementById("workspace-assistant-landing"),
-        workspaceAssistantGovernance: document.getElementById("workspace-assistant-governance"),
-        workspaceAssistantGovernanceTitle: document.getElementById("workspace-assistant-governance-title"),
-        workspaceAssistantGovernanceDetail: document.getElementById("workspace-assistant-governance-detail"),
-        btnAssistantLandingOpenInspecaoModal: document.getElementById("btn-assistant-landing-open-inspecao-modal"),
-        btnSidebarOpenInspecaoModal: document.getElementById("btn-sidebar-open-inspecao-modal"),
-        btnWorkspaceOpenInspecaoModal: document.getElementById("btn-workspace-open-inspecao-modal"),
-        painelPendenciasMesa: document.getElementById("painel-pendencias-mesa"),
-        listaPendenciasMesa: document.getElementById("lista-pendencias-mesa"),
-        estadoLoadingPendenciasMesa: document.getElementById("estado-loading-pendencias-mesa"),
-        textoVazioPendenciasMesa: document.getElementById("texto-vazio-pendencias-mesa"),
-        textoVazioPendenciasMesaTexto: document.querySelector("#texto-vazio-pendencias-mesa [data-pendencias-empty-text]"),
-        estadoErroPendenciasMesa: document.getElementById("estado-erro-pendencias-mesa"),
-        estadoErroPendenciasMesaTexto: document.querySelector("#estado-erro-pendencias-mesa [data-pendencias-error-text]"),
-        resumoPendenciasMesa: document.getElementById("resumo-pendencias-mesa"),
-        acoesPendenciasMesa: document.querySelector("#painel-pendencias-mesa .acoes-pendencias"),
-        filtrosPendenciasMesa: document.querySelector("#painel-pendencias-mesa .filtros-pendencias"),
-        btnExportarPendenciasPdf: document.getElementById("btn-exportar-pendencias-pdf"),
-        btnCarregarMaisPendencias: document.getElementById("btn-carregar-mais-pendencias"),
-        botoesFiltroPendencias: Array.from(document.querySelectorAll("[data-filtro-pendencias]")),
-        btnMarcarPendenciasLidas: document.getElementById("btn-marcar-pendencias-lidas"),
-        btnFecharPendenciasMesa: document.getElementById("btn-fechar-pendencias-mesa"),
-        btnFinalizarInspecao: document.getElementById("btn-finalizar-inspecao"),
-        botoesFinalizarInspecao: Array.from(document.querySelectorAll("[data-finalizar-inspecao]")),
-        btnRailFinalizarInspecao: document.getElementById("btn-rail-finalizar-inspecao"),
-        btnWorkspaceToggleRail: document.getElementById("btn-workspace-toggle-rail"),
-        btnWorkspacePreview: document.getElementById("btn-workspace-preview"),
-        rodapeEntrada: document.querySelector(".rodape-entrada"),
-        areaMensagens: document.getElementById("area-mensagens"),
-        rodapeContextoTitulo: document.getElementById("rodape-contexto-titulo"),
-        rodapeContextoStatus: document.getElementById("rodape-contexto-status"),
-        btnIrFimChat: document.getElementById("btn-ir-fim-chat"),
-        btnHomeVerHistorico: document.getElementById("btn-home-ver-historico"),
-        btnHomeToggleHistoricoCompleto: document.getElementById("btn-home-toggle-historico-completo"),
-        secaoHomeRecentes: document.getElementById("secao-home-recentes"),
-        portalGovernanceSummary: document.getElementById("portal-governance-summary"),
-        portalGovernanceSummaryTitle: document.getElementById("portal-governance-summary-title"),
-        portalGovernanceSummaryDetail: document.getElementById("portal-governance-summary-detail"),
-        historicoHomeExtras: Array.from(document.querySelectorAll("[data-home-historico-extra]")),
-        botoesHomeLaudosRecentes: Array.from(document.querySelectorAll("[data-home-laudo-id]")),
-        botoesAbrirChatLivre: Array.from(document.querySelectorAll('[data-action="open-assistant-chat"]')),
-        inputBuscaHistorico: document.getElementById("busca-historico-input"),
-        sidebarHistoricoLista: document.getElementById("lista-historico"),
-        sidebarBuscaVazio: document.getElementById("estado-vazio-historico"),
-        sidebarLaudosTabButtons: Array.from(document.querySelectorAll("[data-sidebar-laudos-tab-trigger]")),
-
-        campoMensagem: document.getElementById("campo-mensagem"),
-        btnEnviar: document.getElementById("btn-enviar"),
-        btnAnexo: document.getElementById("btn-anexo"),
-        btnFotoRapida: document.getElementById("btn-foto-rapida"),
-        composerAttachmentTriggerButtons: Array.from(document.querySelectorAll("[data-composer-attachment-trigger]")),
-        btnToggleHumano: document.getElementById("btn-toggle-humano"),
-        backdropHighlight: document.getElementById("highlight-backdrop"),
-        pilulaEntrada: document.querySelector(".pilula-entrada"),
-
-        bannerEngenharia: document.getElementById("banner-notificacao-engenharia"),
-        textoBannerEngenharia: document.getElementById("texto-previa-notificacao"),
-        btnFecharBanner: document.querySelector(".btn-fechar-banner"),
-
-        botoesAcoesRapidas: Array.from(document.querySelectorAll(".btn-acao-rapida")),
-
-        btnMesaWidgetToggle: document.getElementById("btn-mesa-widget-toggle"),
-        painelMesaWidget: document.getElementById("painel-mesa-widget"),
-        btnFecharMesaWidget: document.getElementById("btn-fechar-mesa-widget"),
-        statusConexaoMesaWidget: document.getElementById("status-conexao-mesa-widget"),
-        textoConexaoMesaWidget: document.getElementById("texto-conexao-mesa-widget"),
-        mesaWidgetResumo: document.getElementById("mesa-widget-resumo"),
-        mesaWidgetResumoTitulo: document.getElementById("mesa-widget-resumo-titulo"),
-        mesaWidgetResumoTexto: document.getElementById("mesa-widget-resumo-texto"),
-        mesaWidgetChipStatus: document.getElementById("mesa-widget-chip-status"),
-        mesaWidgetChipPendencias: document.getElementById("mesa-widget-chip-pendencias"),
-        mesaWidgetChipNaoLidas: document.getElementById("mesa-widget-chip-nao-lidas"),
-        mesaWidgetLista: document.getElementById("mesa-widget-lista"),
-        mesaWidgetPreviewAnexo: document.getElementById("mesa-widget-preview-anexo"),
-        mesaWidgetInput: document.getElementById("mesa-widget-input"),
-        mesaWidgetBtnAnexo: document.getElementById("mesa-widget-btn-anexo"),
-        mesaWidgetBtnFoto: document.getElementById("mesa-widget-btn-foto"),
-        mesaWidgetInputAnexo: document.getElementById("mesa-widget-input-anexo"),
-        mesaWidgetEnviar: document.getElementById("mesa-widget-enviar"),
-        mesaWidgetCarregarMais: document.getElementById("mesa-widget-carregar-mais"),
-        mesaWidgetRefAtiva: document.getElementById("mesa-widget-ref-ativa"),
-        mesaWidgetRefTitulo: document.getElementById("mesa-widget-ref-titulo"),
-        mesaWidgetRefTexto: document.getElementById("mesa-widget-ref-texto"),
-        mesaWidgetRefLimpar: document.getElementById("mesa-widget-ref-limpar"),
-        workspaceAnexosPanel: document.getElementById("workspace-anexos-panel"),
-        workspaceAnexosGrid: document.getElementById("workspace-anexos-grid"),
-        workspaceAnexosEmpty: document.getElementById("workspace-anexos-empty"),
-        workspaceAnexosCount: document.getElementById("workspace-anexos-count"),
-        workspaceHistoryTimeline: document.querySelector("[data-history-timeline]"),
-        workspaceHistoryEmpty: document.querySelector("[data-history-empty]"),
-        botoesWorkspaceHistoryContinue: Array.from(document.querySelectorAll("[data-history-continue]")),
-        workspaceHistorySource: document.getElementById("workspace-history-source"),
-        workspaceHistoryActiveFilter: document.getElementById("workspace-history-active-filter"),
-        workspaceHistoryTotal: document.getElementById("workspace-history-total"),
-        workspaceHistoryGovernance: document.getElementById("workspace-history-governance"),
-        workspaceHistoryGovernanceTitle: document.getElementById("workspace-history-governance-title"),
-        workspaceHistoryGovernanceDetail: document.getElementById("workspace-history-governance-detail"),
-        btnWorkspaceHistoryReissue: document.getElementById("btn-workspace-history-reissue"),
-        workspaceMesaStage: document.getElementById("workspace-mesa-stage"),
-        workspaceMesaWidgetHost: document.getElementById("workspace-mesa-widget-host"),
-        workspaceMesaStageStatus: document.getElementById("workspace-mesa-stage-status"),
-        workspaceMesaStagePendencias: document.getElementById("workspace-mesa-stage-pendencias"),
-        workspaceMesaStageEvidencias: document.getElementById("workspace-mesa-stage-evidencias"),
-        workspaceMesaStageUnread: document.getElementById("workspace-mesa-stage-unread"),
-        workspaceMesaStageSummary: document.getElementById("workspace-mesa-stage-summary"),
-        workspaceMesaStageNextStep: document.getElementById("workspace-mesa-stage-next-step"),
-        workspaceMesaStageTemplate: document.getElementById("workspace-mesa-stage-template"),
-        workspaceMesaStageOperation: document.getElementById("workspace-mesa-stage-operation"),
-        workspaceMesaStageEquipment: document.getElementById("workspace-mesa-stage-equipment"),
-        workspaceMesaStageLastMovement: document.getElementById("workspace-mesa-stage-last-movement"),
-        workspaceProgressCard: document.getElementById("workspace-progress-card"),
-        workspaceProgressPercent: document.getElementById("workspace-progress-percent"),
-        workspaceProgressBar: document.getElementById("workspace-progress-bar"),
-        workspaceProgressEvidencias: document.getElementById("workspace-progress-evidencias"),
-        workspaceProgressPendencias: document.getElementById("workspace-progress-pendencias"),
-        workspaceActivityList: document.getElementById("workspace-activity-list"),
-        chatThreadSearch: document.querySelector("[data-workspace-history-search]"),
-        chatThreadResults: document.getElementById("chat-thread-results"),
-        workspaceConversationEmpty: document.getElementById("workspace-conversation-empty"),
-        workspaceChannelTabButtons: Array.from(document.querySelectorAll("[data-workspace-channel-tab]")),
-        chatFilterButtons: Array.from(document.querySelectorAll("[data-chat-filter]")),
-        historyTypeFilterButtons: Array.from(document.querySelectorAll("[data-history-type-filter]")),
-        workspaceRailThreadTabButtons: Array.from(document.querySelectorAll("[data-rail-thread-tab]")),
-        workspaceRailToggleButtons: Array.from(document.querySelectorAll("[data-rail-toggle]")),
-        btnWorkspacePreviewRail: document.getElementById("btn-workspace-preview-rail"),
-        composerSuggestions: document.getElementById("composer-suggestions"),
-        slashCommandPalette: document.getElementById("slash-command-palette"),
-        workspaceContextTemplate: document.getElementById("workspace-context-template"),
-        workspaceContextEvidencias: document.getElementById("workspace-context-evidencias"),
-        workspaceContextPendencias: document.getElementById("workspace-context-pendencias"),
-        workspaceContextMesa: document.getElementById("workspace-context-mesa"),
-        workspaceContextEquipment: document.getElementById("workspace-context-equipment"),
-        workspaceContextOperation: document.getElementById("workspace-context-operation"),
-        workspaceContextSummary: document.getElementById("workspace-context-summary"),
-        workspacePinnedCard: document.getElementById("workspace-pinned-card"),
-        workspaceContextPinnedCount: document.getElementById("workspace-context-pinned-count"),
-        workspaceContextPinnedList: document.getElementById("workspace-context-pinned-list"),
-        btnWorkspaceContextCopy: document.getElementById("btn-workspace-context-copy"),
-        btnWorkspaceContextClear: document.getElementById("btn-workspace-context-clear"),
-        workspaceMesaCardText: document.getElementById("workspace-mesa-card-text"),
-        workspaceMesaCardStatus: document.getElementById("workspace-mesa-card-status"),
-        workspaceMesaCardUnread: document.getElementById("workspace-mesa-card-unread"),
-    };
+    const el =
+        window.TarielInspectorWorkspacePageElements?.buildInspectorPageElements?.(document) || {};
 
     const avisosEstadoInspector = new Set();
     const divergenciasEstadoInspector = new Map();
@@ -642,70 +430,17 @@
     }
 
     function obterResumoPerfInspector(snapshot = estado.snapshotEstadoInspector || null) {
-        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
-        return {
-            screen: String(
-                payload.inspectorScreen ||
-                document.body?.dataset?.inspectorScreen ||
-                ""
-            ).trim(),
-            baseScreen: String(
-                payload.inspectorBaseScreen ||
-                document.body?.dataset?.inspectorBaseScreen ||
-                ""
-            ).trim(),
-            modoInspecaoUI: String(
-                payload.modoInspecaoUI ||
-                document.body?.dataset?.inspecaoUi ||
-                ""
-            ).trim(),
-            workspaceStage: String(
-                payload.workspaceStage ||
-                document.body?.dataset?.workspaceStage ||
-                ""
-            ).trim(),
-            threadTab: String(
-                payload.threadTab ||
-                document.body?.dataset?.threadTab ||
-                ""
-            ).trim(),
-            laudoAtualId: Number(
-                payload.laudoAtualId ||
-                document.body?.dataset?.laudoAtualId ||
-                0
-            ) || null,
-        };
+        return InspectorWorkspaceRuntimeState.obterResumoPerfInspector?.(snapshot, {
+            document,
+        }) || {};
     }
 
     function reportarProntidaoInspector(snapshot = estado.snapshotEstadoInspector || null) {
-        if (!PERF?.enabled) return;
-
-        const resumo = obterResumoPerfInspector(snapshot);
-        const portalVisivel = !!(
-            el.portalScreenRoot &&
-            !el.portalScreenRoot.hidden &&
-            el.portalScreenRoot.getClientRects().length > 0
-        );
-        const workspaceVisivel = !!(
-            el.workspaceScreenRoot &&
-            !el.workspaceScreenRoot.hidden &&
-            el.workspaceScreenRoot.getClientRects().length > 0
-        );
-        const composerUtilizavel = !!(
-            el.campoMensagem &&
-            !el.campoMensagem.disabled &&
-            el.campoMensagem.getClientRects().length > 0
-        );
-
-        if (portalVisivel) {
-            PERF.markOnce("inspetor.portal.usable", resumo);
-        }
-        if (workspaceVisivel) {
-            PERF.markOnce("inspetor.workspace.usable", resumo);
-        }
-        if (composerUtilizavel) {
-            PERF.markOnce("inspetor.composer.usable", resumo);
-        }
+        InspectorWorkspaceRuntimeState.reportarProntidaoInspector?.(snapshot, {
+            PERF,
+            el,
+            obterResumoPerfInspector,
+        });
     }
 
     function normalizarTipoTemplate(tipo) {
@@ -796,120 +531,15 @@
     }
 
     function normalizarPublicVerificationSeguro(payload = null) {
-        if (!payload || typeof payload !== "object") return null;
-
-        const verificationUrl = String(
-            payload.verification_url || payload.verificationUrl || ""
-        ).trim();
-        const hashShort = String(
-            payload.hash_short || payload.hashShort || payload.codigo_hash || ""
-        ).trim();
-        const statusVisualLabel = String(
-            payload.status_visual_label || payload.statusVisualLabel || ""
-        ).trim();
-        const statusRevisao = String(
-            payload.status_revisao || payload.statusRevisao || ""
-        ).trim();
-        const caseLifecycleStatus = String(
-            payload.case_lifecycle_status || payload.caseLifecycleStatus || ""
-        ).trim();
-        const activeOwnerRole = String(
-            payload.active_owner_role || payload.activeOwnerRole || ""
-        ).trim();
-        const statusConformidade = String(
-            payload.status_conformidade || payload.statusConformidade || ""
-        ).trim();
-        const documentOutcome = String(
-            payload.document_outcome || payload.documentOutcome || ""
-        ).trim();
-
-        if (!verificationUrl && !hashShort) return null;
-
-        return {
-            verificationUrl,
-            hashShort,
-            statusVisualLabel,
-            statusRevisao,
-            caseLifecycleStatus,
-            activeOwnerRole,
-            statusConformidade,
-            documentOutcome,
-        };
+        return window.TarielInspectorWorkspaceStatusPayload?.normalizarPublicVerificationSeguro?.(payload) || null;
     }
 
     function normalizarEmissaoOficialSeguro(payload = null) {
-        if (!payload || typeof payload !== "object") return null;
-
-        const currentIssue = payload.current_issue && typeof payload.current_issue === "object"
-            ? { ...payload.current_issue }
-            : null;
-        const issueStatus = String(payload.issue_status || "").trim();
-        const issueStatusLabel = String(payload.issue_status_label || "").trim();
-
-        if (!issueStatus && !issueStatusLabel && !currentIssue) return null;
-
-        return {
-            issueStatus,
-            issueStatusLabel,
-            issueActionLabel: String(payload.issue_action_label || "").trim(),
-            blockerCount: Number(payload.blocker_count || 0) || 0,
-            eligibleSignatoryCount: Number(payload.eligible_signatory_count || 0) || 0,
-            readyForIssue: !!payload.ready_for_issue,
-            reissueRecommended: !!payload.reissue_recommended,
-            alreadyIssued: !!payload.already_issued,
-            currentIssue,
-            blockers: Array.isArray(payload.blockers) ? payload.blockers : [],
-        };
+        return window.TarielInspectorWorkspaceStatusPayload?.normalizarEmissaoOficialSeguro?.(payload) || null;
     }
 
     function clonarPayloadStatusRelatorioWorkspace(payload = null) {
-        if (!payload || typeof payload !== "object") return null;
-
-        return {
-            ...payload,
-            allowed_next_lifecycle_statuses: Array.isArray(payload?.allowed_next_lifecycle_statuses)
-                ? [...payload.allowed_next_lifecycle_statuses]
-                : [],
-            allowed_lifecycle_transitions: Array.isArray(payload?.allowed_lifecycle_transitions)
-                ? payload.allowed_lifecycle_transitions.map((item) =>
-                    item && typeof item === "object" ? { ...item } : item
-                )
-                : [],
-            allowed_surface_actions: Array.isArray(payload?.allowed_surface_actions)
-                ? [...payload.allowed_surface_actions]
-                : [],
-            public_verification:
-                payload?.public_verification && typeof payload.public_verification === "object"
-                    ? { ...payload.public_verification }
-                    : payload?.public_verification ?? null,
-            emissao_oficial:
-                payload?.emissao_oficial && typeof payload.emissao_oficial === "object"
-                    ? { ...payload.emissao_oficial }
-                    : payload?.emissao_oficial ?? null,
-            laudo_card:
-                payload?.laudo_card && typeof payload.laudo_card === "object"
-                    ? {
-                        ...payload.laudo_card,
-                        allowed_next_lifecycle_statuses: Array.isArray(
-                            payload?.laudo_card?.allowed_next_lifecycle_statuses
-                        )
-                            ? [...payload.laudo_card.allowed_next_lifecycle_statuses]
-                            : [],
-                        allowed_lifecycle_transitions: Array.isArray(
-                            payload?.laudo_card?.allowed_lifecycle_transitions
-                        )
-                            ? payload.laudo_card.allowed_lifecycle_transitions.map((item) =>
-                                item && typeof item === "object" ? { ...item } : item
-                            )
-                            : [],
-                        allowed_surface_actions: Array.isArray(
-                            payload?.laudo_card?.allowed_surface_actions
-                        )
-                            ? [...payload.laudo_card.allowed_surface_actions]
-                            : [],
-                    }
-                    : payload?.laudo_card ?? null,
-        };
+        return window.TarielInspectorWorkspaceStatusPayload?.clonarPayloadStatusRelatorioWorkspace?.(payload) || null;
     }
 
     function registrarUltimoPayloadStatusRelatorioWorkspace(payload = null) {
@@ -918,115 +548,15 @@
     }
 
     function obterPayloadStatusRelatorioWorkspaceAtual() {
-        const snapshot = clonarPayloadStatusRelatorioWorkspace(
-            window.TarielAPI?.obterSnapshotStatusRelatorioAtual?.() || null
-        );
-        const fallback = clonarPayloadStatusRelatorioWorkspace(estado.ultimoStatusRelatorioPayload);
-        const mergedLaudoCard = (
-            snapshot?.laudo_card && typeof snapshot.laudo_card === "object"
-        ) || (
-            fallback?.laudo_card && typeof fallback.laudo_card === "object"
-        )
-            ? {
-                ...(fallback?.laudo_card && typeof fallback.laudo_card === "object"
-                    ? fallback.laudo_card
-                    : {}),
-                ...(snapshot?.laudo_card && typeof snapshot.laudo_card === "object"
-                    ? snapshot.laudo_card
-                    : {}),
-            }
-            : (snapshot?.laudo_card ?? fallback?.laudo_card ?? null);
-
-        if (!snapshot && !fallback) {
-            return {};
-        }
-
-        const allowedNextLifecycleStatuses = (
-            Array.isArray(snapshot?.allowed_next_lifecycle_statuses)
-                ? snapshot.allowed_next_lifecycle_statuses
-                : Array.isArray(snapshot?.laudo_card?.allowed_next_lifecycle_statuses)
-                    ? snapshot.laudo_card.allowed_next_lifecycle_statuses
-                    : Array.isArray(fallback?.allowed_next_lifecycle_statuses)
-                        ? fallback.allowed_next_lifecycle_statuses
-                        : Array.isArray(fallback?.laudo_card?.allowed_next_lifecycle_statuses)
-                            ? fallback.laudo_card.allowed_next_lifecycle_statuses
-                            : []
-        )
-            .map((item) => normalizarCaseLifecycleStatusSeguro(item))
-            .filter(Boolean);
-        const allowedLifecycleTransitions = normalizarAllowedLifecycleTransitionsSeguro(
-            Array.isArray(snapshot?.allowed_lifecycle_transitions)
-                ? snapshot.allowed_lifecycle_transitions
-                : Array.isArray(snapshot?.laudo_card?.allowed_lifecycle_transitions)
-                    ? snapshot.laudo_card.allowed_lifecycle_transitions
-                    : Array.isArray(fallback?.allowed_lifecycle_transitions)
-                        ? fallback.allowed_lifecycle_transitions
-                        : Array.isArray(fallback?.laudo_card?.allowed_lifecycle_transitions)
-                            ? fallback.laudo_card.allowed_lifecycle_transitions
-                            : []
-        );
-        const allowedSurfaceActions = normalizarAllowedSurfaceActionsSeguro(
-            Array.isArray(snapshot?.allowed_surface_actions)
-                ? snapshot.allowed_surface_actions
-                : Array.isArray(snapshot?.laudo_card?.allowed_surface_actions)
-                    ? snapshot.laudo_card.allowed_surface_actions
-                    : Array.isArray(fallback?.allowed_surface_actions)
-                        ? fallback.allowed_surface_actions
-                        : Array.isArray(fallback?.laudo_card?.allowed_surface_actions)
-                            ? fallback.laudo_card.allowed_surface_actions
-                            : []
-        );
-        const caseLifecycleStatus = normalizarCaseLifecycleStatusSeguro(
-            snapshot?.case_lifecycle_status ||
-            snapshot?.laudo_card?.case_lifecycle_status ||
-            fallback?.case_lifecycle_status ||
-            fallback?.laudo_card?.case_lifecycle_status ||
-            ""
-        );
-        const caseWorkflowMode = String(
-            snapshot?.case_workflow_mode ||
-            snapshot?.laudo_card?.case_workflow_mode ||
-            fallback?.case_workflow_mode ||
-            fallback?.laudo_card?.case_workflow_mode ||
-            ""
-        ).trim().toLowerCase();
-        const activeOwnerRole = normalizarActiveOwnerRoleSeguro(
-            snapshot?.active_owner_role ||
-            snapshot?.laudo_card?.active_owner_role ||
-            fallback?.active_owner_role ||
-            fallback?.laudo_card?.active_owner_role ||
-            ""
-        );
-
-        return {
-            ...(fallback || {}),
-            ...(snapshot || {}),
-            public_verification:
-                snapshot?.public_verification ??
-                fallback?.public_verification ??
-                null,
-            emissao_oficial:
-                snapshot?.emissao_oficial ??
-                fallback?.emissao_oficial ??
-                null,
-            laudo_card: mergedLaudoCard
-                ? {
-                    ...mergedLaudoCard,
-                    case_lifecycle_status: caseLifecycleStatus,
-                    case_workflow_mode: caseWorkflowMode,
-                    active_owner_role: activeOwnerRole,
-                    allowed_next_lifecycle_statuses: allowedNextLifecycleStatuses,
-                    allowed_lifecycle_transitions: allowedLifecycleTransitions,
-                    allowed_surface_actions: allowedSurfaceActions,
-                }
-                : null,
-            case_lifecycle_status: caseLifecycleStatus,
-            case_workflow_mode: caseWorkflowMode,
-            active_owner_role: activeOwnerRole,
-            allowed_next_lifecycle_statuses: allowedNextLifecycleStatuses,
-            allowed_lifecycle_transitions: allowedLifecycleTransitions,
-            allowed_surface_actions: allowedSurfaceActions,
-        };
+        return window.TarielInspectorWorkspaceStatusPayload?.obterPayloadStatusRelatorioWorkspaceAtual?.({
+            estado,
+            apiRef: window.TarielAPI || null,
+            clonarPayload: clonarPayloadStatusRelatorioWorkspace,
+            normalizarCaseLifecycleStatusSeguro,
+            normalizarActiveOwnerRoleSeguro,
+            normalizarAllowedLifecycleTransitionsSeguro,
+            normalizarAllowedSurfaceActionsSeguro,
+        }) || {};
     }
 
     function normalizarLaudoAtualId(valor) {
@@ -1135,50 +665,46 @@
     estado.contextoVisualPorLaudo = {};
 
     function paginaSolicitaHomeLandingViaURL() {
-        try {
-            const url = new URL(window.location.href);
-            return url.searchParams.get("home") === "1" && !url.searchParams.get("laudo");
-        } catch (_) {
-            return false;
-        }
+        return !!InspectorWorkspaceRuntimeState.paginaSolicitaHomeLandingViaURL?.({
+            locationRef: window.location,
+        });
     }
 
     function obterLaudoIdDaURLInspector() {
-        try {
-            const valor = new URL(window.location.href).searchParams.get("laudo");
-            return normalizarLaudoAtualId(valor);
-        } catch (_) {
-            return null;
-        }
+        return InspectorWorkspaceRuntimeState.obterLaudoIdDaURLInspector?.({
+            locationRef: window.location,
+            normalizarLaudoAtualId,
+        }) || null;
     }
 
     function obterThreadTabDaURLInspector() {
-        try {
-            const valor = new URL(window.location.href).searchParams.get("aba");
-            return valor ? normalizarThreadTab(valor) : undefined;
-        } catch (_) {
-            return undefined;
-        }
+        return InspectorWorkspaceRuntimeState.obterThreadTabDaURLInspector?.({
+            locationRef: window.location,
+            normalizarThreadTab,
+        });
     }
 
     function obterSnapshotCompatCoreInspector() {
-        return InspectorStateSnapshots.obterSnapshotCompatCoreInspector({
+        return InspectorWorkspaceRuntimeState.obterSnapshotCompatCoreInspector?.({
+            InspectorStateSnapshots,
             normalizarLaudoAtualId,
             normalizarEstadoRelatorio,
-        });
+        }) || {};
     }
 
     function obterSnapshotCompatApiInspector() {
-        return InspectorStateSnapshots.obterSnapshotCompatApiInspector({
+        return InspectorWorkspaceRuntimeState.obterSnapshotCompatApiInspector?.({
+            InspectorStateSnapshots,
             normalizarLaudoAtualId,
             normalizarEstadoRelatorio,
-        });
+        }) || {};
     }
 
     function obterSnapshotDatasetInspector() {
-        return InspectorStateSnapshots.obterSnapshotDatasetInspector({
-            body: document.body,
-            painelChat: el.painelChat,
+        return InspectorWorkspaceRuntimeState.obterSnapshotDatasetInspector?.({
+            InspectorStateSnapshots,
+            document,
+            el,
             normalizarLaudoAtualId,
             normalizarEstadoRelatorio,
             normalizarModoInspecaoUI,
@@ -1186,34 +712,36 @@
             normalizarThreadTab,
             normalizarBooleanoEstado,
             normalizarOverlayOwner,
-        });
+        }) || {};
     }
 
     function obterSnapshotSSRInspector() {
-        return InspectorStateSnapshots.obterSnapshotSSRInspector({
-            painelChat: el.painelChat,
+        return InspectorWorkspaceRuntimeState.obterSnapshotSSRInspector?.({
+            InspectorStateSnapshots,
+            el,
             normalizarLaudoAtualId,
             normalizarEstadoRelatorio,
             normalizarModoInspecaoUI,
             normalizarWorkspaceStage,
-        });
+        }) || {};
     }
 
     function obterSnapshotStorageInspector() {
-        return InspectorStateSnapshots.obterSnapshotStorageInspector({
+        return InspectorWorkspaceRuntimeState.obterSnapshotStorageInspector?.({
+            InspectorStateSnapshots,
             normalizarLaudoAtualId,
             obterLaudoIdDaURLInspector,
             obterThreadTabDaURLInspector,
             lerFlagForcaHomeStorage,
             lerRetomadaHomePendenteStorage,
             paginaSolicitaHomeLandingViaURL,
-        });
+        }) || {};
     }
 
     function obterSnapshotMemoriaInspector() {
-        return InspectorStateSnapshots.obterSnapshotMemoriaInspector({
-            snapshotEstadoInspector: estado.snapshotEstadoInspector,
-            estadoAtual: estado,
+        return InspectorWorkspaceRuntimeState.obterSnapshotMemoriaInspector?.({
+            InspectorStateSnapshots,
+            estado,
             normalizarLaudoAtualId,
             normalizarEstadoRelatorio,
             normalizarModoInspecaoUI,
@@ -1223,11 +751,12 @@
             normalizarOverlayOwner,
             retomadaHomePendenteEhValida,
             normalizarRetomadaHomePendenteSeguro,
-        });
+        }) || {};
     }
 
     function obterSnapshotBootstrapInspector() {
-        return InspectorStateSnapshots.obterSnapshotBootstrapInspector({
+        return InspectorWorkspaceRuntimeState.obterSnapshotBootstrapInspector?.({
+            InspectorStateSnapshots,
             obterSnapshotSSRInspector,
             obterSnapshotDatasetInspector,
             obterSnapshotStorageInspector,
@@ -1238,62 +767,31 @@
             normalizarThreadTab,
             retomadaHomePendenteEhValida,
             normalizarRetomadaHomePendenteSeguro,
-        });
+        }) || {};
     }
 
     function escolherCampoEstadoInspector(candidatos = [], { fallback = null, aceitarNulo = false } = {}) {
-        return InspectorStateSnapshots.escolherCampoEstadoInspector(
+        return InspectorWorkspaceRuntimeState.escolherCampoEstadoInspector?.(
             candidatos,
-            { fallback, aceitarNulo }
-        );
+            { fallback, aceitarNulo },
+            {
+                InspectorStateSnapshots,
+            }
+        ) || { value: fallback, source: "fallback" };
     }
 
     function registrarDivergenciaEstadoInspector(campo, mapaFontes = {}, valorEscolhido) {
-        const entradas = Object.entries(mapaFontes)
-            .map(([origem, valor]) => [origem, valor])
-            .filter(([, valor]) => valor !== undefined && valor !== null && valor !== "");
-
-        const valoresDistintos = [...new Set(entradas.map(([, valor]) => JSON.stringify(valor)))];
-        const divergente = valoresDistintos.length > 1;
-
-        if (!divergente) {
-            divergenciasEstadoInspector.delete(campo);
-            return false;
-        }
-
-        if (!EM_PRODUCAO) {
-            const chaveAviso = `${campo}:${valoresDistintos.join("|")}`;
-            const agora = Date.now();
-            const anterior = divergenciasEstadoInspector.get(campo);
-
-            if (!anterior || anterior.key !== chaveAviso) {
-                divergenciasEstadoInspector.set(campo, {
-                    key: chaveAviso,
-                    count: 1,
-                    firstAt: agora,
-                    warned: false,
-                });
-                debugRuntime(`[INSPECTOR_STATE] Divergência transitória detectada em ${campo}.`, {
-                    escolhido: valorEscolhido,
-                    fontes: mapaFontes,
-                });
-                return true;
+        return InspectorWorkspaceRuntimeState.registrarDivergenciaEstadoInspector?.(
+            campo,
+            mapaFontes,
+            valorEscolhido,
+            {
+                divergenciasEstadoInspector,
+                EM_PRODUCAO,
+                debugRuntime,
+                logOnceRuntime,
             }
-
-            anterior.count += 1;
-
-            if (!anterior.warned && (anterior.count >= 3 || (agora - anterior.firstAt) >= 1200)) {
-                anterior.warned = true;
-                logOnceRuntime(`inspector-state:${chaveAviso}`, "warn", `[INSPECTOR_STATE] Divergência persistente em ${campo}.`, {
-                    escolhido: valorEscolhido,
-                    fontes: mapaFontes,
-                    ocorrencias: anterior.count,
-                    persistenciaMs: agora - anterior.firstAt,
-                });
-            }
-        }
-
-        return divergente;
+        ) || false;
     }
 
     function resolverInspectorBaseScreenPorSnapshot(snapshot = {}) {
@@ -1301,69 +799,72 @@
     }
 
     function resolverEstadoAutoritativoInspector(overrides = {}) {
-        return InspectorStateAuthority.resolverEstadoAutoritativoInspector({
+        return InspectorWorkspaceRuntimeState.resolverEstadoAutoritativoInspector?.(
             overrides,
-            obterSnapshotMemoriaInspector,
-            obterSnapshotCompatCoreInspector,
-            obterSnapshotCompatApiInspector,
-            obterSnapshotDatasetInspector,
-            obterSnapshotSSRInspector,
-            obterSnapshotStorageInspector,
-            obterSnapshotBootstrapInspector,
-            escolherCampoEstadoInspector,
-            normalizarLaudoAtualId,
-            normalizarEstadoRelatorio,
-            normalizarModoInspecaoUI,
-            normalizarWorkspaceStage,
-            normalizarThreadTab,
-            normalizarOverlayOwner,
-            normalizarBooleanoEstado,
-            normalizarRetomadaHomePendenteSeguro,
-            retomadaHomePendenteEhValida,
-            estadoRelatorioPossuiContexto,
-            resolverInspectorBaseScreenPorSnapshot,
-            registrarDivergenciaEstadoInspector,
-            paginaSolicitaHomeLandingViaURL,
-            modalNovaInspecaoEstaAberta,
-        });
+            {
+                InspectorStateAuthority,
+                obterSnapshotMemoriaInspector,
+                obterSnapshotCompatCoreInspector,
+                obterSnapshotCompatApiInspector,
+                obterSnapshotDatasetInspector,
+                obterSnapshotSSRInspector,
+                obterSnapshotStorageInspector,
+                obterSnapshotBootstrapInspector,
+                escolherCampoEstadoInspector,
+                normalizarLaudoAtualId,
+                normalizarEstadoRelatorio,
+                normalizarModoInspecaoUI,
+                normalizarWorkspaceStage,
+                normalizarThreadTab,
+                normalizarOverlayOwner,
+                normalizarBooleanoEstado,
+                normalizarRetomadaHomePendenteSeguro,
+                retomadaHomePendenteEhValida,
+                estadoRelatorioPossuiContexto,
+                resolverInspectorBaseScreenPorSnapshot,
+                registrarDivergenciaEstadoInspector,
+                paginaSolicitaHomeLandingViaURL,
+                modalNovaInspecaoEstaAberta,
+            }
+        ) || {};
     }
 
     function espelharEstadoInspectorCompat(snapshot = {}) {
-        return InspectorStateRuntimeSync.espelharEstadoInspectorCompat(snapshot);
+        return InspectorWorkspaceRuntimeState.espelharEstadoInspectorCompat?.(snapshot, {
+            InspectorStateRuntimeSync,
+        });
     }
 
     function espelharEstadoInspectorNoDataset(snapshot = {}) {
-        return InspectorStateRuntimeSync.espelharEstadoInspectorNoDataset({
-            snapshot,
-            body: document.body,
-            painelChat: el.painelChat,
-            overlayHost: el.overlayHost,
+        return InspectorWorkspaceRuntimeState.espelharEstadoInspectorNoDataset?.(snapshot, {
+            InspectorStateRuntimeSync,
+            document,
+            el,
             sincronizarConversationVariantNoDom,
         });
     }
 
     function espelharEstadoInspectorNoStorage(snapshot = {}, opts = {}) {
-        return InspectorStateRuntimeSync.espelharEstadoInspectorNoStorage({
-            snapshot,
-            opts,
-            contextoVisualPorLaudo: estado.contextoVisualPorLaudo,
+        return InspectorWorkspaceRuntimeState.espelharEstadoInspectorNoStorage?.(snapshot, opts, {
+            InspectorStateRuntimeSync,
+            estado,
             persistirContextoVisualLaudosStorage,
-            chaveForceHomeLanding: CHAVE_FORCE_HOME_LANDING,
-            chaveRetomadaHomePendente: CHAVE_RETOMADA_HOME_PENDENTE,
+            CHAVE_FORCE_HOME_LANDING,
+            CHAVE_RETOMADA_HOME_PENDENTE,
         });
     }
 
     function emitirEstadoInspectorSincronizado(snapshot = {}) {
-        return InspectorStateRuntimeSync.emitirEstadoInspectorSincronizado({
-            snapshot,
+        return InspectorWorkspaceRuntimeState.emitirEstadoInspectorSincronizado?.(snapshot, {
+            InspectorStateRuntimeSync,
             emitirEventoTariel,
         });
     }
 
     function aplicarSnapshotEstadoInspector(snapshot = {}, opts = {}) {
-        return InspectorStateRuntimeSync.aplicarSnapshotEstadoInspector({
-            snapshot,
-            opts,
+        return InspectorWorkspaceRuntimeState.aplicarSnapshotEstadoInspector?.(snapshot, opts, {
+            InspectorStateRuntimeSync,
+            windowRef: window,
             estado,
             setInspectorStateGlobal: (stateSnapshot) => {
                 if (window.TarielInspectorState && typeof window.TarielInspectorState === "object") {
@@ -1373,38 +874,46 @@
             espelharEstadoInspectorNoDataset,
             espelharEstadoInspectorCompat,
             espelharEstadoInspectorNoStorage,
-            sincronizandoInspectorScreen,
-            syncInspectorScreenRaf,
-            cancelAnimationFrameFn: window.cancelAnimationFrame.bind(window),
-            requestAnimationFrameFn: window.requestAnimationFrame.bind(window),
             sincronizarInspectorScreen,
             emitirEstadoInspectorSincronizado,
-            atualizarSyncInspectorScreenRaf: (valor) => {
-                syncInspectorScreenRaf = valor;
+            stateRef: {
+                get sincronizandoInspectorScreen() {
+                    return sincronizandoInspectorScreen;
+                },
+                get syncInspectorScreenRaf() {
+                    return syncInspectorScreenRaf;
+                },
+                setSyncInspectorScreenRaf: (valor) => {
+                    syncInspectorScreenRaf = valor;
+                },
             },
-        });
+        }) || snapshot;
     }
 
     function sincronizarEstadoInspector(overrides = {}, opts = {}) {
-        const snapshot = resolverEstadoAutoritativoInspector(overrides);
-        return aplicarSnapshotEstadoInspector(snapshot, opts);
+        return InspectorWorkspaceRuntimeState.sincronizarEstadoInspector?.(overrides, opts, {
+            resolverEstadoAutoritativoInspector,
+            aplicarSnapshotEstadoInspector,
+        }) || {};
     }
 
     function obterSnapshotEstadoInspectorAtual() {
-        return InspectorStateRuntimeSync.obterSnapshotEstadoInspectorAtual({
-            snapshotEstadoInspector: estado.snapshotEstadoInspector,
+        return InspectorWorkspaceRuntimeState.obterSnapshotEstadoInspectorAtual?.({
+            InspectorStateRuntimeSync,
+            estado,
             resolverEstadoAutoritativoInspector,
-        });
+        }) || {};
     }
 
-    window.TarielInspectorState = Object.assign(
-        window.TarielInspectorState || {},
+    InspectorWorkspaceRuntimeState.atualizarGlobalInspectorState?.(
         {
             resolverEstadoAutoritativoInspector,
             sincronizarEstadoInspector,
             obterSnapshotEstadoInspectorAtual,
             atualizarThreadWorkspace,
-            state: estado.snapshotEstadoInspector ? { ...estado.snapshotEstadoInspector } : null,
+        },
+        {
+            estado,
         }
     );
 
@@ -1452,150 +961,124 @@
     }
 
     function landingNovoChatAtivo(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
-        const baseScreen = payload.inspectorBaseScreen || resolverInspectorBaseScreenPorSnapshot(payload);
-
-        return normalizarModoInspecaoUI(payload.modoInspecaoUI) === "workspace"
-            && baseScreen === "assistant_landing";
+        return !!InspectorWorkspaceThread.landingNovoChatAtivo?.(
+            snapshot,
+            {
+                normalizarModoInspecaoUI,
+                resolverInspectorBaseScreenPorSnapshot,
+            }
+        );
     }
 
     function conversaNovoChatFocadaAtiva(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        if (!normalizarBooleanoEstado(snapshot?.freeChatConversationActive, false)) {
-            return false;
-        }
-
-        return !obterBaseRealConversaNovoChat(snapshot).pronta;
+        return !!InspectorWorkspaceThread.conversaNovoChatFocadaAtiva?.(
+            snapshot,
+            {
+                normalizarBooleanoEstado,
+                obterBaseRealConversaNovoChat,
+            }
+        );
     }
 
     function obterTotalMensagensReaisWorkspace(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
-        const totalHistorico = Math.max(
-            0,
-            Number(
-                payload.historyRealCount ??
-                estado.historyRealCount ??
-                document.body?.dataset?.historyRealCount ??
-                0
-            ) || 0
-        );
-
-        return Math.max(totalHistorico, coletarLinhasWorkspace().length);
+        return InspectorWorkspaceThread.obterTotalMensagensReaisWorkspace?.(
+            snapshot,
+            {
+                estado,
+                documentRef: document,
+                coletarLinhasWorkspace,
+            }
+        ) || 0;
     }
 
     function conversaWorkspaceModoChatAtivo(
         screen = estado.inspectorScreen || resolveInspectorScreen(),
         snapshot = obterSnapshotEstadoInspectorAtual()
     ) {
-        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
-        const screenAtual = screen || payload.inspectorScreen || payload.inspectorBaseScreen || resolveInspectorScreen();
-        const workspaceView = resolveWorkspaceView(screenAtual);
-        const laudoAtivoId = normalizarLaudoAtualId(
-            payload.laudoAtualId ??
-            estado.laudoAtualId ??
-            obterLaudoAtivoIdSeguro()
+        return !!InspectorWorkspaceThread.conversaWorkspaceModoChatAtivo?.(
+            screen,
+            snapshot,
+            {
+                estado,
+                resolveInspectorScreen,
+                resolveWorkspaceView,
+                normalizarLaudoAtualId,
+                obterLaudoAtivoIdSeguro,
+                normalizarEstadoRelatorio,
+                obterEstadoRelatorioAtualSeguro,
+                estadoRelatorioPossuiContexto,
+                normalizarModoInspecaoUI,
+                normalizarBooleanoEstado,
+                obterTotalMensagensReaisWorkspace,
+            }
         );
-        const estadoRelatorio = normalizarEstadoRelatorio(
-            payload.estadoRelatorio ??
-            estado.estadoRelatorio ??
-            obterEstadoRelatorioAtualSeguro()
-        );
-
-        if (laudoAtivoId || estadoRelatorioPossuiContexto(estadoRelatorio)) {
-            return false;
-        }
-
-        return normalizarModoInspecaoUI(payload.modoInspecaoUI) === "workspace"
-            && workspaceView === "inspection_conversation"
-            && (
-                normalizarBooleanoEstado(payload.freeChatConversationActive, false)
-                || obterTotalMensagensReaisWorkspace(payload) > 0
-            );
     }
 
     function fluxoNovoChatFocadoAtivoOuPendente(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        return conversaNovoChatFocadaAtiva(snapshot)
-            || !!normalizarBooleanoEstado(snapshot?.assistantLandingFirstSendPending, false);
+        return !!InspectorWorkspaceThread.fluxoNovoChatFocadoAtivoOuPendente?.(
+            snapshot,
+            {
+                conversaNovoChatFocadaAtiva,
+                normalizarBooleanoEstado,
+            }
+        );
     }
 
     function conversaNovoChatFocadaVisivel(
         screen = estado.inspectorScreen || resolveInspectorScreen(),
         snapshot = obterSnapshotEstadoInspectorAtual()
     ) {
-        if (!conversaNovoChatFocadaAtiva(snapshot)) {
-            return false;
-        }
-
-        return resolveWorkspaceView(screen) === "inspection_conversation";
+        return !!InspectorWorkspaceThread.conversaNovoChatFocadaVisivel?.(
+            screen,
+            snapshot,
+            {
+                conversaNovoChatFocadaAtiva,
+                resolveWorkspaceView,
+            }
+        );
     }
 
     function resolverConversationVariant(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const payload = snapshot && typeof snapshot === "object" ? snapshot : {};
-        const screen = payload.inspectorScreen || payload.inspectorBaseScreen || resolverInspectorBaseScreenPorSnapshot(payload);
-        return conversaWorkspaceModoChatAtivo(screen, payload)
-            ? "focused"
-            : "technical";
+        return InspectorWorkspaceThread.resolverConversationVariant?.(
+            snapshot,
+            {
+                resolverInspectorBaseScreenPorSnapshot,
+                conversaWorkspaceModoChatAtivo,
+            }
+        ) || "technical";
     }
 
     function aplicarConversationVariantElemento(elemento, variant = "technical") {
-        if (!elemento) return;
-        elemento.dataset.conversationVariant = String(variant || "technical");
+        InspectorWorkspaceThread.aplicarConversationVariantElemento?.(elemento, variant);
     }
 
     function sincronizarURLConversaFocada(
         variant = "technical",
         snapshot = obterSnapshotEstadoInspectorAtual()
     ) {
-        if (variant !== "focused") {
-            return;
-        }
-
-        try {
-            const url = new URL(window.location.href);
-            const laudoAtivo = normalizarLaudoAtualId(
-                snapshot?.laudoAtualId ??
-                obterLaudoAtivoIdSeguro() ??
-                estado.laudoAtualId
-            );
-            const laudoAtualNaURL = url.searchParams.get("laudo") || "";
-            const abaAtualNaURL = normalizarThreadTab(url.searchParams.get("aba") || "");
-
-            if (!laudoAtivo && !laudoAtualNaURL && !abaAtualNaURL && !url.searchParams.get("home")) {
-                return;
+        InspectorWorkspaceThread.sincronizarURLConversaFocada?.(
+            variant,
+            snapshot,
+            {
+                windowRef: window,
+                estado,
+                normalizarLaudoAtualId,
+                obterLaudoAtivoIdSeguro,
+                normalizarThreadTab,
             }
-
-            if (laudoAtivo) {
-                url.searchParams.set("laudo", String(laudoAtivo));
-                url.searchParams.set("aba", "conversa");
-            } else {
-                url.searchParams.delete("laudo");
-                url.searchParams.delete("aba");
-            }
-            url.searchParams.delete("home");
-
-            history.replaceState({
-                ...(history.state && typeof history.state === "object" ? history.state : {}),
-                laudoId: laudoAtivo,
-                threadTab: "conversa",
-            }, "", url.toString());
-        } catch (_) {
-            // silêncio intencional
-        }
+        );
     }
 
     function sincronizarConversationVariantNoDom(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const variant = resolverConversationVariant(snapshot);
-
-        aplicarConversationVariantElemento(document.body, variant);
-        aplicarConversationVariantElemento(el.painelChat, variant);
-        aplicarConversationVariantElemento(el.workspaceScreenRoot, variant);
-        aplicarConversationVariantElemento(el.workspaceHeader, variant);
-        aplicarConversationVariantElemento(el.workspaceConversationViewRoot, variant);
-        aplicarConversationVariantElemento(el.chatThreadToolbar, variant);
-        aplicarConversationVariantElemento(el.rodapeEntrada, variant);
-        aplicarConversationVariantElemento(el.areaMensagens || document.getElementById("area-mensagens"), variant);
-        sincronizarURLConversaFocada(variant, snapshot);
-
-        return variant;
+        return InspectorWorkspaceThread.sincronizarConversationVariantNoDom?.(
+            snapshot,
+            {
+                documentRef: document,
+                el,
+                resolverConversationVariant,
+                sincronizarURLConversaFocada,
+            }
+        ) || "technical";
     }
 
     function armarPrimeiroEnvioNovoChatPendente() {
@@ -1605,77 +1088,57 @@
     }
 
     function limparFluxoNovoChatFocado() {
-        const snapshot = obterSnapshotEstadoInspectorAtual();
-        if (!snapshot.assistantLandingFirstSendPending && !snapshot.freeChatConversationActive) {
-            return false;
-        }
-
-        sincronizarEstadoInspector({
-            assistantLandingFirstSendPending: false,
-            freeChatConversationActive: false,
-        }, {
-            persistirStorage: false,
+        return !!InspectorWorkspaceThread.limparFluxoNovoChatFocado?.({
+            obterSnapshotEstadoInspectorAtual,
+            sincronizarEstadoInspector,
         });
-
-        return true;
     }
 
     function obterBaseRealConversaNovoChat(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const totalMensagensReais = coletarLinhasWorkspace().length;
-        const temContextoReal =
-            !!normalizarLaudoAtualId(snapshot?.laudoAtualId) ||
-            estadoRelatorioPossuiContexto(snapshot?.estadoRelatorio);
-
-        return {
-            totalMensagensReais,
-            temContextoReal,
-            pronta: totalMensagensReais > 0 || temContextoReal,
+        return InspectorWorkspaceThread.obterBaseRealConversaNovoChat?.(
+            snapshot,
+            {
+                coletarLinhasWorkspace,
+                normalizarLaudoAtualId,
+                estadoRelatorioPossuiContexto,
+            }
+        ) || {
+            totalMensagensReais: 0,
+            temContextoReal: false,
+            pronta: false,
         };
     }
 
     function exibirConversaFocadaNovoChat({ tipoTemplate = estado.tipoTemplateAtivo, focarComposer = false } = {}) {
-        const tipoNormalizado = normalizarTipoTemplate(tipoTemplate);
-        const totalMensagensReais = coletarLinhasWorkspace().length;
-
-        sincronizarResumoHistoricoWorkspace({ totalMensagensReais });
-        sincronizarEstadoInspector({
-            forceHomeLanding: false,
-            modoInspecaoUI: "workspace",
-            workspaceStage: "inspection",
-            threadTab: "conversa",
-            overlayOwner: "",
-            assistantLandingFirstSendPending: false,
-            freeChatConversationActive: true,
-        }, {
-            persistirStorage: false,
-        });
-
-        atualizarNomeTemplateAtivo(tipoNormalizado);
-        atualizarControlesWorkspaceStage();
-        atualizarContextoWorkspaceAtivo();
-        atualizarThreadWorkspace("conversa");
-        renderizarSugestoesComposer();
-        atualizarStatusChatWorkspace(estado.chatStatusIA.status, estado.chatStatusIA.texto);
-
-        if (focarComposer) {
-            focarComposerInspector();
-        }
-
-        return true;
+        return !!InspectorWorkspaceThread.exibirConversaFocadaNovoChat?.(
+            { tipoTemplate, focarComposer },
+            {
+                estado,
+                normalizarTipoTemplate,
+                coletarLinhasWorkspace,
+                sincronizarResumoHistoricoWorkspace,
+                sincronizarEstadoInspector,
+                atualizarNomeTemplateAtivo,
+                atualizarControlesWorkspaceStage,
+                atualizarContextoWorkspaceAtivo,
+                atualizarThreadWorkspace,
+                renderizarSugestoesComposer,
+                atualizarStatusChatWorkspace,
+                focarComposerInspector,
+            }
+        );
     }
 
     function promoverPrimeiraMensagemNovoChatSePronta({ forcar = false, focarComposer = false } = {}) {
-        const snapshot = obterSnapshotEstadoInspectorAtual();
-        if (!fluxoNovoChatFocadoAtivoOuPendente(snapshot)) {
-            return false;
-        }
-
-        const base = obterBaseRealConversaNovoChat(snapshot);
-        if (!forcar && !snapshot.freeChatConversationActive && !base.pronta) {
-            return false;
-        }
-
-        return exibirConversaFocadaNovoChat({ focarComposer });
+        return !!InspectorWorkspaceThread.promoverPrimeiraMensagemNovoChatSePronta?.(
+            { forcar, focarComposer },
+            {
+                obterSnapshotEstadoInspectorAtual,
+                fluxoNovoChatFocadoAtivoOuPendente,
+                obterBaseRealConversaNovoChat,
+                exibirConversaFocadaNovoChat,
+            }
+        );
     }
 
     function normalizarFiltroPendencias(valor) {
@@ -1717,73 +1180,11 @@
         return Number(total || 0) === 1 ? singular : plural;
     }
 
-    function obterSecaoSidebarLaudos(tab) {
-        if (tab === "fixados") return document.getElementById("secao-laudos-pinados");
-        if (tab === "recentes") return document.getElementById("secao-laudos-historico");
-        return null;
-    }
-
-    function itemSidebarHistoricoEstaVisivel(item) {
-        return !!item && !item.hidden && item.style.display !== "none";
-    }
-
-    function contarItensVisiveisSecaoSidebar(secao) {
-        if (!secao) return 0;
-
-        return Array.from(secao.querySelectorAll(".item-historico[data-laudo-id]"))
-            .filter((item) => itemSidebarHistoricoEstaVisivel(item))
-            .length;
-    }
-
-    function resolverSidebarLaudosTab(preferida = estado.sidebarLaudosTab) {
-        const pinados = contarItensVisiveisSecaoSidebar(obterSecaoSidebarLaudos("fixados"));
-        const recentes = contarItensVisiveisSecaoSidebar(obterSecaoSidebarLaudos("recentes"));
-
-        if (preferida === "fixados" && pinados > 0) {
-            return {
-                ativa: "fixados",
-                pinados,
-                recentes,
-            };
-        }
-
-        if (preferida === "recentes" && recentes > 0) {
-            return {
-                ativa: "recentes",
-                pinados,
-                recentes,
-            };
-        }
-
-        if (recentes > 0) {
-            return {
-                ativa: "recentes",
-                pinados,
-                recentes,
-            };
-        }
-
-        if (pinados > 0) {
-            return {
-                ativa: "fixados",
-                pinados,
-                recentes,
-            };
-        }
-
-        return {
-            ativa: preferida === "fixados" ? "fixados" : "recentes",
-            pinados,
-            recentes,
-        };
-    }
-
     function obterDependenciasSidebarHistory() {
         return {
+            document,
             el,
             estado,
-            obterSecaoSidebarLaudos,
-            resolverSidebarLaudosTab,
         };
     }
 
@@ -2092,19 +1493,28 @@
             NOMES_TEMPLATES,
             construirResumoGovernancaHistoricoWorkspace,
             contarEvidenciasWorkspace,
+            construirItensHistoricoWorkspace,
+            itemHistoricoWorkspaceAtendeFiltros,
             copiarTextoWorkspace,
             coletarLinhasWorkspace,
             el,
             escaparHtml,
             estado,
             mostrarToast,
+            normalizarFiltroChat,
             normalizarFiltroTipoHistorico,
+            normalizarThreadTab,
             obterDetalheLinhaWorkspace,
+            obterHistoricoLaudoAtual: () => window.TarielAPI?.obterHistoricoLaudoAtual?.(),
             obterLaudoAtivoIdSeguro,
             obterPapelLinhaWorkspace,
             obterResumoOperacionalMesa,
+            obterSnapshotEstadoInspectorAtual,
             pluralizarChat,
             resumirTexto,
+            sincronizarInspectorScreen,
+            sincronizarResumoHistoricoWorkspace,
+            atualizarEmptyStateHonestoConversa,
         };
     }
 
@@ -2117,100 +1527,37 @@
     }
 
     function resetarFiltrosHistoricoWorkspace() {
-        estado.chatBuscaTermo = "";
-        estado.chatFiltroTimeline = "todos";
-        estado.historyTypeFilter = "todos";
-
-        if (el.chatThreadSearch) {
-            el.chatThreadSearch.value = "";
-        }
-
-        el.chatFilterButtons.forEach((botao) => {
-            const ativo = String(botao.dataset.chatFilter || "") === "todos";
-            botao.setAttribute("aria-pressed", ativo ? "true" : "false");
-        });
-
-        el.historyTypeFilterButtons.forEach((botao) => {
-            const ativo = String(botao.dataset.historyTypeFilter || "") === "todos";
-            botao.setAttribute("aria-pressed", ativo ? "true" : "false");
-        });
+        InspectorWorkspaceHistoryContext.resetarFiltrosHistoricoWorkspace?.(
+            obterDependenciasWorkspaceHistoryContext()
+        );
     }
 
     function obterRotuloFiltroAtorHistoricoWorkspace(filtro = "todos") {
-        if (filtro === "inspetor") return "Inspetor";
-        if (filtro === "ia") return "IA";
-        if (filtro === "mesa") return "Mesa";
-        if (filtro === "sistema") return "Sistema";
-        return "Todos os atores";
+        return InspectorWorkspaceHistoryContext.obterRotuloFiltroAtorHistoricoWorkspace?.(filtro) || "Todos os atores";
     }
 
     function obterRotuloFiltroTipoHistoricoWorkspace(filtro = "todos") {
-        if (filtro === "mensagens") return "Mensagens";
-        if (filtro === "eventos") return "Eventos";
-        if (filtro === "anexos") return "Anexos";
-        if (filtro === "decisoes") return "Decisões";
-        return "Todos os tipos";
+        return InspectorWorkspaceHistoryContext.obterRotuloFiltroTipoHistoricoWorkspace?.(filtro) || "Todos os tipos";
     }
 
     function obterDescricaoFonteHistoricoWorkspace() {
-        const canonicosEmEstado = Array.isArray(estado.historyCanonicalItems) ? estado.historyCanonicalItems.length : 0;
-        const canonicosViaApi = Array.isArray(window.TarielAPI?.obterHistoricoLaudoAtual?.())
-            ? window.TarielAPI.obterHistoricoLaudoAtual().length
-            : 0;
-
-        return (canonicosEmEstado > 0 || canonicosViaApi > 0)
-            ? "Histórico estruturado"
-            : "Registros transitórios";
+        return InspectorWorkspaceHistoryContext.obterDescricaoFonteHistoricoWorkspace?.(
+            obterDependenciasWorkspaceHistoryContext()
+        ) || "Registros transitórios";
     }
 
     function renderizarMetaHistoricoWorkspace({ filteredCount, totalCount } = {}) {
-        const totalReal = Math.max(0, Number(totalCount ?? estado.historyRealCount ?? 0) || 0);
-        const totalFiltrado = Math.max(0, Number(filteredCount ?? estado.chatResultados ?? totalReal) || 0);
-        const filtroAtor = obterRotuloFiltroAtorHistoricoWorkspace(normalizarFiltroChat(estado.chatFiltroTimeline));
-        const filtroTipo = obterRotuloFiltroTipoHistoricoWorkspace(normalizarFiltroTipoHistorico(estado.historyTypeFilter));
-        const busca = String(estado.chatBuscaTermo || "").trim();
-        const partes = [];
-
-        if (filtroAtor !== "Todos os atores") {
-            partes.push(filtroAtor);
-        }
-        if (filtroTipo !== "Todos os tipos") {
-            partes.push(filtroTipo);
-        }
-        if (busca) {
-            partes.push(`Busca "${busca}"`);
-        }
-
-        if (el.workspaceHistorySource) {
-            el.workspaceHistorySource.textContent = obterDescricaoFonteHistoricoWorkspace();
-        }
-        if (el.workspaceHistoryActiveFilter) {
-            el.workspaceHistoryActiveFilter.textContent = partes.length ? partes.join(" • ") : "Todos os registros";
-        }
-        if (el.workspaceHistoryTotal) {
-            el.workspaceHistoryTotal.textContent = `${totalReal} ${pluralizarChat(totalReal, "registro real", "registros reais")}`;
-        }
-        if (el.chatThreadResults && totalFiltrado > totalReal) {
-            el.chatThreadResults.textContent = `${totalReal} ${pluralizarChat(totalReal, "registro", "registros")}`;
-        }
+        InspectorWorkspaceHistoryContext.renderizarMetaHistoricoWorkspace?.(
+            { filteredCount, totalCount },
+            obterDependenciasWorkspaceHistoryContext()
+        );
     }
 
     function renderizarResultadosChatWorkspace(total = 0) {
-        if (!el.chatThreadResults) return;
-        const quantidade = Number(total || 0);
-        const tabAtual = normalizarThreadTab(obterSnapshotEstadoInspectorAtual().threadTab);
-        if (estado.workspaceStage === "assistant" && quantidade === 0) {
-            el.chatThreadResults.textContent = "Nova conversa";
-            renderizarMetaHistoricoWorkspace({ filteredCount: quantidade });
-            return;
-        }
-        if (tabAtual === "historico" && Number(estado.historyRealCount || 0) === 0) {
-            el.chatThreadResults.textContent = "Histórico vazio";
-            renderizarMetaHistoricoWorkspace({ filteredCount: quantidade });
-            return;
-        }
-        el.chatThreadResults.textContent = `${quantidade} ${pluralizarChat(quantidade, "registro", "registros")}`;
-        renderizarMetaHistoricoWorkspace({ filteredCount: quantidade });
+        InspectorWorkspaceHistoryContext.renderizarResultadosChatWorkspace?.(
+            total,
+            obterDependenciasWorkspaceHistoryContext()
+        );
     }
 
     function copiarTextoWorkspace(texto = "") {
@@ -2243,33 +1590,9 @@
     }
 
     function filtrarTimelineWorkspace() {
-        const termo = String(estado.chatBuscaTermo || "").trim().toLowerCase();
-        const filtro = normalizarFiltroChat(estado.chatFiltroTimeline);
-        const tipo = normalizarFiltroTipoHistorico(estado.historyTypeFilter);
-        const itens = construirItensHistoricoWorkspace();
-        const totalLinhasReais = itens.length;
-        const filtrados = itens.filter((item) => itemHistoricoWorkspaceAtendeFiltros(item, {
-            termo,
-            ator: filtro,
-            tipo,
-        }));
-
-        sincronizarResumoHistoricoWorkspace({
-            totalMensagensReais: totalLinhasReais,
-        });
-        estado.chatResultados = filtrados.length;
-        renderizarResultadosChatWorkspace(filtrados.length);
-        renderizarHistoricoWorkspace(filtrados, {
-            totalMensagensReais: totalLinhasReais,
-        });
-
-        const landingAssistenteAtivo = estado.workspaceStage === "assistant" && filtrados.length === 0;
-        if (el.workspaceAssistantLanding) {
-            el.workspaceAssistantLanding.hidden = !landingAssistenteAtivo;
-        }
-
-        atualizarEmptyStateHonestoConversa();
-        sincronizarInspectorScreen();
+        InspectorWorkspaceHistoryContext.filtrarTimelineWorkspace?.(
+            obterDependenciasWorkspaceHistoryContext()
+        );
     }
 
     function carregarContextoFixadoWorkspace() {
@@ -2662,94 +1985,35 @@
     }
 
     function atualizarThreadWorkspace(tab = "conversa", options = {}) {
-        const { persistirURL = false, replaceURL = false } = options && typeof options === "object"
-            ? options
-            : {};
-        const tabNormalizada = normalizarThreadTab(tab);
-
-        sincronizarEstadoInspector({
-            threadTab: tabNormalizada,
-            ...(tabNormalizada !== "conversa"
-                ? {
-                    assistantLandingFirstSendPending: false,
-                    freeChatConversationActive: false,
-                }
-                : {}),
-        }, { persistirStorage: false });
-
-        if (typeof window.TarielChatPainel?.selecionarThreadTab === "function") {
-            window.TarielChatPainel.selecionarThreadTab(tabNormalizada, { emit: false });
-        }
-        if (persistirURL && typeof window.TarielChatPainel?.definirThreadTabNaURL === "function") {
-            window.TarielChatPainel.definirThreadTabNaURL(tabNormalizada, {
-                replace: replaceURL,
-                laudoId: obterLaudoAtivoIdSeguro() || estado.laudoAtualId || null,
-            });
-        }
-        if (el.workspaceAnexosPanel) {
-            el.workspaceAnexosPanel.setAttribute(
-                "aria-hidden",
-                String(tabNormalizada !== "anexos")
-            );
-        }
-
-        if (tabNormalizada === "anexos") {
-            renderizarAnexosWorkspace();
-        } else if (tabNormalizada === "historico") {
-            filtrarTimelineWorkspace();
-        }
-
-        renderizarResumoNavegacaoWorkspace();
-        sincronizarInspectorScreen();
-        window.requestAnimationFrame(() => {
-            atualizarControlesWorkspaceStage();
-        });
-    }
-
-    function montarDiagnosticoPreviewWorkspace() {
-        const diagnosticoAtual = String(window.TarielAPI?.obterUltimoDiagnosticoBruto?.() || "").trim();
-        if (diagnosticoAtual) {
-            return diagnosticoAtual;
-        }
-
-        const linhas = coletarLinhasWorkspace();
-        if (!linhas.length) {
-            return "";
-        }
-
-        const titulo = String(estado.workspaceVisualContext?.title || "Registro Técnico").trim();
-        const subtitulo = String(estado.workspaceVisualContext?.subtitle || "").trim();
-        const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
-        const evidencias = contarEvidenciasWorkspace();
-        const blocos = [
-            `Registro Técnico: ${titulo}`,
-            subtitulo || "Sem subtítulo operacional disponível.",
-            `Evidências mapeadas: ${evidencias}`,
-            `Pendências abertas: ${pendencias}`,
-            "",
-            "Resumo auditável da sessão:",
-        ];
-
-        linhas.slice(-12).forEach((linha) => {
-            const meta = extrairMetaLinhaWorkspace(linha);
-            const resumo = String(meta.resumo || "").trim();
-            if (!resumo) return;
-
-            const prefixo = [meta.autor, meta.tempo].filter(Boolean).join(" • ");
-            blocos.push(`- ${prefixo ? `${prefixo}: ` : ""}${resumo}`);
-        });
-
-        return blocos.join("\n").trim();
+        InspectorWorkspaceThread.atualizarThreadWorkspace?.(
+            tab,
+            options,
+            {
+                normalizarThreadTab,
+                sincronizarEstadoInspector,
+                windowRef: window,
+                estado,
+                el,
+                obterLaudoAtivoIdSeguro,
+                renderizarAnexosWorkspace,
+                filtrarTimelineWorkspace,
+                renderizarResumoNavegacaoWorkspace,
+                sincronizarInspectorScreen,
+                atualizarControlesWorkspaceStage,
+            }
+        );
     }
 
     async function abrirPreviewWorkspace() {
         return InspectorWorkspaceDeliveryFlow.abrirPreviewWorkspace?.({
-            montarDiagnosticoPreviewWorkspace,
             mostrarToast,
             obterLaudoAtivoIdSeguro,
             obterHeadersComCSRF,
             extrairMensagemErroHTTP,
             estado,
+            contarEvidenciasWorkspace,
+            coletarLinhasWorkspace,
+            extrairMetaLinhaWorkspace,
         });
     }
     function obterElementosFocaveis(container) {
@@ -2955,155 +2219,98 @@
         });
     }
 
-    function obterTokenCsrf() {
-        return document.querySelector('meta[name="csrf-token"]')?.content || "";
-    }
-
     function limparEstadoHomeNoCliente() {
-        try {
-            localStorage.removeItem("tariel_laudo_atual");
-        } catch (_) {
-            // silêncio intencional
-        }
-
-        try {
-            const url = new URL(window.location.href);
-            url.searchParams.delete("laudo");
-            url.searchParams.delete("aba");
-            history.replaceState({ laudoId: null, threadTab: null }, "", url.toString());
-        } catch (_) {
-            // silêncio intencional
-        }
-
-        sincronizarEstadoInspector({
-            laudoAtualId: null,
-            forceHomeLanding: false,
-        }, {
-            persistirStorage: false,
+        return InspectorWorkspaceUtils.limparEstadoHomeNoCliente?.({
+            sincronizarEstadoInspector,
         });
     }
 
     async function desativarContextoAtivoParaHome() {
-        const laudoAtivo = obterLaudoAtivo();
-        const estadoAtual = obterEstadoRelatorioAtualSeguro();
-
-        if (!laudoAtivo && estadoAtual !== "relatorio_ativo") {
-            return true;
-        }
-
-        try {
-            const resposta = await fetch("/app/api/laudo/desativar", {
-                method: "POST",
-                credentials: "same-origin",
-                headers: {
-                    "Accept": "application/json",
-                    "X-CSRF-Token": obterTokenCsrf(),
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-            });
-
-            return resposta.ok;
-        } catch (_) {
-            return false;
-        }
+        return InspectorWorkspaceUtils.desativarContextoAtivoParaHome?.({
+            document,
+            obterLaudoAtivo,
+            obterEstadoRelatorioAtualSeguro,
+        }) || false;
     }
 
     function marcarForcaTelaInicial() {
-        sincronizarEstadoInspector({ forceHomeLanding: true });
+        InspectorWorkspaceUtils.marcarForcaTelaInicial?.({
+            sincronizarEstadoInspector,
+        });
     }
 
     function paginaSolicitaHomeLanding() {
-        const snapshot = obterSnapshotEstadoInspectorAtual();
-        return !!snapshot.forceHomeLanding || lerFlagForcaHomeStorage() || paginaSolicitaHomeLandingViaURL();
+        return !!InspectorWorkspaceUtils.paginaSolicitaHomeLanding?.({
+            obterSnapshotEstadoInspectorAtual,
+            lerFlagForcaHomeStorage,
+            paginaSolicitaHomeLandingViaURL,
+        });
     }
 
     function limparForcaTelaInicial() {
-        sincronizarEstadoInspector({ forceHomeLanding: false });
-
-        try {
-            const url = new URL(window.location.href);
-            if (url.searchParams.get("home") === "1") {
-                url.searchParams.delete("home");
-                history.replaceState(history.state || {}, "", url.toString());
-            }
-        } catch (_) {
-            // silêncio intencional
-        }
+        InspectorWorkspaceUtils.limparForcaTelaInicial?.({
+            sincronizarEstadoInspector,
+        });
     }
 
     function homeForcadoAtivo() {
-        return !!obterSnapshotEstadoInspectorAtual().forceHomeLanding || paginaSolicitaHomeLandingViaURL();
+        return !!InspectorWorkspaceUtils.homeForcadoAtivo?.({
+            obterSnapshotEstadoInspectorAtual,
+            paginaSolicitaHomeLandingViaURL,
+        });
     }
 
     function entradaChatLivreDisponivel(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        return !normalizarLaudoAtualId(snapshot?.laudoAtualId) && !estadoRelatorioPossuiContexto(snapshot?.estadoRelatorio);
+        return !!InspectorWorkspaceRuntimeScreen.entradaChatLivreDisponivel?.(
+            snapshot,
+            {
+                normalizarLaudoAtualId,
+                estadoRelatorioPossuiContexto,
+            }
+        );
     }
 
     function origemChatLivreEhPortal(origem = "") {
-        return String(origem || "").trim() === "portal-open-chat";
+        return !!InspectorWorkspaceRuntimeScreen.origemChatLivreEhPortal?.(origem);
     }
 
     function resolverDisponibilidadeBotaoChatLivre(botao, snapshot = obterSnapshotEstadoInspectorAtual()) {
-        if (!botao) return false;
-
-        if (origemChatLivreEhPortal(botao.dataset.inspectorEntry)) {
-            return true;
-        }
-
-        return entradaChatLivreDisponivel(snapshot);
+        return !!InspectorWorkspaceRuntimeScreen.resolverDisponibilidadeBotaoChatLivre?.(
+            botao,
+            snapshot,
+            {
+                normalizarLaudoAtualId,
+                estadoRelatorioPossuiContexto,
+            }
+        );
     }
 
     function modoFocoPodePromoverPortalParaChat(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        if (!document.body.classList.contains("modo-foco")) {
-            return false;
-        }
-
-        const screenBase = String(
-            snapshot?.inspectorBaseScreen ||
-            resolveInspectorBaseScreen()
-        ).trim();
-        if (screenBase !== "portal_dashboard") {
-            return false;
-        }
-
-        if (String(snapshot?.overlayOwner || "").trim()) {
-            return false;
-        }
-
-        const laudoId = normalizarLaudoAtualId(
-            snapshot?.laudoAtualId ??
-            estado.laudoAtualId ??
-            obterLaudoAtivoIdSeguro()
+        return !!InspectorWorkspaceRuntimeScreen.modoFocoPodePromoverPortalParaChat?.(
+            snapshot,
+            {
+                document,
+                estado,
+                resolveInspectorBaseScreen,
+                normalizarLaudoAtualId,
+                obterLaudoAtivoIdSeguro,
+                normalizarEstadoRelatorio,
+                obterEstadoRelatorioAtualSeguro,
+                normalizarWorkspaceStage,
+                estadoRelatorioPossuiContexto,
+            }
         );
-        const estadoRelatorio = normalizarEstadoRelatorio(
-            snapshot?.estadoRelatorio ??
-            estado.estadoRelatorio ??
-            obterEstadoRelatorioAtualSeguro()
-        );
-        const workspaceStage = normalizarWorkspaceStage(
-            snapshot?.workspaceStage ??
-            estado.workspaceStage
-        );
-
-        return !laudoId
-            && !estadoRelatorioPossuiContexto(estadoRelatorio)
-            && workspaceStage === "assistant";
     }
 
     function sincronizarVisibilidadeAcoesChatLivre(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const botoes = Array.isArray(el.botoesAbrirChatLivre) ? el.botoesAbrirChatLivre : [];
-        let algumDisponivel = false;
-
-        botoes.forEach((botao) => {
-            if (!botao) return;
-            const disponivel = resolverDisponibilidadeBotaoChatLivre(botao, snapshot);
-            botao.hidden = !disponivel;
-            botao.disabled = !disponivel;
-            botao.setAttribute("aria-hidden", String(!disponivel));
-            algumDisponivel = algumDisponivel || disponivel;
-        });
-
-        return algumDisponivel;
+        return !!InspectorWorkspaceRuntimeScreen.sincronizarVisibilidadeAcoesChatLivre?.(
+            snapshot,
+            {
+                el,
+                normalizarLaudoAtualId,
+                estadoRelatorioPossuiContexto,
+            }
+        );
     }
 
     function layoutInspectorCompacto() {
@@ -3111,83 +2318,20 @@
     }
 
     function resolverMatrizVisibilidadeInspector(screen = resolveInspectorScreen(), snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const screenBase = screen === "new_inspection"
-            ? (snapshot.inspectorBaseScreen || resolveInspectorBaseScreen())
-            : (snapshot.inspectorBaseScreen || screen);
-        const overlayAtivo = screen === "new_inspection" || snapshot.overlayOwner === "new_inspection";
-        const compacto = layoutInspectorCompacto();
-        const portalAtivo = screenBase === "portal_dashboard";
-        const assistantAtivo = screenBase === "assistant_landing";
-        const inspectionAtivo = [
-            "inspection_workspace",
-            "inspection_conversation",
-            "inspection_history",
-            "inspection_record",
-            "inspection_mesa",
-        ].includes(screenBase);
-        const workspaceView = resolveWorkspaceView(screen);
-        const laudoAtivoId = normalizarLaudoAtualId(
-            snapshot?.laudoAtualId
-            ?? estado.laudoAtualId
-            ?? obterLaudoAtivoIdSeguro()
-        );
-        const conversaLivreFocada =
-            workspaceView === "inspection_conversation" &&
-            conversaWorkspaceModoChatAtivo(screen, snapshot);
-        const chatLivreDisponivel = entradaChatLivreDisponivel(snapshot);
-        const quickDock = !overlayAtivo && compacto && (
-            assistantAtivo ||
-            (inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada)
-        )
-            ? "visible"
-            : "hidden";
-        const contextRail = inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo && !compacto
-            ? "visible"
-            : "hidden";
-        const mesaEntry = inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo
-            ? (compacto ? "composer" : "rail")
-            : "hidden";
-        const finalizeEntry = inspectionAtivo && workspaceView !== "inspection_mesa" && !overlayAtivo && !!laudoAtivoId
-            ? "header"
-            : "hidden";
-        let novaInspecaoEntry = "hidden";
-        if (portalAtivo && !overlayAtivo) {
-            novaInspecaoEntry = "portal";
-        } else if ((assistantAtivo || inspectionAtivo) && !overlayAtivo) {
-            novaInspecaoEntry = "header";
-        }
-
-        let abrirChatEntry = "hidden";
-        if (portalAtivo && !overlayAtivo) {
-            abrirChatEntry = "portal";
-        } else if (screen === "new_inspection" && chatLivreDisponivel) {
-            abrirChatEntry = "modal";
-        }
-
-        return {
+        return InspectorWorkspaceRuntimeScreen.resolverMatrizVisibilidadeInspector?.(
             screen,
-            screenBase,
-            workspaceView,
-            overlayAtivo,
-            compacto,
-            portalAtivo,
-            assistantAtivo,
-            inspectionAtivo,
-            quickDock,
-            contextRail,
-            mesaWidget: inspectionAtivo && !conversaLivreFocada && !overlayAtivo ? "contextual" : "hidden",
-            novaInspecaoEntry,
-            abrirChatEntry,
-            landingNewInspection: assistantAtivo && !overlayAtivo ? "visible" : "hidden",
-            workspaceHeaderNewInspection: (assistantAtivo || inspectionAtivo) && !overlayAtivo ? "visible" : "hidden",
-            sidebarNewInspection: "hidden",
-            headerFinalize: finalizeEntry === "header" ? "visible" : "hidden",
-            railFinalize: finalizeEntry === "rail" ? "visible" : "hidden",
-            mesaEntry,
-            operationalShortcuts: inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo
-                ? "inspection"
-                : (assistantAtivo && !overlayAtivo ? "assistant" : "hidden"),
-        };
+            snapshot,
+            {
+                layoutInspectorCompacto,
+                resolveInspectorBaseScreen,
+                resolveWorkspaceView,
+                normalizarLaudoAtualId,
+                estado,
+                obterLaudoAtivoIdSeguro,
+                conversaWorkspaceModoChatAtivo,
+                entradaChatLivreDisponivel,
+            }
+        ) || {};
     }
 
     function aplicarMatrizVisibilidadeInspector(screen = resolveInspectorScreen(), snapshot = obterSnapshotEstadoInspectorAtual()) {
@@ -3203,75 +2347,37 @@
     }
 
     function modalNovaInspecaoEstaAberta() {
-        return Boolean(el.modal && !el.modal.hidden && el.modal.classList.contains("ativo"));
+        return !!InspectorWorkspaceRuntimeScreen.modalNovaInspecaoEstaAberta?.({ el });
     }
 
     function resolveInspectorBaseScreen() {
-        return resolverInspectorBaseScreenPorSnapshot(obterSnapshotEstadoInspectorAtual());
+        return InspectorWorkspaceRuntimeScreen.resolveInspectorBaseScreen?.({
+            resolverInspectorBaseScreenPorSnapshot,
+            obterSnapshotEstadoInspectorAtual,
+        }) || "assistant_landing";
     }
 
     function definirRootAtivo(root, ativo) {
-        if (!root) return;
-
-        const deveAtivar = !!ativo;
-        root.dataset.active = deveAtivar ? "true" : "false";
-        root.setAttribute("aria-hidden", String(!deveAtivar));
-
-        if (deveAtivar) {
-            root.removeAttribute("hidden");
-        } else {
-            root.setAttribute("hidden", "");
-        }
-
-        try {
-            root.inert = !deveAtivar;
-        } catch (_) {
-            if (deveAtivar) {
-                root.removeAttribute("inert");
-            } else {
-                root.setAttribute("inert", "");
-            }
-        }
+        InspectorWorkspaceRuntimeScreen.definirRootAtivo?.(root, ativo);
     }
 
     function resolveInspectorScreen() {
-        return obterSnapshotEstadoInspectorAtual().inspectorScreen || resolveInspectorBaseScreen();
+        return InspectorWorkspaceRuntimeScreen.resolveInspectorScreen?.({
+            obterSnapshotEstadoInspectorAtual,
+            resolveInspectorBaseScreen,
+        }) || resolveInspectorBaseScreen();
     }
 
     function resolveWorkspaceView(screen = estado.inspectorScreen || resolveInspectorScreen()) {
-        const snapshot = obterSnapshotEstadoInspectorAtual();
-        const screenBase = screen === "new_inspection"
-            ? snapshot.inspectorBaseScreen || resolveInspectorBaseScreen()
-            : screen;
-
-        if (screenBase === "assistant_landing") {
-            return "assistant_landing";
-        }
-
-        if ([
-            "inspection_conversation",
-            "inspection_history",
-            "inspection_record",
-            "inspection_mesa",
-        ].includes(screenBase)) {
-            return screenBase;
-        }
-
-        if (screenBase !== "inspection_workspace") {
-            return "inspection_history";
-        }
-
-        const threadTabAtual = normalizarThreadTab(snapshot.threadTab);
-        if (threadTabAtual === "anexos") return "inspection_record";
-        if (threadTabAtual === "mesa") return "inspection_mesa";
-        if (threadTabAtual === "historico") return "inspection_history";
-        return "inspection_conversation";
+        return InspectorWorkspaceRuntimeScreen.resolveWorkspaceView?.(screen, {
+            obterSnapshotEstadoInspectorAtual,
+            resolveInspectorBaseScreen,
+            normalizarThreadTab,
+        }) || "inspection_history";
     }
 
     function workspaceViewSuportaRail(view = resolveWorkspaceView()) {
-        return view === "inspection_history"
-            || view === "inspection_record"
-            || view === "inspection_conversation";
+        return !!InspectorWorkspaceRuntimeScreen.workspaceViewSuportaRail?.(view);
     }
 
     function resolveWorkspaceRailVisibility(screen = estado.inspectorScreen || resolveInspectorScreen()) {
@@ -3312,69 +2418,54 @@
     }
 
     function resolveMesaWidgetDisponibilidade(screen = estado.inspectorScreen || resolveInspectorScreen()) {
-        if (screen === "new_inspection") {
-            return false;
-        }
-
-        const snapshot = obterSnapshotEstadoInspectorAtual();
-        if (conversaWorkspaceModoChatAtivo(screen, snapshot)) {
-            return false;
-        }
-
-        const laudoId = normalizarLaudoAtualId(
-            snapshot?.laudoAtualId ??
-            estado.laudoAtualId ??
-            obterLaudoAtivoIdSeguro()
-        );
-        if (!laudoId) {
-            return false;
-        }
-
-        const view = resolveWorkspaceView(screen);
-        return [
-            "inspection_history",
-            "inspection_record",
-            "inspection_conversation",
-            "inspection_mesa",
-        ].includes(view);
+        return InspectorWorkspaceScreen.resolveMesaWidgetDisponibilidade?.(
+            screen,
+            {
+                estado,
+                resolveInspectorScreen,
+                obterSnapshotEstadoInspectorAtual,
+                conversaWorkspaceModoChatAtivo,
+                normalizarLaudoAtualId,
+                obterLaudoAtivoIdSeguro,
+                resolveWorkspaceView,
+            }
+        ) || false;
     }
 
     function contextoTecnicoPrecisaRefresh(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const screenBase = snapshot?.inspectorBaseScreen || resolveInspectorBaseScreen();
-        return screenBase === "inspection_workspace";
+        return !!InspectorWorkspaceRuntimeScreen.contextoTecnicoPrecisaRefresh?.(
+            snapshot,
+            {
+                resolveInspectorBaseScreen,
+            }
+        );
     }
 
     function contextoPrecisaSSE(snapshot = obterSnapshotEstadoInspectorAtual()) {
-        const screenBase = snapshot?.inspectorBaseScreen || resolveInspectorBaseScreen();
-        const laudoId = normalizarLaudoAtualId(
-            snapshot?.laudoAtualId
-            ?? estado.laudoAtualId
-            ?? obterLaudoAtivoIdSeguro()
+        return !!InspectorWorkspaceRuntimeScreen.contextoPrecisaSSE?.(
+            snapshot,
+            {
+                resolveInspectorBaseScreen,
+                normalizarLaudoAtualId,
+                estado,
+                obterLaudoAtivoIdSeguro,
+            }
         );
-
-        if (!laudoId) {
-            return false;
-        }
-
-        return screenBase === "inspection_workspace";
     }
 
     function sincronizarSSEPorContexto(opcoes = {}) {
-        if (!contextoPrecisaSSE()) {
-            fecharSSE();
-            limparTimerReconexaoSSE();
-            PERF?.count?.("inspetor.sse.suprimido_orquestrador", 1, {
-                category: "request_churn",
-                detail: {
-                    laudoId: obterLaudoAtivoIdSeguro(),
-                    screen: resolveInspectorBaseScreen(),
-                },
-            });
-            return false;
-        }
-
-        inicializarNotificacoesSSE(opcoes);
-        return true;
+        return !!InspectorWorkspaceRuntimeScreen.sincronizarSSEPorContexto?.(
+            opcoes,
+            {
+                contextoPrecisaSSE,
+                fecharSSE,
+                limparTimerReconexaoSSE,
+                PERF,
+                obterLaudoAtivoIdSeguro,
+                resolveInspectorBaseScreen,
+                inicializarNotificacoesSSE,
+            }
+        );
     }
 
     function resolverEstadoPadraoAcordeoesRail(view = resolveWorkspaceView()) {
@@ -3415,54 +2506,19 @@
     }
 
     function sincronizarMesaStageWorkspace(view = resolveWorkspaceView(), mesaWidgetPermitido = resolveMesaWidgetDisponibilidade()) {
-        if (!el.painelMesaWidget) return;
-
-        const hostMesaWorkspace = el.workspaceMesaWidgetHost || el.workspaceMesaStage;
-
-        const embutirNoWorkspace =
-            mesaWidgetPermitido &&
-            view === "inspection_mesa" &&
-            hostMesaWorkspace;
-        const estavaEmbutido = el.painelMesaWidget.dataset.workspaceEmbedded === "true";
-
-        if (embutirNoWorkspace) {
-            if (el.painelMesaWidget.parentElement !== hostMesaWorkspace) {
-                hostMesaWorkspace.appendChild(el.painelMesaWidget);
+        InspectorWorkspaceScreen.sincronizarMesaStageWorkspace?.(
+            view,
+            mesaWidgetPermitido,
+            {
+                estado,
+                el,
+                resolveWorkspaceView,
+                resolveMesaWidgetDisponibilidade,
+                mesaWidgetDockOriginal,
+                atualizarEstadoVisualBotaoMesaWidget,
+                carregarMensagensMesaWidget,
             }
-
-            el.painelMesaWidget.dataset.workspaceEmbedded = "true";
-            el.painelMesaWidget.hidden = false;
-            el.painelMesaWidget.classList.remove("fechando");
-            el.painelMesaWidget.classList.add("aberto", "painel-mesa-widget--workspace");
-            estado.mesaWidgetAberto = true;
-            if (el.btnMesaWidgetToggle) {
-                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "true");
-            }
-            atualizarEstadoVisualBotaoMesaWidget();
-
-            if (!estavaEmbutido) {
-                carregarMensagensMesaWidget({ silencioso: true }).catch(() => {});
-            }
-
-            return;
-        }
-
-        if (mesaWidgetDockOriginal && el.painelMesaWidget.parentElement !== mesaWidgetDockOriginal) {
-            mesaWidgetDockOriginal.appendChild(el.painelMesaWidget);
-        }
-
-        el.painelMesaWidget.dataset.workspaceEmbedded = "false";
-        el.painelMesaWidget.classList.remove("painel-mesa-widget--workspace");
-
-        if (estavaEmbutido) {
-            estado.mesaWidgetAberto = false;
-            el.painelMesaWidget.hidden = true;
-            el.painelMesaWidget.classList.remove("aberto", "fechando");
-            if (el.btnMesaWidgetToggle) {
-                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "false");
-            }
-            atualizarEstadoVisualBotaoMesaWidget();
-        }
+        );
     }
 
     function sincronizarWorkspaceRail(screen = estado.inspectorScreen || resolveInspectorScreen()) {
@@ -3658,6 +2714,7 @@
         "registerUiBindings",
         "registerGovernance",
         "registerWorkspaceOverview",
+        "registerWorkspaceCorrections",
         "registerWorkspaceDerivatives",
     ]);
 
@@ -3804,9 +2861,10 @@
             }),
             construirResumoGovernancaHistoricoWorkspace: () => ({
                 visible: false,
-                title: "Reemissão recomendada",
-                detail: "PDF emitido divergente detectado no caso atual.",
-                actionLabel: "Abrir reemissão na Mesa",
+                title: "Governança do caso",
+                detail: "Os sinais canônicos do caso aparecerão aqui conforme o fluxo evoluir.",
+                actionLabel: "",
+                actionKey: "",
             }),
             lifecyclePermiteVerificacaoPublicaWorkspace: noopFalse,
             mostrarBannerEngenharia: noop,
@@ -4058,15 +3116,17 @@
     }
 
     function definirWorkspaceStage(stage = "assistant") {
-        const proximoStage = normalizarWorkspaceStage(stage);
-        sincronizarEstadoInspector({ workspaceStage: proximoStage }, { persistirStorage: false });
-
-        atualizarCopyWorkspaceStage(proximoStage);
-        atualizarControlesWorkspaceStage();
+        InspectorWorkspaceOrchestration.definirWorkspaceStage?.(stage, {
+            normalizarWorkspaceStage,
+            sincronizarEstadoInspector,
+            atualizarCopyWorkspaceStage,
+            atualizarControlesWorkspaceStage,
+        });
     }
 
     function atualizarContextoWorkspaceAtivo() {
-        InspectorWorkspaceStage.atualizarContextoWorkspaceAtivo?.({
+        InspectorWorkspaceOrchestration.atualizarContextoWorkspaceAtivo?.({
+            InspectorWorkspaceStage,
             el,
             estado,
             aplicarContextoVisualWorkspace,
@@ -4082,7 +3142,8 @@
     }
 
     function definirModoInspecaoUI(modo = "home") {
-        InspectorWorkspaceContextFlow.definirModoInspecaoUI?.(modo, {
+        InspectorWorkspaceOrchestration.definirModoInspecaoUI?.(modo, {
+            InspectorWorkspaceContextFlow,
             normalizarModoInspecaoUI,
             sincronizarEstadoInspector,
             atualizarControlesWorkspaceStage,
@@ -4096,7 +3157,8 @@
     }
 
     function exibirInterfaceInspecaoAtiva(tipo) {
-        InspectorWorkspaceContextFlow.exibirInterfaceInspecaoAtiva?.(tipo, {
+        InspectorWorkspaceOrchestration.exibirInterfaceInspecaoAtiva?.(tipo, {
+            InspectorWorkspaceContextFlow,
             limparFluxoNovoChatFocado,
             definirWorkspaceStage,
             atualizarNomeTemplateAtivo,
@@ -4110,9 +3172,10 @@
     }
 
     function exibirLandingAssistenteIA({ limparTimeline = false } = {}) {
-        InspectorWorkspaceContextFlow.exibirLandingAssistenteIA?.(
+        InspectorWorkspaceOrchestration.exibirLandingAssistenteIA?.(
             { limparTimeline },
             {
+                InspectorWorkspaceContextFlow,
                 definirRetomadaHomePendente,
                 limparFluxoNovoChatFocado,
                 atualizarEstadoModoEntrada,
@@ -4133,9 +3196,10 @@
     }
 
     function abrirChatLivreInspector({ origem = "chat_free_entry" } = {}) {
-        return InspectorWorkspaceContextFlow.abrirChatLivreInspector?.(
+        return InspectorWorkspaceOrchestration.abrirChatLivreInspector?.(
             { origem },
             {
+                InspectorWorkspaceContextFlow,
                 obterSnapshotEstadoInspectorAtual,
                 redirecionarEntradaParaReemissaoWorkspace,
                 origemChatLivreEhPortal,
@@ -4156,9 +3220,10 @@
     }
 
     function promoverPortalParaChatNoModoFoco({ origem = "focus_mode_toggle" } = {}) {
-        return InspectorWorkspaceContextFlow.promoverPortalParaChatNoModoFoco?.(
+        return InspectorWorkspaceOrchestration.promoverPortalParaChatNoModoFoco?.(
             { origem },
             {
+                InspectorWorkspaceContextFlow,
                 obterSnapshotEstadoInspectorAtual,
                 modoFocoPodePromoverPortalParaChat,
                 abrirChatLivreInspector,
@@ -4167,9 +3232,10 @@
     }
 
     function restaurarTelaSemRelatorio({ limparTimeline = false } = {}) {
-        InspectorWorkspaceContextFlow.restaurarTelaSemRelatorio?.(
+        InspectorWorkspaceOrchestration.restaurarTelaSemRelatorio?.(
             { limparTimeline },
             {
+                InspectorWorkspaceContextFlow,
                 homeForcadoAtivo,
                 resetarInterfaceInspecao,
                 exibirLandingAssistenteIA,
@@ -4178,7 +3244,8 @@
     }
 
     function resetarInterfaceInspecao() {
-        InspectorWorkspaceContextFlow.resetarInterfaceInspecao?.({
+        InspectorWorkspaceOrchestration.resetarInterfaceInspecao?.({
+            InspectorWorkspaceContextFlow,
             definirRetomadaHomePendente,
             limparFluxoNovoChatFocado,
             atualizarEstadoModoEntrada,
@@ -4217,7 +3284,7 @@
         threadTabPreferida = "",
         modoEntradaPayload = null
     ) {
-        return InspectorWorkspaceHomeFlow.abrirLaudoPeloHome?.(
+        return InspectorWorkspaceOrchestration.abrirLaudoPeloHome?.(
             laudoId,
             origem,
             tipoTemplate,
@@ -4225,6 +3292,7 @@
             threadTabPreferida,
             modoEntradaPayload,
             {
+                InspectorWorkspaceHomeFlow,
                 mostrarToast,
                 limparForcaTelaInicial,
                 normalizarTipoTemplate,
@@ -4249,71 +3317,37 @@
         { contextoVisual = null, dadosFormulario = null, entryModePreference = null, runtimeTipoTemplate = null } = {}
     ) {
         if (estado.iniciandoInspecao) return null;
-
-        const tipoSubmissao = String(tipo || "padrao").trim() || "padrao";
-        const tipoNormalizado = normalizarTipoTemplate(runtimeTipoTemplate || tipoSubmissao);
-        limparForcaTelaInicial();
-
-        if (!window.TarielAPI?.iniciarRelatorio) {
-            mostrarToast("A API do chat ainda não está pronta.", "erro", 3000);
-            return null;
-        }
-
-        estado.iniciandoInspecao = true;
-        definirBotaoIniciarCarregando(true);
-
-        try {
-            const respostaBruta = await window.TarielAPI.iniciarRelatorio(tipoSubmissao, {
+        return InspectorWorkspaceOrchestration.iniciarInspecao?.(
+            tipo,
+            {
+                contextoVisual,
                 dadosFormulario,
                 entryModePreference,
-            });
-            const resposta = enriquecerPayloadLaudoComContextoVisual(
-                respostaBruta,
-                contextoVisual
-            );
-
-            if (!resposta) {
-                return null;
+                runtimeTipoTemplate,
+            },
+            {
+                estado,
+                normalizarTipoTemplate,
+                limparForcaTelaInicial,
+                mostrarToast,
+                definirBotaoIniciarCarregando,
+                enriquecerPayloadLaudoComContextoVisual,
+                modalNovaInspecaoEstaAberta,
+                fecharNovaInspecaoComScreenSync,
+                registrarContextoVisualLaudo,
+                atualizarEstadoModoEntrada,
+                emitirSincronizacaoLaudo,
+                resolverThreadTabInicialPorModoEntrada,
+                definirRetomadaHomePendente,
+                abrirLaudoPeloHome,
+                exibirInterfaceInspecaoAtiva,
             }
-
-            if (modalNovaInspecaoEstaAberta()) {
-                fecharNovaInspecaoComScreenSync({ forcar: true, restaurarFoco: false });
-            }
-
-            const laudoId = Number(resposta?.laudo_id ?? resposta?.laudoId ?? 0) || null;
-            registrarContextoVisualLaudo(laudoId, contextoVisual);
-            atualizarEstadoModoEntrada(resposta, { atualizarPadrao: true });
-            emitirSincronizacaoLaudo(resposta, { selecionar: true });
-            const threadTabInicial = resolverThreadTabInicialPorModoEntrada(resposta, "historico");
-
-            definirRetomadaHomePendente({
-                laudoId,
-                tipoTemplate: tipoNormalizado,
-                contextoVisual: contextoVisual || null,
-                expiresAt: Date.now() + 15000,
-            });
-
-            if (laudoId) {
-                await abrirLaudoPeloHome(
-                    laudoId,
-                    "new_inspection",
-                    tipoNormalizado,
-                    contextoVisual || null,
-                    threadTabInicial
-                );
-                return resposta;
-            }
-
-            exibirInterfaceInspecaoAtiva(tipoNormalizado);
-            return resposta;
-        } finally {
-            estado.iniciandoInspecao = false;
-            definirBotaoIniciarCarregando(false);
-        }
+        ) || null;
     }
 
     async function finalizarInspecao() {
-        return InspectorWorkspaceDeliveryFlow.finalizarInspecao?.({
+        return InspectorWorkspaceOrchestration.finalizarInspecao?.({
+            InspectorWorkspaceDeliveryFlow,
             estado,
             mostrarToast,
             definirBotaoFinalizarCarregando,
@@ -4324,36 +3358,22 @@
     // HIGHLIGHT / ESTADO VISUAL DO COMPOSER
     // =========================================================
 
-    function obterModoMarcador(texto = "") {
-        const valor = String(texto || "").trimStart();
-
-        if (/^@insp\b/i.test(valor)) return "insp";
-        if (/^eng\b/i.test(valor) || /^@eng\b/i.test(valor)) return "eng";
-
-        return "";
+    function aplicarHighlightComposer(texto = "") {
+        InspectorWorkspaceComposer.aplicarHighlightComposer?.(texto, {
+            el,
+            atualizarStatusMesaPorComposer,
+        });
     }
 
     function atualizarVisualComposer(texto = "") {
-        const modo = obterModoMarcador(texto);
-
-        el.campoMensagem?.classList.toggle("modo-humano-ativo", modo === "insp");
-        el.campoMensagem?.classList.toggle("modo-eng-ativo", modo === "eng");
-
-        el.pilulaEntrada?.classList.toggle("estado-insp", modo === "insp");
-        el.pilulaEntrada?.classList.toggle("estado-eng", modo === "eng");
-
-        atualizarStatusMesaPorComposer(modo);
-    }
-
-    function aplicarHighlightComposer(texto = "") {
-        if (el.backdropHighlight) {
-            el.backdropHighlight.innerHTML = "";
-        }
-        atualizarVisualComposer(texto);
+        InspectorWorkspaceComposer.atualizarVisualComposer?.(texto, {
+            el,
+            atualizarStatusMesaPorComposer,
+        });
     }
 
     function sincronizarScrollBackdrop() {
-        return;
+        return InspectorWorkspaceComposer.sincronizarScrollBackdrop?.();
     }
 
     // =========================================================
@@ -4473,376 +3493,80 @@
         inicializarObservadorWorkspace: ctx.actions.inicializarObservadorWorkspace,
     });
     function bindEventosModal() {
-        ctx.actions.bindEventosNovaInspecao?.();
-        ctx.actions.bindUiBindings?.();
+        InspectorWorkspacePageBoot.bindEventosModal?.({ ctx });
     }
 
     function bindEventosPagina() {
-        ctx.actions.bindUiBindings?.();
+        InspectorWorkspacePageBoot.bindEventosPagina?.({ ctx });
     }
 
     function bindEventosSistema() {
-        ctx.actions.bindSystemEvents?.();
-
-        const onModoFocoAlterado = (event) => {
-            if (event?.detail?.ativo !== true) {
-                return;
-            }
-
-            promoverPortalParaChatNoModoFoco({ origem: "focus_mode_toggle" });
-        };
-
-        document.addEventListener("tariel:focus-mode-changed", onModoFocoAlterado);
-
-        window.addEventListener("pagehide", () => {
-            fecharSSE();
-            limparTimerReconexaoSSE();
-            limparTimerFecharMesaWidget();
-            limparTimerBanner();
-            cancelarCarregamentoPendenciasMesa();
-            cancelarCarregamentoMensagensMesaWidget();
-            atualizarConexaoMesaWidget("offline");
-            ctx.actions.limparObserversInspector?.();
-        });
-
-        document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "hidden") {
-                fecharSSE();
-                limparTimerReconexaoSSE();
-                return;
-            }
-
-            if (!estado.fonteSSE) {
-                limparTimerReconexaoSSE();
-                sincronizarSSEPorContexto();
-            }
-
-            if (contextoTecnicoPrecisaRefresh()) {
-                carregarPendenciasMesa({ silencioso: true }).catch(() => {});
-            }
+        InspectorWorkspacePageBoot.bindEventosSistema?.({
+            ctx,
+            documentRef: document,
+            windowRef: window,
+            estado,
+            origemModoFocoPayload: { origem: "focus_mode_toggle" },
+            promoverPortalParaChatNoModoFoco,
+            fecharSSE,
+            limparTimerReconexaoSSE,
+            limparTimerFecharMesaWidget,
+            limparTimerBanner,
+            cancelarCarregamentoPendenciasMesa,
+            cancelarCarregamentoMensagensMesaWidget,
+            atualizarConexaoMesaWidget,
+            sincronizarSSEPorContexto,
+            contextoTecnicoPrecisaRefresh,
+            carregarPendenciasMesa,
         });
     }
-
-    if (PERF?.enabled) {
-        const resolverInspectorBaseScreenPorSnapshotOriginal = resolverInspectorBaseScreenPorSnapshot;
-        resolverInspectorBaseScreenPorSnapshot = function resolverInspectorBaseScreenPorSnapshotComPerf(...args) {
-            const snapshot = args[0] && typeof args[0] === "object" ? args[0] : {};
-            return PERF.measureSync(
-                "inspetor.resolverInspectorBaseScreenPorSnapshot",
-                () => resolverInspectorBaseScreenPorSnapshotOriginal.apply(this, args),
-                {
-                    category: "state",
-                    detail: {
-                        modoInspecaoUI: snapshot.modoInspecaoUI || "",
-                        workspaceStage: snapshot.workspaceStage || "",
-                        overlayOwner: snapshot.overlayOwner || "",
-                    },
-                }
-            );
-        };
-
-        const resolverEstadoAutoritativoInspectorOriginal = resolverEstadoAutoritativoInspector;
-        resolverEstadoAutoritativoInspector = function resolverEstadoAutoritativoInspectorComPerf(...args) {
-            const overrides = args[0] && typeof args[0] === "object" ? args[0] : {};
-            return PERF.measureSync(
-                "inspetor.resolverEstadoAutoritativoInspector",
-                () => resolverEstadoAutoritativoInspectorOriginal.apply(this, args),
-                {
-                    category: "state",
-                    detail: {
-                        overrideKeys: Object.keys(overrides),
-                    },
-                }
-            );
-        };
-
-        const espelharEstadoInspectorNoDatasetOriginal = espelharEstadoInspectorNoDataset;
-        espelharEstadoInspectorNoDataset = function espelharEstadoInspectorNoDatasetComPerf(...args) {
-            const snapshot = args[0] && typeof args[0] === "object" ? args[0] : {};
-            PERF.count("inspetor.dataset.sync", 1, {
-                category: "counter",
-                detail: {
-                    screen: snapshot.inspectorScreen || "",
-                    baseScreen: snapshot.inspectorBaseScreen || "",
-                },
-            });
-            return PERF.measureSync(
-                "inspetor.espelharEstadoInspectorNoDataset",
-                () => espelharEstadoInspectorNoDatasetOriginal.apply(this, args),
-                {
-                    category: "state",
-                    detail: {
-                        screen: snapshot.inspectorScreen || "",
-                        baseScreen: snapshot.inspectorBaseScreen || "",
-                    },
-                }
-            );
-        };
-
-        const espelharEstadoInspectorNoStorageOriginal = espelharEstadoInspectorNoStorage;
-        espelharEstadoInspectorNoStorage = function espelharEstadoInspectorNoStorageComPerf(...args) {
-            const snapshot = args[0] && typeof args[0] === "object" ? args[0] : {};
-            const opts = args[1] && typeof args[1] === "object" ? args[1] : {};
-            PERF.count("inspetor.storage.sync", 1, {
-                category: "counter",
-                detail: {
-                    persistirStorage: opts.persistirStorage !== false,
-                },
-            });
-            return PERF.measureSync(
-                "inspetor.espelharEstadoInspectorNoStorage",
-                () => espelharEstadoInspectorNoStorageOriginal.apply(this, args),
-                {
-                    category: "storage",
-                    detail: {
-                        laudoAtualId: snapshot.laudoAtualId || null,
-                        persistirStorage: opts.persistirStorage !== false,
-                    },
-                }
-            );
-        };
-
-        const sincronizarEstadoInspectorOriginal = sincronizarEstadoInspector;
-        sincronizarEstadoInspector = function sincronizarEstadoInspectorComPerf(...args) {
-            const overrides = args[0] && typeof args[0] === "object" ? args[0] : {};
-            const opts = args[1] && typeof args[1] === "object" ? args[1] : {};
-            return PERF.measureSync(
-                "inspetor.sincronizarEstadoInspector",
-                () => {
-                    const snapshot = sincronizarEstadoInspectorOriginal.apply(this, args);
-                    reportarProntidaoInspector(snapshot);
-                    return snapshot;
-                },
-                {
-                    category: "state",
-                    detail: {
-                        overrideKeys: Object.keys(overrides),
-                        persistirStorage: opts.persistirStorage !== false,
-                    },
-                }
-            );
-        };
-
-        if (window.TarielInspectorState) {
-            window.TarielInspectorState.resolverEstadoAutoritativoInspector = resolverEstadoAutoritativoInspector;
-            window.TarielInspectorState.sincronizarEstadoInspector = sincronizarEstadoInspector;
-            window.TarielInspectorState.atualizarThreadWorkspace = atualizarThreadWorkspace;
-        }
-
-        const exibirConversaFocadaNovoChatOriginal = exibirConversaFocadaNovoChat;
-        exibirConversaFocadaNovoChat = function exibirConversaFocadaNovoChatComPerf(...args) {
-            return PERF.measureSync(
-                "inspetor.exibirConversaFocadaNovoChat",
-                () => {
-                    const resultado = exibirConversaFocadaNovoChatOriginal.apply(this, args);
-                    PERF.finish("transition.primeira_mensagem_novo_chat", obterResumoPerfInspector());
-                    reportarProntidaoInspector();
-                    PERF.snapshotDOM?.("inspetor:focused-conversation");
-                    return resultado;
-                },
-                {
-                    category: "transition",
-                    detail: obterResumoPerfInspector(),
-                }
-            );
-        };
-
-        const promoverPrimeiraMensagemNovoChatSeProntaOriginal = promoverPrimeiraMensagemNovoChatSePronta;
-        promoverPrimeiraMensagemNovoChatSePronta = function promoverPrimeiraMensagemNovoChatSeProntaComPerf(...args) {
-            const opcoes = args[0] && typeof args[0] === "object" ? args[0] : {};
-            return PERF.measureSync(
-                "inspetor.promoverPrimeiraMensagemNovoChatSePronta",
-                () => promoverPrimeiraMensagemNovoChatSeProntaOriginal.apply(this, args),
-                {
-                    category: "transition",
-                    detail: {
-                        forcar: opcoes.forcar === true,
-                        focarComposer: opcoes.focarComposer === true,
-                        ...obterResumoPerfInspector(),
-                    },
-                }
-            );
-        };
-
-        const atualizarPainelWorkspaceDerivadoOriginal = atualizarPainelWorkspaceDerivado;
-        atualizarPainelWorkspaceDerivado = function atualizarPainelWorkspaceDerivadoComPerf(...args) {
-            return PERF.measureSync(
-                "inspetor.atualizarPainelWorkspaceDerivado",
-                () => atualizarPainelWorkspaceDerivadoOriginal.apply(this, args),
-                {
-                    category: "render",
-                    detail: obterResumoPerfInspector(),
-                }
-            );
-        };
-
-        const atualizarThreadWorkspaceOriginal = atualizarThreadWorkspace;
-        atualizarThreadWorkspace = function atualizarThreadWorkspaceComPerf(...args) {
-            const tab = String(args[0] || "conversa").trim().toLowerCase() || "conversa";
-            return PERF.measureSync(
-                "inspetor.atualizarThreadWorkspace",
-                () => {
-                    const resultado = atualizarThreadWorkspaceOriginal.apply(this, args);
-                    PERF.finish(`transition.thread_tab.${tab}`, {
-                        tab,
-                        ...obterResumoPerfInspector(),
-                    });
-                    reportarProntidaoInspector();
-                    return resultado;
-                },
-                {
-                    category: "render",
-                    detail: {
-                        tab,
-                        ...obterResumoPerfInspector(),
-                    },
-                }
-            );
-        };
-
-        const aplicarMatrizVisibilidadeInspectorOriginal = aplicarMatrizVisibilidadeInspector;
-        aplicarMatrizVisibilidadeInspector = function aplicarMatrizVisibilidadeInspectorComPerf(...args) {
-            return PERF.measureSync(
-                "inspetor.aplicarMatrizVisibilidadeInspector",
-                () => aplicarMatrizVisibilidadeInspectorOriginal.apply(this, args),
-                {
-                    category: "state",
-                    detail: obterResumoPerfInspector(args[1]),
-                }
-            );
-        };
-
-        const resolveInspectorScreenOriginal = resolveInspectorScreen;
-        resolveInspectorScreen = function resolveInspectorScreenComPerf(...args) {
-            return PERF.measureSync(
-                "inspetor.resolveInspectorScreen",
-                () => resolveInspectorScreenOriginal.apply(this, args),
-                {
-                    category: "state",
-                    detail: obterResumoPerfInspector(),
-                }
-            );
-        };
-
-        const sincronizarWorkspaceRailOriginal = sincronizarWorkspaceRail;
-        sincronizarWorkspaceRail = function sincronizarWorkspaceRailComPerf(...args) {
-            return PERF.measureSync(
-                "inspetor.sincronizarWorkspaceRail",
-                () => sincronizarWorkspaceRailOriginal.apply(this, args),
-                {
-                    category: "state",
-                    detail: obterResumoPerfInspector(),
-                }
-            );
-        };
-
-        const sincronizarWidgetsGlobaisWorkspaceOriginal = sincronizarWidgetsGlobaisWorkspace;
-        sincronizarWidgetsGlobaisWorkspace = function sincronizarWidgetsGlobaisWorkspaceComPerf(...args) {
-            return PERF.measureSync(
-                "inspetor.sincronizarWidgetsGlobaisWorkspace",
-                () => sincronizarWidgetsGlobaisWorkspaceOriginal.apply(this, args),
-                {
-                    category: "state",
-                    detail: obterResumoPerfInspector(),
-                }
-            );
-        };
-
-        const sincronizarInspectorScreenOriginal = sincronizarInspectorScreen;
-        sincronizarInspectorScreen = function sincronizarInspectorScreenComPerf(...args) {
-            return PERF.measureSync(
-                "inspetor.sincronizarInspectorScreen",
-                () => {
-                    const screen = sincronizarInspectorScreenOriginal.apply(this, args);
-                    reportarProntidaoInspector();
-                    PERF.snapshotDOM?.(`inspetor:screen:${String(screen || "unknown")}`);
-                    if (screen === "assistant_landing") {
-                        PERF.finish("transition.novo_chat", {
-                            ...obterResumoPerfInspector(),
-                            screen,
-                        });
-                    }
-                    if (screen === "new_inspection") {
-                        PERF.finish("transition.abrir_nova_inspecao", {
-                            ...obterResumoPerfInspector(),
-                            screen,
-                        });
-                    }
-                    return screen;
-                },
-                {
-                    category: "state",
-                    detail: obterResumoPerfInspector(),
-                }
-            );
-        };
-
-        const abrirChatLivreInspectorOriginal = abrirChatLivreInspector;
-        abrirChatLivreInspector = function abrirChatLivreInspectorComPerf(...args) {
-            const payload = args[0] && typeof args[0] === "object" ? args[0] : {};
-            return PERF.measureSync(
-                "inspetor.abrirChatLivreInspector",
-                () => abrirChatLivreInspectorOriginal.apply(this, args),
-                {
-                    category: "transition",
-                    detail: {
-                        origem: payload.origem || "chat_free_entry",
-                        ...obterResumoPerfInspector(),
-                    },
-                }
-            );
-        };
-
-        const abrirNovaInspecaoComScreenSyncOriginal = abrirNovaInspecaoComScreenSync;
-        abrirNovaInspecaoComScreenSync = function abrirNovaInspecaoComScreenSyncComPerf(...args) {
-            const payload = args[0] && typeof args[0] === "object" ? args[0] : {};
-            return PERF.measureSync(
-                "inspetor.abrirNovaInspecaoComScreenSync",
-                () => abrirNovaInspecaoComScreenSyncOriginal.apply(this, args),
-                {
-                    category: "transition",
-                    detail: {
-                        tipoPrefill: payload.tipoPrefill || "",
-                        possuiPrePrompt: !!String(payload.prePrompt || "").trim(),
-                        ...obterResumoPerfInspector(),
-                    },
-                }
-            );
-        };
-    }
-
-    // =========================================================
-    // BOOT
-    // =========================================================
 
     async function boot() {
-        await ctx.actions.bootInspector?.();
+        await InspectorWorkspacePageBoot.boot?.({ ctx });
     }
 
-    if (PERF?.enabled) {
-        const bootOriginal = boot;
-        boot = async function bootComPerf(...args) {
-            PERF.begin("transition.boot_inspetor", {
-                readyState: document.readyState,
-            });
-            return PERF.measureAsync(
-                "inspetor.boot",
-                async () => {
-                    const resultado = await bootOriginal.apply(this, args);
-                    reportarProntidaoInspector();
-                    PERF.finish("transition.boot_inspetor", obterResumoPerfInspector());
-                    PERF.snapshotDOM?.("inspetor:boot-final");
-                    return resultado;
-                },
-                {
-                    category: "boot",
-                    detail: {
-                        readyState: document.readyState,
-                    },
-                }
-            );
-        };
-    }
+    const perfInstrumentation = InspectorWorkspacePerf.instrument?.({
+        PERF,
+        windowRef: window,
+        documentRef: document,
+        obterResumoPerfInspector,
+        reportarProntidaoInspector,
+        resolverInspectorBaseScreenPorSnapshot,
+        resolverEstadoAutoritativoInspector,
+        espelharEstadoInspectorNoDataset,
+        espelharEstadoInspectorNoStorage,
+        sincronizarEstadoInspector,
+        exibirConversaFocadaNovoChat,
+        promoverPrimeiraMensagemNovoChatSePronta,
+        atualizarPainelWorkspaceDerivado,
+        atualizarThreadWorkspace,
+        aplicarMatrizVisibilidadeInspector,
+        resolveInspectorScreen,
+        sincronizarWorkspaceRail,
+        sincronizarWidgetsGlobaisWorkspace,
+        sincronizarInspectorScreen,
+        abrirChatLivreInspector,
+        abrirNovaInspecaoComScreenSync,
+        boot,
+    }) || {};
+
+    resolverInspectorBaseScreenPorSnapshot = perfInstrumentation.resolverInspectorBaseScreenPorSnapshot || resolverInspectorBaseScreenPorSnapshot;
+    resolverEstadoAutoritativoInspector = perfInstrumentation.resolverEstadoAutoritativoInspector || resolverEstadoAutoritativoInspector;
+    espelharEstadoInspectorNoDataset = perfInstrumentation.espelharEstadoInspectorNoDataset || espelharEstadoInspectorNoDataset;
+    espelharEstadoInspectorNoStorage = perfInstrumentation.espelharEstadoInspectorNoStorage || espelharEstadoInspectorNoStorage;
+    sincronizarEstadoInspector = perfInstrumentation.sincronizarEstadoInspector || sincronizarEstadoInspector;
+    exibirConversaFocadaNovoChat = perfInstrumentation.exibirConversaFocadaNovoChat || exibirConversaFocadaNovoChat;
+    promoverPrimeiraMensagemNovoChatSePronta = perfInstrumentation.promoverPrimeiraMensagemNovoChatSePronta || promoverPrimeiraMensagemNovoChatSePronta;
+    atualizarPainelWorkspaceDerivado = perfInstrumentation.atualizarPainelWorkspaceDerivado || atualizarPainelWorkspaceDerivado;
+    atualizarThreadWorkspace = perfInstrumentation.atualizarThreadWorkspace || atualizarThreadWorkspace;
+    aplicarMatrizVisibilidadeInspector = perfInstrumentation.aplicarMatrizVisibilidadeInspector || aplicarMatrizVisibilidadeInspector;
+    resolveInspectorScreen = perfInstrumentation.resolveInspectorScreen || resolveInspectorScreen;
+    sincronizarWorkspaceRail = perfInstrumentation.sincronizarWorkspaceRail || sincronizarWorkspaceRail;
+    sincronizarWidgetsGlobaisWorkspace = perfInstrumentation.sincronizarWidgetsGlobaisWorkspace || sincronizarWidgetsGlobaisWorkspace;
+    sincronizarInspectorScreen = perfInstrumentation.sincronizarInspectorScreen || sincronizarInspectorScreen;
+    abrirChatLivreInspector = perfInstrumentation.abrirChatLivreInspector || abrirChatLivreInspector;
+    abrirNovaInspecaoComScreenSync = perfInstrumentation.abrirNovaInspecaoComScreenSync || abrirNovaInspecaoComScreenSync;
+    boot = perfInstrumentation.boot || boot;
 
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", boot, { once: true });
