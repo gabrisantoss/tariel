@@ -2945,3 +2945,51 @@ Próximo passo imediato:
 
 - continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, provavelmente anexos/mesa ou fluxo de retomada home;
 - no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando reduções reais do agregado.
+
+## Ciclo 75 — Extração da retomada pela home e material real do catálogo
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda mantinha o fluxo de abertura de laudo pela home, com retomada, contexto visual, modo de entrada e fallback entre `TarielChatPainel` e `TarielAPI`;
+- `web/app/domains/admin/services.py` ainda carregava o bloco grande de material real do catálogo, incluindo resumo do workspace, prioridade, worklist e trilha de execução;
+- esse conjunto ainda representava volume real nos dois hotspots e tinha fronteiras claras para sair do agregado principal.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_home_flow.js` com `abrirLaudoPeloHome`;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse fluxo para `window.TarielInspectorWorkspaceHomeFlow`;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/admin_catalog_material_real_services.py` com resumo do workspace, prioridade, worklist, track de execução e helpers auxiliares de material real;
+- `web/app/domains/admin/services.py` ficou com wrappers finos para esse bloco.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_home_flow.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_catalog_material_real_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_home_flow.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_material_real_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_material_real_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- resultado:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, provavelmente anexos/mesa ou foco do composer;
+- no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando helpers de preview/documentação que ainda ocupam muito volume.

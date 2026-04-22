@@ -2831,3 +2831,31 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de contexto visual/chat livre
 - `admin/services.py` perde mais uma fatia material de helpers de leitura documental
 - smoke do web e subset focal do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-12` — Abertura de laudo pela home e material real do catálogo
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega a abertura de laudo pela home para `web/static/js/inspetor/workspace_home_flow.js`, `admin/services.py` delega o bloco de material real do catálogo para `web/app/domains/admin/admin_catalog_material_real_services.py`, e o pacote passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por um bloco residual de retomada/home do inspetor e por uma fatia administrativa grande de material real que ainda ocupava volume demais no agregado principal
+
+### Escopo
+
+- entra extração do fluxo `abrirLaudoPeloHome`
+- entra extração do bloco de workspace/prioridade/fila de material real do catálogo
+- não entra mudança funcional da retomada de laudo
+- não entra mudança semântica do catálogo material real
+
+### Passos
+
+1. extrair a abertura de laudo pela home para módulo dedicado do inspetor
+2. extrair o bloco de material real para serviço administrativo dedicado
+3. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso de retomada/home
+- `admin/services.py` perde uma fatia grande de material real e filas associadas
+- smoke do web e subset focal do admin seguem verdes

@@ -750,3 +750,48 @@ Próximo passo imediato:
 
 - continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo anexos/mesa ou fluxo de retomada home;
 - no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando reduções reais do agregado.
+
+## Ciclo R18 — Retomada pela home e material real do catálogo
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda concentrava o fluxo de abertura de laudo pela home, incluindo retomada, contexto visual, modo de entrada e fallback entre `TarielChatPainel` e `TarielAPI`;
+- `web/app/domains/admin/services.py` ainda mantinha o bloco grande de material real do catálogo, com resumo do workspace, prioridade, fila e trilha de execução.
+
+Corte executado:
+
+- criação do módulo `web/static/js/inspetor/workspace_home_flow.js`;
+- extração da rotina `abrirLaudoPeloHome(...)`;
+- reapontamento de `web/static/js/chat/chat_index_page.js` para consumir o helper novo via `window.TarielInspectorWorkspaceHomeFlow`;
+- criação do módulo `web/app/domains/admin/admin_catalog_material_real_services.py`;
+- extração das rotinas de resumo do workspace, prioridade, worklist, track de execução e helpers auxiliares de material real, preservando wrappers compatíveis em `services.py`;
+- ajuste da ordem de carga em `web/templates/index.html` para carregar o helper novo antes do runtime principal.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_home_flow.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_catalog_material_real_services.py`
+- `web/app/domains/admin/services.py`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_home_flow.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_catalog_material_real_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_catalog_material_real_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "catalogo_rollup_expoe_biblioteca_premium_e_material_real or catalogo_detalhe_expoe_biblioteca_documental_e_workspace_material_real or reference_package_workspace or material_real"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- resultados:
+  - `2 passed, 40 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo anexos/mesa ou foco do composer;
+- no backend, seguir para a próxima fatia administrativa ainda pesada em `web/app/domains/admin/services.py`, priorizando preview/documentação e outras leituras volumosas.

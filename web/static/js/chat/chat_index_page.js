@@ -46,6 +46,7 @@
     const InspectorWorkspaceUtils = window.TarielInspectorWorkspaceUtils || {};
     const InspectorWorkspaceStage = window.TarielInspectorWorkspaceStage || {};
     const InspectorWorkspaceContextFlow = window.TarielInspectorWorkspaceContextFlow || {};
+    const InspectorWorkspaceHomeFlow = window.TarielInspectorWorkspaceHomeFlow || {};
     const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
@@ -4418,86 +4419,31 @@
         threadTabPreferida = "",
         modoEntradaPayload = null
     ) {
-        const id = Number(laudoId || 0) || null;
-        if (!id) {
-            mostrarToast("Nenhum laudo recente disponível para continuar.", "aviso", 2600);
-            return false;
-        }
-
-        limparForcaTelaInicial();
-        const tipoNormalizado = normalizarTipoTemplate(tipoTemplate);
-        const payloadModoEntrada = modoEntradaPayload && typeof modoEntradaPayload === "object"
-            ? { ...modoEntradaPayload }
-            : {};
-        const threadTabInicial = String(threadTabPreferida || "").trim()
-            ? normalizarThreadTab(threadTabPreferida)
-            : resolverThreadTabInicialPorModoEntrada(payloadModoEntrada, "historico");
-        definirRetomadaHomePendente({
-            laudoId: id,
-            tipoTemplate: tipoNormalizado,
-            contextoVisual: contextoVisual || null,
-            expiresAt: Date.now() + 6000,
-        });
-        registrarContextoVisualLaudo(id, contextoVisual);
-        aplicarContextoVisualWorkspace(contextoVisual || criarContextoVisualPadrao());
-        atualizarEstadoModoEntrada(payloadModoEntrada);
-        sincronizarEstadoInspector({
-            laudoAtualId: id,
-            forceHomeLanding: false,
-            modoInspecaoUI: "workspace",
-            workspaceStage: "inspection",
-            threadTab: threadTabInicial,
-            overlayOwner: "",
-            assistantLandingFirstSendPending: false,
-            freeChatConversationActive: false,
-        }, {
-            persistirStorage: false,
-        });
-
-        if (typeof window.TarielChatPainel?.selecionarLaudo === "function") {
-            const ok = !!window.TarielChatPainel.selecionarLaudo(id, {
-                atualizarURL: true,
-                origem,
-                threadTab: threadTabInicial,
-                ignorarBloqueioRelatorio: true,
-                ...payloadModoEntrada,
-            });
-            if (ok) {
-                exibirInterfaceInspecaoAtiva(tipoNormalizado);
-                atualizarThreadWorkspace(threadTabInicial, {
-                    persistirURL: true,
-                    replaceURL: true,
-                });
-                carregarPendenciasMesa({ laudoId: id, silencioso: true }).catch(() => {});
+        return InspectorWorkspaceHomeFlow.abrirLaudoPeloHome?.(
+            laudoId,
+            origem,
+            tipoTemplate,
+            contextoVisual,
+            threadTabPreferida,
+            modoEntradaPayload,
+            {
+                mostrarToast,
+                limparForcaTelaInicial,
+                normalizarTipoTemplate,
+                normalizarThreadTab,
+                resolverThreadTabInicialPorModoEntrada,
+                definirRetomadaHomePendente,
+                registrarContextoVisualLaudo,
+                aplicarContextoVisualWorkspace,
+                criarContextoVisualPadrao,
+                atualizarEstadoModoEntrada,
+                sincronizarEstadoInspector,
+                exibirInterfaceInspecaoAtiva,
+                atualizarThreadWorkspace,
+                carregarPendenciasMesa,
+                emitirEventoTariel,
             }
-            return ok;
-        }
-
-        try {
-            if (typeof window.TarielAPI?.carregarLaudo === "function") {
-                await window.TarielAPI.carregarLaudo(id, {
-                    forcar: true,
-                    silencioso: true,
-                });
-            }
-
-            emitirEventoTariel("tariel:laudo-selecionado", {
-                laudoId: id,
-                origem,
-                threadTab: threadTabInicial,
-                ...payloadModoEntrada,
-            });
-            exibirInterfaceInspecaoAtiva(tipoNormalizado);
-            atualizarThreadWorkspace(threadTabInicial, {
-                persistirURL: true,
-                replaceURL: true,
-            });
-            carregarPendenciasMesa({ laudoId: id, silencioso: true }).catch(() => {});
-            return true;
-        } catch (erro) {
-            mostrarToast("Não foi possível abrir esse laudo agora.", "erro", 2800);
-            return false;
-        }
+        ) || false;
     }
 
     async function iniciarInspecao(
