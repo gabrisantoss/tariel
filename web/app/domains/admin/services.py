@@ -68,6 +68,19 @@ from app.domains.admin.catalog_read_services import (
     listar_metodos_catalogo as _catalog_read_listar_metodos_catalogo,
     resumir_catalogo_laudos_admin as _catalog_read_resumir_catalogo_laudos_admin,
 )
+from app.domains.admin.catalog_tenant_management_services import (
+    catalogo_actor_label as _catalog_tenant_actor_label,
+    historico_catalogo_familia as _catalog_tenant_historico_familia,
+    normalizar_family_keys_signatario as _catalog_tenant_normalizar_family_keys_signatario,
+    normalizar_validade_signatario as _catalog_tenant_normalizar_validade_signatario,
+    resumir_portfolio_catalogo_empresa as _catalog_tenant_resumir_portfolio,
+    serializar_release_catalogo_familia as _catalog_tenant_serializar_release,
+    serializar_signatario_governado_admin as _catalog_tenant_serializar_signatario,
+    sincronizar_portfolio_catalogo_empresa as _catalog_tenant_sincronizar_portfolio,
+    status_signatario_governado as _catalog_tenant_status_signatario,
+    upsert_signatario_governado_laudo as _catalog_tenant_upsert_signatario,
+    upsert_tenant_family_release as _catalog_tenant_upsert_release,
+)
 from app.domains.admin.platform_settings_state import (
     get_platform_default_new_tenant_plan,  # noqa: F401
     get_support_exceptional_policy_snapshot,  # noqa: F401
@@ -3496,13 +3509,7 @@ def resumir_catalogo_laudos_admin(
 
 
 def _catalogo_actor_label(actor: Usuario | None, *, fallback: str = "Sistema Tariel") -> str:
-    if actor is None:
-        return fallback
-    nome = str(getattr(actor, "nome_completo", "") or getattr(actor, "email", "") or "").strip()
-    if nome:
-        return nome
-    actor_id = getattr(actor, "id", None)
-    return f"Usuário #{int(actor_id)}" if actor_id else fallback
+    return _catalog_tenant_actor_label(actor, fallback=fallback)
 
 
 def _serializar_release_catalogo_familia(
@@ -3511,50 +3518,20 @@ def _serializar_release_catalogo_familia(
     empresa_lookup: dict[int, Empresa],
     oferta: OfertaComercialFamiliaLaudo | None = None,
 ) -> dict[str, Any]:
-    tenant = empresa_lookup.get(int(item.tenant_id))
-    release_status = str(getattr(item, "release_status", "") or "").strip().lower() or "draft"
-    commercial = summarize_release_contract_governance(
-        getattr(item, "governance_policy_json", None),
-        offer_flags_payload=getattr(oferta, "flags_json", None) if oferta is not None else None,
-        offer_lifecycle_status=_offer_lifecycle_resolvido(oferta),
+    return _catalog_tenant_serializar_release(
+        item,
+        empresa_lookup=empresa_lookup,
+        oferta=oferta,
+        summarize_release_contract_governance=summarize_release_contract_governance,
+        offer_lifecycle_resolvido=_offer_lifecycle_resolvido,
+        label_catalogo=_label_catalogo,
+        release_status_labels=_CATALOGO_RELEASE_STATUS_LABELS,
+        catalogo_modelo_label=_catalogo_modelo_label,
+        normalizar_datetime_admin=_normalizar_datetime_admin,
+        formatar_data_admin=_formatar_data_admin,
+        resumir_governanca_release_policy=_resumir_governanca_release_policy,
+        catalogo_scope_summary_label=_catalogo_scope_summary_label,
     )
-    return {
-        "id": int(item.id),
-        "tenant_id": int(item.tenant_id),
-        "tenant_label": str(getattr(tenant, "nome_fantasia", "") or f"Empresa {item.tenant_id}"),
-        "release_status": _label_catalogo(
-            _CATALOGO_RELEASE_STATUS_LABELS,
-            release_status,
-            release_status or "Rascunho",
-        ),
-        "allowed_modes": list(getattr(item, "allowed_modes_json", None) or []),
-        "allowed_offers": list(getattr(item, "allowed_offers_json", None) or []),
-        "allowed_templates": list(getattr(item, "allowed_templates_json", None) or []),
-        "allowed_variants": list(getattr(item, "allowed_variants_json", None) or []),
-        "default_template_code": str(getattr(item, "default_template_code", "") or "").strip() or None,
-        "default_template_label": _catalogo_modelo_label(
-            str(getattr(item, "default_template_code", "") or "").strip() or None,
-            fallback="Herdado da família",
-        ),
-        "observacoes": str(getattr(item, "observacoes", "") or "").strip() or None,
-        "start_at": _normalizar_datetime_admin(getattr(item, "start_at", None)),
-        "end_at": _normalizar_datetime_admin(getattr(item, "end_at", None)),
-        "start_at_label": _formatar_data_admin(_normalizar_datetime_admin(getattr(item, "start_at", None)), fallback="Imediato"),
-        "end_at_label": _formatar_data_admin(_normalizar_datetime_admin(getattr(item, "end_at", None)), fallback="Sem expiração"),
-        "updated_at": _normalizar_datetime_admin(getattr(item, "atualizado_em", None)),
-        "updated_at_label": _formatar_data_admin(_normalizar_datetime_admin(getattr(item, "atualizado_em", None))),
-        "actor_label": _catalogo_actor_label(getattr(item, "criado_por", None)),
-        "governance": _resumir_governanca_release_policy(
-            getattr(item, "governance_policy_json", None)
-        ),
-        "effective_release_channel": commercial["effective_release_channel"],
-        "contract_entitlements": commercial["effective_contract_entitlements"],
-        "scope_summary": _catalogo_scope_summary_label(
-            allowed_modes=list(getattr(item, "allowed_modes_json", None) or []),
-            allowed_templates=list(getattr(item, "allowed_templates_json", None) or []),
-            allowed_variants=list(getattr(item, "allowed_variants_json", None) or []),
-        ),
-    }
 
 
 def _historico_catalogo_familia(
@@ -3562,122 +3539,16 @@ def _historico_catalogo_familia(
     *,
     tenant_releases: list[TenantFamilyReleaseLaudo],
 ) -> list[dict[str, Any]]:
-    eventos: list[dict[str, Any]] = []
-
-    tipo_labels = {
-        "family": "Família",
-        "offer": "Oferta",
-        "calibration": "Calibração",
-        "tenant_release": "Liberação para empresa",
-    }
-
-    def _push(
-        tipo: str,
-        titulo: str,
-        quando: datetime | None,
-        detalhe: str = "",
-        *,
-        actor_label: str = "Sistema Tariel",
-        diff_summary: str = "",
-    ) -> None:
-        quando_norm = _normalizar_datetime_admin(quando)
-        if quando_norm is None:
-            return
-        eventos.append(
-            {
-                "tipo": tipo,
-                "tipo_label": tipo_labels.get(tipo, "Evento"),
-                "titulo": titulo,
-                "detalhe": detalhe,
-                "actor_label": actor_label,
-                "diff_summary": diff_summary,
-                "quando": quando_norm,
-                "quando_label": _formatar_data_admin(quando_norm),
-            }
-        )
-
-    macro_categoria = str(getattr(familia, "macro_categoria", "") or "").strip() or "Sem macro categoria"
-    _push(
-        "family",
-        "Família atualizada",
-        _normalizar_datetime_admin(getattr(familia, "atualizado_em", None)) or _normalizar_datetime_admin(getattr(familia, "criado_em", None)),
-        f"Status técnico: {str(getattr(familia, 'technical_status', '') or 'draft')}.",
-        actor_label=_catalogo_actor_label(getattr(familia, "criado_por", None)),
-        diff_summary=f"Schema v{int(getattr(familia, 'schema_version', 1) or 1)} • macro {macro_categoria}",
+    return _catalog_tenant_historico_familia(
+        familia,
+        tenant_releases=tenant_releases,
+        normalizar_datetime_admin=_normalizar_datetime_admin,
+        formatar_data_admin=_formatar_data_admin,
+        catalog_offer_variants=catalog_offer_variants,
+        offer_lifecycle_resolvido=_offer_lifecycle_resolvido,
+        catalogo_modelo_label=_catalogo_modelo_label,
+        catalogo_texto_leitura=_catalogo_texto_leitura,
     )
-    oferta = getattr(familia, "oferta_comercial", None)
-    if oferta is not None:
-        variants = catalog_offer_variants(familia, oferta)
-        _push(
-            "offer",
-            "Oferta comercial revisada",
-            _normalizar_datetime_admin(getattr(oferta, "atualizado_em", None)) or _normalizar_datetime_admin(getattr(oferta, "criado_em", None)),
-            f"Situação do pacote: {str(getattr(oferta, 'lifecycle_status', '') or _offer_lifecycle_resolvido(oferta) or 'draft')}.",
-            actor_label=_catalogo_actor_label(getattr(oferta, "criado_por", None)),
-            diff_summary=" • ".join(
-                trecho
-                for trecho in (
-                    "modelo principal "
-                    + str(
-                        _catalogo_modelo_label(
-                            str(getattr(oferta, "template_default_code", "") or "").strip() or None,
-                            fallback="em definição",
-                        )
-                    ),
-                    f"{len(variants)} opções",
-                    str(getattr(oferta, "pacote_comercial", "") or "").strip() or "",
-                )
-                if trecho
-            ),
-        )
-    calibracao = getattr(familia, "calibracao", None)
-    if calibracao is not None:
-        changed_fields = list(getattr(calibracao, "changed_fields_json", None) or [])
-        _push(
-            "calibration",
-            "Calibração registrada",
-            _normalizar_datetime_admin(getattr(calibracao, "last_calibrated_at", None))
-            or _normalizar_datetime_admin(getattr(calibracao, "atualizado_em", None)),
-            f"Status: {str(getattr(calibracao, 'calibration_status', '') or 'none')}.",
-            actor_label=_catalogo_actor_label(getattr(calibracao, "criado_por", None)),
-            diff_summary=" • ".join(
-                trecho
-                for trecho in (
-                    _catalogo_texto_leitura(
-                        str(getattr(calibracao, "reference_source", "") or "").strip() or None
-                    )
-                    or "",
-                    f"{len(changed_fields)} campos alterados" if changed_fields else "",
-                )
-                if trecho
-            ),
-        )
-    for item in tenant_releases:
-        _push(
-            "tenant_release",
-            "Liberação para empresa revisada",
-            _normalizar_datetime_admin(getattr(item, "atualizado_em", None)) or _normalizar_datetime_admin(getattr(item, "criado_em", None)),
-            f"Empresa {int(item.tenant_id)} em {str(getattr(item, 'release_status', '') or 'draft')}.",
-            actor_label=_catalogo_actor_label(getattr(item, "criado_por", None)),
-            diff_summary=" • ".join(
-                trecho
-                for trecho in (
-                    _catalogo_modelo_label(
-                        str(getattr(item, "default_template_code", "") or "").strip() or None,
-                        fallback="modelo herdado",
-                    ),
-                    f"{len(list(getattr(item, 'allowed_templates_json', None) or []))} modelos"
-                    if list(getattr(item, "allowed_templates_json", None) or [])
-                    else "",
-                    f"{len(list(getattr(item, 'allowed_variants_json', None) or []))} opções"
-                    if list(getattr(item, "allowed_variants_json", None) or [])
-                    else "",
-                )
-                if trecho
-            ),
-        )
-    eventos.sort(key=lambda item: item["quando"], reverse=True)
-    return eventos
 
 
 def buscar_catalogo_familia_admin(db: Session, family_key: str) -> dict[str, Any] | None:
@@ -3746,126 +3617,66 @@ def upsert_tenant_family_release(
     observacoes: str = "",
     criado_por_id: int | None = None,
 ) -> TenantFamilyReleaseLaudo:
-    empresa = _buscar_empresa(db, int(tenant_id))
-    familia = _buscar_familia_catalogo_por_chave(db, family_key)
-    oferta = getattr(familia, "oferta_comercial", None)
-    registro = db.scalar(
-        select(TenantFamilyReleaseLaudo).where(
-            TenantFamilyReleaseLaudo.tenant_id == int(empresa.id),
-            TenantFamilyReleaseLaudo.family_id == int(familia.id),
-        )
-    )
-    if registro is None:
-        registro = TenantFamilyReleaseLaudo(
-            tenant_id=int(empresa.id),
-            family_id=int(familia.id),
-            criado_por_id=criado_por_id,
-        )
-        db.add(registro)
-
-    release_status_norm = _normalizar_status_release_catalogo(release_status)
-    allowed_modes_norm = _normalizar_lista_json_canonica(allowed_modes, campo="Allowed modes")
-    allowed_offers_norm = _normalizar_lista_json_canonica(allowed_offers, campo="Allowed offers")
-    allowed_templates_norm = _normalizar_lista_json_canonica(allowed_templates, campo="Allowed templates")
-    allowed_variants_norm = _normalizar_selection_tokens_catalogo(allowed_variants, campo="Allowed variants")
-    governance_policy = _merge_release_governance_policy(
-        dict(getattr(registro, "governance_policy_json", None) or {})
-        if isinstance(getattr(registro, "governance_policy_json", None), dict)
-        else {},
-        force_review_mode=_normalizar_review_mode_governanca(
-            force_review_mode,
-            campo="Force review mode",
-        ),
-        max_review_mode=_normalizar_review_mode_governanca(
-            max_review_mode,
-            campo="Max review mode",
-        ),
-        mobile_review_override=_normalizar_override_tristate(
-            mobile_review_override,
-            campo="Override de revisão mobile",
-        ),
-        mobile_autonomous_override=_normalizar_override_tristate(
-            mobile_autonomous_override,
-            campo="Override de autonomia mobile",
-        ),
-        release_channel_override=_normalizar_release_channel_catalogo(
-            release_channel_override,
-            campo="Override de release channel",
-        ),
-        contract_entitlements=_normalizar_contract_entitlements_payload(
-            included_features_text=included_features_text,
-            monthly_issues=entitlement_monthly_issues,
-            max_admin_clients=entitlement_max_admin_clients,
-            max_inspectors=entitlement_max_inspectors,
-            max_reviewers=entitlement_max_reviewers,
-            max_active_variants=entitlement_max_active_variants,
-            max_integrations=entitlement_max_integrations,
-        ),
-    )
-    registro.offer_id = int(oferta.id) if oferta is not None else None
-    registro.allowed_modes_json = allowed_modes_norm
-    registro.allowed_offers_json = allowed_offers_norm
-    registro.allowed_templates_json = allowed_templates_norm
-    registro.allowed_variants_json = allowed_variants_norm
-    registro.governance_policy_json = governance_policy
-    registro.default_template_code = (
-        _normalizar_chave_catalogo(default_template_code, campo="Template default", max_len=120)
-        if str(default_template_code or "").strip()
-        else None
-    )
-    registro.release_status = release_status_norm
-    registro.start_at = _agora_utc() if release_status_norm == "active" and getattr(registro, "start_at", None) is None else getattr(registro, "start_at", None)
-    registro.end_at = _agora_utc() if release_status_norm in {"paused", "expired"} else None
-    registro.observacoes = _normalizar_texto_opcional(observacoes)
-    if criado_por_id and not registro.criado_por_id:
-        registro.criado_por_id = criado_por_id
-
-    ativos_existentes = list_active_tenant_catalog_activations(db, empresa_id=int(empresa.id))
-    outros_tokens = [
-        f"catalog:{str(item.family_key).strip().lower()}:{str(item.variant_key).strip().lower()}"
-        for item in ativos_existentes
-        if str(item.family_key).strip().lower() != str(familia.family_key).strip().lower()
-    ]
-    tokens_familia = allowed_variants_norm if release_status_norm == "active" else []
-    sync_tenant_catalog_activations(
+    return _catalog_tenant_upsert_release(
         db,
-        empresa_id=int(empresa.id),
-        selection_tokens=[*outros_tokens, *(tokens_familia or [])],
-        admin_id=criado_por_id,
-    )
-
-    flush_ou_rollback_integridade(
-        db,
+        tenant_id=tenant_id,
+        family_key=family_key,
+        release_status=release_status,
+        allowed_modes=allowed_modes,
+        allowed_offers=allowed_offers,
+        allowed_templates=allowed_templates,
+        allowed_variants=allowed_variants,
+        force_review_mode=force_review_mode,
+        max_review_mode=max_review_mode,
+        mobile_review_override=mobile_review_override,
+        mobile_autonomous_override=mobile_autonomous_override,
+        release_channel_override=release_channel_override,
+        included_features_text=included_features_text,
+        entitlement_monthly_issues=entitlement_monthly_issues,
+        entitlement_max_admin_clients=entitlement_max_admin_clients,
+        entitlement_max_inspectors=entitlement_max_inspectors,
+        entitlement_max_reviewers=entitlement_max_reviewers,
+        entitlement_max_active_variants=entitlement_max_active_variants,
+        entitlement_max_integrations=entitlement_max_integrations,
+        default_template_code=default_template_code,
+        observacoes=observacoes,
+        criado_por_id=criado_por_id,
+        buscar_empresa=_buscar_empresa,
+        buscar_familia_catalogo_por_chave=_buscar_familia_catalogo_por_chave,
+        tenant_release_model=TenantFamilyReleaseLaudo,
+        normalizar_status_release_catalogo=_normalizar_status_release_catalogo,
+        normalizar_lista_json_canonica=_normalizar_lista_json_canonica,
+        normalizar_selection_tokens_catalogo=_normalizar_selection_tokens_catalogo,
+        merge_release_governance_policy=_merge_release_governance_policy,
+        normalizar_review_mode_governanca=_normalizar_review_mode_governanca,
+        normalizar_override_tristate=_normalizar_override_tristate,
+        normalizar_release_channel_catalogo=_normalizar_release_channel_catalogo,
+        normalizar_contract_entitlements_payload=_normalizar_contract_entitlements_payload,
+        normalizar_chave_catalogo=_normalizar_chave_catalogo,
+        agora_utc=_agora_utc,
+        normalizar_texto_opcional=_normalizar_texto_opcional,
+        list_active_tenant_catalog_activations=list_active_tenant_catalog_activations,
+        sync_tenant_catalog_activations=sync_tenant_catalog_activations,
+        flush_ou_rollback_integridade=flush_ou_rollback_integridade,
         logger_operacao=logger,
-        mensagem_erro="Não foi possível salvar a liberação por tenant da família.",
     )
-    return registro
 
 
 def _normalizar_validade_signatario(valor: str | datetime | None) -> datetime | None:
-    if isinstance(valor, datetime):
-        dt = valor
-    else:
-        bruto = _normalizar_texto_opcional(valor, 40)
-        if not bruto:
-            return None
-        try:
-            dt = datetime.fromisoformat(bruto)
-        except ValueError as exc:
-            raise ValueError("Data de validade do signatário inválida.") from exc
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+    return _catalog_tenant_normalizar_validade_signatario(
+        valor,
+        normalizar_texto_opcional=_normalizar_texto_opcional,
+    )
 
 
 def _normalizar_family_keys_signatario(
     family_keys: list[str] | tuple[str, ...] | str | None,
 ) -> list[str]:
-    valores = _normalizar_lista_json_canonica(family_keys, campo="Famílias compatíveis") or []
-    return [
-        _normalizar_chave_catalogo(item, campo="Família compatível", max_len=120)
-        for item in valores
-    ]
+    return _catalog_tenant_normalizar_family_keys_signatario(
+        family_keys,
+        normalizar_lista_json_canonica=_normalizar_lista_json_canonica,
+        normalizar_chave_catalogo=_normalizar_chave_catalogo,
+    )
 
 
 def _status_signatario_governado(
@@ -3873,14 +3684,12 @@ def _status_signatario_governado(
     ativo: bool,
     valid_until: datetime | None,
 ) -> dict[str, str]:
-    validade = _normalizar_datetime_admin(valid_until)
-    if not ativo:
-        return {"key": "inactive", "label": "Inativo", "tone": "idle"}
-    if validade is not None and validade < _agora_utc():
-        return {"key": "expired", "label": "Expirado", "tone": "archived"}
-    if validade is not None and validade <= (_agora_utc() + timedelta(days=30)):
-        return {"key": "expiring_soon", "label": "Validade próxima", "tone": "testing"}
-    return {"key": "ready", "label": "Pronto", "tone": "active"}
+    return _catalog_tenant_status_signatario(
+        ativo=ativo,
+        valid_until=valid_until,
+        normalizar_datetime_admin=_normalizar_datetime_admin,
+        agora_utc=_agora_utc,
+    )
 
 
 def _serializar_signatario_governado_admin(
@@ -3888,36 +3697,15 @@ def _serializar_signatario_governado_admin(
     *,
     family_labels: dict[str, str],
 ) -> dict[str, Any]:
-    allowed_family_keys = _normalizar_family_keys_signatario(
-        getattr(signatario, "allowed_family_keys_json", None)
+    return _catalog_tenant_serializar_signatario(
+        signatario,
+        family_labels=family_labels,
+        normalizar_family_keys_signatario_fn=_normalizar_family_keys_signatario,
+        status_signatario_governado_fn=_status_signatario_governado,
+        normalizar_datetime_admin=_normalizar_datetime_admin,
+        formatar_data_admin=_formatar_data_admin,
+        normalizar_texto_opcional=_normalizar_texto_opcional,
     )
-    status = _status_signatario_governado(
-        ativo=bool(getattr(signatario, "ativo", False)),
-        valid_until=getattr(signatario, "valid_until", None),
-    )
-    family_scope = [
-        {
-            "family_key": family_key,
-            "family_label": family_labels.get(family_key, family_key),
-        }
-        for family_key in allowed_family_keys
-    ]
-    return {
-        "id": int(signatario.id),
-        "nome": str(signatario.nome),
-        "funcao": str(signatario.funcao),
-        "registro_profissional": _normalizar_texto_opcional(signatario.registro_profissional, 80),
-        "valid_until": _normalizar_datetime_admin(getattr(signatario, "valid_until", None)),
-        "valid_until_label": _formatar_data_admin(getattr(signatario, "valid_until", None), fallback="Sem validade"),
-        "ativo": bool(getattr(signatario, "ativo", False)),
-        "status": status,
-        "allowed_family_keys": allowed_family_keys,
-        "family_scope": family_scope,
-        "family_scope_summary": "Todas as famílias liberadas do tenant" if not family_scope else ", ".join(
-            item["family_label"] for item in family_scope[:3]
-        ),
-        "observacoes": _normalizar_texto_opcional(getattr(signatario, "observacoes", None)),
-    }
 
 
 def upsert_signatario_governado_laudo(
@@ -3934,44 +3722,35 @@ def upsert_signatario_governado_laudo(
     signatario_id: int | None = None,
     criado_por_id: int | None = None,
 ) -> SignatarioGovernadoLaudo:
-    empresa = _buscar_empresa(db, int(tenant_id))
-    registro = None
-    if signatario_id:
-        registro = db.scalar(
-            select(SignatarioGovernadoLaudo).where(
-                SignatarioGovernadoLaudo.id == int(signatario_id),
-                SignatarioGovernadoLaudo.tenant_id == int(empresa.id),
-            )
-        )
-        if registro is None:
-            raise ValueError("Signatário governado não encontrado para este tenant.")
-    if registro is None:
-        registro = SignatarioGovernadoLaudo(
-            tenant_id=int(empresa.id),
-            criado_por_id=criado_por_id,
-        )
-        db.add(registro)
-
-    registro.nome = _normalizar_texto_curto(nome, campo="Nome do signatário", max_len=160)
-    registro.funcao = _normalizar_texto_curto(funcao, campo="Função do signatário", max_len=120)
-    registro.registro_profissional = _normalizar_texto_opcional(registro_profissional, 80)
-    registro.valid_until = _normalizar_validade_signatario(valid_until)
-    registro.allowed_family_keys_json = _normalizar_family_keys_signatario(allowed_family_keys)
-    registro.observacoes = _normalizar_texto_opcional(observacoes)
-    registro.ativo = bool(ativo)
-    if criado_por_id and not registro.criado_por_id:
-        registro.criado_por_id = criado_por_id
-
-    flush_ou_rollback_integridade(
+    return _catalog_tenant_upsert_signatario(
         db,
+        tenant_id=tenant_id,
+        nome=nome,
+        funcao=funcao,
+        registro_profissional=registro_profissional,
+        valid_until=valid_until,
+        allowed_family_keys=allowed_family_keys,
+        observacoes=observacoes,
+        ativo=ativo,
+        signatario_id=signatario_id,
+        criado_por_id=criado_por_id,
+        buscar_empresa=_buscar_empresa,
+        signatario_model=SignatarioGovernadoLaudo,
+        normalizar_texto_curto=_normalizar_texto_curto,
+        normalizar_texto_opcional=_normalizar_texto_opcional,
+        normalizar_validade_signatario_fn=_normalizar_validade_signatario,
+        normalizar_family_keys_signatario_fn=_normalizar_family_keys_signatario,
+        flush_ou_rollback_integridade=flush_ou_rollback_integridade,
         logger_operacao=logger,
-        mensagem_erro="Não foi possível salvar o signatário governado do tenant.",
     )
-    return registro
 
 
 def resumir_portfolio_catalogo_empresa(db: Session, *, empresa_id: int) -> dict[str, Any]:
-    return build_admin_tenant_catalog_snapshot(db, empresa_id=int(empresa_id))
+    return _catalog_tenant_resumir_portfolio(
+        db,
+        empresa_id=empresa_id,
+        build_admin_tenant_catalog_snapshot=build_admin_tenant_catalog_snapshot,
+    )
 
 
 def sincronizar_portfolio_catalogo_empresa(
@@ -3981,19 +3760,16 @@ def sincronizar_portfolio_catalogo_empresa(
     selection_tokens: list[str] | tuple[str, ...],
     admin_id: int | None = None,
 ) -> dict[str, Any]:
-    _buscar_empresa(db, int(empresa_id))
-    resultado = sync_tenant_catalog_activations(
+    return _catalog_tenant_sincronizar_portfolio(
         db,
-        empresa_id=int(empresa_id),
+        empresa_id=empresa_id,
         selection_tokens=selection_tokens,
-        admin_id=int(admin_id) if admin_id is not None else None,
-    )
-    flush_ou_rollback_integridade(
-        db,
+        admin_id=admin_id,
+        buscar_empresa=_buscar_empresa,
+        sync_tenant_catalog_activations=sync_tenant_catalog_activations,
+        flush_ou_rollback_integridade=flush_ou_rollback_integridade,
         logger_operacao=logger,
-        mensagem_erro="Não foi possível sincronizar o portfólio comercial do tenant.",
     )
-    return resultado
 
 
 def _serializar_usuario_admin(

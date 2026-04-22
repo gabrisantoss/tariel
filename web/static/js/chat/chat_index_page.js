@@ -39,6 +39,7 @@
     const InspectorStateNormalization = window.TarielInspectorStateNormalization || {};
     const InspectorHistoryBuilders = window.TarielInspectorHistoryBuilders || {};
     const InspectorWorkspaceHistoryContext = window.TarielInspectorWorkspaceHistoryContext || {};
+    const InspectorWorkspaceMesaStatus = window.TarielInspectorWorkspaceMesaStatus || {};
     const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
@@ -2441,78 +2442,30 @@
         );
     }
 
-    function atualizarStatusChatWorkspace(status = "pronto", texto = "") {
-        const normalizado = ["respondendo", "documento", "interrompido", "erro", "mesa", "pronto"]
-            .includes(String(status || "").trim().toLowerCase())
-            ? String(status).trim().toLowerCase()
-            : "pronto";
-
-        estado.chatStatusIA = {
-            status: normalizado,
-            texto: String(texto || "").trim() || "Assistente pronto",
+    function obterDependenciasWorkspaceMesaStatus() {
+        return {
+            NOMES_TEMPLATES,
+            contarEvidenciasWorkspace,
+            el,
+            estado,
+            normalizarStatusMesa,
+            obterOperacaoWorkspace,
+            obterResumoOperacionalMesa,
         };
     }
 
+    function atualizarStatusChatWorkspace(status = "pronto", texto = "") {
+        InspectorWorkspaceMesaStatus.atualizarStatusChatWorkspace?.(
+            status,
+            texto,
+            obterDependenciasWorkspaceMesaStatus()
+        );
+    }
+
     function renderizarMesaCardWorkspace() {
-        const resumo = obterResumoOperacionalMesa();
-        const evidencias = contarEvidenciasWorkspace();
-        const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
-        const naoLidas = Number(estado.mesaWidgetNaoLidas || 0) || 0;
-        const modelo = NOMES_TEMPLATES[estado.tipoTemplateAtivo] || NOMES_TEMPLATES.padrao;
-        const operacao = obterOperacaoWorkspace();
-        const equipamento = String(estado.workspaceVisualContext?.title || "Registro técnico").trim() || "Registro técnico";
-        const ultimoMovimento = resumo.descricao || "Sem atualização recente.";
-        let proximoPasso = "Use o canal para alinhar dúvidas ou anexar novas evidências.";
-
-        if (pendencias > 0) {
-            proximoPasso = "Responda às pendências abertas para destravar a revisão.";
-        } else if (naoLidas > 0) {
-            proximoPasso = "Leia o retorno mais recente da mesa e ajuste o laudo se necessário.";
-        } else if (resumo.status === "aguardando") {
-            proximoPasso = "Aguarde a resposta da mesa ou complemente o caso com novo contexto.";
-        }
-
-        if (el.workspaceMesaCardText) {
-            el.workspaceMesaCardText.textContent = resumo.descricao;
-        }
-        if (el.workspaceMesaCardStatus) {
-            el.workspaceMesaCardStatus.textContent = resumo.chipStatus || resumo.titulo;
-            el.workspaceMesaCardStatus.dataset.mesaStatus = String(resumo.status || "pronta");
-        }
-        if (el.workspaceMesaCardUnread) {
-            el.workspaceMesaCardUnread.hidden = naoLidas <= 0;
-            el.workspaceMesaCardUnread.textContent = naoLidas > 99 ? "99+ novas" : `${naoLidas} novas`;
-        }
-        if (el.workspaceMesaStageStatus) {
-            el.workspaceMesaStageStatus.textContent = resumo.chipStatus || resumo.titulo;
-        }
-        if (el.workspaceMesaStagePendencias) {
-            el.workspaceMesaStagePendencias.textContent = String(pendencias);
-        }
-        if (el.workspaceMesaStageEvidencias) {
-            el.workspaceMesaStageEvidencias.textContent = String(evidencias);
-        }
-        if (el.workspaceMesaStageUnread) {
-            el.workspaceMesaStageUnread.textContent = String(naoLidas);
-        }
-        if (el.workspaceMesaStageSummary) {
-            el.workspaceMesaStageSummary.textContent = resumo.descricao;
-        }
-        if (el.workspaceMesaStageNextStep) {
-            el.workspaceMesaStageNextStep.textContent = proximoPasso;
-        }
-        if (el.workspaceMesaStageTemplate) {
-            el.workspaceMesaStageTemplate.textContent = modelo;
-        }
-        if (el.workspaceMesaStageOperation) {
-            el.workspaceMesaStageOperation.textContent = operacao;
-        }
-        if (el.workspaceMesaStageEquipment) {
-            el.workspaceMesaStageEquipment.textContent = equipamento;
-        }
-        if (el.workspaceMesaStageLastMovement) {
-            el.workspaceMesaStageLastMovement.textContent = ultimoMovimento;
-        }
+        InspectorWorkspaceMesaStatus.renderizarMesaCardWorkspace?.(
+            obterDependenciasWorkspaceMesaStatus()
+        );
     }
 
     function obterDependenciasWorkspaceComposer() {
@@ -4011,21 +3964,18 @@
     }
 
     function atualizarStatusMesa(status = "pronta", detalhe = "") {
-        const statusNormalizado = normalizarStatusMesa(status);
-        estado.statusMesa = statusNormalizado;
-        estado.statusMesaDescricao = String(detalhe || "").trim();
+        InspectorWorkspaceMesaStatus.atualizarStatusMesa?.(
+            status,
+            detalhe,
+            obterDependenciasWorkspaceMesaStatus()
+        );
     }
 
     function atualizarStatusMesaPorComposer(modoMarcador) {
-        if (modoMarcador === "insp") {
-            if (estado.statusMesa !== "aguardando" && estado.statusMesa !== "respondeu") {
-                atualizarStatusMesa("canal_ativo");
-            }
-            return;
-        }
-
-        if (estado.statusMesa === "canal_ativo") {
-        }
+        InspectorWorkspaceMesaStatus.atualizarStatusMesaPorComposer?.(
+            modoMarcador,
+            obterDependenciasWorkspaceMesaStatus()
+        );
     }
 
     function obterTipoTemplateDoPayload(dados = {}) {

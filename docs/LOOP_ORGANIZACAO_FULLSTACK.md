@@ -2605,3 +2605,49 @@ Próximo passo imediato:
 
 - continuar esvaziando `chat_index_page.js` pela camada de status/cards auxiliares do workspace e, depois, por ações do rail/sidebar;
 - no admin, avaliar a próxima extração de escrita/leitura de portfolio/catalog runtime para continuar reduzindo o agregado `services.py`.
+
+## Ciclo 68 — Extração do status da mesa no workspace e gestão tenant do catálogo
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda concentrava o status operacional da IA/mesa e a renderização do card/stage de acompanhamento da mesa no workspace;
+- `web/app/domains/admin/services.py` ainda mantinha serialização de release, histórico da família, signatários governados e operações de portfólio/ativação por tenant;
+- esse bloco do backend já era coeso o suficiente para sair como serviço de gestão tenant do catálogo.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_mesa_status.js` com atualização de status da IA/mesa, sincronização com o composer e renderização do card/stage da mesa;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorWorkspaceMesaStatus` via dependências explícitas;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/catalog_tenant_management_services.py` com serialização de release, histórico da família, signatários governados e operações de portfólio/catalog activation por tenant;
+- `web/app/domains/admin/services.py` ficou como fachada fina para esse conjunto, preservando a API do domínio admin.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_mesa_status.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/catalog_tenant_management_services.py`
+- `web/app/domains/admin/services.py`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_mesa_status.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/catalog_tenant_management_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/catalog_tenant_management_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "catalog or governance or platform_settings"`
+- resultado:
+  - `41 passed`
+  - `14 passed, 28 deselected`
+
+Próximo passo imediato:
+
+- continuar reduzindo `chat_index_page.js` pelos blocos remanescentes de navegação/resumo/rail do workspace;
+- no backend, atacar o que ainda restar de orquestração ampla em `admin/services.py`, principalmente áreas onde leitura e escrita ainda dividem o mesmo agregado.

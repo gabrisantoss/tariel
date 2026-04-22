@@ -2629,3 +2629,31 @@ Atualizado em `2026-04-21`.
 - `chat_index_page.js` perde mais um bloco grande de render/contexto do workspace
 - `admin/services.py` perde a leitura principal do catálogo sem regressão funcional
 - `make verify` segue verde
+
+### `PKT-HOTSPOTS-BASELINE-05` — Mesa do workspace e gestão tenant do catálogo
+
+- `status`: em andamento em `2026-04-22`
+
+### Objetivo
+
+- seguir drenando o restante dos hotspots por blocos operacionais de UI e gestão de catálogo tenant
+
+### Escopo
+
+- entra extração do status/card da mesa no workspace
+- entra extração da gestão tenant do catálogo, releases e signatários
+- não entra mudança funcional de governança
+- não entra redesign da UI da mesa
+
+### Passos
+
+1. extrair status operacional da IA/mesa e card da mesa para módulo do inspetor
+2. extrair releases, signatários e portfolio tenant para serviço admin dedicado
+3. validar com smoke, subset admin, lint e sintaxe
+4. fechar com `make verify` e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco operacional do workspace
+- `admin/services.py` perde mais uma fatia de gestão tenant/catálogo
+- `make verify` continua verde
