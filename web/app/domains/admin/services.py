@@ -15,8 +15,7 @@ import json
 import logging
 from pathlib import Path
 import re
-from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from datetime import datetime, timezone
 from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -98,6 +97,9 @@ from app.domains.admin.admin_presentation_services import (
 )
 from app.domains.admin.tenant_onboarding_services import (
     registrar_novo_cliente as _tenant_onboarding_registrar_novo_cliente,
+)
+from app.domains.admin.admin_dashboard_services import (
+    buscar_metricas_ia_painel as _admin_dashboard_buscar_metricas_ia_painel,
 )
 from app.domains.admin.platform_settings_state import (
     get_platform_default_new_tenant_plan,  # noqa: F401
@@ -3945,51 +3947,23 @@ def registrar_novo_cliente(
 
 
 def buscar_metricas_ia_painel(db: Session) -> dict[str, Any]:
-    qtd_clientes = db.scalar(select(func.count(Empresa.id)).where(_tenant_cliente_clause())) or 0
-    total_inspecoes = db.scalar(select(func.count(Laudo.id))) or 0
-    faturamento_ia = db.scalar(select(func.coalesce(func.sum(Laudo.custo_api_reais), 0))) or Decimal("0")
-    familias_catalogadas = listar_catalogo_familias(db, filtro_classificacao="family")
-    family_rows = [_serializar_familia_catalogo_row(item) for item in familias_catalogadas]
-
-    stmt_ranking = select(Empresa).where(_tenant_cliente_clause()).order_by(_case_prioridade_plano(), Empresa.id.desc())
-    ranking = list(db.scalars(stmt_ranking).all())
-
-    hoje = _agora_utc().date()
-    labels: list[str] = []
-    valores: list[int] = []
-
-    for i in range(6, -1, -1):
-        dia = hoje - timedelta(days=i)
-        inicio = datetime(dia.year, dia.month, dia.day, tzinfo=timezone.utc)
-        fim = inicio + timedelta(days=1)
-
-        qtd = (
-            db.scalar(
-                select(func.count(Laudo.id)).where(
-                    Laudo.criado_em >= inicio,
-                    Laudo.criado_em < fim,
-                )
-            )
-            or 0
-        )
-
-        labels.append(dia.strftime("%a %d/%m"))
-        valores.append(int(qtd))
-
-    return {
-        "qtd_clientes": int(qtd_clientes),
-        "total_inspecoes": int(total_inspecoes),
-        "receita_ia_total": faturamento_ia,
-        "clientes": ranking,
-        "governance_rollup": _build_catalog_governance_rollup(
-            db,
-            families=familias_catalogadas,
-        ),
-        "commercial_scale_rollup": _build_commercial_scale_rollup(family_rows),
-        "calibration_queue_rollup": _build_calibration_queue_rollup(family_rows),
-        "labels_grafico": labels,
-        "valores_grafico": valores,
-    }
+    return _admin_dashboard_buscar_metricas_ia_painel(
+        db,
+        dependencies={
+            "select": select,
+            "func": func,
+            "Empresa": Empresa,
+            "Laudo": Laudo,
+            "tenant_cliente_clause": _tenant_cliente_clause,
+            "case_prioridade_plano": _case_prioridade_plano,
+            "listar_catalogo_familias": listar_catalogo_familias,
+            "serializar_familia_catalogo_row": _serializar_familia_catalogo_row,
+            "build_catalog_governance_rollup": _build_catalog_governance_rollup,
+            "build_commercial_scale_rollup": _build_commercial_scale_rollup,
+            "build_calibration_queue_rollup": _build_calibration_queue_rollup,
+            "agora_utc": _agora_utc,
+        },
+    )
 
 
 # =========================================================

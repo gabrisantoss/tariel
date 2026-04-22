@@ -533,3 +533,52 @@ Próximo passo imediato:
 
 - continuar a limpeza de `web/static/js/chat/chat_index_page.js`, agora mirando helpers remanescentes de divergência/logging ou o próximo bloco coeso do runtime do inspetor;
 - se o ganho estrutural do frontend cair, alternar de volta para uma fatia isolada do backend admin.
+
+## Ciclo R14 — Screen sync do workspace e dashboard admin
+
+Status:
+
+- concluído e validado localmente
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda centralizava a sincronização das views do workspace, a visibilidade do widget da mesa e a emissão do evento `tariel:screen-synced`, mantendo mais orquestração de tela do que o necessário no runtime principal;
+- `web/app/domains/admin/services.py` ainda concentrava a leitura agregada do dashboard administrativo, misturando contadores, ranking e rollups do catálogo no mesmo agregado já muito grande.
+
+Corte executado:
+
+- criação do módulo `web/static/js/inspetor/workspace_screen.js`;
+- extração das rotinas:
+  - `sincronizarWorkspaceViews`
+  - `sincronizarWidgetsGlobaisWorkspace`
+  - `sincronizarInspectorScreen`
+- reapontamento de `web/static/js/chat/chat_index_page.js` para consumir o helper novo via `window.TarielInspectorWorkspaceScreen`;
+- criação do módulo `web/app/domains/admin/admin_dashboard_services.py`;
+- extração da rotina `buscar_metricas_ia_painel(...)` para o módulo novo, preservando a API pública em `services.py`;
+- ajuste da ordem de carga em `web/templates/index.html` para carregar o helper novo antes do runtime principal.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_screen.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_dashboard_services.py`
+- `web/app/domains/admin/services.py`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_screen.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_dashboard_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_dashboard_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py -q -k "buscar_metricas_ia_painel or ignora_tenant_plataforma_em_metricas or governance_rollup"`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`
+- `git diff --check`
+- resultados:
+  - `1 passed, 41 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar a quebra de `web/static/js/chat/chat_index_page.js` pelo próximo bloco coeso de runtime do workspace, preferindo utilitários de navegação/home ou contexto residual;
+- no backend, seguir com a próxima fatia isolada de leitura ou mutação administrativa ainda remanescente em `web/app/domains/admin/services.py`.

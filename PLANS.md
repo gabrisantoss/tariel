@@ -2715,3 +2715,32 @@ Atualizado em `2026-04-22`.
 - `chat_index_page.js` perde mais um bloco coeso de navegação/rail sem regressão de bootstrap
 - `admin/services.py` perde o fluxo de onboarding sem quebrar testes de cadastro e boas-vindas
 - smoke do web e testes focais do admin seguem verdes
+
+### `PKT-HOTSPOTS-BASELINE-08` — Screen sync do workspace e dashboard admin
+
+- `status`: concluído localmente em `2026-04-22`; `chat_index_page.js` delega sincronização de views/widgets/screen para `web/static/js/inspetor/workspace_screen.js`, `admin/services.py` delega `buscar_metricas_ia_painel` para `web/app/domains/admin/admin_dashboard_services.py`, e o recorte passou em sintaxe, `ruff`, smoke e subset focal do admin
+
+### Objetivo
+
+- continuar drenando os hotspots por blocos centrais de screen sync do inspetor e leitura agregada do dashboard admin sem mexer no contrato público
+
+### Escopo
+
+- entra extração da sincronização de views do workspace, widget da mesa e evento `tariel:screen-synced`
+- entra extração da leitura agregada de métricas do painel admin
+- entra alinhamento da memória operacional entre `LOOP_ORGANIZACAO_FULLSTACK` e `LOOP_RECUPERACAO_TARIEL_WEB`
+- não entra mudança visual do inspetor
+- não entra alteração semântica do dashboard admin
+
+### Passos
+
+1. extrair o bloco de views/widgets/screen sync para módulo do inspetor com dependências explícitas
+2. extrair `buscar_metricas_ia_painel` para serviço dedicado de dashboard admin
+3. validar com `node --check`, `py_compile`, `ruff`, subset focal do admin e `tests/test_smoke.py`
+4. registrar o checkpoint e commitar o lote
+
+### Critério de pronto
+
+- `chat_index_page.js` perde mais um bloco coeso do screen sync sem quebrar o bootstrap do inspetor
+- `admin/services.py` perde a leitura agregada do painel sem regressão em métricas e rollups
+- smoke do web e subset focal do admin seguem verdes

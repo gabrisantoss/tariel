@@ -2747,3 +2747,52 @@ Próximo passo imediato:
 
 - continuar reduzindo `chat_index_page.js` pelos blocos remanescentes de widgets globais/screen sync do workspace;
 - no backend, atacar a próxima fatia de `admin/services.py` que ainda mistura métricas, leitura agregada e mutações administrativas no mesmo agregado.
+
+## Ciclo 71 — Extração do screen sync do workspace e dashboard admin
+
+Status:
+
+- concluído e validado localmente em `2026-04-22`
+
+Problema observado:
+
+- `web/static/js/chat/chat_index_page.js` ainda mantinha no arquivo central a sincronização das views do workspace, a visibilidade do widget da mesa e o disparo do evento público `tariel:screen-synced`;
+- `web/app/domains/admin/services.py` ainda mantinha a leitura agregada do painel administrativo, juntando contagem de clientes, ranking, séries diárias e rollups do catálogo no mesmo agregado;
+- ambos os blocos eram coesos e de leitura/orquestração, portanto bons candidatos para sair do hotspot sem mudar comportamento.
+
+Corte executado:
+
+- extraído `web/static/js/inspetor/workspace_screen.js` com `sincronizarWorkspaceViews`, `sincronizarWidgetsGlobaisWorkspace` e `sincronizarInspectorScreen`;
+- `web/static/js/chat/chat_index_page.js` passou a delegar esse bloco para `window.TarielInspectorWorkspaceScreen` por meio de dependências explícitas;
+- `web/templates/index.html` passou a carregar o novo módulo antes do `chat_index_page.js`;
+- extraído `web/app/domains/admin/admin_dashboard_services.py` com `buscar_metricas_ia_painel`;
+- `web/app/domains/admin/services.py` ficou como fachada fina para o dashboard administrativo, injetando as dependências necessárias.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_screen.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/app/domains/admin/admin_dashboard_services.py`
+- `web/app/domains/admin/services.py`
+- `PLANS.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada:
+
+- `node --check web/static/js/inspetor/workspace_screen.js`
+- `node --check web/static/js/chat/chat_index_page.js`
+- `python -m py_compile web/app/domains/admin/services.py web/app/domains/admin/admin_dashboard_services.py`
+- `cd web && PYTHONPATH=. python -m ruff check app/domains/admin/services.py app/domains/admin/admin_dashboard_services.py`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_admin_services.py -k "buscar_metricas_ia_painel or ignora_tenant_plataforma_em_metricas or governance_rollup"`
+- `cd web && PYTHONPATH=. python -m pytest -q tests/test_smoke.py`
+- `git diff --check`
+- resultado:
+  - `1 passed, 41 deselected`
+  - `41 passed`
+
+Próximo passo imediato:
+
+- continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime do workspace, provavelmente navegação/home helpers ou utilitários remanescentes de contexto;
+- no backend, atacar a próxima leitura/mutação administrativa ainda concentrada em `admin/services.py`, preferindo cortes pequenos com cobertura já existente.

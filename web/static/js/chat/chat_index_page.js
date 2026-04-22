@@ -42,6 +42,7 @@
     const InspectorWorkspaceMesaStatus = window.TarielInspectorWorkspaceMesaStatus || {};
     const InspectorSidebarHistory = window.TarielInspectorSidebarHistory || {};
     const InspectorWorkspaceRail = window.TarielInspectorWorkspaceRail || {};
+    const InspectorWorkspaceScreen = window.TarielInspectorWorkspaceScreen || {};
     const InspectorWorkspaceComposer = window.TarielInspectorWorkspaceComposer || {};
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
@@ -3647,141 +3648,69 @@
     }
 
     function sincronizarWidgetsGlobaisWorkspace(screen = estado.inspectorScreen || resolveInspectorScreen()) {
-        const mesaWidgetPermitido = resolveMesaWidgetDisponibilidade(screen);
-        const view = resolveWorkspaceView(screen);
-        const mesaIncorporada = view === "inspection_mesa";
-
-        document.body.dataset.mesaWidgetVisible = mesaWidgetPermitido ? "true" : "false";
-
-        if (el.painelChat) {
-            el.painelChat.dataset.mesaWidgetVisible = mesaWidgetPermitido ? "true" : "false";
-        }
-
-        if (el.mesaWidgetScreenRoot) {
-            el.mesaWidgetScreenRoot.dataset.widgetAllowed = mesaWidgetPermitido ? "true" : "false";
-            definirRootAtivo(el.mesaWidgetScreenRoot, mesaWidgetPermitido && !mesaIncorporada);
-        }
-
-        if (el.painelMesaWidget) {
-            el.painelMesaWidget.dataset.widgetAllowed = mesaWidgetPermitido ? "true" : "false";
-            const ariaHidden = !mesaWidgetPermitido || el.painelMesaWidget.hidden;
-            el.painelMesaWidget.setAttribute("aria-hidden", String(ariaHidden));
-        }
-
-        sincronizarMesaStageWorkspace(view, mesaWidgetPermitido);
-
-        if (!mesaWidgetPermitido) {
-            if (estado.mesaWidgetAberto || !el.painelMesaWidget?.hidden) {
-                fecharMesaWidget();
-            } else if (el.btnMesaWidgetToggle) {
-                el.btnMesaWidgetToggle.setAttribute("aria-expanded", "false");
+        return InspectorWorkspaceScreen.sincronizarWidgetsGlobaisWorkspace?.(
+            screen,
+            {
+                document,
+                estado,
+                el,
+                resolveInspectorScreen,
+                resolveMesaWidgetDisponibilidade,
+                resolveWorkspaceView,
+                definirRootAtivo,
+                sincronizarMesaStageWorkspace,
+                fecharMesaWidget,
+                sincronizarClasseBodyMesaWidget,
             }
-        }
-
-        sincronizarClasseBodyMesaWidget();
-        return mesaWidgetPermitido;
+        ) || false;
     }
 
     function sincronizarWorkspaceViews(screen = estado.inspectorScreen || resolveInspectorScreen()) {
-        const view = resolveWorkspaceView(screen);
-        const chromeTecnicoVisivel =
-            view !== "assistant_landing" &&
-            !conversaWorkspaceModoChatAtivo(screen, obterSnapshotEstadoInspectorAtual());
-
-        definirRootAtivo(el.workspaceAssistantViewRoot, view === "assistant_landing");
-        definirRootAtivo(el.workspaceHistoryViewRoot, view === "inspection_history");
-        definirRootAtivo(el.workspaceRecordViewRoot, view === "inspection_record");
-        definirRootAtivo(el.workspaceConversationViewRoot, view === "inspection_conversation");
-        definirRootAtivo(el.workspaceMesaViewRoot, view === "inspection_mesa");
-
-        if (!el.threadNav) {
-            el.threadNav = document.querySelector(".thread-nav");
-        }
-
-        if (el.threadNav) {
-            el.threadNav.hidden = !chromeTecnicoVisivel;
-            el.threadNav.setAttribute("aria-hidden", String(!chromeTecnicoVisivel));
-        }
-
-        if (el.workspaceHistoryViewRoot) {
-            el.workspaceHistoryViewRoot.dataset.historyFocus = view === "inspection_history" ? "reading" : "idle";
-        }
-
-        if (el.workspaceHistoryRoot) {
-            el.workspaceHistoryRoot.dataset.historyFocus = view === "inspection_history" ? "reading" : "idle";
-        }
-
-        if (el.workspaceAnexosPanel) {
-            const anexosVisiveis = view === "inspection_record";
-            el.workspaceAnexosPanel.hidden = !anexosVisiveis;
-            el.workspaceAnexosPanel.setAttribute("aria-hidden", String(!anexosVisiveis));
-        }
-
-        atualizarEmptyStateHonestoConversa();
-
-        return view;
+        return InspectorWorkspaceScreen.sincronizarWorkspaceViews?.(
+            screen,
+            {
+                document,
+                estado,
+                el,
+                resolveInspectorScreen,
+                resolveWorkspaceView,
+                conversaWorkspaceModoChatAtivo,
+                obterSnapshotEstadoInspectorAtual,
+                definirRootAtivo,
+                atualizarEmptyStateHonestoConversa,
+            }
+        ) || resolveWorkspaceView(screen);
     }
 
     function sincronizarInspectorScreen() {
-        if (sincronizandoInspectorScreen) {
-            sincronizacaoInspectorScreenPendente = true;
-            return estado.inspectorScreen || resolveInspectorBaseScreen();
-        }
-
-        sincronizandoInspectorScreen = true;
-
-        try {
-            const snapshot = sincronizarEstadoInspector({}, {
-                persistirStorage: false,
-                syncScreen: false,
-            });
-            const screen = snapshot.inspectorScreen;
-            const baseScreen = snapshot.inspectorBaseScreen;
-            const workspaceAtivo = baseScreen !== "portal_dashboard";
-            const overlayOwner = snapshot.overlayOwner;
-
-            definirRootAtivo(el.portalScreenRoot, baseScreen === "portal_dashboard");
-            definirRootAtivo(el.workspaceScreenRoot, workspaceAtivo);
-            sincronizarWorkspaceViews(screen);
-            const railVisible = sincronizarWorkspaceRail(screen);
-            const mesaWidgetVisible = sincronizarWidgetsGlobaisWorkspace(screen);
-            const chatLivreDisponivel = sincronizarVisibilidadeAcoesChatLivre(snapshot);
-            const matrizVisibilidade = aplicarMatrizVisibilidadeInspector(screen, snapshot);
-
-            document.dispatchEvent(new CustomEvent("tariel:screen-synced", {
-                detail: {
-                    screen,
-                    baseScreen,
-                    overlayOwner,
-                    workspaceAtivo,
-                    homeActionVisible: !!snapshot.homeActionVisible,
-                    chatLivreDisponivel,
-                    compactLayout: matrizVisibilidade.compacto,
-                    quickDock: matrizVisibilidade.quickDock,
-                    contextRail: matrizVisibilidade.contextRail,
-                    mesaEntry: matrizVisibilidade.mesaEntry,
-                    finalizeEntry: matrizVisibilidade.headerFinalize === "visible" ? "header" : (
-                        matrizVisibilidade.railFinalize === "visible" ? "rail" : "hidden"
-                    ),
-                    novaInspecaoEntry: matrizVisibilidade.novaInspecaoEntry,
-                    abrirChatEntry: matrizVisibilidade.abrirChatEntry,
-                    railVisible,
-                    mesaWidgetVisible,
+        return InspectorWorkspaceScreen.sincronizarInspectorScreen?.({
+            windowRef: window,
+            document,
+            state: {
+                estado,
+                el,
+                get sincronizandoInspectorScreen() {
+                    return sincronizandoInspectorScreen;
                 },
-                bubbles: true,
-            }));
-
-            return screen;
-        } finally {
-            sincronizandoInspectorScreen = false;
-
-            if (sincronizacaoInspectorScreenPendente) {
-                sincronizacaoInspectorScreenPendente = false;
-                window.requestAnimationFrame(() => {
-                    sincronizarInspectorScreen();
-                });
-            }
-        }
+                set sincronizandoInspectorScreen(value) {
+                    sincronizandoInspectorScreen = value;
+                },
+                get sincronizacaoInspectorScreenPendente() {
+                    return sincronizacaoInspectorScreenPendente;
+                },
+                set sincronizacaoInspectorScreenPendente(value) {
+                    sincronizacaoInspectorScreenPendente = value;
+                },
+            },
+            sincronizarEstadoInspector,
+            resolveInspectorBaseScreen,
+            definirRootAtivo,
+            sincronizarWorkspaceViews,
+            sincronizarWorkspaceRail,
+            sincronizarWidgetsGlobaisWorkspace,
+            sincronizarVisibilidadeAcoesChatLivre,
+            aplicarMatrizVisibilidadeInspector,
+        }) || (estado.inspectorScreen || resolveInspectorBaseScreen());
     }
 
     async function navegarParaHome(destino = "/app/?home=1", { preservarContexto = true } = {}) {
