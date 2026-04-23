@@ -572,3 +572,41 @@ body.pagina-chat-dashboard-v2 .workspace-history-card__more-menu {
         height: 40px;
     }
 }
+
+body.pagina-chat-dashboard-v2 [data-workspace-history-root] {
+    gap: 18px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-filter-shell,
+body.pagina-chat-dashboard-v2 .workspace-history-insight,
+body.pagina-chat-dashboard-v2 .workspace-history-card {
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.05);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card {
+    border-radius: 20px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card__body {
+    gap: 14px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card__identity strong {
+    letter-spacing: -0.01em;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card__text {
+    overflow-wrap: anywhere;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card__attachment,
+body.pagina-chat-dashboard-v2 .workspace-history-card__action,
+body.pagina-chat-dashboard-v2 .workspace-history-card__more summary {
+    min-height: 34px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card__more-menu {
+    min-width: 148px;
+    border-radius: 18px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+}
