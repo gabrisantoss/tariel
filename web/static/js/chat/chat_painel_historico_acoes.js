@@ -281,33 +281,37 @@
     } = {}) {
         return new Promise((resolve) => {
             const overlay = document.createElement("div");
-            overlay.className = "finalizacao-preview-overlay";
+            overlay.className = "finalizacao-preview-overlay inspetor-confirm-delete-overlay";
             overlay.setAttribute("role", "presentation");
 
             const modal = document.createElement("div");
-            modal.className = "finalizacao-preview-modal";
+            modal.className = "finalizacao-preview-modal inspetor-confirm-delete-modal";
             modal.setAttribute("role", "dialog");
             modal.setAttribute("aria-modal", "true");
             modal.setAttribute("aria-labelledby", "modal-confirmacao-historico-titulo");
             modal.innerHTML = `
-                <div class="finalizacao-preview-modal__header">
-                    <span class="finalizacao-preview-modal__eyebrow">Histórico do chat</span>
+                <div class="finalizacao-preview-modal__header inspetor-confirm-delete-modal__header">
+                    <div class="inspetor-confirm-delete-modal__icon" aria-hidden="true">
+                        <span class="material-symbols-rounded">delete</span>
+                    </div>
+                    <span class="finalizacao-preview-modal__eyebrow inspetor-confirm-delete-modal__eyebrow">Ação destrutiva</span>
                     <h2 id="modal-confirmacao-historico-titulo">${titulo}</h2>
                     <p>${descricao}</p>
                 </div>
                 ${contexto ? `
-                    <div class="finalizacao-preview-modal__blockers">
+                    <div class="finalizacao-preview-modal__blockers inspetor-confirm-delete-modal__context">
                         <strong>Item selecionado</strong>
-                        <ul>
-                            <li>${contexto}</li>
-                        </ul>
+                        <div class="inspetor-confirm-delete-modal__context-card">
+                            <span class="material-symbols-rounded" aria-hidden="true">chat</span>
+                            <span>${contexto}</span>
+                        </div>
                     </div>
                 ` : ""}
-                <div class="finalizacao-preview-modal__footer">
+                <div class="finalizacao-preview-modal__footer inspetor-confirm-delete-modal__footer">
                     <button type="button" class="technical-record-btn technical-record-btn--ghost" data-confirmacao-cancelar>
                         Cancelar
                     </button>
-                    <button type="button" class="technical-record-btn technical-record-btn--danger" data-confirmacao-confirmar>
+                    <button type="button" class="technical-record-btn inspetor-confirm-delete-modal__confirm" data-confirmacao-confirmar>
                         ${confirmarLabel}
                     </button>
                 </div>
