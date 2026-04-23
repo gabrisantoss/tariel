@@ -249,6 +249,7 @@
             windowRef = global,
             estado = {},
             el = {},
+            obterSnapshotEstadoInspectorAtual,
             obterLaudoAtivoIdSeguro,
             renderizarAnexosWorkspace,
             filtrarTimelineWorkspace,
@@ -259,7 +260,16 @@
         const { persistirURL = false, replaceURL = false } = options && typeof options === "object"
             ? options
             : {};
-        const tabNormalizada = normalizarThreadTab?.(tab) || "conversa";
+        let tabNormalizada = normalizarThreadTab?.(tab) || "conversa";
+        const snapshotAtual = obterSnapshotEstadoInspectorAtual?.() || {};
+        const conversaLivreFocada = !!dependencies.normalizarBooleanoEstado?.(
+            snapshotAtual?.freeChatConversationActive,
+            false
+        );
+
+        if (conversaLivreFocada && tabNormalizada === "mesa") {
+            tabNormalizada = "conversa";
+        }
 
         sincronizarEstadoInspector?.({
             threadTab: tabNormalizada,
