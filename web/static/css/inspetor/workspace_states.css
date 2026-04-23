@@ -398,6 +398,7 @@ body.pagina-chat-dashboard-v2 .technical-record-header[data-conversation-variant
 
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-conversation-variant="focused"] .thread-nav,
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-conversation-variant="focused"] .technical-chat-bar,
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-conversation-variant="focused"] .workspace-channel-toolbar,
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-conversation-variant="focused"] .chat-dashboard-rail,
 body.pagina-chat-dashboard-v2 .rodape-entrada[data-conversation-variant="focused"] .rodape-entrada__contexto,
 body.pagina-chat-dashboard-v2 .rodape-entrada[data-conversation-variant="focused"] .rodape-entrada__acoes,

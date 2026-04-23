@@ -54,6 +54,10 @@
             || payload.inspectorBaseScreen
             || dependencies.resolveInspectorScreen?.();
         const workspaceView = dependencies.resolveWorkspaceView?.(screenAtual);
+        const conversaLivreAtiva = dependencies.normalizarBooleanoEstado?.(
+            payload.freeChatConversationActive,
+            false
+        );
         const laudoAtivoId = dependencies.normalizarLaudoAtualId?.(
             payload.laudoAtualId ??
             dependencies.estado?.laudoAtualId ??
@@ -65,6 +69,11 @@
             dependencies.obterEstadoRelatorioAtualSeguro?.()
         );
 
+        if (conversaLivreAtiva) {
+            return dependencies.normalizarModoInspecaoUI?.(payload.modoInspecaoUI) === "workspace"
+                && workspaceView === "inspection_conversation";
+        }
+
         if (laudoAtivoId || dependencies.estadoRelatorioPossuiContexto?.(estadoRelatorio)) {
             return false;
         }
@@ -72,7 +81,7 @@
         return dependencies.normalizarModoInspecaoUI?.(payload.modoInspecaoUI) === "workspace"
             && workspaceView === "inspection_conversation"
             && (
-                dependencies.normalizarBooleanoEstado?.(payload.freeChatConversationActive, false)
+                conversaLivreAtiva
                 || obterTotalMensagensReaisWorkspace(payload, dependencies) > 0
             );
     }
