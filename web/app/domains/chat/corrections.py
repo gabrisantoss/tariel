@@ -78,6 +78,10 @@ def _serializar_correcao(item: dict) -> dict:
         "created_by_id": item.get("created_by_id"),
         "created_by_name": item.get("created_by_name") or "Inspetor",
         "updated_by_id": item.get("updated_by_id"),
+        "applied_at": item.get("applied_at"),
+        "applied_by_id": item.get("applied_by_id"),
+        "application_mode": item.get("application_mode"),
+        "applied_to": list(item.get("applied_to") or []) if isinstance(item.get("applied_to"), list) else [],
     }
 
 
@@ -88,6 +92,117 @@ def _salvar_correcoes_laudo(laudo: Laudo, correcoes: list[dict]) -> None:
     laudo.report_pack_draft_json = draft
     laudo.atualizado_em = agora_utc()
     flag_modified(laudo, "report_pack_draft_json")
+
+
+def _texto_limpo(valor: object, *, limite: int = 1600) -> str:
+    return " ".join(str(valor or "").strip().split())[:limite]
+
+
+def _append_texto_documental(valor_atual: object, novo_texto: str) -> str:
+    atual = str(valor_atual or "").strip()
+    texto = _texto_limpo(novo_texto, limite=1600)
+    if not texto:
+        return atual
+    if not atual:
+        return texto
+    if texto.lower() in atual.lower():
+        return atual
+    return f"{atual}\n\n{texto}"
+
+
+def _payload_documento_laudo(laudo: Laudo) -> dict:
+    payload = getattr(laudo, "dados_formulario", None)
+    return deepcopy(payload) if isinstance(payload, dict) else {}
+
+
+def _sincronizar_payload_documento_no_draft(laudo: Laudo, payload: dict) -> None:
+    draft = _draft_laudo(laudo)
+    draft["structured_data_candidate"] = deepcopy(payload)
+    draft["structured_data_candidate_source"] = "inspector_structured_correction"
+    laudo.report_pack_draft_json = draft
+    flag_modified(laudo, "report_pack_draft_json")
+
+
+def _aplicar_correcao_no_documento(
+    *,
+    laudo: Laudo,
+    item: dict,
+    usuario: Usuario,
+) -> list[str]:
+    block = str(item.get("block") or "").strip().lower()
+    descricao = _texto_limpo(item.get("description"), limite=1600)
+    if not descricao:
+        return []
+
+    payload = _payload_documento_laudo(laudo)
+    campos_aplicados: list[str] = []
+
+    if block == "conclusao":
+        conclusao = (
+            dict(payload.get("conclusao") or {})
+            if isinstance(payload.get("conclusao"), dict)
+            else {}
+        )
+        conclusao["conclusao_tecnica"] = _append_texto_documental(
+            conclusao.get("conclusao_tecnica"),
+            descricao,
+        )
+        conclusao["justificativa"] = _append_texto_documental(
+            conclusao.get("justificativa"),
+            descricao,
+        )
+        payload["conclusao"] = conclusao
+        campos_aplicados.extend(
+            [
+                "dados_formulario.conclusao.conclusao_tecnica",
+                "dados_formulario.conclusao.justificativa",
+            ]
+        )
+    elif block == "observacoes":
+        payload["observacoes"] = _append_texto_documental(payload.get("observacoes"), descricao)
+        documentacao = (
+            dict(payload.get("documentacao_e_registros") or {})
+            if isinstance(payload.get("documentacao_e_registros"), dict)
+            else {}
+        )
+        documentacao["observacoes_documentais"] = _append_texto_documental(
+            documentacao.get("observacoes_documentais"),
+            descricao,
+        )
+        payload["documentacao_e_registros"] = documentacao
+        campos_aplicados.extend(
+            [
+                "dados_formulario.observacoes",
+                "dados_formulario.documentacao_e_registros.observacoes_documentais",
+            ]
+        )
+    else:
+        return []
+
+    agora = agora_utc().isoformat()
+    item["applied_at"] = agora
+    item["applied_by_id"] = int(usuario.id)
+    item["application_mode"] = "document_payload_append"
+    item["applied_to"] = campos_aplicados
+    item["applied_description"] = descricao
+    historico = payload.get("correcoes_estruturadas_aplicadas")
+    if not isinstance(historico, list):
+        historico = []
+    historico.append(
+        {
+            "id": str(item.get("id") or "").strip(),
+            "block": block,
+            "description": descricao,
+            "applied_at": agora,
+            "applied_by_id": int(usuario.id),
+            "fields": campos_aplicados,
+        }
+    )
+    payload["correcoes_estruturadas_aplicadas"] = historico[-40:]
+    laudo.dados_formulario = payload
+    flag_modified(laudo, "dados_formulario")
+    _sincronizar_payload_documento_no_draft(laudo, payload)
+    return campos_aplicados
 
 
 def _summary(correcoes: list[dict]) -> dict:
@@ -175,6 +290,13 @@ async def atualizar_status_correcao_estruturada_laudo(
     for item in correcoes:
         if str(item.get("id") or "").strip() != alvo:
             continue
+        status_anterior = str(item.get("status") or "pendente").strip().lower()
+        if dados.status == "aplicada" and status_anterior != "aplicada":
+            _aplicar_correcao_no_documento(
+                laudo=laudo,
+                item=item,
+                usuario=usuario,
+            )
         item["status"] = dados.status
         item["updated_at"] = agora_utc().isoformat()
         item["updated_by_id"] = int(usuario.id)

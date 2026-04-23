@@ -3961,3 +3961,22 @@ Atualizado em `2026-04-23`.
 - `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k "correcoes_estruturadas or sem_mesa"`
 - `make web-ci`
 - `make hygiene-check`
+
+### `PKT-CHAT-INSPETOR-CORRECOES-04` — Aplicação real de correções no documento
+
+- `status`: concluído localmente em `2026-04-23`; a ação `Marcar como aplicada` passa a atualizar o payload documental do laudo para blocos seguros.
+
+### Escopo
+
+- aplica correções de `Conclusão/status` em `dados_formulario.conclusao.conclusao_tecnica` e `dados_formulario.conclusao.justificativa`.
+- aplica correções de `Observações` em `dados_formulario.observacoes` e `dados_formulario.documentacao_e_registros.observacoes_documentais`.
+- registra rastreabilidade no item aplicado: `applied_at`, `applied_by_id`, `application_mode` e `applied_to`.
+- sincroniza `report_pack_draft_json.structured_data_candidate` com o payload documental atualizado.
+- mantém evidências e checklist fora da aplicação automática nesta etapa, por exigirem edição mais específica.
+
+### Validação
+
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/corrections.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k "correcao_estruturada or correcoes_estruturadas"`
+- `make web-ci`
+- `make hygiene-check`

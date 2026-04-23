@@ -709,6 +709,73 @@ def test_correcoes_estruturadas_do_inspetor_persistem_no_laudo(
         assert draft_recalculado["structured_corrections"][0]["status"] == "enviada_ia"
 
 
+def test_correcao_estruturada_aplicada_atualiza_documento_do_laudo(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat",
+        }
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.dados_formulario = {
+            "conclusao": {"conclusao_tecnica": "Conclusão inicial."},
+            "observacoes": "Observação anterior.",
+        }
+        banco.commit()
+
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta_criacao = client.post(
+        f"/app/api/laudo/{laudo_id}/correcoes-estruturadas",
+        headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+        json={
+            "block": "observacoes",
+            "intent": "adicionar",
+            "description": "Registrar ressalva de acesso parcial controlado.",
+        },
+    )
+    assert resposta_criacao.status_code == 201
+    item_id = resposta_criacao.json()["item"]["id"]
+
+    resposta_status = client.patch(
+        f"/app/api/laudo/{laudo_id}/correcoes-estruturadas/{item_id}",
+        headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+        json={"status": "aplicada"},
+    )
+
+    assert resposta_status.status_code == 200
+    corpo = resposta_status.json()
+    assert corpo["item"]["status"] == "aplicada"
+    assert "dados_formulario.observacoes" in corpo["item"]["applied_to"]
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        assert isinstance(laudo.dados_formulario, dict)
+        assert "Observação anterior." in laudo.dados_formulario["observacoes"]
+        assert "Registrar ressalva de acesso parcial controlado." in laudo.dados_formulario["observacoes"]
+        assert (
+            "Registrar ressalva de acesso parcial controlado."
+            in laudo.dados_formulario["documentacao_e_registros"]["observacoes_documentais"]
+        )
+        draft = laudo.report_pack_draft_json
+        assert isinstance(draft, dict)
+        assert draft["structured_data_candidate"]["observacoes"] == laudo.dados_formulario["observacoes"]
+        assert draft["structured_corrections"][0]["application_mode"] == "document_payload_append"
+
+
 def test_revogacao_de_capacidades_bloqueia_websocket_e_exports_governados_da_mesa(
     ambiente_critico,
 ) -> None:
