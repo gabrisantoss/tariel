@@ -504,6 +504,21 @@ async def pagina_preparar_emissao_laudo(
     )
 
 
+async def pagina_assinatura_digital_laudo(
+    laudo_id: int,
+    request: Request,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+) -> HTMLResponse:
+    return await pagina_preparar_emissao_laudo(
+        laudo_id=laudo_id,
+        request=request,
+        tool="assinatura",
+        usuario=usuario,
+        banco=banco,
+    )
+
+
 async def api_emitir_oficialmente_laudo_inspetor(
     laudo_id: int,
     dados: DadosEmissaoOficialInspetor,
@@ -886,6 +901,13 @@ roteador_laudo.add_api_route(
     methods=["GET"],
     response_class=HTMLResponse,
     responses={**RESPOSTA_LAUDO_NAO_ENCONTRADO, 403: {"description": "Emissão não contratada."}},
+)
+roteador_laudo.add_api_route(
+    "/laudo/{laudo_id}/assinatura",
+    pagina_assinatura_digital_laudo,
+    methods=["GET"],
+    response_class=HTMLResponse,
+    responses={**RESPOSTA_LAUDO_NAO_ENCONTRADO, 403: {"description": "Assinatura não contratada."}},
 )
 roteador_laudo.add_api_route(
     "/api/laudo/{laudo_id}/emissao-oficial",

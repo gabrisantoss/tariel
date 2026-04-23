@@ -584,6 +584,11 @@ def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(
     assert "Emitir oficialmente" in resposta.text
     assert f"/revisao/api/laudo/{laudo_id}/pacote/exportar-pdf" in resposta.text
 
+    resposta_assinatura = client.get(f"/app/laudo/{laudo_id}/assinatura")
+    assert resposta_assinatura.status_code == 200
+    assert "Assinatura digital do laudo" in resposta_assinatura.text
+    assert "Selecione o signatario governado" in resposta_assinatura.text
+
 
 def test_inspetor_sem_servicos_da_mesa_nao_abre_preparacao_de_emissao(
     ambiente_critico,

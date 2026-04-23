@@ -124,7 +124,7 @@
             if (!id) return "";
             if (action === "official_pdf") return `/app/laudo/${encodeURIComponent(id)}/preparar-emissao?tool=pdf`;
             if (action === "technical_package") return `/app/laudo/${encodeURIComponent(id)}/preparar-emissao?tool=pacote`;
-            if (action === "signature") return `/app/laudo/${encodeURIComponent(id)}/preparar-emissao?tool=assinatura`;
+            if (action === "signature") return `/app/laudo/${encodeURIComponent(id)}/assinatura`;
             return "";
         }
 

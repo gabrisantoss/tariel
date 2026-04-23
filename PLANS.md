@@ -3962,6 +3962,25 @@ Atualizado em `2026-04-23`.
 - `make web-ci`
 - `make hygiene-check`
 
+### `PKT-CHAT-INSPETOR-ASSINATURA-01` — Rota dedicada de assinatura digital
+
+- `status`: concluído localmente em `2026-04-23`; a barra de ferramentas do Chat Inspetor passa a abrir uma tela dedicada para assinatura do laudo.
+
+### Escopo
+
+- adiciona rota `GET /app/laudo/{id}/assinatura` reutilizando a governança da preparação de emissão.
+- muda o botão `Assinatura` da barra de utilitários para abrir a rota dedicada.
+- ajusta a tela para título e orientação específicos de assinatura digital.
+- mantém emissão oficial, pacote e signatário governado no mesmo contrato já validado.
+
+### Validação
+
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/laudo.py`
+- `node --check web/static/js/inspetor/ui_bindings.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py tests/test_tenant_entitlements_critical.py -q -k "emissao_governada or templates_chat_mantem_controles_essenciais_de_ui"`
+- `make web-ci`
+- `make hygiene-check`
+
 ### `PKT-CHAT-INSPETOR-CORRECOES-04` — Aplicação real de correções no documento
 
 - `status`: concluído localmente em `2026-04-23`; a ação `Marcar como aplicada` passa a atualizar o payload documental do laudo para blocos seguros.

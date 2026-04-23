@@ -311,10 +311,11 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'data-rail-tool-action="technical_package"' in workspace_rail_html
     assert "preparar-emissao?tool=pdf" in ui_bindings_js
     assert "preparar-emissao?tool=pacote" in ui_bindings_js
-    assert "preparar-emissao?tool=assinatura" in ui_bindings_js
+    assert "/assinatura" in ui_bindings_js
     assert "precisa-aprovar" in ui_bindings_js
     assert "liberado pelo pacote" in workspace_rail_css
     assert "Preparar emissao oficial" in preparar_emissao_html
+    assert "Assinatura digital do laudo" in preparar_emissao_html
     assert "Assinatura digital" in preparar_emissao_html
     assert "data-issue-submit" in preparar_emissao_html
     assert "data-emissao-state-pill" in preparar_emissao_html
