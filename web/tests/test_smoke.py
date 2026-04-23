@@ -249,6 +249,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     workspace_mesa_status_js = (raiz / "static" / "js" / "inspetor" / "workspace_mesa_status.js").read_text(encoding="utf-8")
     workspace_states_css = (raiz / "static" / "css" / "inspetor" / "workspace_states.css").read_text(encoding="utf-8")
     workspace_rail_css = (raiz / "static" / "css" / "inspetor" / "workspace_rail.css").read_text(encoding="utf-8")
+    visual_refinements_css = (raiz / "static" / "css" / "inspetor" / "visual_refinements.css").read_text(encoding="utf-8")
     shared_api_js = (raiz / "static" / "js" / "shared" / "api.js").read_text(encoding="utf-8")
 
     assert not (raiz / "templates" / "base.html").exists()
@@ -427,6 +428,8 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "workspaceMesaStageMomentDetail" in workspace_mesa_status_js
     assert ".workspace-mesa-signals" in workspace_states_css
     assert ".workspace-mesa-signal--focus" in workspace_states_css
+    assert ".inspetor-sidebar-report:hover .btn-deletar-laudo" in visual_refinements_css
+    assert ".btn-deletar-laudo:focus-visible" in visual_refinements_css
     assert "function promoverConversaLivreNoPrimeiroEnvio()" in shared_api_js
     assert 'workspaceStage: "inspection"' in shared_api_js
     assert 'freeChatConversationActive: true' in shared_api_js
