@@ -3922,3 +3922,22 @@ Atualizado em `2026-04-23`.
 - `node --check web/static/js/inspetor/workspace_corrections.js`
 - `node --check web/static/js/inspetor/workspace_page_elements.js`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k "templates_chat_mantem_controles_essenciais_de_ui"`
+
+### `PKT-CHAT-INSPETOR-CORRECOES-02` — Persistência governada das correções estruturadas
+
+- `status`: concluído localmente em `2026-04-23`; a fila de `Correções` do Chat Inspetor passou a ser persistida no backend por laudo, com fallback local apenas quando a API não responder.
+
+### Escopo
+
+- adiciona API `GET/POST/PATCH /app/api/laudo/{id}/correcoes-estruturadas`.
+- persiste bloco, intenção, descrição, status, autor e timestamps em `report_pack_draft_json.structured_corrections`.
+- preserva `structured_corrections` quando o report pack é recalculado.
+- atualiza a UI para carregar/salvar no backend e marcar correção como `enviada_ia` quando o prompt vai para o composer.
+- cobre o contrato com teste de criação, listagem, mudança de status e preservação após recálculo do draft.
+
+### Validação
+
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/corrections.py app/domains/chat/router.py app/domains/chat/schemas.py app/domains/chat/report_pack_helpers.py`
+- `node --check web/static/js/inspetor/workspace_corrections.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q`
+- `make web-ci`

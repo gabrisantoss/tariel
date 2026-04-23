@@ -4,6 +4,7 @@ import json
 import re
 from datetime import datetime, timedelta, timezone
 
+from app.domains.chat.report_pack_helpers import atualizar_report_pack_draft_laudo
 from app.shared.database import (
     ApprovedCaseSnapshot,
     Empresa,
@@ -564,6 +565,74 @@ def test_inspetor_com_servicos_da_mesa_emite_oficialmente_no_fluxo_do_chat(
     resposta_download = client.get(corpo["download_url"])
     assert resposta_download.status_code == 200
     assert "application/zip" in resposta_download.headers.get("content-type", "").lower()
+
+
+def test_correcoes_estruturadas_do_inspetor_persistem_no_laudo(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        inspetor = banco.get(Usuario, ids["inspetor_a"])
+        assert empresa is not None
+        assert inspetor is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat",
+        }
+        inspetor.allowed_portals_json = ["inspetor"]
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        banco.commit()
+
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta_criacao = client.post(
+        f"/app/api/laudo/{laudo_id}/correcoes-estruturadas",
+        headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+        json={
+            "block": "evidencias",
+            "intent": "substituir",
+            "description": "Trocar foto superior por imagem anexada.",
+        },
+    )
+
+    assert resposta_criacao.status_code == 201
+    corpo = resposta_criacao.json()
+    item_id = corpo["item"]["id"]
+    assert corpo["summary"]["pending"] == 1
+    assert corpo["item"]["status"] == "pendente"
+
+    resposta_status = client.patch(
+        f"/app/api/laudo/{laudo_id}/correcoes-estruturadas/{item_id}",
+        headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+        json={"status": "enviada_ia"},
+    )
+    assert resposta_status.status_code == 200
+    assert resposta_status.json()["item"]["status"] == "enviada_ia"
+
+    resposta_lista = client.get(f"/app/api/laudo/{laudo_id}/correcoes-estruturadas")
+    assert resposta_lista.status_code == 200
+    assert resposta_lista.json()["items"][0]["description"] == "Trocar foto superior por imagem anexada."
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        draft = laudo.report_pack_draft_json
+        assert isinstance(draft, dict)
+        assert draft["structured_corrections"][0]["id"] == item_id
+
+        atualizar_report_pack_draft_laudo(banco=banco, laudo=laudo)
+        banco.flush()
+        draft_recalculado = laudo.report_pack_draft_json
+        assert isinstance(draft_recalculado, dict)
+        assert draft_recalculado["structured_corrections"][0]["id"] == item_id
+        assert draft_recalculado["structured_corrections"][0]["status"] == "enviada_ia"
 
 
 def test_revogacao_de_capacidades_bloqueia_websocket_e_exports_governados_da_mesa(

@@ -1,7 +1,7 @@
 """Domínio Chat/Inspetor.
 
 `router.py` monta o roteador principal com os submódulos:
-`auth`, `laudo`, `chat`, `mesa` e `pendencias`.
+`auth`, `laudo`, `chat`, `mesa`, `corrections` e `pendencias`.
 `routes.py` é apenas uma camada de compatibilidade legada
 (exports mínimos para testes e integrações antigas).
 
@@ -18,6 +18,7 @@ __all__ = [
     "auth",
     "laudo",
     "chat",
+    "corrections",
     "mesa",
     "pendencias",
 ]
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
     from app.domains.chat.router import (
         auth,
         chat,
+        corrections,
         laudo,
         mesa,
         pendencias,
@@ -40,6 +42,7 @@ def __getattr__(name: str) -> Any:
     from app.domains.chat.router import (
         auth,
         chat,
+        corrections,
         laudo,
         mesa,
         pendencias,
@@ -51,6 +54,7 @@ def __getattr__(name: str) -> Any:
         "auth": auth,
         "laudo": laudo,
         "chat": chat,
+        "corrections": corrections,
         "mesa": mesa,
         "pendencias": pendencias,
     }

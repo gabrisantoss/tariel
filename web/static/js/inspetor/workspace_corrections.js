@@ -15,6 +15,8 @@
             normalizarThreadTab,
             obterLaudoAtivoIdSeguro,
             obterPayloadStatusRelatorioWorkspaceAtual,
+            obterHeadersComCSRF,
+            extrairMensagemErroHTTP,
         } = ctx.shared;
         const STORAGE_PREFIX = "tariel:workspace-corrections:";
         const CORRECTION_BLOCKS = {
@@ -140,6 +142,14 @@
         }
 
         function carregarFilaCorrecoes(laudoId = obterLaudoAtivoIdSeguro()) {
+            const id = Number(laudoId || 0) || 0;
+            if (
+                id &&
+                Number(estado.workspaceCorrectionsLoadedLaudoId || 0) === id &&
+                Array.isArray(estado.workspaceCorrectionsItems)
+            ) {
+                return estado.workspaceCorrectionsItems;
+            }
             const chave = storageKeyCorrecoes(laudoId);
             if (!chave) return [];
             try {
@@ -153,6 +163,11 @@
         }
 
         function salvarFilaCorrecoes(fila = [], laudoId = obterLaudoAtivoIdSeguro()) {
+            const id = Number(laudoId || 0) || 0;
+            if (id) {
+                estado.workspaceCorrectionsLoadedLaudoId = id;
+                estado.workspaceCorrectionsItems = (Array.isArray(fila) ? fila : []).slice(-40);
+            }
             const chave = storageKeyCorrecoes(laudoId);
             if (!chave) return;
             try {
@@ -160,6 +175,116 @@
             } catch (_) {
                 // localStorage pode estar indisponível em ambientes restritos; a UI segue sem persistência.
             }
+        }
+
+        function normalizarItemCorrecaoBackend(item = {}) {
+            return {
+                id: String(item.id || "").trim(),
+                block: String(item.block || "evidencias").trim().toLowerCase(),
+                intent: String(item.intent || "corrigir").trim().toLowerCase(),
+                description: String(item.description || "").trim(),
+                status: String(item.status || "pendente").trim().toLowerCase(),
+                statusLabel: String(item.status_label || "").trim(),
+                blockLabel: String(item.block_label || "").trim(),
+                intentLabel: String(item.intent_label || "").trim(),
+                createdAt: String(item.created_at || item.createdAt || "").trim(),
+                updatedAt: String(item.updated_at || item.updatedAt || "").trim(),
+                createdByName: String(item.created_by_name || "").trim(),
+            };
+        }
+
+        async function carregarCorrecoesBackend({ force = false } = {}) {
+            const laudoId = Number(obterLaudoAtivoIdSeguro() || 0) || 0;
+            if (!laudoId) {
+                estado.workspaceCorrectionsLoadedLaudoId = 0;
+                estado.workspaceCorrectionsItems = [];
+                return [];
+            }
+            if (
+                !force &&
+                Number(estado.workspaceCorrectionsLoadedLaudoId || 0) === laudoId &&
+                Array.isArray(estado.workspaceCorrectionsItems)
+            ) {
+                return estado.workspaceCorrectionsItems;
+            }
+            if (estado.workspaceCorrectionsLoadingLaudoId === laudoId) {
+                return carregarFilaCorrecoes(laudoId);
+            }
+            estado.workspaceCorrectionsLoadingLaudoId = laudoId;
+            try {
+                const resposta = await fetch(
+                    `/app/api/laudo/${encodeURIComponent(String(laudoId))}/correcoes-estruturadas`,
+                    {
+                        method: "GET",
+                        credentials: "same-origin",
+                        headers: obterHeadersComCSRF?.() || { Accept: "application/json" },
+                    }
+                );
+                if (!resposta.ok) {
+                    throw new Error(await extrairMensagemErroHTTP?.(resposta, "Não foi possível carregar correções."));
+                }
+                const payload = await resposta.json();
+                const itens = Array.isArray(payload?.items)
+                    ? payload.items.map(normalizarItemCorrecaoBackend).filter((item) => item.id)
+                    : [];
+                salvarFilaCorrecoes(itens, laudoId);
+                renderizarFilaCorrecoes();
+                return itens;
+            } catch (_) {
+                return carregarFilaCorrecoes(laudoId);
+            } finally {
+                if (estado.workspaceCorrectionsLoadingLaudoId === laudoId) {
+                    estado.workspaceCorrectionsLoadingLaudoId = 0;
+                }
+            }
+        }
+
+        async function criarCorrecaoBackend({ block, intent, description }) {
+            const laudoId = Number(obterLaudoAtivoIdSeguro() || 0) || 0;
+            if (!laudoId) return null;
+            const resposta = await fetch(
+                `/app/api/laudo/${encodeURIComponent(String(laudoId))}/correcoes-estruturadas`,
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: obterHeadersComCSRF?.({ "Content-Type": "application/json" }) || { "Content-Type": "application/json", Accept: "application/json" },
+                    body: JSON.stringify({ block, intent, description }),
+                }
+            );
+            if (!resposta.ok) {
+                throw new Error(await extrairMensagemErroHTTP?.(resposta, "Não foi possível salvar a correção."));
+            }
+            const payload = await resposta.json();
+            const itens = Array.isArray(payload?.items)
+                ? payload.items.map(normalizarItemCorrecaoBackend).filter((item) => item.id)
+                : [];
+            salvarFilaCorrecoes(itens, laudoId);
+            return normalizarItemCorrecaoBackend(payload?.item || itens[itens.length - 1] || {});
+        }
+
+        async function atualizarStatusCorrecaoBackend(item = {}, status = "pendente") {
+            const laudoId = Number(obterLaudoAtivoIdSeguro() || 0) || 0;
+            const correctionId = String(item?.id || "").trim();
+            if (!laudoId || !correctionId) return null;
+            const resposta = await fetch(
+                `/app/api/laudo/${encodeURIComponent(String(laudoId))}/correcoes-estruturadas/${encodeURIComponent(correctionId)}`,
+                {
+                    method: "PATCH",
+                    credentials: "same-origin",
+                    headers: obterHeadersComCSRF?.({ "Content-Type": "application/json" }) || { "Content-Type": "application/json", Accept: "application/json" },
+                    body: JSON.stringify({ status }),
+                }
+            );
+            if (!resposta.ok) {
+                throw new Error(await extrairMensagemErroHTTP?.(resposta, "Não foi possível atualizar a correção."));
+            }
+            const payload = await resposta.json();
+            const itens = Array.isArray(payload?.items)
+                ? payload.items.map(normalizarItemCorrecaoBackend).filter((row) => row.id)
+                : [];
+            salvarFilaCorrecoes(itens, laudoId);
+            renderizarFilaCorrecoes();
+            return normalizarItemCorrecaoBackend(payload?.item || {});
         }
 
         function obterBlocoSelecionado() {
@@ -190,7 +315,7 @@
             ].filter(Boolean).join("\n\n");
         }
 
-        function aplicarPromptNoComposer(item = {}) {
+        async function aplicarPromptNoComposer(item = {}) {
             const prompt = montarPromptCorrecao(item);
             const inseriu = ctx.actions.inserirTextoNoComposer?.(prompt, { substituir: true });
             if (!inseriu && el.campoMensagem) {
@@ -202,6 +327,9 @@
                 persistirURL: true,
                 replaceURL: true,
             });
+            if (String(item?.status || "pendente").trim().toLowerCase() === "pendente") {
+                atualizarStatusCorrecaoBackend(item, "enviada_ia").catch(() => {});
+            }
             ctx.actions.mostrarToast?.("Correção estruturada pronta no chat. Revise e envie para a IA.", "sucesso", 2600);
         }
 
@@ -217,14 +345,22 @@
                 el.workspaceCorrectionsQueueList.hidden = !possuiFila;
                 el.workspaceCorrectionsQueueList.innerHTML = fila.map((item, index) => {
                     const bloco = CORRECTION_BLOCKS[item.block] || CORRECTION_BLOCKS.evidencias;
-                    const intencao = CORRECTION_INTENTS[item.intent] || CORRECTION_INTENTS.corrigir;
+                    const intencao = item.intentLabel || CORRECTION_INTENTS[item.intent] || CORRECTION_INTENTS.corrigir;
                     const texto = String(item.description || "").trim();
+                    const status = String(item.status || "pendente").trim().toLowerCase();
+                    const statusLabel = item.statusLabel || {
+                        pendente: "Pendente",
+                        enviada_ia: "Enviada para IA",
+                        aplicada: "Aplicada",
+                        descartada: "Descartada",
+                    }[status] || status;
                     return `
-                        <li class="workspace-corrections-queue-item" data-correction-queue-index="${index}">
+                        <li class="workspace-corrections-queue-item" data-correction-queue-index="${index}" data-correction-status="${escaparHtml(status)}">
                             <span class="workspace-corrections-queue-item__index">${index + 1}</span>
                             <div>
                                 <strong>${escaparHtml(bloco.label)}</strong>
                                 <p>${escaparHtml(intencao)}${texto ? ` · ${escaparHtml(texto)}` : ""}</p>
+                                <small>${escaparHtml(statusLabel)}</small>
                             </div>
                             <button
                                 type="button"
@@ -252,7 +388,7 @@
             }
         }
 
-        function prepararCorrecao({ block = obterBlocoSelecionado(), intent = obterIntencaoSelecionada(), description = "" } = {}) {
+        async function prepararCorrecao({ block = obterBlocoSelecionado(), intent = obterIntencaoSelecionada(), description = "" } = {}) {
             const laudoId = obterLaudoAtivoIdSeguro();
             if (!laudoId) {
                 ctx.actions.mostrarToast?.("Selecione ou inicie um laudo antes de preparar correções.", "aviso", 2600);
@@ -264,15 +400,26 @@
                 ctx.actions.mostrarToast?.("Descreva a correção necessária antes de preparar a fila.", "aviso", 2600);
                 return null;
             }
-            const item = {
-                id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                block,
-                intent,
-                description: descricao,
-                createdAt: new Date().toISOString(),
-            };
-            const fila = [...carregarFilaCorrecoes(laudoId), item].slice(-12);
-            salvarFilaCorrecoes(fila, laudoId);
+            let item = null;
+            try {
+                item = await criarCorrecaoBackend({ block, intent, description: descricao });
+            } catch (erro) {
+                item = {
+                    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                    block,
+                    intent,
+                    description: descricao,
+                    status: "pendente",
+                    createdAt: new Date().toISOString(),
+                };
+                const fila = [...carregarFilaCorrecoes(laudoId), item].slice(-12);
+                salvarFilaCorrecoes(fila, laudoId);
+                ctx.actions.mostrarToast?.(
+                    String(erro?.message || "").trim() || "Correção salva localmente até a API responder.",
+                    "aviso",
+                    2600
+                );
+            }
             if (el.workspaceCorrectionsDescription) {
                 el.workspaceCorrectionsDescription.value = "";
             }
@@ -304,27 +451,34 @@
             el.workspaceCorrectionsBlock?.addEventListener("change", () => {
                 selecionarBlocoCorrecao(obterBlocoSelecionado());
             });
-            el.workspaceCorrectionsForm?.addEventListener("submit", (event) => {
+            el.workspaceCorrectionsForm?.addEventListener("submit", async (event) => {
                 event.preventDefault();
-                const item = prepararCorrecao();
-                if (item) aplicarPromptNoComposer(item);
+                const item = await prepararCorrecao();
+                if (item) await aplicarPromptNoComposer(item);
             });
-            el.btnWorkspaceCorrectionsSendLatest?.addEventListener("click", () => {
+            el.btnWorkspaceCorrectionsSendLatest?.addEventListener("click", async () => {
                 const fila = carregarFilaCorrecoes();
                 const item = fila[fila.length - 1];
-                if (item) aplicarPromptNoComposer(item);
+                if (item) await aplicarPromptNoComposer(item);
             });
-            el.btnWorkspaceCorrectionsClear?.addEventListener("click", () => {
+            el.btnWorkspaceCorrectionsClear?.addEventListener("click", async () => {
+                const fila = carregarFilaCorrecoes();
+                await Promise.allSettled(
+                    fila
+                        .filter((item) => item?.id && String(item.status || "").toLowerCase() !== "descartada")
+                        .map((item) => atualizarStatusCorrecaoBackend(item, "descartada"))
+                );
                 salvarFilaCorrecoes([]);
                 renderizarFilaCorrecoes();
-                ctx.actions.mostrarToast?.("Fila de correções limpa para este laudo.", "info", 2200);
+                await carregarCorrecoesBackend({ force: true });
+                ctx.actions.mostrarToast?.("Fila de correções descartada para este laudo.", "info", 2200);
             });
-            el.workspaceCorrectionsQueueList?.addEventListener("click", (event) => {
+            el.workspaceCorrectionsQueueList?.addEventListener("click", async (event) => {
                 const botao = event.target?.closest?.("[data-correction-send-index]");
                 if (!botao) return;
                 const index = Number(botao.dataset.correctionSendIndex || -1);
                 const item = carregarFilaCorrecoes()[index];
-                if (item) aplicarPromptNoComposer(item);
+                if (item) await aplicarPromptNoComposer(item);
             });
         }
 
@@ -352,6 +506,9 @@
             const radar = construirRadarOperacional(snapshot);
             const podeReabrir = allowedActions.includes("chat_reopen");
             const podeCorrigir = !!laudoId;
+            if (podeCorrigir) {
+                carregarCorrecoesBackend().catch(() => {});
+            }
 
             el.workspaceCorrectionsTitle.textContent = podeCorrigir
                 ? `Correções do laudo • ${tituloLaudo}`
@@ -409,6 +566,7 @@
         Object.assign(ctx.actions, {
             renderizarPainelCorrecoesWorkspace,
             prepararCorrecaoWorkspace: prepararCorrecao,
+            carregarCorrecoesEstruturadasWorkspace: carregarCorrecoesBackend,
             renderizarFilaCorrecoesWorkspace: renderizarFilaCorrecoes,
         });
     };

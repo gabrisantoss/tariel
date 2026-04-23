@@ -369,6 +369,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'data-correction-quick-action="conclusao"' in workspace_corrections_html
     assert 'data-correction-quick-action="observacoes"' in workspace_corrections_html
     assert "CORRECAO ESTRUTURADA DO LAUDO" in workspace_corrections_js
+    assert "correcoes-estruturadas" in workspace_corrections_js
     assert "tariel:workspace-corrections:" in workspace_corrections_js
     assert "prepararCorrecaoWorkspace" in workspace_corrections_js
     assert 'id="btn-mesa-widget-toggle"' in workspace_rail_html

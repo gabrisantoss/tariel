@@ -140,6 +140,20 @@ class DadosEmissaoOficialInspetor(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
 
 
+class DadosCorrecaoEstruturada(BaseModel):
+    block: Literal["evidencias", "checklist", "conclusao", "observacoes"]
+    intent: Literal["corrigir", "adicionar", "substituir", "validar"]
+    description: str = Field(..., min_length=1, max_length=1600)
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
+
+
+class DadosStatusCorrecaoEstruturada(BaseModel):
+    status: Literal["pendente", "enviada_ia", "aplicada", "descartada"]
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
+
+
 class DadosReabrirLaudo(BaseModel):
     issued_document_policy: Literal["keep_visible", "hide_from_case"] = (
         "keep_visible"

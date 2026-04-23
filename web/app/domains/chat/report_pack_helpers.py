@@ -154,6 +154,14 @@ def _preservar_curadoria_report_pack(
     if not isinstance(draft_atual, dict):
         return novo_draft
 
+    structured_corrections = draft_atual.get("structured_corrections")
+    if isinstance(structured_corrections, list):
+        novo_draft["structured_corrections"] = deepcopy(structured_corrections)
+        if draft_atual.get("structured_corrections_version"):
+            novo_draft["structured_corrections_version"] = draft_atual.get(
+                "structured_corrections_version"
+            )
+
     analysis_basis_atual = (
         dict(draft_atual.get("analysis_basis") or {})
         if isinstance(draft_atual.get("analysis_basis"), dict)

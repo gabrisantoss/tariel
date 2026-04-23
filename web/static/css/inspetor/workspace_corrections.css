@@ -281,6 +281,34 @@ body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item p {
     line-height: 1.45;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item small {
+    display: inline-flex;
+    width: fit-content;
+    margin-top: 8px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--vf-text-soft);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item[data-correction-status="enviada_ia"] small {
+    background: rgba(17, 50, 77, 0.1);
+    color: var(--vf-accent);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item[data-correction-status="aplicada"] small {
+    background: rgba(22, 101, 52, 0.1);
+    color: #166534;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item[data-correction-status="descartada"] {
+    opacity: 0.72;
+}
+
 body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__send {
     display: inline-grid;
     place-items: center;
