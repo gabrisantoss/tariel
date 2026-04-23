@@ -115,6 +115,15 @@
                 (viewAtual === "inspection_record" && dependencies.modoEntradaEvidenceFirstAtivo?.())
             );
 
+        if (
+            simulacaoFerramentasLocal &&
+            chromeTecnicoOperacional &&
+            !layoutCompacto &&
+            dependencies.workspaceViewSuportaRail?.(viewAtual)
+        ) {
+            dependencies.estado.workspaceRailExpanded = true;
+        }
+
         if (el.rodapeEntrada) {
             el.rodapeEntrada.hidden = !composerVisivel;
         }
