@@ -53,6 +53,10 @@ body.pagina-chat-dashboard-v2 .inspetor-shell-grid {
     background: transparent;
 }
 
+body.pagina-chat-dashboard-v2.sidebar-colapsada .inspetor-shell-grid {
+    grid-template-columns: 0 minmax(0, 1fr);
+}
+
 body.pagina-chat-dashboard-v2 .inspetor-sidebar {
     position: sticky;
     top: 0;
@@ -70,6 +74,19 @@ body.pagina-chat-dashboard-v2 .inspetor-sidebar {
         linear-gradient(180deg, rgba(12, 18, 31, 0.97), rgba(9, 14, 25, 0.98)),
         var(--bg-app);
     backdrop-filter: blur(20px);
+    transition:
+        opacity var(--t-fast, .12s) ease,
+        transform var(--t-fast, .12s) ease,
+        padding var(--t-fast, .12s) ease,
+        border-color var(--t-fast, .12s) ease;
+}
+
+body.pagina-chat-dashboard-v2.sidebar-colapsada .inspetor-sidebar {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-20px);
+    padding-inline: 0;
+    border-right-color: transparent;
 }
 
 body.pagina-chat-dashboard-v2 .inspetor-sidebar__top,
