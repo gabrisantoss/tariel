@@ -75,15 +75,19 @@
             </header>
 
             <section class="workspace-corrections-grid" aria-label="Blocos corrigíveis do laudo">
-                <article class="workspace-correction-block">
+                <article class="workspace-correction-block" data-correction-block="evidencias">
                     <header class="workspace-correction-block__header">
                         <div>
                             <span class="workspace-correction-block__eyebrow">Registros fotográficos</span>
                             <h4>Substituir, adicionar ou reclassificar evidências</h4>
                         </div>
-                        <button type="button" class="technical-inline-action" disabled>
+                        <button
+                            type="button"
+                            class="technical-inline-action"
+                            data-correction-quick-action="evidencias"
+                        >
                             <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                            <span>Editar bloco</span>
+                            <span>Corrigir evidência</span>
                         </button>
                     </header>
                     <ul class="workspace-correction-block__list">
@@ -93,15 +97,19 @@
                     </ul>
                 </article>
 
-                <article class="workspace-correction-block">
+                <article class="workspace-correction-block" data-correction-block="checklist">
                     <header class="workspace-correction-block__header">
                         <div>
                             <span class="workspace-correction-block__eyebrow">Checklist técnico</span>
                             <h4>Ajustar condição, observação e leitura do item</h4>
                         </div>
-                        <button type="button" class="technical-inline-action" disabled>
+                        <button
+                            type="button"
+                            class="technical-inline-action"
+                            data-correction-quick-action="checklist"
+                        >
                             <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
-                            <span>Editar checklist</span>
+                            <span>Ajustar checklist</span>
                         </button>
                     </header>
                     <ul class="workspace-correction-block__list">
@@ -111,21 +119,47 @@
                     </ul>
                 </article>
 
-                <article class="workspace-correction-block">
+                <article class="workspace-correction-block" data-correction-block="conclusao">
                     <header class="workspace-correction-block__header">
                         <div>
                             <span class="workspace-correction-block__eyebrow">Conclusão</span>
                             <h4>Revisar status, motivo e condição para reinspeção</h4>
                         </div>
-                        <button type="button" class="technical-inline-action" disabled>
+                        <button
+                            type="button"
+                            class="technical-inline-action"
+                            data-correction-quick-action="conclusao"
+                        >
                             <span class="material-symbols-rounded" aria-hidden="true">rule</span>
-                            <span>Editar conclusão</span>
+                            <span>Revisar conclusão</span>
                         </button>
                     </header>
                     <ul class="workspace-correction-block__list">
                         <li>Mudar de aprovado para pendente ou reprovado</li>
                         <li>Ajustar motivo do status final</li>
                         <li>Reemitir nova versão quando o laudo já estiver emitido</li>
+                    </ul>
+                </article>
+
+                <article class="workspace-correction-block" data-correction-block="observacoes">
+                    <header class="workspace-correction-block__header">
+                        <div>
+                            <span class="workspace-correction-block__eyebrow">Observações</span>
+                            <h4>Adicionar ressalvas, divergências e justificativas humanas</h4>
+                        </div>
+                        <button
+                            type="button"
+                            class="technical-inline-action"
+                            data-correction-quick-action="observacoes"
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">edit_note</span>
+                            <span>Adicionar observação</span>
+                        </button>
+                    </header>
+                    <ul class="workspace-correction-block__list">
+                        <li>Registrar ressalva técnica antes da aprovação</li>
+                        <li>Explicar divergência aceita pelo humano responsável</li>
+                        <li>Orientar a IA sem perder trilha de decisão</li>
                     </ul>
                 </article>
             </section>
@@ -145,6 +179,34 @@
                     <span class="material-symbols-rounded" aria-hidden="true">playlist_add_check</span>
                     <p id="workspace-corrections-queue-detail">As próximas interações desta aba devem aparecer aqui como operações estruturadas antes da reemissão.</p>
                 </div>
+
+                <ol
+                    id="workspace-corrections-queue-list"
+                    class="workspace-corrections-queue-list"
+                    aria-label="Fila de alterações pendentes"
+                    hidden
+                ></ol>
+
+                <div class="workspace-corrections-queue-actions">
+                    <button
+                        type="button"
+                        id="btn-workspace-corrections-send-latest"
+                        class="technical-record-btn technical-record-btn--primary"
+                        disabled
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">send</span>
+                        <span>Enviar última para IA</span>
+                    </button>
+                    <button
+                        type="button"
+                        id="btn-workspace-corrections-clear"
+                        class="technical-record-btn technical-record-btn--ghost"
+                        disabled
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">delete_sweep</span>
+                        <span>Limpar fila</span>
+                    </button>
+                </div>
             </article>
 
             <article class="workspace-corrections-panel">
@@ -154,6 +216,53 @@
                         <h4>Comandos naturais, aplicação guiada</h4>
                     </div>
                 </header>
+
+                <form
+                    id="workspace-corrections-form"
+                    class="workspace-corrections-form"
+                    data-correction-form
+                >
+                    <label>
+                        <span>Bloco do laudo</span>
+                        <select id="workspace-corrections-block" name="correction_block">
+                            <option value="evidencias">Evidências/fotos</option>
+                            <option value="checklist">Checklist</option>
+                            <option value="conclusao">Conclusão/status</option>
+                            <option value="observacoes">Observações</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <span>Tipo de ajuste</span>
+                        <select id="workspace-corrections-intent" name="correction_intent">
+                            <option value="corrigir">Corrigir informação existente</option>
+                            <option value="adicionar">Adicionar item faltante</option>
+                            <option value="substituir">Substituir evidência ou texto</option>
+                            <option value="validar">Validar antes de aplicar</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <span>Correção necessária</span>
+                        <textarea
+                            id="workspace-corrections-description"
+                            name="correction_description"
+                            rows="4"
+                            placeholder="Ex.: Trocar a foto do ponto superior pela imagem anexada e ajustar a conclusão para pendente por acesso parcial."
+                        ></textarea>
+                    </label>
+
+                    <div class="workspace-corrections-form__actions">
+                        <button
+                            type="submit"
+                            id="btn-workspace-corrections-prepare"
+                            class="technical-record-btn technical-record-btn--primary"
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">playlist_add</span>
+                            <span>Preparar correção</span>
+                        </button>
+                    </div>
+                </form>
 
                 <div class="workspace-corrections-command-box" role="status" aria-live="polite">
                     <p><strong>Exemplos:</strong></p>

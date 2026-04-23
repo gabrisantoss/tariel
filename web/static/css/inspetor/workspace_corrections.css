@@ -180,6 +180,123 @@ body.pagina-chat-dashboard-v2 .workspace-corrections-console {
     gap: 12px;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-corrections-form {
+    display: grid;
+    gap: 12px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-form label {
+    display: grid;
+    gap: 7px;
+    color: var(--vf-text);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-form select,
+body.pagina-chat-dashboard-v2 .workspace-corrections-form textarea {
+    width: 100%;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--vf-text);
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.45;
+    outline: none;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-form select {
+    min-height: 42px;
+    padding: 0 12px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-form textarea {
+    min-height: 108px;
+    padding: 12px;
+    resize: vertical;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-form select:focus,
+body.pagina-chat-dashboard-v2 .workspace-corrections-form textarea:focus {
+    border-color: rgba(17, 50, 77, 0.34);
+    box-shadow: 0 0 0 3px rgba(17, 50, 77, 0.1);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-form__actions,
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-list[hidden] {
+    display: none;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid rgba(17, 50, 77, 0.12);
+    border-radius: 16px;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.68));
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__index {
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: rgba(17, 50, 77, 0.1);
+    color: var(--vf-accent);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item strong {
+    display: block;
+    color: var(--vf-text);
+    font-size: 13px;
+    line-height: 1.25;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item p {
+    margin: 4px 0 0;
+    color: var(--vf-text-muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__send {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--vf-accent);
+    color: #fff;
+    cursor: pointer;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__send:hover {
+    filter: brightness(1.05);
+}
+
 body.pagina-chat-dashboard-v2 .workspace-corrections-chip {
     display: inline-flex;
     align-items: center;

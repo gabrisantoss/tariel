@@ -3905,3 +3905,20 @@ Atualizado em `2026-04-23`.
 - `make web-ci`
 - `make mobile-ci`
 - `make hygiene-check`
+
+### `PKT-CHAT-INSPETOR-CORRECOES-01` — Correções estruturadas no Chat Inspetor sem Mesa
+
+- `status`: concluído localmente em `2026-04-23`; a aba `Correções` deixou de ser apenas scaffold visual e passou a preparar operações estruturadas por laudo, mantendo o Chat como canal de IA.
+
+### Escopo
+
+- adiciona formulário de correção por bloco: `Evidências/fotos`, `Checklist`, `Conclusão/status` e `Observações`.
+- adiciona botões rápidos por bloco para orientar o inspetor sem misturar ação documental com conversa livre.
+- adiciona fila local de alterações pendentes por laudo, persistida no navegador e limitada para evitar acúmulo operacional.
+- gera prompt estruturado `[CORRECAO ESTRUTURADA DO LAUDO]` e envia para o composer do Chat Inspetor, preservando revisão humana antes do envio para IA.
+
+### Validação
+
+- `node --check web/static/js/inspetor/workspace_corrections.js`
+- `node --check web/static/js/inspetor/workspace_page_elements.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k "templates_chat_mantem_controles_essenciais_de_ui"`

@@ -233,6 +233,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     workspace_record_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_record.html").read_text(encoding="utf-8")
     workspace_conversation_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_conversation.html").read_text(encoding="utf-8")
     workspace_mesa_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_mesa.html").read_text(encoding="utf-8")
+    workspace_corrections_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_corrections.html").read_text(encoding="utf-8")
     workspace_rail_html = (raiz / "templates" / "inspetor" / "workspace" / "_workspace_context_rail.html").read_text(encoding="utf-8")
     preparar_emissao_html = (raiz / "templates" / "inspetor" / "preparar_emissao.html").read_text(encoding="utf-8")
     mesa_widget_html = (raiz / "templates" / "inspetor" / "_mesa_widget.html").read_text(encoding="utf-8")
@@ -242,6 +243,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     chat_index_js = (raiz / "static" / "js" / "chat" / "chat_index_page.js").read_text(encoding="utf-8")
     ui_bindings_js = (raiz / "static" / "js" / "inspetor" / "ui_bindings.js").read_text(encoding="utf-8")
     workspace_page_elements_js = (raiz / "static" / "js" / "inspetor" / "workspace_page_elements.js").read_text(encoding="utf-8")
+    workspace_corrections_js = (raiz / "static" / "js" / "inspetor" / "workspace_corrections.js").read_text(encoding="utf-8")
     workspace_overview_js = (raiz / "static" / "js" / "inspetor" / "workspace_overview.js").read_text(encoding="utf-8")
     workspace_status_payload_js = (raiz / "static" / "js" / "inspetor" / "workspace_status_payload.js").read_text(encoding="utf-8")
     workspace_mesa_status_js = (raiz / "static" / "js" / "inspetor" / "workspace_mesa_status.js").read_text(encoding="utf-8")
@@ -357,6 +359,18 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="workspace-mesa-stage-owner"' in workspace_mesa_html
     assert 'id="workspace-mesa-stage-moment"' in workspace_mesa_html
     assert 'id="workspace-mesa-stage-moment-detail"' in workspace_mesa_html
+    assert 'id="workspace-corrections-form"' in workspace_corrections_html
+    assert 'id="workspace-corrections-block"' in workspace_corrections_html
+    assert 'id="workspace-corrections-intent"' in workspace_corrections_html
+    assert 'id="workspace-corrections-description"' in workspace_corrections_html
+    assert 'id="workspace-corrections-queue-list"' in workspace_corrections_html
+    assert 'data-correction-quick-action="evidencias"' in workspace_corrections_html
+    assert 'data-correction-quick-action="checklist"' in workspace_corrections_html
+    assert 'data-correction-quick-action="conclusao"' in workspace_corrections_html
+    assert 'data-correction-quick-action="observacoes"' in workspace_corrections_html
+    assert "CORRECAO ESTRUTURADA DO LAUDO" in workspace_corrections_js
+    assert "tariel:workspace-corrections:" in workspace_corrections_js
+    assert "prepararCorrecaoWorkspace" in workspace_corrections_js
     assert 'id="btn-mesa-widget-toggle"' in workspace_rail_html
     assert 'data-mesa-toggle-label' in workspace_rail_html
     assert 'data-rail-toggle="progress"' in workspace_rail_html
