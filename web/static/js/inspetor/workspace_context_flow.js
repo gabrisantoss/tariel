@@ -175,7 +175,11 @@
         };
 
         if (limparTimeline) {
-            global.TarielAPI?.limparAreaMensagens?.();
+            if (typeof global.TarielAPI?.limparHistoricoChat === "function") {
+                global.TarielAPI.limparHistoricoChat();
+            } else {
+                global.TarielAPI?.limparAreaMensagens?.();
+            }
         }
 
         dependencies.resetarFiltrosHistoricoWorkspace?.();

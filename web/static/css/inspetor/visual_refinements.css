@@ -2342,3 +2342,96 @@ body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--c
     min-height: 42px;
     border-radius: 12px !important;
 }
+
+body.pagina-chat-dashboard-v2 .technical-record-header__row {
+    align-items: flex-start;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-chat-summary {
+    gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-chat-summary__note {
+    max-width: 72ch;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-hero-strip {
+    gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-hero-stat {
+    min-height: 34px;
+    padding: 0 11px;
+    border-radius: 14px !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-hero-stat span {
+    font-size: 9.5px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-hero-stat strong {
+    font-size: 12px;
+}
+
+body.pagina-chat-dashboard-v2 .technical-record-header__actions {
+    gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .technical-record-header__actions .technical-record-status-pill {
+    min-height: 32px;
+    padding-inline: 11px;
+    letter-spacing: 0.04em;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-chat-summary {
+    display: none;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .technical-record-header__actions {
+    align-self: flex-start;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-context-actions {
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-context-actions__button {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.04);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-template-compatibility {
+    border-radius: 18px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-template-compatibility strong {
+    letter-spacing: -0.01em;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-rail__panel .technical-chat-empty--rail {
+    min-height: 148px;
+    justify-items: start;
+    text-align: left;
+    gap: 10px;
+    padding: 20px 18px;
+    border-radius: 18px !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-rail__panel .technical-chat-empty--rail .material-symbols-rounded {
+    color: var(--vf-accent) !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-rail__panel .technical-chat-empty--rail strong {
+    font-size: 14px;
+    letter-spacing: -0.01em;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-rail__panel .technical-chat-empty--rail p {
+    max-width: 28ch;
+    line-height: 1.5;
+}

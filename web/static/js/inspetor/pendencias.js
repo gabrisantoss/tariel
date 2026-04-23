@@ -107,12 +107,12 @@
     function obterTextoVazioPendencias(filtro = "abertas") {
         const filtroNormalizado = normalizarFiltroPendencias(filtro);
         if (filtroNormalizado === "resolvidas") {
-            return "Nenhuma pendência resolvida neste laudo.";
+            return "Ainda não há pedidos resolvidos neste laudo.";
         }
         if (filtroNormalizado === "todas") {
-            return "Nenhuma pendência enviada pela mesa avaliadora neste laudo.";
+            return "A mesa ainda não enviou pedidos para este laudo.";
         }
-        return "Nenhuma pendência aberta neste laudo.";
+        return "Não há pedidos em aberto neste laudo.";
     }
 
     function atualizarBotoesFiltroPendencias() {
@@ -135,7 +135,7 @@
     }
 
     function atualizarTextoErroPendencias(mensagem = "") {
-        const texto = String(mensagem || "").trim() || "Não foi possível carregar as pendências da mesa agora.";
+        const texto = String(mensagem || "").trim() || "Não foi possível carregar os pedidos da mesa agora.";
         if (el.estadoErroPendenciasMesaTexto) {
             el.estadoErroPendenciasMesaTexto.textContent = texto;
             return;
@@ -193,7 +193,7 @@
         }
 
         el.resumoPendenciasMesa.hidden = false;
-        el.resumoPendenciasMesa.textContent = `Exibindo ${exibidas} de ${filtradas} pendências no filtro atual.`;
+        el.resumoPendenciasMesa.textContent = `Mostrando ${exibidas} de ${filtradas} itens neste filtro.`;
     }
 
     function atualizarControlesPendenciasVisiveis() {

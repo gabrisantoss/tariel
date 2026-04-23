@@ -12,7 +12,7 @@
     <div class="chat-dashboard-rail__panel">
         <section class="technical-record-card technical-record-card--navigation" aria-label="Navegação e ferramentas do laudo">
             <div class="technical-record-card__header">
-                <h3>Ferramentas do laudo</h3>
+                <h3>Este laudo</h3>
             </div>
             <div class="workspace-rail-card__body workspace-rail-card__body--navigation">
                 <div class="workspace-rail-top-actions" aria-label="Ações principais da conversa">
@@ -21,13 +21,13 @@
                         class="technical-record-btn technical-record-btn--ghost workspace-rail-top-actions__home"
                         data-action="go-home"
                         data-home-destino="/app/?home=1"
-                        aria-label="Voltar para o Portal do Inspetor"
+                        aria-label="Voltar para a tela inicial do chat"
                     >
                         <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
-                        <span>Portal</span>
+                        <span>Início</span>
                     </a>
 
-                    <span class="technical-record-status-pill workspace-rail-status-pill">Chat livre</span>
+                    <span class="technical-record-status-pill workspace-rail-status-pill">Tudo em um só lugar</span>
 
                     <button
                         type="button"
@@ -35,7 +35,7 @@
                         data-open-inspecao-modal
                         data-inspector-entry="workspace-rail-new-inspection"
                     >
-                        Nova Inspeção
+                        Novo laudo
                     </button>
 
                     <button
@@ -49,7 +49,7 @@
                     </button>
                 </div>
 
-                <span class="workspace-rail-card__eyebrow">Acesso rápido</span>
+                <span class="workspace-rail-card__eyebrow">Ir para</span>
                 <div class="workspace-rail-nav" role="tablist" aria-label="Ir para seções do laudo">
                     <button type="button" class="workspace-rail-nav__button" data-rail-thread-tab="conversa" aria-pressed="true">Conversa</button>
                     <button type="button" class="workspace-rail-nav__button" data-rail-thread-tab="historico" aria-pressed="false">Histórico</button>
@@ -67,7 +67,7 @@
                 </div>
 
                 <div class="workspace-rail-toolbox" data-workspace-toolbox>
-                    <span class="workspace-rail-card__eyebrow">Tratamento técnico</span>
+                    <span class="workspace-rail-card__eyebrow">Ferramentas extras</span>
                     <div class="workspace-rail-toolbox__grid" aria-label="Ferramentas específicas do laudo">
                         <button
                             type="button"
@@ -129,7 +129,7 @@
 
         <section id="workspace-progress-card" class="technical-record-card technical-record-card--progress">
             <div class="technical-record-card__header">
-                <h3>Estado da Inspeção</h3>
+                <h3>Como está este laudo</h3>
                 <div class="technical-record-card__header-meta">
                     <span id="workspace-progress-percent">65%</span>
                     <button type="button" class="workspace-rail-toggle" data-rail-toggle="progress" aria-expanded="true">
@@ -138,8 +138,8 @@
                 </div>
             </div>
             <div class="workspace-rail-card__body" data-rail-body="progress">
-                <span class="workspace-rail-card__eyebrow">Leitura operacional</span>
-                <p class="workspace-rail-card__description">Acompanhe a saude do laudo e os marcos mais recentes.</p>
+                <span class="workspace-rail-card__eyebrow">Resumo rápido</span>
+                <p class="workspace-rail-card__description">Veja o andamento e o que aconteceu por último.</p>
 
                 <div class="technical-progress" role="progressbar" aria-label="Progresso da inspeção" aria-valuemin="0" aria-valuemax="100" aria-valuenow="65">
                     <span id="workspace-progress-bar" class="technical-progress__bar"></span>
@@ -153,7 +153,7 @@
                 <div class="workspace-rail-mini-section">
                     <div class="workspace-rail-mini-section__head">
                         <strong>Marcos recentes</strong>
-                        <span>historico curto</span>
+                        <span>últimas atualizações</span>
                     </div>
                     <ul id="workspace-activity-list" class="technical-activity-list technical-activity-list--compact">
                         <li><span></span><div><strong>Evidência adicionada</strong><small>há 30min</small></div></li>
@@ -167,7 +167,7 @@
 
         <section id="workspace-context-card" class="technical-record-card technical-record-card--context">
             <div class="technical-record-card__header">
-                <h3>Contexto do laudo</h3>
+                <h3>Contexto rápido</h3>
                 <div class="technical-record-card__header-meta">
                     <button type="button" class="workspace-rail-toggle" data-rail-toggle="context" aria-expanded="false">
                         <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
@@ -175,12 +175,12 @@
                 </div>
             </div>
             <div class="workspace-rail-card__body" data-rail-body="context" hidden>
-                <span class="workspace-rail-card__eyebrow">Base ativa do laudo</span>
-                <p class="workspace-rail-card__description">Modelo, operacao e sintese atual no mesmo painel.</p>
+                <span class="workspace-rail-card__eyebrow">Base do caso</span>
+                <p class="workspace-rail-card__description">Modelo, operação e resumo do que já foi entendido.</p>
 
                 <div class="technical-record-card__actions-inline">
                     <button type="button" id="btn-workspace-context-copy" class="portal-link-button">Copiar resumo</button>
-                    <button type="button" id="btn-workspace-context-clear" class="portal-link-button">Limpar fixados</button>
+                    <button type="button" id="btn-workspace-context-clear" class="portal-link-button">Limpar lembretes</button>
                 </div>
 
                 <div class="workspace-context-grid">
@@ -221,7 +221,7 @@
 
         <section id="painel-pendencias-mesa" class="technical-record-card technical-record-card--pendencias" aria-live="polite">
             <div class="technical-record-card__header">
-                <h3>Pendências</h3>
+                <h3>Pedidos da mesa</h3>
                 <div class="technical-record-card__header-meta">
                     <button type="button" class="workspace-rail-toggle" data-rail-toggle="pendencias" aria-expanded="false">
                         <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
@@ -229,12 +229,12 @@
                 </div>
             </div>
             <div class="workspace-rail-card__body" data-rail-body="pendencias" hidden>
-                <span class="workspace-rail-card__eyebrow">Fila documental</span>
-                <p class="workspace-rail-card__description">Veja o que a mesa pediu sem inflar a leitura principal.</p>
+                <span class="workspace-rail-card__eyebrow">Acompanhar ajustes</span>
+                <p class="workspace-rail-card__description">Veja o que a mesa pediu e o que já foi resolvido.</p>
 
                 <div class="acoes-pendencias" hidden>
-                    <button type="button" id="btn-exportar-pendencias-pdf">Exportar PDF</button>
-                    <button type="button" id="btn-marcar-pendencias-lidas">Marcar lidas</button>
+                    <button type="button" id="btn-exportar-pendencias-pdf">Baixar PDF</button>
+                    <button type="button" id="btn-marcar-pendencias-lidas">Marcar como vistas</button>
                     <button type="button" id="btn-fechar-pendencias-mesa">Fechar</button>
                 </div>
 
@@ -252,8 +252,8 @@
                     hidden
                 >
                     <span class="material-symbols-rounded" aria-hidden="true">progress_activity</span>
-                    <strong>Carregando pendencias</strong>
-                    <p>Buscando as pendencias atuais deste laudo.</p>
+                    <strong>Carregando pedidos da mesa</strong>
+                    <p>Buscando o que está em aberto neste laudo.</p>
                 </div>
 
                 <div
@@ -264,8 +264,8 @@
                     hidden
                 >
                     <span class="material-symbols-rounded" aria-hidden="true">task_alt</span>
-                    <strong>Nenhuma pendencia encontrada</strong>
-                    <p data-pendencias-empty-text>Nenhuma pendência enviada pela mesa avaliadora neste laudo.</p>
+                    <strong>Nada pendente por aqui</strong>
+                    <p data-pendencias-empty-text>Nenhum pedido da mesa apareceu neste laudo.</p>
                 </div>
 
                 <div
@@ -276,8 +276,8 @@
                     hidden
                 >
                     <span class="material-symbols-rounded" aria-hidden="true">error</span>
-                    <strong>Falha ao carregar pendências</strong>
-                    <p data-pendencias-error-text>Não foi possível carregar as pendências da mesa agora.</p>
+                    <strong>Não foi possível carregar agora</strong>
+                    <p data-pendencias-error-text>Os pedidos da mesa não puderam ser carregados neste momento.</p>
                 </div>
 
                 <p id="resumo-pendencias-mesa" class="resumo-pendencias-mesa" hidden></p>
@@ -297,7 +297,7 @@
 
         <section class="technical-record-card technical-record-card--mesa">
             <div class="technical-record-card__header">
-                <h3>Mesa Técnica</h3>
+                <h3>Falar com a mesa</h3>
                 <div class="technical-record-card__header-meta">
                     <button
                         type="button"
@@ -315,8 +315,8 @@
                 </div>
             </div>
             <div class="workspace-rail-card__body" data-rail-body="mesa" hidden>
-                <span class="workspace-rail-card__eyebrow">Revisão externa</span>
-                <p class="workspace-rail-card__description" id="workspace-mesa-card-text">Envie para revisao quando concluir a coleta de evidencias.</p>
+                <span class="workspace-rail-card__eyebrow">Validação externa</span>
+                <p class="workspace-rail-card__description" id="workspace-mesa-card-text">Envie para revisão quando terminar a coleta principal.</p>
 
                 <div class="workspace-mesa-card__chips">
                     <span id="workspace-mesa-card-status" class="workspace-mesa-card-chip">Canal disponível</span>
@@ -339,7 +339,7 @@
 
         <section id="workspace-pinned-card" class="technical-record-card technical-record-card--pinned">
             <div class="technical-record-card__header">
-                <h3>Contexto fixado</h3>
+                <h3>Lembretes fixos</h3>
                 <div class="technical-record-card__header-meta">
                     <button type="button" class="workspace-rail-toggle" data-rail-toggle="pinned" aria-expanded="false">
                         <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>

@@ -400,17 +400,32 @@ def _abrir_modal_nova_inspecao(page: Page) -> None:
 
 
 def _abrir_home_explicita(page: Page) -> None:
+    def _esperar_home_atual() -> bool:
+        seletores = [
+            "#workspace-assistant-landing",
+            "#tela-boas-vindas",
+            "[data-workspace-view-root='assistant_landing']",
+        ]
+        for seletor in seletores:
+            locator = page.locator(seletor)
+            if not locator.count():
+                continue
+            try:
+                locator.wait_for(state="visible", timeout=8000)
+                return True
+            except Exception:
+                continue
+        return False
+
     if page.locator("#btn-shell-home").count():
         page.evaluate("() => document.getElementById('btn-shell-home')?.click()")
         page.wait_for_timeout(250)
-        if page.locator("#tela-boas-vindas").count():
-            page.locator("#tela-boas-vindas").wait_for(state="visible", timeout=8000)
+        if _esperar_home_atual():
             return
     if page.locator("a[href='/app/']").first.count():
         page.locator("a[href='/app/']").first.click()
         page.wait_for_timeout(250)
-        if page.locator("#tela-boas-vindas").count():
-            page.locator("#tela-boas-vindas").wait_for(state="visible", timeout=8000)
+        if _esperar_home_atual():
             return
     raise RuntimeError("Não foi possível abrir a home explícita do portal.")
 

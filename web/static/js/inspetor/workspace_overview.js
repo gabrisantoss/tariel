@@ -52,22 +52,22 @@
 
             if (stage === "assistant") {
                 caption = "Canal IA";
-                status = "Composer em foco";
+                status = "Conversa em foco";
             } else if (tab === "historico") {
                 caption = "Histórico da conversa";
                 status = "Mensagens anteriores no mesmo chat";
             } else if (tab === "anexos") {
                 caption = "Evidências e anexos do laudo";
-                status = "Arquivos e provas em foco";
+                status = "Arquivos e provas em um só lugar";
             } else if (tab === "correcoes") {
                 caption = "Correções estruturadas do laudo";
-                status = "Revisão, ajuste e reemissão guiadas";
+                status = "Ajustes guiados no documento";
             } else if (tab === "mesa") {
                 caption = "Canal Mesa Avaliadora";
-                status = "Validação e retorno técnico";
+                status = "Troca com a mesa";
             } else {
                 caption = "Canal IA";
-                status = "Coleta e conversa no mesmo eixo";
+                status = "Conversa e coleta no mesmo fluxo";
             }
 
             if (el.workspaceNavCaption) {
@@ -115,12 +115,12 @@
             const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
             const resumoMesa = ctx.actions.obterResumoOperacionalMesa?.() || {};
             const statusAtual = stage === "assistant"
-                ? CONTEXTO_WORKSPACE_ASSISTENTE.statusBadge
+                ? "Chat livre"
                 : String(
                     estado.workspaceVisualContext?.statusBadge ||
                     el.workspaceStatusBadge?.textContent ||
-                    "EM COLETA"
-                ).trim().toUpperCase() || "EM COLETA";
+                    "Em coleta"
+                ).trim() || "Em coleta";
 
             if (el.workspaceSummaryState) {
                 el.workspaceSummaryState.textContent = statusAtual;
@@ -134,7 +134,7 @@
             if (el.workspaceSummaryMesa) {
                 el.workspaceSummaryMesa.textContent = mesaAvaliadoraDisponivelParaUsuario()
                     ? (resumoMesa.chipStatus || resumoMesa.titulo || "")
-                    : "Correções no chat";
+                    : "Mesa fora do plano";
             }
             if (el.workspaceModeChip) {
                 const laudoAtivo = !!obterLaudoAtivoIdSeguro();
