@@ -132,8 +132,22 @@
             modoInfo = { value: "workspace", source: "url-laudo" };
         }
 
+        const freeChatConversationActiveInfo = escolherCampoEstadoInspector([
+            {
+                source: "override",
+                value: Object.prototype.hasOwnProperty.call(payload, "freeChatConversationActive")
+                    ? normalizarBooleanoEstado(payload.freeChatConversationActive, false)
+                    : undefined,
+            },
+            { source: "memory", value: memoria?.freeChatConversationActive },
+            { source: "dataset", value: autoridadeDisponivel ? undefined : dataset.freeChatConversationActive },
+            { source: "bootstrap", value: bootstrap.freeChatConversationActive },
+        ], { fallback: false });
+
         const workspaceStageDerivado = (
-            estadoRelatorioPossuiContexto(estadoRelatorioInfo.value) || !!laudoInfo.value
+            estadoRelatorioPossuiContexto(estadoRelatorioInfo.value)
+            || !!laudoInfo.value
+            || !!freeChatConversationActiveInfo.value
         )
             ? "inspection"
             : "assistant";
@@ -218,18 +232,6 @@
             { source: "memory", value: memoria?.assistantLandingFirstSendPending },
             { source: "dataset", value: autoridadeDisponivel ? undefined : dataset.assistantLandingFirstSendPending },
             { source: "bootstrap", value: bootstrap.assistantLandingFirstSendPending },
-        ], { fallback: false });
-
-        const freeChatConversationActiveInfo = escolherCampoEstadoInspector([
-            {
-                source: "override",
-                value: Object.prototype.hasOwnProperty.call(payload, "freeChatConversationActive")
-                    ? normalizarBooleanoEstado(payload.freeChatConversationActive, false)
-                    : undefined,
-            },
-            { source: "memory", value: memoria?.freeChatConversationActive },
-            { source: "dataset", value: autoridadeDisponivel ? undefined : dataset.freeChatConversationActive },
-            { source: "bootstrap", value: bootstrap.freeChatConversationActive },
         ], { fallback: false });
 
         const retomadaInfo = escolherCampoEstadoInspector([

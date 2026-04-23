@@ -247,6 +247,9 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     workspace_overview_js = (raiz / "static" / "js" / "inspetor" / "workspace_overview.js").read_text(encoding="utf-8")
     workspace_status_payload_js = (raiz / "static" / "js" / "inspetor" / "workspace_status_payload.js").read_text(encoding="utf-8")
     workspace_mesa_status_js = (raiz / "static" / "js" / "inspetor" / "workspace_mesa_status.js").read_text(encoding="utf-8")
+    state_snapshots_js = (raiz / "static" / "js" / "inspetor" / "state_snapshots.js").read_text(encoding="utf-8")
+    state_authority_js = (raiz / "static" / "js" / "inspetor" / "state_authority.js").read_text(encoding="utf-8")
+    system_events_js = (raiz / "static" / "js" / "inspetor" / "system_events.js").read_text(encoding="utf-8")
     workspace_states_css = (raiz / "static" / "css" / "inspetor" / "workspace_states.css").read_text(encoding="utf-8")
     workspace_rail_css = (raiz / "static" / "css" / "inspetor" / "workspace_rail.css").read_text(encoding="utf-8")
     visual_refinements_css = (raiz / "static" / "css" / "inspetor" / "visual_refinements.css").read_text(encoding="utf-8")
@@ -378,6 +381,11 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "correcoes-estruturadas" in workspace_corrections_js
     assert "tariel:workspace-corrections:" in workspace_corrections_js
     assert "prepararCorrecaoWorkspace" in workspace_corrections_js
+    assert 'const conversaLivreAtiva = !!snapshot.freeChatConversationActive' in state_snapshots_js
+    assert 'if (conversaLivreAtiva) {' in state_snapshots_js
+    assert '|| !!freeChatConversationActiveInfo.value' in state_authority_js
+    assert 'if (fluxoNovoChatAtivo) {' in system_events_js
+    assert 'promoverPrimeiraMensagemNovoChatSePronta({ forcar: true });' in system_events_js
     assert 'id="btn-mesa-widget-toggle"' in workspace_rail_html
     assert 'data-mesa-toggle-label' in workspace_rail_html
     assert 'data-rail-toggle="progress"' in workspace_rail_html

@@ -257,6 +257,12 @@
             return "portal_dashboard";
         }
 
+        const conversaLivreAtiva = !!snapshot.freeChatConversationActive;
+
+        if (conversaLivreAtiva) {
+            return "inspection_workspace";
+        }
+
         if (snapshot.workspaceStage === "assistant") {
             return "assistant_landing";
         }

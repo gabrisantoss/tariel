@@ -234,6 +234,7 @@
                         !laudoIdEfetivo ||
                         retomadaPendente.laudoId === laudoIdEfetivo
                     );
+                const fluxoNovoChatAtivo = fluxoNovoChatFocadoAtivoOuPendente();
 
                 if (homeForcadoAtivo() && estadoRelatorio !== "sem_relatorio") {
                     return;
@@ -259,6 +260,11 @@
                     }
                     carregarPendenciasMesa({ laudoId: laudoIdEfetivo, silencioso: true }).catch(() => {});
                     sincronizarSSEPorContexto();
+                    return;
+                }
+
+                if (fluxoNovoChatAtivo) {
+                    promoverPrimeiraMensagemNovoChatSePronta({ forcar: true });
                     return;
                 }
 
