@@ -500,6 +500,34 @@
         previewEl.textContent = texto || horaBr || "";
     }
 
+    function construirPreviewHistorico(card = {}) {
+        const preview = String(card.preview || "").trim();
+        if (preview) return preview;
+
+        const subtitulo = String(
+            card.subtitulo ||
+            card.workspace_subtitle ||
+            card.home_subtitle ||
+            ""
+        ).trim();
+        const tempo = String(card.tempo || card.hora_br || "").trim();
+
+        if (subtitulo && tempo) {
+            return `${subtitulo} • ${tempo}`;
+        }
+
+        return subtitulo || tempo;
+    }
+
+    function construirTituloHistorico(card = {}) {
+        return String(
+            card.titulo ||
+            card.workspace_title ||
+            card.home_title ||
+            "Inspeção"
+        ).trim() || "Inspeção";
+    }
+
     function criarBotaoAcaoLaudo({ acao, title, icone, pinado = false }) {
         const btn = document.createElement("button");
         btn.type = "button";
@@ -669,6 +697,8 @@
         item.className = "inspetor-sidebar-report item-historico";
         item.setAttribute("role", "button");
         item.setAttribute("tabindex", "0");
+        const tituloHistorico = construirTituloHistorico(card);
+        const previewHistorico = construirPreviewHistorico(card);
         item.dataset.laudoId = String(card.id);
         item.dataset.pinado = String(!!card.pinado);
         item.dataset.openThreadTab = "conversa";
@@ -682,8 +712,11 @@
         item.dataset.caseLifecycleStatus = normalizarCaseLifecycleStatus(
             card.case_lifecycle_status
         );
+        item.dataset.homeTitle = tituloHistorico;
+        item.dataset.homeSubtitle = previewHistorico;
+        item.dataset.homeStatus = String(card.badge || "").trim();
         aplicarModoEntradaDataset(item, card);
-        item.title = `Abrir laudo ${card.titulo || ""}`.trim();
+        item.title = `Abrir laudo ${tituloHistorico}`.trim();
         item.setAttribute("aria-label", item.title || "Abrir laudo");
 
         if (card.pinado) {
@@ -699,12 +732,12 @@
         texto.className = "texto-laudo-historico inspetor-sidebar-report__copy";
 
         const titulo = document.createElement("span");
-        titulo.textContent = String(card.titulo || "Inspeção");
+        titulo.textContent = tituloHistorico;
         texto.appendChild(titulo);
 
         const preview = document.createElement("span");
         preview.className = "preview-mensagem";
-        preview.textContent = String(card.preview || card.hora_br || "");
+        preview.textContent = previewHistorico;
         texto.appendChild(preview);
         const metaCanonica = document.createElement("small");
         metaCanonica.className = "meta-canonica-laudo";
@@ -836,11 +869,12 @@
         item.dataset.caseLifecycleStatus = normalizarCaseLifecycleStatus(
             card.case_lifecycle_status || item.dataset.caseLifecycleStatus || ""
         );
+        item.dataset.homeTitle = construirTituloHistorico(card);
+        item.dataset.homeSubtitle = construirPreviewHistorico(card);
+        item.dataset.homeStatus = String(card.badge || item.dataset.homeStatus || "").trim();
         aplicarModoEntradaDataset(item, card);
-        item.querySelector(".texto-laudo-historico span:first-child").textContent = String(
-            card.titulo || "Inspeção"
-        );
-        atualizarPreviewItem(item, card.preview, card.hora_br);
+        item.querySelector(".texto-laudo-historico span:first-child").textContent = item.dataset.homeTitle;
+        atualizarPreviewItem(item, item.dataset.homeSubtitle, card.hora_br);
         atualizarMetaCanonicaItem(item, {
             ...card,
             active_owner_role: item.dataset.activeOwnerRole,

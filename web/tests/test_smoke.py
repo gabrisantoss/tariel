@@ -1742,6 +1742,8 @@ def test_chat_sidebar_e_modal_perfil_expoem_controles_essenciais() -> None:
     assert 'placeholder="Buscar em chats"' in sidebar_html
     assert 'data-acao-laudo="menu"' in sidebar_macros_html
     assert 'data-acao-laudo="open"' in sidebar_macros_html
+    assert 'data-acao-laudo="pin"' in sidebar_macros_html
+    assert 'data-acao-laudo="delete"' in sidebar_macros_html
     assert 'data-foto-url="' in sidebar_html
     assert 'class="inspetor-user-card__avatar"' in sidebar_html
     assert "Adicionar conta" in sidebar_html
@@ -1754,3 +1756,16 @@ def test_chat_sidebar_e_modal_perfil_expoem_controles_essenciais() -> None:
     assert 'id="input-perfil-email"' in perfil_modal_html
     assert 'id="input-perfil-telefone"' in perfil_modal_html
     assert 'id="input-foto-perfil"' in perfil_modal_html
+
+
+def test_chat_sidebar_history_runtime_mantem_resumo_e_destaque_da_conversa_ativa() -> None:
+    raiz = Path(__file__).resolve().parents[1]
+    laudos_js = (raiz / "static" / "js" / "chat" / "chat_painel_laudos.js").read_text(encoding="utf-8")
+    visual_refinements_css = (raiz / "static" / "css" / "inspetor" / "visual_refinements.css").read_text(encoding="utf-8")
+
+    assert "function construirPreviewHistorico(card = {})" in laudos_js
+    assert "function construirTituloHistorico(card = {})" in laudos_js
+    assert "item.dataset.homeSubtitle = construirPreviewHistorico(card);" in laudos_js
+    assert "item.dataset.homeTitle = construirTituloHistorico(card);" in laudos_js
+    assert ".inspetor-sidebar-report.ativo .inspetor-sidebar-report__copy > span:first-child" in visual_refinements_css
+    assert "inset 3px 0 0 rgba(31, 94, 142, 0.84)" in visual_refinements_css

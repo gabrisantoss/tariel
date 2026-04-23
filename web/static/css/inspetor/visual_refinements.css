@@ -1452,6 +1452,10 @@ body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--c
     background: transparent !important;
     box-shadow: none !important;
     transform: none !important;
+    transition:
+        background 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease;
 }
 
 body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report[data-official-issue-diverged="true"] {
@@ -1473,7 +1477,9 @@ body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--c
 body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report.ativo {
     border-color: rgba(194, 211, 233, 0.98) !important;
     background: linear-gradient(180deg, rgba(221, 233, 250, 0.98), rgba(227, 237, 251, 0.96)) !important;
-    box-shadow: none !important;
+    box-shadow:
+        inset 3px 0 0 rgba(31, 94, 142, 0.84),
+        0 8px 18px rgba(31, 94, 142, 0.08) !important;
 }
 
 body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__icon,
@@ -1522,6 +1528,33 @@ body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--c
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report .meta-canonica-laudo[hidden] {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report .meta-canonica-laudo {
+    margin-top: 2px;
+    color: #7c8da3 !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report.ativo .inspetor-sidebar-report__copy > span:first-child {
+    color: #17324d !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report.ativo .preview-mensagem,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report.ativo .meta-canonica-laudo {
+    color: #516a84 !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report.ativo .inspetor-sidebar-report__actions {
+    display: flex !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report.ativo .btn-menu-laudo {
+    border-color: rgba(168, 188, 212, 0.9) !important;
+    background: rgba(255, 255, 255, 0.72) !important;
 }
 
 body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__governance {
