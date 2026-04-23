@@ -708,11 +708,24 @@
     }
 
     function registrarContextoVisualLaudo(laudoId, contextoVisual = null) {
-        return ctx.actions.registrarContextoVisualLaudo?.(laudoId, contextoVisual) || null;
+        const id = normalizarLaudoAtualId(laudoId);
+        const contexto = normalizarContextoVisualSeguro(contextoVisual);
+        if (!id || !contexto) return null;
+
+        estado.contextoVisualPorLaudo = persistirContextoVisualLaudosStorage({
+            ...(estado.contextoVisualPorLaudo && typeof estado.contextoVisualPorLaudo === "object"
+                ? estado.contextoVisualPorLaudo
+                : {}),
+            [id]: contexto,
+        });
+
+        return contexto;
     }
 
     function obterContextoVisualLaudoRegistrado(laudoId) {
-        return ctx.actions.obterContextoVisualLaudoRegistrado?.(laudoId) || null;
+        const id = normalizarLaudoAtualId(laudoId);
+        if (!id) return null;
+        return normalizarContextoVisualSeguro(estado.contextoVisualPorLaudo?.[id]);
     }
 
     function lerRetomadaHomePendenteStorage() {
