@@ -467,6 +467,7 @@
         if (!lista || !estadoVazio) return;
 
         const possuiItens = !!lista.querySelector(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]");
+        lista.hidden = !possuiItens;
         estadoVazio.hidden = possuiItens;
     }
 
@@ -843,6 +844,7 @@
     function anexarItemHistorico(card) {
         const lista = getListaHistorico();
         if (!lista) return null;
+        lista.hidden = false;
 
         const item = criarItemHistorico(card);
         if (card.pinado) {
@@ -1049,6 +1051,7 @@
 
         const lista = getListaHistorico();
         if (!lista) return null;
+        lista.hidden = false;
 
         const itemNovo = criarItemHistoricoChatLivre(detail);
         if (!itemNovo) return null;
