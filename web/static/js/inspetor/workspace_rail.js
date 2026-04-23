@@ -15,8 +15,9 @@
             return false;
         }
 
+        const simulacaoFerramentasLocal = !!global.TARIEL?.devInspectorToolSimulation;
         const snapshot = obterSnapshotEstadoInspectorAtual?.();
-        if (conversaWorkspaceModoChatAtivo?.(screenAtual, snapshot)) {
+        if (!simulacaoFerramentasLocal && conversaWorkspaceModoChatAtivo?.(screenAtual, snapshot)) {
             return false;
         }
 

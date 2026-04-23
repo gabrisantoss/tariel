@@ -64,6 +64,7 @@
 
     function atualizarControlesWorkspaceStage(dependencies = {}) {
         const el = dependencies.el || {};
+        const simulacaoFerramentasLocal = !!global.TARIEL?.devInspectorToolSimulation;
         const screenBase = dependencies.resolveInspectorBaseScreen?.();
         const viewAtual = dependencies.resolveWorkspaceView?.(screenBase);
         const workspaceAtivo = screenBase !== "portal_dashboard";
@@ -86,9 +87,12 @@
             workspaceAtivo &&
             !assistantAtivo &&
             !overlayAtivo &&
-            !dependencies.conversaWorkspaceModoChatAtivo?.(
-                screenBase,
-                dependencies.obterSnapshotEstadoInspectorAtual?.()
+            (
+                simulacaoFerramentasLocal
+                || !dependencies.conversaWorkspaceModoChatAtivo?.(
+                    screenBase,
+                    dependencies.obterSnapshotEstadoInspectorAtual?.()
+                )
             );
         const finalizacaoVisivel =
             workspaceAtivo &&

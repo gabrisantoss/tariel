@@ -1789,3 +1789,17 @@ def test_chat_sidebar_history_runtime_mantem_resumo_e_destaque_da_conversa_ativa
     assert '.item-historico[data-sidebar-thread-id]' in sidebar_history_js
     assert ".inspetor-sidebar-report.ativo .inspetor-sidebar-report__copy > span:first-child" in visual_refinements_css
     assert "inset 3px 0 0 rgba(31, 94, 142, 0.84)" in visual_refinements_css
+
+
+def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
+    raiz = Path(__file__).resolve().parents[1]
+    app_shell_js = (raiz / "static" / "js" / "shared" / "app_shell.js").read_text(encoding="utf-8")
+    workspace_stage_js = (raiz / "static" / "js" / "inspetor" / "workspace_stage.js").read_text(encoding="utf-8")
+    workspace_rail_js = (raiz / "static" / "js" / "inspetor" / "workspace_rail.js").read_text(encoding="utf-8")
+
+    assert "simularPacoteReviewerServicesEmLocal" in app_shell_js
+    assert "devInspectorToolSimulation" in app_shell_js
+    assert "reviewer_decision: true" in app_shell_js
+    assert "reviewer_issue: true" in app_shell_js
+    assert "simulacaoFerramentasLocal" in workspace_stage_js
+    assert "simulacaoFerramentasLocal" in workspace_rail_js

@@ -73,6 +73,63 @@
         };
     }
 
+    function simularPacoteReviewerServicesEmLocal(policy) {
+        const base = policy && typeof policy === "object" ? policy : normalizarTenantAccessPolicy({});
+        if (!EM_DESENVOLVIMENTO_LOCAL) {
+            return {
+                ...base,
+                devInspectorToolSimulation: false,
+            };
+        }
+
+        const raw = base.raw && typeof base.raw === "object" ? { ...base.raw } : {};
+        const portalEntitlements = {
+            ...base.portalEntitlements,
+            inspetor: true,
+            revisor: true,
+        };
+        const capabilityEntitlements = {
+            ...base.capabilityEntitlements,
+            inspector_send_to_mesa: true,
+            reviewer_decision: true,
+            reviewer_issue: true,
+        };
+        const userCapabilityEntitlements = {
+            ...base.userCapabilityEntitlements,
+            inspector_send_to_mesa: true,
+            reviewer_decision: true,
+            reviewer_issue: true,
+        };
+        const allowedPortals = Array.from(new Set([...(base.allowedPortals || []), "inspetor", "revisor"]));
+        const allowedPortalLabels = Array.from(new Set([...(base.allowedPortalLabels || []), "Area de campo", "Area de analise"]));
+
+        return {
+            raw: {
+                ...raw,
+                commercial_service_package: raw.commercial_service_package || "inspector_chat_mesa_reviewer_services",
+                commercial_service_package_effective:
+                    raw.commercial_service_package_effective || "inspector_chat_mesa_reviewer_services",
+                commercial_service_package_label:
+                    raw.commercial_service_package_label || "Chat Inspetor + Mesa + servicos no Inspetor",
+                commercial_service_package_description:
+                    raw.commercial_service_package_description
+                    || "Simulacao local com ferramentas governadas da Mesa liberadas no Inspetor.",
+                portal_entitlements: portalEntitlements,
+                capability_entitlements: capabilityEntitlements,
+                user_capability_entitlements: userCapabilityEntitlements,
+                allowed_portals: allowedPortals,
+                allowed_portal_labels: allowedPortalLabels,
+            },
+            portalEntitlements,
+            capabilityEntitlements,
+            userCapabilityEntitlements,
+            allowedPortals,
+            allowedPortalLabels,
+            governedByAdminCeo: !!base.governedByAdminCeo,
+            devInspectorToolSimulation: true,
+        };
+    }
+
     function tenantPolicyCapabilityEnabled(policy, capability, fallback = true) {
         const chave = String(capability || "").trim();
         if (!chave) return !!fallback;
@@ -116,7 +173,9 @@
     }
 
     function exporConfigGlobal(cfg) {
-        const tenantAccessPolicy = normalizarTenantAccessPolicy(cfg.tenantAccessPolicy);
+        const tenantAccessPolicy = simularPacoteReviewerServicesEmLocal(
+            normalizarTenantAccessPolicy(cfg.tenantAccessPolicy)
+        );
 
         window.TARIEL = Object.freeze({
             csrfToken: cfg.csrfToken ?? "",
@@ -137,6 +196,7 @@
             portalEntitlements: Object.freeze({ ...tenantAccessPolicy.portalEntitlements }),
             capabilityEntitlements: Object.freeze({ ...tenantAccessPolicy.capabilityEntitlements }),
             userCapabilityEntitlements: Object.freeze({ ...tenantAccessPolicy.userCapabilityEntitlements }),
+            devInspectorToolSimulation: !!tenantAccessPolicy.devInspectorToolSimulation,
             hasPortalAccess(portal, fallback = true) {
                 return tenantPolicyPortalEnabled(tenantAccessPolicy, portal, fallback);
             },
