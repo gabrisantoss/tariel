@@ -717,11 +717,21 @@ def tenant_admin_effective_user_portal_grants(
     access_level: Any,
     stored_portals: Any = None,
 ) -> list[str]:
-    return tenant_admin_normalize_user_portal_grants(
+    effective = tenant_admin_normalize_user_portal_grants(
         payload,
         access_level=access_level,
         requested_portals=stored_portals,
     )
+    summary = summarize_tenant_admin_policy(payload)
+    base_portals = set(_base_portals_for_access_level(access_level))
+    if bool(summary.get("operational_user_cross_portal_enabled")) and (
+        {"inspetor", "revisor"} & base_portals
+    ):
+        allowed = tenant_admin_allowed_user_portal_set(payload, access_level=access_level)
+        for portal in ("inspetor", "revisor"):
+            if portal in allowed and portal not in effective:
+                effective.append(portal)
+    return effective
 
 
 def tenant_admin_forbidden_user_portal_grants(

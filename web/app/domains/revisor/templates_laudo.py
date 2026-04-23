@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from copy import deepcopy
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
@@ -51,6 +52,7 @@ from app.domains.revisor.templates_laudo_support import (
 )
 from app.shared.backend_hotspot_metrics import observe_backend_hotspot
 from app.shared.database import TemplateLaudo, Usuario, obter_banco
+from app.shared.official_issue_package import build_official_issue_package
 from app.shared.security import exigir_revisor
 from nucleo.template_laudos import (
     gerar_preview_pdf_template,
@@ -97,6 +99,100 @@ RESPOSTA_OK_PDF = {
 }
 
 
+def _texto_curto(value: Any, *, limite: int = 220) -> str | None:
+    texto = " ".join(str(value or "").strip().split())
+    if not texto:
+        return None
+    if len(texto) > limite:
+        return f"{texto[: max(0, limite - 3)].rstrip()}..."
+    return texto
+
+
+def _editor_laudo_context_payload(
+    *,
+    banco: Session,
+    usuario: Usuario,
+    laudo_id: int | None,
+    origin: str | None,
+) -> dict[str, Any] | None:
+    if not laudo_id:
+        return None
+    laudo = _obter_laudo_empresa(banco, int(laudo_id), usuario.empresa_id)
+    dados_formulario = deepcopy(laudo.dados_formulario or {}) if isinstance(laudo.dados_formulario, dict) else {}
+    draft = deepcopy(laudo.report_pack_draft_json or {}) if isinstance(laudo.report_pack_draft_json, dict) else {}
+    analysis_basis = dict(draft.get("analysis_basis") or {}) if isinstance(draft.get("analysis_basis"), dict) else {}
+    selected_photos = [
+        dict(item)
+        for item in list(analysis_basis.get("selected_photo_evidence") or analysis_basis.get("issued_photo_evidence") or [])
+        if isinstance(item, dict)
+    ]
+    corrections_history = [
+        dict(item)
+        for item in list(dados_formulario.get("correcoes_estruturadas_aplicadas") or [])
+        if isinstance(item, dict)
+    ]
+    checklist_notes = [
+        _texto_curto(item.get("description"))
+        for item in list(dados_formulario.get("checklist_correcoes_estruturadas") or [])
+        if isinstance(item, dict) and _texto_curto(item.get("description"))
+    ]
+    evidence_notes = [
+        _texto_curto(item.get("description"))
+        for item in list(dados_formulario.get("evidencias_correcoes_estruturadas") or [])
+        if isinstance(item, dict) and _texto_curto(item.get("description"))
+    ]
+    correction_items = [
+        dict(item)
+        for item in list(draft.get("structured_corrections") or [])
+        if isinstance(item, dict)
+    ]
+    pending_count = sum(
+        1
+        for item in correction_items
+        if str(item.get("status") or "pendente").strip().lower() in {"pendente", "enviada_ia"}
+    )
+    _, emissao_oficial = build_official_issue_package(banco, laudo=laudo)
+    current_issue = emissao_oficial.get("current_issue") if isinstance(emissao_oficial.get("current_issue"), dict) else {}
+
+    return {
+        "active": True,
+        "origin": _texto_curto(origin, limite=80),
+        "source_label": "Chat Inspetor" if str(origin or "").strip() == "inspetor_preparar_emissao" else "Fluxo tecnico",
+        "laudo_id": int(laudo.id),
+        "family_key": _texto_curto(getattr(laudo, "catalog_family_key", None) or getattr(laudo, "tipo_template", None), limite=120),
+        "status_revisao": _texto_curto(getattr(laudo, "status_revisao", None), limite=40),
+        "preview_data_json": json.dumps(dados_formulario, ensure_ascii=False, indent=2),
+        "corrections": {
+            "applied_count": len(corrections_history),
+            "pending_count": pending_count,
+            "items": [
+                {
+                    "block": _texto_curto(item.get("block"), limite=80),
+                    "description": _texto_curto(item.get("description"), limite=200),
+                }
+                for item in corrections_history[:5]
+            ],
+        },
+        "checklist_notes": checklist_notes[-5:],
+        "evidence_notes": evidence_notes[-5:],
+        "selected_photos": [
+            {
+                "label": _texto_curto(item.get("label") or item.get("caption") or item.get("reference"), limite=140)
+                or "Foto selecionada",
+                "caption": _texto_curto(item.get("caption") or item.get("reference"), limite=200),
+            }
+            for item in selected_photos[:6]
+        ],
+        "reissue": {
+            "already_issued": bool(emissao_oficial.get("already_issued")),
+            "recommended": bool(emissao_oficial.get("reissue_recommended")),
+            "issue_number": _texto_curto(current_issue.get("issue_number"), limite=80),
+            "reason_summary": _texto_curto(current_issue.get("reissue_reason_summary"), limite=220),
+            "primary_pdf_diverged": bool(current_issue.get("primary_pdf_diverged")),
+        },
+    }
+
+
 def _build_preview_template_ref(
     *,
     template: TemplateLaudo,
@@ -128,9 +224,18 @@ async def tela_templates_laudo(
 @roteador_templates_laudo.get("/templates-laudo/editor", response_class=HTMLResponse)
 async def tela_editor_templates_laudo(
     request: Request,
+    laudo_id: int | None = Query(default=None, ge=1),
+    origin: str | None = Query(default=None),
     usuario: Usuario = Depends(exigir_revisor),
+    banco: Session = Depends(obter_banco),
 ):
     contexto = _contexto_templates_padrao(request, usuario)
+    contexto["editor_context"] = _editor_laudo_context_payload(
+        banco=banco,
+        usuario=usuario,
+        laudo_id=laudo_id,
+        origin=origin,
+    )
     return templates.TemplateResponse(request, "revisor_templates_editor_word.html", contexto)
 
 

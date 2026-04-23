@@ -213,6 +213,68 @@ def test_revogacao_do_portal_revisor_reflete_nos_grants_e_bloqueia_login(
     assert "portal correto" in resposta_login_revisor.text.lower()
 
 
+def test_portal_inspetor_abre_chat_principal_por_padrao_apos_login(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.get("/app/")
+
+    assert resposta.status_code == 200
+    assert "No que você está pensando hoje?" in resposta.text
+    assert re.search(
+        r'id="tela-boas-vindas"[\s\S]*?data-active="false"[\s\S]*?hidden inert',
+        resposta.text,
+    )
+    assert re.search(
+        r'id="workspace-assistant-landing"[\s\S]*?aria-label="Novo chat com o assistente"',
+        resposta.text,
+    )
+
+
+def test_pacote_servicos_mesa_libera_ferramentas_para_inspetor_com_grant_legado(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        inspetor = banco.get(Usuario, ids["inspetor_a"])
+        assert empresa is not None
+        assert inspetor is not None
+
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat_mesa_reviewer_services",
+            "case_visibility_mode": "case_list",
+            "case_action_mode": "case_actions",
+        }
+        inspetor.allowed_portals_json = ["inspetor"]
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+        banco.commit()
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta_portal = client.get(f"/app/?laudo={laudo_id}")
+    assert resposta_portal.status_code == 200
+    boot_inspetor = _extrair_boot_inspetor(resposta_portal.text)
+    assert boot_inspetor["tenantAccessPolicy"]["allowed_portals"] == ["inspetor", "revisor"]
+    assert boot_inspetor["tenantAccessPolicy"]["user_capability_entitlements"]["reviewer_decision"] is True
+    assert boot_inspetor["tenantAccessPolicy"]["user_capability_entitlements"]["reviewer_issue"] is True
+
+    _login_revisor(client, "inspetor@empresa-a.test")
+    resposta_editor = client.get(
+        f"/revisao/templates-laudo/editor?laudo_id={laudo_id}&origin=inspetor"
+    )
+    assert resposta_editor.status_code == 200
+
+
 def test_revogacao_de_capacidades_bloqueia_acoes_criticas_do_tenant(
     ambiente_critico,
 ) -> None:
@@ -704,6 +766,254 @@ def test_inspetor_com_servicos_da_mesa_emite_oficialmente_no_fluxo_do_chat(
     resposta_download = client.get(corpo["download_url"])
     assert resposta_download.status_code == 200
     assert "application/zip" in resposta_download.headers.get("content-type", "").lower()
+
+
+def test_preparacao_emissao_exibe_contexto_documental_e_fotos_curadas(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        inspetor = banco.get(Usuario, ids["inspetor_a"])
+        assert empresa is not None
+        assert inspetor is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat_mesa_reviewer_services",
+        }
+        inspetor.allowed_portals_json = ["inspetor", "revisor"]
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.nome_arquivo_pdf = "laudo_emitido.pdf"
+        laudo.catalog_family_key = "nr13_inspecao_caldeira"
+        laudo.dados_formulario = {
+            "correcoes_estruturadas_aplicadas": [
+                {
+                    "id": "corr-1",
+                    "block": "observacoes",
+                    "description": "Registrar ressalva documental sobre acesso parcial.",
+                    "applied_at": "2026-04-23T14:00:00+00:00",
+                    "fields": ["dados_formulario.observacoes"],
+                }
+            ],
+            "checklist_correcoes_estruturadas": [
+                {"description": "Ajustar checklist final para NC controlada."}
+            ],
+            "evidencias_correcoes_estruturadas": [
+                {"description": "Substituir foto superior por anexo validado."}
+            ],
+        }
+        laudo.report_pack_draft_json = {
+            "structured_corrections": [
+                {"id": "corr-1", "status": "aplicada"},
+                {"id": "corr-2", "status": "pendente"},
+            ],
+            "analysis_basis": {
+                "coverage_summary": "2 foto(s) elegiveis para emissao.",
+                "photo_evidence": [
+                    {
+                        "message_id": 701,
+                        "reference": "msg:701",
+                        "label": "Vista geral",
+                        "caption": "Linha de vida vertical na escada de acesso",
+                    },
+                    {
+                        "message_id": 702,
+                        "reference": "msg:702",
+                        "label": "Ponto superior",
+                        "caption": "Corrosao inicial no cabo proximo ao topo",
+                    },
+                ],
+                "selected_photo_evidence": [
+                    {
+                        "message_id": 701,
+                        "reference": "msg:701",
+                        "label": "Vista geral",
+                        "caption": "Linha de vida vertical na escada de acesso",
+                    }
+                ],
+            },
+            "quality_gates": {"missing_evidence": []},
+        }
+        banco.add(
+            ApprovedCaseSnapshot(
+                laudo_id=laudo_id,
+                empresa_id=ids["empresa_a"],
+                family_key="nr13_inspecao_caldeira",
+                approval_version=3,
+                document_outcome="approved",
+                laudo_output_snapshot={"codigo_hash": laudo.codigo_hash},
+            )
+        )
+        signatario = SignatarioGovernadoLaudo(
+            tenant_id=ids["empresa_a"],
+            nome="Eng. Inspetor Responsavel",
+            funcao="Responsavel tecnico",
+            registro_profissional="CREA 123456-GO",
+            valid_until=datetime.now(timezone.utc) + timedelta(days=120),
+            allowed_family_keys_json=["nr13_inspecao_caldeira"],
+            ativo=True,
+            criado_por_id=ids["admin_a"],
+        )
+        banco.add(signatario)
+        banco.commit()
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.get(f"/app/laudo/{laudo_id}/preparar-emissao?tool=pdf")
+
+    assert resposta.status_code == 200
+    assert "Correcoes no documento" in resposta.text
+    assert "Registrar ressalva documental sobre acesso parcial." in resposta.text
+    assert "Fotos para emissao" in resposta.text
+    assert "2 foto(s) elegiveis para emissao." in resposta.text
+    assert "msg:701" in resposta.text
+    assert "Mudancas desde a ultima emissao" in resposta.text
+    assert f"/revisao/templates-laudo/editor?laudo_id={laudo_id}&amp;origin=inspetor_preparar_emissao" in resposta.text
+
+
+def test_editor_visual_recebe_contexto_do_inspetor_para_laudo_real(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.catalog_family_key = "nr13_inspecao_caldeira"
+        laudo.dados_formulario = {
+            "informacoes_gerais": {"cliente": "Cliente demonstracao"},
+            "checklist_correcoes_estruturadas": [
+                {"description": "Ajustar checklist final para NC controlada."}
+            ],
+            "evidencias_correcoes_estruturadas": [
+                {"description": "Substituir foto superior por anexo validado."}
+            ],
+            "correcoes_estruturadas_aplicadas": [
+                {
+                    "id": "corr-1",
+                    "block": "observacoes",
+                    "description": "Registrar ressalva documental sobre acesso parcial.",
+                }
+            ],
+        }
+        laudo.report_pack_draft_json = {
+            "analysis_basis": {
+                "selected_photo_evidence": [
+                    {
+                        "label": "Vista geral",
+                        "caption": "Linha de vida vertical na escada de acesso",
+                    }
+                ]
+            },
+            "structured_corrections": [
+                {"id": "corr-1", "status": "aplicada"},
+                {"id": "corr-2", "status": "pendente"},
+            ],
+            "quality_gates": {"missing_evidence": []},
+        }
+        banco.add(
+            ApprovedCaseSnapshot(
+                laudo_id=laudo_id,
+                empresa_id=ids["empresa_a"],
+                family_key="nr13_inspecao_caldeira",
+                approval_version=2,
+                document_outcome="approved",
+                laudo_output_snapshot={"codigo_hash": laudo.codigo_hash},
+            )
+        )
+        banco.commit()
+
+    _login_revisor(client, "revisor@empresa-a.test")
+    resposta = client.get(
+        f"/revisao/templates-laudo/editor?laudo_id={laudo_id}&origin=inspetor_preparar_emissao"
+    )
+
+    assert resposta.status_code == 200
+    assert "Contexto do laudo" in resposta.text
+    assert "Chat Inspetor" in resposta.text
+    assert "Registrar ressalva documental sobre acesso parcial." in resposta.text
+    assert "Inserir checklist" in resposta.text
+    assert '"laudo_id": %d' % laudo_id in resposta.text
+
+
+def test_inspetor_salva_curadoria_de_fotos_para_emissao_no_fluxo_do_chat(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        inspetor = banco.get(Usuario, ids["inspetor_a"])
+        assert empresa is not None
+        assert inspetor is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat_mesa_reviewer_services",
+        }
+        inspetor.allowed_portals_json = ["inspetor", "revisor"]
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.report_pack_draft_json = {
+            "analysis_basis": {
+                "photo_evidence": [
+                    {
+                        "message_id": 801,
+                        "reference": "msg:801",
+                        "label": "Vista geral",
+                        "caption": "Visao geral do conjunto inspecionado",
+                    },
+                    {
+                        "message_id": 802,
+                        "reference": "msg:802",
+                        "label": "Detalhe",
+                        "caption": "Detalhe do achado principal",
+                    },
+                ]
+            },
+            "quality_gates": {"missing_evidence": []},
+        }
+        banco.commit()
+
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.post(
+        f"/app/api/laudo/{laudo_id}/fotos-emissao",
+        headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+        json={
+            "selected_photo_keys": ["msg:802"],
+            "selection_source": "inspetor_prepare_issue",
+        },
+    )
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["ok"] is True
+    analysis_basis = corpo["report_pack_draft"]["analysis_basis"]
+    assert analysis_basis["issued_photo_selection"]["selection_source"] == "inspetor_prepare_issue"
+    assert analysis_basis["issued_photo_selection"]["selected_keys"] == ["msg:802"]
+    assert analysis_basis["selected_photo_evidence"][0]["message_id"] == 802
 
 
 def test_correcoes_estruturadas_do_inspetor_persistem_no_laudo(

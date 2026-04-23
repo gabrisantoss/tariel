@@ -3,6 +3,7 @@
 
     const config = window.__TARIEL_TEMPLATE_CONFIG__ || {};
     const csrf = String(config.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || "");
+    const editorContext = config.editorContext && typeof config.editorContext === "object" ? config.editorContext : null;
 
     const q = (id) => document.getElementById(id);
     const els = {
@@ -95,6 +96,7 @@
         btnPlaceholderToken: q("btn-ed-placeholder-token"),
         blockButtons: [...document.querySelectorAll(".js-insert-block")],
         quickPlaceholderButtons: [...document.querySelectorAll(".js-insert-placeholder-quick")],
+        contextInsertButtons: [...document.querySelectorAll("[data-context-insert]")],
     };
     if (!els.editorSurface || !els.btnOpenEditorA4) return;
 
@@ -109,6 +111,68 @@
         bibliotecaOculta: false,
         painelLateralOculto: false,
         ribbonAtivo: "home",
+    };
+
+    const buildContextBulletList = (items) => ({
+        type: "bulletList",
+        content: items.map((item) => ({
+            type: "listItem",
+            content: [{
+                type: "paragraph",
+                content: [{ type: "text", text: String(item || "").trim() }],
+            }],
+        })),
+    });
+
+    const buildEditorContextBlock = (kind) => {
+        if (!editorContext?.active) return null;
+        const normalizedKind = String(kind || "").trim().toLowerCase();
+        if (normalizedKind === "correcoes") {
+            const items = (editorContext.corrections?.items || [])
+                .map((item) => {
+                    const block = String(item?.block || "").trim();
+                    const description = String(item?.description || "").trim();
+                    if (!description) return "";
+                    return block ? `${block}: ${description}` : description;
+                })
+                .filter(Boolean);
+            if (!items.length) return null;
+            return [
+                { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Correções aplicadas pelo Inspetor" }] },
+                buildContextBulletList(items),
+            ];
+        }
+        if (normalizedKind === "checklist") {
+            const items = [...(editorContext.checklist_notes || [])].map((item) => String(item || "").trim()).filter(Boolean);
+            if (!items.length) return null;
+            return [
+                { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Checklist operacional do caso" }] },
+                buildContextBulletList(items),
+            ];
+        }
+        if (normalizedKind === "evidencias") {
+            const items = [...(editorContext.evidence_notes || [])].map((item) => String(item || "").trim()).filter(Boolean);
+            if (!items.length) return null;
+            return [
+                { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Curadoria de evidências" }] },
+                buildContextBulletList(items),
+            ];
+        }
+        if (normalizedKind === "fotos") {
+            const items = (editorContext.selected_photos || [])
+                .map((item) => {
+                    const label = String(item?.label || "").trim();
+                    const caption = String(item?.caption || "").trim();
+                    return [label, caption].filter(Boolean).join(" — ");
+                })
+                .filter(Boolean);
+            if (!items.length) return null;
+            return [
+                { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Fotos selecionadas para emissão" }] },
+                buildContextBulletList(items),
+            ];
+        }
+        return null;
     };
 
     const PRESETS = {
@@ -835,6 +899,18 @@
         agendarAutosave();
     };
 
+    const inserirBlocoDoContexto = (kind) => {
+        if (!state.editor) return;
+        const bloco = buildEditorContextBlock(kind);
+        if (!Array.isArray(bloco) || !bloco.length) {
+            status(els.statusEditorWord, "Nenhum dado do laudo disponível para inserir nesta seção.", "err");
+            return;
+        }
+        state.editor.chain().focus().insertContent(bloco).run();
+        status(els.statusEditorWord, "Contexto do laudo inserido no documento.", "ok");
+        agendarAutosave();
+    };
+
     const payloadSalvarEditor = () => {
         if (!state.editor) throw new Error("Editor não inicializado.");
         const nome = String(els.editorNome?.value || "").trim();
@@ -1129,7 +1205,11 @@
         const queryTemplateId = Number(query.get("template_id") || 0);
         const queryNovo = query.get("novo") === "1";
 
-        if (els.editorPreviewDados && !els.editorPreviewDados.value.trim()) els.editorPreviewDados.value = String(config.dadosPreviewExemploJson || "{}");
+        if (els.editorPreviewDados && editorContext?.preview_data_json) {
+            els.editorPreviewDados.value = String(editorContext.preview_data_json || "{}");
+        } else if (els.editorPreviewDados && !els.editorPreviewDados.value.trim()) {
+            els.editorPreviewDados.value = String(config.dadosPreviewExemploJson || "{}");
+        }
         if (els.editorNome && !String(els.editorNome.value || "").trim()) els.editorNome.value = "Novo Modelo Tariel";
         if (els.editorCodigo && !String(els.editorCodigo.value || "").trim()) els.editorCodigo.value = gerarCodigoPadrao();
 
@@ -1171,6 +1251,9 @@
         });
         els.blockButtons.forEach((btn) => {
             btn.addEventListener("click", () => inserirBloco(btn.dataset.block));
+        });
+        els.contextInsertButtons.forEach((btn) => {
+            btn.addEventListener("click", () => inserirBlocoDoContexto(btn.dataset.contextInsert));
         });
         els.quickPlaceholderButtons.forEach((btn) => {
             btn.addEventListener("click", () => inserirPlaceholderRapido(btn.dataset.mode, btn.dataset.key));

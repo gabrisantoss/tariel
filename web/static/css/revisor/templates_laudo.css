@@ -1831,6 +1831,69 @@ textarea {
     line-height: 1.55;
 }
 
+.word-editor-context {
+    display: grid;
+    gap: 14px;
+    margin-top: 12px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(18, 35, 60, 0.08);
+}
+
+.word-context-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.word-context-columns {
+    display: grid;
+    gap: 10px;
+}
+
+.word-context-card {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid rgba(18, 35, 60, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.word-context-card small {
+    color: var(--text-soft);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.word-context-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.word-context-list li {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(244, 247, 251, 0.92);
+}
+
+.word-context-list strong {
+    color: var(--ink-900);
+    font-size: 13px;
+}
+
+.word-context-list span {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 #frame-editor-preview {
     min-height: 760px;
 }

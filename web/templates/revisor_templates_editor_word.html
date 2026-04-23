@@ -358,6 +358,89 @@
                                         <p>Abra uma base, ajuste a tipografia, insira marcadores e publique depois de validar a visualização.</p>
                                     </article>
                                 </div>
+                                {% if editor_context %}
+                                <section class="word-editor-context" data-editor-context-shell>
+                                    <div class="word-inspector-panel-head">
+                                        <strong>Contexto do laudo</strong>
+                                        <small>Resumo trazido do Inspetor para editar o documento com base no caso real.</small>
+                                    </div>
+                                    <div class="word-doc-summary">
+                                        <article class="word-doc-summary-card">
+                                            <small>Origem</small>
+                                            <strong>{{ editor_context.source_label | e }}</strong>
+                                            <p>
+                                                Laudo #{{ editor_context.laudo_id }} • {{ editor_context.family_key | default("Sem familia", true) | e }} • {{ editor_context.status_revisao | default("Sem status", true) | e }}
+                                            </p>
+                                        </article>
+                                        <article class="word-doc-summary-card">
+                                            <small>Correcoes</small>
+                                            <strong>{{ editor_context.corrections.applied_count }} aplicada(s)</strong>
+                                            <p>{{ editor_context.corrections.pending_count }} ainda aberta(s) para tratamento fora do template.</p>
+                                        </article>
+                                        <article class="word-doc-summary-card">
+                                            <small>Reemissao</small>
+                                            <strong>
+                                                {% if editor_context.reissue.recommended %}
+                                                Reemissao recomendada
+                                                {% elif editor_context.reissue.already_issued %}
+                                                Emissao ativa
+                                                {% else %}
+                                                Primeira emissao
+                                                {% endif %}
+                                            </strong>
+                                            <p>{{ editor_context.reissue.reason_summary | default("Sem alerta de reemissao no momento.", true) | e }}</p>
+                                        </article>
+                                    </div>
+                                    <div class="word-context-actions">
+                                        <button type="button" class="btn ghost" data-context-insert="correcoes">Inserir correcoes</button>
+                                        <button type="button" class="btn ghost" data-context-insert="checklist">Inserir checklist</button>
+                                        <button type="button" class="btn ghost" data-context-insert="evidencias">Inserir evidencias</button>
+                                        <button type="button" class="btn ghost" data-context-insert="fotos">Inserir fotos</button>
+                                    </div>
+                                    <div class="word-context-columns">
+                                        <article class="word-context-card">
+                                            <small>Correcoes aplicadas</small>
+                                            <ul class="word-context-list">
+                                                {% for item in editor_context.corrections["items"] %}
+                                                <li>
+                                                    <strong>{{ item.block | default("correcao", true) | e }}</strong>
+                                                    <span>{{ item.description | default("Sem descricao", true) | e }}</span>
+                                                </li>
+                                                {% else %}
+                                                <li><span>Nenhuma correcao aplicada ao documento ainda.</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </article>
+                                        <article class="word-context-card">
+                                            <small>Checklist e evidencias</small>
+                                            <ul class="word-context-list">
+                                                {% for item in editor_context.checklist_notes %}
+                                                <li><span>{{ item | e }}</span></li>
+                                                {% endfor %}
+                                                {% for item in editor_context.evidence_notes %}
+                                                <li><span>{{ item | e }}</span></li>
+                                                {% endfor %}
+                                                {% if not editor_context.checklist_notes and not editor_context.evidence_notes %}
+                                                <li><span>Sem notas estruturadas de checklist ou evidencias.</span></li>
+                                                {% endif %}
+                                            </ul>
+                                        </article>
+                                        <article class="word-context-card">
+                                            <small>Fotos selecionadas</small>
+                                            <ul class="word-context-list">
+                                                {% for item in editor_context.selected_photos %}
+                                                <li>
+                                                    <strong>{{ item.label | e }}</strong>
+                                                    <span>{{ item.caption | default("Sem legenda operacional", true) | e }}</span>
+                                                </li>
+                                                {% else %}
+                                                <li><span>Nenhuma foto curada para emissao ainda.</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </article>
+                                    </div>
+                                </section>
+                                {% endif %}
                                 <div id="status-editor-word" class="status"></div>
                             </section>
 
@@ -480,7 +563,8 @@
     <script nonce="{{ csp_nonce }}">
         window.__TARIEL_TEMPLATE_CONFIG__ = {
             csrfToken: {{ csrf_token | tojson }},
-            dadosPreviewExemploJson: {{ dados_preview_exemplo_json | tojson }}
+            dadosPreviewExemploJson: {{ dados_preview_exemplo_json | tojson }},
+            editorContext: {{ editor_context | tojson }}
         };
     </script>
     <script type="module" nonce="{{ csp_nonce }}" src="/static/js/revisor/templates_editor_word.js"></script>

@@ -279,9 +279,7 @@ def resolver_contexto_principal_inspetor(
             resumo_cache=cache,
         )
 
-    home_forcado_inicial = (home_explicito and fonte_laudo_ativo != "query_param") or (
-        not laudo_query_presente and not home_explicito
-    )
+    home_forcado_inicial = home_explicito and fonte_laudo_ativo != "query_param"
 
     return {
         "estado_relatorio": estado_relatorio,

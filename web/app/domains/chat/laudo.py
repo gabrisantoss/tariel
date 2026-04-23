@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Annotated
+from typing import Annotated, Any
+from urllib.parse import urlencode
 
 from fastapi import Depends, Form, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
@@ -460,6 +461,183 @@ def _resumo_estado_preparo_emissao(emissao_oficial: dict) -> dict[str, str]:
     }
 
 
+def _texto_curto(value: Any, *, limite: int = 280) -> str | None:
+    texto = " ".join(str(value or "").strip().split())
+    if not texto:
+        return None
+    if len(texto) > limite:
+        return f"{texto[: max(0, limite - 3)].rstrip()}..."
+    return texto
+
+
+def _normalizar_chave_foto_emissao(item: Any) -> str | None:
+    if not isinstance(item, dict):
+        return None
+    message_id = int(item.get("message_id") or 0)
+    if message_id > 0:
+        return f"msg:{message_id}"
+    referencia = _texto_curto(item.get("reference") or item.get("original_name"), limite=180)
+    if referencia:
+        return f"ref:{referencia.casefold()}"
+    return None
+
+
+def _resumo_correcoes_documentais_laudo(laudo: Laudo) -> dict[str, Any]:
+    payload = getattr(laudo, "dados_formulario", None)
+    payload = dict(payload or {}) if isinstance(payload, dict) else {}
+    draft = getattr(laudo, "report_pack_draft_json", None)
+    draft = dict(draft or {}) if isinstance(draft, dict) else {}
+
+    historico = [
+        dict(item)
+        for item in list(payload.get("correcoes_estruturadas_aplicadas") or [])
+        if isinstance(item, dict)
+    ]
+    historico.sort(key=lambda item: str(item.get("applied_at") or ""), reverse=True)
+    notas_checklist = [
+        dict(item)
+        for item in list(payload.get("checklist_correcoes_estruturadas") or [])
+        if isinstance(item, dict)
+    ]
+    notas_evidencias = [
+        dict(item)
+        for item in list(payload.get("evidencias_correcoes_estruturadas") or [])
+        if isinstance(item, dict)
+    ]
+    correcoes = [
+        dict(item)
+        for item in list(draft.get("structured_corrections") or [])
+        if isinstance(item, dict)
+    ]
+    pendentes = [
+        item
+        for item in correcoes
+        if str(item.get("status") or "pendente").strip().lower() in {"pendente", "enviada_ia"}
+    ]
+
+    return {
+        "applied_count": len(historico),
+        "pending_count": len(pendentes),
+        "checklist_note_count": len(notas_checklist),
+        "evidence_note_count": len(notas_evidencias),
+        "applied_items": [
+            {
+                "id": str(item.get("id") or "").strip() or None,
+                "block": str(item.get("block") or "").strip() or None,
+                "description": _texto_curto(item.get("description"), limite=220),
+                "applied_at": _texto_curto(item.get("applied_at"), limite=80),
+                "fields": [
+                    str(campo or "").strip()
+                    for campo in list(item.get("fields") or [])
+                    if str(campo or "").strip()
+                ],
+            }
+            for item in historico[:6]
+        ],
+        "checklist_notes": [
+            _texto_curto(item.get("description"), limite=220)
+            for item in notas_checklist[-4:]
+            if _texto_curto(item.get("description"), limite=220)
+        ],
+        "evidence_notes": [
+            _texto_curto(item.get("description"), limite=220)
+            for item in notas_evidencias[-4:]
+            if _texto_curto(item.get("description"), limite=220)
+        ],
+    }
+
+
+def _resumo_fotos_emissao_laudo(laudo: Laudo) -> dict[str, Any]:
+    draft = getattr(laudo, "report_pack_draft_json", None)
+    draft = dict(draft or {}) if isinstance(draft, dict) else {}
+    analysis_basis = dict(draft.get("analysis_basis") or {}) if isinstance(draft.get("analysis_basis"), dict) else {}
+    photo_evidence = [
+        dict(item)
+        for item in list(analysis_basis.get("photo_evidence") or [])
+        if isinstance(item, dict)
+    ]
+    selected_photo_evidence = [
+        dict(item)
+        for item in list(analysis_basis.get("selected_photo_evidence") or analysis_basis.get("issued_photo_evidence") or [])
+        if isinstance(item, dict)
+    ]
+    selected_keys = {
+        key
+        for item in selected_photo_evidence
+        for key in [_normalizar_chave_foto_emissao(item)]
+        if key
+    }
+    photos: list[dict[str, Any]] = []
+    for index, item in enumerate(photo_evidence, start=1):
+        key = _normalizar_chave_foto_emissao(item)
+        if not key:
+            continue
+        photos.append(
+            {
+                "key": key,
+                "label": _texto_curto(
+                    item.get("label") or item.get("caption") or item.get("reference") or f"Foto {index}",
+                    limite=120,
+                )
+                or f"Foto {index}",
+                "caption": _texto_curto(item.get("caption") or item.get("reference"), limite=220),
+                "selected": key in selected_keys,
+            }
+        )
+
+    selection_meta = (
+        dict(analysis_basis.get("issued_photo_selection") or {})
+        if isinstance(analysis_basis.get("issued_photo_selection"), dict)
+        else {}
+    )
+    return {
+        "available_count": len(photos),
+        "selected_count": sum(1 for item in photos if item["selected"]),
+        "coverage_summary": _texto_curto(analysis_basis.get("coverage_summary"), limite=220),
+        "selection_source": _texto_curto(selection_meta.get("selection_source"), limite=80),
+        "selected_at": _texto_curto(selection_meta.get("selected_at"), limite=80),
+        "photos": photos,
+    }
+
+
+def _resumo_reemissao_laudo(emissao_oficial: dict[str, Any]) -> dict[str, Any]:
+    current_issue = emissao_oficial.get("current_issue")
+    current_issue = dict(current_issue or {}) if isinstance(current_issue, dict) else {}
+    audit_trail = [
+        dict(item)
+        for item in list(emissao_oficial.get("audit_trail") or [])
+        if isinstance(item, dict)
+    ]
+    eventos = [
+        {
+            "title": _texto_curto(item.get("title"), limite=120),
+            "summary": _texto_curto(item.get("summary"), limite=220),
+            "status": _texto_curto(item.get("status"), limite=32),
+        }
+        for item in audit_trail[:3]
+        if _texto_curto(item.get("title"), limite=120) or _texto_curto(item.get("summary"), limite=220)
+    ]
+    return {
+        "already_issued": bool(emissao_oficial.get("already_issued")),
+        "reissue_recommended": bool(emissao_oficial.get("reissue_recommended")),
+        "issue_number": _texto_curto(current_issue.get("issue_number"), limite=80),
+        "reason_summary": _texto_curto(current_issue.get("reissue_reason_summary"), limite=220),
+        "primary_pdf_diverged": bool(current_issue.get("primary_pdf_diverged")),
+        "approval_version": int(current_issue.get("approval_version") or 0) or None,
+        "events": eventos,
+    }
+
+
+def _editor_laudo_url(laudo: Laudo) -> str:
+    query = urlencode(
+        {
+            "laudo_id": int(getattr(laudo, "id", 0) or 0),
+            "origin": "inspetor_preparar_emissao",
+        }
+    )
+    return f"/revisao/templates-laudo/editor?{query}"
+
+
 async def pagina_preparar_emissao_laudo(
     laudo_id: int,
     request: Request,
@@ -487,14 +665,18 @@ async def pagina_preparar_emissao_laudo(
         "tool": str(tool or "").strip().lower(),
         "template_emissao": _resumo_template_emissao_laudo(laudo),
         "estado_preparo_emissao": _resumo_estado_preparo_emissao(emissao_oficial),
+        "correcoes_documentais": _resumo_correcoes_documentais_laudo(laudo),
+        "fotos_emissao": _resumo_fotos_emissao_laudo(laudo),
+        "contexto_reemissao": _resumo_reemissao_laudo(emissao_oficial),
         "anexo_pack": anexo_pack,
         "emissao_oficial": emissao_oficial,
         "current_issue": current_issue,
         "download_emissao_url": f"/app/api/laudo/{int(laudo.id)}/emissao-oficial/download",
         "emitir_emissao_url": f"/app/api/laudo/{int(laudo.id)}/emissao-oficial",
+        "salvar_fotos_emissao_url": f"/app/api/laudo/{int(laudo.id)}/fotos-emissao",
         "pacote_pdf_url": f"/revisao/api/laudo/{int(laudo.id)}/pacote/exportar-pdf",
         "templates_url": "/revisao/templates-laudo",
-        "editor_url": "/revisao/templates-laudo/editor",
+        "editor_url": _editor_laudo_url(laudo),
         "mesa_url": f"/revisao?laudo_id={int(laudo.id)}",
     }
     return templates.TemplateResponse(
@@ -933,6 +1115,12 @@ roteador_laudo.add_api_route(
 )
 roteador_laudo.add_api_route(
     "/api/laudo/{laudo_id}/issued-photo-selection",
+    api_salvar_selecao_fotos_emissao_laudo,
+    methods=["POST"],
+    responses={**RESPOSTA_LAUDO_NAO_ENCONTRADO, 400: {"description": "Seleção de fotos indisponível."}},
+)
+roteador_laudo.add_api_route(
+    "/api/laudo/{laudo_id}/fotos-emissao",
     api_salvar_selecao_fotos_emissao_laudo,
     methods=["POST"],
     responses={**RESPOSTA_LAUDO_NAO_ENCONTRADO, 400: {"description": "Seleção de fotos indisponível."}},
