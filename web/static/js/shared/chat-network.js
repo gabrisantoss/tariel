@@ -1508,6 +1508,55 @@
             ].some((gatilho) => texto === gatilho || texto.startsWith(`${gatilho} `));
         }
 
+        function obterIntencaoModoLaudo(mensagem = "") {
+            const helper = window.TarielInspectorReportMode;
+            if (typeof helper?.detectIntent === "function") {
+                return helper.detectIntent(mensagem);
+            }
+            const texto = String(mensagem || "")
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, " ");
+            if (!texto) return "";
+            if ([
+                "sair do modo laudo",
+                "sair do laudo",
+                "pausar laudo",
+                "pausar modo laudo",
+                "modo off",
+            ].some((gatilho) => texto === gatilho || texto.startsWith(`${gatilho} `))) {
+                return "pause";
+            }
+            if ([
+                "voltar ao modo laudo",
+                "voltar para o laudo",
+                "retomar laudo",
+                "continuar laudo",
+                "entrar no modo laudo",
+            ].some((gatilho) => texto === gatilho || texto.startsWith(`${gatilho} `))) {
+                return "resume";
+            }
+            return "";
+        }
+
+        function deveColetarParaLaudo(mensagem = "") {
+            const laudoId = Number(getLaudoAtualId?.() || 0) || 0;
+            if (laudoId <= 0) return true;
+            const helper = window.TarielInspectorReportMode;
+            const intencao = obterIntencaoModoLaudo(mensagem);
+            if (intencao && typeof helper?.setEnabled === "function") {
+                helper.setEnabled(laudoId, intencao === "resume");
+            }
+            if (intencao === "pause") return false;
+            if (intencao === "resume") return true;
+            if (typeof helper?.isEnabled === "function") {
+                return helper.isEnabled(laudoId);
+            }
+            return true;
+        }
+
         async function enviarParaIA(
             mensagem,
             dadosImagem = null,
@@ -1581,6 +1630,8 @@
                         nome_documento: nomeDocumento || "",
                         laudo_id: getLaudoAtualId?.() ? Number(getLaudoAtualId()) : null,
                         iniciar_laudo: deveIniciarLaudoPeloChatLivre(mensagem),
+                        coletar_para_laudo: deveColetarParaLaudo(mensagem),
+                        report_context_command: obterIntencaoModoLaudo(mensagem),
                     }),
                 });
 

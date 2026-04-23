@@ -94,6 +94,16 @@ def _resolved_catalog_family_key_for_laudo(laudo: Laudo, *, template_key: str) -
     )
 
 
+def mensagem_incluida_no_contexto_do_laudo(message: MensagemLaudo) -> bool:
+    metadata = getattr(message, "metadata_json", None)
+    if not isinstance(metadata, dict):
+        return True
+    report_context = metadata.get("report_context")
+    if not isinstance(report_context, dict):
+        return True
+    return report_context.get("included") is not False
+
+
 def _normalize_report_pack_photo_selection_key(item: Any) -> str | None:
     if not isinstance(item, dict):
         return None
@@ -229,6 +239,11 @@ def build_report_pack_draft_for_laudo(
         .order_by(MensagemLaudo.criado_em.asc())
         .all()
     )
+    user_messages = [
+        mensagem
+        for mensagem in user_messages
+        if mensagem_incluida_no_contexto_do_laudo(mensagem)
+    ]
     visual_attachment_by_message_id = _build_visual_attachment_by_message_id(
         banco=banco,
         laudo_id=int(laudo.id),
@@ -473,6 +488,7 @@ __all__ = [
     "atualizar_selecao_fotos_emissao_report_pack",
     "atualizar_report_pack_draft_laudo",
     "build_report_pack_draft_for_laudo",
+    "mensagem_incluida_no_contexto_do_laudo",
     "obter_dados_formulario_candidate_report_pack",
     "obter_pre_laudo_outline_report_pack",
     "obter_report_pack_draft_laudo",

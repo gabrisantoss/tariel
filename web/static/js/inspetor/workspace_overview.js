@@ -11,6 +11,7 @@
         const el = ctx.elements;
         const {
             CONTEXTO_WORKSPACE_ASSISTENTE,
+            NOMES_TEMPLATES,
             normalizarCaseLifecycleStatusSeguro,
             normalizarPublicVerificationSeguro,
             normalizarThreadTab,
@@ -86,7 +87,9 @@
         }
 
         function renderizarResumoExecutivoWorkspace() {
-            const stage = normalizarWorkspaceStage((ctx.actions.obterSnapshotEstadoInspectorAtual?.() || {}).workspaceStage);
+            const snapshotAtual = ctx.actions.obterSnapshotEstadoInspectorAtual?.() || {};
+            const stage = normalizarWorkspaceStage(snapshotAtual.workspaceStage);
+            const tab = normalizarThreadTab(snapshotAtual.threadTab);
             const evidencias = ctx.actions.contarEvidenciasWorkspace?.() || 0;
             const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
             const resumoMesa = ctx.actions.obterResumoOperacionalMesa?.() || {};
@@ -110,6 +113,21 @@
             if (el.workspaceSummaryMesa) {
                 el.workspaceSummaryMesa.textContent = resumoMesa.chipStatus || resumoMesa.titulo || "";
             }
+            if (el.workspaceModeChip) {
+                const laudoAtivo = !!obterLaudoAtivoIdSeguro();
+                const nomeTemplate = NOMES_TEMPLATES?.[estado.tipoTemplateAtivo] || NOMES_TEMPLATES?.padrao || "Laudo";
+                let modo = "Chat livre";
+                if (tab === "correcoes") {
+                    modo = "Correções";
+                } else if (stage !== "assistant" && laudoAtivo) {
+                    modo = estado.tipoTemplateAtivo === "padrao"
+                        ? "Laudo livre"
+                        : nomeTemplate;
+                }
+                el.workspaceModeChip.textContent = modo;
+                el.workspaceModeChip.dataset.mode = modo.toLowerCase().replace(/\s+/g, "_");
+            }
+            window.TarielInspectorReportMode?.sync?.();
         }
 
         function renderizarWorkspacePublicVerification() {

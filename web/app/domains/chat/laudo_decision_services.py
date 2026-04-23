@@ -43,6 +43,7 @@ from app.domains.chat.report_pack_helpers import (
     atualizar_final_validation_mode_report_pack,
     atualizar_report_pack_draft_laudo,
     build_pre_laudo_summary,
+    mensagem_incluida_no_contexto_do_laudo,
     obter_dados_formulario_candidate_report_pack,
     obter_pre_laudo_outline_report_pack,
     obter_report_pack_draft_laudo,
@@ -440,6 +441,7 @@ async def _preparar_laudo_para_decisao_final(
                         TipoMensagem.HUMANO_INSP.value,
                         TipoMensagem.IA.value,
                     )
+                    and mensagem_incluida_no_contexto_do_laudo(m)
                 ]
             )
 

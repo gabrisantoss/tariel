@@ -167,6 +167,7 @@ def build_ai_stream_response(
                 is_deep=stream_context.eh_deep,
                 citacoes=citacoes_deep if stream_context.eh_deep else None,
                 confianca_ia=confianca_ia_payload or None,
+                report_context_included=stream_context.report_context_included,
             )
 
     return StreamingResponse(

@@ -159,6 +159,44 @@
                         </button>
                     </div>
 
+                    <div class="workspace-context-actions" aria-label="Ações rápidas do laudo no chat">
+                        <button
+                            type="button"
+                            id="btn-checar-nr35-chat-livre"
+                            class="workspace-context-actions__button"
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
+                            <span>Checar NR35</span>
+                        </button>
+                        <button
+                            type="button"
+                            id="btn-ver-pendencias-chat"
+                            class="workspace-context-actions__button"
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">rule</span>
+                            <span>Pendências</span>
+                        </button>
+                        <button
+                            type="button"
+                            id="btn-previa-chat"
+                            class="workspace-context-actions__button"
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+                            <span>Prévia</span>
+                        </button>
+                    </div>
+
+                    <div
+                        id="workspace-template-compatibility"
+                        class="workspace-template-compatibility"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                    >
+                        <strong id="workspace-template-compatibility-title">Compatibilidade do laudo</strong>
+                        <p id="workspace-template-compatibility-detail"></p>
+                    </div>
+
                     <div class="pilula-entrada">
                         <input
                             type="file"

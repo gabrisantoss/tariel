@@ -25,6 +25,9 @@ from app.domains.chat.report_pack_helpers import (
     atualizar_selecao_fotos_emissao_report_pack,
     obter_report_pack_draft_laudo,
 )
+from app.domains.chat.report_template_compatibility import (
+    analisar_compatibilidade_template_laudo,
+)
 from app.domains.chat.laudo_decision_services import (
     executar_comando_revisao_mobile_resposta,
     finalizar_relatorio_resposta,
@@ -280,6 +283,41 @@ async def api_salvar_selecao_fotos_emissao_laudo(
             "report_pack_draft": obter_report_pack_draft_laudo(laudo),
         }
     )
+
+
+async def api_analisar_compatibilidade_template_laudo(
+    laudo_id: int,
+    request: Request,
+    tipo_template: Annotated[str, Query(pattern=PADRAO_TIPO_TEMPLATE_FORM)] = "nr35_linha_vida",
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+):
+    with observe_backend_hotspot(
+        "inspector_template_compatibility",
+        request=request,
+        surface="inspetor",
+        tenant_id=getattr(usuario, "empresa_id", None),
+        user_id=getattr(usuario, "id", None),
+        laudo_id=laudo_id,
+        route_path=f"/app/api/laudo/{laudo_id}/compatibilidade-template",
+        method="GET",
+        detail={"target_template": str(tipo_template or "")},
+    ) as hotspot:
+        laudo = obter_laudo_do_inspetor(banco, laudo_id, usuario)
+        payload = analisar_compatibilidade_template_laudo(
+            laudo,
+            target_template=tipo_template,
+        )
+        hotspot.outcome = "compatible" if payload.get("compatible") else "missing_evidence"
+        hotspot.response_status_code = 200
+        hotspot.detail.update(
+            {
+                "current_template": str(payload.get("current_template") or ""),
+                "target_template": str(payload.get("target_template") or ""),
+                "missing_total": len(payload.get("missing_evidence") or []),
+            }
+        )
+        return resposta_json_ok(payload)
 
 
 async def api_reabrir_laudo(
@@ -602,6 +640,12 @@ roteador_laudo.add_api_route(
     api_salvar_selecao_fotos_emissao_laudo,
     methods=["POST"],
     responses={**RESPOSTA_LAUDO_NAO_ENCONTRADO, 400: {"description": "Seleção de fotos indisponível."}},
+)
+roteador_laudo.add_api_route(
+    "/api/laudo/{laudo_id}/compatibilidade-template",
+    api_analisar_compatibilidade_template_laudo,
+    methods=["GET"],
+    responses={**RESPOSTA_LAUDO_NAO_ENCONTRADO, 400: {"description": "Template inválido."}},
 )
 roteador_laudo.add_api_route(
     "/api/laudo/{laudo_id}/reabrir",

@@ -127,6 +127,7 @@ class ChatPersistedMessageContext:
     usuario_nome_atual: str
     mensagem_usuario_id: int
     eh_deep: bool
+    report_context_included: bool
 
 
 @dataclass(slots=True)
@@ -492,11 +493,21 @@ def persist_chat_user_message(
         texto_salvar = prepared.mensagem_limpa or prepared.nome_documento or "[imagem]"
         texto_exibicao = texto_salvar
 
+    report_context_included = bool(dados.coletar_para_laudo) and str(
+        dados.report_context_command or ""
+    ) not in {"pause", "resume"}
     mensagem_usuario = MensagemLaudo(
         laudo_id=prepared.laudo.id,
         remetente_id=usuario.id,
         tipo=tipo_msg_usuario,
         conteudo=texto_salvar,
+        metadata_json={
+            "report_context": {
+                "included": report_context_included,
+                "command": str(dados.report_context_command or ""),
+                "source": "inspector_chat",
+            }
+        },
         custo_api_reais=Decimal("0.0000"),
     )
     banco.add(mensagem_usuario)
@@ -514,7 +525,7 @@ def persist_chat_user_message(
             tem_imagem=bool(prepared.dados_imagem_validos),
         )
 
-    if tipo_msg_usuario == TipoMensagem.USER.value and not eh_comando_finalizar:
+    if report_context_included and tipo_msg_usuario == TipoMensagem.USER.value and not eh_comando_finalizar:
         registrar_aprendizado_visual_automatico_chat(
             banco,
             empresa_id=usuario.empresa_id,
@@ -553,16 +564,19 @@ def persist_chat_user_message(
                 step_title=prepared.guided_inspection_context.step_title,
             )
 
-    mesclar_guided_inspection_draft_laudo(
-        laudo=prepared.laudo,
-        draft_payload=prepared.guided_inspection_draft,
-        evidence_ref=guided_evidence_ref,
-        mesa_handoff=guided_mesa_handoff,
-    )
-    report_pack_draft = atualizar_report_pack_draft_laudo(
-        banco=banco,
-        laudo=prepared.laudo,
-    )
+    if report_context_included:
+        mesclar_guided_inspection_draft_laudo(
+            laudo=prepared.laudo,
+            draft_payload=prepared.guided_inspection_draft,
+            evidence_ref=guided_evidence_ref,
+            mesa_handoff=guided_mesa_handoff,
+        )
+        report_pack_draft = atualizar_report_pack_draft_laudo(
+            banco=banco,
+            laudo=prepared.laudo,
+        )
+    else:
+        report_pack_draft = getattr(prepared.laudo, "report_pack_draft_json", None)
     if (
         isinstance(getattr(prepared.laudo, "guided_inspection_draft_json", None), dict)
         and isinstance(report_pack_draft, dict)
@@ -588,12 +602,16 @@ def persist_chat_user_message(
         if prepared.primeira_interacao_real and laudo_possui_historico_visivel(banco, prepared.laudo)
         else None
     )
-    contexto_aprendizado_ia = construir_contexto_aprendizado_para_ia(
-        banco,
-        empresa_id=empresa_id_atual,
-        laudo_id=laudo_id_atual,
-        setor_industrial=str(prepared.laudo.setor_industrial or "geral"),
-        mensagem_atual=prepared.mensagem_limpa,
+    contexto_aprendizado_ia = (
+        construir_contexto_aprendizado_para_ia(
+            banco,
+            empresa_id=empresa_id_atual,
+            laudo_id=laudo_id_atual,
+            setor_industrial=str(prepared.laudo.setor_industrial or "geral"),
+            mensagem_atual=prepared.mensagem_limpa,
+        )
+        if report_context_included
+        else None
     )
     pre_laudo_summary = build_pre_laudo_summary(
         obter_pre_laudo_outline_report_pack(report_pack_draft)
@@ -617,7 +635,7 @@ def persist_chat_user_message(
             else None
         ),
     )
-    if pre_laudo_prompt_context:
+    if report_context_included and pre_laudo_prompt_context:
         if mensagem_base_para_ia:
             mensagem_base_para_ia = (
                 f"{pre_laudo_prompt_context}\n\n{mensagem_base_para_ia}"
@@ -650,6 +668,7 @@ def persist_chat_user_message(
         usuario_nome_atual=usuario_nome_atual,
         mensagem_usuario_id=int(mensagem_usuario.id),
         eh_deep=(dados.modo == MODO_DEEP),
+        report_context_included=report_context_included,
     )
 
 

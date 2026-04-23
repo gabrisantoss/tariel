@@ -74,6 +74,11 @@ def _looks_like_document_message(message: MensagemLaudo) -> bool:
 
 
 def _extract_message_text(message: MensagemLaudo) -> str:
+    metadata = getattr(message, "metadata_json", None)
+    if isinstance(metadata, dict):
+        report_context = metadata.get("report_context")
+        if isinstance(report_context, dict) and report_context.get("included") is False:
+            return ""
     text = str(getattr(message, "conteudo", "") or "").strip()
     if not text:
         return ""

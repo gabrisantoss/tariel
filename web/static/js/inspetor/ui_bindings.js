@@ -13,8 +13,95 @@
             mostrarToast,
             normalizarFiltroPendencias,
             obterLaudoAtivoIdSeguro,
+            obterHeadersComCSRF,
+            extrairMensagemErroHTTP,
             avisarMesaExigeInspecao,
         } = ctx.shared;
+
+        function normalizarTextoComandoModoLaudo(texto = "") {
+            return String(texto || "")
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, " ");
+        }
+
+        function detectarIntencaoModoLaudo(texto = "") {
+            const normalizado = normalizarTextoComandoModoLaudo(texto);
+            if (!normalizado) return "";
+            if ([
+                "sair do modo laudo",
+                "sair do laudo",
+                "pausar laudo",
+                "pausar modo laudo",
+                "modo off",
+            ].some((gatilho) => normalizado === gatilho || normalizado.startsWith(`${gatilho} `))) {
+                return "pause";
+            }
+            if ([
+                "voltar ao modo laudo",
+                "voltar para o laudo",
+                "retomar laudo",
+                "continuar laudo",
+                "entrar no modo laudo",
+            ].some((gatilho) => normalizado === gatilho || normalizado.startsWith(`${gatilho} `))) {
+                return "resume";
+            }
+            return "";
+        }
+
+        function chaveModoColetaLaudo(laudoId) {
+            return `tariel_report_context_enabled:${Number(laudoId || 0) || 0}`;
+        }
+
+        function modoColetaLaudoAtivo(laudoId = obterLaudoAtivoIdSeguro()) {
+            const id = Number(laudoId || 0) || 0;
+            if (id <= 0) return true;
+            try {
+                return window.localStorage?.getItem?.(chaveModoColetaLaudo(id)) !== "0";
+            } catch (_) {
+                return true;
+            }
+        }
+
+        function definirModoColetaLaudo(laudoId, ativo) {
+            const id = Number(laudoId || 0) || 0;
+            if (id <= 0) return;
+            try {
+                window.localStorage?.setItem?.(chaveModoColetaLaudo(id), ativo ? "1" : "0");
+            } catch (_) {}
+            sincronizarBotaoModoColetaLaudo();
+        }
+
+        function sincronizarBotaoModoColetaLaudo() {
+            const laudoId = obterLaudoAtivoIdSeguro();
+            const ativo = modoColetaLaudoAtivo(laudoId);
+            document.body.dataset.reportContextEnabled = ativo ? "true" : "false";
+
+            if (!el.btnIniciarLaudoChatLivre) return;
+            const label = el.btnIniciarLaudoChatLivre.querySelector("span:last-child");
+            const icon = el.btnIniciarLaudoChatLivre.querySelector(".material-symbols-rounded");
+            if (!laudoId) {
+                if (label) label.textContent = "Iniciar laudo";
+                if (icon) icon.textContent = "description";
+                el.btnIniciarLaudoChatLivre.setAttribute("aria-label", "Iniciar novo laudo a partir do chat livre");
+                return;
+            }
+            if (label) label.textContent = ativo ? "Sair do laudo" : "Voltar ao laudo";
+            if (icon) icon.textContent = ativo ? "pause_circle" : "play_circle";
+            el.btnIniciarLaudoChatLivre.setAttribute(
+                "aria-label",
+                ativo ? "Pausar coleta do laudo" : "Retomar coleta do laudo"
+            );
+        }
+
+        window.TarielInspectorReportMode = {
+            detectIntent: detectarIntencaoModoLaudo,
+            isEnabled: modoColetaLaudoAtivo,
+            setEnabled: definirModoColetaLaudo,
+            sync: sincronizarBotaoModoColetaLaudo,
+        };
 
         function bindUiBindings() {
             if (estado.uiBindingsBound) return;
@@ -136,12 +223,128 @@
             });
             el.btnIniciarLaudoChatLivre?.addEventListener("click", () => {
                 if (!el.campoMensagem || !el.btnEnviar) return;
-                const textoAtual = String(el.campoMensagem.value || "").trim();
-                if (!textoAtual) {
-                    el.campoMensagem.value = "iniciar novo laudo";
-                    el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
+                const laudoId = obterLaudoAtivoIdSeguro();
+                if (laudoId) {
+                    const proximo = !modoColetaLaudoAtivo(laudoId);
+                    definirModoColetaLaudo(laudoId, proximo);
+                    mostrarToast(
+                        proximo
+                            ? "Coleta do laudo retomada. As próximas mensagens entram no relatório."
+                            : "Coleta do laudo pausada. As próximas mensagens ficam fora do PDF.",
+                        "info",
+                        2600
+                    );
+                    return;
                 }
+                const textoAtual = String(el.campoMensagem.value || "").trim();
+                el.campoMensagem.value = textoAtual
+                    ? `iniciar novo laudo\n\n${textoAtual}`
+                    : "iniciar novo laudo";
+                el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
                 el.btnEnviar.click();
+            });
+            el.btnChecarNr35ChatLivre?.addEventListener("click", async () => {
+                const laudoId = obterLaudoAtivoIdSeguro();
+                if (!laudoId) {
+                    mostrarToast("Inicie um laudo livre antes de checar compatibilidade.", "aviso", 2400);
+                    return;
+                }
+
+                el.btnChecarNr35ChatLivre.disabled = true;
+                if (el.workspaceTemplateCompatibility) {
+                    el.workspaceTemplateCompatibility.hidden = false;
+                }
+                if (el.workspaceTemplateCompatibilityTitle) {
+                    el.workspaceTemplateCompatibilityTitle.textContent = "Checando compatibilidade NR35...";
+                }
+                if (el.workspaceTemplateCompatibilityDetail) {
+                    el.workspaceTemplateCompatibilityDetail.textContent =
+                        "Analisando evidências, fotos e status técnico já coletados neste laudo.";
+                }
+
+                try {
+                    const resposta = await fetch(
+                        `/app/api/laudo/${encodeURIComponent(String(laudoId))}/compatibilidade-template?tipo_template=nr35_linha_vida`,
+                        {
+                            method: "GET",
+                            credentials: "same-origin",
+                            headers: obterHeadersComCSRF?.() || { Accept: "application/json" },
+                        }
+                    );
+                    if (!resposta.ok) {
+                        throw new Error(await extrairMensagemErroHTTP?.(resposta, "Não foi possível checar a compatibilidade."));
+                    }
+                    const payload = await resposta.json();
+                    const faltantes = Array.isArray(payload?.missing_evidence)
+                        ? payload.missing_evidence
+                        : [];
+                    const resumoFaltantes = faltantes
+                        .slice(0, 3)
+                        .map((item) => String(item?.title || item?.detail || "").trim())
+                        .filter(Boolean)
+                        .join(" • ");
+
+                    if (el.workspaceTemplateCompatibilityTitle) {
+                        el.workspaceTemplateCompatibilityTitle.textContent = payload?.compatible
+                            ? "Compatível com NR35 linha de vida"
+                            : "Ainda faltam dados para NR35";
+                    }
+                    if (el.workspaceTemplateCompatibilityDetail) {
+                        el.workspaceTemplateCompatibilityDetail.textContent = payload?.compatible
+                            ? "As evidências atuais permitem seguir para um laudo guiado NR35. Revise a prévia antes da emissão."
+                            : (resumoFaltantes || payload?.next_step || "Complete as evidências obrigatórias antes de migrar.");
+                    }
+                    mostrarToast(
+                        payload?.compatible
+                            ? "Laudo livre compatível com NR35."
+                            : "A checagem apontou pendências para NR35.",
+                        payload?.compatible ? "sucesso" : "aviso",
+                        2600
+                    );
+                } catch (erro) {
+                    if (el.workspaceTemplateCompatibilityTitle) {
+                        el.workspaceTemplateCompatibilityTitle.textContent = "Falha ao checar compatibilidade";
+                    }
+                    if (el.workspaceTemplateCompatibilityDetail) {
+                        el.workspaceTemplateCompatibilityDetail.textContent =
+                            String(erro?.message || "").trim() || "Tente novamente em instantes.";
+                    }
+                    mostrarToast(
+                        String(erro?.message || "").trim() || "Não foi possível checar a compatibilidade.",
+                        "erro",
+                        2800
+                    );
+                } finally {
+                    el.btnChecarNr35ChatLivre.disabled = false;
+                }
+            });
+            el.btnVerPendenciasChat?.addEventListener("click", () => {
+                if (!obterLaudoAtivoIdSeguro()) {
+                    mostrarToast("As pendências aparecem quando houver um laudo ativo.", "aviso", 2200);
+                    return;
+                }
+                atualizarThreadWorkspace("correcoes", {
+                    persistirURL: true,
+                    replaceURL: true,
+                });
+            });
+            el.btnPreviaChat?.addEventListener("click", async () => {
+                if (!obterLaudoAtivoIdSeguro()) {
+                    mostrarToast("Inicie um laudo antes de gerar prévia.", "aviso", 2200);
+                    return;
+                }
+                definirBotaoPreviewCarregando(true);
+                try {
+                    await abrirPreviewWorkspace();
+                } catch (erro) {
+                    mostrarToast(
+                        String(erro?.message || "").trim() || "Não foi possível gerar a pré-visualização agora.",
+                        "aviso",
+                        2600
+                    );
+                } finally {
+                    definirBotaoPreviewCarregando(false);
+                }
             });
             el.botoesAbrirChatLivre.forEach((botao) => {
                 botao.addEventListener("click", (event) => {
@@ -498,6 +701,11 @@
                 );
             });
             document.addEventListener("tariel:prompt-enviado", (event) => {
+                const laudoId = obterLaudoAtivoIdSeguro();
+                const intencaoModoLaudo = detectarIntencaoModoLaudo(event?.detail?.texto || "");
+                if (laudoId && intencaoModoLaudo) {
+                    definirModoColetaLaudo(laudoId, intencaoModoLaudo === "resume");
+                }
                 registrarPromptHistorico(event?.detail?.texto || "");
                 armarPrimeiroEnvioNovoChatPendente();
                 promoverPrimeiraMensagemNovoChatSePronta({ forcar: true, focarComposer: true });

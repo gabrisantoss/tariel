@@ -145,6 +145,7 @@ async def salvar_mensagem_ia(
     is_deep: bool = False,
     citacoes: Optional[list[dict[str, Any]]] = None,
     confianca_ia: Optional[dict[str, Any]] = None,
+    report_context_included: bool = True,
 ) -> None:
     if not (texto_final or "").strip():
         return
@@ -159,35 +160,44 @@ async def salvar_mensagem_ia(
                     laudo_id=laudo_id,
                     tipo=TipoMensagem.IA.value,
                     conteudo=texto_final,
+                    metadata_json={
+                        "report_context": {
+                            "included": bool(report_context_included),
+                            "source": "inspector_chat",
+                        }
+                    },
                     custo_api_reais=custo_reais,
                 )
             )
 
             laudo = banco.get(Laudo, laudo_id)
             if laudo:
-                laudo_modelo: Any = laudo
-                payload_confianca = normalizar_payload_confianca_ia(confianca_ia or {})
-                if not payload_confianca:
-                    payload_confianca = analisar_confianca_resposta_ia(texto_final)
+                if not report_context_included:
+                    laudo.atualizado_em = agora_utc()
+                else:
+                    laudo_modelo: Any = laudo
+                    payload_confianca = normalizar_payload_confianca_ia(confianca_ia or {})
+                    if not payload_confianca:
+                        payload_confianca = analisar_confianca_resposta_ia(texto_final)
 
-                laudo_modelo.parecer_ia = texto_final[:LIMITE_PARECER]
-                laudo_modelo.confianca_ia_json = payload_confianca or None
-                laudo_modelo.custo_api_reais = (laudo_modelo.custo_api_reais or Decimal("0")) + custo_reais
-                laudo_modelo.atualizado_em = agora_utc()
-                _registrar_revisao_laudo(
-                    banco,
-                    laudo,
-                    conteudo=texto_final,
-                    origem="ia",
-                    confianca=payload_confianca,
-                )
-
-                if is_deep and citacoes:
-                    _atualizar_citacoes_laudo(
-                        banco=banco,
-                        laudo_id=laudo_id,
-                        citacoes=citacoes,
+                    laudo_modelo.parecer_ia = texto_final[:LIMITE_PARECER]
+                    laudo_modelo.confianca_ia_json = payload_confianca or None
+                    laudo_modelo.custo_api_reais = (laudo_modelo.custo_api_reais or Decimal("0")) + custo_reais
+                    laudo_modelo.atualizado_em = agora_utc()
+                    _registrar_revisao_laudo(
+                        banco,
+                        laudo,
+                        conteudo=texto_final,
+                        origem="ia",
+                        confianca=payload_confianca,
                     )
+
+                    if is_deep and citacoes:
+                        _atualizar_citacoes_laudo(
+                            banco=banco,
+                            laudo_id=laudo_id,
+                            citacoes=citacoes,
+                        )
 
             empresa = banco.get(Empresa, empresa_id)
             if empresa:
