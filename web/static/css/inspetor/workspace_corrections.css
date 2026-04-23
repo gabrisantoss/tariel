@@ -309,7 +309,14 @@ body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item[data-correction-
     opacity: 0.72;
 }
 
-body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__send {
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__actions {
+    display: grid;
+    grid-template-columns: repeat(3, 34px);
+    gap: 6px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__send,
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__status-action {
     display: inline-grid;
     place-items: center;
     width: 34px;
@@ -321,8 +328,26 @@ body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__send {
     cursor: pointer;
 }
 
-body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__send:hover {
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__status-action {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--vf-text-soft);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__status-action--apply {
+    color: #166534;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__send:hover,
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__status-action:hover {
     filter: brightness(1.05);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__send:disabled,
+body.pagina-chat-dashboard-v2 .workspace-corrections-queue-item__status-action:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: none;
 }
 
 body.pagina-chat-dashboard-v2 .workspace-corrections-chip {

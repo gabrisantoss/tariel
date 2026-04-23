@@ -89,6 +89,7 @@ _OPEN_RETURN_TO_INSPECTOR_STATUSES = (
     OperationalIrregularityStatus.OPEN.value,
     OperationalIrregularityStatus.ACKNOWLEDGED.value,
 )
+_OPEN_STRUCTURED_CORRECTION_STATUSES = {"pendente", "enviada_ia"}
 _MOBILE_APPROVAL_REVIEW_MODES = {"mobile_autonomous", "mobile_review_allowed"}
 _REOPEN_ISSUED_DOCUMENT_POLICIES = {"keep_visible", "hide_from_case"}
 
@@ -292,6 +293,54 @@ def _garantir_sem_irregularidades_abertas_para_aprovacao(
             "code": "mobile_review_pending_returns",
             "message": "Ainda existem blocos ou pendencias operacionais em refazer no mobile.",
             "open_return_count": total_abertas,
+        },
+    )
+
+
+def _listar_correcoes_estruturadas_abertas(laudo: Laudo) -> list[dict[str, Any]]:
+    draft = obter_report_pack_draft_laudo(laudo)
+    raw_items = draft.get("structured_corrections") if isinstance(draft, dict) else []
+    if not isinstance(raw_items, list):
+        return []
+
+    abertas: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("status") or "pendente").strip().lower()
+        if status not in _OPEN_STRUCTURED_CORRECTION_STATUSES:
+            continue
+        abertas.append(
+            {
+                "id": str(item.get("id") or "").strip() or None,
+                "block": str(item.get("block") or "").strip() or None,
+                "intent": str(item.get("intent") or "").strip() or None,
+                "description": str(item.get("description") or "").strip()[:280],
+                "status": status,
+            }
+        )
+    return abertas
+
+
+def _garantir_sem_correcoes_estruturadas_abertas_para_aprovacao_direta(laudo: Laudo) -> None:
+    abertas = _listar_correcoes_estruturadas_abertas(laudo)
+    if not abertas:
+        return
+    raise HTTPException(
+        status_code=422,
+        detail={
+            "code": "structured_corrections_pending",
+            "codigo": "structured_corrections_pending",
+            "message": (
+                "Ha correcoes estruturadas abertas. Marque cada correcao como aplicada "
+                "ou descartada antes de aprovar sem Mesa Avaliadora."
+            ),
+            "mensagem": (
+                "Há correções estruturadas abertas. Marque cada correção como aplicada "
+                "ou descartada antes de aprovar sem Mesa Avaliadora."
+            ),
+            "open_correction_count": len(abertas),
+            "open_corrections": abertas[:8],
         },
     )
 
@@ -733,6 +782,12 @@ async def finalizar_relatorio_resposta(
         final_validation_mode == "mobile_autonomous"
         and final_validation_mode_reason == "tenant_without_mesa"
     )
+    if direct_without_mesa:
+        _garantir_sem_correcoes_estruturadas_abertas_para_aprovacao_direta(laudo)
+        _garantir_sem_irregularidades_abertas_para_aprovacao(
+            banco=banco,
+            laudo_id=laudo_id,
+        )
     status_destino = (
         StatusRevisao.APROVADO.value
         if final_validation_mode == "mobile_autonomous"

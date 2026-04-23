@@ -405,6 +405,80 @@ def test_finalizacao_sem_mesa_contratada_aprova_no_fluxo_interno_governado(
         )
 
 
+def test_finalizacao_sem_mesa_bloqueia_correcoes_estruturadas_abertas(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat",
+        }
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.primeira_mensagem = "Inspeção inicial em painel elétrico da linha de produção."
+        laudo.report_pack_draft_json = {
+            "structured_corrections": [
+                {
+                    "id": "corr-test-1",
+                    "block": "conclusao",
+                    "intent": "corrigir",
+                    "description": "Revisar conclusão antes da aprovação sem mesa.",
+                    "status": "enviada_ia",
+                }
+            ],
+        }
+        banco.add_all(
+            [
+                MensagemLaudo(
+                    laudo_id=laudo_id,
+                    remetente_id=ids["inspetor_a"],
+                    tipo=TipoMensagem.USER.value,
+                    conteudo="Identifiquei aquecimento anormal no borne principal do painel.",
+                ),
+                MensagemLaudo(
+                    laudo_id=laudo_id,
+                    remetente_id=ids["inspetor_a"],
+                    tipo=TipoMensagem.USER.value,
+                    conteudo="[imagem]",
+                ),
+                MensagemLaudo(
+                    laudo_id=laudo_id,
+                    tipo=TipoMensagem.IA.value,
+                    conteudo="Parecer preliminar: recomenda-se correção e isolamento preventivo.",
+                ),
+            ]
+        )
+        banco.commit()
+
+    csrf_inspetor = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.post(
+        f"/app/api/laudo/{laudo_id}/finalizar",
+        headers={"X-CSRF-Token": csrf_inspetor},
+    )
+
+    assert resposta.status_code == 422
+    detalhe = resposta.json()["detail"]
+    assert detalhe["code"] == "structured_corrections_pending"
+    assert detalhe["open_correction_count"] == 1
+    assert detalhe["open_corrections"][0]["id"] == "corr-test-1"
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        assert laudo.status_revisao == StatusRevisao.RASCUNHO.value
+
+
 def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(
     ambiente_critico,
 ) -> None:

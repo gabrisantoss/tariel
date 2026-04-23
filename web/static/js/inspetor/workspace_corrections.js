@@ -287,6 +287,50 @@
             return normalizarItemCorrecaoBackend(payload?.item || {});
         }
 
+        function correcaoAberta(item = {}) {
+            const status = String(item.status || "pendente").trim().toLowerCase();
+            return status === "pendente" || status === "enviada_ia";
+        }
+
+        function atualizarStatusCorrecaoLocal(item = {}, status = "pendente") {
+            const laudoId = obterLaudoAtivoIdSeguro();
+            const alvoId = String(item?.id || "").trim();
+            const fila = carregarFilaCorrecoes(laudoId).map((row) => {
+                const mesmoId = alvoId && String(row?.id || "").trim() === alvoId;
+                if (!mesmoId && row !== item) return row;
+                return {
+                    ...row,
+                    status,
+                    statusLabel: {
+                        pendente: "Pendente",
+                        enviada_ia: "Enviada para IA",
+                        aplicada: "Aplicada",
+                        descartada: "Descartada",
+                    }[status] || status,
+                    updatedAt: new Date().toISOString(),
+                };
+            });
+            salvarFilaCorrecoes(fila, laudoId);
+            renderizarFilaCorrecoes();
+        }
+
+        async function marcarStatusCorrecao(item = {}, status = "pendente") {
+            const statusLimpo = String(status || "pendente").trim().toLowerCase();
+            try {
+                const atualizado = await atualizarStatusCorrecaoBackend(item, statusLimpo);
+                if (!atualizado?.id) {
+                    atualizarStatusCorrecaoLocal(item, statusLimpo);
+                }
+            } catch (erro) {
+                atualizarStatusCorrecaoLocal(item, statusLimpo);
+                ctx.actions.mostrarToast?.(
+                    String(erro?.message || "").trim() || "Status atualizado localmente até a API responder.",
+                    "aviso",
+                    2400
+                );
+            }
+        }
+
         function obterBlocoSelecionado() {
             const bloco = String(el.workspaceCorrectionsBlock?.value || "evidencias").trim().toLowerCase();
             return CORRECTION_BLOCKS[bloco] ? bloco : "evidencias";
@@ -328,7 +372,7 @@
                 replaceURL: true,
             });
             if (String(item?.status || "pendente").trim().toLowerCase() === "pendente") {
-                atualizarStatusCorrecaoBackend(item, "enviada_ia").catch(() => {});
+                marcarStatusCorrecao(item, "enviada_ia").catch(() => {});
             }
             ctx.actions.mostrarToast?.("Correção estruturada pronta no chat. Revise e envie para a IA.", "sucesso", 2600);
         }
@@ -337,6 +381,7 @@
             const laudoId = obterLaudoAtivoIdSeguro();
             const fila = carregarFilaCorrecoes(laudoId);
             const possuiFila = fila.length > 0;
+            const abertas = fila.filter(correcaoAberta);
 
             if (el.workspaceCorrectionsQueueEmpty) {
                 el.workspaceCorrectionsQueueEmpty.hidden = possuiFila;
@@ -354,37 +399,61 @@
                         aplicada: "Aplicada",
                         descartada: "Descartada",
                     }[status] || status;
+                    const itemAberto = correcaoAberta(item);
                     return `
                         <li class="workspace-corrections-queue-item" data-correction-queue-index="${index}" data-correction-status="${escaparHtml(status)}">
                             <span class="workspace-corrections-queue-item__index">${index + 1}</span>
                             <div>
                                 <strong>${escaparHtml(bloco.label)}</strong>
                                 <p>${escaparHtml(intencao)}${texto ? ` · ${escaparHtml(texto)}` : ""}</p>
-                                <small>${escaparHtml(statusLabel)}</small>
+                                <small class="workspace-corrections-queue-item__status">${escaparHtml(statusLabel)}</small>
                             </div>
-                            <button
-                                type="button"
-                                class="workspace-corrections-queue-item__send"
-                                data-correction-send-index="${index}"
-                                aria-label="Enviar correção ${index + 1} para o chat"
-                            >
-                                <span class="material-symbols-rounded" aria-hidden="true">send</span>
-                            </button>
+                            <div class="workspace-corrections-queue-item__actions" aria-label="Ações da correção ${index + 1}">
+                                <button
+                                    type="button"
+                                    class="workspace-corrections-queue-item__send"
+                                    data-correction-send-index="${index}"
+                                    aria-label="Enviar correção ${index + 1} para o chat"
+                                    ${status === "descartada" ? "disabled" : ""}
+                                >
+                                    <span class="material-symbols-rounded" aria-hidden="true">send</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="workspace-corrections-queue-item__status-action workspace-corrections-queue-item__status-action--apply"
+                                    data-correction-status-index="${index}"
+                                    data-correction-status-target="aplicada"
+                                    aria-label="Marcar correção ${index + 1} como aplicada"
+                                    ${itemAberto ? "" : "disabled"}
+                                >
+                                    <span class="material-symbols-rounded" aria-hidden="true">task_alt</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="workspace-corrections-queue-item__status-action"
+                                    data-correction-status-index="${index}"
+                                    data-correction-status-target="descartada"
+                                    aria-label="Descartar correção ${index + 1}"
+                                    ${itemAberto ? "" : "disabled"}
+                                >
+                                    <span class="material-symbols-rounded" aria-hidden="true">block</span>
+                                </button>
+                            </div>
                         </li>
                     `;
                 }).join("");
             }
             if (el.btnWorkspaceCorrectionsSendLatest) {
-                el.btnWorkspaceCorrectionsSendLatest.disabled = !possuiFila;
+                el.btnWorkspaceCorrectionsSendLatest.disabled = !fila.some((item) => String(item.status || "").toLowerCase() !== "descartada");
             }
             if (el.btnWorkspaceCorrectionsClear) {
-                el.btnWorkspaceCorrectionsClear.disabled = !possuiFila;
+                el.btnWorkspaceCorrectionsClear.disabled = abertas.length === 0;
             }
             if (el.workspaceCorrectionsQueueTitle && possuiFila) {
-                el.workspaceCorrectionsQueueTitle.textContent = `${fila.length} alteração${fila.length === 1 ? "" : "es"} pendente${fila.length === 1 ? "" : "s"}`;
+                el.workspaceCorrectionsQueueTitle.textContent = `${abertas.length} correção${abertas.length === 1 ? "" : "es"} aberta${abertas.length === 1 ? "" : "s"} de ${fila.length}`;
             }
             if (el.workspaceCorrectionsQueueChip && possuiFila) {
-                el.workspaceCorrectionsQueueChip.textContent = "Fila estruturada";
+                el.workspaceCorrectionsQueueChip.textContent = abertas.length ? "Exige decisão" : "Resolvida";
             }
         }
 
@@ -458,27 +527,39 @@
             });
             el.btnWorkspaceCorrectionsSendLatest?.addEventListener("click", async () => {
                 const fila = carregarFilaCorrecoes();
-                const item = fila[fila.length - 1];
+                const item = [...fila].reverse().find((row) => String(row?.status || "").toLowerCase() !== "descartada");
                 if (item) await aplicarPromptNoComposer(item);
             });
             el.btnWorkspaceCorrectionsClear?.addEventListener("click", async () => {
                 const fila = carregarFilaCorrecoes();
                 await Promise.allSettled(
                     fila
-                        .filter((item) => item?.id && String(item.status || "").toLowerCase() !== "descartada")
-                        .map((item) => atualizarStatusCorrecaoBackend(item, "descartada"))
+                        .filter(correcaoAberta)
+                        .map((item) => marcarStatusCorrecao(item, "descartada"))
                 );
-                salvarFilaCorrecoes([]);
-                renderizarFilaCorrecoes();
                 await carregarCorrecoesBackend({ force: true });
-                ctx.actions.mostrarToast?.("Fila de correções descartada para este laudo.", "info", 2200);
+                ctx.actions.mostrarToast?.("Correções abertas descartadas para este laudo.", "info", 2200);
             });
             el.workspaceCorrectionsQueueList?.addEventListener("click", async (event) => {
-                const botao = event.target?.closest?.("[data-correction-send-index]");
-                if (!botao) return;
-                const index = Number(botao.dataset.correctionSendIndex || -1);
+                const botaoEnvio = event.target?.closest?.("[data-correction-send-index]");
+                if (botaoEnvio) {
+                    const index = Number(botaoEnvio.dataset.correctionSendIndex || -1);
+                    const item = carregarFilaCorrecoes()[index];
+                    if (item) await aplicarPromptNoComposer(item);
+                    return;
+                }
+                const botaoStatus = event.target?.closest?.("[data-correction-status-index]");
+                if (!botaoStatus) return;
+                const index = Number(botaoStatus.dataset.correctionStatusIndex || -1);
+                const status = String(botaoStatus.dataset.correctionStatusTarget || "").trim().toLowerCase();
                 const item = carregarFilaCorrecoes()[index];
-                if (item) await aplicarPromptNoComposer(item);
+                if (!item || !status) return;
+                await marcarStatusCorrecao(item, status);
+                ctx.actions.mostrarToast?.(
+                    status === "aplicada" ? "Correção marcada como aplicada." : "Correção descartada.",
+                    "sucesso",
+                    1800
+                );
             });
         }
 

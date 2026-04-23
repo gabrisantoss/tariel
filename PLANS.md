@@ -3941,3 +3941,23 @@ Atualizado em `2026-04-23`.
 - `node --check web/static/js/inspetor/workspace_corrections.js`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q`
 - `make web-ci`
+
+### `PKT-CHAT-INSPETOR-CORRECOES-03` — Fechamento operacional das correções antes da aprovação sem Mesa
+
+- `status`: concluído localmente em `2026-04-23`; o Chat Inspetor passa a exigir decisão explícita sobre correções estruturadas antes da aprovação direta em empresas sem Mesa Avaliadora.
+
+### Escopo
+
+- bloqueia a finalização `mobile_autonomous` por pacote sem Mesa quando existirem correções estruturadas com status `pendente` ou `enviada_ia`.
+- expõe erro governado `structured_corrections_pending` com contagem e lista resumida das correções abertas.
+- adiciona ações por item na fila de Correções: enviar para IA, marcar como aplicada e descartar.
+- troca a ação global ambígua de limpar fila por `Descartar abertas`, preservando histórico no laudo.
+- cobre o bloqueio com teste crítico de tenant sem Mesa.
+
+### Validação
+
+- `node --check web/static/js/inspetor/workspace_corrections.js`
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/laudo_decision_services.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k "correcoes_estruturadas or sem_mesa"`
+- `make web-ci`
+- `make hygiene-check`
