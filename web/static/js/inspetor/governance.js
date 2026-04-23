@@ -16,6 +16,10 @@
             workspaceTemContratoLifecycle,
         } = ctx.shared;
 
+        function mesaAvaliadoraDisponivelParaUsuario() {
+            return window.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true;
+        }
+
         function humanizarMarcadorWorkspace(valor = "") {
             return String(valor || "")
                 .trim()
@@ -46,7 +50,9 @@
 
         function humanizarAcaoSuperficieWorkspace(actionKey = "") {
             const chave = String(actionKey || "").trim().toLowerCase();
-            if (chave === "chat_finalize") return "Enviar para Mesa";
+            if (chave === "chat_finalize") {
+                return mesaAvaliadoraDisponivelParaUsuario() ? "Enviar para Mesa" : "Finalizar laudo";
+            }
             if (chave === "mesa_approve") return "Aprovar";
             if (chave === "mesa_return") return "Devolver para correção";
             if (chave === "review_approve") return "Aprovar revisão";
@@ -88,9 +94,9 @@
         function obterRotuloAcaoFinalizacaoWorkspace(valor = "") {
             const status = normalizarCaseLifecycleStatusSeguro(valor);
             if (status === "devolvido_para_correcao") {
-                return "Reenviar para Mesa";
+                return mesaAvaliadoraDisponivelParaUsuario() ? "Reenviar para Mesa" : "Aplicar correções";
             }
-            return "Enviar para Mesa";
+            return mesaAvaliadoraDisponivelParaUsuario() ? "Enviar para Mesa" : "Finalizar laudo";
         }
 
         function workspacePermiteFinalizacao(snapshot = null) {

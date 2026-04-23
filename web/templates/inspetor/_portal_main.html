@@ -3,7 +3,7 @@
 {% set modo_inspecao_inicial = "home" if home_forcado_inicial else "workspace" %}
 {% set workspace_stage_inicial = "inspection" if possui_contexto_ativo else "assistant" %}
 {% set inspector_screen_inicial = "portal_dashboard" if home_forcado_inicial else ("assistant_landing" if workspace_stage_inicial == "assistant" else "inspection_workspace") %}
-{% set thread_tab_inicial = "historico" if possui_contexto_ativo else "conversa" %}
+{% set thread_tab_inicial = "conversa" %}
 
 <main
     class="painel-chat"

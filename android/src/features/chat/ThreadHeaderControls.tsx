@@ -69,7 +69,7 @@ export function ThreadHeaderControls({
       : blankChatEntry
         ? "Envie fotos, documentos ou contexto para iniciar a inspeção."
         : filaOfflineTotal
-          ? `${filaOfflineTotal} pendência${filaOfflineTotal === 1 ? "" : "s"} pronta${filaOfflineTotal === 1 ? "" : "s"} para sincronizar.`
+          ? `${filaOfflineTotal} pendência${filaOfflineTotal === 1 ? "" : "s"} na fila offline.`
           : chatHasActiveCase
             ? "Fotos, contexto e anexos entram direto na análise e no laudo."
             : "";

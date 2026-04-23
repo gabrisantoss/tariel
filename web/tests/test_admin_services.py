@@ -333,6 +333,67 @@ def test_registrar_novo_cliente_mobile_single_operator_permite_desligar_superfic
         assert admin_cliente.allowed_portals == ("cliente", "inspetor")
 
 
+def test_pacote_comercial_chat_sem_mesa_deriva_entitlements_do_tenant(
+    ambiente_critico,
+) -> None:
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        resumo = admin_services.atualizar_politica_admin_cliente_empresa(
+            banco,
+            empresa_id=ids["empresa_a"],
+            commercial_service_package="inspector_chat",
+            case_visibility_mode="case_list",
+            case_action_mode="case_actions",
+        )
+
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        assert empresa.admin_cliente_policy_json == {
+            "case_visibility_mode": "case_list",
+            "case_action_mode": "case_actions",
+            "commercial_service_package": "inspector_chat",
+            "tenant_portal_revisor_enabled": False,
+        }
+        assert resumo["commercial_service_package"] == "inspector_chat"
+        assert resumo["tenant_portal_entitlements"]["revisor"] is False
+        assert resumo["tenant_capability_entitlements"]["inspector_send_to_mesa"] is False
+        assert resumo["tenant_capability_entitlements"]["mobile_case_approve"] is True
+        assert resumo["tenant_capability_entitlements"]["reviewer_decision"] is False
+
+
+def test_pacote_comercial_mesa_com_servicos_no_inspetor_libera_cross_portal(
+    ambiente_critico,
+) -> None:
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        resumo = admin_services.atualizar_politica_admin_cliente_empresa(
+            banco,
+            empresa_id=ids["empresa_a"],
+            commercial_service_package="inspector_chat_mesa_reviewer_services",
+            case_visibility_mode="case_list",
+            case_action_mode="case_actions",
+        )
+
+        assert resumo["commercial_service_package"] == "inspector_chat_mesa_reviewer_services"
+        assert resumo["operational_user_cross_portal_enabled"] is True
+        assert resumo["tenant_portal_entitlements"]["revisor"] is True
+        assert resumo["tenant_capability_entitlements"]["inspector_send_to_mesa"] is True
+        assert resumo["tenant_capability_entitlements"]["reviewer_decision"] is True
+        assert resumo["tenant_capability_entitlements"]["reviewer_issue"] is True
+        assert resumo["tenant_capability_entitlements"]["mobile_case_approve"] is False
+
+        inspetor = banco.get(Usuario, ids["inspetor_a"])
+        assert inspetor is not None
+        inspetor.allowed_portals_json = ["inspetor", "revisor"]
+        banco.commit()
+
+        assert inspetor.allowed_portals == ("inspetor", "revisor")
+
+
 def test_criar_usuario_empresa_aceita_portais_adicionais_dentro_da_regra_do_tenant(
     ambiente_critico,
 ) -> None:

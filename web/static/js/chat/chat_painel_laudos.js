@@ -935,7 +935,7 @@
             replaceURL = false,
         } = options && typeof options === "object" ? options : {};
         const bruto = String(tab || "conversa").trim().toLowerCase();
-        const valor =
+        let valor =
             bruto === "chat" ? "conversa"
                 : bruto === "history" ? "historico"
                     : bruto === "attachments" ? "anexos"
@@ -946,6 +946,11 @@
                             "correction",
                             "corrections",
                         ].includes(bruto) ? "correcoes" : bruto);
+        const mesaDisponivel =
+            window.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true;
+        if (valor === "mesa" && !mesaDisponivel) {
+            valor = "correcoes";
+        }
         const nav = garantirThreadNav();
         const tabs = nav?.querySelectorAll(".thread-tab[data-tab]") || [];
 

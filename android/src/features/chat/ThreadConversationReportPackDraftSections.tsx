@@ -304,6 +304,13 @@ export function ThreadConversationReportPackActionsSection(props: {
 
   return (
     <View style={styles.threadReviewActionsRail}>
+      <Text style={styles.threadReviewFootnote}>
+        {showOpenMesaAction && showFinalizeAction
+          ? "Próxima ação: validar no quality gate ou abrir a Mesa para decisão humana."
+          : showOpenMesaAction
+            ? "Próxima ação: abrir a Mesa para decisão humana rastreável."
+            : "Próxima ação: validar no quality gate para seguir com o fechamento."}
+      </Text>
       {showFinalizeAction ? (
         <Pressable
           accessibilityRole="button"

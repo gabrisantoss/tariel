@@ -234,6 +234,8 @@
             historyTypeFilterButtons: Array.from(documentRef.querySelectorAll("[data-history-type-filter]")),
             workspaceRailThreadTabButtons: Array.from(documentRef.querySelectorAll("[data-rail-thread-tab]")),
             workspaceRailToggleButtons: Array.from(documentRef.querySelectorAll("[data-rail-toggle]")),
+            workspaceRailToolButtons: Array.from(documentRef.querySelectorAll("[data-rail-tool-action]")),
+            workspaceRailToolboxHint: documentRef.querySelector("[data-workspace-toolbox-hint]"),
             btnWorkspacePreviewRail: documentRef.getElementById("btn-workspace-preview-rail"),
             composerSuggestions: documentRef.getElementById("composer-suggestions"),
             slashCommandPalette: documentRef.getElementById("slash-command-palette"),

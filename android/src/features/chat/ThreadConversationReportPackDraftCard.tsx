@@ -43,11 +43,11 @@ export function renderizarReportPackDraftCard(
   const pendingText =
     summary.pendingBlocks > 0
       ? `${summary.pendingBlocks} bloco${summary.pendingBlocks === 1 ? "" : "s"} pendente${summary.pendingBlocks === 1 ? "" : "s"}`
-      : "Sem pendências";
+      : "Sem bloqueios do pré-laudo";
   const attentionText =
     summary.attentionBlocks > 0
       ? `${summary.attentionBlocks} bloco${summary.attentionBlocks === 1 ? "" : "s"} em atenção`
-      : "Sem alertas";
+      : "Sem alertas ativos";
   const visibleBlocks = [...summary.blockSummaries]
     .sort((left, right) => {
       const priority = (value: string) => {
@@ -227,11 +227,20 @@ export function renderizarReportPackDraftCard(
             {pendingText}
           </Text>
         </View>
-        <View style={[styles.threadReviewChip, styles.threadReviewChipAccent]}>
+        <View
+          style={[
+            styles.threadReviewChip,
+            summary.attentionBlocks > 0
+              ? styles.threadReviewChipAccent
+              : styles.threadReviewChipSuccess,
+          ]}
+        >
           <Text
             style={[
               styles.threadReviewChipText,
-              styles.threadReviewChipTextAccent,
+              summary.attentionBlocks > 0
+                ? styles.threadReviewChipTextAccent
+                : styles.threadReviewChipTextSuccess,
             ]}
           >
             {attentionText}

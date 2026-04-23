@@ -9,10 +9,56 @@ import {
   rotuloCaseLifecycle,
   targetThreadCaseLifecycle,
 } from "../chat/caseLifecycle";
+import { buildReportPackDraftSummary } from "../chat/reportPackHelpers";
 import type { ActiveThread, MobileActivityNotification } from "../chat/types";
 import { resumoMensagemAtividade } from "../common/messagePreviewHelpers";
 
 const MAX_LAUDOS_MONITORADOS_MESA = 6;
+
+function resumirStatusOperacionalLaudo(params: {
+  item: MobileLaudoCard;
+  lifecycleDetail: string;
+  lifecycleStatus: string;
+  ownerRole: string;
+  reportPackSummary: ReturnType<typeof buildReportPackDraftSummary>;
+}) {
+  const {
+    item,
+    lifecycleDetail,
+    lifecycleStatus,
+    ownerRole,
+    reportPackSummary,
+  } = params;
+
+  if (lifecycleStatus === "devolvido_para_correcao") {
+    if (reportPackSummary?.pendingBlocks) {
+      return `${item.titulo} voltou para correção com ${reportPackSummary.pendingBlocks} bloqueio${reportPackSummary.pendingBlocks === 1 ? "" : "s"} no pré-laudo. Abra o chat para ajustar antes de reenviar.`;
+    }
+    return `${item.titulo} voltou para correção. Abra o chat para ajustar o caso antes da próxima decisão.`;
+  }
+
+  if (lifecycleStatus === "aguardando_mesa") {
+    return `${item.titulo} já foi enviado para a Mesa. Abra a aba Mesa para acompanhar a entrada da revisão humana.`;
+  }
+
+  if (lifecycleStatus === "em_revisao_mesa") {
+    return `${item.titulo} está em revisão humana. Abra a aba Mesa para acompanhar pendências e respostas da avaliadora.`;
+  }
+
+  if (
+    lifecycleStatus === "laudo_em_coleta" ||
+    lifecycleStatus === "pre_laudo"
+  ) {
+    if (reportPackSummary?.pendingBlocks) {
+      return `${item.titulo} segue em coleta com ${reportPackSummary.pendingBlocks} bloqueio${reportPackSummary.pendingBlocks === 1 ? "" : "s"} no pré-laudo. Abra o chat para completar evidências e destravar a validação.`;
+    }
+    if (reportPackSummary?.attentionBlocks) {
+      return `${item.titulo} segue em consolidação com ${reportPackSummary.attentionBlocks} ponto${reportPackSummary.attentionBlocks === 1 ? "" : "s"} em revisão. Abra o chat para fechar o pré-laudo antes da validação final.`;
+    }
+  }
+
+  return `${item.titulo} agora está em ${rotuloCaseLifecycle(lifecycleStatus as any).toLowerCase()}. ${lifecycleDetail}${ownerRole === "mesa" ? " Acompanhe a mesa no app." : ""}`;
+}
 
 function resolverResumoReemissaoPdfOficial(item: MobileLaudoCard): {
   title: string;
@@ -141,7 +187,12 @@ export function criarNotificacaoStatusLaudo(
     card: item,
     lifecycleStatus,
   });
-  const lifecycleLabel = rotuloCaseLifecycle(lifecycleStatus);
+  const reportPackSummary = buildReportPackDraftSummary(item.report_pack_draft);
+  const prontoParaValidar =
+    Boolean(reportPackSummary?.autonomyReady) ||
+    Boolean(reportPackSummary?.readyForStructuredForm);
+  const exigeMesaNaValidacao =
+    reportPackSummary?.finalValidationMode === "mesa_required";
   const lifecycleDetail = descricaoCaseLifecycle(lifecycleStatus);
   const mapaTitulo: Record<string, string> = {
     analise_livre: "Caso em análise livre",
@@ -154,12 +205,44 @@ export function criarNotificacaoStatusLaudo(
     emitido: "Documento final emitido",
   };
 
+  if (prontoParaValidar && exigeMesaNaValidacao) {
+    return {
+      id: `status:${item.id}:${assinaturaStatusLaudo(item)}`,
+      kind: "status",
+      laudoId: item.id,
+      title: "Caso pronto para decisão da mesa",
+      body: `${item.titulo} já pode seguir para a Mesa. Abra a aba Mesa para concluir a decisão humana rastreável.`,
+      createdAt: new Date().toISOString(),
+      unread: true,
+      targetThread: "mesa",
+    };
+  }
+
+  if (prontoParaValidar) {
+    return {
+      id: `status:${item.id}:${assinaturaStatusLaudo(item)}`,
+      kind: "status",
+      laudoId: item.id,
+      title: "Caso pronto para validar",
+      body: `${item.titulo} já está pronto para validação final. Abra Finalizar para revisar o quality gate do caso.`,
+      createdAt: new Date().toISOString(),
+      unread: true,
+      targetThread: "finalizar",
+    };
+  }
+
   return {
     id: `status:${item.id}:${assinaturaStatusLaudo(item)}`,
     kind: "status",
     laudoId: item.id,
     title: mapaTitulo[lifecycleStatus] || "Status do laudo atualizado",
-    body: `${item.titulo} agora está em ${lifecycleLabel.toLowerCase()}. ${lifecycleDetail}${ownerRole === "mesa" ? " Acompanhe a mesa no app." : ""}`,
+    body: resumirStatusOperacionalLaudo({
+      item,
+      lifecycleDetail,
+      lifecycleStatus,
+      ownerRole,
+      reportPackSummary,
+    }),
     createdAt: new Date().toISOString(),
     unread: true,
     targetThread: targetThreadCaseLifecycle(lifecycleStatus),
@@ -220,6 +303,77 @@ export function criarNotificacaoSistema(params: {
     unread: true,
     targetThread: params.targetThread || "chat",
   };
+}
+
+export function prioridadeNotificacaoAtividade(
+  item: MobileActivityNotification,
+): number {
+  if (item.unread && item.kind === "alerta_critico") {
+    return 0;
+  }
+  if (item.unread && item.kind === "mesa_reaberta") {
+    return 1;
+  }
+  if (item.unread && item.kind === "mesa_nova") {
+    return 2;
+  }
+  if (item.unread && item.kind === "status") {
+    return 3;
+  }
+  if (item.unread && item.kind === "mesa_resolvida") {
+    return 4;
+  }
+  if (item.unread) {
+    return 5;
+  }
+  if (item.kind === "alerta_critico") {
+    return 6;
+  }
+  return 7;
+}
+
+export function rotuloCategoriaNotificacaoAtividade(
+  item: MobileActivityNotification,
+): string {
+  if (item.kind === "alerta_critico") {
+    return "Reemissão";
+  }
+  if (
+    item.kind === "mesa_nova" ||
+    item.kind === "mesa_resolvida" ||
+    item.kind === "mesa_reaberta"
+  ) {
+    return "Mesa";
+  }
+  if (item.kind === "status") {
+    return "Status do caso";
+  }
+  return "Sistema";
+}
+
+export function hintDestinoNotificacaoAtividade(
+  item: MobileActivityNotification,
+): string {
+  if (item.targetThread === "finalizar") {
+    return "Abrir em Finalizar";
+  }
+  if (item.targetThread === "mesa") {
+    return "Abrir na aba Mesa";
+  }
+  return "Abrir no Chat";
+}
+
+export function ordenarNotificacoesAtividade(
+  items: readonly MobileActivityNotification[],
+): MobileActivityNotification[] {
+  return [...items].sort((a, b) => {
+    const priorityDiff =
+      prioridadeNotificacaoAtividade(a) - prioridadeNotificacaoAtividade(b);
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }
 
 export function selecionarLaudosParaMonitoramentoMesa(params: {

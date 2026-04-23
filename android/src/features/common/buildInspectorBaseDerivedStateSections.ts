@@ -31,6 +31,7 @@ import {
   hasMobileUserPortal,
   buildMobileWorkspaceSummary,
 } from "./mobileUserAccess";
+import { buildOfflineQueueOperationalSummary } from "../offline/offlineQueueHelpers";
 import { summarizeOfflinePendingQueueV1 } from "../offline/offlineSyncObservability";
 import { buildGuidedInspectionPlaceholder } from "../inspection/guidedInspection";
 import type {
@@ -428,14 +429,33 @@ export function buildInspectorHistoryAndOfflineDerivedState(
         : "Inicie um laudo para vê-lo aqui.";
   const resumoFilaOffline = !filaOfflineOrdenada.length
     ? ""
-    : filaOfflineOrdenada.length === 1
-      ? `1 envio pendente${statusApi === "offline" ? " aguardando conexão" : totalFilaOfflinePronta ? " pronto para reenviar" : " em backoff"}`
-      : `${filaOfflineOrdenada.length} envios pendentes${statusApi === "offline" ? " aguardando conexão" : totalFilaOfflineFalha ? ` (${totalFilaOfflineFalha} com falha)` : totalFilaOfflineEmEspera && totalFilaOfflinePronta ? ` (${totalFilaOfflinePronta} prontos, ${totalFilaOfflineEmEspera} em backoff)` : totalFilaOfflinePronta ? " prontos para reenviar" : " em backoff"}`;
+    : buildOfflineQueueOperationalSummary({
+        items: filaOfflineOrdenada,
+        statusApi,
+        readyItems: totalFilaOfflinePronta,
+        failedItems: totalFilaOfflineFalha,
+        waitingItems: totalFilaOfflineEmEspera,
+      });
+  const totalFilaOfflineFiltradaPronta = filaOfflineFiltrada.filter((item) =>
+    pendenciaFilaProntaParaReenvio(item),
+  ).length;
+  const totalFilaOfflineFiltradaFalha = filaOfflineFiltrada.filter((item) =>
+    Boolean(item.lastError),
+  ).length;
+  const totalFilaOfflineFiltradaEmEspera = filaOfflineFiltrada.filter(
+    (item) => !item.lastError && item.nextRetryAt,
+  ).length;
   const resumoFilaOfflineFiltrada =
     filtroFilaOffline === "all"
       ? resumoFilaOffline
       : filaOfflineFiltrada.length
-        ? `${filaOfflineFiltrada.length} pendência${filaOfflineFiltrada.length > 1 ? "s" : ""} ${filaOfflineFiltrada.length > 1 ? "visíveis" : "visível"} em ${filtroFilaOffline === "chat" ? "Chat" : "Mesa"}`
+        ? buildOfflineQueueOperationalSummary({
+            items: filaOfflineFiltrada,
+            statusApi,
+            readyItems: totalFilaOfflineFiltradaPronta,
+            failedItems: totalFilaOfflineFiltradaFalha,
+            waitingItems: totalFilaOfflineFiltradaEmEspera,
+          })
         : `Nenhuma pendência em ${filtroFilaOffline === "chat" ? "Chat" : "Mesa"}`;
   const podeSincronizarFilaOffline =
     statusApi === "online" && totalFilaOfflinePronta > 0;
@@ -679,8 +699,8 @@ export function buildInspectorSettingsDerivedState(
     Boolean(item.attachmentUri),
   ).length;
   const resumoFilaSuporteLocal = filaSuporteLocal.length
-    ? `${filaSuporteLocal.length} item(ns) locais • ${ticketsBugTotal} bug(s) • ${ticketsFeedbackTotal} feedback(s) • ${ticketsComAnexoTotal} com anexo`
-    : "Sem itens na fila local";
+    ? `${filaSuporteLocal.length} ${filaSuporteLocal.length === 1 ? "relato local" : "relatos locais"} • ${ticketsBugTotal} bug${ticketsBugTotal === 1 ? "" : "s"} • ${ticketsFeedbackTotal} feedback${ticketsFeedbackTotal === 1 ? "" : "s"} • ${ticketsComAnexoTotal} com anexo`
+    : "Nenhum relato local";
   const temPrioridadesConfiguracao = permissoesNegadasTotal > 0;
   const eventosSegurancaFiltrados = eventosSeguranca.filter((item) => {
     if (filtroEventosSeguranca === "todos") {

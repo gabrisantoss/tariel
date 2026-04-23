@@ -387,7 +387,9 @@ export function SettingsSupportSection({
         onPress={onReportarProblema}
         testID="settings-support-report-bug-row"
         title="Reportar problema"
-        value={ticketsBugTotal ? `${ticketsBugTotal} na fila` : "Diagnóstico"}
+        value={
+          ticketsBugTotal ? `${ticketsBugTotal} na fila` : "Abrir formulário"
+        }
       />
       <SettingsPressRow
         description={emailRetorno}
@@ -396,7 +398,9 @@ export function SettingsSupportSection({
         testID="settings-support-send-feedback-row"
         title="Enviar feedback"
         value={
-          ticketsFeedbackTotal ? `${ticketsFeedbackTotal} na fila` : "Sugestões"
+          ticketsFeedbackTotal
+            ? `${ticketsFeedbackTotal} na fila`
+            : "Enviar ideia"
         }
       />
       <SettingsPressRow

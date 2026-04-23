@@ -1,6 +1,10 @@
 (function attachTarielInspectorWorkspaceScreen(global) {
     "use strict";
 
+    function mesaAvaliadoraDisponivelParaUsuario() {
+        return global.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true;
+    }
+
     function resolveMesaWidgetDisponibilidade(screen, dependencies = {}) {
         const {
             estado = {},
@@ -11,6 +15,10 @@
             obterLaudoAtivoIdSeguro,
             resolveWorkspaceView,
         } = dependencies;
+        if (!mesaAvaliadoraDisponivelParaUsuario()) {
+            return false;
+        }
+
         const screenAtual = screen || estado.inspectorScreen || resolveInspectorScreen?.();
         if (screenAtual === "new_inspection") {
             return false;

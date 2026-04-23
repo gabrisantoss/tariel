@@ -1,4 +1,5 @@
 import {
+  buildOfflineQueueOperationalSummary,
   calcularBackoffPendenciaOfflineMs,
   criarItemFilaOffline,
   detalheStatusPendenciaOffline,
@@ -104,5 +105,38 @@ describe("offlineQueueHelpers", () => {
     expect(calcularBackoffPendenciaOfflineMs(2)).toBe(120_000);
     expect(calcularBackoffPendenciaOfflineMs(3)).toBe(300_000);
     expect(calcularBackoffPendenciaOfflineMs(9)).toBe(600_000);
+  });
+
+  it("resume a fila offline pelo impacto operacional antes do detalhe técnico", () => {
+    const summary = buildOfflineQueueOperationalSummary({
+      items: [
+        {
+          id: "chat-new",
+          channel: "chat",
+          operation: "message",
+          laudoId: null,
+        },
+        {
+          id: "mesa-1",
+          channel: "mesa",
+          operation: "message",
+          laudoId: 91,
+        },
+        {
+          id: "final-1",
+          channel: "chat",
+          operation: "quality_gate_finalize",
+          laudoId: 91,
+        },
+      ] as any,
+      statusApi: "online",
+      readyItems: 1,
+      failedItems: 1,
+      waitingItems: 1,
+    });
+
+    expect(summary).toBe(
+      "1 criação de caso · 1 finalização · 1 resposta à mesa · 3 itens locais · 1 com falha",
+    );
   });
 });

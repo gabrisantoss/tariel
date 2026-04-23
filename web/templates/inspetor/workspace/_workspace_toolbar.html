@@ -1,4 +1,4 @@
-{% set workspace_tab_inicial = "conversa" if (workspace_assistant_inicial | default(false)) else "historico" %}
+{% set workspace_tab_inicial = "conversa" %}
 {% set workspace_nav_caption_inicial = "Canal do assistente" if workspace_tab_inicial == "conversa" else "Workspace tecnico do laudo" %}
 {% set workspace_nav_status_inicial = "Canal ativo" if workspace_tab_inicial == "conversa" else "Leitura e ação separadas" %}
 

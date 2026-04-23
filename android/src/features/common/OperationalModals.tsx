@@ -26,6 +26,11 @@ import {
   buildActivityCenterAutomationProbeLabel,
   type ActivityCenterAutomationDiagnostics,
 } from "./mobilePilotAutomationDiagnostics";
+import {
+  hintDestinoNotificacaoAtividade,
+  ordenarNotificacoesAtividade,
+  rotuloCategoriaNotificacaoAtividade,
+} from "../activity/activityNotificationHelpers";
 
 type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
@@ -133,6 +138,7 @@ export function ActivityCenterModal({
         activityCenterAutomationDiagnostics,
       )
     : "";
+  const notificacoesOrdenadas = ordenarNotificacoesAtividade(notificacoes);
 
   return (
     <Modal
@@ -219,8 +225,8 @@ export function ActivityCenterModal({
             contentContainerStyle={styles.activityModalList}
             testID="activity-center-list"
           >
-            {notificacoes.length ? (
-              notificacoes.map((item) => (
+            {notificacoesOrdenadas.length ? (
+              notificacoesOrdenadas.map((item) => (
                 <Pressable
                   key={item.id}
                   onPress={() => onAbrirNotificacao(item)}
@@ -252,11 +258,12 @@ export function ActivityCenterModal({
                         {formatarHorarioAtividade(item.createdAt)}
                       </Text>
                     </View>
+                    <Text style={styles.activityItemHint}>
+                      {rotuloCategoriaNotificacaoAtividade(item)}
+                    </Text>
                     <Text style={styles.activityItemText}>{item.body}</Text>
                     <Text style={styles.activityItemHint}>
-                      {item.targetThread === "mesa"
-                        ? "Abrir na aba Mesa"
-                        : "Abrir no Chat"}
+                      {hintDestinoNotificacaoAtividade(item)}
                     </Text>
                   </View>
                 </Pressable>
@@ -338,6 +345,14 @@ export function OfflineQueueModal({
   detalheStatusPendenciaOffline: (item: OfflinePendingMessage) => string;
   pendenciaFilaProntaParaReenvio: (item: OfflinePendingMessage) => boolean;
 }) {
+  const toolbarBlockingReason = !sincronizacaoDispositivos
+    ? "Sincronização entre dispositivos está desativada nas configurações de dados."
+    : statusApi !== "online"
+      ? "Conecte-se para reenviar a fila offline."
+      : !sincronizandoFilaOffline && !podeSincronizarFilaOffline
+        ? "Nenhum item está pronto para sincronizar agora. Retome uma pendência ou aguarde o backoff."
+        : "";
+
   return (
     <Modal
       animationType="slide"
@@ -412,10 +427,9 @@ export function OfflineQueueModal({
               </Pressable>
             )}
           </View>
-          {!sincronizacaoDispositivos ? (
+          {toolbarBlockingReason ? (
             <Text style={styles.offlineModalToolbarText}>
-              Sincronização entre dispositivos está desativada nas configurações
-              de dados.
+              {toolbarBlockingReason}
             </Text>
           ) : null}
 
@@ -573,7 +587,7 @@ export function OfflineQueueModal({
                       >
                         {pendenciaFilaProntaParaReenvio(item)
                           ? "Enviar agora"
-                          : "Forçar agora"}
+                          : "Enviar sem esperar"}
                       </Text>
                     </Pressable>
                     <Pressable

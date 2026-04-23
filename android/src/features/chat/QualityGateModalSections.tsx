@@ -127,9 +127,10 @@ export function QualityGateMetricRow(props: {
 }
 
 export function QualityGateReportPackSection(props: {
+  blockingNarrative?: string;
   reportPackSummary: MobileReportPackDraftSummary | null;
 }) {
-  const { reportPackSummary } = props;
+  const { blockingNarrative, reportPackSummary } = props;
   if (!reportPackSummary) {
     return null;
   }
@@ -140,6 +141,9 @@ export function QualityGateReportPackSection(props: {
       <Text style={modalStyles.sectionDescription}>
         {`${reportPackSummary.readinessLabel}. ${reportPackSummary.readinessDetail}`}
       </Text>
+      {blockingNarrative ? (
+        <Text style={modalStyles.issueMeta}>{blockingNarrative}</Text>
+      ) : null}
       <Text style={modalStyles.issueMeta}>
         {`${reportPackSummary.templateLabel} • ${reportPackSummary.finalValidationModeLabel} • conflito ${reportPackSummary.maxConflictScore}`}
       </Text>
@@ -276,15 +280,25 @@ export function QualityGateOverrideSection(props: {
   );
 }
 
-export function QualityGateCorrectionSection() {
+export function QualityGateCorrectionSection(props: {
+  blockingNarrative: string;
+  reviewModeLabel: string;
+}) {
+  const { blockingNarrative, reviewModeLabel } = props;
+  const nextAction =
+    reviewModeLabel === "Mesa obrigatória"
+      ? "Resolva os bloqueios no chat e então siga para a Mesa."
+      : "Resolva os bloqueios no chat e valide novamente neste quality gate.";
+
   return (
     <View style={modalStyles.section}>
       <Text style={modalStyles.sectionTitle}>
         Correção necessária antes de seguir
       </Text>
       <Text style={modalStyles.sectionDescription}>
-        Ajuste a coleta do caso e volte a validar quando as pendências forem
-        resolvidas.
+        {blockingNarrative
+          ? `${blockingNarrative} ainda seguram o avanço. ${nextAction}`
+          : `Ajuste a coleta do caso antes de seguir. ${nextAction}`}
       </Text>
     </View>
   );

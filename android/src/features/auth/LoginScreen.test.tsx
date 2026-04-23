@@ -4,7 +4,6 @@ import { LoginScreen, type LoginScreenProps } from "./LoginScreen";
 
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
-  const { Text } = require("react-native");
   return {
     MaterialCommunityIcons: ({
       name,
@@ -12,16 +11,15 @@ jest.mock("@expo/vector-icons", () => {
     }: {
       name: string;
       [key: string]: unknown;
-    }) => React.createElement(Text, props, name),
+    }) => React.createElement("Text", props, name),
   };
 });
 
 jest.mock("expo-linear-gradient", () => {
   const React = require("react");
-  const { View } = require("react-native");
   return {
     LinearGradient: ({ children, ...props }: any) =>
-      React.createElement(View, props, children),
+      React.createElement("View", props, children),
   };
 });
 

@@ -4,7 +4,6 @@ import { ThreadHeaderControls } from "./ThreadHeaderControls";
 
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
-  const { Text } = require("react-native");
   return {
     MaterialCommunityIcons: ({
       name,
@@ -12,7 +11,7 @@ jest.mock("@expo/vector-icons", () => {
     }: {
       name: string;
       [key: string]: unknown;
-    }) => React.createElement(Text, props, name),
+    }) => React.createElement("Text", props, name),
   };
 });
 
@@ -98,5 +97,30 @@ describe("ThreadHeaderControls", () => {
     expect(queryByText("Novo chat")).toBeNull();
     expect(queryByText("Primeiro envio cria o caso.")).toBeNull();
     expect(queryByText("Caso no 1º envio")).toBeNull();
+  });
+
+  it("usa uma descrição neutra para a fila offline no header do chat", () => {
+    const { getByText } = render(
+      <ThreadHeaderControls
+        chatHasActiveCase
+        finalizacaoDisponivel={false}
+        filaOfflineTotal={2}
+        headerSafeTopInset={0}
+        keyboardVisible={false}
+        mesaAcessoPermitido
+        notificacoesMesaLaudoAtual={0}
+        notificacoesNaoLidas={0}
+        onOpenChatTab={jest.fn()}
+        onOpenFinalizarTab={jest.fn()}
+        onOpenHistory={jest.fn()}
+        onOpenMesaTab={jest.fn()}
+        onOpenNewChat={jest.fn()}
+        onOpenSettings={jest.fn()}
+        vendoFinalizacao={false}
+        vendoMesa={false}
+      />,
+    );
+
+    expect(getByText("2 pendências na fila offline.")).toBeTruthy();
   });
 });

@@ -274,6 +274,11 @@ describe("useSettingsOperationsActions", () => {
 
     expect(base.compartilharTextoExportado).toHaveBeenCalledWith(
       expect.objectContaining({
+        content: expect.stringContaining("Fila offline: 2 itens locais"),
+      }),
+    );
+    expect(base.compartilharTextoExportado).toHaveBeenCalledWith(
+      expect.objectContaining({
         content: expect.stringContaining(
           "Fila offline (resumo): prontas=1, falha=1, backoff=0, chat=1, mesa=1, anexos=1",
         ),
@@ -283,6 +288,18 @@ describe("useSettingsOperationsActions", () => {
       expect.objectContaining({
         content: expect.stringContaining(
           "Fila offline (capacidade): api=online, sync=on, wifi_only=off, blocker=none, pode_sincronizar=sim, auto_sync=sim",
+        ),
+      }),
+    );
+    expect(base.compartilharTextoExportado).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("Fila de suporte: 0 relatos locais"),
+      }),
+    );
+    expect(base.compartilharTextoExportado).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining(
+          "Fila de suporte com anexo: 0 relatos",
         ),
       }),
     );

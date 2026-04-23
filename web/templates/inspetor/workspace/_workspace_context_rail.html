@@ -1,7 +1,7 @@
 <aside
     id="workspace-context-rail"
     class="chat-dashboard-rail"
-    aria-label="Painel lateral do laudo"
+    aria-label="Ferramentas do laudo"
     data-inspector-region="context-rail"
     data-component-slice="workspace-rail"
     data-workspace-rail-root
@@ -10,9 +10,9 @@
     hidden
 >
     <div class="chat-dashboard-rail__panel">
-        <section class="technical-record-card technical-record-card--navigation" aria-label="Navegação do laudo">
+        <section class="technical-record-card technical-record-card--navigation" aria-label="Navegação e ferramentas do laudo">
             <div class="technical-record-card__header">
-                <h3>Navegação</h3>
+                <h3>Ferramentas do laudo</h3>
             </div>
             <div class="workspace-rail-card__body workspace-rail-card__body--navigation">
                 <div class="workspace-rail-top-actions" aria-label="Ações principais da conversa">
@@ -64,6 +64,65 @@
                     >
                         Pré-visualizar
                     </button>
+                </div>
+
+                <div class="workspace-rail-toolbox" data-workspace-toolbox>
+                    <span class="workspace-rail-card__eyebrow">Tratamento técnico</span>
+                    <div class="workspace-rail-toolbox__grid" aria-label="Ferramentas específicas do laudo">
+                        <button
+                            type="button"
+                            class="workspace-rail-tool"
+                            data-rail-tool-action="templates"
+                            data-required-capability="reviewer_decision"
+                            hidden
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">view_quilt</span>
+                            <span>Templates</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="workspace-rail-tool"
+                            data-rail-tool-action="editor"
+                            data-required-capability="reviewer_decision"
+                            hidden
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">edit_document</span>
+                            <span>Editor</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="workspace-rail-tool"
+                            data-rail-tool-action="signature"
+                            data-required-capability="reviewer_issue"
+                            hidden
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">draw</span>
+                            <span>Assinatura</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="workspace-rail-tool"
+                            data-rail-tool-action="official_pdf"
+                            data-required-capability="reviewer_issue"
+                            hidden
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">picture_as_pdf</span>
+                            <span>PDF oficial</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="workspace-rail-tool"
+                            data-rail-tool-action="technical_package"
+                            data-required-capability="reviewer_issue"
+                            hidden
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+                            <span>Pacote</span>
+                        </button>
+                    </div>
+                    <p class="workspace-rail-toolbox__hint" data-workspace-toolbox-hint hidden>
+                        Serviços de Mesa no Inspetor não estão liberados para esta empresa.
+                    </p>
                 </div>
             </div>
         </section>

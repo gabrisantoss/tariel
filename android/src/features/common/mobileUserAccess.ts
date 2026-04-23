@@ -1,6 +1,8 @@
 import type {
   MobileCommercialOperatingModel,
+  MobileCommercialServicePackage,
   MobilePortalSwitchLink,
+  MobileTenantAccessPolicy,
   MobileUser,
   MobileUserPortal,
 } from "../../types/mobile";
@@ -29,10 +31,26 @@ const MOBILE_OPERATING_MODEL_LABELS: Record<
   mobile_single_operator: "Mobile principal com operador único",
 };
 
+const MOBILE_COMMERCIAL_SERVICE_PACKAGE_LABELS: Record<
+  MobileCommercialServicePackage,
+  string
+> = {
+  inspector_chat: "Chat Inspetor sem Mesa",
+  inspector_chat_mesa: "Chat Inspetor + Mesa Avaliadora",
+  inspector_chat_mesa_reviewer_services:
+    "Chat Inspetor + Mesa + serviços no Inspetor",
+};
+
 const ACCESS_LEVEL_BASE_PORTALS: Record<number, MobileUserPortal> = {
   1: "inspetor",
   50: "revisor",
   80: "cliente",
+};
+
+const MOBILE_PORTAL_DEFAULT_PATHS: Record<MobileUserPortal, string> = {
+  cliente: "/cliente/painel",
+  inspetor: "/app/",
+  revisor: "/revisao/painel",
 };
 
 export interface MobileResolvedPortalSwitchLink {
@@ -63,6 +81,26 @@ function isMobileOperatingModel(
   value: unknown,
 ): value is MobileCommercialOperatingModel {
   return value === "standard" || value === "mobile_single_operator";
+}
+
+function isMobileCommercialServicePackage(
+  value: unknown,
+): value is MobileCommercialServicePackage {
+  return (
+    value === "inspector_chat" ||
+    value === "inspector_chat_mesa" ||
+    value === "inspector_chat_mesa_reviewer_services"
+  );
+}
+
+function resolveTenantAccessPolicy(
+  user: MobileUser | null | undefined,
+): MobileTenantAccessPolicy | null {
+  const policy = user?.tenant_access_policy;
+  if (!policy || typeof policy !== "object") {
+    return null;
+  }
+  return policy;
 }
 
 function basePublicaPortalWeb(): string {
@@ -122,9 +160,12 @@ export function resolveMobileUserPortals(
   user: MobileUser | null | undefined,
 ): MobileUserPortal[] {
   const normalized: MobileUserPortal[] = [];
+  const tenantPolicy = resolveTenantAccessPolicy(user);
   const rawPortals = Array.isArray(user?.allowed_portals)
     ? user.allowed_portals
-    : [];
+    : Array.isArray(tenantPolicy?.allowed_portals)
+      ? tenantPolicy.allowed_portals
+      : [];
   rawPortals.forEach((item) => {
     if (isMobileUserPortal(item) && !normalized.includes(item)) {
       normalized.push(item);
@@ -151,13 +192,17 @@ export function hasMobileUserPortal(
 export function resolveMobileUserPortalLabels(
   user: MobileUser | null | undefined,
 ): string[] {
+  const tenantPolicy = resolveTenantAccessPolicy(user);
   const rawLabels = Array.isArray(user?.allowed_portal_labels)
     ? user.allowed_portal_labels
-        .map((item) => String(item || "").trim())
-        .filter(Boolean)
-    : [];
-  if (rawLabels.length) {
-    return rawLabels;
+    : Array.isArray(tenantPolicy?.allowed_portal_labels)
+      ? tenantPolicy.allowed_portal_labels
+      : [];
+  const normalizedLabels = rawLabels
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+  if (normalizedLabels.length) {
+    return normalizedLabels;
   }
   return resolveMobileUserPortals(user).map(
     (portal) => MOBILE_USER_PORTAL_LABELS[portal],
@@ -180,14 +225,36 @@ export function resolveMobileUserOperatingModelLabel(
   return "";
 }
 
+export function resolveMobileUserCommercialServicePackageLabel(
+  user: MobileUser | null | undefined,
+): string {
+  const tenantPolicy = resolveTenantAccessPolicy(user);
+  const explicitLabel = String(
+    user?.commercial_service_package_label ||
+      tenantPolicy?.commercial_service_package_label ||
+      "",
+  ).trim();
+  if (explicitLabel) {
+    return explicitLabel;
+  }
+  const packageKey =
+    user?.commercial_service_package ||
+    tenantPolicy?.commercial_service_package_effective ||
+    tenantPolicy?.commercial_service_package;
+  if (isMobileCommercialServicePackage(packageKey)) {
+    return MOBILE_COMMERCIAL_SERVICE_PACKAGE_LABELS[packageKey];
+  }
+  return "";
+}
+
 export function buildMobileWorkspaceSummary(
   user: MobileUser | null | undefined,
 ): string {
   const companyName = String(user?.empresa_nome || "").trim() || "Pessoal";
+  const packageLabel = resolveMobileUserCommercialServicePackageLabel(user);
   const operatingModelLabel = resolveMobileUserOperatingModelLabel(user);
-  return operatingModelLabel
-    ? `${companyName} • ${operatingModelLabel}`
-    : companyName;
+  const workspaceLabel = packageLabel || operatingModelLabel;
+  return workspaceLabel ? `${companyName} • ${workspaceLabel}` : companyName;
 }
 
 export function buildMobileAccessSummary(
@@ -201,6 +268,11 @@ export function buildMobileAccessSummary(
   const portalLabels = resolveMobileUserPortalLabels(user);
   if (portalLabels.length) {
     parts.push(portalLabels.join(" + "));
+  }
+
+  const packageLabel = resolveMobileUserCommercialServicePackageLabel(user);
+  if (packageLabel) {
+    parts.push(packageLabel);
   }
 
   const operatingModelLabel = resolveMobileUserOperatingModelLabel(user);
@@ -258,6 +330,33 @@ export function resolveMobilePortalSwitchLinks(
     if (!portal || !label || !destinationPath || !resolvedUrl) {
       return;
     }
+    if (
+      normalized.some(
+        (existing) =>
+          existing.portal === portal &&
+          existing.destinationPath === destinationPath,
+      )
+    ) {
+      return;
+    }
+    normalized.push({
+      portal,
+      label,
+      url: resolvedUrl,
+      destinationPath,
+    });
+  });
+  if (normalized.length) {
+    return normalized;
+  }
+
+  const fallbackLabels = resolveMobileUserPortalLabels(user);
+  resolveMobileUserPortals(user).forEach((portal, index) => {
+    const destinationPath = MOBILE_PORTAL_DEFAULT_PATHS[portal];
+    const label =
+      String(fallbackLabels[index] || "").trim() ||
+      MOBILE_USER_PORTAL_LABELS[portal];
+    const resolvedUrl = normalizarUrlPortalWeb(destinationPath);
     if (
       normalized.some(
         (existing) =>

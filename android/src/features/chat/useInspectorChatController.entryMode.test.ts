@@ -1153,6 +1153,81 @@ describe("useInspectorChatController entry mode", () => {
     ]);
   });
 
+  it("preserva entry mode do envelope principal na resposta do chat quando o card vem parcial", async () => {
+    const conversation: ChatState = {
+      laudoId: 88,
+      estado: "relatorio_ativo",
+      statusCard: "aberto",
+      permiteEdicao: true,
+      permiteReabrir: false,
+      laudoCard: criarLaudoCard({
+        entry_mode_preference: "auto_recommended",
+        entry_mode_effective: "chat_first",
+        entry_mode_reason: "default_product_fallback",
+      }),
+      entryModePreference: "auto_recommended",
+      entryModeEffective: "chat_first",
+      entryModeReason: "default_product_fallback",
+      modo: "detalhado",
+      mensagens: [],
+    };
+    const setConversation = jest.fn();
+    const params = criarParams({
+      conversation,
+      message: "Atualizacao guiada",
+      setConversation,
+    });
+    (sendInspectorMessageFlow as jest.Mock).mockImplementation(async (args) => {
+      args.onApplyAssistantResponse(
+        {
+          laudoId: 88,
+          laudoCard: criarLaudoCard({
+            entry_mode_preference: undefined,
+            entry_mode_effective: undefined,
+            entry_mode_reason: undefined,
+          }),
+          entry_mode_preference: "evidence_first",
+          entry_mode_effective: "evidence_first",
+          entry_mode_reason: "existing_case_state",
+          assistantText: "Coleta guiada retomada.",
+          modo: "detalhado",
+          citacoes: [],
+          confiancaIa: null,
+          events: [],
+        },
+        null,
+      );
+    });
+
+    const { result } = renderHook(() =>
+      useInspectorChatController<OfflinePendingMessage, MobileReadCache>(
+        params,
+      ),
+    );
+
+    await act(async () => {
+      await result.current.actions.handleEnviarMensagem();
+    });
+
+    const conversationUpdaters = setConversation.mock.calls
+      .map((call) => call[0])
+      .filter(
+        (
+          value,
+        ): value is (
+          current: typeof conversation | null,
+        ) => typeof conversation => typeof value === "function",
+      );
+    const assistantUpdater = conversationUpdaters.at(-1) as (
+      current: typeof conversation | null,
+    ) => typeof conversation;
+    const assistantState = assistantUpdater(conversation);
+
+    expect(assistantState.entryModePreference).toBe("evidence_first");
+    expect(assistantState.entryModeEffective).toBe("evidence_first");
+    expect(assistantState.entryModeReason).toBe("existing_case_state");
+  });
+
   it("solicita a politica do PDF anterior ao reabrir um caso emitido", async () => {
     const alertSpy = jest
       .spyOn(Alert, "alert")

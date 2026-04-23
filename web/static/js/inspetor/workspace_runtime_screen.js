@@ -1,6 +1,10 @@
 (function attachTarielInspectorWorkspaceRuntimeScreen(global) {
     "use strict";
 
+    function mesaAvaliadoraDisponivelParaUsuario() {
+        return global.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true;
+    }
+
     function resolverMatrizVisibilidadeInspector(screen, snapshot = {}, dependencies = {}) {
         const screenBase = screen === "new_inspection"
             ? (snapshot.inspectorBaseScreen || dependencies.resolveInspectorBaseScreen?.())
@@ -27,6 +31,7 @@
             workspaceView === "inspection_conversation" &&
             dependencies.conversaWorkspaceModoChatAtivo?.(screen, snapshot);
         const chatLivreDisponivel = dependencies.entradaChatLivreDisponivel?.(snapshot);
+        const mesaDisponivel = mesaAvaliadoraDisponivelParaUsuario();
         const quickDock = !overlayAtivo && compacto && (
             assistantAtivo ||
             (inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada)
@@ -36,7 +41,7 @@
         const contextRail = inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo && !compacto
             ? "visible"
             : "hidden";
-        const mesaEntry = inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo
+        const mesaEntry = mesaDisponivel && inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo
             ? (compacto ? "composer" : "rail")
             : "hidden";
         const finalizeEntry = inspectionAtivo && workspaceView !== "inspection_mesa" && !overlayAtivo && !!laudoAtivoId
@@ -67,7 +72,7 @@
             inspectionAtivo,
             quickDock,
             contextRail,
-            mesaWidget: inspectionAtivo && !conversaLivreFocada && !overlayAtivo ? "contextual" : "hidden",
+            mesaWidget: mesaDisponivel && inspectionAtivo && !conversaLivreFocada && !overlayAtivo ? "contextual" : "hidden",
             novaInspecaoEntry,
             abrirChatEntry,
             landingNewInspection: assistantAtivo && !overlayAtivo ? "visible" : "hidden",
@@ -140,14 +145,16 @@
         }
 
         if (screenBase !== "inspection_workspace") {
-            return "inspection_history";
+            return "inspection_conversation";
         }
 
         const threadTabAtual = dependencies.normalizarThreadTab?.(snapshot.threadTab);
         if (threadTabAtual === "anexos") return "inspection_record";
         if (threadTabAtual === "correcoes") return "inspection_corrections";
-        if (threadTabAtual === "mesa") return "inspection_mesa";
-        if (threadTabAtual === "historico") return "inspection_history";
+        if (threadTabAtual === "mesa") {
+            return mesaAvaliadoraDisponivelParaUsuario() ? "inspection_mesa" : "inspection_corrections";
+        }
+        if (threadTabAtual === "historico") return "inspection_conversation";
         return "inspection_conversation";
     }
 

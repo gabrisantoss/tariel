@@ -82,6 +82,46 @@ function lerNumero(value: unknown, fallback = 0): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+function pluralizeFinalizationCount(
+  value: number,
+  singular: string,
+  plural: string,
+): string {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
+function resumirComposicaoBloqueios(params: {
+  documentBlockers: number;
+  pendingCount: number;
+  attentionCount: number;
+}) {
+  const parts = [
+    params.documentBlockers
+      ? pluralizeFinalizationCount(
+          params.documentBlockers,
+          "bloqueio documental",
+          "bloqueios documentais",
+        )
+      : "",
+    params.pendingCount
+      ? pluralizeFinalizationCount(
+          params.pendingCount,
+          "pendência do pré-laudo",
+          "pendências do pré-laudo",
+        )
+      : "",
+    !params.documentBlockers && !params.pendingCount && params.attentionCount
+      ? pluralizeFinalizationCount(
+          params.attentionCount,
+          "ponto de atenção",
+          "pontos de atenção",
+        )
+      : "",
+  ].filter(Boolean);
+
+  return parts.join(" · ");
+}
+
 function resumirIntegridadePdfOficial(params: {
   currentIssue: Record<string, unknown> | null;
 }) {
@@ -297,6 +337,11 @@ export function resumirContextoFinalizacao(params: {
     .slice(0, 3);
   const emitted = caseLifecycleStatus === "emitido";
   const issueInProgress = Boolean(currentIssueNumber) && !emitted;
+  const blockerBreakdown = resumirComposicaoBloqueios({
+    documentBlockers,
+    pendingCount,
+    attentionCount,
+  });
   const deliveryLabel = currentIssueNumber
     ? currentIssueNumber
     : emitted
@@ -486,13 +531,14 @@ export function resumirContextoFinalizacao(params: {
         label: "Bloqueios",
         value:
           blockerCount > 0
-            ? `${blockerCount} pendência${blockerCount === 1 ? "" : "s"}`
+            ? blockerBreakdown ||
+              `${blockerCount} pendência${blockerCount === 1 ? "" : "s"}`
             : attentionCount > 0
-              ? `${attentionCount} atenção`
+              ? blockerBreakdown || `${attentionCount} atenção`
               : "Sem bloqueios",
         detail:
           blockerCount > 0
-            ? `${documentBlockers} bloqueio(s) documentais e ${pendingCount} pendência(s) do pre-laudo ainda seguram o fechamento.${blockedSections.length ? ` Foco atual: ${blockedSections.join(" · ")}.` : ""}`
+            ? `${blockerBreakdown || `${blockerCount} pendências`} ainda seguram o fechamento.${blockedSections.length ? ` Foco atual: ${blockedSections.join(" · ")}.` : ""}`
             : attentionCount > 0
               ? "A base já fecha, mas ainda existem pontos para revisão fina antes da emissão."
               : "Pacote documental e pré-laudo coerentes para seguir no fluxo final.",

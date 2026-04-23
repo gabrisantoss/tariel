@@ -399,10 +399,72 @@ describe("buildInspectorBaseDerivedStateSections", () => {
     ).toEqual(["chat-1", "mesa-1"]);
     expect(state.totalFilaOfflinePronta).toBe(1);
     expect(state.totalFilaOfflineFalha).toBe(1);
-    expect(state.resumoFilaOffline).toContain("2 envios pendentes");
+    expect(state.resumoFilaOffline).toContain("1 criação de caso");
+    expect(state.resumoFilaOffline).toContain("1 resposta à mesa");
+    expect(state.resumoFilaOffline).toContain("2 itens locais");
+    expect(state.resumoFilaOffline).toContain("1 com falha");
+    expect(state.resumoFilaOfflineFiltrada).toContain("1 criação de caso");
     expect(state.historicoAgrupadoFinal).toHaveLength(1);
     expect(state.conversasFixadasTotal).toBe(1);
     expect(state.notificacoesNaoLidas).toBe(1);
+  });
+
+  it("mantem o resumo operacional quando a fila offline esta filtrada por mesa", () => {
+    const state = buildInspectorHistoryAndOfflineDerivedState({
+      buscaHistorico: "",
+      buildHistorySections: jest.fn().mockReturnValue([]),
+      filaOffline: [
+        criarPendenciaParcial({
+          id: "mesa-1",
+          channel: "mesa",
+          laudoId: 51,
+          createdAt: "2026-03-19T10:00:00.000Z",
+          lastError: "timeout",
+        }),
+        criarPendenciaParcial({
+          id: "chat-1",
+          channel: "chat",
+          laudoId: null,
+          createdAt: "2026-03-20T11:00:00.000Z",
+        }),
+      ],
+      filtroFilaOffline: "mesa",
+      filtroHistorico: "todos",
+      fixarConversas: false,
+      historicoOcultoIds: [],
+      laudosDisponiveis: [],
+      notificacoes: [],
+      pendenciaFilaProntaParaReenvio: jest.fn().mockReturnValue(false),
+      prioridadePendenciaOffline: jest.fn().mockReturnValue(0),
+      session: {
+        accessToken: "token-123",
+        bootstrap: {
+          ok: true,
+          app: {
+            api_base_url: "https://tariel.test",
+            nome: "Tariel Inspetor",
+            portal: "inspetor",
+            suporte_whatsapp: "",
+          },
+          usuario: {
+            id: 7,
+            nome_completo: "Inspetor Tariel",
+            email: "inspetor@tariel.test",
+            telefone: "",
+            foto_perfil_url: "",
+            empresa_nome: "Empresa A",
+            empresa_id: 33,
+            nivel_acesso: 1,
+            allowed_portals: ["inspetor", "revisor"],
+          },
+        },
+      },
+      statusApi: "online",
+    });
+
+    expect(state.resumoFilaOfflineFiltrada).toBe(
+      "1 resposta à mesa · 1 item local · 1 com falha",
+    );
   });
 
   it("permite buscar histórico por resumo canônico do caso", () => {
@@ -792,6 +854,78 @@ describe("buildInspectorBaseDerivedStateSections", () => {
     expect(state.reemissoesRecomendadasTotal).toBe(1);
     expect(state.resumoGovernancaConfiguracao).toBe(
       "1 caso com reemissão recomendada",
+    );
+  });
+
+  it("resume a fila de suporte local com linguagem operacional mais legivel", () => {
+    const state = buildInspectorSettingsDerivedState({
+      arquivosPermitidos: true,
+      buscaAjuda: "",
+      buscaConfiguracoes: "",
+      cameraPermitida: true,
+      codigosRecuperacao: [],
+      contaTelefone: "(11) 99999-0000",
+      corDestaque: "laranja",
+      densidadeInterface: "confortável",
+      email: "inspetor@tariel.test",
+      emailAtualConta: "inspetor@tariel.test",
+      estiloResposta: "objetivo",
+      eventosSeguranca: [],
+      filaSuporteLocal: [
+        {
+          id: "bug-1",
+          kind: "bug",
+          body: "Falha ao abrir histórico",
+          status: "queued",
+          createdAt: "2026-04-22T10:00:00.000Z",
+          attachmentUri: "file:///tmp/print-1.png",
+        },
+        {
+          id: "feedback-1",
+          kind: "feedback",
+          body: "Sugestão para o radar",
+          status: "queued",
+          createdAt: "2026-04-22T09:00:00.000Z",
+          attachmentUri: "",
+        },
+      ],
+      filtroConfiguracoes: "all",
+      filtroEventosSeguranca: "todos",
+      formatarHorarioAtividade: jest.fn().mockReturnValue("Agora"),
+      formatarTipoTemplateLaudo: jest.fn().mockReturnValue("Laranja"),
+      idiomaResposta: "pt-BR",
+      integracoesExternas: [],
+      lockTimeout: "5min",
+      microfonePermitido: true,
+      modeloIa: "equilibrado",
+      mostrarConteudoNotificacao: false,
+      mostrarSomenteNovaMensagem: true,
+      notificacoesPermitidas: true,
+      ocultarConteudoBloqueado: true,
+      perfilExibicao: "Tariel",
+      perfilNome: "Inspetor Tariel",
+      planoAtual: "Free",
+      provedoresConectados: [],
+      reautenticacaoStatus: "Não confirmada",
+      recoveryCodesEnabled: false,
+      salvarHistoricoConversas: true,
+      session: null,
+      settingsDrawerPage: "overview",
+      settingsDrawerSection: "all",
+      sessoesAtivas: [],
+      somNotificacao: "Ping",
+      statusAtualizacaoApp: "Atualizado",
+      temaApp: "claro",
+      twoFactorEnabled: false,
+      twoFactorMethod: "app",
+      ultimaVerificacaoAtualizacao: "",
+      conversasFixadasTotal: 0,
+      conversasVisiveisTotal: 0,
+      temaEfetivo: "claro",
+    } as never);
+
+    expect(state.resumoFilaSuporteLocal).toBe(
+      "2 relatos locais • 1 bug • 1 feedback • 1 com anexo",
     );
   });
 

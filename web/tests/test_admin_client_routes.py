@@ -340,6 +340,43 @@ def test_admin_ceo_pode_definir_modelo_mobile_single_operator_no_tenant(
         }
 
 
+def test_admin_ceo_pode_definir_pacote_chat_inspetor_sem_mesa(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    _login_admin(client, "admin@empresa-a.test")
+    csrf = _csrf_pagina(client, f"/admin/clientes/{ids['empresa_a']}")
+
+    resposta = client.post(
+        f"/admin/clientes/{ids['empresa_a']}/politica-admin-cliente",
+        data={
+            "csrf_token": csrf,
+            "admin_cliente_commercial_service_package": "inspector_chat",
+            "admin_cliente_case_visibility_mode": "case_list",
+            "admin_cliente_case_action_mode": "case_actions",
+        },
+        follow_redirects=False,
+    )
+
+    assert resposta.status_code == 303
+    pagina = client.get(resposta.headers["location"])
+    assert pagina.status_code == 200
+    assert "Chat Inspetor sem Mesa" in pagina.text
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        assert empresa.admin_cliente_policy_json == {
+            "case_visibility_mode": "case_list",
+            "case_action_mode": "case_actions",
+            "commercial_service_package": "inspector_chat",
+            "tenant_portal_revisor_enabled": False,
+        }
+
+
 def test_admin_cliente_salva_signatario_governado_no_tenant(ambiente_critico) -> None:
     client = ambiente_critico["client"]
     ids = ambiente_critico["ids"]

@@ -46,9 +46,26 @@ export type MobileUserPortal = "cliente" | "inspetor" | "revisor";
 export type MobileCommercialOperatingModel =
   | "standard"
   | "mobile_single_operator";
+export type MobileCommercialServicePackage =
+  | "inspector_chat"
+  | "inspector_chat_mesa"
+  | "inspector_chat_mesa_reviewer_services";
 export type MobileIdentityRuntimeMode =
   | "standard_role_accounts"
   | "tenant_scoped_portal_grants";
+
+export interface MobileTenantAccessPolicy {
+  governed_by_admin_ceo: boolean;
+  commercial_service_package?: string;
+  commercial_service_package_effective?: string;
+  commercial_service_package_label?: string;
+  commercial_service_package_description?: string;
+  portal_entitlements?: Partial<Record<MobileUserPortal, boolean>>;
+  capability_entitlements?: Record<string, boolean>;
+  allowed_portals?: MobileUserPortal[];
+  allowed_portal_labels?: string[];
+  user_capability_entitlements?: Record<string, boolean>;
+}
 
 export interface MobilePortalSwitchLink {
   portal: MobileUserPortal;
@@ -77,10 +94,14 @@ export interface MobileUser {
   allowed_portal_labels?: string[];
   commercial_operating_model?: MobileCommercialOperatingModel;
   commercial_operating_model_label?: string;
+  commercial_service_package?: MobileCommercialServicePackage | string;
+  commercial_service_package_label?: string;
+  commercial_service_package_description?: string;
   identity_runtime_mode?: MobileIdentityRuntimeMode;
   identity_runtime_note?: string;
   portal_switch_links?: MobilePortalSwitchLink[];
   admin_ceo_governed?: boolean;
+  tenant_access_policy?: MobileTenantAccessPolicy;
 }
 
 export interface MobileLoginResponse {
@@ -738,6 +759,9 @@ export interface MobileGuidedInspectionDraftUpdateResponse {
 export interface MobileChatSendResult {
   laudoId: number | null;
   laudoCard: MobileLaudoCard | null;
+  entry_mode_preference?: MobileInspectionEntryModePreference;
+  entry_mode_effective?: MobileInspectionEntryModeEffective;
+  entry_mode_reason?: string;
   assistantText: string;
   modo: MobileChatMode | string;
   citacoes: Array<Record<string, unknown>>;

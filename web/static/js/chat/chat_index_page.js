@@ -275,7 +275,7 @@
         workspaceVisualContext: { ...CONTEXTO_WORKSPACE_ASSISTENTE },
         contextoVisualPorLaudo: {},
         ultimoStatusRelatorioPayload: null,
-        workspaceRailExpanded: true,
+        workspaceRailExpanded: false,
         workspaceRailAccordionState: Object.create(null),
         workspaceRailViewKey: "",
         pendenciasItens: [],
@@ -621,7 +621,7 @@
         return !!window.TarielInspetorRuntime?.shared?.modoEntradaEvidenceFirstAtivo?.();
     }
 
-    function resolverThreadTabInicialPorModoEntrada(payload = {}, fallback = "historico") {
+    function resolverThreadTabInicialPorModoEntrada(payload = {}, fallback = "conversa") {
         return ctx.shared.resolverThreadTabInicialPorModoEntrada?.(payload, fallback)
             || normalizarThreadTab(fallback);
     }
@@ -2465,7 +2465,7 @@
             obterSnapshotEstadoInspectorAtual,
             resolveInspectorBaseScreen,
             normalizarThreadTab,
-        }) || "inspection_history";
+        }) || "inspection_conversation";
     }
 
     function workspaceViewSuportaRail(view = resolveWorkspaceView()) {

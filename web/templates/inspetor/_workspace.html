@@ -1,7 +1,7 @@
 {% set home_forcado_inicial = home_forcado_inicial | default(false) %}
 {% set workspace_assistant_inicial = (not home_forcado_inicial) and status_relatorio_atual == "sem_relatorio" %}
 {% set workspace_record_inicial = not workspace_assistant_inicial %}
-{% set workspace_view_inicial = "assistant_landing" if workspace_assistant_inicial else "inspection_history" %}
+{% set workspace_view_inicial = "assistant_landing" if workspace_assistant_inicial else "inspection_conversation" %}
 
 <section
     class="chat-dashboard-grid"
@@ -10,8 +10,8 @@
     data-screen-root="workspace"
     data-active="{{ 'false' if home_forcado_inicial else 'true' }}"
     data-workspace-view="{{ workspace_view_inicial }}"
-    data-workspace-layout="{{ 'thread-only' if workspace_assistant_inicial else 'thread-with-rail' }}"
-    data-workspace-rail-visible="{{ 'false' if workspace_assistant_inicial else 'true' }}"
+    data-workspace-layout="thread-only"
+    data-workspace-rail-visible="false"
     data-conversation-variant="technical"
     aria-hidden="{{ 'true' if home_forcado_inicial else 'false' }}"
     {% if home_forcado_inicial %}hidden inert{% endif %}
@@ -35,9 +35,10 @@
                 <section
                     class="workspace-view-root workspace-view-root--history"
                     data-workspace-view-root="inspection_history"
-                    data-active="{{ 'true' if workspace_record_inicial else 'false' }}"
-                    aria-hidden="{{ 'false' if workspace_record_inicial else 'true' }}"
-                    {% if not workspace_record_inicial %}hidden inert{% endif %}
+                    data-active="false"
+                    aria-hidden="true"
+                    hidden
+                    inert
                 >
                     {% include "inspetor/workspace/_inspection_history.html" %}
                 </section>
@@ -45,10 +46,9 @@
                 <section
                     class="workspace-view-root workspace-view-root--record"
                     data-workspace-view-root="inspection_record"
-                    data-active="false"
-                    aria-hidden="true"
-                    hidden
-                    inert
+                    data-active="{{ 'true' if workspace_record_inicial else 'false' }}"
+                    aria-hidden="{{ 'false' if workspace_record_inicial else 'true' }}"
+                    {% if not workspace_record_inicial %}hidden inert{% endif %}
                 >
                     {% include "inspetor/workspace/_inspection_record.html" %}
                 </section>

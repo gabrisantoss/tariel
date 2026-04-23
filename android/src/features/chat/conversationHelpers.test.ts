@@ -80,6 +80,9 @@ describe("conversationHelpers", () => {
         },
       ],
       allowed_surface_actions: ["mesa_approve", "mesa_return"],
+      entry_mode_preference: "auto_recommended",
+      entry_mode_effective: "evidence_first",
+      entry_mode_reason: "existing_case_state",
       attachment_policy: {
         policy_name: "android_attachment_sync_policy",
         upload_allowed: true,
@@ -163,6 +166,9 @@ describe("conversationHelpers", () => {
       "mesa_approve",
       "mesa_return",
     ]);
+    expect(conversa.entryModePreference).toBe("auto_recommended");
+    expect(conversa.entryModeEffective).toBe("evidence_first");
+    expect(conversa.entryModeReason).toBe("existing_case_state");
     expect(conversa.attachmentPolicy?.supported_categories).toEqual([
       "imagem",
       "documento",
@@ -189,6 +195,9 @@ describe("conversationHelpers", () => {
         },
       ],
       allowed_surface_actions: ["chat_reopen"],
+      entry_mode_preference: "evidence_first",
+      entry_mode_effective: "chat_first",
+      entry_mode_reason: "user_preference",
       laudo_card: {
         id: 23,
         titulo: "Laudo 23",
@@ -250,6 +259,9 @@ describe("conversationHelpers", () => {
       ),
     ).toEqual(["devolvido_para_correcao"]);
     expect(atualizado?.allowedSurfaceActions).toEqual(["chat_reopen"]);
+    expect(atualizado?.entryModePreference).toBe("evidence_first");
+    expect(atualizado?.entryModeEffective).toBe("chat_first");
+    expect(atualizado?.entryModeReason).toBe("user_preference");
     expect(atualizado?.attachmentPolicy?.supported_categories).toEqual([
       "imagem",
     ]);
@@ -260,6 +272,26 @@ describe("conversationHelpers", () => {
       final_validation_mode: "mobile_autonomous",
       checklist_complete: true,
     });
+  });
+
+  it("preserva o entry mode do envelope mesmo sem laudo card hidratado", () => {
+    const conversa = normalizarConversa({
+      laudo_id: 77,
+      estado: "relatorio_ativo",
+      status_card: "aberto",
+      permite_edicao: true,
+      permite_reabrir: false,
+      entry_mode_preference: "evidence_first",
+      entry_mode_effective: "evidence_first",
+      entry_mode_reason: "existing_case_state",
+      laudo_card: null,
+      modo: "detalhado",
+      itens: [],
+    } as any);
+
+    expect(conversa.entryModePreference).toBe("evidence_first");
+    expect(conversa.entryModeEffective).toBe("evidence_first");
+    expect(conversa.entryModeReason).toBe("existing_case_state");
   });
 
   it("monta historico util e mensagem do assistente", () => {

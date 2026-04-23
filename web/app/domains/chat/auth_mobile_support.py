@@ -375,6 +375,15 @@ def serializar_usuario_mobile(usuario: Usuario) -> dict[str, object]:
         "commercial_operating_model_label": str(
             policy_summary.get("operating_model_label") or "Operação padrão"
         ),
+        "commercial_service_package": str(
+            policy_summary.get("commercial_service_package_effective") or ""
+        ),
+        "commercial_service_package_label": str(
+            policy_summary.get("commercial_service_package_label") or ""
+        ),
+        "commercial_service_package_description": str(
+            policy_summary.get("commercial_service_package_description") or ""
+        ),
         "identity_runtime_mode": str(
             operational_package.get("identity_runtime_mode")
             or "standard_role_accounts"

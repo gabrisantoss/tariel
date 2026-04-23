@@ -323,6 +323,7 @@ export function hasFormalCaseWorkflow(params: {
 }): boolean {
   const entryModeEffective = String(
     params.entryModeEffective ||
+      params.conversation?.entryModeEffective ||
       params.conversation?.laudoCard?.entry_mode_effective ||
       params.card?.entry_mode_effective ||
       "",

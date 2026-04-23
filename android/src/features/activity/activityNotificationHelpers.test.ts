@@ -5,7 +5,11 @@ import {
   criarNotificacaoSistema,
   criarNotificacaoStatusLaudo,
   formatarTipoTemplateLaudo,
+  hintDestinoNotificacaoAtividade,
   mapearStatusLaudoVisual,
+  ordenarNotificacoesAtividade,
+  prioridadeNotificacaoAtividade,
+  rotuloCategoriaNotificacaoAtividade,
   selecionarLaudosParaMonitoramentoMesa,
 } from "./activityNotificationHelpers";
 
@@ -45,6 +49,16 @@ describe("activityNotificationHelpers", () => {
       tone: "success",
       icon: "file-document-check-outline",
     });
+    expect(
+      rotuloCategoriaNotificacaoAtividade({
+        kind: "alerta_critico",
+      } as any),
+    ).toBe("Reemissão");
+    expect(
+      hintDestinoNotificacaoAtividade({
+        targetThread: "finalizar",
+      } as any),
+    ).toBe("Abrir em Finalizar");
     expect(
       assinaturaStatusLaudo({
         id: 12,
@@ -88,10 +102,106 @@ describe("activityNotificationHelpers", () => {
         permite_edicao: false,
         case_lifecycle_status: "devolvido_para_correcao",
         active_owner_role: "inspetor",
+        report_pack_draft: {
+          quality_gates: {
+            checklist_complete: false,
+            required_image_slots_complete: false,
+            critical_items_complete: false,
+            autonomy_ready: false,
+            final_validation_mode: "mesa_required",
+          },
+          items: [
+            {
+              item_codigo: "fixacao",
+              veredito_ia_normativo: "pendente",
+              approved_for_emission: false,
+              missing_evidence: ["foto_obrigatoria"],
+            },
+          ],
+        },
       } as any),
     ).toMatchObject({
       id: "status:5:ajustes|pendente|Ajustes|1|0|devolvido_para_correcao|inspetor|laudo_em_coleta|chat_reopen",
       targetThread: "chat",
+      body: "Laudo 5 voltou para correção com 3 bloqueios no pré-laudo. Abra o chat para ajustar antes de reenviar.",
+    });
+    expect(
+      criarNotificacaoStatusLaudo({
+        id: 15,
+        titulo: "Laudo 15",
+        status_card: "aguardando",
+        status_card_label: "Aguardando",
+        status_revisao: "ativo",
+        permite_reabrir: false,
+        permite_edicao: true,
+        case_lifecycle_status: "em_revisao_mesa",
+        active_owner_role: "mesa",
+        report_pack_draft: {
+          quality_gates: {
+            autonomy_ready: true,
+            final_validation_mode: "mesa_required",
+          },
+        },
+      } as any),
+    ).toMatchObject({
+      title: "Caso pronto para decisão da mesa",
+      targetThread: "mesa",
+    });
+    expect(
+      criarNotificacaoStatusLaudo({
+        id: 25,
+        titulo: "Laudo 25",
+        status_card: "aguardando",
+        status_card_label: "Aguardando",
+        status_revisao: "ativo",
+        permite_reabrir: false,
+        permite_edicao: true,
+        case_lifecycle_status: "aguardando_mesa",
+        active_owner_role: "mesa",
+      } as any),
+    ).toMatchObject({
+      title: "Caso enviado para a mesa",
+      body: "Laudo 25 já foi enviado para a Mesa. Abra a aba Mesa para acompanhar a entrada da revisão humana.",
+      targetThread: "mesa",
+    });
+    expect(
+      criarNotificacaoStatusLaudo({
+        id: 16,
+        titulo: "Laudo 16",
+        status_card: "aberto",
+        status_card_label: "Em andamento",
+        status_revisao: "ativo",
+        permite_reabrir: false,
+        permite_edicao: true,
+        case_lifecycle_status: "pre_laudo",
+        active_owner_role: "inspetor",
+        report_pack_draft: {
+          quality_gates: {
+            autonomy_ready: true,
+            final_validation_mode: "self_service",
+          },
+        },
+      } as any),
+    ).toMatchObject({
+      title: "Caso pronto para validar",
+      targetThread: "finalizar",
+    });
+    expect(
+      criarNotificacaoStatusLaudo({
+        id: 26,
+        titulo: "Laudo 26",
+        status_card: "aguardando",
+        status_card_label: "Em revisão",
+        status_revisao: "ativo",
+        permite_reabrir: false,
+        permite_edicao: true,
+        case_lifecycle_status: "em_revisao_mesa",
+        active_owner_role: "mesa",
+      } as any),
+    ).toMatchObject({
+      title: "Mesa revisando o caso",
+      body: "Laudo 26 está em revisão humana. Abra a aba Mesa para acompanhar pendências e respostas da avaliadora.",
+      targetThread: "mesa",
     });
     expect(
       criarNotificacaoStatusLaudo({
@@ -172,5 +282,35 @@ describe("activityNotificationHelpers", () => {
         ] as any,
       }),
     ).toEqual([3, 2, 4]);
+  });
+
+  it("prioriza alertas críticos e mesa reaberta antes de status comuns", () => {
+    const ordered = ordenarNotificacoesAtividade([
+      {
+        id: "status-1",
+        kind: "status",
+        unread: true,
+        createdAt: "2026-03-30T10:00:00.000Z",
+      },
+      {
+        id: "mesa-1",
+        kind: "mesa_reaberta",
+        unread: true,
+        createdAt: "2026-03-30T09:00:00.000Z",
+      },
+      {
+        id: "critical-1",
+        kind: "alerta_critico",
+        unread: true,
+        createdAt: "2026-03-30T08:00:00.000Z",
+      },
+    ] as any);
+
+    expect(ordered.map((item) => item.id)).toEqual([
+      "critical-1",
+      "mesa-1",
+      "status-1",
+    ]);
+    expect(prioridadeNotificacaoAtividade(ordered[0] as any)).toBe(0);
   });
 });

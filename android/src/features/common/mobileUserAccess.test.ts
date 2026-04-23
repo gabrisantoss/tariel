@@ -37,6 +37,9 @@ describe("mobileUserAccess", () => {
       allowed_portals: ["inspetor", "revisor", "cliente"],
       commercial_operating_model: "mobile_single_operator",
       commercial_operating_model_label: "Mobile principal com operador único",
+      commercial_service_package: "inspector_chat_mesa_reviewer_services",
+      commercial_service_package_label:
+        "Chat Inspetor + Mesa + serviços no Inspetor",
       identity_runtime_note:
         "A conta principal do tenant pode receber multiplas superficies conforme o cadastro definido no Admin-CEO.",
       portal_switch_links: [
@@ -64,10 +67,10 @@ describe("mobileUserAccess", () => {
       "Admin-Cliente",
     ]);
     expect(buildMobileWorkspaceSummary(user)).toBe(
-      "Empresa A • Mobile principal com operador único",
+      "Empresa A • Chat Inspetor + Mesa + serviços no Inspetor",
     );
     expect(buildMobileAccessSummary(user)).toBe(
-      "Empresa #33 • Inspetor web/mobile + Mesa Avaliadora + Admin-Cliente • Mobile principal com operador único",
+      "Empresa #33 • Inspetor web/mobile + Mesa Avaliadora + Admin-Cliente • Chat Inspetor + Mesa + serviços no Inspetor • Mobile principal com operador único",
     );
     expect(buildMobileSupportAccessLabel(user)).toBe(
       "Inspetor web/mobile + Mesa Avaliadora + Admin-Cliente",
@@ -121,6 +124,69 @@ describe("mobileUserAccess", () => {
     );
     expect(buildMobileHelpTopicsSummary(user)).toBe(
       "mesa, offline e segurança",
+    );
+  });
+
+  it("usa tenant_access_policy como fallback canonico para grants, labels e links", () => {
+    const user = criarUsuario({
+      allowed_portals: undefined,
+      allowed_portal_labels: undefined,
+      portal_switch_links: undefined,
+      tenant_access_policy: {
+        governed_by_admin_ceo: true,
+        commercial_service_package_effective: "inspector_chat",
+        commercial_service_package_label: "Chat Inspetor sem Mesa",
+        allowed_portals: ["inspetor", "revisor", "cliente"],
+        allowed_portal_labels: [
+          "Area de campo",
+          "Area de analise",
+          "Portal da empresa",
+        ],
+        portal_entitlements: {
+          inspetor: true,
+          revisor: true,
+          cliente: true,
+        },
+        capability_entitlements: {},
+        user_capability_entitlements: {},
+      },
+    });
+
+    expect(resolveMobileUserPortals(user)).toEqual([
+      "inspetor",
+      "revisor",
+      "cliente",
+    ]);
+    expect(resolveMobileUserPortalLabels(user)).toEqual([
+      "Area de campo",
+      "Area de analise",
+      "Portal da empresa",
+    ]);
+    expect(buildMobileWorkspaceSummary(user)).toBe(
+      "Empresa A • Chat Inspetor sem Mesa",
+    );
+    expect(resolveMobilePortalSwitchLinks(user)).toEqual([
+      {
+        portal: "inspetor",
+        label: "Area de campo",
+        url: "http://127.0.0.1:8000/app/",
+        destinationPath: "/app/",
+      },
+      {
+        portal: "revisor",
+        label: "Area de analise",
+        url: "http://127.0.0.1:8000/revisao/painel",
+        destinationPath: "/revisao/painel",
+      },
+      {
+        portal: "cliente",
+        label: "Portal da empresa",
+        url: "http://127.0.0.1:8000/cliente/painel",
+        destinationPath: "/cliente/painel",
+      },
+    ]);
+    expect(buildMobilePortalSwitchSummary(user)).toBe(
+      "Area de campo (/app/) • Area de analise (/revisao/painel) • Portal da empresa (/cliente/painel)",
     );
   });
 

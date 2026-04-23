@@ -84,6 +84,122 @@ function deduplicarRazoesFalha(items: string[]): string[] {
   return Array.from(dedup);
 }
 
+function resumirProximaAcaoRevisao(params: {
+  allowedDecisions: string[];
+  blockerCount: number;
+  modeLabel: string;
+  redFlagCount: number;
+}) {
+  const { allowedDecisions, blockerCount, modeLabel, redFlagCount } = params;
+  const canApprove = allowedDecisions.includes("aprovar_no_mobile");
+  const canSendMesa = allowedDecisions.includes("enviar_para_mesa");
+  const canReturn = allowedDecisions.includes("devolver_no_mobile");
+
+  if ((blockerCount > 0 || redFlagCount > 0) && canReturn) {
+    return {
+      label: "Próxima ação",
+      value: "Devolver para ajuste",
+      detail:
+        modeLabel === "Mesa obrigatória"
+          ? "Corrija os pontos sinalizados e devolva o caso para ajuste antes de qualquer decisão final."
+          : "Corrija os pontos sinalizados no mobile antes de aprovar ou escalar a revisão.",
+    };
+  }
+
+  if (canApprove) {
+    return {
+      label: "Próxima ação",
+      value: "Aprovar no mobile",
+      detail:
+        "O pacote já permite decisão local. Aprove no mobile quando a revisão estiver coerente com a evidência consolidada.",
+    };
+  }
+
+  if (canSendMesa) {
+    return {
+      label: "Próxima ação",
+      value: "Enviar para Mesa",
+      detail:
+        "A revisão local já pode escalar o caso. Envie para a Mesa quando a decisão humana final precisar continuar fora do mobile.",
+    };
+  }
+
+  if (canReturn) {
+    return {
+      label: "Próxima ação",
+      value: "Devolver para ajuste",
+      detail:
+        "Devolva o caso para ajuste antes de concluir a revisão governada.",
+    };
+  }
+
+  return null;
+}
+
+function resumirStatusDocumental(params: {
+  blockerCount: number;
+  redFlagCount: number;
+}): { label: string; tone: "danger" | "accent" | "success" } {
+  const { blockerCount, redFlagCount } = params;
+
+  if (redFlagCount > 0) {
+    return {
+      label:
+        redFlagCount === 1
+          ? "1 red flag crítica"
+          : `${redFlagCount} red flags críticas`,
+      tone: "danger" as const,
+    };
+  }
+
+  if (blockerCount > 0) {
+    return {
+      label:
+        blockerCount === 1
+          ? "1 bloqueio documental"
+          : `${blockerCount} bloqueios documentais`,
+      tone: "danger" as const,
+    };
+  }
+
+  return {
+    label: "Sem bloqueios documentais",
+    tone: "success" as const,
+  };
+}
+
+function resumirStatusBlocos(params: {
+  attentionBlocks: number;
+  returnedBlocks: number;
+}): { label: string; tone: "danger" | "accent" | "success" } {
+  const { attentionBlocks, returnedBlocks } = params;
+
+  if (returnedBlocks > 0) {
+    return {
+      label:
+        returnedBlocks === 1
+          ? "1 bloco para refazer"
+          : `${returnedBlocks} blocos para refazer`,
+      tone: "danger" as const,
+    };
+  }
+
+  if (attentionBlocks > 0) {
+    return {
+      label:
+        attentionBlocks === 1
+          ? "1 bloco em revisão"
+          : `${attentionBlocks} blocos em revisão`,
+      tone: "accent" as const,
+    };
+  }
+
+  return {
+    label: "Sem blocos em revisão",
+    tone: "success" as const,
+  };
+}
+
 export type ReviewPackageCaseContext =
   | {
       caseLifecycleStatus?: string;
@@ -136,6 +252,7 @@ export function buildThreadConversationReviewPackageSummary(
     ? caseContext.allowedSurfaceActions
     : [];
   const surfaceActionSummary = resumirCaseSurfaceActions(allowedSurfaceActions);
+  const modeLabel = rotuloModoRevisao(reviewPackage.review_mode);
 
   const coverageMap = lerRegistro(reviewPackage.coverage_map);
   const revisaoPorBloco = lerRegistro(reviewPackage.revisao_por_bloco);
@@ -212,6 +329,19 @@ export function buildThreadConversationReviewPackageSummary(
     reviewStatus: lerTexto(item.review_status, "ready"),
     recommendedAction: lerTexto(item.recommended_action),
   }));
+  const blockerCount = Array.isArray(reviewPackage.document_blockers)
+    ? reviewPackage.document_blockers.length
+    : 0;
+  const returnedBlocks = lerNumero(revisaoPorBloco?.returned_blocks);
+  const attentionBlocks = lerNumero(revisaoPorBloco?.attention_blocks);
+  const documentStatus = resumirStatusDocumental({
+    blockerCount,
+    redFlagCount: redFlags.length,
+  });
+  const blockStatus = resumirStatusBlocos({
+    attentionBlocks,
+    returnedBlocks,
+  });
 
   let entitlementMessage = "";
   if (tenantEntitlements) {
@@ -231,7 +361,7 @@ export function buildThreadConversationReviewPackageSummary(
   }
 
   return {
-    modeLabel: rotuloModoRevisao(reviewPackage.review_mode),
+    modeLabel,
     lifecycleLabel: rotuloCaseLifecycle(lifecycleStatus),
     lifecycleDescription: descricaoCaseLifecycle(lifecycleStatus),
     ownerLabel,
@@ -240,18 +370,20 @@ export function buildThreadConversationReviewPackageSummary(
     surfaceActionsKnown: allowedSurfaceActions.length > 0,
     allowedSurfaceActions,
     reviewRequired: lerBooleanOuNull(reviewPackage.review_required),
-    blockerCount: Array.isArray(reviewPackage.document_blockers)
-      ? reviewPackage.document_blockers.length
-      : 0,
+    blockerCount,
     totalRequired: lerNumero(coverageMap?.total_required),
     totalAccepted: lerNumero(coverageMap?.total_accepted),
     totalMissing: lerNumero(coverageMap?.total_missing),
     totalIrregular: lerNumero(coverageMap?.total_irregular),
-    returnedBlocks: lerNumero(revisaoPorBloco?.returned_blocks),
-    attentionBlocks: lerNumero(revisaoPorBloco?.attention_blocks),
+    returnedBlocks,
+    attentionBlocks,
     historyCount: historyItems.length,
     approvedCount: lerNumero(memoriaOperacional?.approved_snapshot_count),
     redFlagCount: redFlags.length,
+    documentStatusLabel: documentStatus.label,
+    documentStatusTone: documentStatus.tone,
+    blockStatusLabel: blockStatus.label,
+    blockStatusTone: blockStatus.tone,
     entitlementMessage,
     humanOverrideReason: lerTexto(humanOverrideLatest?.reason),
     humanOverrideActor: lerTexto(humanOverrideLatest?.actor_name),
@@ -321,6 +453,17 @@ export function buildThreadConversationReviewPackageSummary(
           item.reviewStatus === "returned" || item.reviewStatus === "attention",
       )
       .slice(0, 3),
+    nextAction: resumirProximaAcaoRevisao({
+      allowedDecisions: Array.isArray(reviewPackage.allowed_decisions)
+        ? reviewPackage.allowed_decisions.filter(
+            (item): item is string =>
+              typeof item === "string" && item.trim().length > 0,
+          )
+        : [],
+      blockerCount,
+      modeLabel,
+      redFlagCount: redFlags.length,
+    }),
   };
 }
 

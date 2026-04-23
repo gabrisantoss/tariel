@@ -127,6 +127,10 @@ from app.domains.admin.admin_operations_application_services import (
     buscar_metricas_ia_painel as _admin_operations_buscar_metricas_ia_painel,
     registrar_novo_cliente as _admin_operations_registrar_novo_cliente,
 )
+from app.domains.admin.admin_welcome_notification_services import (
+    aviso_notificacao_boas_vindas as _admin_welcome_notice_message,
+    disparar_email_boas_vindas as _admin_dispatch_welcome_notice,
+)
 from app.domains.admin.admin_platform_settings_application_services import (
     apply_platform_settings_update as _admin_platform_settings_apply_update,
     build_admin_platform_settings_console as _admin_platform_settings_build_console,
@@ -391,6 +395,20 @@ _BACKEND_NOTIFICACAO_BOAS_VINDAS = env_str(
     "ADMIN_WELCOME_NOTIFICATION_BACKEND",
     "log" if _MODO_DEV else "noop",
 ).strip().lower()
+
+
+def _aviso_notificacao_boas_vindas() -> str:
+    return _admin_welcome_notice_message()
+
+
+def _disparar_email_boas_vindas(email: str, empresa: str, senha: str) -> str | None:
+    return _admin_dispatch_welcome_notice(
+        email,
+        empresa,
+        senha,
+        backend=_BACKEND_NOTIFICACAO_BOAS_VINDAS,
+        logger=logger,
+    )
 
 
 def apply_platform_settings_update(

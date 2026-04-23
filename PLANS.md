@@ -2,7 +2,7 @@
 
 Arquivo de trabalho para tarefas longas, confusas ou multissuperfície.
 
-Atualizado em `2026-04-22`.
+Atualizado em `2026-04-23`.
 
 ## Quando usar
 
@@ -13,6 +13,35 @@ Atualizado em `2026-04-22`.
 - correção crítica com risco de regressão.
 
 ## Estado atual
+
+### `PKT-INSPETOR-CHAT-MESA-01` - Chat inspetor como flagship com Mesa contratual
+
+- `status`: em andamento em `2026-04-23`; primeira fatia local aplicada para esconder/desviar entradas da `Mesa Avaliadora` no inspetor quando o tenant não possui `inspector_send_to_mesa`, preservar o fluxo de Mesa para empresas contratantes, bloquear comandos `/enviar_mesa` sem laudo ativo antes de cair no chat livre com IA, e finalizar casos `mesa_required` como aprovação interna governada quando a empresa não contratou Mesa mas possui `mobile_case_approve`
+- `validacao focal`: `node --check` nos módulos JS alterados do inspetor/chat, `py_compile` em `chat_stream_routes.py`, `laudo_decision_services.py` e `report_pack_helpers.py`, `tests/test_tenant_entitlements_critical.py -k 'finalizacao_sem_mesa or revogacao_de_capacidades_bloqueia_acoes_criticas'`, `tests/test_regras_rotas_criticas.py -k 'api_chat_comando_rapido_enviar_mesa_sem_inspecao_ativa or api_chat_comando_rapido_enviar_mesa_gera_whisper or canais_ia_e_mesa_ficam_isolados_no_historico or inspetor_finalizacao_aprovada_com_evidencias_minimas'`
+- `checkpoint 2026-04-23`: o Admin-CEO agora possui preset comercial governado para `Chat Inspetor sem Mesa`, `Chat Inspetor + Mesa Avaliadora` e `Chat Inspetor + Mesa + servicos no Inspetor`; os presets derivam portais/capabilities no motor compartilhado de tenant e chegam ao inspetor, mobile, portal da empresa e Mesa pelo mesmo `tenant_access_policy`; validacao com `make web-ci`, `make hygiene-check`, testes focais de admin services/routes e entitlements
+- `checkpoint 2026-04-23`: a barra direita do inspetor virou `Ferramentas do laudo`, inicia recolhida, expõe atalhos governados para `Templates`, `Editor`, `Assinatura`, `PDF oficial` e `Pacote` apenas quando as capabilities de servico da Mesa estão liberadas, e abre tratamentos em nova aba; o laudo ativo agora inicia na conversa, e a aba `Histórico` mantém a mesma superfície de chat para mostrar o que foi conversado, sem trocar para uma tela administrativa separada; validacao com `make web-ci` e `make hygiene-check`
+- `checkpoint 2026-04-23`: criada a tela intermediaria `/app/laudo/{id}/preparar-emissao` para assinatura, PDF oficial, pacote tecnico, template e bloqueios de emissao sem poluir o chat; o dock mostra `liberado pelo pacote`, `sem laudo ativo` e `precisa aprovar` conforme estado/capability; o pacote comercial agora tambem aparece no `tenant_access_policy`, no login mobile e no cabecalho do Portal Cliente; validacao focal com `py_compile`, `node --check`, `pytest` de entitlements/smoke e `jest` de `mobileUserAccess`
+- `checkpoint 2026-04-23`: a tela `Preparar emissao` passou a executar emissao oficial pelo proprio `/app`, com selecao de signatario governado, CSRF, guarda `reviewer_issue`, download oficial no namespace do Chat Inspetor e feedback visual de `aguardando aprovacao`, `assinatura pendente`, `pronto para emissao` e `emitido oficialmente`; validacao focal com `py_compile`, `test_tenant_entitlements_critical.py -k 'preparacao_de_emissao or emite_oficialmente_no_fluxo_do_chat'` e smoke de UI
+
+### Objetivo
+
+- consolidar o chat do inspetor como superfície principal do produto, com IA e fluxo técnico no mesmo lugar
+- permitir pacote sem Mesa, pacote com Mesa, e pacote com Mesa + serviços de avaliação disponíveis ao inspetor sem duplicar produto
+- fazer a UI e o backend respeitarem o contrato Admin-CEO por capability, não por texto fixo de tela
+
+### Escopo
+
+- entra governança por `inspector_send_to_mesa` e `mobile_case_approve`
+- entra redirecionamento visual de Mesa para Correções quando Mesa não estiver contratada
+- entra decisão final sem Mesa como aprovação interna governada, mantendo `report_pack` coerente
+- nao entra redesenho completo do chat nem cadastro comercial completo de pacotes nesta fatia
+
+### Criterio de pronto
+
+- empresas sem Mesa não veem nem acionam fila de Mesa por acidente
+- empresas com Mesa continuam enviando e revisando pelo fluxo atual
+- Admin-CEO consegue representar os dois pacotes por policy/capabilities
+- chat livre, laudo ativo, Correções e Mesa ficam semanticamente separados
 
 ### `PKT-WEB-HOTSPOTS-03` - Inspetor runtime, admin rollups, bridge cliente e mesa SSR
 
@@ -3859,3 +3888,20 @@ Atualizado em `2026-04-22`.
 - a central de atividade deixa de depender só da ordenação por tempo
 - alertas críticos e reaberturas da mesa sobem na lista
 - cada item comunica categoria e destino com leitura mais rápida
+
+### `PKT-CHAT-INSPETOR-DEBUG-ENTITLEMENTS-01` — Debug completo dos pacotes do Chat Inspetor
+
+- `status`: concluído localmente em `2026-04-23`; o debug encontrou e corrigiu regressões de compatibilidade no Admin-CEO após a introdução dos pacotes comerciais do Chat Inspetor.
+
+### Escopo
+
+- restaura o wrapper legado `_disparar_email_boas_vindas` em `admin_services`, mantendo os testes e monkeypatches existentes funcionais.
+- preserva o POST legado de política do Admin-CEO para aceitar `tenant_portal_*` e `tenant_capability_*` quando o pacote comercial não é enviado.
+- mantém o novo campo `admin_cliente_commercial_service_package` como caminho preferencial para escolher `Chat Inspetor sem Mesa`, `Chat Inspetor + Mesa` ou `Chat Inspetor + Mesa + serviços no Inspetor`.
+
+### Validação
+
+- `make verify`
+- `make web-ci`
+- `make mobile-ci`
+- `make hygiene-check`

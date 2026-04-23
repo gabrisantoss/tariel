@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react-native";
 
+import { SettingsSupportSection } from "./SettingsSystemSupportSections";
 import { SettingsExperienceNotificationsSection } from "./SettingsExperienceSections";
 import { SettingsPlanSheetContent } from "./SettingsSheetAccountContent";
 import {
@@ -9,7 +10,6 @@ import {
 
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
-  const { Text } = require("react-native");
   return {
     MaterialCommunityIcons: ({
       name,
@@ -17,7 +17,7 @@ jest.mock("@expo/vector-icons", () => {
     }: {
       name: string;
       [key: string]: unknown;
-    }) => React.createElement(Text, props, name),
+    }) => React.createElement("Text", props, name),
   };
 });
 
@@ -138,5 +138,34 @@ describe("settings governance surfaces", () => {
     expect(
       feedback.getByText("Empresa #7 • Inspetor web/mobile + Mesa Avaliadora"),
     ).toBeTruthy();
+  });
+
+  it("usa chamadas de acao mais diretas na secao de suporte quando a fila ainda esta vazia", () => {
+    const support = render(
+      <SettingsSupportSection
+        artigosAjudaCount={4}
+        emailRetorno="inspetor@tariel.test"
+        filaSuporteCount={0}
+        onCanalSuporte={jest.fn()}
+        onCentralAjuda={jest.fn()}
+        onEnviarFeedback={jest.fn()}
+        onExportarDiagnosticoApp={jest.fn()}
+        onLicencas={jest.fn()}
+        onLimparFilaSuporteLocal={jest.fn()}
+        onPoliticaPrivacidade={jest.fn()}
+        onReportarProblema={jest.fn()}
+        onSobreApp={jest.fn()}
+        onTermosUso={jest.fn()}
+        resumoFilaSuporteLocal="Nenhum relato local"
+        resumoSuporteApp="Preview"
+        supportChannelLabel="WhatsApp"
+        ticketsBugTotal={0}
+        ticketsFeedbackTotal={0}
+        ultimoTicketSuporte={null}
+      />,
+    );
+
+    expect(support.getByText("Abrir formulário")).toBeTruthy();
+    expect(support.getByText("Enviar ideia")).toBeTruthy();
   });
 });

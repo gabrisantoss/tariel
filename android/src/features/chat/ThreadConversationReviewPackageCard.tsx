@@ -87,22 +87,24 @@ export function renderizarReviewPackageMesa(
         <View
           style={[
             styles.threadReviewChip,
-            summary.redFlagCount > 0 || summary.blockerCount > 0
+            summary.documentStatusTone === "danger"
               ? styles.threadReviewChipDanger
-              : styles.threadReviewChipSuccess,
+              : summary.documentStatusTone === "accent"
+                ? styles.threadReviewChipAccent
+                : styles.threadReviewChipSuccess,
           ]}
         >
           <Text
             style={[
               styles.threadReviewChipText,
-              summary.redFlagCount > 0 || summary.blockerCount > 0
+              summary.documentStatusTone === "danger"
                 ? styles.threadReviewChipTextDanger
-                : styles.threadReviewChipTextSuccess,
+                : summary.documentStatusTone === "accent"
+                  ? styles.threadReviewChipTextAccent
+                  : styles.threadReviewChipTextSuccess,
             ]}
           >
-            {summary.redFlagCount > 0
-              ? `Red flags ${summary.redFlagCount}`
-              : `Documentos ${summary.blockerCount > 0 ? "pendentes" : "ok"}`}
+            {summary.documentStatusLabel}
           </Text>
         </View>
         <View style={[styles.threadReviewChip, styles.threadReviewChipAccent]}>
@@ -118,20 +120,24 @@ export function renderizarReviewPackageMesa(
         <View
           style={[
             styles.threadReviewChip,
-            summary.returnedBlocks > 0
+            summary.blockStatusTone === "danger"
               ? styles.threadReviewChipDanger
-              : styles.threadReviewChipAccent,
+              : summary.blockStatusTone === "accent"
+                ? styles.threadReviewChipAccent
+                : styles.threadReviewChipSuccess,
           ]}
         >
           <Text
             style={[
               styles.threadReviewChipText,
-              summary.returnedBlocks > 0
+              summary.blockStatusTone === "danger"
                 ? styles.threadReviewChipTextDanger
-                : styles.threadReviewChipTextAccent,
+                : summary.blockStatusTone === "accent"
+                  ? styles.threadReviewChipTextAccent
+                  : styles.threadReviewChipTextSuccess,
             ]}
           >
-            Blocos {summary.returnedBlocks > 0 ? "em refazer" : "monitorados"}
+            {summary.blockStatusLabel}
           </Text>
         </View>
       </View>

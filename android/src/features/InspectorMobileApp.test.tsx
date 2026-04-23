@@ -12,17 +12,21 @@ jest.mock("./common/InspectorAuthenticatedShell", () => ({
   }: {
     pilotAutomationProbeLabel: string;
   }) => {
-    const { Text } = require("react-native");
+    const React = require("react");
 
-    return <Text>{`auth:${pilotAutomationProbeLabel}`}</Text>;
+    return React.createElement(
+      "Text",
+      null,
+      `auth:${pilotAutomationProbeLabel}`,
+    );
   },
 }));
 
 jest.mock("./auth/InspectorLoginShell", () => ({
   InspectorLoginShell: () => {
-    const { Text } = require("react-native");
+    const React = require("react");
 
-    return <Text>login</Text>;
+    return React.createElement("Text", null, "login");
   },
 }));
 

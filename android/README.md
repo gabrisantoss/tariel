@@ -12,10 +12,17 @@ Base mobile separada do produto para o app do inspetor, construída com React Na
 
 ```bash
 cd android
+nvm use
 cp .env.example .env
 npm install
 npm run start
 ```
+
+## Requisito de Node
+
+- Use `Node 22.13.1` para o workspace mobile.
+- O arquivo [`android/.nvmrc`](./.nvmrc) fixa essa versão.
+- O alvo `make mobile-test` já executa o Jest com `node 22.13.1` para evitar falhas de bootstrap do preset Expo em `22.12.x`.
 
 ## Comandos principais
 

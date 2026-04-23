@@ -4,27 +4,24 @@ import { InspectorAuthenticatedLayout } from "./InspectorAuthenticatedLayout";
 
 jest.mock("expo-linear-gradient", () => {
   const React = require("react");
-  const { View } = require("react-native");
   return {
     LinearGradient: ({ children, ...props }: any) =>
-      React.createElement(View, props, children),
+      React.createElement("View", props, children),
   };
 });
 
 jest.mock("./chat/ThreadHeaderControls", () => ({
   ThreadHeaderControls: () => {
     const React = require("react");
-    const { Text } = require("react-native");
-    return React.createElement(Text, { testID: "thread-header-controls" });
+    return React.createElement("Text", { testID: "thread-header-controls" });
   },
 }));
 
 jest.mock("./chat/ThreadContextCard", () => ({
   ThreadContextCard: ({ visible }: { visible?: boolean }) => {
     const React = require("react");
-    const { Text } = require("react-native");
     return visible
-      ? React.createElement(Text, { testID: "thread-context-card" })
+      ? React.createElement("Text", { testID: "thread-context-card" })
       : null;
   },
 }));
@@ -32,17 +29,15 @@ jest.mock("./chat/ThreadContextCard", () => ({
 jest.mock("./chat/ThreadConversationPane", () => ({
   ThreadConversationPane: () => {
     const React = require("react");
-    const { Text } = require("react-native");
-    return React.createElement(Text, { testID: "thread-conversation-pane" });
+    return React.createElement("Text", { testID: "thread-conversation-pane" });
   },
 }));
 
 jest.mock("./chat/ThreadComposerPanel", () => ({
   ThreadComposerPanel: ({ visible }: { visible?: boolean }) => {
     const React = require("react");
-    const { Text } = require("react-native");
     return visible
-      ? React.createElement(Text, { testID: "thread-composer-panel" })
+      ? React.createElement("Text", { testID: "thread-composer-panel" })
       : null;
   },
 }));

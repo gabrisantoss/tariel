@@ -24,6 +24,9 @@
             <span class="hero-chip">Responsavel {{ empresa.nome_responsavel | default('nao informado', true) | e }}</span>
             <span class="hero-chip">Base {{ empresa.cidade_estado | default('nao informada', true) | e }}</span>
             <span class="hero-chip">CNPJ {{ empresa.cnpj | default('nao informado', true) | e }}</span>
+            <span class="hero-chip">
+                Pacote {{ tenant_admin_policy.commercial_service_package_label | default('Chat Inspetor + Mesa Avaliadora', true) | e }}
+            </span>
         </div>
     </section>
 
@@ -33,6 +36,7 @@
                 <div>
                     <p class="box-subtitle">Plano atual da empresa</p>
                     <strong>{{ empresa.plano_ativo | e }}</strong>
+                    <small>{{ tenant_admin_policy.commercial_service_package_description | default('Modelo operacional contratado para esta empresa.', true) | e }}</small>
                 </div>
                 <span class="plan-badge">Operando</span>
             </div>

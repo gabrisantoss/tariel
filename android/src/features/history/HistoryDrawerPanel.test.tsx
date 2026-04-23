@@ -16,7 +16,6 @@ import type {
 
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
-  const { Text } = require("react-native");
   return {
     MaterialCommunityIcons: ({
       name,
@@ -24,7 +23,7 @@ jest.mock("@expo/vector-icons", () => {
     }: {
       name: string;
       [key: string]: unknown;
-    }) => React.createElement(Text, props, name),
+    }) => React.createElement("Text", props, name),
   };
 });
 
@@ -98,6 +97,81 @@ describe("HistoryDrawerPanel", () => {
     expect(getByTestId("history-item-selected-80")).toBeTruthy();
   });
 
+  it("resume sinais operacionais de entrada guiada e reemissão no radar do histórico", () => {
+    const props = createProps({
+      historicoAgrupadoFinal: [
+        {
+          key: "hoje",
+          title: "Hoje",
+          items: [
+            {
+              ...createItem(80),
+              entry_mode_effective: "evidence_first",
+              report_pack_draft: {
+                quality_gates: {
+                  autonomy_ready: true,
+                  final_validation_mode: "mesa_required",
+                },
+              },
+              official_issue_summary: {
+                label: "Reemissão recomendada",
+                detail: "PDF emitido divergente",
+                primary_pdf_diverged: true,
+              },
+            },
+            {
+              ...createItem(81),
+              entry_mode_effective: "chat_first",
+            },
+          ],
+        },
+      ],
+    });
+    const { getByText } = render(<HistoryDrawerPanel {...props} />);
+
+    expect(getByText("1 guiados")).toBeTruthy();
+    expect(getByText("1 pronto para validar")).toBeTruthy();
+    expect(getByText("1 reemissão recomendada")).toBeTruthy();
+    expect(getByText("1 guiados · 1 em chat livre")).toBeTruthy();
+    expect(getByText("0 em andamento · 2 na mesa · 0 concluidos")).toBeTruthy();
+  });
+
+  it("enriquece a busca com sinais operacionais quando houver match guiado ou com reemissão", () => {
+    const props = createProps({
+      buscaHistorico: "linha de vida",
+      historicoAgrupadoFinal: [
+        {
+          key: "hoje",
+          title: "Hoje",
+          items: [
+            {
+              ...createItem(80),
+              entry_mode_effective: "evidence_first",
+              report_pack_draft: {
+                quality_gates: {
+                  autonomy_ready: true,
+                  final_validation_mode: "mesa_required",
+                },
+              },
+              official_issue_summary: {
+                label: "Reemissão recomendada",
+                detail: "PDF emitido divergente",
+                primary_pdf_diverged: true,
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const { getByText } = render(<HistoryDrawerPanel {...props} />);
+
+    expect(
+      getByText(
+        "1 caso encontrado. 1 guiados · 1 prontos para validar · 1 com reemissao.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("propaga foco da busca do histórico para o controlador lateral", () => {
     const props = createProps();
     const { getByTestId } = render(<HistoryDrawerPanel {...props} />);
@@ -163,7 +237,7 @@ describe("HistoryDrawerPanel", () => {
                   checklist_complete: false,
                   required_image_slots_complete: true,
                   critical_items_complete: false,
-                  autonomy_ready: false,
+                  autonomy_ready: true,
                   requires_normative_curation: false,
                   final_validation_mode: "mesa_required",
                 },
@@ -189,11 +263,12 @@ describe("HistoryDrawerPanel", () => {
     expect(getByTestId("history-item-meta-80").props.children).toBe(
       "Operacao · Mesa avaliadora · Aprovar no mobile",
     );
+    expect(getByTestId("history-item-validation-badge-80")).toBeTruthy();
     expect(getByTestId("history-item-entry-mode-80").props.children).toBe(
       "Entrada · Coleta guiada · Preferencia do inspetor",
     );
     expect(getByTestId("history-item-report-pack-80").props.children).toBe(
-      "Pacote · Pre-laudo em montagem · 1/4 blocos",
+      "Pacote · Pronto para validar · 3 bloqueios",
     );
     expect(getByTestId("history-item-governance-80").props.children).toBe(
       "Governanca · Reemissão recomendada · PDF emitido divergente · Emitido v0003 · Atual v0004",

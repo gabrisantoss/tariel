@@ -132,6 +132,14 @@ class DadosMobileReviewCommand(BaseModel):
         return itens
 
 
+class DadosEmissaoOficialInspetor(BaseModel):
+    signatory_id: int | None = Field(default=None, ge=1)
+    expected_current_issue_id: int | None = Field(default=None, ge=1)
+    expected_current_issue_number: str | None = Field(default=None, max_length=80)
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
+
+
 class DadosReabrirLaudo(BaseModel):
     issued_document_policy: Literal["keep_visible", "hide_from_case"] = (
         "keep_visible"

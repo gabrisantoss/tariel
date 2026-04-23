@@ -69,6 +69,27 @@ function resolverTomBadgeHistorico(lifecycleStatus: string): HistoryBadgeTone {
   return "neutral";
 }
 
+function formatReportPackMeta(
+  reportPackSummary: ReturnType<typeof buildReportPackDraftSummary>,
+): string {
+  if (!reportPackSummary) {
+    return "";
+  }
+
+  const statusSummary =
+    reportPackSummary.pendingBlocks > 0
+      ? `${reportPackSummary.pendingBlocks} bloqueio${reportPackSummary.pendingBlocks === 1 ? "" : "s"}`
+      : reportPackSummary.attentionBlocks > 0
+        ? `${reportPackSummary.attentionBlocks} em revisão`
+        : reportPackSummary.totalBlocks > 0
+          ? `${reportPackSummary.readyBlocks}/${reportPackSummary.totalBlocks} blocos`
+          : "";
+
+  return [reportPackSummary.readinessLabel, statusSummary]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
   ativo,
   containerTestID,
@@ -154,16 +175,10 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
     .filter(Boolean)
     .join(" · ");
   const reportPackSummary = buildReportPackDraftSummary(item.report_pack_draft);
-  const reportPackMeta = reportPackSummary
-    ? [
-        reportPackSummary.readinessLabel,
-        reportPackSummary.totalBlocks
-          ? `${reportPackSummary.readyBlocks}/${reportPackSummary.totalBlocks} blocos`
-          : "",
-      ]
-        .filter(Boolean)
-        .join(" · ")
-    : "";
+  const reportPackMeta = formatReportPackMeta(reportPackSummary);
+  const prontoParaValidar =
+    Boolean(reportPackSummary?.autonomyReady) ||
+    Boolean(reportPackSummary?.readyForStructuredForm);
   const officialIssueSummary = item.official_issue_summary;
   const governanceMeta = officialIssueSummary
     ? [officialIssueSummary.label, officialIssueSummary.detail]
@@ -351,18 +366,49 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                 <View
                   style={[
                     styles.historyItemBadge,
+                    prontoParaValidar ? styles.historyItemBadgeSuccess : null,
+                    ativo && prontoParaValidar
+                      ? styles.historyItemBadgeMutedActive
+                      : null,
                     ativo ? styles.historyItemBadgeMutedActive : null,
                   ]}
+                  testID={
+                    prontoParaValidar
+                      ? `history-item-validation-badge-${item.id}`
+                      : undefined
+                  }
                 >
                   <Text
                     style={[
                       styles.historyItemBadgeText,
+                      prontoParaValidar
+                        ? styles.historyItemBadgeTextSuccess
+                        : null,
                       ativo ? styles.historyItemBadgeTextActive : null,
                     ]}
                   >
-                    {badgeTemplateLabel}
+                    {prontoParaValidar
+                      ? "Pronto para validar"
+                      : badgeTemplateLabel}
                   </Text>
                 </View>
+                {!prontoParaValidar ? null : (
+                  <View
+                    style={[
+                      styles.historyItemBadge,
+                      ativo ? styles.historyItemBadgeMutedActive : null,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.historyItemBadgeText,
+                        ativo ? styles.historyItemBadgeTextActive : null,
+                      ]}
+                    >
+                      {badgeTemplateLabel}
+                    </Text>
+                  </View>
+                )}
                 <View
                   style={[
                     styles.historyItemBadge,

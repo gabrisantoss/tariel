@@ -35,6 +35,11 @@
 
                     <div class="grid-2">
                         <div class="info-card">
+                            <div class="label">Pacote do Chat Inspetor</div>
+                            <div class="valor">{{ _admin_cliente_policy.get("commercial_service_package_label", "Chat Inspetor + Mesa Avaliadora") | e }}</div>
+                            <div class="valor-auxiliar">{{ _admin_cliente_policy.get("commercial_service_package_description", "Define se a empresa usa Mesa, aprovacao interna ou servicos de Mesa acumulados pelo inspetor.") | e }}</div>
+                        </div>
+                        <div class="info-card">
                             <div class="label">Modelo contratado</div>
                             <div class="valor">{{ _admin_cliente_policy.get("operating_model_label", "Não definido") | e }}</div>
                             <div class="valor-auxiliar">
@@ -72,6 +77,22 @@
 
                     <form method="POST" action="/admin/clientes/{{ empresa.id | int }}/politica-admin-cliente" class="form-inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <div class="campo-form campo-form--full">
+                            <label for="admin-cliente-commercial-service-package">
+                                <span class="label-with-help">
+                                    <span>Pacote comercial do Chat Inspetor</span>
+                                    {{ help_icon("Escolha o pacote vendido pelo Admin-CEO. Este pacote libera ou bloqueia Mesa, revisao e aprovacao interna nos demais portais.", "Ajuda sobre pacote comercial") }}
+                                </span>
+                            </label>
+                            <select id="admin-cliente-commercial-service-package" name="admin_cliente_commercial_service_package">
+                                {% for package in _admin_cliente_policy.get("commercial_service_package_options", []) %}
+                                <option value="{{ package.key | e }}" {% if _admin_cliente_policy.get("commercial_service_package_effective") == package.key %}selected{% endif %}>{{ package.label | e }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="valor-auxiliar">
+                                Sem Mesa: o inspetor finaliza internamente. Com Mesa: o caso vai para avaliacao. Com servicos no Inspetor: usuarios autorizados podem acumular campo e analise.
+                            </div>
+                        </div>
                         <div class="campo-form">
                             <label for="admin-cliente-operating-model">
                                 <span class="label-with-help">

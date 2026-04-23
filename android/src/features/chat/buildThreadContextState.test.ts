@@ -211,7 +211,7 @@ describe("buildThreadContextState", () => {
     const state = buildThreadContextState(
       criarInput({
         caseCreationState: "queued_offline" as const,
-        resumoFilaOffline: "1 pendência pronta para sincronizar",
+        resumoFilaOffline: "1 pendência na fila offline",
         statusApi: "offline" as const,
       }) as never,
     );
@@ -235,6 +235,25 @@ describe("buildThreadContextState", () => {
       ]),
     );
     expect(state.threadActions).toEqual([]);
+  });
+
+  it("usa fallback operacional quando a criação offline ainda não tem resumo da fila", () => {
+    const state = buildThreadContextState(
+      criarInput({
+        caseCreationState: "queued_offline" as const,
+        resumoFilaOffline: "",
+        statusApi: "online" as const,
+      }) as never,
+    );
+
+    expect(state.chipsContextoThread).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "offline",
+          label: "Aguardando sincronização",
+        }),
+      ]),
+    );
   });
 
   it("destaca falha de criação do caso sem esconder o retry manual", () => {
@@ -489,6 +508,39 @@ describe("buildThreadContextState", () => {
             data_br: "06/04/2026",
             status_card_label: "Em andamento",
           },
+          mensagens: [],
+          modo: "detalhado",
+          permiteEdicao: true,
+          permiteReabrir: false,
+          statusCard: "aberto",
+        },
+        onResumeGuidedInspection,
+      }) as never,
+    );
+
+    expect(state.threadSpotlight.label).toBe("Coleta guiada preferida");
+    expect(state.threadActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "guided-resume",
+          label: "Retomar coleta guiada",
+          onPress: onResumeGuidedInspection,
+        }),
+      ]),
+    );
+  });
+
+  it("respeita o entry mode salvo no estado da conversa mesmo sem laudoCard hidratado", () => {
+    const onResumeGuidedInspection = jest.fn();
+    const state = buildThreadContextState(
+      criarInput({
+        conversaAtiva: {
+          estado: "relatorio_ativo",
+          laudoId: 77,
+          laudoCard: null,
+          entryModePreference: "auto_recommended",
+          entryModeEffective: "evidence_first",
+          entryModeReason: "existing_case_state",
           mensagens: [],
           modo: "detalhado",
           permiteEdicao: true,
@@ -827,6 +879,10 @@ describe("buildThreadContextState", () => {
         expect.objectContaining({
           key: "next-step",
           value: "Corrigir e revisar",
+        }),
+        expect.objectContaining({
+          key: "blockers",
+          value: "1 bloqueio documental · 2 pendências do pré-laudo",
         }),
       ]),
     );

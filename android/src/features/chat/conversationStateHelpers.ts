@@ -5,6 +5,8 @@ import type {
   MobileCaseWorkflowMode,
   MobileChatMode,
   MobileEstadoLaudo,
+  MobileInspectionEntryModeEffective,
+  MobileInspectionEntryModePreference,
   MobileLaudoCard,
   MobileLaudoMensagensResponse,
   MobileLaudoStatusResponse,
@@ -37,6 +39,9 @@ export function atualizarResumoLaudoAtual<
     allowed_next_lifecycle_statuses?: string[];
     allowed_lifecycle_transitions?: MobileLifecycleTransition[];
     allowed_surface_actions?: MobileSurfaceAction[];
+    entry_mode_preference?: MobileInspectionEntryModePreference;
+    entry_mode_effective?: MobileInspectionEntryModeEffective;
+    entry_mode_reason?: string;
     laudo_card: MobileLaudoCard | null;
     attachment_policy?: MobileAttachmentPolicy | null;
     review_package?: MobileReviewPackage | null;
@@ -83,6 +88,18 @@ export function atualizarResumoLaudoAtual<
       payload.allowed_surface_actions ||
       payload.laudo_card?.allowed_surface_actions ||
       estadoAtual.allowedSurfaceActions,
+    entryModePreference:
+      payload.entry_mode_preference ||
+      payload.laudo_card?.entry_mode_preference ||
+      estadoAtual.entryModePreference,
+    entryModeEffective:
+      payload.entry_mode_effective ||
+      payload.laudo_card?.entry_mode_effective ||
+      estadoAtual.entryModeEffective,
+    entryModeReason:
+      payload.entry_mode_reason ||
+      payload.laudo_card?.entry_mode_reason ||
+      estadoAtual.entryModeReason,
     attachmentPolicy:
       payload.attachment_policy !== undefined
         ? payload.attachment_policy || null
@@ -150,6 +167,14 @@ export function normalizarConversa(
     allowedSurfaceActions:
       payload.allowed_surface_actions ||
       laudoCardNormalizado?.allowed_surface_actions,
+    entryModePreference:
+      payload.entry_mode_preference ||
+      laudoCardNormalizado?.entry_mode_preference,
+    entryModeEffective:
+      payload.entry_mode_effective ||
+      laudoCardNormalizado?.entry_mode_effective,
+    entryModeReason:
+      payload.entry_mode_reason || laudoCardNormalizado?.entry_mode_reason,
     attachmentPolicy: payload.attachment_policy || null,
     reportPackDraft: payload.report_pack_draft || null,
     reviewPackage: payload.review_package || null,
@@ -191,6 +216,9 @@ export function criarConversaNova(): ChatState {
     allowedNextLifecycleStatuses: ["pre_laudo", "laudo_em_coleta"],
     allowedLifecycleTransitions: [],
     allowedSurfaceActions: [],
+    entryModePreference: "auto_recommended",
+    entryModeEffective: "chat_first",
+    entryModeReason: "default_product_fallback",
     attachmentPolicy: null,
     reportPackDraft: null,
     reviewPackage: null,

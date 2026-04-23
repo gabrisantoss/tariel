@@ -20,21 +20,42 @@
             obterPayloadStatusRelatorioWorkspaceAtual,
         } = ctx.shared;
 
+        function mesaAvaliadoraDisponivelParaUsuario() {
+            return window.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true;
+        }
+
+        function sincronizarVisibilidadeMesaGovernada() {
+            const mesaDisponivel = mesaAvaliadoraDisponivelParaUsuario();
+            document
+                .querySelectorAll(
+                    "[data-tab='mesa'], [data-workspace-channel-tab='mesa'], [data-rail-thread-tab='mesa'], .technical-record-card--mesa"
+                )
+                .forEach((item) => {
+                    item.hidden = !mesaDisponivel;
+                    item.setAttribute("aria-hidden", String(!mesaDisponivel));
+                    if ("disabled" in item) {
+                        item.disabled = !mesaDisponivel;
+                    }
+                });
+            document.body.dataset.inspectorMesaContract = mesaDisponivel ? "enabled" : "disabled";
+        }
+
         function renderizarResumoNavegacaoWorkspace() {
             const snapshot = ctx.actions.obterSnapshotEstadoInspectorAtual?.() || {};
             const stage = normalizarWorkspaceStage(snapshot.workspaceStage);
             const tab = normalizarThreadTab(snapshot.threadTab);
-            const mesaGovernada =
-                !(window.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true);
+            const mesaGovernada = !mesaAvaliadoraDisponivelParaUsuario();
             let caption = "Workspace técnico do laudo";
             let status = "Leitura e ação separadas";
+
+            sincronizarVisibilidadeMesaGovernada();
 
             if (stage === "assistant") {
                 caption = "Canal IA";
                 status = "Composer em foco";
             } else if (tab === "historico") {
-                caption = "Histórico técnico do laudo";
-                status = "Leitura sem composer";
+                caption = "Histórico da conversa";
+                status = "Mensagens anteriores no mesmo chat";
             } else if (tab === "anexos") {
                 caption = "Evidências e anexos do laudo";
                 status = "Arquivos e provas em foco";
@@ -111,7 +132,9 @@
                 el.workspaceSummaryPendencias.textContent = String(pendencias);
             }
             if (el.workspaceSummaryMesa) {
-                el.workspaceSummaryMesa.textContent = resumoMesa.chipStatus || resumoMesa.titulo || "";
+                el.workspaceSummaryMesa.textContent = mesaAvaliadoraDisponivelParaUsuario()
+                    ? (resumoMesa.chipStatus || resumoMesa.titulo || "")
+                    : "Correções no chat";
             }
             if (el.workspaceModeChip) {
                 const laudoAtivo = !!obterLaudoAtivoIdSeguro();
@@ -264,7 +287,7 @@
             const snapshot = obterPayloadStatusRelatorioWorkspaceAtual();
             const rotuloBase = ctx.actions.obterRotuloAcaoFinalizacaoWorkspace?.(
                 snapshot?.case_lifecycle_status ?? snapshot?.laudo_card?.case_lifecycle_status
-            ) || "Enviar para Mesa";
+            ) || (mesaAvaliadoraDisponivelParaUsuario() ? "Enviar para Mesa" : "Finalizar laudo");
             const algumCarregando = botoes.some(
                 (botao) => botao?.getAttribute("aria-busy") === "true"
             );

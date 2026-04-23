@@ -80,7 +80,10 @@ from app.shared.operational_memory_hooks import (
 )
 from app.shared.public_verification import build_public_verification_payload
 from app.shared.official_issue_package import resolve_official_issue_primary_pdf_artifact
-from app.shared.tenant_entitlement_guard import ensure_tenant_capability_for_user
+from app.shared.tenant_entitlement_guard import (
+    ensure_tenant_capability_for_user,
+    tenant_capability_enabled_for_user,
+)
 
 _OPEN_RETURN_TO_INSPECTOR_STATUSES = (
     OperationalIrregularityStatus.OPEN.value,
@@ -94,17 +97,41 @@ def _resolver_review_mode_final(
     *,
     request: Request,
     laudo: Laudo,
+    usuario: Usuario,
 ) -> str:
     policy_summary = getattr(request.state, "v2_policy_decision_summary", None)
     if not isinstance(policy_summary, dict):
         policy_summary = {}
-    return str(
+    review_mode = str(
         policy_summary.get("review_mode")
         or ((getattr(laudo, "report_pack_draft_json", None) or {}).get("quality_gates") or {}).get(
             "final_validation_mode"
         )
         or "mesa_required"
     ).strip().lower()
+    if review_mode != "mesa_required":
+        return review_mode
+
+    if tenant_capability_enabled_for_user(usuario, capability="inspector_send_to_mesa"):
+        return review_mode
+
+    if tenant_capability_enabled_for_user(usuario, capability="mobile_case_approve"):
+        request.state.final_validation_mode_reason = "tenant_without_mesa"
+        return "mobile_autonomous"
+
+    raise HTTPException(
+        status_code=422,
+        detail={
+            "code": "mesa_review_not_available",
+            "message": (
+                "Esta empresa nao possui Mesa Avaliadora contratada e tambem nao possui "
+                "aprovacao interna liberada pelo Admin-CEO."
+            ),
+            "review_mode_requested": "mesa_required",
+            "required_capability": "mobile_case_approve",
+            "fallback_surface": "correcoes",
+        },
+    )
 
 
 def _normalize_reopen_issued_document_policy(value: str | None) -> str:
@@ -555,7 +582,11 @@ async def _preparar_laudo_para_decisao_final(
             detail=build_document_hard_gate_block_detail(hard_gate_result),
         )
 
-    return laudo, _resolver_review_mode_final(request=request, laudo=laudo)
+    return laudo, _resolver_review_mode_final(
+        request=request,
+        laudo=laudo,
+        usuario=usuario,
+    )
 
 
 def _persistir_decisao_final_laudo(
@@ -695,6 +726,13 @@ async def finalizar_relatorio_resposta(
         usuario=usuario,
         banco=banco,
     )
+    final_validation_mode_reason = str(
+        getattr(request.state, "final_validation_mode_reason", "") or ""
+    ).strip()
+    direct_without_mesa = (
+        final_validation_mode == "mobile_autonomous"
+        and final_validation_mode_reason == "tenant_without_mesa"
+    )
     status_destino = (
         StatusRevisao.APROVADO.value
         if final_validation_mode == "mobile_autonomous"
@@ -714,7 +752,11 @@ async def finalizar_relatorio_resposta(
         ),
         mesa_resolution_summary={
             "decision": "approved" if final_validation_mode == "mobile_autonomous" else "send_to_mesa",
-            "decision_source": final_validation_mode,
+            "decision_source": (
+                "tenant_without_mesa"
+                if direct_without_mesa
+                else final_validation_mode
+            ),
             "actor_user_id": int(getattr(usuario, "id", 0) or 0) or None,
             "review_mode_final": final_validation_mode,
         },
@@ -732,7 +774,9 @@ async def finalizar_relatorio_resposta(
         {
             "success": True,
             "message": (
-                "✅ Relatório aprovado automaticamente com o report pack canônico do caso."
+                "✅ Relatório aprovado no fluxo sem Mesa Avaliadora desta empresa."
+                if direct_without_mesa
+                else "✅ Relatório aprovado automaticamente com o report pack canônico do caso."
                 if final_validation_mode == "mobile_autonomous"
                 else "✅ Relatório enviado para engenharia! Já aparece na Mesa de Avaliação."
             ),
@@ -740,6 +784,7 @@ async def finalizar_relatorio_resposta(
             "estado": contexto["estado"],
             "permite_reabrir": contexto["permite_reabrir"],
             "review_mode_final": final_validation_mode,
+            "review_mode_final_reason": final_validation_mode_reason or None,
             "idempotent_replay": False,
             "inspection_history": build_inspection_history_summary(
                 banco,

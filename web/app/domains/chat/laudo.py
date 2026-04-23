@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import os
 import re
 from typing import Annotated
 
 from fastapi import Depends, Form, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.routing import APIRouter
 from sqlalchemy.orm import Session
 
@@ -45,8 +47,11 @@ from app.domains.chat.session_helpers import (
     exigir_csrf,
     laudo_id_sessao,
     limpar_contexto_laudo_ativo,
+    contexto_base,
 )
+from app.domains.chat.app_context import templates
 from app.domains.chat.schemas import (
+    DadosEmissaoOficialInspetor,
     DadosIssuedPhotoSelection,
     DadosMobileReviewCommand,
     DadosPin,
@@ -62,6 +67,16 @@ from app.shared.database import (
     obter_banco,
 )
 from app.shared.security import exigir_inspetor
+from app.shared.official_issue_package import (
+    OfficialIssueConflictError,
+    build_official_issue_package,
+    load_active_official_issue_record,
+)
+from app.shared.official_issue_transaction import emitir_oficialmente_transacional
+from app.shared.tenant_entitlement_guard import (
+    ensure_tenant_capability_for_user,
+    tenant_access_policy_for_user,
+)
 
 PADRAO_TIPO_TEMPLATE_FORM = "^(?:" + "|".join(re.escape(item) for item in sorted(ALIASES_TEMPLATE)) + ")$"
 
@@ -363,6 +378,211 @@ async def api_reabrir_laudo(
         return resposta_json_ok(payload, status_code=status_code)
 
 
+def _resumo_template_emissao_laudo(laudo: Laudo) -> dict[str, str | None]:
+    snapshot = getattr(laudo, "pdf_template_snapshot_json", None)
+    if not isinstance(snapshot, dict):
+        snapshot = {}
+    template_ref = snapshot.get("template_ref")
+    if not isinstance(template_ref, dict):
+        template_ref = snapshot
+    return {
+        "codigo": str(template_ref.get("codigo_template") or "").strip() or None,
+        "nome": str(template_ref.get("nome") or template_ref.get("template_name") or "").strip() or None,
+        "versao": str(template_ref.get("versao") or "").strip() or None,
+        "familia": str(
+            template_ref.get("family_key")
+            or getattr(laudo, "catalog_family_key", None)
+            or getattr(laudo, "tipo_template", None)
+            or ""
+        ).strip() or None,
+    }
+
+
+def _resumo_estado_preparo_emissao(emissao_oficial: dict) -> dict[str, str]:
+    issue_status = str(emissao_oficial.get("issue_status") or "").strip()
+    signature_status = str(emissao_oficial.get("signature_status") or "").strip()
+    if bool(emissao_oficial.get("already_issued")) and not bool(emissao_oficial.get("reissue_recommended")):
+        return {
+            "status": "issued",
+            "label": "Emitido oficialmente",
+            "detail": "O pacote oficial esta congelado e disponivel para download.",
+            "tone": "success",
+        }
+    if issue_status == "awaiting_approval":
+        return {
+            "status": "awaiting_approval",
+            "label": "Aguardando aprovacao",
+            "detail": "A Mesa precisa aprovar o laudo antes da assinatura e emissao oficial.",
+            "tone": "warning",
+        }
+    if signature_status not in {"ready", "attention"}:
+        return {
+            "status": "signature_required",
+            "label": "Assinatura pendente",
+            "detail": "Configure um signatario governado elegivel para liberar a emissao.",
+            "tone": "warning",
+        }
+    if bool(emissao_oficial.get("issue_action_enabled")):
+        return {
+            "status": "ready_for_issue",
+            "label": "Pronto para emissao",
+            "detail": "Template, assinatura e pacote tecnico estao prontos para congelar a emissao oficial.",
+            "tone": "success",
+        }
+    if bool(emissao_oficial.get("reissue_recommended")):
+        return {
+            "status": "reissue_recommended",
+            "label": "Reemissao recomendada",
+            "detail": "Existe emissao ativa, mas o pacote atual recomenda uma nova emissao.",
+            "tone": "warning",
+        }
+    return {
+        "status": "blocked",
+        "label": str(emissao_oficial.get("issue_status_label") or "Bloqueado por governanca"),
+        "detail": "Resolva os bloqueios listados antes de emitir oficialmente.",
+        "tone": "danger",
+    }
+
+
+async def pagina_preparar_emissao_laudo(
+    laudo_id: int,
+    request: Request,
+    tool: str = Query(default=""),
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+) -> HTMLResponse:
+    ensure_tenant_capability_for_user(
+        usuario,
+        capability="reviewer_issue",
+    )
+    laudo = obter_laudo_do_inspetor(banco, laudo_id, usuario)
+    anexo_pack, emissao_oficial = build_official_issue_package(banco, laudo=laudo)
+    current_issue = emissao_oficial.get("current_issue") if isinstance(emissao_oficial.get("current_issue"), dict) else {}
+    contexto = {
+        **contexto_base(request),
+        "usuario": usuario,
+        "laudos_mes_usados": 0,
+        "laudos_mes_limite": None,
+        "plano_upload_doc": True,
+        "deep_research_disponivel": False,
+        "estado_relatorio": None,
+        "tenant_access_policy": tenant_access_policy_for_user(usuario),
+        "laudo": laudo,
+        "tool": str(tool or "").strip().lower(),
+        "template_emissao": _resumo_template_emissao_laudo(laudo),
+        "estado_preparo_emissao": _resumo_estado_preparo_emissao(emissao_oficial),
+        "anexo_pack": anexo_pack,
+        "emissao_oficial": emissao_oficial,
+        "current_issue": current_issue,
+        "download_emissao_url": f"/app/api/laudo/{int(laudo.id)}/emissao-oficial/download",
+        "emitir_emissao_url": f"/app/api/laudo/{int(laudo.id)}/emissao-oficial",
+        "pacote_pdf_url": f"/revisao/api/laudo/{int(laudo.id)}/pacote/exportar-pdf",
+        "templates_url": "/revisao/templates-laudo",
+        "editor_url": "/revisao/templates-laudo/editor",
+        "mesa_url": f"/revisao?laudo_id={int(laudo.id)}",
+    }
+    return templates.TemplateResponse(
+        request,
+        "inspetor/preparar_emissao.html",
+        contexto,
+    )
+
+
+async def api_emitir_oficialmente_laudo_inspetor(
+    laudo_id: int,
+    dados: DadosEmissaoOficialInspetor,
+    request: Request,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+) -> JSONResponse:
+    exigir_csrf(request)
+    ensure_tenant_capability_for_user(usuario, capability="reviewer_issue")
+    laudo = obter_laudo_do_inspetor(banco, laudo_id, usuario)
+    with observe_backend_hotspot(
+        "inspector_official_issue",
+        request=request,
+        surface="inspetor",
+        tenant_id=getattr(usuario, "empresa_id", None),
+        user_id=getattr(usuario, "id", None),
+        laudo_id=laudo_id,
+        case_id=laudo_id,
+        route_path=f"/app/api/laudo/{laudo_id}/emissao-oficial",
+        method="POST",
+    ) as hotspot:
+        try:
+            resultado = emitir_oficialmente_transacional(
+                banco,
+                laudo=laudo,
+                actor_user=usuario,
+                signatory_id=int(dados.signatory_id or 0) or None,
+                expected_active_issue_id=int(dados.expected_current_issue_id or 0) or None,
+                expected_active_issue_number=str(dados.expected_current_issue_number or "").strip() or None,
+            )
+        except OfficialIssueConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        record_payload = resultado.get("record_payload") if isinstance(resultado, dict) else None
+        hotspot.outcome = "issue_recorded"
+        hotspot.response_status_code = 200
+        return JSONResponse(
+            jsonable_encoder(
+                {
+                    "success": True,
+                    "laudo_id": int(laudo.id),
+                    "issue_number": (record_payload or {}).get("issue_number"),
+                    "issue_state": (record_payload or {}).get("issue_state"),
+                    "package_sha256": (record_payload or {}).get("package_sha256"),
+                    "idempotent_replay": bool((resultado or {}).get("idempotent_replay")),
+                    "reissued": bool((record_payload or {}).get("reissue_of_issue_id")),
+                    "superseded_issue_number": (record_payload or {}).get("reissue_of_issue_number"),
+                    "reissue_reason_codes": list((record_payload or {}).get("reissue_reason_codes") or []),
+                    "reissue_reason_summary": (record_payload or {}).get("reissue_reason_summary"),
+                    "download_url": f"/app/api/laudo/{laudo_id}/emissao-oficial/download",
+                    "record": record_payload,
+                }
+            )
+        )
+
+
+async def api_baixar_emissao_oficial_inspetor(
+    laudo_id: int,
+    request: Request,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+) -> FileResponse:
+    ensure_tenant_capability_for_user(usuario, capability="reviewer_issue")
+    laudo = obter_laudo_do_inspetor(banco, laudo_id, usuario)
+    with observe_backend_hotspot(
+        "inspector_official_issue_download",
+        request=request,
+        surface="inspetor",
+        tenant_id=getattr(usuario, "empresa_id", None),
+        user_id=getattr(usuario, "id", None),
+        laudo_id=laudo_id,
+        case_id=laudo_id,
+        route_path=f"/app/api/laudo/{laudo_id}/emissao-oficial/download",
+        method="GET",
+    ) as hotspot:
+        record = load_active_official_issue_record(banco, laudo=laudo)
+        path = str(getattr(record, "package_storage_path", "") or "").strip() if record is not None else ""
+        if not path or not os.path.isfile(path):
+            raise HTTPException(status_code=404, detail="Emissao oficial congelada nao encontrada.")
+        filename = str(
+            getattr(record, "package_filename", "")
+            or getattr(record, "issue_number", "")
+            or "emissao_oficial.zip"
+        )
+        hotspot.outcome = "file_response"
+        hotspot.response_status_code = 200
+        return FileResponse(
+            path=path,
+            filename=filename,
+            media_type="application/zip",
+        )
+
+
 async def api_executar_comando_revisao_mobile(
     laudo_id: int,
     dados: DadosMobileReviewCommand,
@@ -636,6 +856,35 @@ roteador_laudo.add_api_route(
     responses={**RESPOSTA_LAUDO_NAO_ENCONTRADO, **RESPOSTA_GATE_QUALIDADE_REPROVADO},
 )
 roteador_laudo.add_api_route(
+    "/laudo/{laudo_id}/preparar-emissao",
+    pagina_preparar_emissao_laudo,
+    methods=["GET"],
+    response_class=HTMLResponse,
+    responses={**RESPOSTA_LAUDO_NAO_ENCONTRADO, 403: {"description": "Emissão não contratada."}},
+)
+roteador_laudo.add_api_route(
+    "/api/laudo/{laudo_id}/emissao-oficial",
+    api_emitir_oficialmente_laudo_inspetor,
+    methods=["POST"],
+    responses={
+        **RESPOSTA_LAUDO_NAO_ENCONTRADO,
+        403: {"description": "Emissão não contratada ou CSRF inválido."},
+        409: {"description": "A emissão oficial ativa mudou durante a tentativa de reemissão."},
+        422: {"description": "Bloqueio de governança para emissão oficial."},
+    },
+)
+roteador_laudo.add_api_route(
+    "/api/laudo/{laudo_id}/emissao-oficial/download",
+    api_baixar_emissao_oficial_inspetor,
+    methods=["GET"],
+    response_class=FileResponse,
+    responses={
+        **RESPOSTA_LAUDO_NAO_ENCONTRADO,
+        403: {"description": "Emissão não contratada."},
+        404: {"description": "Emissão oficial congelada não encontrada."},
+    },
+)
+roteador_laudo.add_api_route(
     "/api/laudo/{laudo_id}/issued-photo-selection",
     api_salvar_selecao_fotos_emissao_laudo,
     methods=["POST"],
@@ -727,6 +976,9 @@ __all__ = [
     "api_finalizar_relatorio",
     "api_obter_gate_qualidade_laudo",
     "api_gate_qualidade_laudo",
+    "pagina_preparar_emissao_laudo",
+    "api_emitir_oficialmente_laudo_inspetor",
+    "api_baixar_emissao_oficial_inspetor",
     "api_reabrir_laudo",
     "api_executar_comando_revisao_mobile",
     "api_cancelar_relatorio",

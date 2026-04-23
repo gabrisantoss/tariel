@@ -4,7 +4,6 @@ import { ThreadConversationPane } from "./ThreadConversationPane";
 
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
-  const { Text } = require("react-native");
   return {
     MaterialCommunityIcons: ({
       name,
@@ -12,7 +11,7 @@ jest.mock("@expo/vector-icons", () => {
     }: {
       name: string;
       [key: string]: unknown;
-    }) => React.createElement(Text, props, name),
+    }) => React.createElement("Text", props, name),
   };
 });
 
@@ -257,9 +256,16 @@ describe("ThreadConversationPane", () => {
     expect(
       getByText("Ações canônicas: Aprovar no mobile · Devolver no mobile"),
     ).toBeTruthy();
+    expect(getByText("1 red flag crítica")).toBeTruthy();
+    expect(getByText("1 bloco para refazer")).toBeTruthy();
     expect(getAllByText("Revisar a foto da placa.").length).toBeGreaterThan(0);
     expect(getByText("Evidência obrigatória pendente")).toBeTruthy();
     expect(getByText("Foco da decisão")).toBeTruthy();
+    expect(
+      getByText(
+        "Próxima ação: Devolver para ajuste. Corrija os pontos sinalizados e devolva o caso para ajuste antes de qualquer decisão final.",
+      ),
+    ).toBeTruthy();
     expect(getByText("Sinalização: missing_required_evidence")).toBeTruthy();
     expect(getByText("Emissão oficial")).toBeTruthy();
     expect(getByText("Pronto para emissão oficial")).toBeTruthy();
@@ -307,7 +313,7 @@ describe("ThreadConversationPane", () => {
     const onExecutarComandoRevisaoMobile = jest
       .fn()
       .mockResolvedValue(undefined);
-    const { getByTestId } = render(
+    const { getByTestId, getByText } = render(
       <ThreadConversationPane
         {...baseProps}
         onExecutarComandoRevisaoMobile={onExecutarComandoRevisaoMobile}
@@ -351,6 +357,14 @@ describe("ThreadConversationPane", () => {
         }}
       />,
     );
+
+    expect(
+      getByText(
+        "Próxima ação: Aprovar no mobile. O pacote já permite decisão local. Aprove no mobile quando a revisão estiver coerente com a evidência consolidada.",
+      ),
+    ).toBeTruthy();
+    expect(getByText("Sem bloqueios documentais")).toBeTruthy();
+    expect(getByText("1 bloco em revisão")).toBeTruthy();
 
     fireEvent.press(getByTestId("mesa-review-action-approve"));
     fireEvent.press(getByTestId("mesa-review-action-send"));
@@ -608,6 +622,11 @@ describe("ThreadConversationPane", () => {
     expect(getByText("Rota canônica")).toBeTruthy();
     expect(getByText("Seções do documento")).toBeTruthy();
     expect(getByText("Slots de evidência")).toBeTruthy();
+    expect(
+      getByText(
+        "Próxima ação: validar no quality gate ou abrir a Mesa para decisão humana.",
+      ),
+    ).toBeTruthy();
     expect(getByText("Validar e finalizar")).toBeTruthy();
     expect(getByText("Abrir Mesa")).toBeTruthy();
 
@@ -620,6 +639,70 @@ describe("ThreadConversationPane", () => {
     );
     expect(onAbrirQualityGate).toHaveBeenCalled();
     expect(onAbrirMesaTab).toHaveBeenCalled();
+  });
+
+  it("mostra estado operacional limpo quando o pre-laudo ja nao tem bloqueios nem alertas", () => {
+    const { getAllByText, getByText } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        vendoMesa={false}
+        conversaVazia={false}
+        mensagensVisiveis={[
+          {
+            id: 1,
+            papel: "assistente",
+            texto: "Pacote consolidado.",
+            tipo: "assistant",
+            citacoes: [],
+          },
+        ]}
+        reportPackDraft={{
+          modeled: true,
+          template_label: "CBMGO",
+          structured_data_candidate: {
+            identificacao: {
+              ativo_nome: "Reservatório principal",
+            },
+          },
+          quality_gates: {
+            checklist_complete: true,
+            required_image_slots_complete: true,
+            critical_items_complete: true,
+            autonomy_ready: true,
+            max_conflict_score: 8,
+            final_validation_mode: "mobile_autonomous",
+            missing_evidence: [],
+          },
+          pre_laudo_outline: {
+            ready_for_structured_form: true,
+            ready_for_finalization: true,
+          },
+          guided_context: {
+            checklist_ids: ["identificacao", "conclusao"],
+            completed_step_ids: ["identificacao", "conclusao"],
+          },
+          image_slots: [{ slot: "fachada", status: "ready" }],
+          items: [
+            {
+              item_codigo: "seguranca_estrutural.paredes",
+              titulo: "Paredes",
+              veredito_ia_normativo: "C",
+              approved_for_emission: true,
+              missing_evidence: [],
+            },
+          ],
+          evidence_summary: {
+            evidence_count: 6,
+            image_count: 1,
+            text_count: 5,
+          },
+        }}
+      />,
+    );
+
+    expect(getAllByText("Pronto para validar").length).toBeGreaterThan(0);
+    expect(getByText("Sem bloqueios do pré-laudo")).toBeTruthy();
+    expect(getByText("Sem alertas ativos")).toBeTruthy();
   });
 
   it("destaca o documento emitido na thread quando o caso já tem emissão oficial", () => {

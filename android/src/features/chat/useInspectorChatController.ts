@@ -16,6 +16,8 @@ import type {
   MobileCaseLifecycleStatus,
   MobileCaseWorkflowMode,
   MobileEstadoLaudo,
+  MobileInspectionEntryModeEffective,
+  MobileInspectionEntryModePreference,
   MobileLaudoCard,
   MobileLifecycleTransition,
   MobileLaudoMensagensResponse,
@@ -68,6 +70,9 @@ interface UpdateConversationSummaryPayload {
   allowed_next_lifecycle_statuses?: string[];
   allowed_lifecycle_transitions?: MobileLifecycleTransition[];
   allowed_surface_actions?: MobileSurfaceAction[];
+  entry_mode_preference?: MobileInspectionEntryModePreference;
+  entry_mode_effective?: MobileInspectionEntryModeEffective;
+  entry_mode_reason?: string;
   attachment_policy?: MobileAttachmentPolicy | null;
   laudo_card: MobileLaudoCard | null;
   report_pack_draft?: MobileReportPackDraft | null;

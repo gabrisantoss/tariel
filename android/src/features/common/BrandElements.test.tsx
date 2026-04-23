@@ -4,10 +4,9 @@ import { BrandLaunchOverlay } from "./BrandElements";
 
 jest.mock("expo-linear-gradient", () => {
   const React = require("react");
-  const { View } = require("react-native");
   return {
     LinearGradient: ({ children, ...props }: Record<string, unknown>) =>
-      React.createElement(View, props, children),
+      React.createElement("View", props, children),
   };
 });
 

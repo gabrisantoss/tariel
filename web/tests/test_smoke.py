@@ -234,16 +234,19 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     workspace_conversation_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_conversation.html").read_text(encoding="utf-8")
     workspace_mesa_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_mesa.html").read_text(encoding="utf-8")
     workspace_rail_html = (raiz / "templates" / "inspetor" / "workspace" / "_workspace_context_rail.html").read_text(encoding="utf-8")
+    preparar_emissao_html = (raiz / "templates" / "inspetor" / "preparar_emissao.html").read_text(encoding="utf-8")
     mesa_widget_html = (raiz / "templates" / "inspetor" / "_mesa_widget.html").read_text(encoding="utf-8")
     home_html = (raiz / "templates" / "inspetor" / "_portal_home.html").read_text(encoding="utf-8")
     gate_modal_html = (raiz / "templates" / "inspetor" / "modals" / "_gate_qualidade.html").read_text(encoding="utf-8")
     nova_inspecao_html = (raiz / "templates" / "inspetor" / "modals" / "_nova_inspecao.html").read_text(encoding="utf-8")
     chat_index_js = (raiz / "static" / "js" / "chat" / "chat_index_page.js").read_text(encoding="utf-8")
+    ui_bindings_js = (raiz / "static" / "js" / "inspetor" / "ui_bindings.js").read_text(encoding="utf-8")
     workspace_page_elements_js = (raiz / "static" / "js" / "inspetor" / "workspace_page_elements.js").read_text(encoding="utf-8")
     workspace_overview_js = (raiz / "static" / "js" / "inspetor" / "workspace_overview.js").read_text(encoding="utf-8")
     workspace_status_payload_js = (raiz / "static" / "js" / "inspetor" / "workspace_status_payload.js").read_text(encoding="utf-8")
     workspace_mesa_status_js = (raiz / "static" / "js" / "inspetor" / "workspace_mesa_status.js").read_text(encoding="utf-8")
     workspace_states_css = (raiz / "static" / "css" / "inspetor" / "workspace_states.css").read_text(encoding="utf-8")
+    workspace_rail_css = (raiz / "static" / "css" / "inspetor" / "workspace_rail.css").read_text(encoding="utf-8")
 
     assert not (raiz / "templates" / "base.html").exists()
     assert 'id="btn-toggle-ui"' in inspetor_base_html
@@ -289,6 +292,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="workspace-readiness-title"' in workspace_header_html
     assert 'id="workspace-readiness-chip"' in workspace_header_html
     assert 'id="btn-workspace-open-inspecao-modal"' in workspace_header_html
+    assert "Ferramentas" in workspace_header_html
     assert 'class="thread-nav"' in workspace_toolbar_html
     assert 'id="workspace-nav-caption"' in workspace_toolbar_html
     assert 'id="workspace-nav-status"' in workspace_toolbar_html
@@ -297,6 +301,22 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'data-tab="anexos"' in workspace_toolbar_html
     assert 'data-tab="mesa"' in workspace_toolbar_html
     assert "thread-breadcrumb" not in workspace_toolbar_html
+    assert 'aria-label="Ferramentas do laudo"' in workspace_rail_html
+    assert 'data-rail-tool-action="templates"' in workspace_rail_html
+    assert 'data-rail-tool-action="editor"' in workspace_rail_html
+    assert 'data-rail-tool-action="signature"' in workspace_rail_html
+    assert 'data-rail-tool-action="official_pdf"' in workspace_rail_html
+    assert 'data-rail-tool-action="technical_package"' in workspace_rail_html
+    assert "preparar-emissao?tool=pdf" in ui_bindings_js
+    assert "preparar-emissao?tool=pacote" in ui_bindings_js
+    assert "preparar-emissao?tool=assinatura" in ui_bindings_js
+    assert "precisa-aprovar" in ui_bindings_js
+    assert "liberado pelo pacote" in workspace_rail_css
+    assert "Preparar emissao oficial" in preparar_emissao_html
+    assert "Assinatura digital" in preparar_emissao_html
+    assert "data-issue-submit" in preparar_emissao_html
+    assert "data-emissao-state-pill" in preparar_emissao_html
+    assert "Baixar pacote tecnico" in preparar_emissao_html
     assert 'id="workspace-assistant-landing"' in workspace_assistant_html
     assert 'data-workspace-user-greeting-name' in workspace_assistant_html
     assert "Por onde começamos?" in workspace_assistant_html
@@ -428,12 +448,16 @@ def test_modo_foco_promove_portal_para_chat_livre_no_mobile() -> None:
 def test_superficies_cliente_mesa_inspetor_e_mobile_usam_copy_sem_jargao_interno() -> None:
     raiz = Path(__file__).resolve().parents[1]
     cliente_novo_html = (raiz / "templates" / "cliente" / "chat" / "_new_report.html").read_text(encoding="utf-8")
+    cliente_shell_header_html = (raiz / "templates" / "cliente" / "_shell_header.html").read_text(encoding="utf-8")
     painel_revisor_html = (raiz / "templates" / "painel_revisor.html").read_text(encoding="utf-8")
     portal_inspetor_html = (raiz / "templates" / "inspetor" / "_portal_home.html").read_text(encoding="utf-8")
     auth_mobile_routes = (raiz / "app" / "domains" / "chat" / "auth_mobile_routes.py").read_text(encoding="utf-8")
+    auth_mobile_support = (raiz / "app" / "domains" / "chat" / "auth_mobile_support.py").read_text(encoding="utf-8")
 
     assert "Abertura guiada de laudo" in cliente_novo_html
     assert "Modelo liberado" in cliente_novo_html
+    assert "Pacote {{ tenant_admin_policy.commercial_service_package_label" in cliente_shell_header_html
+    assert "commercial_service_package_label" in auth_mobile_support
     assert "Sessão ativa em <strong>/revisao/painel</strong>" not in painel_revisor_html
     assert "fila da mesa" in painel_revisor_html
     assert "modelos pendente de publicação" not in painel_revisor_html.lower()

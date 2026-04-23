@@ -134,7 +134,9 @@ export function buildThreadConversationPaneProps(
     carregandoMesa: input.carregandoMesa,
     caseLifecycleStatus: input.conversaAtiva?.caseLifecycleStatus,
     caseWorkflowMode: input.conversaAtiva?.caseWorkflowMode,
-    entryModeEffective: input.conversaAtiva?.laudoCard?.entry_mode_effective,
+    entryModeEffective:
+      input.conversaAtiva?.entryModeEffective ||
+      input.conversaAtiva?.laudoCard?.entry_mode_effective,
     activeOwnerRole: input.conversaAtiva?.activeOwnerRole,
     allowedNextLifecycleStatuses:
       input.conversaAtiva?.allowedNextLifecycleStatuses,
@@ -186,7 +188,9 @@ export function buildThreadHeaderControlsProps(
     hasFormalCaseWorkflow({
       allowedSurfaceActions: input.conversaAtiva?.allowedSurfaceActions,
       conversation: input.conversaAtiva,
-      entryModeEffective: input.conversaAtiva?.laudoCard?.entry_mode_effective,
+      entryModeEffective:
+        input.conversaAtiva?.entryModeEffective ||
+        input.conversaAtiva?.laudoCard?.entry_mode_effective,
       lifecycleStatus: input.conversaAtiva?.caseLifecycleStatus,
       workflowMode: input.conversaAtiva?.caseWorkflowMode,
     }),

@@ -1,0 +1,483 @@
+{% extends "inspetor/base.html" %}
+
+{% block title %}Preparar emissao • Tariel.ia{% endblock %}
+{% block body_class %}pagina-chat pagina-chat-dashboard-v2 pagina-emissao-preparo{% endblock %}
+
+{% block content %}
+<main class="emissao-preparo-shell" aria-label="Preparar emissao oficial">
+    <section class="emissao-preparo-hero">
+        <div>
+            <span class="technical-record-copy__eyebrow">Ferramentas do laudo</span>
+            <h1>Preparar emissao oficial</h1>
+            <p>
+                Valide template, assinatura, PDF e pacote tecnico antes de emitir ou baixar
+                o documento oficial. Esta tela separa o tratamento documental do chat.
+            </p>
+        </div>
+        <div class="emissao-preparo-hero__actions">
+            <span
+                class="emissao-preparo-state emissao-preparo-state--{{ estado_preparo_emissao.tone | e }}"
+                data-emissao-state-pill
+            >
+                {{ estado_preparo_emissao.label | e }}
+            </span>
+            <a class="technical-record-btn technical-record-btn--ghost" href="/app/?laudo_id={{ laudo.id | int }}">
+                Voltar ao chat
+            </a>
+            <a class="technical-record-btn technical-record-btn--ghost" href="{{ mesa_url | e }}" target="_blank" rel="noopener noreferrer">
+                Abrir Mesa
+            </a>
+        </div>
+    </section>
+
+    <section class="emissao-preparo-grid">
+        <article class="technical-record-card emissao-preparo-card emissao-preparo-card--status">
+            <div class="technical-record-card__header">
+                <h2>Status de emissao</h2>
+                <span class="technical-record-status-pill">{{ emissao_oficial.issue_status_label | e }}</span>
+            </div>
+            <p data-emissao-state-detail>{{ estado_preparo_emissao.detail | e }}</p>
+            <dl class="emissao-preparo-facts">
+                <div>
+                    <dt>Laudo</dt>
+                    <dd>#{{ laudo.id | int }}</dd>
+                </div>
+                <div>
+                    <dt>Estado</dt>
+                    <dd>{{ emissao_oficial.status_visual_label | default("Nao informado", true) | e }}</dd>
+                </div>
+                <div>
+                    <dt>PDF atual</dt>
+                    <dd>{{ "Materializado" if emissao_oficial.pdf_present else "Pendente" }}</dd>
+                </div>
+                <div>
+                    <dt>Verificacao publica</dt>
+                    <dd>{{ "Pronta" if emissao_oficial.public_verification_present else "Pendente" }}</dd>
+                </div>
+                <div>
+                    <dt>Emissao</dt>
+                    <dd data-emissao-issue-number>
+                        {{ current_issue.issue_number | default("Ainda nao emitida", true) | e }}
+                    </dd>
+                </div>
+            </dl>
+            {% if emissao_oficial.audit_trail %}
+            <p>{{ emissao_oficial.audit_trail[0].summary | e }}</p>
+            {% endif %}
+        </article>
+
+        <article class="technical-record-card emissao-preparo-card">
+            <div class="technical-record-card__header">
+                <h2>Template aplicado</h2>
+                <a class="portal-link-button" href="{{ templates_url | e }}" target="_blank" rel="noopener noreferrer">Selecionar templates</a>
+            </div>
+            <dl class="emissao-preparo-facts">
+                <div>
+                    <dt>Codigo</dt>
+                    <dd>{{ template_emissao.codigo | default("Ainda nao fixado", true) | e }}</dd>
+                </div>
+                <div>
+                    <dt>Nome</dt>
+                    <dd>{{ template_emissao.nome | default("Modelo padrao do laudo", true) | e }}</dd>
+                </div>
+                <div>
+                    <dt>Versao</dt>
+                    <dd>{{ template_emissao.versao | default("Atual", true) | e }}</dd>
+                </div>
+                <div>
+                    <dt>Familia</dt>
+                    <dd>{{ template_emissao.familia | default("Livre", true) | e }}</dd>
+                </div>
+            </dl>
+            <a class="technical-record-btn technical-record-btn--outline" href="{{ editor_url | e }}" target="_blank" rel="noopener noreferrer">
+                Abrir editor do documento
+            </a>
+        </article>
+
+        <article class="technical-record-card emissao-preparo-card">
+            <div class="technical-record-card__header">
+                <h2>Assinatura digital</h2>
+                <span class="technical-record-status-pill">{{ emissao_oficial.signature_status_label | e }}</span>
+            </div>
+            {% if emissao_oficial.signatories %}
+            <div class="emissao-preparo-signatories" data-signatory-list>
+                {% for signatario in emissao_oficial.signatories %}
+                <label class="emissao-preparo-signatory">
+                    <input
+                        type="radio"
+                        name="signatory_id"
+                        value="{{ signatario.id | int }}"
+                        {% if signatario.status not in ["ready", "expiring_soon"] %}disabled{% endif %}
+                        {% if loop.first and signatario.status in ["ready", "expiring_soon"] %}checked{% endif %}
+                    >
+                    <strong>{{ signatario.nome | e }}</strong>
+                    <span>{{ signatario.funcao | e }}</span>
+                    <small>{{ signatario.registro_profissional | default("Sem registro informado", true) | e }} · {{ signatario.status_label | e }}</small>
+                </label>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>Nenhum signatario governado compativel foi cadastrado para esta familia de laudo.</p>
+            {% endif %}
+        </article>
+
+        <article class="technical-record-card emissao-preparo-card">
+            <div class="technical-record-card__header">
+                <h2>Bloqueios e acoes</h2>
+                <span class="technical-record-status-pill">{{ emissao_oficial.blocker_count }} bloqueio(s)</span>
+            </div>
+            {% if emissao_oficial.blockers %}
+            <ul class="emissao-preparo-blockers">
+                {% for blocker in emissao_oficial.blockers %}
+                <li>
+                    <strong>{{ blocker.title | e }}</strong>
+                    <span>{{ blocker.message | e }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>Sem bloqueios de governanca para a emissao oficial.</p>
+            {% endif %}
+
+            <div
+                class="emissao-preparo-actions"
+                data-issue-form
+                data-issue-url="{{ emitir_emissao_url | e }}"
+                data-download-url="{{ download_emissao_url | e }}"
+                data-current-issue-id="{{ current_issue.id | default('', true) }}"
+                data-current-issue-number="{{ current_issue.issue_number | default('', true) | e }}"
+            >
+                {% if emissao_oficial.issue_action_enabled %}
+                <button class="technical-record-btn technical-record-btn--primary" type="button" data-issue-submit>
+                    {{ emissao_oficial.issue_action_label | e }}
+                </button>
+                {% else %}
+                <span class="technical-record-btn technical-record-btn--primary disabled" aria-disabled="true">
+                    {{ emissao_oficial.issue_action_label | e }}
+                </span>
+                {% endif %}
+                {% if emissao_oficial.already_issued %}
+                <a class="technical-record-btn technical-record-btn--primary" href="{{ download_emissao_url | e }}" target="_blank" rel="noopener noreferrer">
+                    Baixar emissao oficial
+                </a>
+                {% endif %}
+                <a class="technical-record-btn technical-record-btn--outline" href="{{ pacote_pdf_url | e }}" target="_blank" rel="noopener noreferrer">
+                    Baixar pacote tecnico
+                </a>
+            </div>
+            <p class="emissao-preparo-feedback" data-issue-feedback role="status" aria-live="polite"></p>
+        </article>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script nonce="{{ csp_nonce }}">
+    (() => {
+        const form = document.querySelector("[data-issue-form]");
+        const button = document.querySelector("[data-issue-submit]");
+        const feedback = document.querySelector("[data-issue-feedback]");
+        const issueNumber = document.querySelector("[data-emissao-issue-number]");
+        const statePill = document.querySelector("[data-emissao-state-pill]");
+        const stateDetail = document.querySelector("[data-emissao-state-detail]");
+        const csrfToken = window.TARIEL?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || "";
+        if (!form || !button) return;
+
+        function setFeedback(text, kind = "info") {
+            if (!feedback) return;
+            feedback.textContent = text || "";
+            feedback.dataset.kind = kind;
+        }
+
+        button.addEventListener("click", async () => {
+            const selected = document.querySelector('input[name="signatory_id"]:checked');
+            const signatoryId = Number(selected?.value || 0) || null;
+            if (!signatoryId) {
+                setFeedback("Selecione um signatario elegivel antes de emitir.", "warning");
+                return;
+            }
+            button.disabled = true;
+            button.textContent = "Emitindo...";
+            setFeedback("Congelando pacote oficial e assinatura governada.", "info");
+            try {
+                const payload = {
+                    signatory_id: signatoryId,
+                    expected_current_issue_id: Number(form.dataset.currentIssueId || 0) || null,
+                    expected_current_issue_number: form.dataset.currentIssueNumber || null,
+                };
+                const response = await fetch(form.dataset.issueUrl || "", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-Token": csrfToken,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(data.detail || data.erro || "Nao foi possivel emitir oficialmente.");
+                }
+                const downloadUrl = data.download_url || form.dataset.downloadUrl || "";
+                form.dataset.currentIssueId = String(data.record?.id || "");
+                form.dataset.currentIssueNumber = String(data.issue_number || "");
+                if (issueNumber) issueNumber.textContent = data.issue_number || "Emitido oficialmente";
+                if (statePill) {
+                    statePill.textContent = data.idempotent_replay ? "Emissao ja registrada" : "Emitido oficialmente";
+                    statePill.className = "emissao-preparo-state emissao-preparo-state--success";
+                }
+                if (stateDetail) {
+                    stateDetail.textContent = "O pacote oficial foi congelado e ja pode ser baixado.";
+                }
+                setFeedback(
+                    data.idempotent_replay
+                        ? "Esta emissao ja estava registrada. Download liberado."
+                        : "Emissao oficial registrada com sucesso.",
+                    "success"
+                );
+                if (downloadUrl && !form.querySelector("[data-issued-download]")) {
+                    const link = document.createElement("a");
+                    link.className = "technical-record-btn technical-record-btn--primary";
+                    link.href = downloadUrl;
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+                    link.dataset.issuedDownload = "true";
+                    link.textContent = "Baixar emissao oficial";
+                    form.insertBefore(link, button.nextSibling);
+                }
+                button.textContent = "Reemitir oficialmente";
+                button.disabled = false;
+            } catch (error) {
+                setFeedback(String(error?.message || "Falha ao emitir oficialmente."), "danger");
+                button.textContent = "{{ emissao_oficial.issue_action_label | e }}";
+                button.disabled = false;
+            }
+        });
+    })();
+</script>
+{% endblock %}
+
+{% block extra_head %}
+<style nonce="{{ csp_nonce }}">
+    body.pagina-emissao-preparo .container-app {
+        min-height: 100dvh;
+        background:
+            radial-gradient(circle at 12% 8%, rgba(31, 94, 142, 0.12), transparent 34%),
+            linear-gradient(180deg, rgba(248, 251, 253, 0.98), rgba(238, 244, 249, 0.96));
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-shell {
+        width: min(1180px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 34px 0 54px;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-hero {
+        display: flex;
+        justify-content: space-between;
+        gap: 22px;
+        align-items: flex-end;
+        margin-bottom: 22px;
+        padding: 28px;
+        border: 1px solid var(--vf-border);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: var(--vf-shadow-sm);
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-hero h1 {
+        margin: 8px 0;
+        color: var(--vf-text);
+        font-size: clamp(34px, 4vw, 56px);
+        line-height: 0.96;
+        letter-spacing: -0.05em;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-hero p {
+        max-width: 680px;
+        margin: 0;
+        color: var(--vf-text-muted);
+        font-size: 15px;
+        line-height: 1.65;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-hero__actions,
+    body.pagina-emissao-preparo .emissao-preparo-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-hero__actions {
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-state {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: rgba(31, 94, 142, 0.1);
+        color: var(--vf-accent);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-state--success {
+        background: rgba(22, 101, 52, 0.1);
+        color: #166534;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-state--warning {
+        background: rgba(217, 119, 6, 0.12);
+        color: var(--vf-warning);
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-state--danger {
+        background: rgba(185, 28, 28, 0.1);
+        color: #991b1b;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-card {
+        display: grid;
+        gap: 16px;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-card h2 {
+        margin: 0;
+        color: var(--vf-text);
+        font-size: 18px;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-card p {
+        margin: 0;
+        color: var(--vf-text-muted);
+        line-height: 1.6;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-facts {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-facts div,
+    body.pagina-emissao-preparo .emissao-preparo-signatory,
+    body.pagina-emissao-preparo .emissao-preparo-blockers li {
+        display: grid;
+        gap: 5px;
+        padding: 12px;
+        border: 1px solid rgba(186, 201, 217, 0.78);
+        border-radius: 16px;
+        background: rgba(248, 250, 252, 0.72);
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-facts dt,
+    body.pagina-emissao-preparo .emissao-preparo-signatory small {
+        color: var(--vf-text-soft);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-facts dd {
+        margin: 0;
+        color: var(--vf-text);
+        font-weight: 700;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-signatories,
+    body.pagina-emissao-preparo .emissao-preparo-blockers {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-signatory strong,
+    body.pagina-emissao-preparo .emissao-preparo-blockers strong {
+        color: var(--vf-text);
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-signatory span,
+    body.pagina-emissao-preparo .emissao-preparo-blockers span {
+        color: var(--vf-text-muted);
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-signatory {
+        cursor: pointer;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-signatory input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-signatory:has(input:checked) {
+        border-color: rgba(31, 94, 142, 0.42);
+        background: rgba(31, 94, 142, 0.08);
+        box-shadow: inset 0 0 0 1px rgba(31, 94, 142, 0.12);
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-signatory:has(input:disabled) {
+        cursor: not-allowed;
+        opacity: 0.58;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-feedback {
+        min-height: 20px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-feedback[data-kind="success"] {
+        color: #166534;
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-feedback[data-kind="warning"] {
+        color: var(--vf-warning);
+    }
+
+    body.pagina-emissao-preparo .emissao-preparo-feedback[data-kind="danger"] {
+        color: #991b1b;
+    }
+
+    body.pagina-emissao-preparo .technical-record-btn.disabled {
+        opacity: 0.55;
+        pointer-events: none;
+    }
+
+    @media (max-width: 860px) {
+        body.pagina-emissao-preparo .emissao-preparo-shell {
+            width: min(100vw - 24px, 680px);
+            padding-top: 18px;
+        }
+
+        body.pagina-emissao-preparo .emissao-preparo-hero,
+        body.pagina-emissao-preparo .emissao-preparo-grid {
+            grid-template-columns: 1fr;
+        }
+
+        body.pagina-emissao-preparo .emissao-preparo-hero {
+            display: grid;
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}

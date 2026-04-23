@@ -49,7 +49,7 @@
             icone.textContent = railVisivel ? "right_panel_close" : "right_panel_open";
         }
         if (rotulo) {
-            rotulo.textContent = railVisivel ? "Fechar painel" : "Painel";
+            rotulo.textContent = railVisivel ? "Fechar ferramentas" : "Ferramentas";
         }
     }
 

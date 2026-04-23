@@ -18,7 +18,6 @@ from app.domains.admin.admin_presentation_services import (
 )
 from app.domains.admin.admin_welcome_notification_services import (
     aviso_notificacao_boas_vindas as _admin_welcome_notice_message,
-    disparar_email_boas_vindas as _admin_dispatch_welcome_notice,
 )
 from app.domains.admin.tenant_onboarding_services import (
     registrar_novo_cliente as _tenant_onboarding_registrar_novo_cliente,
@@ -63,13 +62,7 @@ def _aviso_notificacao_boas_vindas() -> str:
 def _disparar_email_boas_vindas(email: str, empresa: str, senha: str) -> str | None:
     from app.domains.admin import services as admin_services
 
-    return _admin_dispatch_welcome_notice(
-        email,
-        empresa,
-        senha,
-        backend=admin_services._BACKEND_NOTIFICACAO_BOAS_VINDAS,
-        logger=admin_services.logger,
-    )
+    return admin_services._disparar_email_boas_vindas(email, empresa, senha)
 
 
 def registrar_novo_cliente(

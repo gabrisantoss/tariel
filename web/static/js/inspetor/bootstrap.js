@@ -131,7 +131,7 @@
                     !!(laudoId || laudoAtual) || estadoRelatorioPossuiContexto(estadoRelatorio);
 
                 if (!contextoAutoritativoAtivo && laudoUrlSolicitado && !homeForcadoAtivo()) {
-                    const threadTabBoot = abaUrlSolicitada || snapshotAtual?.threadTab || "historico";
+                    const threadTabBoot = abaUrlSolicitada || snapshotAtual?.threadTab || "conversa";
                     sincronizarEstadoInspector({
                         laudoAtualId: laudoAtual || laudoUrlSolicitado,
                         modoInspecaoUI: "workspace",

@@ -1,6 +1,7 @@
 import type {
   MobileReportPackBlockSummary,
   MobileReportPackDraftSummary,
+  MobileReportPackSectionSummary,
   MobileReportPackSlotSummary,
 } from "./reportPackHelperTypes";
 import {
@@ -35,6 +36,47 @@ export type {
   MobileReportPackSlotSummary,
   ReportPackBlockStatus,
 } from "./reportPackHelperTypes";
+
+function buildReadinessDetail(params: {
+  finalValidationMode: string;
+  highlightedBlocks: MobileReportPackBlockSummary[];
+  highlightedDocumentSections: MobileReportPackSectionSummary[];
+  pendingBlocks: number;
+  readyForFinalization: boolean;
+}) {
+  const highlightedDocumentTitles = params.highlightedDocumentSections
+    .map((item) => item.title)
+    .slice(0, 3);
+  const highlightedBlockTitles = params.highlightedBlocks
+    .map((item) => item.title)
+    .slice(0, 3);
+
+  if (params.readyForFinalization) {
+    return params.finalValidationMode === "mesa_required"
+      ? "Pré-laudo consolidado. Próxima etapa: decisão humana rastreável na Mesa."
+      : "Pré-laudo consolidado. Próxima etapa: revisar o quality gate para seguir com o fechamento.";
+  }
+
+  if (params.pendingBlocks > 0 && highlightedBlockTitles.length > 0) {
+    return highlightedBlockTitles.length === 1
+      ? `${highlightedBlockTitles[0]} ainda bloqueia o avanço do pré-laudo.`
+      : `${highlightedBlockTitles.join(" · ")} ainda bloqueiam o avanço do pré-laudo.`;
+  }
+
+  if (highlightedDocumentTitles.length > 0) {
+    return highlightedDocumentTitles.length === 1
+      ? `${highlightedDocumentTitles[0]} ainda precisa de revisão antes da validação final.`
+      : `${highlightedDocumentTitles.join(" · ")} ainda precisam de revisão antes da validação final.`;
+  }
+
+  if (highlightedBlockTitles.length > 0) {
+    return highlightedBlockTitles.length === 1
+      ? `${highlightedBlockTitles[0]} ainda precisa de revisão antes da validação final.`
+      : `${highlightedBlockTitles.join(" · ")} ainda precisam de revisão antes da validação final.`;
+  }
+
+  return `Modo final previsto: ${labelForValidationMode(params.finalValidationMode)}.`;
+}
 
 export function buildReportPackDraftSummary(
   value: unknown,
@@ -338,18 +380,13 @@ export function buildReportPackDraftSummary(
     readinessLabel = "Pronto para mesa";
   }
 
-  const readinessDetail =
-    highlightedDocumentSections.length > 0
-      ? `${highlightedDocumentSections
-          .map((item) => item.title)
-          .slice(0, 3)
-          .join(" · ")} precisam de acompanhamento.`
-      : highlightedBlocks.length > 0
-        ? `${highlightedBlocks
-            .map((item) => item.title)
-            .slice(0, 3)
-            .join(" · ")} precisam de acompanhamento.`
-        : `Modo final previsto: ${labelForValidationMode(finalValidationMode)}.`;
+  const readinessDetail = buildReadinessDetail({
+    finalValidationMode,
+    highlightedBlocks,
+    highlightedDocumentSections,
+    pendingBlocks,
+    readyForFinalization,
+  });
 
   return {
     modeled: draft.modeled !== false,

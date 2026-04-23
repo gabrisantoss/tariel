@@ -5,7 +5,6 @@ import { SettingsExperienceAiSection } from "./SettingsExperienceAiSection";
 
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
-  const { Text } = require("react-native");
   return {
     MaterialCommunityIcons: ({
       name,
@@ -13,7 +12,92 @@ jest.mock("@expo/vector-icons", () => {
     }: {
       name: string;
       [key: string]: unknown;
-    }) => React.createElement(Text, props, name),
+    }) => React.createElement("Text", props, name),
+  };
+});
+
+jest.mock("./SettingsPrimitives", () => {
+  const React = require("react");
+
+  const renderTexts = (...values: Array<unknown>) =>
+    values
+      .filter((value) => typeof value === "string" && value.length > 0)
+      .map((value, index) =>
+        React.createElement(
+          "Text",
+          { key: `${String(value)}-${index}` },
+          value,
+        ),
+      );
+
+  return {
+    SettingsSection: ({
+      title,
+      subtitle,
+      children,
+    }: {
+      title?: string;
+      subtitle?: string;
+      children?: React.ReactNode;
+    }) =>
+      React.createElement(
+        React.Fragment,
+        null,
+        ...renderTexts(title, subtitle),
+        children,
+      ),
+    SettingsPressRow: ({
+      title,
+      value,
+      description,
+    }: {
+      title?: string;
+      value?: string;
+      description?: string;
+    }) =>
+      React.createElement(
+        React.Fragment,
+        null,
+        ...renderTexts(title, value, description),
+      ),
+    SettingsSwitchRow: ({
+      title,
+      description,
+    }: {
+      title?: string;
+      description?: string;
+    }) =>
+      React.createElement(
+        React.Fragment,
+        null,
+        ...renderTexts(title, description),
+      ),
+    SettingsSegmentedRow: ({
+      title,
+      description,
+      value,
+    }: {
+      title?: string;
+      description?: string;
+      value?: string;
+    }) =>
+      React.createElement(
+        React.Fragment,
+        null,
+        ...renderTexts(title, description, value),
+      ),
+    SettingsScaleRow: ({
+      title,
+      description,
+    }: {
+      title?: string;
+      description?: string;
+    }) =>
+      React.createElement(
+        React.Fragment,
+        null,
+        ...renderTexts(title, description),
+      ),
   };
 });
 

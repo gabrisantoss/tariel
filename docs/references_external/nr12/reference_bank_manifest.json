@@ -1,0 +1,162 @@
+{
+  "family_key": "nr12_reference_bank",
+  "created_at": "2026-04-22",
+  "scope": "Banco inicial de referencias externas da NR12 para apoio normativo e visual.",
+  "usage_policy": {
+    "official_docs_are_primary": true,
+    "public_images_are_contextual_only": true,
+    "real_company_material_required_for_final_contract": true
+  },
+  "documents": [
+    {
+      "id": "nr12_oficial_mte",
+      "type": "official_pdf",
+      "title": "NR-12 - Seguranca no Trabalho em Maquinas e Equipamentos",
+      "source_url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-12.pdf",
+      "local_path": "docs/references_external/nr12/nr12_oficial_mte.pdf",
+      "sha256": "c256b79b3390d32fac4ccbc34a6a1ff994acdab5db8ecc50999da2d8b2c7c79b",
+      "notes": "Base normativa oficial para requisitos da NR12."
+    },
+    {
+      "id": "manual_aplicacao_nr12_mte",
+      "type": "official_pdf",
+      "title": "Manual de Aplicacao da NR-12",
+      "source_url": "https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/inspecao-do-trabalho/manuais-e-publicacoes/manual-de-aplicacao-da-nr-12.pdf/@@download/file",
+      "local_path": "docs/references_external/nr12/manual_aplicacao_nr12_mte.pdf",
+      "sha256": "9e855ff93ce41d4b37b42478c3649701b67766e9791748e6a5ab1c5e5f033988",
+      "notes": "Fonte oficial interpretativa para apoiar o mapeamento estrutural da familia."
+    }
+  ],
+  "public_images": [
+    {
+      "id": "machine_guarding_cc0",
+      "theme": "protecoes_fixas_e_guardas",
+      "title": "Machine guarding",
+      "license": "CC0",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Machine_guarding.jpg",
+      "local_path": "docs/references_external/nr12/public_images/machine_guarding_cc0.jpg",
+      "sha256": "e26d768308bdac9f029e4d189a1d9b3edd1c416c2ca94ca1ad049b97e9fb91b5",
+      "notes": "Referencia visual de guarda fisica em maquina."
+    },
+    {
+      "id": "electrical_interlock_cc_by_sa_4",
+      "theme": "intertravamento",
+      "title": "Electrical Interlock",
+      "license": "CC BY-SA 4.0",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Electrical_Interlock.jpg",
+      "local_path": "docs/references_external/nr12/public_images/electrical_interlock_cc_by_sa_4.jpg",
+      "sha256": "2f03b9fbedb10c4e8af386576d8dd409830875fa76a567f7b0f2e43f149b13dc",
+      "notes": "Referencia visual para intertravamento e protecao de acesso."
+    },
+    {
+      "id": "point_guarding_cc_by_sa_4",
+      "theme": "zona_de_risco",
+      "title": "Point Guarding",
+      "license": "CC BY-SA 4.0",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Point_Guarding.jpg",
+      "local_path": "docs/references_external/nr12/public_images/point_guarding_cc_by_sa_4.jpg",
+      "sha256": "07d623fd643eb58cc0fb934d3a21d9c599e213c6ef961b8fc762e5db4c903ecb",
+      "notes": "Referencia visual de protecao de ponto perigoso."
+    },
+    {
+      "id": "pressure_sensitive_mat_cc_by_sa_4",
+      "theme": "dispositivos_de_seguranca",
+      "title": "Pressure Sensitive Mat",
+      "license": "CC BY-SA 4.0",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Pressure_Sensitive_Mat.jpg",
+      "local_path": "docs/references_external/nr12/public_images/pressure_sensitive_mat_cc_by_sa_4.jpg",
+      "sha256": "faa3eb99f3dd7b9ec912a189c7b45c8ddc7dbcaad7028560a812e33b9b379421",
+      "notes": "Referencia visual de dispositivo sensivel a presenca/pisada."
+    },
+    {
+      "id": "emergency_stop_button_cc_by_sa_4",
+      "theme": "parada_de_emergencia",
+      "title": "Emergency Stop",
+      "license": "CC BY-SA 4.0",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Emergency_Stop.jpg",
+      "local_path": "docs/references_external/nr12/public_images/emergency_stop_button_cc_by_sa_4.jpg",
+      "sha256": "4afd2a42bcde031d01a2613a2e5578641efc4fbcfc020b3245ad08f2303b8ef7",
+      "notes": "Referencia visual para botoeira de parada de emergencia."
+    },
+    {
+      "id": "light_curtain_public_domain",
+      "theme": "cortina_de_luz",
+      "title": "Light Curtain",
+      "license": "Open / Public reference",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Lightcurtain.svg",
+      "local_path": "docs/references_external/nr12/public_images/light_curtain_public_domain.svg",
+      "sha256": "197482de0620da6e92efb02a34654fdd6ea50273dac511991a7157f2ac1b5c0b",
+      "notes": "Referencia conceitual de cortina de luz para zonas protegidas."
+    },
+    {
+      "id": "two_hands_control_device_cc_by_4",
+      "theme": "comando_bimanual",
+      "title": "Two-hands control device",
+      "license": "CC BY 4.0",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Two-hands_control_device.jpg",
+      "local_path": "docs/references_external/nr12/public_images/two_hands_control_device_cc_by_4.jpg",
+      "sha256": "f6234044e2ae282387a99b8fe66d3d440e34a5d1b5a0e173008a88e335aa5bef",
+      "notes": "Referencia visual de dispositivo de acionamento bimanual."
+    },
+    {
+      "id": "two_hand_controls_osha_public_domain",
+      "theme": "comando_bimanual",
+      "title": "Two hand controls",
+      "license": "Public domain / open government reference",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Two_hand_controls.gif",
+      "local_path": "docs/references_external/nr12/public_images/two_hand_controls_osha_public_domain.gif",
+      "sha256": "13d5e2de16a4bc6d15be135f1aa4fe232090196c1e69ad1a5df3ecda15e5dbf3",
+      "notes": "Referencia complementar conceitual para acionamento bimanual."
+    },
+    {
+      "id": "lockout_tagout_hasp_open_license",
+      "theme": "bloqueio_e_etiquetagem",
+      "title": "Lockout-tagout hasp",
+      "license": "Open reference",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Lockout-tagout_hasp.svg",
+      "local_path": "docs/references_external/nr12/public_images/lockout_tagout_hasp_open_license.svg",
+      "sha256": "e2ff6d0449dedf5627bf5aea916cc649b8381da271b23bed20d36816f3da80e1",
+      "notes": "Referencia visual de dispositivo de bloqueio para manutencao e isolamento."
+    },
+    {
+      "id": "conveyor_belt_cc_by_sa_2",
+      "theme": "transportadores",
+      "title": "Conveyor belt",
+      "license": "CC BY-SA 2.0",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Conveyor_belt_(31977379751).jpg",
+      "local_path": "docs/references_external/nr12/public_images/conveyor_belt_cc_by_sa_2.jpg",
+      "sha256": "375d88c0155a0d035bcc6e0302dba7bf84c4b521a783a474ead862e502b59431",
+      "notes": "Referencia visual de transportador/esteira para contexto de risco mecanico."
+    },
+    {
+      "id": "trapped_key_interlock_switchgear_door_cc_by_sa_4",
+      "theme": "chave_de_seguranca",
+      "title": "Trapped key interlock switchgear door",
+      "license": "CC BY-SA 4.0",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Trapped_key_interlock_switchgear_door.JPG",
+      "local_path": "docs/references_external/nr12/public_images/trapped_key_interlock_switchgear_door_cc_by_sa_4.jpg",
+      "sha256": "b67e1fd543cdf5ed61172f36f80a8b64eb61f12ad0de8cf469e7378e1f377c5e",
+      "notes": "Referencia visual de intertravamento por chave em acesso protegido."
+    },
+    {
+      "id": "safety_fence_for_machinery_cc0",
+      "theme": "protecao_perimetral",
+      "title": "Safety fence for machinery",
+      "license": "CC0",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Safety_fence_for_machinery.jpg",
+      "local_path": "docs/references_external/nr12/public_images/safety_fence_for_machinery_cc0.jpg",
+      "sha256": "cbe991d6124d326aba31de21a5f474fdb051cbd7ef5541c1c6b9fbc39c097e82",
+      "notes": "Referencia visual de cercamento/perimetro de seguranca."
+    },
+    {
+      "id": "safety_signage_public_domain",
+      "theme": "sinalizacao",
+      "title": "Safety signage",
+      "license": "Open / public reference",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Safety_signage_(2492834550).jpg",
+      "local_path": "docs/references_external/nr12/public_images/safety_signage_public_domain.jpg",
+      "sha256": "5d291ad68adf1a59b717484764ee77bf406799ceec9496cba0a237f0cdc59597",
+      "notes": "Referencia visual de sinalizacao de risco e orientacao de seguranca."
+    }
+  ]
+}

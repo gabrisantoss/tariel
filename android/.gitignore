@@ -47,6 +47,7 @@ window_dump*.xml
 
 # typescript
 *.tsbuildinfo
+.jest-cache/
 
 # generated native folders
 /ios

@@ -124,7 +124,7 @@ mobile-typecheck: ## Roda TypeScript no workspace mobile
 	cd android && npm run typecheck
 
 mobile-test: ## Roda Jest no workspace mobile
-	cd android && npm run test -- --runInBand
+	cd android && npm run test:baseline
 
 mobile-format-check: ## Confere formatação do workspace mobile
 	cd android && npm run format:check

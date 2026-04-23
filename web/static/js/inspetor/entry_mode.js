@@ -196,7 +196,7 @@
             return normalizarEntryModeEffective(estado.entryModeEffective) === "evidence_first";
         }
 
-        function resolverThreadTabInicialPorModoEntrada(payload = {}, fallback = "historico") {
+        function resolverThreadTabInicialPorModoEntrada(payload = {}, fallback = "conversa") {
             const contexto = extrairModoEntradaPayload(payload);
             if (contexto.effective === "evidence_first") return "anexos";
             if (contexto.effective === "chat_first") return "conversa";

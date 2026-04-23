@@ -2,8 +2,18 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timedelta, timezone
 
-from app.shared.database import Empresa, Laudo, StatusRevisao, Usuario
+from app.shared.database import (
+    ApprovedCaseSnapshot,
+    Empresa,
+    Laudo,
+    MensagemLaudo,
+    SignatarioGovernadoLaudo,
+    StatusRevisao,
+    TipoMensagem,
+    Usuario,
+)
 from app.shared.tenant_admin_policy import summarize_tenant_admin_policy
 from tests.regras_rotas_criticas_support import (
     _criar_laudo,
@@ -314,6 +324,246 @@ def test_revogacao_de_capacidades_bloqueia_acoes_criticas_do_tenant(
     )
     assert resposta_emitir.status_code == 403
     assert "emissão oficial" in resposta_emitir.json()["detail"].lower()
+
+
+def test_finalizacao_sem_mesa_contratada_aprova_no_fluxo_interno_governado(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "case_visibility_mode": "case_list",
+            "case_action_mode": "case_actions",
+            "tenant_portal_revisor_enabled": False,
+            "tenant_capability_inspector_case_create_enabled": True,
+            "tenant_capability_inspector_case_finalize_enabled": True,
+            "tenant_capability_inspector_send_to_mesa_enabled": False,
+            "tenant_capability_mobile_case_approve_enabled": True,
+            "tenant_capability_reviewer_decision_enabled": False,
+            "tenant_capability_reviewer_issue_enabled": False,
+        }
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.primeira_mensagem = "Inspeção inicial em painel elétrico da linha de produção."
+        banco.add_all(
+            [
+                MensagemLaudo(
+                    laudo_id=laudo_id,
+                    remetente_id=ids["inspetor_a"],
+                    tipo=TipoMensagem.USER.value,
+                    conteudo="Identifiquei aquecimento anormal no borne principal do painel.",
+                ),
+                MensagemLaudo(
+                    laudo_id=laudo_id,
+                    remetente_id=ids["inspetor_a"],
+                    tipo=TipoMensagem.USER.value,
+                    conteudo="[imagem]",
+                ),
+                MensagemLaudo(
+                    laudo_id=laudo_id,
+                    tipo=TipoMensagem.IA.value,
+                    conteudo="Parecer preliminar: recomenda-se correção e isolamento preventivo.",
+                ),
+            ]
+        )
+        banco.commit()
+
+    csrf_inspetor = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.post(
+        f"/app/api/laudo/{laudo_id}/finalizar",
+        headers={"X-CSRF-Token": csrf_inspetor},
+    )
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["success"] is True
+    assert corpo["review_mode_final"] == "mobile_autonomous"
+    assert corpo["review_mode_final_reason"] == "tenant_without_mesa"
+    assert "sem Mesa Avaliadora" in corpo["message"]
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        assert laudo.status_revisao == StatusRevisao.APROVADO.value
+        assert (
+            (laudo.report_pack_draft_json or {})
+            .get("quality_gates", {})
+            .get("final_validation_mode")
+            == "mobile_autonomous"
+        )
+
+
+def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        inspetor = banco.get(Usuario, ids["inspetor_a"])
+        assert empresa is not None
+        assert inspetor is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat_mesa_reviewer_services",
+        }
+        inspetor.allowed_portals_json = ["inspetor", "revisor"]
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+        banco.commit()
+
+    resposta_login_mobile = client.post(
+        "/app/api/mobile/auth/login",
+        json={
+            "email": "inspetor@empresa-a.test",
+            "senha": "Senha@123",
+            "lembrar": True,
+        },
+    )
+    assert resposta_login_mobile.status_code == 200
+    usuario_mobile = resposta_login_mobile.json()["usuario"]
+    assert usuario_mobile["commercial_service_package_label"] == "Chat Inspetor + Mesa + servicos no Inspetor"
+    assert (
+        usuario_mobile["tenant_access_policy"]["commercial_service_package_effective"]
+        == "inspector_chat_mesa_reviewer_services"
+    )
+
+    _login_cliente(client, "cliente@empresa-a.test")
+    resposta_bootstrap_cliente = client.get("/cliente/api/bootstrap")
+    assert resposta_bootstrap_cliente.status_code == 200
+    assert (
+        resposta_bootstrap_cliente.json()["tenant_access_policy"]["commercial_service_package_label"]
+        == "Chat Inspetor + Mesa + servicos no Inspetor"
+    )
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.get(f"/app/laudo/{laudo_id}/preparar-emissao?tool=pdf")
+
+    assert resposta.status_code == 200
+    assert "Preparar emissao oficial" in resposta.text
+    assert "Template aplicado" in resposta.text
+    assert "Assinatura digital" in resposta.text
+    assert "Aguardando aprova" in resposta.text
+    assert "Emitir oficialmente" in resposta.text
+    assert f"/revisao/api/laudo/{laudo_id}/pacote/exportar-pdf" in resposta.text
+
+
+def test_inspetor_sem_servicos_da_mesa_nao_abre_preparacao_de_emissao(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        inspetor = banco.get(Usuario, ids["inspetor_a"])
+        assert empresa is not None
+        assert inspetor is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat",
+        }
+        inspetor.allowed_portals_json = ["inspetor"]
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+        banco.commit()
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.get(f"/app/laudo/{laudo_id}/preparar-emissao?tool=pdf")
+
+    assert resposta.status_code == 403
+    assert "emissão oficial" in resposta.json()["detail"].lower()
+
+
+def test_inspetor_com_servicos_da_mesa_emite_oficialmente_no_fluxo_do_chat(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        inspetor = banco.get(Usuario, ids["inspetor_a"])
+        assert empresa is not None
+        assert inspetor is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat_mesa_reviewer_services",
+        }
+        inspetor.allowed_portals_json = ["inspetor", "revisor"]
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.nome_arquivo_pdf = "laudo_emitido.pdf"
+        laudo.tipo_template = "nr13"
+        laudo.catalog_family_key = "nr13_inspecao_caldeira"
+        laudo.report_pack_draft_json = {"quality_gates": {"missing_evidence": []}}
+        banco.add(
+            ApprovedCaseSnapshot(
+                laudo_id=laudo_id,
+                empresa_id=ids["empresa_a"],
+                family_key="nr13_inspecao_caldeira",
+                approval_version=1,
+                document_outcome="approved",
+                laudo_output_snapshot={"codigo_hash": laudo.codigo_hash},
+            )
+        )
+        signatario = SignatarioGovernadoLaudo(
+            tenant_id=ids["empresa_a"],
+            nome="Eng. Inspetor Responsavel",
+            funcao="Responsavel tecnico",
+            registro_profissional="CREA 123456-GO",
+            valid_until=datetime.now(timezone.utc) + timedelta(days=120),
+            allowed_family_keys_json=["nr13_inspecao_caldeira"],
+            ativo=True,
+            criado_por_id=ids["admin_a"],
+        )
+        banco.add(signatario)
+        banco.commit()
+        signatory_id = int(signatario.id)
+
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.post(
+        f"/app/api/laudo/{laudo_id}/emissao-oficial",
+        headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+        json={"signatory_id": signatory_id},
+    )
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["success"] is True
+    assert corpo["issue_number"].startswith("TAR-")
+    assert corpo["download_url"] == f"/app/api/laudo/{laudo_id}/emissao-oficial/download"
+    assert corpo["record"]["package_storage_ready"] is True
+
+    resposta_download = client.get(corpo["download_url"])
+    assert resposta_download.status_code == 200
+    assert "application/zip" in resposta_download.headers.get("content-type", "").lower()
 
 
 def test_revogacao_de_capacidades_bloqueia_websocket_e_exports_governados_da_mesa(

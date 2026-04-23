@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+import type { ApiHealthStatus } from "../../types/mobile";
 import type { MobileChatMode } from "../../types/mobile";
 import {
   duplicarComposerAttachment,
@@ -34,6 +35,14 @@ function rotuloEtapaGuiadaPendente(
   return `Etapa guiada: ${stepTitle}`;
 }
 
+function pluralizeOfflineItems(
+  value: number,
+  singular: string,
+  plural: string,
+) {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
 export function resumoPendenciaOffline(
   item: Pick<
     OfflinePendingMessage,
@@ -49,6 +58,75 @@ export function resumoPendenciaOffline(
     return item.text.trim();
   }
   return textoFallbackAnexo(item.attachment);
+}
+
+export function buildOfflineQueueOperationalSummary(params: {
+  items: readonly OfflinePendingMessage[];
+  statusApi: ApiHealthStatus;
+  readyItems: number;
+  failedItems: number;
+  waitingItems: number;
+}): string {
+  const { items, statusApi, readyItems, failedItems, waitingItems } = params;
+  if (!items.length) {
+    return "";
+  }
+
+  const caseCreations = items.filter(
+    (item) =>
+      item.channel === "chat" && item.operation === "message" && !item.laudoId,
+  ).length;
+  const finalizations = items.filter(
+    (item) => item.operation === "quality_gate_finalize",
+  ).length;
+  const mesaReplies = items.filter((item) => item.channel === "mesa").length;
+
+  const impactParts = [
+    caseCreations
+      ? pluralizeOfflineItems(
+          caseCreations,
+          "criação de caso",
+          "criações de caso",
+        )
+      : "",
+    finalizations
+      ? pluralizeOfflineItems(finalizations, "finalização", "finalizações")
+      : "",
+    mesaReplies
+      ? pluralizeOfflineItems(
+          mesaReplies,
+          "resposta à mesa",
+          "respostas à mesa",
+        )
+      : "",
+  ].filter(Boolean);
+
+  const statusDetail =
+    statusApi === "offline"
+      ? "aguardando conexão"
+      : failedItems
+        ? `${failedItems} com falha`
+        : waitingItems && readyItems
+          ? `${readyItems} prontos, ${waitingItems} em backoff`
+          : readyItems
+            ? "prontos para reenviar"
+            : "em backoff";
+
+  const lead =
+    impactParts.length > 0
+      ? impactParts.join(" · ")
+      : pluralizeOfflineItems(
+          items.length,
+          "envio pendente",
+          "envios pendentes",
+        );
+
+  const extra =
+    impactParts.length > 0
+      ? ` · ${pluralizeOfflineItems(items.length, "item local", "itens locais")}`
+      : "";
+
+  return `${lead}${extra} · ${statusDetail}`;
 }
 
 export function iconePendenciaOffline(

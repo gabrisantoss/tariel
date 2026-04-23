@@ -223,7 +223,7 @@
             dependencies.emitirSincronizacaoLaudo?.(resposta, { selecionar: true });
             const threadTabInicial = dependencies.resolverThreadTabInicialPorModoEntrada?.(
                 resposta,
-                "historico"
+                "conversa"
             );
 
             dependencies.definirRetomadaHomePendente?.({

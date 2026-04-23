@@ -167,6 +167,18 @@ function aplicarRespostaAssistente(
       allowedSurfaceActions:
         respostaChat.laudoCard?.allowed_surface_actions ||
         base.allowedSurfaceActions,
+      entryModePreference:
+        respostaChat.entry_mode_preference ||
+        respostaChat.laudoCard?.entry_mode_preference ||
+        base.entryModePreference,
+      entryModeEffective:
+        respostaChat.entry_mode_effective ||
+        respostaChat.laudoCard?.entry_mode_effective ||
+        base.entryModeEffective,
+      entryModeReason:
+        respostaChat.entry_mode_reason ||
+        respostaChat.laudoCard?.entry_mode_reason ||
+        base.entryModeReason,
       reportPackDraft: base.reportPackDraft || null,
       modo: current.normalizarModoChat(
         respostaChat.modo,

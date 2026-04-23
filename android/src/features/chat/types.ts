@@ -7,6 +7,8 @@ import type {
   MobileCaseWorkflowMode,
   MobileEstadoLaudo,
   MobileGuidedInspectionDraftPayload,
+  MobileInspectionEntryModeEffective,
+  MobileInspectionEntryModePreference,
   MobileLaudoCard,
   MobileLifecycleTransition,
   MobileQualityGateResponse,
@@ -76,6 +78,9 @@ export interface ChatState {
   allowedNextLifecycleStatuses?: string[];
   allowedLifecycleTransitions?: MobileLifecycleTransition[];
   allowedSurfaceActions?: MobileSurfaceAction[];
+  entryModePreference?: MobileInspectionEntryModePreference;
+  entryModeEffective?: MobileInspectionEntryModeEffective;
+  entryModeReason?: string;
   attachmentPolicy?: MobileAttachmentPolicy | null;
   reportPackDraft?: MobileReportPackDraft | null;
   reviewPackage?: MobileReviewPackage | null;

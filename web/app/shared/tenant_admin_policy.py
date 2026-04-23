@@ -7,10 +7,18 @@ from app.shared.database import NivelAcesso
 TenantAdminCaseVisibilityMode = Literal["summary_only", "case_list"]
 TenantAdminCaseActionMode = Literal["read_only", "case_actions"]
 TenantAdminOperatingModel = Literal["standard", "mobile_single_operator"]
+TenantAdminCommercialServicePackage = Literal[
+    "inspector_chat",
+    "inspector_chat_mesa",
+    "inspector_chat_mesa_reviewer_services",
+]
 
 DEFAULT_TENANT_ADMIN_CASE_VISIBILITY_MODE: TenantAdminCaseVisibilityMode = "case_list"
 DEFAULT_TENANT_ADMIN_CASE_ACTION_MODE: TenantAdminCaseActionMode = "case_actions"
 DEFAULT_TENANT_ADMIN_OPERATING_MODEL: TenantAdminOperatingModel = "standard"
+DEFAULT_TENANT_ADMIN_COMMERCIAL_SERVICE_PACKAGE: TenantAdminCommercialServicePackage = (
+    "inspector_chat_mesa"
+)
 
 _VISIBILITY_MODE_LABELS: dict[TenantAdminCaseVisibilityMode, str] = {
     "summary_only": "Somente resumos agregados",
@@ -23,6 +31,63 @@ _ACTION_MODE_LABELS: dict[TenantAdminCaseActionMode, str] = {
 _OPERATING_MODEL_LABELS: dict[TenantAdminOperatingModel, str] = {
     "standard": "Operação padrão",
     "mobile_single_operator": "Aplicativo principal com uma pessoa responsavel",
+}
+_COMMERCIAL_SERVICE_PACKAGE_LABELS: dict[TenantAdminCommercialServicePackage, str] = {
+    "inspector_chat": "Chat Inspetor sem Mesa",
+    "inspector_chat_mesa": "Chat Inspetor + Mesa Avaliadora",
+    "inspector_chat_mesa_reviewer_services": "Chat Inspetor + Mesa + servicos no Inspetor",
+}
+_COMMERCIAL_SERVICE_PACKAGE_DESCRIPTIONS: dict[TenantAdminCommercialServicePackage, str] = {
+    "inspector_chat": (
+        "O inspetor conduz o caso no chat com IA e finaliza internamente, sem fila de Mesa."
+    ),
+    "inspector_chat_mesa": (
+        "O inspetor envia para a Mesa e a avaliacao/emissao ficam no portal de analise."
+    ),
+    "inspector_chat_mesa_reviewer_services": (
+        "Mantem Mesa Avaliadora e permite que usuarios operacionais acumulem campo e analise."
+    ),
+}
+_COMMERCIAL_SERVICE_PACKAGE_PRESETS: dict[TenantAdminCommercialServicePackage, dict[str, Any]] = {
+    "inspector_chat": {
+        "tenant_portal_cliente_enabled": True,
+        "tenant_portal_inspetor_enabled": True,
+        "tenant_portal_revisor_enabled": False,
+        "tenant_capability_admin_manage_team_enabled": True,
+        "tenant_capability_inspector_case_create_enabled": True,
+        "tenant_capability_inspector_case_finalize_enabled": True,
+        "tenant_capability_inspector_send_to_mesa_enabled": False,
+        "tenant_capability_mobile_case_approve_enabled": True,
+        "tenant_capability_reviewer_decision_enabled": False,
+        "tenant_capability_reviewer_issue_enabled": False,
+        "operational_user_cross_portal_enabled": False,
+    },
+    "inspector_chat_mesa": {
+        "tenant_portal_cliente_enabled": True,
+        "tenant_portal_inspetor_enabled": True,
+        "tenant_portal_revisor_enabled": True,
+        "tenant_capability_admin_manage_team_enabled": True,
+        "tenant_capability_inspector_case_create_enabled": True,
+        "tenant_capability_inspector_case_finalize_enabled": True,
+        "tenant_capability_inspector_send_to_mesa_enabled": True,
+        "tenant_capability_mobile_case_approve_enabled": False,
+        "tenant_capability_reviewer_decision_enabled": True,
+        "tenant_capability_reviewer_issue_enabled": True,
+        "operational_user_cross_portal_enabled": False,
+    },
+    "inspector_chat_mesa_reviewer_services": {
+        "tenant_portal_cliente_enabled": True,
+        "tenant_portal_inspetor_enabled": True,
+        "tenant_portal_revisor_enabled": True,
+        "tenant_capability_admin_manage_team_enabled": True,
+        "tenant_capability_inspector_case_create_enabled": True,
+        "tenant_capability_inspector_case_finalize_enabled": True,
+        "tenant_capability_inspector_send_to_mesa_enabled": True,
+        "tenant_capability_mobile_case_approve_enabled": False,
+        "tenant_capability_reviewer_decision_enabled": True,
+        "tenant_capability_reviewer_issue_enabled": True,
+        "operational_user_cross_portal_enabled": True,
+    },
 }
 _OPERATING_SURFACE_LABELS: dict[str, str] = {
     "mobile": "App mobile",
@@ -272,8 +337,52 @@ def _normalize_operating_model(value: Any) -> TenantAdminOperatingModel:
     return aliases.get(text, DEFAULT_TENANT_ADMIN_OPERATING_MODEL)
 
 
+def _normalize_commercial_service_package(value: Any) -> TenantAdminCommercialServicePackage | None:
+    text = str(value or "").strip().lower()
+    aliases: dict[str, TenantAdminCommercialServicePackage | None] = {
+        "": None,
+        "custom": None,
+        "manual": None,
+        "inspector_chat": "inspector_chat",
+        "chat_inspetor": "inspector_chat",
+        "chat_sem_mesa": "inspector_chat",
+        "inspector_chat_mesa": "inspector_chat_mesa",
+        "chat_com_mesa": "inspector_chat_mesa",
+        "mesa": "inspector_chat_mesa",
+        "inspector_chat_mesa_reviewer_services": "inspector_chat_mesa_reviewer_services",
+        "chat_mesa_servicos": "inspector_chat_mesa_reviewer_services",
+        "mesa_servicos_inspetor": "inspector_chat_mesa_reviewer_services",
+    }
+    return aliases.get(text, DEFAULT_TENANT_ADMIN_COMMERCIAL_SERVICE_PACKAGE)
+
+
+def tenant_admin_commercial_service_package_options() -> list[dict[str, str]]:
+    return [
+        {
+            "key": key,
+            "label": _COMMERCIAL_SERVICE_PACKAGE_LABELS[key],
+            "description": _COMMERCIAL_SERVICE_PACKAGE_DESCRIPTIONS[key],
+        }
+        for key in _COMMERCIAL_SERVICE_PACKAGE_LABELS
+    ]
+
+
 def sanitize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
     source = dict(payload or {}) if isinstance(payload, dict) else {}
+    commercial_service_package = _normalize_commercial_service_package(
+        _coalesce_policy_value(
+            source,
+            "commercial_service_package",
+            "admin_cliente_commercial_service_package",
+            "tenant_commercial_service_package",
+        )
+    )
+    if commercial_service_package is not None:
+        source = {
+            **source,
+            **_COMMERCIAL_SERVICE_PACKAGE_PRESETS[commercial_service_package],
+            "commercial_service_package": commercial_service_package,
+        }
     visibility_mode = _normalize_case_visibility_mode(
         _coalesce_policy_value(
             source,
@@ -344,6 +453,8 @@ def sanitize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
         "case_visibility_mode": visibility_mode,
         "case_action_mode": action_mode,
     }
+    if commercial_service_package is not None:
+        sanitized["commercial_service_package"] = commercial_service_package
     portal_entitlements = _resolve_tenant_portal_entitlements(source)
     capability_entitlements = _resolve_tenant_capability_entitlements(
         source,
@@ -389,6 +500,10 @@ def summarize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
     case_actions_enabled = case_list_visible and sanitized["case_action_mode"] == "case_actions"
     operating_model = _normalize_operating_model(sanitized.get("operating_model"))
     mobile_single_operator = operating_model == "mobile_single_operator"
+    commercial_service_package_explicit = "commercial_service_package" in sanitized
+    commercial_service_package = _normalize_commercial_service_package(
+        sanitized.get("commercial_service_package")
+    ) or DEFAULT_TENANT_ADMIN_COMMERCIAL_SERVICE_PACKAGE
     shared_mobile_operator_web_inspector_enabled = bool(
         mobile_single_operator
         and sanitized.get("shared_mobile_operator_web_inspector_enabled", True)
@@ -414,6 +529,17 @@ def summarize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
         **sanitized,
         "operating_model": operating_model,
         "operating_model_label": _OPERATING_MODEL_LABELS[operating_model],
+        "commercial_service_package": (
+            commercial_service_package if commercial_service_package_explicit else ""
+        ),
+        "commercial_service_package_effective": commercial_service_package,
+        "commercial_service_package_label": _COMMERCIAL_SERVICE_PACKAGE_LABELS[
+            commercial_service_package
+        ],
+        "commercial_service_package_description": _COMMERCIAL_SERVICE_PACKAGE_DESCRIPTIONS[
+            commercial_service_package
+        ],
+        "commercial_service_package_options": tenant_admin_commercial_service_package_options(),
         "case_visibility_mode_label": _VISIBILITY_MODE_LABELS[
             sanitized["case_visibility_mode"]  # type: ignore[index]
         ],
@@ -725,6 +851,10 @@ def build_tenant_access_policy_payload(
     summary = summarize_tenant_admin_policy(payload)
     public_payload: dict[str, Any] = {
         "governed_by_admin_ceo": True,
+        "commercial_service_package": summary.get("commercial_service_package") or "",
+        "commercial_service_package_effective": summary.get("commercial_service_package_effective") or "",
+        "commercial_service_package_label": summary.get("commercial_service_package_label") or "",
+        "commercial_service_package_description": summary.get("commercial_service_package_description") or "",
         "portal_entitlements": tenant_admin_portal_entitlements(summary),
         "capability_entitlements": tenant_admin_capability_entitlements(summary),
     }

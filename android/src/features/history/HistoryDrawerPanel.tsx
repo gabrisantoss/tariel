@@ -14,6 +14,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import { resolverCaseLifecycleStatus } from "../chat/caseLifecycle";
+import { buildReportPackDraftSummary } from "../chat/reportPackHelpers";
 import { HistoryDrawerListItem } from "./HistoryDrawerListItem";
 import type {
   HistoryDrawerPanelItem,
@@ -27,6 +28,10 @@ export type {
 
 function pluralizeHistoryCases(value: number): string {
   return `${value} caso${value === 1 ? "" : "s"}`;
+}
+
+function buildHistorySearchResultLabel(value: number): string {
+  return `${pluralizeHistoryCases(value)} encontrado${value === 1 ? "" : "s"}.`;
 }
 
 function buildHistorySummaryCounts(items: readonly HistoryDrawerPanelItem[]) {
@@ -57,14 +62,55 @@ function buildHistorySummaryCounts(items: readonly HistoryDrawerPanelItem[]) {
   );
 }
 
+function buildHistorySignalCounts(items: readonly HistoryDrawerPanelItem[]) {
+  return items.reduce(
+    (acc, item) => {
+      const reportPackSummary = buildReportPackDraftSummary(
+        item.report_pack_draft,
+      );
+      if (item.entry_mode_effective === "evidence_first") {
+        acc.guided += 1;
+      } else if (item.entry_mode_effective === "chat_first") {
+        acc.chatLivre += 1;
+      }
+
+      if (item.official_issue_summary?.primary_pdf_diverged) {
+        acc.reemissao += 1;
+      }
+
+      if (
+        reportPackSummary?.autonomyReady ||
+        reportPackSummary?.readyForStructuredForm
+      ) {
+        acc.prontosParaValidar += 1;
+      }
+
+      return acc;
+    },
+    { chatLivre: 0, guided: 0, prontosParaValidar: 0, reemissao: 0 },
+  );
+}
+
 function buildHistorySummaryText(
   items: readonly HistoryDrawerPanelItem[],
   buscaHistorico: string,
 ): string {
   const totals = buildHistorySummaryCounts(items);
+  const signals = buildHistorySignalCounts(items);
 
   if (buscaHistorico.trim()) {
-    return `${pluralizeHistoryCases(items.length)} encontrados.`;
+    const searchSignals = [
+      signals.guided ? `${signals.guided} guiados` : "",
+      signals.prontosParaValidar
+        ? `${signals.prontosParaValidar} prontos para validar`
+        : "",
+      signals.reemissao ? `${signals.reemissao} com reemissao` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return searchSignals
+      ? `${buildHistorySearchResultLabel(items.length)} ${searchSignals}.`
+      : buildHistorySearchResultLabel(items.length);
   }
 
   return `${totals.emAndamento} em andamento · ${totals.mesa} na mesa · ${totals.concluidos} concluidos`;
@@ -106,6 +152,7 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
     (section) => section.items,
   );
   const totals = buildHistorySummaryCounts(itensVisiveis);
+  const signals = buildHistorySignalCounts(itensVisiveis);
   const totalVisiveis = historicoAgrupadoFinal.reduce(
     (total, section) => total + section.items.length,
     0,
@@ -207,10 +254,50 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
                 {conversasOcultasTotal} ocultos
               </Text>
             </View>
+            {signals.guided ? (
+              <View style={styles.historySummaryPill}>
+                <Text
+                  style={styles.historySummaryPillText}
+                  testID="history-summary-guided-pill"
+                >
+                  {signals.guided} guiados
+                </Text>
+              </View>
+            ) : null}
+            {signals.reemissao ? (
+              <View style={styles.historySummaryPill}>
+                <Text
+                  style={styles.historySummaryPillText}
+                  testID="history-summary-reissue-pill"
+                >
+                  {signals.reemissao} reemissão recomendada
+                  {signals.reemissao === 1 ? "" : "s"}
+                </Text>
+              </View>
+            ) : null}
+            {signals.prontosParaValidar ? (
+              <View style={styles.historySummaryPill}>
+                <Text
+                  style={styles.historySummaryPillText}
+                  testID="history-summary-validation-pill"
+                >
+                  {signals.prontosParaValidar} pronto
+                  {signals.prontosParaValidar === 1 ? "" : "s"} para validar
+                </Text>
+              </View>
+            ) : null}
           </View>
           <Text style={styles.historySummaryText}>
             {buildHistorySummaryText(itensVisiveis, buscaHistorico)}
           </Text>
+          {!buscaHistorico.trim() && signals.chatLivre ? (
+            <Text
+              style={styles.historySummaryText}
+              testID="history-summary-entry-mode-text"
+            >
+              {signals.guided} guiados · {signals.chatLivre} em chat livre
+            </Text>
+          ) : null}
         </View>
       ) : null}
 

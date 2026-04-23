@@ -69,7 +69,22 @@ export function buildThreadContextState(
   );
   const modoGuiadoAtivo = Boolean(guidedInspectionDraft) && !vendoMesa;
   const entryMode = resolveInspectionEntryMode({
-    activeCase: conversaAtiva?.laudoCard,
+    activeCase: conversaAtiva
+      ? {
+          entry_mode_effective:
+            conversaAtiva.entryModeEffective ||
+            conversaAtiva.laudoCard?.entry_mode_effective ||
+            null,
+          entry_mode_preference:
+            conversaAtiva.entryModePreference ||
+            conversaAtiva.laudoCard?.entry_mode_preference ||
+            null,
+          entry_mode_reason:
+            conversaAtiva.entryModeReason ||
+            conversaAtiva.laudoCard?.entry_mode_reason ||
+            null,
+        }
+      : null,
     cards: laudosDisponiveis,
     preference: entryModePreference,
     rememberLastCaseMode,
@@ -125,7 +140,9 @@ export function buildThreadContextState(
     hasFormalCaseWorkflow({
       allowedSurfaceActions: conversaAtiva?.allowedSurfaceActions,
       conversation: conversaAtiva,
-      entryModeEffective: conversaAtiva?.laudoCard?.entry_mode_effective,
+      entryModeEffective:
+        conversaAtiva?.entryModeEffective ||
+        conversaAtiva?.laudoCard?.entry_mode_effective,
       lifecycleStatus: caseLifecycleStatus,
       workflowMode: conversaAtiva?.caseWorkflowMode,
     });
@@ -508,7 +525,7 @@ export function buildThreadContextState(
         blankCaseCreationQueuedOffline
           ? {
               key: "offline",
-              label: resumoFilaOffline || "Fila offline ativa",
+              label: resumoFilaOffline || "Aguardando sincronização",
               tone:
                 statusApi === "offline"
                   ? ("danger" as const)

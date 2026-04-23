@@ -18,6 +18,14 @@ export interface QualityGateSummaryChip {
   label: string;
 }
 
+function pluralizeQualityGateCount(
+  value: number,
+  singular: string,
+  plural: string,
+): string {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
 export function resumoNumero(
   value: string | number | boolean | null | undefined,
 ): string | null {
@@ -108,4 +116,41 @@ export function buildQualityGateSummaryChips(params: {
           : "Sem bloqueios",
     },
   ];
+}
+
+export function buildQualityGateBlockingNarrative(params: {
+  missingItemsCount: number;
+  reportPackSummary: MobileReportPackDraftSummary | null;
+}): string {
+  const documentBlockers = params.missingItemsCount;
+  const reportPackPending =
+    (params.reportPackSummary?.pendingBlocks || 0) +
+    (params.reportPackSummary?.missingEvidenceCount || 0);
+  const attentionBlocks = params.reportPackSummary?.attentionBlocks || 0;
+
+  const parts = [
+    documentBlockers
+      ? pluralizeQualityGateCount(
+          documentBlockers,
+          "bloqueio objetivo",
+          "bloqueios objetivos",
+        )
+      : "",
+    reportPackPending
+      ? pluralizeQualityGateCount(
+          reportPackPending,
+          "pendência do pré-laudo",
+          "pendências do pré-laudo",
+        )
+      : "",
+    !documentBlockers && !reportPackPending && attentionBlocks
+      ? pluralizeQualityGateCount(
+          attentionBlocks,
+          "ponto de atenção",
+          "pontos de atenção",
+        )
+      : "",
+  ].filter(Boolean);
+
+  return parts.join(" · ");
 }

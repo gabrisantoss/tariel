@@ -335,6 +335,11 @@ export function ThreadConversationReviewActionsSection(props: {
 
   return (
     <View style={styles.threadReviewActionsRail}>
+      {summary.nextAction ? (
+        <Text style={styles.threadReviewFootnote}>
+          {`${summary.nextAction.label}: ${summary.nextAction.value}. ${summary.nextAction.detail}`}
+        </Text>
+      ) : null}
       {summary.allowedDecisions.includes("aprovar_no_mobile") &&
       (!summary.surfaceActionsKnown ||
         summary.allowedSurfaceActions.includes("mesa_approve")) ? (

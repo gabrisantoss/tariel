@@ -29,6 +29,7 @@ import {
   qualityGatePermiteOverride,
 } from "./qualityGateHelpers";
 import {
+  buildQualityGateBlockingNarrative,
   buildQualityGateStatusSummary,
   buildQualityGateSummaryChips,
   resumoNumero,
@@ -109,6 +110,10 @@ export function QualityGateModal({
     reportPackSummary,
     reviewModeLabel,
   });
+  const blockingNarrative = buildQualityGateBlockingNarrative({
+    missingItemsCount: missingItems.length,
+    reportPackSummary,
+  });
 
   return (
     <Modal
@@ -158,6 +163,7 @@ export function QualityGateModal({
                 textCount={textCount}
               />
               <QualityGateReportPackSection
+                blockingNarrative={blockingNarrative}
                 reportPackSummary={reportPackSummary}
               />
               <QualityGateMissingItemsSection items={missingItems} />
@@ -171,7 +177,10 @@ export function QualityGateModal({
                 />
               ) : null}
               {!payload.aprovado && !overrideAvailable ? (
-                <QualityGateCorrectionSection />
+                <QualityGateCorrectionSection
+                  blockingNarrative={blockingNarrative}
+                  reviewModeLabel={reviewModeLabel}
+                />
               ) : null}
               <QualityGateOfflineCard statusApi={statusApi} />
             </ScrollView>

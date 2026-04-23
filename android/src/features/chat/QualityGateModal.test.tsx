@@ -4,7 +4,6 @@ import { QualityGateModal } from "./QualityGateModal";
 
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
-  const { Text } = require("react-native");
   return {
     MaterialCommunityIcons: ({
       name,
@@ -12,7 +11,7 @@ jest.mock("@expo/vector-icons", () => {
     }: {
       name: string;
       [key: string]: unknown;
-    }) => React.createElement(Text, props, name),
+    }) => React.createElement("Text", props, name),
   };
 });
 
@@ -97,6 +96,12 @@ describe("QualityGateModal", () => {
     expect(getByText("Blocos")).toBeTruthy();
     expect(getByText("Checklist guiado")).toBeTruthy();
     expect(getByText("Curadoria normativa")).toBeTruthy();
+    expect(getByText("5 pendências do pré-laudo")).toBeTruthy();
+    expect(
+      getByText(
+        "5 pendências do pré-laudo ainda seguram o avanço. Resolva os bloqueios no chat e então siga para a Mesa.",
+      ),
+    ).toBeTruthy();
     expect(
       getByText("Ainda faltam evidencias visuais obrigatorias."),
     ).toBeTruthy();

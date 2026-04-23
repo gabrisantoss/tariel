@@ -103,6 +103,106 @@
             sync: sincronizarBotaoModoColetaLaudo,
         };
 
+        function mesaAvaliadoraDisponivelParaUsuario() {
+            return window.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true;
+        }
+
+        function tenantCapabilityAtiva(capability, fallback = false) {
+            return window.TARIEL?.hasUserCapability?.(capability, fallback) ?? !!fallback;
+        }
+
+        function abrirJanelaFerramentaLaudo(url) {
+            const destino = String(url || "").trim();
+            if (!destino) return;
+            window.open(destino, "_blank", "noopener,noreferrer");
+        }
+
+        function urlFerramentaLaudo(action, laudoId) {
+            const id = String(laudoId || "").trim();
+            if (action === "templates") return "/revisao/templates-laudo";
+            if (action === "editor") return "/revisao/templates-laudo/editor";
+            if (!id) return "";
+            if (action === "official_pdf") return `/app/laudo/${encodeURIComponent(id)}/preparar-emissao?tool=pdf`;
+            if (action === "technical_package") return `/app/laudo/${encodeURIComponent(id)}/preparar-emissao?tool=pacote`;
+            if (action === "signature") return `/app/laudo/${encodeURIComponent(id)}/preparar-emissao?tool=assinatura`;
+            return "";
+        }
+
+        function sincronizarFerramentasGovernadasLaudo() {
+            const botoes = Array.isArray(el.workspaceRailToolButtons) ? el.workspaceRailToolButtons : [];
+            const laudoAtivo = !!obterLaudoAtivoIdSeguro();
+            const estadoRelatorio = String(
+                ctx.actions?.obterEstadoRelatorioAtualSeguro?.()
+                || estado.estadoRelatorio
+                || "sem_relatorio"
+            ).trim().toLowerCase();
+            let visiveis = 0;
+            botoes.forEach((botao) => {
+                const capability = String(botao?.dataset?.requiredCapability || "").trim();
+                const podeVer = !capability || tenantCapabilityAtiva(capability, false);
+                const action = String(botao?.dataset?.railToolAction || "").trim();
+                const exigeLaudo = ["signature", "official_pdf", "technical_package"].includes(action);
+                const precisaAprovar = (
+                    podeVer
+                    && laudoAtivo
+                    && action === "official_pdf"
+                    && !["aprovado"].includes(estadoRelatorio)
+                );
+                botao.hidden = !podeVer;
+                botao.setAttribute("aria-hidden", String(!podeVer));
+                botao.classList.toggle("workspace-rail-tool--needs-case", podeVer && exigeLaudo && !laudoAtivo);
+                botao.classList.toggle("workspace-rail-tool--needs-approval", precisaAprovar);
+                botao.title = podeVer
+                    ? (
+                        exigeLaudo && !laudoAtivo
+                            ? "Selecione ou inicie um laudo antes de abrir esta ferramenta."
+                            : precisaAprovar
+                                ? "Precisa aprovar primeiro. A preparacao abre os bloqueios e proximas acoes."
+                            : "Liberado pelo pacote contratado desta empresa."
+                    )
+                    : "Nao contratado para esta empresa.";
+                if (podeVer) {
+                    visiveis += 1;
+                    botao.dataset.toolStatus = exigeLaudo && !laudoAtivo
+                        ? "sem-laudo"
+                        : precisaAprovar
+                            ? "precisa-aprovar"
+                            : "liberado-pacote";
+                }
+            });
+            if (el.workspaceRailToolboxHint) {
+                el.workspaceRailToolboxHint.hidden = visiveis > 0;
+                el.workspaceRailToolboxHint.textContent = "Servicos de Mesa no Inspetor nao estao contratados para esta empresa.";
+            }
+        }
+
+        function abrirFerramentaGovernadaLaudo(action) {
+            const acao = String(action || "").trim();
+            const laudoId = obterLaudoAtivoIdSeguro();
+            if (["official_pdf", "technical_package", "signature"].includes(acao) && !laudoId) {
+                mostrarToast("Selecione ou inicie um laudo antes de abrir esta ferramenta.", "aviso", 2600);
+                return;
+            }
+            const url = urlFerramentaLaudo(acao, laudoId);
+            if (!url) {
+                mostrarToast("Ferramenta ainda não possui tela dedicada para este laudo.", "info", 2600);
+                return;
+            }
+            abrirJanelaFerramentaLaudo(url);
+        }
+
+        function redirecionarMesaGovernadaParaCorrecoes() {
+            mostrarToast(
+                "Mesa Avaliadora não está contratada para esta empresa. Use Correções no próprio chat.",
+                "info",
+                2600
+            );
+            atualizarThreadWorkspace("correcoes", {
+                persistirURL: true,
+                replaceURL: true,
+            });
+        }
+
         function bindUiBindings() {
             if (estado.uiBindingsBound) return;
             estado.uiBindingsBound = true;
@@ -410,6 +510,17 @@
                 event.preventDefault();
                 processarAcaoHome(event?.detail || {});
             });
+            [
+                "tariel:laudo-selecionado",
+                "tariel:estado-relatorio",
+                "tariel:relatorio-iniciado",
+                "tariel:relatorio-finalizado",
+                "tariel:screen-synced",
+            ].forEach((eventName) => {
+                document.addEventListener(eventName, () => {
+                    sincronizarFerramentasGovernadasLaudo();
+                });
+            });
 
             el.btnFinalizarInspecao?.addEventListener("click", finalizarInspecao);
             el.botoesFinalizarInspecao?.forEach((botao) => {
@@ -418,9 +529,20 @@
             });
             el.workspaceRailThreadTabButtons.forEach((botao) => {
                 botao.addEventListener("click", () => {
-                    atualizarThreadWorkspace(botao.dataset.railThreadTab || "conversa", {
+                    const tabDestino = normalizarThreadTab(botao.dataset.railThreadTab || "conversa");
+                    if (tabDestino === "mesa" && !mesaAvaliadoraDisponivelParaUsuario()) {
+                        redirecionarMesaGovernadaParaCorrecoes();
+                        return;
+                    }
+                    atualizarThreadWorkspace(tabDestino, {
                         persistirURL: true,
                     });
+                });
+            });
+            sincronizarFerramentasGovernadasLaudo();
+            el.workspaceRailToolButtons?.forEach((botao) => {
+                botao.addEventListener("click", () => {
+                    abrirFerramentaGovernadaLaudo(botao.dataset.railToolAction || "");
                 });
             });
             el.btnWorkspaceToggleRail?.addEventListener("click", () => {
@@ -763,6 +885,10 @@
             });
 
             el.btnMesaWidgetToggle?.addEventListener("click", () => {
+                if (!mesaAvaliadoraDisponivelParaUsuario()) {
+                    redirecionarMesaGovernadaParaCorrecoes();
+                    return;
+                }
                 if (!obterLaudoAtivoIdSeguro()) {
                     avisarMesaExigeInspecao();
                     return;
@@ -782,6 +908,10 @@
                 botao.dataset.workspaceChannelBound = "true";
                 botao.addEventListener("click", () => {
                     const tabDestino = normalizarThreadTab(botao.dataset.workspaceChannelTab || "conversa");
+                    if (tabDestino === "mesa" && !mesaAvaliadoraDisponivelParaUsuario()) {
+                        redirecionarMesaGovernadaParaCorrecoes();
+                        return;
+                    }
                     if (tabDestino === "mesa" && !obterLaudoAtivoIdSeguro()) {
                         avisarMesaExigeInspecao();
                         return;

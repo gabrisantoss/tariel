@@ -18,13 +18,19 @@ from app.domains.chat.chat_stream_transport import (
 )
 from app.domains.chat.free_chat_report import build_free_chat_report_response
 from app.domains.chat.ia_runtime import obter_cliente_ia_ativo
+from app.domains.chat.normalization import normalizar_tipo_template
 from app.domains.chat.report_finalize_stream_shadow import processar_finalizacao_stream_documental
 from app.domains.chat.schemas import DadosChat
 from app.domains.chat.session_helpers import exigir_csrf
 from app.shared.database import Usuario, obter_banco
 from app.shared.backend_hotspot_metrics import observe_backend_hotspot
 from app.shared.security import exigir_inspetor
-from nucleo.inspetor.comandos_chat import analisar_pedido_relatorio_chat_livre
+from nucleo.inspetor.comandos_chat import (
+    analisar_comando_finalizacao,
+    analisar_comando_rapido_chat,
+    analisar_pedido_relatorio_chat_livre,
+    mensagem_para_mesa,
+)
 
 roteador_chat_stream = APIRouter()
 
@@ -49,11 +55,20 @@ async def rota_chat(
         },
     ) as hotspot:
         exigir_csrf(request)
+        mensagem_limpa = str(getattr(dados, "mensagem", "") or "").strip()
+        comando_rapido, _ = analisar_comando_rapido_chat(mensagem_limpa)
+        comando_finalizacao, _ = analisar_comando_finalizacao(
+            mensagem_limpa,
+            normalizar_tipo_template=normalizar_tipo_template,
+        )
         chat_livre_sem_laudo = (
             not getattr(dados, "laudo_id", None)
             and not getattr(dados, "iniciar_laudo", False)
             and getattr(dados, "guided_inspection_draft", None) is None
             and getattr(dados, "guided_inspection_context", None) is None
+            and not comando_rapido
+            and not comando_finalizacao
+            and not mensagem_para_mesa(mensagem_limpa)
         )
         if chat_livre_sem_laudo:
             cliente_ia_ativo = obter_cliente_ia_ativo()

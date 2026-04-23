@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.domains.chat.normalization import (
     normalizar_tipo_template,
@@ -417,13 +418,15 @@ def atualizar_final_validation_mode_report_pack(
     laudo: Laudo,
     final_validation_mode: str,
 ) -> dict[str, Any] | None:
-    draft = obter_report_pack_draft_laudo(laudo)
-    if draft is None:
+    draft_original = obter_report_pack_draft_laudo(laudo)
+    if draft_original is None:
         return None
+    draft = deepcopy(draft_original)
     quality_gates = dict(draft.get("quality_gates") or {})
     quality_gates["final_validation_mode"] = str(final_validation_mode or "").strip() or "mesa_required"
     draft["quality_gates"] = quality_gates
     laudo.report_pack_draft_json = draft
+    flag_modified(laudo, "report_pack_draft_json")
     return draft
 
 

@@ -76,6 +76,9 @@ describe("reportPackHelpers", () => {
       ]),
     );
     expect(summary?.readinessLabel).toBe("Pre-laudo em montagem");
+    expect(summary?.readinessDetail).toBe(
+      "Checklist guiado · Fotos obrigatorias · Itens criticos ainda bloqueiam o avanço do pré-laudo.",
+    );
   });
 
   it("marca autonomia quando todos os blocos estao prontos", () => {
@@ -118,6 +121,9 @@ describe("reportPackHelpers", () => {
     expect(summary?.readinessLabel).toBe("Pronto para validar");
     expect(summary?.pendingBlocks).toBe(0);
     expect(summary?.attentionBlocks).toBe(0);
+    expect(summary?.readinessDetail).toBe(
+      "Pré-laudo consolidado. Próxima etapa: revisar o quality gate para seguir com o fechamento.",
+    );
   });
 
   it("aproveita o pre-laudo canonico vindo do catalogo admin para o mobile", () => {
@@ -212,5 +218,8 @@ describe("reportPackHelpers", () => {
       "Envie a foto obrigatoria de ponto superior.",
       "Confirme a conclusao final do caso.",
     ]);
+    expect(summary?.readinessDetail).toBe(
+      "Fluxo do documento · Fotos obrigatorias · Estrutura do pre-laudo ainda bloqueiam o avanço do pré-laudo.",
+    );
   });
 });

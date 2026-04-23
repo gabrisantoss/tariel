@@ -7,6 +7,7 @@ jest.mock("@expo/vector-icons", () => ({
 import {
   ActivityCenterModal,
   AttachmentPickerModal,
+  OfflineQueueModal,
 } from "./OperationalModals";
 
 const baseProps = {
@@ -81,6 +82,67 @@ describe("ActivityCenterModal", () => {
     expect(getByTestId("activity-center-feed-v2-served")).toBeTruthy();
     expect(getByTestId("activity-center-feed-v2-target-80")).toBeTruthy();
   });
+
+  it("prioriza alertas críticos e exibe categoria operacional no item", () => {
+    const { getAllByTestId, getByText } = render(
+      <ActivityCenterModal
+        {...baseProps}
+        automationDiagnosticsEnabled={false}
+        activityCenterAutomationDiagnostics={{
+          modalVisible: true,
+          phase: "settled",
+          requestDispatched: true,
+          requestedTargetIds: [80],
+          notificationCount: 3,
+          feedReadMetadata: null,
+          requestTrace: null,
+          skipReason: null,
+        }}
+        notificacoes={[
+          {
+            id: "status-1",
+            kind: "status",
+            title: "Status atualizado",
+            body: "Caso 80 atualizado",
+            createdAt: "2026-03-30T10:00:00.000Z",
+            unread: true,
+            targetThread: "chat",
+            laudoId: 80,
+          },
+          {
+            id: "critical-1",
+            kind: "alerta_critico",
+            title: "Reemissão recomendada",
+            body: "Laudo 80 divergente",
+            createdAt: "2026-03-30T08:00:00.000Z",
+            unread: true,
+            targetThread: "finalizar",
+            laudoId: 80,
+          },
+          {
+            id: "mesa-1",
+            kind: "mesa_reaberta",
+            title: "Pendência reaberta",
+            body: "Mesa reabriu o caso",
+            createdAt: "2026-03-30T09:00:00.000Z",
+            unread: true,
+            targetThread: "mesa",
+            laudoId: 80,
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      getAllByTestId(/activity-center-item-/).map((item) => item.props.testID),
+    ).toEqual([
+      "activity-center-item-critical-1",
+      "activity-center-item-mesa-1",
+      "activity-center-item-status-1",
+    ]);
+    expect(getByText("Reemissão")).toBeTruthy();
+    expect(getByText("Abrir em Finalizar")).toBeTruthy();
+  });
 });
 
 describe("AttachmentPickerModal", () => {
@@ -116,5 +178,93 @@ describe("AttachmentPickerModal", () => {
         "Documentos liberam quando o caso ja estiver em coleta ou laudo.",
       ),
     ).toBeTruthy();
+  });
+});
+
+describe("OfflineQueueModal", () => {
+  const offlineBaseProps = {
+    visible: true,
+    onClose: jest.fn(),
+    resumoFilaOfflineFiltrada:
+      "1 criação de caso · 1 item local · aguardando conexão",
+    sincronizandoFilaOffline: false,
+    podeSincronizarFilaOffline: false,
+    sincronizacaoDispositivos: true,
+    statusApi: "offline" as const,
+    onSincronizarFilaOffline: jest.fn(),
+    filtrosFilaOffline: [
+      { key: "all", label: "Tudo", count: 1 },
+      { key: "chat", label: "Chat", count: 1 },
+      { key: "mesa", label: "Mesa", count: 0 },
+    ] as const,
+    filtroFilaOffline: "all" as const,
+    onSetFiltroFilaOffline: jest.fn(),
+    filaOfflineFiltrada: [],
+    filaOfflineOrdenadaTotal: 1,
+    sincronizandoItemFilaId: "",
+    onSincronizarItemFilaOffline: jest.fn(),
+    onRetomarItemFilaOffline: jest.fn(),
+    onRemoverItemFilaOffline: jest.fn(),
+    formatarHorarioAtividade: jest.fn().mockReturnValue("18:00"),
+    iconePendenciaOffline: jest.fn().mockReturnValue("cloud-upload-outline"),
+    resumoPendenciaOffline: jest.fn().mockReturnValue("Resumo"),
+    legendaPendenciaOffline: jest.fn().mockReturnValue("Legenda"),
+    rotuloStatusPendenciaOffline: jest.fn().mockReturnValue("Pendente"),
+    detalheStatusPendenciaOffline: jest.fn().mockReturnValue("Aguardando"),
+    pendenciaFilaProntaParaReenvio: jest.fn().mockReturnValue(false),
+  };
+
+  it("explica quando a fila não pode sincronizar por falta de conexão", () => {
+    const { getByText } = render(<OfflineQueueModal {...offlineBaseProps} />);
+
+    expect(getByText("Conecte-se para reenviar a fila offline.")).toBeTruthy();
+  });
+
+  it("explica quando ainda não há itens prontos para sincronizar", () => {
+    const { getByText } = render(
+      <OfflineQueueModal
+        {...offlineBaseProps}
+        resumoFilaOfflineFiltrada="1 finalização · 1 item local · em backoff"
+        statusApi="online"
+      />,
+    );
+
+    expect(
+      getByText(
+        "Nenhum item está pronto para sincronizar agora. Retome uma pendência ou aguarde o backoff.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("deixa explícito quando a ação do item quebra a espera do backoff", () => {
+    const { getByText } = render(
+      <OfflineQueueModal
+        {...offlineBaseProps}
+        filaOfflineFiltrada={[
+          {
+            id: "chat-1",
+            channel: "chat",
+            operation: "message",
+            laudoId: 91,
+            title: "Laudo 91",
+            text: "Mensagem pendente",
+            createdAt: "2026-03-30T10:00:00.000Z",
+            attachment: null,
+            referenceMessageId: null,
+            qualityGateDecision: null,
+            attempts: 1,
+            lastAttemptAt: "2026-03-30T10:05:00.000Z",
+            lastError: "",
+            nextRetryAt: "2026-03-30T10:30:00.000Z",
+            aiMode: "detalhado",
+            aiSummary: "",
+            aiMessagePrefix: "",
+          },
+        ]}
+        pendenciaFilaProntaParaReenvio={jest.fn().mockReturnValue(false)}
+      />,
+    );
+
+    expect(getByText("Enviar sem esperar")).toBeTruthy();
   });
 });
