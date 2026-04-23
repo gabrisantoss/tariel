@@ -1801,6 +1801,7 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     app_shell_js = (raiz / "static" / "js" / "shared" / "app_shell.js").read_text(encoding="utf-8")
     workspace_stage_js = (raiz / "static" / "js" / "inspetor" / "workspace_stage.js").read_text(encoding="utf-8")
     workspace_rail_js = (raiz / "static" / "js" / "inspetor" / "workspace_rail.js").read_text(encoding="utf-8")
+    workspace_context_flow_js = (raiz / "static" / "js" / "inspetor" / "workspace_context_flow.js").read_text(encoding="utf-8")
     workspace_header_html = (raiz / "templates" / "inspetor" / "workspace" / "_workspace_header.html").read_text(encoding="utf-8")
     portal_main_html = (raiz / "templates" / "inspetor" / "_portal_main.html").read_text(encoding="utf-8")
     workspace_elements_js = (raiz / "static" / "js" / "inspetor" / "workspace_page_elements.js").read_text(encoding="utf-8")
@@ -1816,6 +1817,9 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     assert "reviewer_issue: true" in app_shell_js
     assert "simulacaoFerramentasLocal" in workspace_stage_js
     assert "simulacaoFerramentasLocal" in workspace_rail_js
+    assert "function limparURLNovoChat" in workspace_context_flow_js
+    assert 'url.searchParams.delete("aba");' in workspace_context_flow_js
+    assert 'dependencies.exibirLandingAssistenteIA?.({ limparTimeline: true });' in workspace_context_flow_js
     assert 'id="btn-workspace-toggle-left-sidebar"' in workspace_header_html
     assert 'id="btn-workspace-toggle-right-rail"' in workspace_header_html
     assert 'id="btn-sidebar-edge-toggle"' in portal_main_html
@@ -1832,4 +1836,5 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     assert ".inspetor-sidebar-edge-toggle" in reboot_css
     assert ".inspetor-rail-edge-toggle" in reboot_css
     assert '.chat-dashboard-grid[data-workspace-rail-visible="true"]' in reboot_css
+    assert '.chat-dashboard-grid[data-conversation-variant="focused"] .chat-dashboard-rail' not in workspace_states_css
     assert 'data-free-chat-conversation-active="true"][data-workspace-rail-visible="false"]' in workspace_states_css

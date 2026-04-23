@@ -1,6 +1,28 @@
 (function attachTarielInspectorWorkspaceContextFlow(global) {
     "use strict";
 
+    function limparURLNovoChat(windowRef = global) {
+        try {
+            const url = new URL(windowRef.location.href);
+            url.searchParams.delete("laudo");
+            url.searchParams.delete("aba");
+            url.searchParams.delete("home");
+            windowRef.history.replaceState(
+                {
+                    ...(windowRef.history.state && typeof windowRef.history.state === "object"
+                        ? windowRef.history.state
+                        : {}),
+                    laudoId: null,
+                    threadTab: null,
+                },
+                "",
+                url.toString()
+            );
+        } catch (_) {
+            // silêncio intencional
+        }
+    }
+
     function detailPossuiContextoVisual(detail = {}) {
         const payload = detail && typeof detail === "object" ? detail : {};
         const card = payload?.laudo_card || payload?.laudoCard || payload?.card || {};
@@ -205,7 +227,8 @@
         }, {
             persistirStorage: false,
         });
-        dependencies.exibirLandingAssistenteIA?.({ limparTimeline: false });
+        dependencies.exibirLandingAssistenteIA?.({ limparTimeline: true });
+        limparURLNovoChat(global);
 
         const screenFinal = dependencies.sincronizarInspectorScreen?.();
         dependencies.focarComposerInspector?.();
