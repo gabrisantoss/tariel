@@ -1103,6 +1103,22 @@
             return finalizarViaComandoSistema(tipoTemplate);
         }
 
+        async function obterPreviaFinalizacaoRelatorio(laudoIdInformado = null) {
+            const laudoId = Number(laudoIdInformado || getLaudoAtualId?.() || 0) || null;
+            if (!laudoId) {
+                throw new Error("Nenhum relatório ativo para revisar.");
+            }
+            const response = await fetch(`/app/api/laudo/${encodeURIComponent(String(laudoId))}/finalizacao-preview`, {
+                method: "GET",
+                credentials: "same-origin",
+                headers: criarHeadersJSON(),
+            });
+            if (!response.ok) {
+                throw criarErroHttp(await extrairErroHTTPDetalhado(response));
+            }
+            return response.json();
+        }
+
         async function cancelarRelatorio() {
             const laudoIdAtual = Number(getLaudoAtualId?.() || 0) || null;
             const form = criarFormDataSeguro();
@@ -2024,6 +2040,7 @@
             iniciarRelatorio,
             finalizarRelatorio,
             finalizarRelatorioDireto,
+            obterPreviaFinalizacaoRelatorio,
             cancelarRelatorio,
             enviarFeedback,
             gerarPDF,

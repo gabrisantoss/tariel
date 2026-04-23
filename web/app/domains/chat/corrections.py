@@ -176,6 +176,34 @@ def _aplicar_correcao_no_documento(
                 "dados_formulario.documentacao_e_registros.observacoes_documentais",
             ]
         )
+    elif block == "checklist":
+        checklist_notes = payload.get("checklist_correcoes_estruturadas")
+        if not isinstance(checklist_notes, list):
+            checklist_notes = []
+        checklist_notes.append(
+            {
+                "description": descricao,
+                "intent": str(item.get("intent") or "").strip() or None,
+                "source_correction_id": str(item.get("id") or "").strip() or None,
+                "created_at": agora_utc().isoformat(),
+            }
+        )
+        payload["checklist_correcoes_estruturadas"] = checklist_notes[-40:]
+        campos_aplicados.append("dados_formulario.checklist_correcoes_estruturadas")
+    elif block == "evidencias":
+        evidence_notes = payload.get("evidencias_correcoes_estruturadas")
+        if not isinstance(evidence_notes, list):
+            evidence_notes = []
+        evidence_notes.append(
+            {
+                "description": descricao,
+                "intent": str(item.get("intent") or "").strip() or None,
+                "source_correction_id": str(item.get("id") or "").strip() or None,
+                "created_at": agora_utc().isoformat(),
+            }
+        )
+        payload["evidencias_correcoes_estruturadas"] = evidence_notes[-40:]
+        campos_aplicados.append("dados_formulario.evidencias_correcoes_estruturadas")
     else:
         return []
 

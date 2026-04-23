@@ -280,6 +280,128 @@
         return obterBotoesFinalizar()[0] || null;
     }
 
+    function escaparHTML(valor) {
+        return typeof TP.escaparHTML === "function"
+            ? TP.escaparHTML(valor)
+            : String(valor ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+    }
+
+    function formatarModoFinalizacaoPreview(preview = {}) {
+        if (preview?.primary_action === "approve_without_mesa") return "Aprovação interna sem Mesa";
+        if (preview?.primary_action === "send_to_mesa") return "Envio para Mesa Avaliadora";
+        return "Resolver pendências antes de finalizar";
+    }
+
+    function montarListaCorrecoesPreview(preview = {}) {
+        const correcoes = preview?.corrections || {};
+        const linhas = [
+            `Abertas: ${Number(correcoes.open || 0)}`,
+            `Aplicadas: ${Number(correcoes.applied || 0)}`,
+            `Descartadas: ${Number(correcoes.discarded || 0)}`,
+        ];
+        return linhas.map((linha) => `<span>${escaparHTML(linha)}</span>`).join("");
+    }
+
+    function abrirAbaCorrecoesWorkspace() {
+        const botaoCorrecoes = document.querySelector('[data-workspace-channel-tab="correcoes"]');
+        if (botaoCorrecoes instanceof HTMLElement) {
+            botaoCorrecoes.click();
+            return;
+        }
+        document.dispatchEvent(new CustomEvent("tariel:workspace-thread-tab", {
+            detail: { tab: "correcoes" },
+        }));
+    }
+
+    function confirmarPreviaFinalizacao(preview = {}) {
+        return new Promise((resolve) => {
+            const bloqueios = Array.isArray(preview?.blocking_items) ? preview.blocking_items : [];
+            const podeFinalizar = preview?.can_finalize !== false && bloqueios.length === 0;
+            const overlay = document.createElement("div");
+            overlay.className = "finalizacao-preview-overlay";
+            overlay.setAttribute("role", "dialog");
+            overlay.setAttribute("aria-modal", "true");
+            overlay.innerHTML = `
+                <div class="finalizacao-preview-modal">
+                    <header class="finalizacao-preview-modal__header">
+                        <span class="finalizacao-preview-modal__eyebrow">Revisão antes de finalizar</span>
+                        <h2>${escaparHTML(formatarModoFinalizacaoPreview(preview))}</h2>
+                        <p>${escaparHTML(preview?.next_step || "Confira o estado do laudo antes de continuar.")}</p>
+                    </header>
+                    <section class="finalizacao-preview-modal__grid" aria-label="Resumo de finalização">
+                        <article>
+                            <strong>Destino</strong>
+                            <span>${escaparHTML(preview?.primary_label || "Finalizar")}</span>
+                        </article>
+                        <article>
+                            <strong>Correções</strong>
+                            <div class="finalizacao-preview-modal__chips">${montarListaCorrecoesPreview(preview)}</div>
+                        </article>
+                        <article>
+                            <strong>Qualidade</strong>
+                            <span>${Number(preview?.quality_gates?.missing_evidence_count || 0)} evidência(s) faltante(s)</span>
+                        </article>
+                    </section>
+                    ${bloqueios.length ? `
+                        <section class="finalizacao-preview-modal__blockers" aria-label="Bloqueios">
+                            <strong>Antes de finalizar</strong>
+                            <ul>
+                                ${bloqueios.map((item) => `<li>${escaparHTML(item.message || item.code || "Pendência aberta")}</li>`).join("")}
+                            </ul>
+                        </section>
+                    ` : ""}
+                    <footer class="finalizacao-preview-modal__footer">
+                        <button type="button" class="technical-record-btn technical-record-btn--ghost" data-preview-action="cancel">Voltar</button>
+                        ${podeFinalizar ? `
+                            <button type="button" class="technical-record-btn technical-record-btn--primary" data-preview-action="confirm">
+                                ${escaparHTML(preview?.primary_label || "Finalizar")}
+                            </button>
+                        ` : `
+                            <button type="button" class="technical-record-btn technical-record-btn--primary" data-preview-action="resolve">
+                                Resolver pendências
+                            </button>
+                        `}
+                    </footer>
+                </div>
+            `;
+            const fechar = (resultado) => {
+                overlay.remove();
+                resolve(resultado);
+            };
+            overlay.addEventListener("click", (event) => {
+                if (event.target === overlay) fechar(false);
+                const acao = event.target?.closest?.("[data-preview-action]")?.dataset?.previewAction;
+                if (!acao) return;
+                if (acao === "confirm") fechar(true);
+                else if (acao === "resolve") {
+                    abrirAbaCorrecoesWorkspace();
+                    fechar(false);
+                } else {
+                    fechar(false);
+                }
+            });
+            document.body.appendChild(overlay);
+            overlay.querySelector("[data-preview-action]")?.focus?.();
+        });
+    }
+
+    async function revisarAntesDeFinalizar(laudoId) {
+        try {
+            const preview = await window.TarielAPI?.obterPreviaFinalizacaoRelatorio?.(laudoId);
+            if (!preview) return true;
+            return await confirmarPreviaFinalizacao(preview);
+        } catch (erro) {
+            TP.log?.("warn", "Falha ao obter previa de finalizacao:", erro);
+            TP.toast?.("Não foi possível carregar a prévia. A finalização seguirá com os bloqueios do servidor.", "aviso", 3200);
+            return true;
+        }
+    }
+
     function solicitarPoliticaDocumentoEmitidoReabertura(snapshotAtual = {}) {
         const lifecycleStatus = normalizarCaseLifecycleStatus(
             snapshotAtual?.case_lifecycle_status ??
@@ -711,6 +833,11 @@
         }
 
         TP.log?.("info", `Finalizando laudo ${laudoId} com template ${tipoTemplate}.`);
+
+        const confirmouPreview = await revisarAntesDeFinalizar(laudoId);
+        if (!confirmouPreview) {
+            return null;
+        }
 
         const snapshotAntesFinalizacao = snapshotAtual;
         bloquearUIFinalizacao();

@@ -345,6 +345,134 @@ def _garantir_sem_correcoes_estruturadas_abertas_para_aprovacao_direta(laudo: La
     )
 
 
+def _resumir_correcoes_estruturadas(laudo: Laudo) -> dict[str, Any]:
+    draft = obter_report_pack_draft_laudo(laudo)
+    raw_items = draft.get("structured_corrections") if isinstance(draft, dict) else []
+    if not isinstance(raw_items, list):
+        raw_items = []
+    contadores = {
+        "pendente": 0,
+        "enviada_ia": 0,
+        "aplicada": 0,
+        "descartada": 0,
+    }
+    recentes: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("status") or "pendente").strip().lower()
+        contadores[status] = contadores.get(status, 0) + 1
+        if len(recentes) < 6:
+            recentes.append(
+                {
+                    "id": str(item.get("id") or "").strip() or None,
+                    "block": str(item.get("block") or "").strip() or None,
+                    "description": str(item.get("description") or "").strip()[:180],
+                    "status": status,
+                    "applied_to": list(item.get("applied_to") or [])
+                    if isinstance(item.get("applied_to"), list)
+                    else [],
+                }
+            )
+    abertas = contadores.get("pendente", 0) + contadores.get("enviada_ia", 0)
+    return {
+        "total": sum(contadores.values()),
+        "open": abertas,
+        "pending": contadores.get("pendente", 0),
+        "sent_to_ai": contadores.get("enviada_ia", 0),
+        "applied": contadores.get("aplicada", 0),
+        "discarded": contadores.get("descartada", 0),
+        "recent": recentes,
+        "open_items": _listar_correcoes_estruturadas_abertas(laudo)[:8],
+    }
+
+
+def obter_previa_finalizacao_laudo_resposta(
+    *,
+    laudo_id: int,
+    request: Request,
+    usuario: Usuario,
+    banco: Session,
+) -> ResultadoJson:
+    ensure_tenant_capability_for_user(
+        usuario,
+        capability="inspector_case_finalize",
+    )
+    laudo = obter_laudo_do_inspetor(banco, laudo_id, usuario)
+    draft = obter_report_pack_draft_laudo(laudo) or {}
+    quality_gates = dict(draft.get("quality_gates") or {}) if isinstance(draft, dict) else {}
+    final_validation_mode = _resolver_review_mode_final(
+        request=request,
+        laudo=laudo,
+        usuario=usuario,
+    )
+    final_validation_mode_reason = str(
+        getattr(request.state, "final_validation_mode_reason", "") or ""
+    ).strip()
+    direct_without_mesa = (
+        final_validation_mode == "mobile_autonomous"
+        and final_validation_mode_reason == "tenant_without_mesa"
+    )
+    correcoes = _resumir_correcoes_estruturadas(laudo)
+    bloqueios: list[dict[str, Any]] = []
+    if laudo.status_revisao != StatusRevisao.RASCUNHO.value:
+        bloqueios.append(
+            {
+                "code": "invalid_status",
+                "message": "Laudo nao esta em rascunho para finalizacao pelo inspetor.",
+            }
+        )
+    if direct_without_mesa and int(correcoes.get("open") or 0) > 0:
+        bloqueios.append(
+            {
+                "code": "structured_corrections_pending",
+                "message": "Resolva as correcoes abertas antes de aprovar sem Mesa.",
+                "count": int(correcoes.get("open") or 0),
+            }
+        )
+
+    if bloqueios:
+        primary_action = "resolve_pending"
+        primary_label = "Resolver pendências"
+    elif final_validation_mode == "mobile_autonomous":
+        primary_action = "approve_without_mesa"
+        primary_label = "Aprovar sem Mesa"
+    else:
+        primary_action = "send_to_mesa"
+        primary_label = "Enviar para Mesa"
+
+    payload = {
+        "ok": True,
+        "laudo_id": int(laudo.id),
+        "can_finalize": not bloqueios,
+        "blocking_items": bloqueios,
+        "primary_action": primary_action,
+        "primary_label": primary_label,
+        "review_mode_final_preview": final_validation_mode,
+        "review_mode_final_reason": final_validation_mode_reason or None,
+        "direct_without_mesa": direct_without_mesa,
+        "status_revisao": laudo.status_revisao,
+        "case_title": str(getattr(laudo, "nome_inspecao", None) or getattr(laudo, "primeira_mensagem", None) or "").strip()[:160],
+        "corrections": correcoes,
+        "quality_gates": {
+            "autonomy_ready": bool(quality_gates.get("autonomy_ready")),
+            "required_image_slots_complete": bool(quality_gates.get("required_image_slots_complete")),
+            "missing_evidence_count": len(list(quality_gates.get("missing_evidence") or [])),
+            "final_validation_mode": str(quality_gates.get("final_validation_mode") or "").strip() or None,
+        },
+        "next_step": (
+            "Revise a aba Correcoes e marque cada item como aplicado ou descartado."
+            if primary_action == "resolve_pending"
+            else (
+                "O laudo sera aprovado internamente sem Mesa Avaliadora."
+                if primary_action == "approve_without_mesa"
+                else "O laudo sera enviado para a Mesa Avaliadora."
+            )
+        ),
+    }
+    return payload, 200
+
+
 def _sincronizar_validacao_evidencia_revisao_mobile(
     *,
     banco: Session,

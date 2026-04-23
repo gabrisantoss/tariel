@@ -3972,11 +3972,32 @@ Atualizado em `2026-04-23`.
 - aplica correções de `Observações` em `dados_formulario.observacoes` e `dados_formulario.documentacao_e_registros.observacoes_documentais`.
 - registra rastreabilidade no item aplicado: `applied_at`, `applied_by_id`, `application_mode` e `applied_to`.
 - sincroniza `report_pack_draft_json.structured_data_candidate` com o payload documental atualizado.
-- mantém evidências e checklist fora da aplicação automática nesta etapa, por exigirem edição mais específica.
+- registra correções de `Checklist` e `Evidências/fotos` como notas estruturadas no payload documental, sem alterar item técnico ou foto específica automaticamente.
 
 ### Validação
 
 - `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/corrections.py`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k "correcao_estruturada or correcoes_estruturadas"`
+- `make web-ci`
+- `make hygiene-check`
+
+### `PKT-CHAT-INSPETOR-FINALIZACAO-01` — Prévia governada antes de finalizar
+
+- `status`: concluído localmente em `2026-04-23`; o Chat Inspetor passa a revisar destino, correções e bloqueios antes de aprovar sem Mesa ou enviar para Mesa.
+
+### Escopo
+
+- adiciona endpoint `GET /app/api/laudo/{id}/finalizacao-preview` com resumo governado da finalização.
+- resolve o destino previsto: `Aprovar sem Mesa`, `Enviar para Mesa` ou `Resolver pendências`.
+- inclui contagem de correções abertas, aplicadas e descartadas.
+- bloqueia a confirmação visual quando a aprovação sem Mesa ainda possui correções abertas.
+- adiciona modal de prévia no botão de finalização do Chat Inspetor.
+
+### Validação
+
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/laudo.py app/domains/chat/laudo_decision_services.py`
+- `node --check web/static/js/shared/chat-network.js`
+- `node --check web/static/js/chat/chat_painel_relatorio.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k "previa_finalizacao or sem_mesa"`
 - `make web-ci`
 - `make hygiene-check`

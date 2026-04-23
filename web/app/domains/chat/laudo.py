@@ -33,6 +33,7 @@ from app.domains.chat.report_template_compatibility import (
 from app.domains.chat.laudo_decision_services import (
     executar_comando_revisao_mobile_resposta,
     finalizar_relatorio_resposta,
+    obter_previa_finalizacao_laudo_resposta,
     reabrir_laudo_resposta,
 )
 from app.domains.chat.normalization import ALIASES_TEMPLATE
@@ -218,6 +219,21 @@ async def api_finalizar_relatorio(
             }
         )
         return resposta_json_ok(payload, status_code=status_code)
+
+
+async def api_previa_finalizacao_relatorio(
+    laudo_id: int,
+    request: Request,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+):
+    payload, status_code = obter_previa_finalizacao_laudo_resposta(
+        laudo_id=laudo_id,
+        request=request,
+        usuario=usuario,
+        banco=banco,
+    )
+    return resposta_json_ok(payload, status_code=status_code)
 
 
 async def api_obter_gate_qualidade_laudo(
@@ -847,6 +863,15 @@ roteador_laudo.add_api_route(
         400: {"description": "Laudo em estado inválido para finalização."},
         **RESPOSTA_DOCUMENT_HARD_GATE_BLOQUEADO,
         **RESPOSTA_GATE_QUALIDADE_REPROVADO,
+    },
+)
+roteador_laudo.add_api_route(
+    "/api/laudo/{laudo_id}/finalizacao-preview",
+    api_previa_finalizacao_relatorio,
+    methods=["GET"],
+    responses={
+        **RESPOSTA_LAUDO_NAO_ENCONTRADO,
+        403: {"description": "Finalizacao desabilitada para a empresa."},
     },
 )
 roteador_laudo.add_api_route(

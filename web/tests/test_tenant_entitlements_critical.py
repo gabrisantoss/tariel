@@ -479,6 +479,52 @@ def test_finalizacao_sem_mesa_bloqueia_correcoes_estruturadas_abertas(
         assert laudo.status_revisao == StatusRevisao.RASCUNHO.value
 
 
+def test_previa_finalizacao_sem_mesa_orienta_resolver_correcoes_abertas(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat",
+        }
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.report_pack_draft_json = {
+            "structured_corrections": [
+                {
+                    "id": "corr-preview-1",
+                    "block": "observacoes",
+                    "intent": "adicionar",
+                    "description": "Adicionar ressalva antes da aprovação.",
+                    "status": "pendente",
+                }
+            ],
+        }
+        banco.commit()
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.get(f"/app/api/laudo/{laudo_id}/finalizacao-preview")
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["can_finalize"] is False
+    assert corpo["primary_action"] == "resolve_pending"
+    assert corpo["direct_without_mesa"] is True
+    assert corpo["corrections"]["open"] == 1
+    assert corpo["blocking_items"][0]["code"] == "structured_corrections_pending"
+
+
 def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(
     ambiente_critico,
 ) -> None:
@@ -774,6 +820,68 @@ def test_correcao_estruturada_aplicada_atualiza_documento_do_laudo(
         assert isinstance(draft, dict)
         assert draft["structured_data_candidate"]["observacoes"] == laudo.dados_formulario["observacoes"]
         assert draft["structured_corrections"][0]["application_mode"] == "document_payload_append"
+
+
+def test_correcao_estruturada_aplicada_registra_checklist_e_evidencias(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat",
+        }
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        banco.commit()
+
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    created_ids = {}
+    for block, description in {
+        "checklist": "Alterar item de proteção para NC após validação humana.",
+        "evidencias": "Substituir foto superior por anexo com foco adequado.",
+    }.items():
+        resposta_criacao = client.post(
+            f"/app/api/laudo/{laudo_id}/correcoes-estruturadas",
+            headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+            json={
+                "block": block,
+                "intent": "corrigir",
+                "description": description,
+            },
+        )
+        assert resposta_criacao.status_code == 201
+        created_ids[block] = resposta_criacao.json()["item"]["id"]
+
+    for item_id in created_ids.values():
+        resposta_status = client.patch(
+            f"/app/api/laudo/{laudo_id}/correcoes-estruturadas/{item_id}",
+            headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+            json={"status": "aplicada"},
+        )
+        assert resposta_status.status_code == 200
+        assert resposta_status.json()["item"]["applied_to"]
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        assert isinstance(laudo.dados_formulario, dict)
+        assert (
+            laudo.dados_formulario["checklist_correcoes_estruturadas"][0]["description"]
+            == "Alterar item de proteção para NC após validação humana."
+        )
+        assert (
+            laudo.dados_formulario["evidencias_correcoes_estruturadas"][0]["description"]
+            == "Substituir foto superior por anexo com foco adequado."
+        )
 
 
 def test_revogacao_de_capacidades_bloqueia_websocket_e_exports_governados_da_mesa(
