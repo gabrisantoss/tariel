@@ -44,9 +44,11 @@
         const view = options.view ?? resolveWorkspaceView?.();
         const railVisivel = options.railVisivel ?? resolveRailVisibility?.();
         const railDisponivel = chromeTecnicoOperacional && !layoutCompacto && workspaceViewSuportaRail?.(view);
-        const botoes = [el.btnWorkspaceToggleRail, el.btnWorkspaceToggleRightRail, el.btnRailEdgeToggle].filter(Boolean);
+        const botoesChrome = [el.btnWorkspaceToggleRail, el.btnWorkspaceToggleRightRail].filter(Boolean);
+        const botaoBorda = el.btnRailEdgeToggle || null;
+        const botaoBordaDisponivel = !layoutCompacto && workspaceViewSuportaRail?.(view);
 
-        botoes.forEach((botao) => {
+        botoesChrome.forEach((botao) => {
             const icone = botao.querySelector(".material-symbols-rounded");
             const rotulo = botao.querySelector("span:last-child");
 
@@ -64,6 +66,19 @@
                 rotulo.textContent = railVisivel ? "Fechar ferramentas" : "Ferramentas";
             }
         });
+
+        if (botaoBorda) {
+            const icone = botaoBorda.querySelector(".material-symbols-rounded");
+            botaoBorda.hidden = !botaoBordaDisponivel;
+            botaoBorda.setAttribute("aria-expanded", railVisivel ? "true" : "false");
+            botaoBorda.setAttribute(
+                "aria-label",
+                railVisivel ? "Esconder ferramentas laterais" : "Mostrar ferramentas laterais"
+            );
+            if (icone) {
+                icone.textContent = railVisivel ? "right_panel_close" : "right_panel_open";
+            }
+        }
     }
 
     function resolverEstadoPadraoAcordeoesRail(view = "inspection_conversation") {
