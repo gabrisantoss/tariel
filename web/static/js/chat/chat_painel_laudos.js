@@ -719,19 +719,57 @@
         const actions = document.createElement("span");
         actions.className = "inspetor-sidebar-report__actions";
 
+        const botaoMenu = criarBotaoAcaoLaudo({
+            acao: "menu",
+            title: "Mais ações",
+            icone: "more_horiz",
+        });
+        botaoMenu.classList.remove("btn-pin-laudo", "btn-deletar-laudo");
+        botaoMenu.classList.add("btn-menu-laudo");
+        botaoMenu.setAttribute("aria-haspopup", "menu");
+        botaoMenu.setAttribute("aria-expanded", "false");
+
+        const menu = document.createElement("span");
+        menu.className = "inspetor-sidebar-report__menu";
+        menu.setAttribute("role", "menu");
+        menu.setAttribute("aria-label", "Ações da conversa");
+        menu.hidden = true;
+
+        const botaoAbrir = document.createElement("button");
+        botaoAbrir.type = "button";
+        botaoAbrir.className = "inspetor-sidebar-report__menu-item";
+        botaoAbrir.dataset.acaoLaudo = "open";
+        botaoAbrir.setAttribute("role", "menuitem");
+        botaoAbrir.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">chat</span><span>Abrir</span>';
+
         const botaoPin = criarBotaoAcaoLaudo({
             acao: "pin",
             title: card.pinado ? "Desafixar laudo" : "Fixar laudo",
             icone: card.pinado ? "keep" : "push_pin",
             pinado: !!card.pinado,
         });
-        const botaoDelete = criarBotaoAcaoLaudo({
-            acao: "delete",
-            title: "Excluir laudo",
-            icone: "delete",
-        });
-        actions.appendChild(botaoPin);
-        actions.appendChild(botaoDelete);
+        botaoPin.classList.add("inspetor-sidebar-report__menu-item");
+        botaoPin.innerHTML = `<span class="material-symbols-rounded" aria-hidden="true">${card.pinado ? "keep" : "push_pin"}</span><span>${card.pinado ? "Desafixar" : "Fixar"}</span>`;
+
+        menu.appendChild(botaoAbrir);
+        menu.appendChild(botaoPin);
+
+        if (card.permite_exclusao) {
+            const botaoDelete = criarBotaoAcaoLaudo({
+                acao: "delete",
+                title: "Excluir laudo",
+                icone: "delete",
+            });
+            botaoDelete.classList.add(
+                "inspetor-sidebar-report__menu-item",
+                "inspetor-sidebar-report__menu-item--danger"
+            );
+            botaoDelete.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">delete</span><span>Excluir</span>';
+            menu.appendChild(botaoDelete);
+        }
+
+        actions.appendChild(botaoMenu);
+        actions.appendChild(menu);
         side.appendChild(pill);
         side.appendChild(actions);
 

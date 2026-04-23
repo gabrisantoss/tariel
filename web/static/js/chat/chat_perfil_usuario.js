@@ -27,6 +27,8 @@
         papelUsuarioCard: document.querySelector("#btn-abrir-perfil-chat .inspetor-user-card__copy span"),
         avatarUsuarioCard: document.querySelector("#btn-abrir-perfil-chat .inspetor-user-card__avatar"),
         btnShellProfile: document.getElementById("btn-shell-profile"),
+        accountMenuRoot: document.querySelector("[data-account-menu]"),
+        accountMenu: document.getElementById("menu-perfil-chat"),
         workspaceGreetingNames: Array.from(document.querySelectorAll("[data-workspace-user-greeting-name]")),
 
         modal: document.getElementById("modal-perfil-chat"),
@@ -120,6 +122,32 @@
     function registrarEdicaoPerfil() {
         estado.perfilSujo = true;
         estado.revisaoEdicaoPerfil += 1;
+    }
+
+    function menuContaAberto() {
+        return !!(el.accountMenu && !el.accountMenu.hidden);
+    }
+
+    function fecharMenuConta() {
+        if (!el.accountMenu || !el.btnAbrirPerfil) return;
+        el.accountMenu.hidden = true;
+        el.accountMenu.dataset.open = "false";
+        el.btnAbrirPerfil.setAttribute("aria-expanded", "false");
+    }
+
+    function abrirMenuConta() {
+        if (!el.accountMenu || !el.btnAbrirPerfil) return;
+        el.accountMenu.hidden = false;
+        el.accountMenu.dataset.open = "true";
+        el.btnAbrirPerfil.setAttribute("aria-expanded", "true");
+    }
+
+    function alternarMenuConta() {
+        if (menuContaAberto()) {
+            fecharMenuConta();
+            return;
+        }
+        abrirMenuConta();
     }
 
     function renderAvatar(target, { nome = "", foto = "" } = {}) {
@@ -216,6 +244,7 @@
     }
 
     function abrirModalPerfil() {
+        fecharMenuConta();
         limparFeedback();
         estado.ultimoElementoFocado = document.activeElement instanceof HTMLElement
             ? document.activeElement
@@ -510,7 +539,30 @@
     function bindEventos() {
         el.btnAbrirPerfil?.addEventListener("click", (event) => {
             event.preventDefault();
-            abrirComDadosAtualizados();
+            alternarMenuConta();
+        });
+
+        el.accountMenu?.addEventListener("click", (event) => {
+            const acao = event.target.closest("[data-profile-menu-action]")?.dataset?.profileMenuAction;
+            if (!acao) return;
+
+            if (acao === "profile") {
+                event.preventDefault();
+                fecharMenuConta();
+                abrirComDadosAtualizados();
+                return;
+            }
+
+            if (acao === "add-account") {
+                event.preventDefault();
+                fecharMenuConta();
+                window.location.href = "/app/login?add_account=1";
+                return;
+            }
+
+            if (acao === "home") {
+                fecharMenuConta();
+            }
         });
 
         el.btnFecharModal?.addEventListener("click", fecharModalPerfil);
@@ -542,10 +594,23 @@
             }
         });
 
+        document.addEventListener("click", (event) => {
+            if (!menuContaAberto()) return;
+            if (el.accountMenuRoot?.contains(event.target)) return;
+            fecharMenuConta();
+        });
+
         document.addEventListener("keydown", (event) => {
             if (event.key === "Escape" && el.modal?.classList.contains("ativo")) {
                 event.preventDefault();
                 fecharModalPerfil();
+                return;
+            }
+
+            if (event.key === "Escape" && menuContaAberto()) {
+                event.preventDefault();
+                fecharMenuConta();
+                el.btnAbrirPerfil?.focus();
             }
         });
 

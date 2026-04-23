@@ -183,6 +183,39 @@
         if (icone) {
             icone.textContent = pinado ? "keep" : "push_pin";
         }
+
+        const legenda = btn.querySelector("span:last-child");
+        if (legenda && !legenda.classList.contains("material-symbols-rounded")) {
+            legenda.textContent = pinado ? "Desafixar" : "Fixar";
+        }
+    }
+
+    function fecharMenusHistorico() {
+        document
+            .querySelectorAll(".inspetor-sidebar-report__actions .btn-menu-laudo[aria-expanded='true']")
+            .forEach((btn) => btn.setAttribute("aria-expanded", "false"));
+
+        document
+            .querySelectorAll(".inspetor-sidebar-report__menu")
+            .forEach((menu) => {
+                menu.hidden = true;
+                menu.dataset.open = "false";
+            });
+    }
+
+    function alternarMenuHistorico(btn) {
+        const item = resolverItemHistoricoAPartirEvento(btn);
+        const menu = item?.querySelector(".inspetor-sidebar-report__menu");
+        if (!btn || !menu) return;
+
+        const estavaAberto = btn.getAttribute("aria-expanded") === "true" && !menu.hidden;
+        fecharMenusHistorico();
+
+        if (estavaAberto) return;
+
+        btn.setAttribute("aria-expanded", "true");
+        menu.hidden = false;
+        menu.dataset.open = "true";
     }
 
     function atualizarUIItemPin(item, pinado) {
@@ -478,7 +511,32 @@
 
                     const item = resolverItemHistoricoAPartirEvento(btnPin);
                     const laudoId = obterLaudoIdDoEvento(btnPin);
+                    fecharMenusHistorico();
                     await alternarPinLaudo(laudoId, item, btnPin);
+                    return;
+                }
+
+                const btnMenu = evento.target.closest(
+                    "[data-acao-laudo='menu'], [data-action='menu'], .btn-menu-laudo"
+                );
+
+                if (btnMenu) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    alternarMenuHistorico(btnMenu);
+                    return;
+                }
+
+                const btnOpen = evento.target.closest(
+                    "[data-acao-laudo='open'], [data-action='open']"
+                );
+
+                if (btnOpen) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    const item = resolverItemHistoricoAPartirEvento(btnOpen);
+                    fecharMenusHistorico();
+                    abrirItemHistorico(item, "historico_menu_open");
                     return;
                 }
 
@@ -492,11 +550,22 @@
 
                     const item = resolverItemHistoricoAPartirEvento(btnDelete);
                     const laudoId = obterLaudoIdDoEvento(btnDelete);
+                    fecharMenusHistorico();
                     await excluirLaudo(laudoId, item);
                 }
             },
             true
         );
+
+        document.addEventListener("click", (evento) => {
+            if (evento.target.closest(".inspetor-sidebar-report__actions")) return;
+            fecharMenusHistorico();
+        });
+
+        document.addEventListener("keydown", (evento) => {
+            if (evento.key !== "Escape") return;
+            fecharMenusHistorico();
+        });
     }
 
     // =========================================================

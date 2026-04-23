@@ -721,3 +721,112 @@ body.pagina-chat-dashboard-v2 #btn-workspace-toggle-rail .material-symbols-round
         flex-wrap: nowrap;
     }
 }
+
+body.pagina-chat-dashboard-v2 .technical-record-header__focused-bar {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .technical-record-header__row {
+    min-height: 0;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .technical-record-header__main {
+    gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .technical-record-header__backline {
+    align-items: center;
+}
+
+body.pagina-chat-dashboard-v2 .technical-record-back--subtle {
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 999px !important;
+    border-color: rgba(203, 213, 225, 0.92) !important;
+    background: rgba(255, 255, 255, 0.72) !important;
+    color: var(--vf-text-muted) !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-chat-summary {
+    display: grid;
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-chat-summary__note {
+    margin: 0;
+    color: var(--vf-text-soft) !important;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-hero-strip {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-hero-stat {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    min-height: 0;
+    padding: 8px 12px;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-hero-stat span,
+body.pagina-chat-dashboard-v2 .workspace-hero-stat strong {
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-hero-stat strong {
+    font-size: 12px;
+    color: var(--vf-text) !important;
+}
+
+body.pagina-chat-dashboard-v2 .thread-nav {
+    margin-bottom: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .thread-nav-copy {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .thread-nav-copy__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .thread-nav-copy__row strong {
+    color: var(--vf-text) !important;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.pagina-chat-dashboard-v2 .thread-nav-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(241, 245, 249, 0.92);
+    color: var(--vf-text-soft) !important;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+body.pagina-chat-dashboard-v2 .thread-nav-shell {
+    display: grid;
+    gap: 8px;
+}

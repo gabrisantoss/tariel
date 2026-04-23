@@ -50,23 +50,52 @@
                 <span class="inspetor-sidebar-report__actions">
                     <button
                         type="button"
-                        class="btn-acao-laudo btn-pin-laudo"
-                        data-acao-laudo="pin"
-                        aria-label="{% if item_pinado %}Desafixar laudo{% else %}Fixar laudo{% endif %}"
-                        aria-pressed="{{ 'true' if item_pinado else 'false' }}"
-                        title="{% if item_pinado %}Desafixar laudo{% else %}Fixar laudo{% endif %}"
+                        class="btn-acao-laudo btn-menu-laudo"
+                        data-acao-laudo="menu"
+                        aria-label="Abrir ações da conversa"
+                        aria-haspopup="menu"
+                        aria-expanded="false"
+                        title="Mais ações"
                     >
-                        <span class="material-symbols-rounded" aria-hidden="true">{% if item_pinado %}keep{% else %}push_pin{% endif %}</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>
                     </button>
-                    <button
-                        type="button"
-                        class="btn-acao-laudo btn-deletar-laudo"
-                        data-acao-laudo="delete"
-                        aria-label="Excluir laudo"
-                        title="Excluir laudo"
-                    >
-                        <span class="material-symbols-rounded" aria-hidden="true">delete</span>
-                    </button>
+
+                    <span class="inspetor-sidebar-report__menu" role="menu" aria-label="Ações da conversa" hidden>
+                        <button
+                            type="button"
+                            class="inspetor-sidebar-report__menu-item"
+                            data-acao-laudo="open"
+                            role="menuitem"
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">chat</span>
+                            <span>Abrir</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="inspetor-sidebar-report__menu-item btn-pin-laudo"
+                            data-acao-laudo="pin"
+                            role="menuitem"
+                            aria-label="{% if item_pinado %}Desafixar laudo{% else %}Fixar laudo{% endif %}"
+                            aria-pressed="{{ 'true' if item_pinado else 'false' }}"
+                            title="{% if item_pinado %}Desafixar laudo{% else %}Fixar laudo{% endif %}"
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">{% if item_pinado %}keep{% else %}push_pin{% endif %}</span>
+                            <span>{% if item_pinado %}Desafixar{% else %}Fixar{% endif %}</span>
+                        </button>
+                        {% if item.permite_exclusao | default(false, true) %}
+                        <button
+                            type="button"
+                            class="inspetor-sidebar-report__menu-item inspetor-sidebar-report__menu-item--danger btn-deletar-laudo"
+                            data-acao-laudo="delete"
+                            role="menuitem"
+                            aria-label="Excluir laudo"
+                            title="Excluir laudo"
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                            <span>Excluir</span>
+                        </button>
+                        {% endif %}
+                    </span>
                 </span>
             {% endif %}
         </span>

@@ -278,10 +278,12 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="btn-toggle-humano"' in workspace_html
     assert 'id="rodape-contexto-titulo"' in workspace_html
     assert 'id="rodape-contexto-status"' in workspace_html
-    assert 'class="btn-secundario btn-home-cabecalho technical-record-back"' in workspace_header_html
+    assert 'class="btn-secundario btn-home-cabecalho technical-record-back technical-record-back--subtle"' in workspace_header_html
     assert 'data-action="go-home"' in workspace_header_html
     assert 'id="workspace-titulo-laudo"' in workspace_header_html
     assert 'id="workspace-status-badge"' in workspace_header_html
+    assert 'class="workspace-chat-summary"' in workspace_header_html
+    assert 'id="workspace-entry-mode-note"' in workspace_header_html
     assert 'id="workspace-summary-state"' in workspace_header_html
     assert 'id="workspace-summary-evidencias"' in workspace_header_html
     assert 'id="workspace-summary-pendencias"' in workspace_header_html
@@ -300,6 +302,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'class="thread-nav"' in workspace_toolbar_html
     assert 'id="workspace-nav-caption"' in workspace_toolbar_html
     assert 'id="workspace-nav-status"' in workspace_toolbar_html
+    assert "Conversa atual" in workspace_toolbar_html
     assert 'data-tab="conversa"' in workspace_toolbar_html
     assert 'data-tab="historico"' in workspace_toolbar_html
     assert 'data-tab="anexos"' in workspace_toolbar_html
@@ -1715,6 +1718,7 @@ def test_tela_templates_laudo_separa_biblioteca_e_editor_word() -> None:
 def test_chat_sidebar_e_modal_perfil_expoem_controles_essenciais() -> None:
     raiz = Path(__file__).resolve().parents[1]
     sidebar_html = (raiz / "templates" / "inspetor" / "_sidebar.html").read_text(encoding="utf-8")
+    sidebar_macros_html = (raiz / "templates" / "inspetor" / "_macros.html").read_text(encoding="utf-8")
     index_html = (raiz / "templates" / "index.html").read_text(encoding="utf-8")
     perfil_modal_html = (raiz / "templates" / "inspetor" / "modals" / "_perfil.html").read_text(encoding="utf-8")
 
@@ -1724,9 +1728,15 @@ def test_chat_sidebar_e_modal_perfil_expoem_controles_essenciais() -> None:
     assert 'id="secao-laudos-historico"' in sidebar_html
     assert 'id="estado-vazio-historico"' in sidebar_html
     assert 'id="btn-abrir-perfil-chat"' in sidebar_html
+    assert 'id="menu-perfil-chat"' in sidebar_html
+    assert 'data-profile-menu-action="add-account"' in sidebar_html
+    assert 'data-profile-menu-action="profile"' in sidebar_html
+    assert 'placeholder="Buscar em chats"' in sidebar_html
+    assert 'data-acao-laudo="menu"' in sidebar_macros_html
+    assert 'data-acao-laudo="open"' in sidebar_macros_html
     assert 'data-foto-url="' in sidebar_html
     assert 'class="inspetor-user-card__avatar"' in sidebar_html
-    assert "Perfil e personalização" in sidebar_html
+    assert "Adicionar conta" in sidebar_html
     assert "inspetor-runtime-compat" not in sidebar_html
 
     assert '{% include "inspetor/modals/_perfil.html" %}' in index_html

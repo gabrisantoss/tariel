@@ -1635,3 +1635,163 @@ body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--c
         pointer-events: none !important;
     }
 }
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar__footer {
+    position: relative;
+    gap: 10px;
+    padding-top: 14px;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-menu {
+    position: relative;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-trigger {
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 58px;
+    padding: 12px;
+    border-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-menu__panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 10px);
+    display: grid;
+    gap: 4px;
+    padding: 8px;
+    border: 1px solid rgba(203, 213, 225, 0.96);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+    backdrop-filter: blur(14px);
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    text-decoration: none;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-menu__item .material-symbols-rounded {
+    font-size: 18px;
+    color: inherit;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-menu__item:hover,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-menu__item:focus-visible {
+    background: rgba(241, 245, 249, 0.9);
+    color: #0f172a;
+    outline: none;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-menu__item--danger {
+    color: #9f1239;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-menu__logout {
+    margin: 0;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report {
+    padding-right: 54px !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__side {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex !important;
+    align-items: flex-start;
+    justify-content: flex-end;
+    pointer-events: none;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__actions {
+    position: relative;
+    display: flex !important;
+    align-items: center;
+    gap: 0;
+    pointer-events: auto;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .pill-status-laudo {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .btn-menu-laudo {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.94);
+    pointer-events: none;
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease,
+        background 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report:hover .btn-menu-laudo,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report:focus-within .btn-menu-laudo,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .btn-menu-laudo[aria-expanded="true"] {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__menu {
+    position: absolute;
+    top: 34px;
+    right: 0;
+    z-index: 3;
+    display: grid;
+    gap: 4px;
+    min-width: 166px;
+    padding: 6px;
+    border: 1px solid rgba(203, 213, 225, 0.96);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.14);
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 36px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__menu-item:hover,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__menu-item:focus-visible {
+    background: rgba(241, 245, 249, 0.92);
+    outline: none;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__menu-item--danger {
+    color: #9f1239;
+}

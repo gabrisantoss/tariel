@@ -1,33 +1,18 @@
 {% set workspace_assistant_inicial = workspace_assistant_inicial | default(false) %}
 
 <header class="chat-thread-toolbar technical-record-header" data-workspace-header data-component-slice="workspace-chrome">
-    <div class="technical-record-header__focused-bar" data-focused-conversation-topbar>
-        <a
-            href="/app/?home=1"
-            class="btn-secundario technical-record-back technical-record-back--focused"
-            data-action="go-home"
-            data-home-destino="/app/?home=1"
-            aria-label="Voltar para o Portal do Inspetor"
-        >
-            <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
-            <span>Portal</span>
-        </a>
-
-        <span class="technical-record-status-pill technical-record-status-pill--focused">CONVERSA</span>
-    </div>
-
     <div class="technical-record-header__row">
         <div class="technical-record-header__main">
             <div class="technical-record-header__backline">
                 <a
                     href="/app/?home=1"
-                    class="btn-secundario btn-home-cabecalho technical-record-back"
+                    class="btn-secundario btn-home-cabecalho technical-record-back technical-record-back--subtle"
                     data-action="go-home"
                     data-home-destino="/app/?home=1"
-                    aria-label="Voltar para o Portal do Inspetor"
+                    aria-label="Voltar para a tela inicial do chat"
                 >
-                    <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
-                    <span>Portal</span>
+                    <span class="material-symbols-rounded" aria-hidden="true">west</span>
+                    <span>Início</span>
                 </a>
 
                 <div class="technical-record-ident">
@@ -43,32 +28,26 @@
                 </div>
             </div>
 
-            <div class="technical-record-copy">
-                <span id="workspace-eyebrow" class="technical-record-copy__eyebrow">Assistente operacional</span>
-                <h1 id="workspace-headline">Converse com o assistente</h1>
-                <p id="workspace-description">
-                    Descreva o equipamento, cenario ou duvida tecnica. A primeira mensagem organiza a sessao e abre o laudo.
-                </p>
-                <p id="workspace-entry-mode-note" class="technical-record-copy__note" hidden></p>
-            </div>
-
-            <div class="workspace-hero-strip" aria-label="Resumo operacional do laudo">
-                <article class="workspace-hero-stat workspace-hero-stat--state">
-                    <span>Estado atual</span>
-                    <strong id="workspace-summary-state">CHAT LIVRE</strong>
-                </article>
-                <article class="workspace-hero-stat">
-                    <span>Evidências</span>
-                    <strong id="workspace-summary-evidencias">0</strong>
-                </article>
-                <article class="workspace-hero-stat">
-                    <span>Pendências</span>
-                    <strong id="workspace-summary-pendencias">0</strong>
-                </article>
-                <article class="workspace-hero-stat">
-                    <span>Mesa técnica</span>
-                    <strong id="workspace-summary-mesa">Canal disponível</strong>
-                </article>
+            <div class="workspace-chat-summary" aria-label="Resumo operacional da conversa">
+                <p id="workspace-entry-mode-note" class="workspace-chat-summary__note" hidden></p>
+                <div class="workspace-hero-strip" aria-label="Resumo operacional do laudo">
+                    <article class="workspace-hero-stat workspace-hero-stat--state">
+                        <span>Estado</span>
+                        <strong id="workspace-summary-state">CHAT LIVRE</strong>
+                    </article>
+                    <article class="workspace-hero-stat">
+                        <span>Evidências</span>
+                        <strong id="workspace-summary-evidencias">0</strong>
+                    </article>
+                    <article class="workspace-hero-stat">
+                        <span>Pendências</span>
+                        <strong id="workspace-summary-pendencias">0</strong>
+                    </article>
+                    <article class="workspace-hero-stat">
+                        <span>Mesa</span>
+                        <strong id="workspace-summary-mesa">Canal disponível</strong>
+                    </article>
+                </div>
             </div>
 
             <section

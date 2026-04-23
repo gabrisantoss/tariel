@@ -4041,3 +4041,20 @@ Atualizado em `2026-04-23`.
 - `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k "previa_finalizacao or sem_mesa"`
 - `make web-ci`
 - `make hygiene-check`
+
+### `PKT-CHAT-INSPETOR-NAVEGACAO-01` — Shell chat-first com clareza de conversa
+
+- `status`: em andamento em `2026-04-23`; o Inspetor está migrando do shell híbrido `portal/workspace` para uma navegação centrada no chat, com sidebar de histórico, menu compacto de conta e topo menos ruidoso.
+
+### Escopo
+
+- consolidar a sidebar esquerda como navegação primária com `Novo chat`, busca e histórico de conversas.
+- substituir ações diretas no hover por menu contextual `...` nas conversas do histórico.
+- trocar o rodapé lateral por menu compacto de conta, preservando o modal de perfil como ação interna.
+- reduzir o peso visual do topo do workspace para manter o laudo como contexto da conversa, não como outro sistema.
+
+### Validação
+
+- `node --check web/static/js/chat/chat_perfil_usuario.js`
+- `node --check web/static/js/chat/chat_painel_historico_acoes.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k "templates_chat_mantem_controles_essenciais_de_ui or templates_sidebar_chat"`

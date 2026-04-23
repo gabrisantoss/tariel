@@ -37,7 +37,7 @@
                 <input
                     type="search"
                     id="busca-historico-input"
-                    placeholder="Buscar conversas..."
+                    placeholder="Buscar em chats"
                     autocomplete="off"
                     spellcheck="false"
                 >
@@ -86,34 +86,78 @@
     </div>
 
     <div class="inspetor-sidebar__footer">
-        <div class="inspetor-sidebar-section-heading inspetor-sidebar-section-heading--footer">
-            <strong>Configurações</strong>
-        </div>
-
-        <button
-            type="button"
-            id="btn-abrir-perfil-chat"
-            class="inspetor-user-card inspetor-user-card--settings"
-            data-nome="{{ usuario_nome | e }}"
-            data-email="{{ usuario_email | e }}"
-            data-telefone="{{ usuario_telefone | e }}"
-            data-foto-url="{{ usuario_foto_url | e }}"
-            aria-label="Abrir perfil do usuário"
-        >
-            <span class="inspetor-user-card__avatar" aria-hidden="true">{{ usuario_nome[:1] | upper }}</span>
-            <span class="inspetor-user-card__copy">
-                <strong>{{ usuario_nome }}</strong>
-                <span>Perfil e personalização</span>
-            </span>
-            <span class="material-symbols-rounded inspetor-user-card__chevron" aria-hidden="true">tune</span>
-        </button>
-
-        <form action="/app/logout" method="POST" class="inspetor-logout-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <button type="submit" class="inspetor-logout-btn inspetor-logout-btn--wide" aria-label="Sair">
-                <span class="material-symbols-rounded" aria-hidden="true">logout</span>
-                <span>Sair</span>
+        <div class="inspetor-account-menu" data-account-menu>
+            <button
+                type="button"
+                id="btn-abrir-perfil-chat"
+                class="inspetor-user-card inspetor-user-card--settings inspetor-account-trigger"
+                data-nome="{{ usuario_nome | e }}"
+                data-email="{{ usuario_email | e }}"
+                data-telefone="{{ usuario_telefone | e }}"
+                data-foto-url="{{ usuario_foto_url | e }}"
+                aria-label="Abrir menu da conta"
+                aria-haspopup="menu"
+                aria-expanded="false"
+            >
+                <span class="inspetor-user-card__avatar" aria-hidden="true">{{ usuario_nome[:1] | upper }}</span>
+                <span class="inspetor-user-card__copy">
+                    <strong>{{ usuario_nome }}</strong>
+                    <span>{{ usuario_email }}</span>
+                </span>
+                <span class="material-symbols-rounded inspetor-user-card__chevron" aria-hidden="true">more_horiz</span>
             </button>
-        </form>
+
+            <div
+                id="menu-perfil-chat"
+                class="inspetor-account-menu__panel"
+                role="menu"
+                aria-label="Menu da conta"
+                hidden
+            >
+                <button
+                    type="button"
+                    class="inspetor-account-menu__item"
+                    data-profile-menu-action="add-account"
+                    role="menuitem"
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
+                    <span>Adicionar conta</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="inspetor-account-menu__item"
+                    data-profile-menu-action="profile"
+                    role="menuitem"
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">badge</span>
+                    <span>Perfil</span>
+                </button>
+
+                <a
+                    href="/app/?home=1"
+                    class="inspetor-account-menu__item"
+                    data-profile-menu-action="home"
+                    role="menuitem"
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">home</span>
+                    <span>Página inicial</span>
+                </a>
+
+                <form action="/app/logout" method="POST" class="inspetor-account-menu__logout">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button
+                        type="submit"
+                        class="inspetor-account-menu__item inspetor-account-menu__item--danger"
+                        data-profile-menu-action="logout"
+                        role="menuitem"
+                        aria-label="Sair"
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+                        <span>Sair</span>
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </aside>
