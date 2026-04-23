@@ -94,6 +94,14 @@
                     dependencies.obterSnapshotEstadoInspectorAtual?.()
                 )
             );
+        if (
+            simulacaoFerramentasLocal &&
+            chromeTecnicoOperacional &&
+            !layoutCompacto &&
+            dependencies.workspaceViewSuportaRail?.(viewAtual)
+        ) {
+            dependencies.estado.workspaceRailExpanded = true;
+        }
         const finalizacaoVisivel =
             workspaceAtivo &&
             !assistantAtivo &&
@@ -114,15 +122,6 @@
                 viewAtual === "inspection_conversation" ||
                 (viewAtual === "inspection_record" && dependencies.modoEntradaEvidenceFirstAtivo?.())
             );
-
-        if (
-            simulacaoFerramentasLocal &&
-            chromeTecnicoOperacional &&
-            !layoutCompacto &&
-            dependencies.workspaceViewSuportaRail?.(viewAtual)
-        ) {
-            dependencies.estado.workspaceRailExpanded = true;
-        }
 
         if (el.rodapeEntrada) {
             el.rodapeEntrada.hidden = !composerVisivel;
