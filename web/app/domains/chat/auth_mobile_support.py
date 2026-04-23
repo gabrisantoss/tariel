@@ -1054,6 +1054,11 @@ def serializar_laudo_portal_inspetor(
         "entry_mode_preference": str(resumo.get("entry_mode_preference") or ""),
         "entry_mode_effective": str(resumo.get("entry_mode_effective") or ""),
         "entry_mode_reason": str(resumo.get("entry_mode_reason") or ""),
+        "permite_exclusao": bool(resumo.get("permite_exclusao", False)),
+        "permite_reabrir": bool(resumo.get("permite_reabrir", False)),
+        "active_owner_role": str(resumo.get("active_owner_role") or ""),
+        "case_lifecycle_status": str(resumo.get("case_lifecycle_status") or ""),
+        "allowed_surface_actions": list(resumo.get("allowed_surface_actions") or []),
     }
     if official_issue_summary is not None:
         payload["official_issue_summary"] = official_issue_summary
