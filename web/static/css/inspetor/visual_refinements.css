@@ -390,6 +390,40 @@ body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-attachment {
     border-radius: 16px;
 }
 
+body.pagina-chat-dashboard-v2 #area-mensagens .img-anexo {
+    display: block;
+    width: auto;
+    max-width: min(100%, 420px);
+    height: auto;
+    max-height: 360px;
+    margin-top: 12px;
+    border-radius: 18px;
+    object-fit: contain;
+    object-position: center;
+    background: rgba(248, 251, 253, 0.92);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .img-anexo,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--user .img-anexo {
+    margin-left: auto;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--assistant .img-anexo,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--assistant .img-anexo,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--typing .img-anexo,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--typing .img-anexo {
+    margin-right: auto;
+}
+
+@media (max-width: 780px) {
+    body.pagina-chat-dashboard-v2 #area-mensagens .img-anexo {
+        max-width: min(100%, 280px);
+        max-height: 280px;
+        border-radius: 16px;
+    }
+}
+
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-shell {
     gap: 14px;
 }
