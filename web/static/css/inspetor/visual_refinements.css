@@ -583,6 +583,126 @@ body.pagina-chat-dashboard-v2 .modal-overlay-perfil {
     backdrop-filter: blur(14px);
 }
 
+body.pagina-chat-dashboard-v2 .modal-overlay-gate {
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(14px);
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate {
+    width: min(760px, calc(100vw - 32px));
+    max-width: 760px;
+    border: 1px solid var(--vf-border) !important;
+    border-radius: 28px !important;
+    background:
+        radial-gradient(circle at top right, rgba(31, 94, 142, 0.08), transparent 32%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 250, 252, 0.97)) !important;
+    color: var(--vf-text) !important;
+    box-shadow: 0 36px 72px rgba(15, 23, 42, 0.24) !important;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .modal-header,
+body.pagina-chat-dashboard-v2 .modal-container-gate .gate-acoes {
+    border-color: var(--vf-border) !important;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .modal-header {
+    padding: 24px 26px 18px;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .modal-header h2,
+body.pagina-chat-dashboard-v2 .modal-container-gate h3,
+body.pagina-chat-dashboard-v2 .modal-container-gate label,
+body.pagina-chat-dashboard-v2 .modal-container-gate summary {
+    color: var(--vf-text) !important;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .modal-header p,
+body.pagina-chat-dashboard-v2 .modal-container-gate .gate-resumo,
+body.pagina-chat-dashboard-v2 .modal-container-gate .gate-roteiro-resumo,
+body.pagina-chat-dashboard-v2 .modal-container-gate li,
+body.pagina-chat-dashboard-v2 .modal-container-gate #gate-qualidade-descricao,
+body.pagina-chat-dashboard-v2 .modal-container-gate #texto-gate-qualidade-resumo,
+body.pagina-chat-dashboard-v2 .modal-container-gate #texto-gate-override-responsabilidade {
+    color: var(--vf-text-muted) !important;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .modal-body-gate {
+    gap: 18px !important;
+    padding: 22px 26px 24px !important;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .material-symbols-rounded {
+    color: inherit;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .gate-template-pill,
+body.pagina-chat-dashboard-v2 .modal-container-gate .bloco-gate-qualidade,
+body.pagina-chat-dashboard-v2 .modal-container-gate .gate-checklist-completo {
+    border: 1px solid var(--vf-border) !important;
+    border-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .gate-template-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    padding: 10px 14px;
+    color: var(--vf-accent) !important;
+    font-weight: 700;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .bloco-gate-qualidade,
+body.pagina-chat-dashboard-v2 .modal-container-gate .gate-checklist-completo {
+    padding: 16px 18px;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .lista-gate-qualidade {
+    margin: 10px 0 0;
+    padding-left: 18px;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .lista-gate-qualidade li + li {
+    margin-top: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate textarea {
+    width: 100%;
+    min-height: 120px;
+    margin-top: 8px;
+    padding: 12px 14px;
+    border: 1px solid var(--vf-border) !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    color: var(--vf-text) !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate textarea::placeholder {
+    color: var(--vf-text-soft) !important;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate textarea:focus {
+    outline: none;
+    border-color: var(--vf-border-strong) !important;
+    box-shadow: var(--vf-focus-ring) !important;
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .gate-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 18px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(247, 250, 252, 0.96) 34%);
+}
+
+body.pagina-chat-dashboard-v2 .modal-container-gate .gate-acoes > * {
+    flex: 0 0 auto;
+}
+
 body.pagina-chat-dashboard-v2 .modal-container-perfil {
     width: min(620px, calc(100vw - 32px));
     max-width: 620px;
