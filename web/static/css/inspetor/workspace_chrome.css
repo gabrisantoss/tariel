@@ -85,6 +85,10 @@ body.pagina-chat-dashboard-v2 .workspace-shell-toggle[aria-expanded="false"] .ma
     color: var(--vf-text-soft) !important;
 }
 
+body.pagina-chat-dashboard-v2 #btn-workspace-toggle-left-sidebar {
+    display: none !important;
+}
+
 body.pagina-chat-dashboard-v2 .technical-record-ident {
     display: grid;
     gap: 2px;
@@ -616,8 +620,24 @@ body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-stage="assistant"] .te
 }
 
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid {
-    --workspace-thread-column-max: 812px;
+    --workspace-thread-column-max: 960px;
     --workspace-rail-width: clamp(300px, 23vw, 320px);
+    --workspace-message-column-max: min(1040px, calc(100vw - 520px));
+}
+
+body.pagina-chat-dashboard-v2:not(.sidebar-colapsada)[data-workspace-rail-visible="false"] .chat-dashboard-grid {
+    --workspace-thread-column-max: 1080px;
+    --workspace-message-column-max: min(1120px, calc(100vw - 340px));
+}
+
+body.pagina-chat-dashboard-v2.sidebar-colapsada .chat-dashboard-grid {
+    --workspace-thread-column-max: 1120px;
+    --workspace-message-column-max: min(1160px, calc(100vw - 260px));
+}
+
+body.pagina-chat-dashboard-v2.sidebar-colapsada[data-workspace-rail-visible="false"] .chat-dashboard-grid {
+    --workspace-thread-column-max: 1320px;
+    --workspace-message-column-max: min(1240px, calc(100vw - 120px));
 }
 
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_mesa"] {

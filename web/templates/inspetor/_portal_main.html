@@ -41,6 +41,17 @@
     <div class="inspetor-shell-grid">
         {% include "inspetor/_sidebar.html" %}
 
+        <button
+            type="button"
+            id="btn-sidebar-edge-toggle"
+            class="inspetor-sidebar-edge-toggle"
+            aria-label="Esconder ou mostrar histórico lateral"
+            aria-controls="barra-historico"
+            aria-expanded="true"
+        >
+            <span class="material-symbols-rounded" aria-hidden="true">left_panel_close</span>
+        </button>
+
         <div class="inspetor-main" data-screen-host="inspector">
             {% include "inspetor/_portal_home.html" %}
             {% include "inspetor/_workspace.html" %}

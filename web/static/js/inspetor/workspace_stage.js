@@ -98,7 +98,8 @@
             simulacaoFerramentasLocal &&
             chromeTecnicoOperacional &&
             !layoutCompacto &&
-            dependencies.workspaceViewSuportaRail?.(viewAtual)
+            dependencies.workspaceViewSuportaRail?.(viewAtual) &&
+            typeof dependencies.estado.workspaceRailExpanded !== "boolean"
         ) {
             dependencies.estado.workspaceRailExpanded = true;
         }

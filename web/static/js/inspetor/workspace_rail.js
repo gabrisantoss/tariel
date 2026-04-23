@@ -23,8 +23,10 @@
 
         const view = resolveWorkspaceView?.(screenAtual);
         if (simulacaoFerramentasLocal && workspaceViewSuportaRail?.(view)) {
-            estado.workspaceRailExpanded = true;
-            return true;
+            if (typeof estado.workspaceRailExpanded !== "boolean") {
+                estado.workspaceRailExpanded = true;
+            }
+            return !!estado.workspaceRailExpanded;
         }
         return !!(workspaceViewSuportaRail?.(view) && estado.workspaceRailExpanded);
     }

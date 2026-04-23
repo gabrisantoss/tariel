@@ -546,25 +546,29 @@
                 });
             });
             const sincronizarBotaoSidebarEsquerda = () => {
-                const botao = el.btnWorkspaceToggleLeftSidebar;
+                const botoes = [el.btnWorkspaceToggleLeftSidebar, el.btnSidebarEdgeToggle].filter(Boolean);
                 const sidebar = document.getElementById("barra-historico");
-                if (!botao || !sidebar) return;
+                if (!botoes.length || !sidebar) return;
 
                 const aberta = !sidebar.classList.contains("oculta");
-                botao.setAttribute("aria-expanded", aberta ? "true" : "false");
-                botao.setAttribute(
-                    "aria-label",
-                    aberta ? "Esconder histórico lateral" : "Mostrar histórico lateral"
-                );
-                const icone = botao.querySelector(".material-symbols-rounded");
-                if (icone) {
-                    icone.textContent = aberta ? "left_panel_close" : "left_panel_open";
-                }
+                botoes.forEach((botao) => {
+                    botao.setAttribute("aria-expanded", aberta ? "true" : "false");
+                    botao.setAttribute(
+                        "aria-label",
+                        aberta ? "Esconder histórico lateral" : "Mostrar histórico lateral"
+                    );
+                    const icone = botao.querySelector(".material-symbols-rounded");
+                    if (icone) {
+                        icone.textContent = aberta ? "left_panel_close" : "left_panel_open";
+                    }
+                });
             };
-            el.btnWorkspaceToggleLeftSidebar?.addEventListener("click", () => {
+            const alternarSidebarEsquerda = () => {
                 document.getElementById("btn-toggle-ui")?.click();
                 window.setTimeout(sincronizarBotaoSidebarEsquerda, 0);
-            });
+            };
+            el.btnWorkspaceToggleLeftSidebar?.addEventListener("click", alternarSidebarEsquerda);
+            el.btnSidebarEdgeToggle?.addEventListener("click", alternarSidebarEsquerda);
             sincronizarBotaoSidebarEsquerda();
             window.addEventListener("resize", sincronizarBotaoSidebarEsquerda);
             document.getElementById("btn-toggle-ui")?.addEventListener("click", () => {
