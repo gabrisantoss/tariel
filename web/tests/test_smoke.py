@@ -1550,6 +1550,8 @@ def test_logins_e_blueprint_nao_reintroduzem_autofill_dev() -> None:
     assert "BOOTSTRAP_ADMIN_EMAIL" in render_yaml
     assert "BOOTSTRAP_ADMIN_PASSWORD" in render_yaml
     assert "rootDir: web" in render_yaml
+    assert 'sessionStorage.setItem("tariel_force_home_landing", "1")' not in login_app
+    assert 'sessionStorage.removeItem("tariel_force_home_landing")' in login_app
 
 
 def test_manifesto_aponta_para_icones_existentes_e_sem_marca_legada() -> None:

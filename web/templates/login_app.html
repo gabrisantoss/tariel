@@ -56,7 +56,7 @@
             document.querySelectorAll("[data-auth-form]").forEach((form) => {
                 form.addEventListener("submit", () => {
                     try {
-                        sessionStorage.setItem("tariel_force_home_landing", "1");
+                        sessionStorage.removeItem("tariel_force_home_landing");
                         sessionStorage.removeItem("tariel_workspace_retomada_home_pendente");
                         localStorage.removeItem("tariel_laudo_atual");
                     } catch (_) {
