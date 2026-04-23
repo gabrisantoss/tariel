@@ -970,6 +970,20 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid {
     --workspace-user-message-max: 720px;
 }
 
+body.pagina-chat-dashboard-v2.sidebar-colapsada .chat-dashboard-grid {
+    --workspace-message-column-max: min(1180px, 100%);
+    --workspace-user-message-max: 780px;
+}
+
+body.pagina-chat-dashboard-v2[data-workspace-rail-visible="false"] .chat-dashboard-grid {
+    --workspace-message-column-max: min(1120px, 100%);
+}
+
+body.pagina-chat-dashboard-v2.sidebar-colapsada[data-workspace-rail-visible="false"] .chat-dashboard-grid {
+    --workspace-message-column-max: min(1240px, 100%);
+    --workspace-user-message-max: 820px;
+}
+
 body.pagina-chat-dashboard-v2.sidebar-colapsada[data-workspace-rail-visible="false"] .chat-dashboard-grid #area-mensagens[data-conversation-variant="technical"],
 body.pagina-chat-dashboard-v2.sidebar-colapsada[data-workspace-rail-visible="false"] .rodape-entrada[data-conversation-variant="technical"],
 body.pagina-chat-dashboard-v2.sidebar-colapsada[data-workspace-rail-visible="false"] .thread-nav {

@@ -686,82 +686,90 @@ body.pagina-chat-dashboard-v2 .inspetor-main {
 
 body.pagina-chat-dashboard-v2 .inspetor-sidebar-edge-toggle {
     position: fixed;
-    top: 18px;
-    left: calc(var(--shell-nav-w) - 16px);
+    top: 22px;
+    left: calc(var(--shell-nav-w) - 18px);
     z-index: 45;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    min-height: 32px;
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
     padding: 0;
-    border: 1px solid rgba(186, 201, 217, 0.92) !important;
+    border: 1px solid rgba(186, 201, 217, 0.9) !important;
     border-radius: 999px !important;
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
     color: var(--vf-text-muted) !important;
-    box-shadow: var(--vf-shadow-sm) !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12) !important;
     transition:
         left var(--t-fast, .12s) ease,
         transform var(--t-fast, .12s) ease,
         border-color var(--t-fast, .12s) ease,
-        color var(--t-fast, .12s) ease;
+        color var(--t-fast, .12s) ease,
+        box-shadow var(--t-fast, .12s) ease,
+        background-color var(--t-fast, .12s) ease;
 }
 
 body.pagina-chat-dashboard-v2 .inspetor-sidebar-edge-toggle:hover,
 body.pagina-chat-dashboard-v2 .inspetor-sidebar-edge-toggle:focus-visible {
     border-color: rgba(31, 94, 142, 0.28) !important;
     color: var(--vf-accent) !important;
+    background: rgba(248, 251, 254, 0.99) !important;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16) !important;
     transform: translateY(-1px);
 }
 
 body.pagina-chat-dashboard-v2 .inspetor-sidebar-edge-toggle .material-symbols-rounded {
-    font-size: 18px;
+    font-size: 19px;
 }
 
 body.pagina-chat-dashboard-v2.sidebar-colapsada .inspetor-sidebar-edge-toggle {
-    left: 12px;
+    left: 14px;
 }
 
 body.pagina-chat-dashboard-v2 .inspetor-rail-edge-toggle {
     position: fixed;
-    top: 18px;
-    right: 12px;
+    top: 22px;
+    right: 14px;
     z-index: 45;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    min-height: 32px;
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
     padding: 0;
-    border: 1px solid rgba(186, 201, 217, 0.92) !important;
+    border: 1px solid rgba(186, 201, 217, 0.9) !important;
     border-radius: 999px !important;
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
     color: var(--vf-text-muted) !important;
-    box-shadow: var(--vf-shadow-sm) !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12) !important;
     transition:
         right var(--t-fast, .12s) ease,
         transform var(--t-fast, .12s) ease,
         border-color var(--t-fast, .12s) ease,
-        color var(--t-fast, .12s) ease;
+        color var(--t-fast, .12s) ease,
+        box-shadow var(--t-fast, .12s) ease,
+        background-color var(--t-fast, .12s) ease;
 }
 
 body.pagina-chat-dashboard-v2 .inspetor-rail-edge-toggle:hover,
 body.pagina-chat-dashboard-v2 .inspetor-rail-edge-toggle:focus-visible {
     border-color: rgba(31, 94, 142, 0.28) !important;
     color: var(--vf-accent) !important;
+    background: rgba(248, 251, 254, 0.99) !important;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16) !important;
     transform: translateY(-1px);
 }
 
 body.pagina-chat-dashboard-v2 .inspetor-rail-edge-toggle .material-symbols-rounded {
-    font-size: 18px;
+    font-size: 19px;
 }
 
 body.pagina-chat-dashboard-v2[data-workspace-rail-visible="true"] .inspetor-rail-edge-toggle {
-    right: calc(var(--workspace-rail-width, 320px) - 16px);
+    right: calc(var(--workspace-rail-width, 320px) - 18px);
 }
 
 body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-main {

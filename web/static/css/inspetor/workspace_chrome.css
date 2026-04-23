@@ -8,9 +8,9 @@
    ========================================== */
 
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread-with-rail"] {
-    --workspace-thread-column-max: 952px;
-    grid-template-columns: minmax(0, 1fr) clamp(246px, 18vw, 272px);
-    gap: 16px;
+    --workspace-thread-column-max: 980px;
+    grid-template-columns: minmax(0, 1fr) clamp(252px, 18.5vw, 280px);
+    gap: 18px;
 }
 
 body.pagina-chat-dashboard-v2 .technical-record-copy {
