@@ -749,7 +749,12 @@
         const sidebar = obterSidebar();
         const overlay = obterOverlaySidebar();
 
-        if (!btnMenu || !sidebar || !overlay) return;
+        if (!sidebar || !overlay) return;
+
+        if (document.documentElement.dataset.uiSidebarEventWired !== "true") {
+            document.documentElement.dataset.uiSidebarEventWired = "true";
+            document.addEventListener("tariel:toggle-sidebar", sincronizarSidebarPorEvento);
+        }
 
         // Estado inicial correto por viewport:
         // desktop = lateral visível; mobile = lateral fechada.
@@ -765,7 +770,6 @@
             overlay.addEventListener("click", fecharSidebarSilencioso);
         }
 
-        document.addEventListener("tariel:toggle-sidebar", sincronizarSidebarPorEvento);
         document.addEventListener("tariel:screen-synced", sincronizarSidebarOverlayPorContexto);
         sincronizarSidebarOverlayPorContexto();
 
