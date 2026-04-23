@@ -423,10 +423,24 @@
                     mostrarToast("As pendências aparecem quando houver um laudo ativo.", "aviso", 2200);
                     return;
                 }
-                atualizarThreadWorkspace("correcoes", {
-                    persistirURL: true,
-                    replaceURL: true,
-                });
+                estado.workspaceRailExpanded = true;
+                sincronizarInspectorScreen();
+
+                const botaoPendenciasRail = Array.isArray(el.workspaceRailToggleButtons)
+                    ? el.workspaceRailToggleButtons.find(
+                        (botao) => String(botao?.dataset?.railToggle || "").trim() === "pendencias"
+                    )
+                    : null;
+
+                if (botaoPendenciasRail) {
+                    aplicarEstadoAcordeaoRailWorkspace(botaoPendenciasRail, true);
+                }
+
+                carregarPendenciasMesa({
+                    silencioso: false,
+                    filtro: estado.filtroPendencias,
+                    forcar: true,
+                }).catch(() => {});
             });
             el.btnPreviaChat?.addEventListener("click", async () => {
                 if (!obterLaudoAtivoIdSeguro()) {
