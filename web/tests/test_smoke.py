@@ -1805,6 +1805,7 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     workspace_elements_js = (raiz / "static" / "js" / "inspetor" / "workspace_page_elements.js").read_text(encoding="utf-8")
     ui_bindings_js = (raiz / "static" / "js" / "inspetor" / "ui_bindings.js").read_text(encoding="utf-8")
     reboot_css = (raiz / "static" / "css" / "inspetor" / "reboot.css").read_text(encoding="utf-8")
+    workspace_states_css = (raiz / "static" / "css" / "inspetor" / "workspace_states.css").read_text(encoding="utf-8")
 
     assert "simularPacoteReviewerServicesEmLocal" in app_shell_js
     assert "devInspectorToolSimulation" in app_shell_js
@@ -1819,3 +1820,4 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     assert "sincronizarBotaoSidebarEsquerda" in ui_bindings_js
     assert "btn-toggle-ui" in ui_bindings_js
     assert '.chat-dashboard-grid[data-workspace-rail-visible="true"]' in reboot_css
+    assert 'data-free-chat-conversation-active="true"][data-workspace-rail-visible="false"]' in workspace_states_css
