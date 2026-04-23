@@ -176,7 +176,102 @@ def build_ai_stream_response(
     )
 
 
+def build_free_assistant_stream_response(
+    *,
+    free_context,
+    dados,
+    cliente_ia_ativo,
+) -> StreamingResponse:
+    async def gerador_async():
+        loop = asyncio.get_running_loop()
+        fila: asyncio.Queue[str | None] = asyncio.Queue()
+        resposta_completa: list[str] = []
+        citacoes_deep: list[dict[str, Any]] = []
+        confianca_ia_payload: dict[str, Any] = {}
+
+        def executar_stream() -> None:
+            try:
+                gerador_stream = cliente_ia_ativo.gerar_resposta_stream(
+                    free_context.mensagem_para_ia,
+                    free_context.dados_imagem_validos or None,
+                    dados.setor,
+                    empresa_id=free_context.empresa_id_atual,
+                    historico=free_context.historico_dict,
+                    modo=dados.modo,
+                    texto_documento=free_context.texto_documento or None,
+                    nome_documento=free_context.nome_documento or None,
+                )
+
+                for pedaco in gerador_stream:
+                    asyncio.run_coroutine_threadsafe(fila.put(pedaco), loop)
+            except Exception:
+                logger.error("Erro no stream da IA em chat livre.", exc_info=True)
+                asyncio.run_coroutine_threadsafe(
+                    fila.put("\n\n**[Erro]** Falha interna."),
+                    loop,
+                )
+            finally:
+                asyncio.run_coroutine_threadsafe(fila.put(None), loop)
+
+        yield evento_sse({"chat_livre": True, "laudo_id": None})
+        contexto_execucao = copy_context()
+        future = loop.run_in_executor(executor_stream, contexto_execucao.run, executar_stream)
+
+        try:
+            while True:
+                try:
+                    pedaco = await asyncio.wait_for(
+                        fila.get(),
+                        timeout=TIMEOUT_FILA_STREAM_SEGUNDOS,
+                    )
+                except asyncio.TimeoutError:
+                    yield evento_sse({"texto": "\n\n**[Timeout]** A IA demorou muito."})
+                    break
+
+                if pedaco is None:
+                    break
+
+                if pedaco.startswith(PREFIXO_METADATA):
+                    continue
+
+                if pedaco.startswith(PREFIXO_CITACOES):
+                    try:
+                        citacoes_deep = json.loads(pedaco[len(PREFIXO_CITACOES) :])
+                        if not isinstance(citacoes_deep, list):
+                            citacoes_deep = []
+                    except Exception:
+                        citacoes_deep = []
+
+                    if citacoes_deep:
+                        yield evento_sse({"citacoes": citacoes_deep})
+                    continue
+
+                if pedaco.startswith(PREFIXO_MODO_HUMANO):
+                    continue
+
+                resposta_completa.append(pedaco)
+                yield evento_sse({"texto": pedaco})
+
+            texto_final_stream = "".join(resposta_completa)
+            if texto_final_stream.strip():
+                confianca_ia_payload = analisar_confianca_resposta_ia(texto_final_stream)
+                if confianca_ia_payload:
+                    yield evento_sse({"confianca_ia": confianca_ia_payload})
+
+            yield "data: [FIM]\n\n"
+        except asyncio.CancelledError:
+            future.cancel()
+            raise
+
+    return StreamingResponse(
+        gerador_async(),
+        media_type="text/event-stream",
+        headers=free_context.headers,
+    )
+
+
 __all__ = [
     "build_ai_stream_response",
+    "build_free_assistant_stream_response",
     "build_whisper_stream_response",
 ]

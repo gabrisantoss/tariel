@@ -102,6 +102,7 @@
             workspaceAssistantGovernanceTitle: documentRef.getElementById("workspace-assistant-governance-title"),
             workspaceAssistantGovernanceDetail: documentRef.getElementById("workspace-assistant-governance-detail"),
             btnAssistantLandingOpenInspecaoModal: documentRef.getElementById("btn-assistant-landing-open-inspecao-modal"),
+            btnIniciarLaudoChatLivre: documentRef.getElementById("btn-iniciar-laudo-chat-livre"),
             btnSidebarOpenInspecaoModal: documentRef.getElementById("btn-sidebar-open-inspecao-modal"),
             btnWorkspaceOpenInspecaoModal: documentRef.getElementById("btn-workspace-open-inspecao-modal"),
             painelPendenciasMesa: documentRef.getElementById("painel-pendencias-mesa"),

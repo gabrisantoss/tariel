@@ -188,6 +188,38 @@ body.pagina-chat-dashboard-v2 .technical-send-btn {
     border-radius: 12px !important;
 }
 
+body.pagina-chat-dashboard-v2 .free-chat-report-start {
+    display: none;
+    width: min(100%, var(--chat-max-w, 1080px));
+    margin: 0 auto 10px;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .free-chat-report-start,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"][data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .free-chat-report-start {
+    display: flex;
+    justify-content: flex-end;
+}
+
+body.pagina-chat-dashboard-v2 .free-chat-report-start__button {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 12px;
+    border: 1px solid rgba(31, 94, 142, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--vf-accent);
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: var(--vf-shadow-sm);
+}
+
+body.pagina-chat-dashboard-v2 .free-chat-report-start__button .material-symbols-rounded {
+    font-size: 16px;
+}
+
 body.pagina-chat-dashboard-v2 .btn-ir-fim-chat {
     position: fixed;
     right: 24px;

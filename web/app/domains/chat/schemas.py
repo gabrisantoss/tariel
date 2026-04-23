@@ -68,6 +68,7 @@ class DadosChat(BaseModel):
     texto_documento: str = Field(default="", max_length=LIMITE_DOC_CHARS)
     nome_documento: str = Field(default="", max_length=LIMITE_NOME_DOCUMENTO)
     laudo_id: int | None = None
+    iniciar_laudo: StrictBool = False
     referencia_mensagem_id: int | None = Field(default=None, ge=1)
     guided_inspection_draft: "GuidedInspectionDraftPayload | None" = Field(default=None)
     guided_inspection_context: "GuidedInspectionMessageContextPayload | None" = Field(default=None)

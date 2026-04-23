@@ -134,6 +134,15 @@
                     mostrarToast("Não foi possível copiar o link agora.", "erro", 2600);
                 }
             });
+            el.btnIniciarLaudoChatLivre?.addEventListener("click", () => {
+                if (!el.campoMensagem || !el.btnEnviar) return;
+                const textoAtual = String(el.campoMensagem.value || "").trim();
+                if (!textoAtual) {
+                    el.campoMensagem.value = "iniciar novo laudo";
+                    el.campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+                el.btnEnviar.click();
+            });
             el.botoesAbrirChatLivre.forEach((botao) => {
                 botao.addEventListener("click", (event) => {
                     event.preventDefault();

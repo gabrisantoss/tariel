@@ -128,6 +128,20 @@ class ChatPersistedMessageContext:
     mensagem_usuario_id: int
     eh_deep: bool
 
+
+@dataclass(slots=True)
+class FreeAssistantChatContext:
+    mensagem_para_ia: str
+    historico_dict: list[dict[str, Any]]
+    headers: dict[str, str]
+    dados_imagem_validos: Any
+    texto_documento: str
+    nome_documento: str
+    empresa_id_atual: int
+    usuario_id_atual: int
+    eh_deep: bool
+
+
 def _resolver_review_mode_guided_flow(
     *,
     banco: Session,
@@ -154,6 +168,58 @@ def _resolver_review_mode_guided_flow(
     )
     review_mode = getattr(getattr(runtime_bundle.policy_decision, "summary", None), "review_mode", "")
     return str(review_mode or "").strip().lower()
+
+
+def prepare_free_assistant_chat_route(
+    *,
+    dados,
+    usuario: Usuario,
+    banco: Session,
+) -> FreeAssistantChatContext:
+    validar_historico_total(dados.historico)
+
+    mensagem_limpa, preferencias_embutidas = extrair_preferencias_ia_mobile_embutidas(
+        dados.mensagem or ""
+    )
+    preferencias_ia_mobile = combinar_preferencias_ia_mobile_contexto(
+        getattr(dados, "preferencias_ia_mobile", ""),
+        preferencias_embutidas,
+    )
+    dados_imagem_validos = validar_imagem_base64(dados.dados_imagem)
+    texto_documento = (dados.texto_documento or "").strip()
+    nome_documento = nome_documento_seguro(dados.nome_documento)
+
+    if not mensagem_limpa and not dados_imagem_validos and not texto_documento:
+        raise HTTPException(status_code=400, detail="Envie texto, imagem ou documento.")
+
+    if texto_documento:
+        garantir_upload_documento_habilitado(usuario, banco)
+
+    if dados.modo == MODO_DEEP:
+        garantir_deep_research_habilitado(usuario, banco)
+
+    mensagem_base_para_ia = anexar_preferencias_ia_mobile_na_mensagem(
+        mensagem_limpa or nome_documento or "[imagem]",
+        preferencias_ia_mobile=preferencias_ia_mobile,
+    )
+
+    return FreeAssistantChatContext(
+        mensagem_para_ia=mensagem_base_para_ia,
+        historico_dict=limpar_historico_visivel_chat(
+            [msg.model_dump() for msg in dados.historico]
+        ),
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+        dados_imagem_validos=dados_imagem_validos,
+        texto_documento=texto_documento,
+        nome_documento=nome_documento,
+        empresa_id_atual=int(usuario.empresa_id),
+        usuario_id_atual=int(usuario.id),
+        eh_deep=(dados.modo == MODO_DEEP),
+    )
 
 
 def prepare_chat_stream_route(
@@ -588,8 +654,10 @@ def persist_chat_user_message(
 
 
 __all__ = [
+    "FreeAssistantChatContext",
     "ChatPersistedMessageContext",
     "ChatPreparedRoute",
     "persist_chat_user_message",
+    "prepare_free_assistant_chat_route",
     "prepare_chat_stream_route",
 ]

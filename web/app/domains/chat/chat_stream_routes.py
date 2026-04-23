@@ -8,10 +8,12 @@ from sqlalchemy.orm import Session
 
 from app.domains.chat.chat_stream_support import (
     persist_chat_user_message,
+    prepare_free_assistant_chat_route,
     prepare_chat_stream_route,
 )
 from app.domains.chat.chat_stream_transport import (
     build_ai_stream_response,
+    build_free_assistant_stream_response,
     build_whisper_stream_response,
 )
 from app.domains.chat.free_chat_report import build_free_chat_report_response
@@ -47,6 +49,27 @@ async def rota_chat(
         },
     ) as hotspot:
         exigir_csrf(request)
+        chat_livre_sem_laudo = (
+            not getattr(dados, "laudo_id", None)
+            and not getattr(dados, "iniciar_laudo", False)
+            and getattr(dados, "guided_inspection_draft", None) is None
+            and getattr(dados, "guided_inspection_context", None) is None
+        )
+        if chat_livre_sem_laudo:
+            cliente_ia_ativo = obter_cliente_ia_ativo()
+            free_context = prepare_free_assistant_chat_route(
+                dados=dados,
+                usuario=usuario,
+                banco=banco,
+            )
+            hotspot.outcome = "free_assistant_chat"
+            hotspot.response_status_code = 200
+            return build_free_assistant_stream_response(
+                free_context=free_context,
+                dados=dados,
+                cliente_ia_ativo=cliente_ia_ativo,
+            )
+
         prepared, early_response = prepare_chat_stream_route(
             dados=dados,
             request=request,

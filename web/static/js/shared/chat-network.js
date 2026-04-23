@@ -1487,6 +1487,27 @@
         // =========================================================
         // ENVIO PRINCIPAL PARA IA
         // =========================================================
+        function deveIniciarLaudoPeloChatLivre(mensagem = "") {
+            if (Number(getLaudoAtualId?.() || 0) > 0) return false;
+            const texto = String(mensagem || "")
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, " ");
+            if (!texto) return false;
+            return [
+                "iniciar novo laudo",
+                "iniciar laudo",
+                "comecar novo laudo",
+                "comecar laudo",
+                "criar novo laudo",
+                "criar laudo",
+                "abrir novo laudo",
+                "abrir laudo",
+            ].some((gatilho) => texto === gatilho || texto.startsWith(`${gatilho} `));
+        }
+
         async function enviarParaIA(
             mensagem,
             dadosImagem = null,
@@ -1559,6 +1580,7 @@
                         texto_documento: textoDocumento || "",
                         nome_documento: nomeDocumento || "",
                         laudo_id: getLaudoAtualId?.() ? Number(getLaudoAtualId()) : null,
+                        iniciar_laudo: deveIniciarLaudoPeloChatLivre(mensagem),
                     }),
                 });
 
