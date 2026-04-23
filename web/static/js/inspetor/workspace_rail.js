@@ -37,25 +37,31 @@
             resolveWorkspaceRailVisibility: resolveRailVisibility,
             workspaceViewSuportaRail,
         } = dependencies;
-        if (!el.btnWorkspaceToggleRail) return;
-
         const chromeTecnicoOperacional = !!options.chromeTecnicoOperacional;
         const layoutCompacto = options.layoutCompacto ?? layoutInspectorCompacto?.();
         const view = options.view ?? resolveWorkspaceView?.();
         const railVisivel = options.railVisivel ?? resolveRailVisibility?.();
         const railDisponivel = chromeTecnicoOperacional && !layoutCompacto && workspaceViewSuportaRail?.(view);
-        const icone = el.btnWorkspaceToggleRail.querySelector(".material-symbols-rounded");
-        const rotulo = el.btnWorkspaceToggleRail.querySelector("span:last-child");
+        const botoes = [el.btnWorkspaceToggleRail, el.btnWorkspaceToggleRightRail].filter(Boolean);
 
-        el.btnWorkspaceToggleRail.hidden = !railDisponivel;
-        el.btnWorkspaceToggleRail.setAttribute("aria-expanded", railVisivel ? "true" : "false");
+        botoes.forEach((botao) => {
+            const icone = botao.querySelector(".material-symbols-rounded");
+            const rotulo = botao.querySelector("span:last-child");
 
-        if (icone) {
-            icone.textContent = railVisivel ? "right_panel_close" : "right_panel_open";
-        }
-        if (rotulo) {
-            rotulo.textContent = railVisivel ? "Fechar ferramentas" : "Ferramentas";
-        }
+            botao.hidden = !railDisponivel;
+            botao.setAttribute("aria-expanded", railVisivel ? "true" : "false");
+            botao.setAttribute(
+                "aria-label",
+                railVisivel ? "Esconder ferramentas laterais" : "Mostrar ferramentas laterais"
+            );
+
+            if (icone) {
+                icone.textContent = railVisivel ? "right_panel_close" : "right_panel_open";
+            }
+            if (rotulo && rotulo !== icone) {
+                rotulo.textContent = railVisivel ? "Fechar ferramentas" : "Ferramentas";
+            }
+        });
     }
 
     function resolverEstadoPadraoAcordeoesRail(view = "inspection_conversation") {

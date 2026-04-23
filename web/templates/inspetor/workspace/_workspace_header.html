@@ -4,6 +4,17 @@
     <div class="technical-record-header__row">
         <div class="technical-record-header__main">
             <div class="technical-record-header__backline">
+                <button
+                    type="button"
+                    id="btn-workspace-toggle-left-sidebar"
+                    class="workspace-shell-toggle workspace-shell-toggle--left"
+                    aria-label="Esconder ou mostrar histórico lateral"
+                    aria-controls="barra-historico"
+                    aria-expanded="true"
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">left_panel_close</span>
+                </button>
+
                 <a
                     href="/app/?home=1"
                     class="btn-secundario btn-home-cabecalho technical-record-back technical-record-back--subtle"
@@ -126,6 +137,16 @@
             <span id="workspace-status-badge" class="technical-record-status-pill">CHAT LIVRE</span>
             <button
                 type="button"
+                id="btn-workspace-toggle-right-rail"
+                class="workspace-shell-toggle workspace-shell-toggle--right"
+                aria-expanded="false"
+                aria-controls="workspace-context-rail"
+                {% if workspace_assistant_inicial %}hidden{% endif %}
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">right_panel_open</span>
+            </button>
+            <button
+                type="button"
                 id="btn-workspace-open-inspecao-modal"
                 class="technical-record-btn technical-record-btn--ghost"
                 data-open-inspecao-modal
@@ -140,6 +161,7 @@
                 class="technical-record-btn technical-record-btn--ghost"
                 aria-expanded="false"
                 aria-controls="workspace-context-rail"
+                aria-label="Esconder ou mostrar ferramentas laterais"
                 {% if workspace_assistant_inicial %}hidden{% endif %}
             >
                 <span class="material-symbols-rounded" aria-hidden="true">right_panel_open</span>

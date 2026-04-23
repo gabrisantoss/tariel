@@ -988,6 +988,11 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread
     gap: 0;
 }
 
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-rail-visible="true"] {
+    grid-template-columns: minmax(0, 1fr) var(--sidebar-w);
+    gap: 24px;
+}
+
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread-only"] .chat-dashboard-rail {
     width: 0;
     min-width: 0;
@@ -998,6 +1003,16 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread
     overflow: hidden;
     visibility: hidden;
     pointer-events: none;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-rail-visible="true"] .chat-dashboard-rail {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    opacity: 1;
+    overflow: visible;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread-with-rail"] .chat-dashboard-rail {

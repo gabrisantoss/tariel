@@ -138,6 +138,8 @@
             btnFinalizarInspecao: documentRef.getElementById("btn-finalizar-inspecao"),
             botoesFinalizarInspecao: Array.from(documentRef.querySelectorAll("[data-finalizar-inspecao]")),
             btnRailFinalizarInspecao: documentRef.getElementById("btn-rail-finalizar-inspecao"),
+            btnWorkspaceToggleLeftSidebar: documentRef.getElementById("btn-workspace-toggle-left-sidebar"),
+            btnWorkspaceToggleRightRail: documentRef.getElementById("btn-workspace-toggle-right-rail"),
             btnWorkspaceToggleRail: documentRef.getElementById("btn-workspace-toggle-rail"),
             btnWorkspacePreview: documentRef.getElementById("btn-workspace-preview"),
             rodapeEntrada: documentRef.querySelector(".rodape-entrada"),

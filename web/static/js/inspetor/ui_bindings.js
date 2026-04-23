@@ -545,12 +545,43 @@
                     abrirFerramentaGovernadaLaudo(botao.dataset.railToolAction || "");
                 });
             });
-            el.btnWorkspaceToggleRail?.addEventListener("click", () => {
+            const sincronizarBotaoSidebarEsquerda = () => {
+                const botao = el.btnWorkspaceToggleLeftSidebar;
+                const sidebar = document.getElementById("barra-historico");
+                if (!botao || !sidebar) return;
+
+                const aberta = !sidebar.classList.contains("oculta");
+                botao.setAttribute("aria-expanded", aberta ? "true" : "false");
+                botao.setAttribute(
+                    "aria-label",
+                    aberta ? "Esconder histórico lateral" : "Mostrar histórico lateral"
+                );
+                const icone = botao.querySelector(".material-symbols-rounded");
+                if (icone) {
+                    icone.textContent = aberta ? "left_panel_close" : "left_panel_open";
+                }
+            };
+            el.btnWorkspaceToggleLeftSidebar?.addEventListener("click", () => {
+                document.getElementById("btn-toggle-ui")?.click();
+                window.setTimeout(sincronizarBotaoSidebarEsquerda, 0);
+            });
+            sincronizarBotaoSidebarEsquerda();
+            window.addEventListener("resize", sincronizarBotaoSidebarEsquerda);
+            document.getElementById("btn-toggle-ui")?.addEventListener("click", () => {
+                window.setTimeout(sincronizarBotaoSidebarEsquerda, 0);
+            });
+            const alternarWorkspaceRail = () => {
                 const viewAtual = resolveWorkspaceView();
                 if (!workspaceViewSuportaRail(viewAtual)) return;
 
                 estado.workspaceRailExpanded = !estado.workspaceRailExpanded;
                 sincronizarInspectorScreen();
+            };
+            el.btnWorkspaceToggleRail?.addEventListener("click", () => {
+                alternarWorkspaceRail();
+            });
+            el.btnWorkspaceToggleRightRail?.addEventListener("click", () => {
+                alternarWorkspaceRail();
             });
             el.btnWorkspacePreview?.addEventListener("click", async () => {
                 definirBotaoPreviewCarregando(true);
