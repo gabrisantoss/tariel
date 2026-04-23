@@ -369,11 +369,11 @@ body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technic
 }
 
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-card {
-    padding: 15px 18px;
-    border-color: rgba(165, 190, 217, 0.82) !important;
-    border-radius: 24px 24px 10px 24px !important;
-    background: linear-gradient(180deg, rgba(234, 242, 250, 0.99), rgba(244, 248, 252, 0.98)) !important;
-    box-shadow: 0 16px 34px rgba(31, 94, 142, 0.08) !important;
+    padding: 14px 17px;
+    border-color: rgba(177, 196, 215, 0.52) !important;
+    border-radius: 24px 24px 8px 24px !important;
+    background: linear-gradient(180deg, rgba(238, 244, 250, 0.98), rgba(246, 249, 252, 0.97)) !important;
+    box-shadow: 0 10px 22px rgba(31, 94, 142, 0.055) !important;
 }
 
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-meta {
@@ -382,7 +382,7 @@ body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technic
 
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-body {
     color: #15344f !important;
-    font-weight: 500;
+    font-weight: 450;
 }
 
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--mesa .workspace-message-card {
@@ -424,16 +424,16 @@ body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused
 }
 
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--user .workspace-message-card {
-    padding: 15px 18px;
-    border-color: rgba(169, 191, 214, 0.8);
-    border-radius: 22px 22px 10px 22px;
-    background: linear-gradient(180deg, rgba(233, 241, 249, 0.99), rgba(243, 248, 252, 0.98));
-    box-shadow: 0 14px 30px rgba(31, 94, 142, 0.075);
+    padding: 14px 17px;
+    border-color: rgba(177, 196, 215, 0.48);
+    border-radius: 22px 22px 8px 22px;
+    background: linear-gradient(180deg, rgba(237, 243, 249, 0.98), rgba(246, 249, 252, 0.97));
+    box-shadow: 0 10px 24px rgba(31, 94, 142, 0.05);
 }
 
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--user .workspace-message-body {
     color: #15344f;
-    font-weight: 500;
+    font-weight: 450;
     line-height: 1.6;
 }
 
