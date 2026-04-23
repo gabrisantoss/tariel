@@ -1698,6 +1698,33 @@
         });
     });
 
+    function promoverConversaLivreNoPrimeiroEnvio() {
+        const snapshot = window.TarielInspectorState?.obterSnapshotEstadoInspectorAtual?.() || {};
+        const modo = String(snapshot.modoInspecaoUI || "").trim().toLowerCase();
+        const baseScreen = String(snapshot.inspectorBaseScreen || "").trim().toLowerCase();
+        const laudoId = Number(snapshot.laudoAtualId || 0) || 0;
+
+        if (modo !== "workspace" || baseScreen !== "assistant_landing" || laudoId > 0) {
+            return false;
+        }
+
+        window.TarielInspectorState?.sincronizarEstadoInspector?.(
+            {
+                forceHomeLanding: false,
+                modoInspecaoUI: "workspace",
+                workspaceStage: "inspection",
+                threadTab: "conversa",
+                overlayOwner: "",
+                assistantLandingFirstSendPending: false,
+                freeChatConversationActive: true,
+            },
+            {
+                persistirStorage: false,
+            }
+        );
+        return true;
+    }
+
     // =========================================================================
     // PROCESSAMENTO DE ENVIO
     // =========================================================================
@@ -1733,6 +1760,8 @@
         if (telaBoasVindas) {
             telaBoasVindas.style.display = "none";
         }
+
+        promoverConversaLivreNoPrimeiroEnvio();
 
         const sugestoesRapidas = document.getElementById("sugestoes-rapidas");
         if (sugestoesRapidas) {

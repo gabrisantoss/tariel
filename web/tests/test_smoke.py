@@ -249,6 +249,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     workspace_mesa_status_js = (raiz / "static" / "js" / "inspetor" / "workspace_mesa_status.js").read_text(encoding="utf-8")
     workspace_states_css = (raiz / "static" / "css" / "inspetor" / "workspace_states.css").read_text(encoding="utf-8")
     workspace_rail_css = (raiz / "static" / "css" / "inspetor" / "workspace_rail.css").read_text(encoding="utf-8")
+    shared_api_js = (raiz / "static" / "js" / "shared" / "api.js").read_text(encoding="utf-8")
 
     assert not (raiz / "templates" / "base.html").exists()
     assert 'id="btn-toggle-ui"' in inspetor_base_html
@@ -426,6 +427,9 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "workspaceMesaStageMomentDetail" in workspace_mesa_status_js
     assert ".workspace-mesa-signals" in workspace_states_css
     assert ".workspace-mesa-signal--focus" in workspace_states_css
+    assert "function promoverConversaLivreNoPrimeiroEnvio()" in shared_api_js
+    assert 'workspaceStage: "inspection"' in shared_api_js
+    assert 'freeChatConversationActive: true' in shared_api_js
 
 
 def test_workspace_chat_oferece_atalho_de_reemissao_no_composer() -> None:
