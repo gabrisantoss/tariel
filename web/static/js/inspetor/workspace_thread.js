@@ -29,7 +29,7 @@
             return false;
         }
 
-        return !obterBaseRealConversaNovoChat(snapshot, dependencies).pronta;
+        return true;
     }
 
     function obterTotalMensagensReaisWorkspace(snapshot = {}, dependencies = {}) {

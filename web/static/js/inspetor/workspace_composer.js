@@ -417,6 +417,19 @@
     }
 
     function redirecionarEntradaParaReemissaoWorkspace(detail = {}, dependencies = {}) {
+        const origem = String(detail?.origem || "").trim();
+        const redirecionamentoExplicito = [
+            "composer_suggestion_reissue",
+            "composer_suggestion_mesa",
+            "slash_palette",
+            "slash_sugestao",
+            "atalho",
+        ].includes(origem) || origem.startsWith("slash_");
+
+        if (!redirecionamentoExplicito) {
+            return false;
+        }
+
         const entrada = obterEntradaReemissaoWorkspace(detail, dependencies);
         if (!entrada) return false;
 
