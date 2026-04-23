@@ -132,7 +132,12 @@
 
         let visiveis = 0;
         itens.forEach((item) => {
-            const texto = String(item.textContent || "").trim().toLowerCase();
+            const texto = String(
+                item.dataset.searchText
+                || item.getAttribute("aria-label")
+                || item.textContent
+                || ""
+            ).trim().toLowerCase();
             const match = !termoNormalizado || texto.includes(termoNormalizado);
             item.hidden = !match;
             if (match) {

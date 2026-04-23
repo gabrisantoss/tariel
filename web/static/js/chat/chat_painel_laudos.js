@@ -946,9 +946,12 @@
         item.dataset.threadKind = "free_chat";
         item.dataset.pinado = String(!!detail.pinado);
         item.dataset.data = String(detail.updated_at || "");
+        item.dataset.searchText = String(detail.search_text || "").trim();
+        item.dataset.messageCount = String(Number(detail.message_count || 0) || 0);
+        item.dataset.lastRole = String(detail.last_role || "").trim().toLowerCase();
         item.dataset.permiteExclusao = "true";
         item.dataset.openThreadTab = "conversa";
-        item.title = `Abrir conversa ${String(detail.title || "Nova conversa").trim()}`.trim();
+        item.title = `Retomar conversa ${String(detail.title || "Nova conversa").trim()}`.trim();
         item.setAttribute("aria-label", item.title || "Abrir conversa");
 
         if (detail.pinado) {
@@ -971,7 +974,10 @@
 
         const metaCanonica = document.createElement("small");
         metaCanonica.className = "meta-canonica-laudo";
-        metaCanonica.textContent = "Chat livre";
+        const totalMensagens = Number(detail.message_count || 0) || 0;
+        metaCanonica.textContent = totalMensagens > 1
+            ? `Chat livre • ${totalMensagens} mensagens`
+            : "Chat livre • 1 mensagem";
         texto.appendChild(metaCanonica);
 
         const side = document.createElement("span");

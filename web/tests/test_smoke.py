@@ -1774,6 +1774,8 @@ def test_chat_sidebar_history_runtime_mantem_resumo_e_destaque_da_conversa_ativa
     assert "function construirPreviewHistorico(card = {})" in laudos_js
     assert "function construirTituloHistorico(card = {})" in laudos_js
     assert 'item.dataset.threadKind = "free_chat";' in laudos_js
+    assert "item.dataset.searchText = String(detail.search_text || \"\").trim();" in laudos_js
+    assert "item.dataset.messageCount = String(Number(detail.message_count || 0) || 0);" in laudos_js
     assert "function sincronizarThreadChatLivreSidebar(thread, opts = {})" in laudos_js
     assert "item.dataset.homeSubtitle = construirPreviewHistorico(card);" in laudos_js
     assert "item.dataset.homeTitle = construirTituloHistorico(card);" in laudos_js
@@ -1785,8 +1787,11 @@ def test_chat_sidebar_history_runtime_mantem_resumo_e_destaque_da_conversa_ativa
     assert 'criadoEmIso: String(meta?.criadoEmIso || new Date().toISOString()).trim()' in api_js
     assert 'const prefixo = String(ultima?.papel || "").trim().toLowerCase() === "assistente" ? "IA: " : "";' in api_js
     assert "function limparTextoTituloLivre(texto = \"\")" in api_js
+    assert "function construirBuscaThreadLivre(mensagens = [], { title = \"\", preview = \"\" } = {})" in api_js
+    assert "search_text: construirBuscaThreadLivre(itens, { title, preview })" in api_js
     assert 'criadoEmIso: String(meta?.criadoEmIso || new Date().toISOString()).trim()' in core_js
     assert '.item-historico[data-sidebar-thread-id]' in sidebar_history_js
+    assert "item.dataset.searchText" in sidebar_history_js
     assert ".inspetor-sidebar-report.ativo .inspetor-sidebar-report__copy > span:first-child" in visual_refinements_css
     assert "inset 3px 0 0 rgba(31, 94, 142, 0.84)" in visual_refinements_css
 

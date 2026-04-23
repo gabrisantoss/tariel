@@ -650,18 +650,36 @@
         return base.length > 72 ? `${base.slice(0, 72).trim()}...` : base;
     }
 
+    function construirBuscaThreadLivre(mensagens = [], { title = "", preview = "" } = {}) {
+        const partes = [
+            String(title || "").trim(),
+            String(preview || "").trim(),
+            ...mensagens.map((item) => String(item?.texto || "").trim()),
+        ].filter(Boolean);
+        return partes.join(" ").replace(/\s+/g, " ").trim();
+    }
+
     function montarThreadChatLivreSnapshot({ threadId = null, mensagens = historicoConversa, pinado = false } = {}) {
         const itens = clonarMensagensThreadLivre(mensagens);
         if (!itens.some((item) => item.papel === "usuario")) {
             return null;
         }
 
+        const primeiraMensagem = itens[0] || null;
+        const ultimaMensagem = itens[itens.length - 1] || null;
+        const title = resumirTituloThreadLivre(itens);
+        const preview = resumirPreviewThreadLivre(itens);
+
         return {
             id: String(threadId || `free_chat:${Date.now()}`),
             thread_kind: "free_chat",
-            title: resumirTituloThreadLivre(itens),
-            preview: resumirPreviewThreadLivre(itens),
+            title,
+            preview,
+            created_at: String(primeiraMensagem?.criadoEmIso || new Date().toISOString()).trim(),
             updated_at: new Date().toISOString(),
+            message_count: itens.length,
+            last_role: String(ultimaMensagem?.papel || "").trim().toLowerCase() === "assistente" ? "assistente" : "usuario",
+            search_text: construirBuscaThreadLivre(itens, { title, preview }),
             pinado: !!pinado,
             messages: itens.slice(-MAX_HISTORICO_LOCAL),
         };
