@@ -180,6 +180,15 @@
         return { screen, baseScreen, overlayOwner };
     }
 
+    function inspetorWorkspaceAtivo() {
+        const painel = document.getElementById("painel-chat");
+        return !!(
+            painel &&
+            document.body?.classList?.contains("pagina-chat-dashboard-v2") &&
+            String(painel.dataset.inspecaoUi || "").trim() === "workspace"
+        );
+    }
+
     function layoutInspectorCompacto() {
         return window.innerWidth <= BREAKPOINT_LAYOUT_INSPETOR_COMPACTO;
     }
@@ -357,6 +366,15 @@
         const iconeToggle =
             document.getElementById("icone-toggle-ui") ||
             btnToggle?.querySelector(".material-symbols-rounded");
+
+        if (inspetorWorkspaceAtivo()) {
+            if (btnToggle) {
+                btnToggle.dataset.tooltip = ativo ? "Fechar ferramentas" : "Ferramentas";
+                btnToggle.title = btnToggle.dataset.tooltip;
+                btnToggle.setAttribute("aria-label", btnToggle.dataset.tooltip);
+            }
+            return;
+        }
 
         document.body.classList.toggle("modo-foco", !!ativo);
 
@@ -799,11 +817,19 @@
         const btnToggle = document.getElementById("btn-toggle-ui");
         if (!btnToggle) return;
 
-        aplicarModoFoco(obterModoFocoSalvo());
+        if (!inspetorWorkspaceAtivo()) {
+            aplicarModoFoco(obterModoFocoSalvo());
+        }
 
         if (btnToggle.dataset.uiWired !== "true") {
             btnToggle.dataset.uiWired = "true";
             btnToggle.addEventListener("click", () => {
+                if (inspetorWorkspaceAtivo()) {
+                    document.dispatchEvent(new CustomEvent("tariel:toggle-workspace-rail", {
+                        bubbles: true,
+                    }));
+                    return;
+                }
                 const isAtivo = document.body.classList.contains("modo-foco");
                 aplicarModoFoco(!isAtivo);
             });

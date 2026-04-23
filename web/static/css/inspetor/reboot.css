@@ -764,6 +764,10 @@ body.pagina-chat-dashboard-v2[data-workspace-rail-visible="true"] .inspetor-rail
     right: calc(var(--workspace-rail-width, 320px) - 16px);
 }
 
+body.pagina-chat-dashboard-v2 .inspetor-rail-edge-toggle {
+    display: none !important;
+}
+
 body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-main {
     overflow-y: hidden;
 }

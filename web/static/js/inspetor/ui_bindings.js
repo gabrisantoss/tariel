@@ -593,6 +593,9 @@
             el.btnRailEdgeToggle?.addEventListener("click", () => {
                 alternarWorkspaceRail();
             });
+            document.addEventListener("tariel:toggle-workspace-rail", () => {
+                alternarWorkspaceRail();
+            });
             el.btnWorkspacePreview?.addEventListener("click", async () => {
                 definirBotaoPreviewCarregando(true);
                 try {

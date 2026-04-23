@@ -1830,7 +1830,10 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     assert "btnWorkspaceToggleRightRail" in workspace_elements_js
     assert "sincronizarBotaoSidebarEsquerda" in ui_bindings_js
     assert 'new CustomEvent("tariel:toggle-sidebar"' in ui_bindings_js
+    assert 'document.addEventListener("tariel:toggle-workspace-rail"' in ui_bindings_js
     assert 'document.addEventListener("tariel:toggle-sidebar", sincronizarSidebarPorEvento);' in shared_ui_js
+    assert 'document.dispatchEvent(new CustomEvent("tariel:toggle-workspace-rail"' in shared_ui_js
+    assert "botaoShellGlobal" in workspace_rail_js
     assert "typeof estado.workspaceRailExpanded !== \"boolean\"" in workspace_rail_js
     assert "const botaoBordaDisponivel = !layoutCompacto && workspaceViewSuportaRail?.(view);" in workspace_rail_js
     assert "--workspace-thread-column-max: 1320px;" in workspace_chrome_css

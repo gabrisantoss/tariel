@@ -44,6 +44,7 @@
         const view = options.view ?? resolveWorkspaceView?.();
         const railVisivel = options.railVisivel ?? resolveRailVisibility?.();
         const railDisponivel = chromeTecnicoOperacional && !layoutCompacto && workspaceViewSuportaRail?.(view);
+        const botaoShellGlobal = global.document?.getElementById?.("btn-toggle-ui") || null;
         const botoesChrome = [el.btnWorkspaceToggleRail, el.btnWorkspaceToggleRightRail].filter(Boolean);
         const botaoBorda = el.btnRailEdgeToggle || null;
         const botaoBordaDisponivel = !layoutCompacto && workspaceViewSuportaRail?.(view);
@@ -75,6 +76,19 @@
                 "aria-label",
                 railVisivel ? "Esconder ferramentas laterais" : "Mostrar ferramentas laterais"
             );
+            if (icone) {
+                icone.textContent = railVisivel ? "right_panel_close" : "right_panel_open";
+            }
+        }
+
+        if (botaoShellGlobal) {
+            const icone = botaoShellGlobal.querySelector(".material-symbols-rounded");
+            botaoShellGlobal.hidden = !!layoutCompacto || !workspaceViewSuportaRail?.(view);
+            botaoShellGlobal.setAttribute("aria-expanded", railVisivel ? "true" : "false");
+            botaoShellGlobal.dataset.tooltip = railVisivel ? "Fechar ferramentas" : "Ferramentas";
+            botaoShellGlobal.title = botaoShellGlobal.dataset.tooltip;
+            botaoShellGlobal.setAttribute("aria-label", botaoShellGlobal.dataset.tooltip);
+            botaoShellGlobal.setAttribute("aria-pressed", railVisivel ? "true" : "false");
             if (icone) {
                 icone.textContent = railVisivel ? "right_panel_close" : "right_panel_open";
             }
