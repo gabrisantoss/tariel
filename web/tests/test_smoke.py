@@ -1738,7 +1738,10 @@ def test_chat_sidebar_e_modal_perfil_expoem_controles_essenciais() -> None:
     assert 'id="btn-abrir-perfil-chat"' in sidebar_html
     assert 'id="menu-perfil-chat"' in sidebar_html
     assert 'data-profile-menu-action="add-account"' in sidebar_html
+    assert 'data-profile-menu-action="upgrade"' in sidebar_html
     assert 'data-profile-menu-action="profile"' in sidebar_html
+    assert 'class="inspetor-account-menu__identity"' in sidebar_html
+    assert 'class="inspetor-account-menu__separator"' in sidebar_html
     assert 'placeholder="Buscar em chats"' in sidebar_html
     assert 'data-acao-laudo="menu"' in sidebar_macros_html
     assert 'data-acao-laudo="open"' in sidebar_macros_html
@@ -1747,6 +1750,7 @@ def test_chat_sidebar_e_modal_perfil_expoem_controles_essenciais() -> None:
     assert 'data-foto-url="' in sidebar_html
     assert 'class="inspetor-user-card__avatar"' in sidebar_html
     assert "Adicionar conta" in sidebar_html
+    assert "Upgrade do plano" in sidebar_html
     assert "inspetor-runtime-compat" not in sidebar_html
 
     assert '{% include "inspetor/modals/_perfil.html" %}' in index_html

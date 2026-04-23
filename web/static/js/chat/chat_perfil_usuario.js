@@ -331,6 +331,21 @@
 
         aplicarPerfilNoShell(dados);
         atualizarSaudacaoWorkspace(dados.nome_completo || "");
+        const nomeConta = el.accountMenu?.querySelector(".inspetor-account-menu__identity-copy strong");
+        const emailConta = el.accountMenu?.querySelector(".inspetor-account-menu__identity-copy span");
+        const avatarConta = el.accountMenu?.querySelector(".inspetor-account-menu__identity-avatar");
+
+        if (nomeConta) {
+            nomeConta.textContent = String(dados.nome_completo || "Usuário");
+        }
+
+        if (emailConta) {
+            emailConta.textContent = String(dados.email || "");
+        }
+
+        if (avatarConta) {
+            avatarConta.textContent = obterIniciais(dados.nome_completo || "");
+        }
     }
 
     async function carregarPerfilRemoto() {
@@ -557,6 +572,11 @@
                 event.preventDefault();
                 fecharMenuConta();
                 window.location.href = "/app/login?add_account=1";
+                return;
+            }
+
+            if (acao === "upgrade") {
+                fecharMenuConta();
                 return;
             }
 

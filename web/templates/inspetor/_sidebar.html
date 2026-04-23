@@ -1,6 +1,9 @@
 {% from "inspetor/_macros.html" import render_sidebar_recent %}
 {% set laudos_pinados = laudos_sidebar | selectattr("pinado") | list %}
 {% set laudos_recentes = laudos_sidebar | rejectattr("pinado") | list %}
+{% set tenant_policy = tenant_access_policy | default({}, true) %}
+{% set tenant_operating_model = tenant_policy.operating_model | default('', true) %}
+{% set exibir_upgrade_plano = (usuario and usuario.eh_admin_cliente) or tenant_operating_model == "mobile_single_operator" %}
 
 <aside
     id="barra-historico"
@@ -114,37 +117,65 @@
                 aria-label="Menu da conta"
                 hidden
             >
-                <button
-                    type="button"
-                    class="inspetor-account-menu__item"
-                    data-profile-menu-action="add-account"
-                    role="menuitem"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
-                    <span>Adicionar conta</span>
-                </button>
+                <div class="inspetor-account-menu__identity" aria-hidden="true">
+                    <span class="inspetor-account-menu__identity-avatar">{{ usuario_nome[:1] | upper }}</span>
+                    <div class="inspetor-account-menu__identity-copy">
+                        <strong>{{ usuario_nome }}</strong>
+                        <span>{{ usuario_email }}</span>
+                    </div>
+                </div>
 
-                <button
-                    type="button"
-                    class="inspetor-account-menu__item"
-                    data-profile-menu-action="profile"
-                    role="menuitem"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">badge</span>
-                    <span>Perfil</span>
-                </button>
+                <div class="inspetor-account-menu__group" role="none">
+                    <button
+                        type="button"
+                        class="inspetor-account-menu__item"
+                        data-profile-menu-action="add-account"
+                        role="menuitem"
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
+                        <span>Adicionar conta</span>
+                    </button>
 
-                <a
-                    href="/app/?home=1"
-                    class="inspetor-account-menu__item"
-                    data-profile-menu-action="home"
-                    role="menuitem"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">home</span>
-                    <span>Página inicial</span>
-                </a>
+                    {% if exibir_upgrade_plano %}
+                    <a
+                        href="/app/planos"
+                        class="inspetor-account-menu__item"
+                        data-profile-menu-action="upgrade"
+                        role="menuitem"
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">rocket_launch</span>
+                        <span>Upgrade do plano</span>
+                    </a>
+                    {% endif %}
+                </div>
 
-                <form action="/app/logout" method="POST" class="inspetor-account-menu__logout">
+                <div class="inspetor-account-menu__separator" role="separator" aria-hidden="true"></div>
+
+                <div class="inspetor-account-menu__group" role="none">
+                    <button
+                        type="button"
+                        class="inspetor-account-menu__item"
+                        data-profile-menu-action="profile"
+                        role="menuitem"
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">badge</span>
+                        <span>Perfil</span>
+                    </button>
+
+                    <a
+                        href="/app/?home=1"
+                        class="inspetor-account-menu__item"
+                        data-profile-menu-action="home"
+                        role="menuitem"
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">home</span>
+                        <span>Página inicial</span>
+                    </a>
+                </div>
+
+                <div class="inspetor-account-menu__separator" role="separator" aria-hidden="true"></div>
+
+                <form action="/app/logout" method="POST" class="inspetor-account-menu__logout inspetor-account-menu__group">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <button
                         type="submit"
