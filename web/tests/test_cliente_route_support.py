@@ -108,8 +108,8 @@ def test_render_portal_cliente_oculta_superficies_de_caso_quando_tenant_usa_so_r
     assert 'data-cliente-tab-inicial="admin"' in html
     assert 'id="tab-chat"' in html
     assert 'id="tab-mesa"' in html
-    assert 'id="tab-chat"' in html and "hidden" in html.split('id="tab-chat"', 1)[1].split(">", 1)[0]
-    assert 'id="tab-mesa"' in html and "hidden" in html.split('id="tab-mesa"', 1)[1].split(">", 1)[0]
+    assert 'id="tab-chat"' in html and 'data-surface-disabled="true"' in html.split('id="tab-chat"', 1)[1].split(">", 1)[0]
+    assert 'id="tab-mesa"' in html and 'data-surface-disabled="true"' in html.split('id="tab-mesa"', 1)[1].split(">", 1)[0]
 
 
 def test_sessao_cliente_registra_e_limpa_token(ambiente_critico) -> None:

@@ -120,6 +120,9 @@ def test_superficies_expoem_tenant_access_policy_governado(
     assert bootstrap_cliente.status_code == 200
     tenant_policy_cliente = bootstrap_cliente.json()["tenant_access_policy"]
     assert tenant_policy_cliente["user_capability_entitlements"]["admin_manage_team"] is False
+    pacote_cliente = bootstrap_cliente.json()["tenant_commercial_package"]
+    assert pacote_cliente["label"] == "Chat Inspetor + Mesa Avaliadora"
+    assert pacote_cliente["surface_availability"]["mesa"] is True
 
     usuario_bootstrap = next(
         item
@@ -572,6 +575,10 @@ def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(
         resposta_bootstrap_cliente.json()["tenant_access_policy"]["commercial_service_package_label"]
         == "Chat Inspetor + Mesa + servicos no Inspetor"
     )
+    assert (
+        resposta_bootstrap_cliente.json()["tenant_commercial_package"]["label"]
+        == "Chat Inspetor + Mesa + servicos no Inspetor"
+    )
 
     _login_app_inspetor(client, "inspetor@empresa-a.test")
     resposta = client.get(f"/app/laudo/{laudo_id}/preparar-emissao?tool=pdf")
@@ -619,6 +626,13 @@ def test_inspetor_sem_servicos_da_mesa_nao_abre_preparacao_de_emissao(
 
     assert resposta.status_code == 403
     assert "emissão oficial" in resposta.json()["detail"].lower()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+    resposta_portal = client.get("/cliente/painel")
+    assert resposta_portal.status_code == 200
+    assert "Chat Inspetor sem Mesa" in resposta_portal.text
+    assert 'id="tab-mesa"' in resposta_portal.text
+    assert 'data-surface-disabled="true"' in resposta_portal.text.split('id="tab-mesa"', 1)[1].split(">", 1)[0]
 
 
 def test_inspetor_com_servicos_da_mesa_emite_oficialmente_no_fluxo_do_chat(

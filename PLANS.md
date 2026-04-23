@@ -3981,6 +3981,25 @@ Atualizado em `2026-04-23`.
 - `make web-ci`
 - `make hygiene-check`
 
+### `PKT-CHAT-INSPETOR-PACOTES-PORTAIS-01` — Visibilidade comercial dos pacotes nos portais
+
+- `status`: concluído localmente em `2026-04-23`; os portais passam a mostrar claramente o pacote contratado e superfícies não contratadas.
+
+### Escopo
+
+- Admin-CEO lista empresas com badge do pacote comercial e indicação de Mesa/Emissão contratadas.
+- Portal Cliente mantém abas visíveis quando a superfície não é contratada, com `não contratado` e bloqueio explícito.
+- Bootstrap do Portal Cliente expõe `tenant_commercial_package` com pacote, descrição, superfícies e capacidades.
+- A disponibilidade de `Chat`/`Mesa` passa a respeitar os entitlements reais do pacote comercial, não apenas visibilidade de casos.
+
+### Validação
+
+- `cd web && PYTHONPATH=. python -m py_compile app/shared/tenant_admin_policy.py app/domains/admin/tenant_client_read_services.py app/domains/cliente/dashboard_bootstrap.py`
+- `node --check web/static/js/cliente/portal_bindings.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py tests/test_cliente_route_support.py tests/test_portais_acesso_critico.py tests/test_tenant_entitlements_critical.py -q -k "pacote_chat_inspetor_sem_mesa or superficies_de_caso or tenant_access_policy_governado or sem_servicos_da_mesa"`
+- `make web-ci`
+- `make hygiene-check`
+
 ### `PKT-CHAT-INSPETOR-CORRECOES-04` — Aplicação real de correções no documento
 
 - `status`: concluído localmente em `2026-04-23`; a ação `Marcar como aplicada` passa a atualizar o payload documental do laudo para blocos seguros.

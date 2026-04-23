@@ -596,10 +596,11 @@ def tenant_admin_can_take_case_actions(payload: Any) -> bool:
 def tenant_admin_surface_availability(payload: Any) -> dict[str, bool]:
     summary = summarize_tenant_admin_policy(payload)
     case_list_visible = bool(summary["case_list_visible"])
+    portal_entitlements = dict(summary.get("tenant_portal_entitlements") or {})
     return {
         "admin": True,
-        "chat": case_list_visible,
-        "mesa": case_list_visible,
+        "chat": case_list_visible and bool(portal_entitlements.get("inspetor", True)),
+        "mesa": case_list_visible and bool(portal_entitlements.get("revisor", True)),
     }
 
 

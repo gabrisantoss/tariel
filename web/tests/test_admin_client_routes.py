@@ -365,6 +365,10 @@ def test_admin_ceo_pode_definir_pacote_chat_inspetor_sem_mesa(
     pagina = client.get(resposta.headers["location"])
     assert pagina.status_code == 200
     assert "Chat Inspetor sem Mesa" in pagina.text
+    listagem = client.get("/admin/clientes")
+    assert listagem.status_code == 200
+    assert "Chat Inspetor sem Mesa" in listagem.text
+    assert "Mesa não contratada" in listagem.text
 
     with SessionLocal() as banco:
         empresa = banco.get(Empresa, ids["empresa_a"])

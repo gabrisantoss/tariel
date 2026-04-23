@@ -29,6 +29,7 @@ from app.shared.database import (
     SignatarioGovernadoLaudo,
     Usuario,
 )
+from app.shared.tenant_admin_policy import summarize_tenant_admin_policy
 
 
 logger = logging.getLogger("tariel.saas")
@@ -333,6 +334,9 @@ def buscar_todos_clientes(
                 PlanoEmpresa.ILIMITADO.value,
             )
         }
+        admin_cliente_policy = summarize_tenant_admin_policy(
+            getattr(empresa, "admin_cliente_policy_json", None)
+        )
 
         itens.append(
             {
@@ -372,6 +376,7 @@ def buscar_todos_clientes(
                 "criado_em": _normalizar_datetime_admin(getattr(empresa, "criado_em", None)),
                 "criado_em_label": _formatar_data_admin(getattr(empresa, "criado_em", None), fallback="Sem data"),
                 "preview_planos": preview_planos,
+                "admin_cliente_policy": admin_cliente_policy,
             }
         )
 

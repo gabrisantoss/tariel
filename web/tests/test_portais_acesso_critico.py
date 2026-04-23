@@ -300,8 +300,8 @@ def test_admin_cliente_com_tenant_resumo_cai_no_painel_admin_e_nao_carrega_super
     assert 'data-cliente-tab-inicial="admin"' in resposta_chat.text
     assert 'id="tab-chat"' in resposta_chat.text
     assert 'id="tab-mesa"' in resposta_chat.text
-    assert 'id="tab-chat"' in resposta_chat.text and "hidden" in resposta_chat.text.split('id="tab-chat"', 1)[1].split(">", 1)[0]
-    assert 'id="tab-mesa"' in resposta_chat.text and "hidden" in resposta_chat.text.split('id="tab-mesa"', 1)[1].split(">", 1)[0]
+    assert 'id="tab-chat"' in resposta_chat.text and 'data-surface-disabled="true"' in resposta_chat.text.split('id="tab-chat"', 1)[1].split(">", 1)[0]
+    assert 'id="tab-mesa"' in resposta_chat.text and 'data-surface-disabled="true"' in resposta_chat.text.split('id="tab-mesa"', 1)[1].split(">", 1)[0]
 
     assert resposta_mesa.status_code == 200
     assert 'data-cliente-tab-inicial="admin"' in resposta_mesa.text

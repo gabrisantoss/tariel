@@ -30,9 +30,9 @@ from app.domains.cliente.dashboard_bootstrap_support import (
     serializar_usuario_cliente,
 )
 from app.shared.backend_hotspot_metrics import observe_backend_hotspot
-from app.shared.database import Usuario
+from app.shared.database import Empresa, Usuario
 from app.shared.tenant_entitlement_guard import tenant_access_policy_for_user
-from app.shared.tenant_admin_policy import tenant_admin_surface_availability
+from app.shared.tenant_admin_policy import summarize_tenant_admin_policy, tenant_admin_surface_availability
 from app.shared.tenant_report_catalog import build_tenant_template_option_snapshot
 
 logger = logging.getLogger("tariel.cliente.bootstrap")
@@ -80,13 +80,12 @@ def bootstrap_cliente(
             empresa_summary=empresa_summary,
             usuarios=usuarios_tenant_admin,
         )
-        tenant_admin_payload = (
-            tenant_admin_projection.payload
-            if isinstance(getattr(tenant_admin_projection, "payload", None), dict)
-            else {}
+        empresa = getattr(usuario, "empresa", None) or banco.get(Empresa, int(usuario.empresa_id))
+        tenant_commercial_package = summarize_tenant_admin_policy(
+            getattr(empresa, "admin_cliente_policy_json", None)
         )
         surface_availability = tenant_admin_surface_availability(
-            tenant_admin_payload.get("visibility_policy")
+            getattr(empresa, "admin_cliente_policy_json", None)
         )
         if surface_resolvida in {"chat", "mesa"} and not surface_availability.get(surface_resolvida, False):
             surface_resolvida = "admin"
@@ -99,6 +98,13 @@ def bootstrap_cliente(
             "empresa": empresa_summary,
             "tenant_admin_projection": tenant_admin_projection.model_dump(mode="json"),
             "tenant_access_policy": tenant_access_policy_for_user(usuario),
+            "tenant_commercial_package": {
+                "key": tenant_commercial_package["commercial_service_package_effective"],
+                "label": tenant_commercial_package["commercial_service_package_label"],
+                "description": tenant_commercial_package["commercial_service_package_description"],
+                "surface_availability": surface_availability,
+                "capability_entitlements": tenant_commercial_package["tenant_capability_entitlements"],
+            },
         }
 
         if incluir_admin:

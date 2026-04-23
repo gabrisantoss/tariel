@@ -92,6 +92,11 @@
         function bindTabs() {
             documentRef.querySelectorAll(".cliente-tab").forEach((link) => {
                 link.addEventListener("click", async (event) => {
+                    if (link.dataset.surfaceDisabled === "true") {
+                        event.preventDefault();
+                        feedback(link.title || "Superfície não contratada pelo pacote atual.", true);
+                        return;
+                    }
                     if (deveUsarNavegacaoNativa(event)) {
                         return;
                     }
