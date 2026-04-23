@@ -310,6 +310,57 @@ body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body {
     letter-spacing: -0.01em;
 }
 
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h1,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h2,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h3,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h4 {
+    margin: 16px 0 8px;
+    color: var(--vf-text) !important;
+    font-weight: 700;
+    line-height: 1.28;
+    letter-spacing: -0.02em;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h1:first-child,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h2:first-child,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h3:first-child,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h4:first-child {
+    margin-top: 0;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h2 {
+    font-size: 1.08em;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body h3 {
+    font-size: 1em;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body ul,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body ol {
+    margin: 10px 0 0;
+    padding-left: 20px;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body li + li {
+    margin-top: 6px;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body blockquote {
+    margin: 12px 0 0;
+    padding: 10px 14px;
+    border-left: 3px solid rgba(31, 94, 142, 0.28);
+    border-radius: 0 14px 14px 0;
+    background: rgba(241, 246, 250, 0.78);
+    color: #35526b;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body hr {
+    border: 0;
+    border-top: 1px solid rgba(202, 212, 224, 0.88);
+    margin: 14px 0;
+}
+
 body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body p + p,
 body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body ul + p,
 body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body ol + p,
@@ -448,6 +499,151 @@ body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--assistant .workspace-message-body,
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--typing .workspace-message-body {
     color: #233648;
+}
+
+body.pagina-chat-dashboard-v2 .technical-chat-empty {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04) !important;
+}
+
+body.pagina-chat-dashboard-v2 .technical-chat-empty::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+body.pagina-chat-dashboard-v2 .technical-chat-empty .material-symbols-rounded {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: rgba(232, 242, 250, 0.92);
+    color: var(--vf-accent) !important;
+    font-size: 22px;
+}
+
+body.pagina-chat-dashboard-v2 .technical-chat-empty strong {
+    font-size: 15px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+}
+
+body.pagina-chat-dashboard-v2 .technical-chat-empty p {
+    max-width: 52ch;
+    line-height: 1.55;
+}
+
+body.pagina-chat-dashboard-v2 #estado-loading-pendencias-mesa .material-symbols-rounded,
+body.pagina-chat-dashboard-v2 #workspace-conversation-empty .material-symbols-rounded {
+    animation: subtle-pulse 1.6s ease-in-out infinite;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-rail__panel {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 252, 0.98)),
+        var(--vf-surface-muted) !important;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06) !important;
+}
+
+body.pagina-chat-dashboard-v2 .technical-record-card {
+    border-color: rgba(209, 218, 229, 0.88) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(249, 251, 253, 0.92)) !important;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.03) !important;
+}
+
+body.pagina-chat-dashboard-v2 .technical-record-card__header h3 {
+    letter-spacing: -0.02em;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-card__eyebrow {
+    color: #6281a0 !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-top-actions {
+    gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-status-pill {
+    min-height: 34px;
+    border-radius: 999px;
+    background: rgba(232, 242, 250, 0.92);
+    color: #29597f !important;
+    font-weight: 700;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-nav__button {
+    min-height: 40px;
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    transition:
+        transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 160ms ease-out,
+        background-color 160ms ease-out,
+        color 160ms ease-out;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-nav__button[aria-pressed="true"] {
+    border-color: rgba(31, 94, 142, 0.2) !important;
+    background: rgba(232, 242, 250, 0.92) !important;
+    color: var(--vf-text) !important;
+    transform: translateY(-1px);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-toolbox {
+    padding: 14px;
+    border: 1px solid rgba(209, 218, 229, 0.84);
+    border-radius: 18px;
+    background: rgba(248, 251, 253, 0.76);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-tool {
+    min-height: 68px;
+    border-radius: 16px;
+    border: 1px solid rgba(202, 212, 224, 0.84);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.03);
+    transition:
+        transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 160ms ease-out,
+        box-shadow 160ms ease-out,
+        background-color 160ms ease-out;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-tool:hover {
+    transform: translateY(-1px);
+    border-color: rgba(31, 94, 142, 0.16);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.045);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-tool .material-symbols-rounded {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(232, 242, 250, 0.92);
+    color: var(--vf-accent);
+    font-size: 19px;
+}
+
+@keyframes subtle-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(0.96);
+        opacity: 0.78;
+    }
 }
 
 body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-avatar {
