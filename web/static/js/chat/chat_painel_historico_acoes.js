@@ -273,6 +273,75 @@
         item.setAttribute("aria-busy", String(!!ativo));
     }
 
+    function confirmarExclusaoHistorico({
+        titulo = "Excluir conversa",
+        descricao = "Essa ação remove este item do seu histórico.",
+        confirmarLabel = "Excluir",
+        contexto = "",
+    } = {}) {
+        return new Promise((resolve) => {
+            const overlay = document.createElement("div");
+            overlay.className = "finalizacao-preview-overlay";
+            overlay.setAttribute("role", "presentation");
+
+            const modal = document.createElement("div");
+            modal.className = "finalizacao-preview-modal";
+            modal.setAttribute("role", "dialog");
+            modal.setAttribute("aria-modal", "true");
+            modal.setAttribute("aria-labelledby", "modal-confirmacao-historico-titulo");
+            modal.innerHTML = `
+                <div class="finalizacao-preview-modal__header">
+                    <span class="finalizacao-preview-modal__eyebrow">Histórico do chat</span>
+                    <h2 id="modal-confirmacao-historico-titulo">${titulo}</h2>
+                    <p>${descricao}</p>
+                </div>
+                ${contexto ? `
+                    <div class="finalizacao-preview-modal__blockers">
+                        <strong>Item selecionado</strong>
+                        <ul>
+                            <li>${contexto}</li>
+                        </ul>
+                    </div>
+                ` : ""}
+                <div class="finalizacao-preview-modal__footer">
+                    <button type="button" class="technical-record-btn technical-record-btn--ghost" data-confirmacao-cancelar>
+                        Cancelar
+                    </button>
+                    <button type="button" class="technical-record-btn technical-record-btn--danger" data-confirmacao-confirmar>
+                        ${confirmarLabel}
+                    </button>
+                </div>
+            `;
+
+            const finalizar = (resultado) => {
+                document.removeEventListener("keydown", onKeyDown, true);
+                overlay.remove();
+                resolve(resultado);
+            };
+
+            const onKeyDown = (event) => {
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    finalizar(false);
+                }
+            };
+
+            overlay.addEventListener("click", (event) => {
+                if (event.target === overlay) {
+                    finalizar(false);
+                }
+            });
+
+            modal.querySelector("[data-confirmacao-cancelar]")?.addEventListener("click", () => finalizar(false));
+            modal.querySelector("[data-confirmacao-confirmar]")?.addEventListener("click", () => finalizar(true));
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            document.addEventListener("keydown", onKeyDown, true);
+            modal.querySelector("[data-confirmacao-confirmar]")?.focus?.();
+        });
+    }
+
     function limparSelecaoSemLaudo() {
         TP.limparSelecaoAtual?.();
         TP.persistirLaudoAtual?.("");
@@ -369,7 +438,15 @@
             const threadId = obterThreadIdDoEvento(itemEl);
             if (!threadId) return null;
 
-            const confirmou = window.confirm("Deseja realmente excluir esta conversa?");
+            const contexto = String(
+                itemEl?.querySelector(".texto-laudo-historico span:first-child")?.textContent || "Conversa sem título"
+            ).trim();
+            const confirmou = await confirmarExclusaoHistorico({
+                titulo: "Excluir conversa",
+                descricao: "A conversa será removida da lateral e você não conseguirá retomá-la depois.",
+                confirmarLabel: "Excluir conversa",
+                contexto,
+            });
             if (!confirmou) return null;
 
             const removido = window.TarielAPI?.removerThreadChatLivre?.(threadId);
@@ -426,7 +503,15 @@
             return null;
         }
 
-        const confirmou = window.confirm("Deseja realmente excluir este laudo?");
+        const contexto = String(
+            itemEl?.querySelector(".texto-laudo-historico span:first-child")?.textContent || "Laudo sem título"
+        ).trim();
+        const confirmou = await confirmarExclusaoHistorico({
+            titulo: "Excluir laudo",
+            descricao: "Esse laudo será removido do histórico do inspetor. Use essa ação só quando tiver certeza.",
+            confirmarLabel: "Excluir laudo",
+            contexto,
+        });
         if (!confirmou) return null;
 
         marcarItemComoProcessando(itemEl, true);
@@ -659,6 +744,7 @@
         obterLaudoIdDoEvento,
         resolverProximoLaudoAposExclusao,
         atualizarUIItemPin,
+        confirmarExclusaoHistorico,
         alternarPinLaudo,
         excluirLaudo,
         bindItemHistorico,
