@@ -15,6 +15,40 @@
                 <h3>Navegação</h3>
             </div>
             <div class="workspace-rail-card__body workspace-rail-card__body--navigation">
+                <div class="workspace-rail-top-actions" aria-label="Ações principais da conversa">
+                    <a
+                        href="/app/?home=1"
+                        class="technical-record-btn technical-record-btn--ghost workspace-rail-top-actions__home"
+                        data-action="go-home"
+                        data-home-destino="/app/?home=1"
+                        aria-label="Voltar para o Portal do Inspetor"
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+                        <span>Portal</span>
+                    </a>
+
+                    <span class="technical-record-status-pill workspace-rail-status-pill">Chat livre</span>
+
+                    <button
+                        type="button"
+                        class="technical-record-btn technical-record-btn--ghost workspace-rail-top-actions__button"
+                        data-open-inspecao-modal
+                        data-inspector-entry="workspace-rail-new-inspection"
+                    >
+                        Nova Inspeção
+                    </button>
+
+                    <button
+                        type="button"
+                        class="technical-record-btn technical-record-btn--primary workspace-rail-top-actions__button"
+                        data-finalizar-inspecao
+                        data-inspector-entry="workspace-rail-send-mesa-primary"
+                    >
+                        <span class="material-symbols-rounded" aria-hidden="true">send</span>
+                        <span>Enviar para Mesa</span>
+                    </button>
+                </div>
+
                 <span class="workspace-rail-card__eyebrow">Acesso rápido</span>
                 <div class="workspace-rail-nav" role="tablist" aria-label="Ir para seções do laudo">
                     <button type="button" class="workspace-rail-nav__button" data-rail-thread-tab="conversa" aria-pressed="true">Conversa</button>

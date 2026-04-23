@@ -578,6 +578,10 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspecti
     --workspace-thread-column-max: 1048px;
 }
 
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-record-header {
+    display: none !important;
+}
+
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread-with-rail"] {
     grid-template-columns: minmax(0, 1fr) var(--workspace-rail-width);
     gap: 20px;

@@ -228,6 +228,23 @@ body.pagina-chat-dashboard-v2 .workspace-rail-card__body--navigation {
     gap: 12px;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-rail-top-actions {
+    display: grid;
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-top-actions__home,
+body.pagina-chat-dashboard-v2 .workspace-rail-top-actions__button {
+    width: 100%;
+    justify-content: center;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-status-pill {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+}
+
 body.pagina-chat-dashboard-v2 .workspace-rail-nav {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -292,6 +309,11 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-record-card--navigation,
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_history"] .technical-record-card--navigation {
     padding-bottom: 12px;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-record-card--navigation .technical-record-card__header,
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_history"] .technical-record-card--navigation .technical-record-card__header {
+    display: none;
 }
 
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-record-card--navigation .workspace-rail-card__body,
