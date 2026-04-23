@@ -392,16 +392,17 @@ body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-attachment {
 
 body.pagina-chat-dashboard-v2 #area-mensagens .img-anexo {
     display: block;
-    width: auto;
-    max-width: min(100%, 420px);
+    width: 100%;
+    max-width: clamp(220px, 32vw, 380px);
     height: auto;
-    max-height: 360px;
-    margin-top: 12px;
-    border-radius: 18px;
-    object-fit: contain;
+    max-height: 420px;
+    margin-top: 8px;
+    border-radius: 20px;
+    object-fit: cover;
     object-position: center;
     background: rgba(248, 251, 253, 0.92);
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(210, 220, 230, 0.72);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .img-anexo,
@@ -416,10 +417,27 @@ body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused
     margin-right: auto;
 }
 
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card:has(.img-anexo) {
+    width: auto !important;
+    max-width: min(100%, 420px);
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-card:has(.img-anexo),
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--user .workspace-message-card:has(.img-anexo) {
+    background: rgba(240, 245, 250, 0.4) !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--assistant .workspace-message-card:has(.img-anexo),
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--assistant .workspace-message-card:has(.img-anexo),
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--typing .workspace-message-card:has(.img-anexo),
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--typing .workspace-message-card:has(.img-anexo) {
+    max-width: min(100%, 420px);
+}
+
 @media (max-width: 780px) {
     body.pagina-chat-dashboard-v2 #area-mensagens .img-anexo {
         max-width: min(100%, 280px);
-        max-height: 280px;
+        max-height: 320px;
         border-radius: 16px;
     }
 }
