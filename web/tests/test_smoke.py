@@ -439,7 +439,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "workspaceMesaStageMomentDetail" in workspace_mesa_status_js
     assert ".workspace-mesa-signals" in workspace_states_css
     assert ".workspace-mesa-signal--focus" in workspace_states_css
-    assert ".inspetor-sidebar-report:hover .btn-deletar-laudo" in visual_refinements_css
+    assert ".inspetor-sidebar-report:hover .inspetor-sidebar-report__actions > .btn-deletar-laudo" in visual_refinements_css
     assert ".btn-deletar-laudo:focus-visible" in visual_refinements_css
     assert "function promoverConversaLivreNoPrimeiroEnvio()" in shared_api_js
     assert 'workspaceStage: "inspection"' in shared_api_js

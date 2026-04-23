@@ -1165,11 +1165,11 @@ body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspet
 }
 
 body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .pill-status-laudo,
-body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .btn-pin-laudo {
+body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__actions > .btn-pin-laudo {
     display: none !important;
 }
 
-body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .btn-deletar-laudo {
+body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__actions > .btn-deletar-laudo {
     opacity: 0;
     transform: translateY(-2px) scale(0.94);
     pointer-events: none;
@@ -1181,19 +1181,19 @@ body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspet
         color 160ms ease;
 }
 
-body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report[data-permite-exclusao="false"] .btn-deletar-laudo {
+body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report[data-permite-exclusao="false"] .inspetor-sidebar-report__actions > .btn-deletar-laudo {
     display: none !important;
 }
 
-body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report:hover .btn-deletar-laudo,
-body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report:focus-within .btn-deletar-laudo {
+body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report:hover .inspetor-sidebar-report__actions > .btn-deletar-laudo,
+body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report:focus-within .inspetor-sidebar-report__actions > .btn-deletar-laudo {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: auto;
 }
 
-body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .btn-deletar-laudo:hover,
-body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .btn-deletar-laudo:focus-visible {
+body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__actions > .btn-deletar-laudo:hover,
+body.pagina-chat-dashboard-v2 #painel-chat[data-inspecao-ui="workspace"] .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar-report__actions > .btn-deletar-laudo:focus-visible {
     border-color: rgba(202, 75, 75, 0.28);
     background: rgba(202, 75, 75, 0.1);
     color: #a63b3b;
