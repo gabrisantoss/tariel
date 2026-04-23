@@ -6,6 +6,8 @@
         role="button"
         tabindex="0"
         {% if item.id %}data-laudo-id="{{ item.id | int }}"{% endif %}
+        {% if item.id %}data-sidebar-thread-id="laudo:{{ item.id | int }}"{% endif %}
+        data-thread-kind="laudo"
         {% if item.id %}data-home-laudo-id="{{ item.id | int }}"{% endif %}
         data-home-template="{{ item.tipo | default('padrao', true) | e }}"
         data-home-title="{{ item.workspace_title | default(item.titulo, true) | e }}"

@@ -375,8 +375,9 @@
     function getItemHistoricoPorId(laudoId) {
         if (!laudoId) return null;
 
+        const valor = String(laudoId);
         return document.querySelector(
-            `.item-historico[data-laudo-id="${escapeSel(laudoId)}"]`
+            `.item-historico[data-laudo-id="${escapeSel(valor)}"], .item-historico[data-sidebar-thread-id="${escapeSel(valor)}"]`
         );
     }
 

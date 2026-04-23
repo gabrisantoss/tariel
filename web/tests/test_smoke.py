@@ -1761,11 +1761,22 @@ def test_chat_sidebar_e_modal_perfil_expoem_controles_essenciais() -> None:
 def test_chat_sidebar_history_runtime_mantem_resumo_e_destaque_da_conversa_ativa() -> None:
     raiz = Path(__file__).resolve().parents[1]
     laudos_js = (raiz / "static" / "js" / "chat" / "chat_painel_laudos.js").read_text(encoding="utf-8")
+    historico_acoes_js = (raiz / "static" / "js" / "chat" / "chat_painel_historico_acoes.js").read_text(encoding="utf-8")
+    api_js = (raiz / "static" / "js" / "shared" / "api.js").read_text(encoding="utf-8")
+    sidebar_history_js = (raiz / "static" / "js" / "inspetor" / "sidebar_history.js").read_text(encoding="utf-8")
     visual_refinements_css = (raiz / "static" / "css" / "inspetor" / "visual_refinements.css").read_text(encoding="utf-8")
 
     assert "function construirPreviewHistorico(card = {})" in laudos_js
     assert "function construirTituloHistorico(card = {})" in laudos_js
+    assert 'item.dataset.threadKind = "free_chat";' in laudos_js
+    assert "function sincronizarThreadChatLivreSidebar(thread, opts = {})" in laudos_js
     assert "item.dataset.homeSubtitle = construirPreviewHistorico(card);" in laudos_js
     assert "item.dataset.homeTitle = construirTituloHistorico(card);" in laudos_js
+    assert "function itemEhChatLivre(item)" in historico_acoes_js
+    assert 'TP.emitir?.("tariel:free-chat-thread-open"' in historico_acoes_js
+    assert "function listarThreadsChatLivre()" in api_js
+    assert "function sincronizarThreadChatLivreAtiva({ selecionar = true } = {})" in api_js
+    assert 'document.addEventListener("tariel:free-chat-thread-open"' in api_js
+    assert '.item-historico[data-sidebar-thread-id]' in sidebar_history_js
     assert ".inspetor-sidebar-report.ativo .inspetor-sidebar-report__copy > span:first-child" in visual_refinements_css
     assert "inset 3px 0 0 rgba(31, 94, 142, 0.84)" in visual_refinements_css

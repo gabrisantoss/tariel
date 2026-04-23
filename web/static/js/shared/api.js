@@ -57,6 +57,7 @@
     const LIMITE_PAGINA_HISTORICO = 80;
     const CACHE_PAGINA_HISTORICO_MS = 900;
     const COOLDOWN_CARGA_LAUDO_MS = 1200;
+    const KEY_FREE_CHAT_THREADS = "tariel_free_chat_threads_v1";
 
     // =========================================================================
     // REFERÊNCIAS DOM
@@ -469,6 +470,7 @@
     let controllerStream = null;
     let laudoAtualId = normalizarNumero(window.TARIEL?.laudoAtivoId ?? null);
     let historicoConversa = [];
+    let activeFreeChatThreadId = null;
     let historicoLaudoPaginado = [];
     let cursorHistoricoProximo = null;
     let temMaisHistorico = false;
@@ -559,6 +561,142 @@
         if (historicoConversa.length > MAX_HISTORICO_LOCAL) {
             historicoConversa = historicoConversa.slice(-MAX_HISTORICO_LOCAL);
         }
+    }
+
+    function obterStorageKeyThreadsChatLivre() {
+        const escopo = [NOME_EMPRESA, NOME_USUARIO]
+            .map((item) => String(item || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"))
+            .filter(Boolean)
+            .join(":");
+        return escopo ? `${KEY_FREE_CHAT_THREADS}:${escopo}` : KEY_FREE_CHAT_THREADS;
+    }
+
+    function clonarMensagensThreadLivre(mensagens = []) {
+        return Array.isArray(mensagens)
+            ? mensagens
+                .map((item) => ({
+                    papel: String(item?.papel || "").trim().toLowerCase() === "assistente" ? "assistente" : "usuario",
+                    texto: String(item?.texto || "").trim(),
+                }))
+                .filter((item) => item.texto)
+            : [];
+    }
+
+    function lerThreadsChatLivreStorage() {
+        try {
+            const bruto = localStorage.getItem(obterStorageKeyThreadsChatLivre());
+            const dados = JSON.parse(bruto || "[]");
+            return Array.isArray(dados) ? dados : [];
+        } catch (_) {
+            return [];
+        }
+    }
+
+    function salvarThreadsChatLivreStorage(threads = []) {
+        try {
+            localStorage.setItem(
+                obterStorageKeyThreadsChatLivre(),
+                JSON.stringify(Array.isArray(threads) ? threads.slice(0, 30) : [])
+            );
+        } catch (_) {}
+    }
+
+    function resumirTituloThreadLivre(mensagens = []) {
+        const primeiraUsuario = mensagens.find((item) => item?.papel === "usuario" && String(item?.texto || "").trim());
+        const base = String(primeiraUsuario?.texto || "Nova conversa").trim();
+        return base.length > 56 ? `${base.slice(0, 56).trim()}...` : base;
+    }
+
+    function resumirPreviewThreadLivre(mensagens = []) {
+        const ultima = [...mensagens].reverse().find((item) => String(item?.texto || "").trim());
+        const base = String(ultima?.texto || "").trim();
+        return base.length > 72 ? `${base.slice(0, 72).trim()}...` : base;
+    }
+
+    function montarThreadChatLivreSnapshot({ threadId = null, mensagens = historicoConversa, pinado = false } = {}) {
+        const itens = clonarMensagensThreadLivre(mensagens);
+        if (!itens.some((item) => item.papel === "usuario")) {
+            return null;
+        }
+
+        return {
+            id: String(threadId || `free_chat:${Date.now()}`),
+            thread_kind: "free_chat",
+            title: resumirTituloThreadLivre(itens),
+            preview: resumirPreviewThreadLivre(itens),
+            updated_at: new Date().toISOString(),
+            pinado: !!pinado,
+            messages: itens.slice(-MAX_HISTORICO_LOCAL),
+        };
+    }
+
+    function listarThreadsChatLivre() {
+        return lerThreadsChatLivreStorage()
+            .filter((item) => item && typeof item === "object" && String(item.id || "").trim())
+            .sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
+    }
+
+    function sincronizarThreadChatLivreAtiva({ selecionar = true } = {}) {
+        if (normalizarNumero(laudoAtualId)) return null;
+
+        const existentes = lerThreadsChatLivreStorage();
+        const atual = activeFreeChatThreadId
+            ? existentes.find((item) => String(item?.id || "") === String(activeFreeChatThreadId))
+            : null;
+        const snapshot = montarThreadChatLivreSnapshot({
+            threadId: activeFreeChatThreadId,
+            mensagens: historicoConversa,
+            pinado: !!atual?.pinado,
+        });
+
+        if (!snapshot) return null;
+
+        activeFreeChatThreadId = snapshot.id;
+        const restantes = existentes.filter((item) => String(item?.id || "") !== snapshot.id);
+        const atualizados = [snapshot, ...restantes]
+            .sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")))
+            .slice(0, 30);
+        salvarThreadsChatLivreStorage(atualizados);
+        emitirEventos("tariel:free-chat-thread-synced", {
+            thread: snapshot,
+            selecionar,
+        });
+        return snapshot;
+    }
+
+    function removerThreadChatLivre(threadId) {
+        const alvo = String(threadId || "").trim();
+        if (!alvo) return false;
+
+        const existentes = lerThreadsChatLivreStorage();
+        const restantes = existentes.filter((item) => String(item?.id || "") !== alvo);
+        if (restantes.length === existentes.length) return false;
+
+        salvarThreadsChatLivreStorage(restantes);
+        if (activeFreeChatThreadId === alvo) {
+            activeFreeChatThreadId = null;
+            historicoConversa = [];
+        }
+        emitirEventos("tariel:free-chat-thread-removed", { threadId: alvo });
+        return true;
+    }
+
+    function alternarPinThreadChatLivre(threadId) {
+        const alvo = String(threadId || "").trim();
+        if (!alvo) return null;
+
+        const atualizados = lerThreadsChatLivreStorage().map((item) => {
+            if (String(item?.id || "") !== alvo) return item;
+            return {
+                ...item,
+                pinado: !item?.pinado,
+                updated_at: new Date().toISOString(),
+            };
+        });
+        const thread = atualizados.find((item) => String(item?.id || "") === alvo) || null;
+        if (!thread) return null;
+        salvarThreadsChatLivreStorage(atualizados);
+        return thread;
     }
 
     // =========================================================================
@@ -944,6 +1082,87 @@
         renderizarMarkdown,
     } = ChatRender;
 
+    function renderizarThreadChatLivre(thread = {}) {
+        const mensagens = clonarMensagensThreadLivre(thread.messages);
+        activeFreeChatThreadId = String(thread.id || "").trim() || activeFreeChatThreadId;
+
+        resetarEstadoLocal({
+            limparLaudoAtual: true,
+            limparEntrada: true,
+            limparMensagensVisuais: true,
+        });
+
+        historicoConversa = [];
+        ultimoDiagnosticoBruto = "";
+        historicoLaudoPaginado = [];
+        cursorHistoricoProximo = null;
+        temMaisHistorico = false;
+        carregandoHistoricoAntigo = false;
+
+        if (telaBoasVindas) {
+            telaBoasVindas.style.display = "none";
+        }
+
+        mensagens.forEach((mensagem, index) => {
+            if (mensagem.papel === "assistente") {
+                const elIA = criarBolhaIA("detalhado", {
+                    mensagemId: `free-chat-assistant-${index + 1}`,
+                });
+                const elTexto = elIA?.querySelector(".texto-msg");
+                elIA?.querySelector(".cursor-piscando")?.remove();
+                if (elTexto) {
+                    elTexto.innerHTML = renderizarMarkdown(mensagem.texto || "");
+                }
+                if (elIA && mensagem.texto) {
+                    mostrarAcoesPosResposta(elIA, mensagem.texto);
+                }
+                if (mensagem.texto) {
+                    adicionarAoHistorico("assistente", mensagem.texto);
+                    ultimoDiagnosticoBruto = mensagem.texto;
+                }
+                return;
+            }
+
+            adicionarMensagemInspetor(
+                mensagem.texto || "",
+                null,
+                null,
+                `free-chat-user-${index + 1}`,
+                { omitirStatusEntrega: true }
+            );
+            if (mensagem.texto) {
+                adicionarAoHistorico("usuario", mensagem.texto);
+            }
+        });
+
+        window.TarielInspectorState?.sincronizarEstadoInspector?.(
+            {
+                laudoAtualId: null,
+                estadoRelatorio: "sem_relatorio",
+                forceHomeLanding: false,
+                modoInspecaoUI: "workspace",
+                workspaceStage: "inspection",
+                threadTab: "conversa",
+                assistantLandingFirstSendPending: false,
+                freeChatConversationActive: true,
+            },
+            { persistirStorage: false }
+        );
+
+        emitirEstadoRelatorio({
+            estado_normalizado: "sem_relatorio",
+            laudo_id: null,
+        });
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("laudo");
+            url.searchParams.set("aba", "conversa");
+            url.searchParams.delete("home");
+            history.replaceState(history.state || {}, "", url.toString());
+        } catch (_) {}
+        rolarParaBaixo({ forcar: true });
+    }
+
     // =========================================================================
     // NETWORK
     // =========================================================================
@@ -1194,6 +1413,16 @@
         obterSnapshotEstadoCompat: () => obterSnapshotEstadoCompat(),
         setLaudoAtualId: (v) => sincronizarEstadoCompat({ laudoAtualId: v }).laudoAtualId,
         setEstadoRelatorio: (v) => sincronizarEstadoCompat({ estadoRelatorio: v }).estadoRelatorio,
+        listarThreadsChatLivre: () => listarThreadsChatLivre(),
+        sincronizarThreadChatLivreAtiva: (...args) => sincronizarThreadChatLivreAtiva(...args),
+        removerThreadChatLivre: (threadId) => removerThreadChatLivre(threadId),
+        alternarPinThreadChatLivre: (threadId) => alternarPinThreadChatLivre(threadId),
+        abrirThreadChatLivre: (threadId) => {
+            const thread = listarThreadsChatLivre().find((item) => String(item?.id || "") === String(threadId || ""));
+            if (!thread) return false;
+            renderizarThreadChatLivre(thread);
+            return true;
+        },
 
         obterLaudoAtualId: () => sincronizarEspelhoEstadoCanonico().laudoAtualId,
         obterEstadoRelatorio: () => estadoParaLegado(sincronizarEspelhoEstadoCanonico().estadoRelatorio),
@@ -1698,6 +1927,23 @@
         });
     });
 
+    document.addEventListener("tariel:assistant-chat-opened", () => {
+        sincronizarThreadChatLivreAtiva({ selecionar: false });
+        activeFreeChatThreadId = null;
+        document.querySelectorAll(".item-historico.ativo").forEach((item) => {
+            item.classList.remove("ativo");
+            item.removeAttribute("aria-current");
+        });
+    });
+
+    document.addEventListener("tariel:free-chat-thread-open", (event) => {
+        const threadId = String(event?.detail?.threadId || "").trim();
+        if (!threadId) return;
+        const thread = listarThreadsChatLivre().find((item) => String(item?.id || "") === threadId);
+        if (!thread) return;
+        renderizarThreadChatLivre(thread);
+    });
+
     function promoverConversaLivreNoPrimeiroEnvio() {
         const snapshot = window.TarielInspectorState?.obterSnapshotEstadoInspectorAtual?.() || {};
         const modo = String(snapshot.modoInspecaoUI || "").trim().toLowerCase();
@@ -1777,6 +2023,7 @@
         const textoHistorico = texto || (nomeDocParaEnviar ? `[Documento: ${nomeDocParaEnviar}]` : "");
         if (textoHistorico) {
             adicionarAoHistorico("usuario", textoHistorico);
+            sincronizarThreadChatLivreAtiva({ selecionar: true });
             emitirEventos("tariel:prompt-enviado", {
                 texto,
                 laudoId: laudoAtualId,
@@ -1803,6 +2050,7 @@
             tmpId,
             false
         );
+        sincronizarThreadChatLivreAtiva({ selecionar: true });
     }
 
     if (PERF?.enabled) {

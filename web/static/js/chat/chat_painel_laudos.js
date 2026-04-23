@@ -466,7 +466,7 @@
         const estadoVazio = getEstadoVazioHistorico();
         if (!lista || !estadoVazio) return;
 
-        const possuiItens = !!lista.querySelector(".item-historico[data-laudo-id]");
+        const possuiItens = !!lista.querySelector(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]");
         estadoVazio.hidden = possuiItens;
     }
 
@@ -627,6 +627,28 @@
         return new Date().toLocaleDateString("pt-BR");
     }
 
+    function formatarTempoRelativoSidebar(dataIso = "") {
+        const valor = String(dataIso || "").trim();
+        if (!valor) return "agora";
+
+        try {
+            const data = new Date(valor);
+            if (Number.isNaN(data.getTime())) return "agora";
+
+            const diffMs = Math.max(0, Date.now() - data.getTime());
+            const diffMin = Math.max(1, Math.round(diffMs / 60000));
+            if (diffMin < 60) return `há ${diffMin}min`;
+
+            const diffHoras = Math.round(diffMin / 60);
+            if (diffHoras < 24) return `há ${diffHoras}h`;
+
+            const diffDias = Math.round(diffHoras / 24);
+            return diffDias <= 1 ? "ontem" : `há ${diffDias} dias`;
+        } catch (_) {
+            return "agora";
+        }
+    }
+
     function itemHistoricoEhPinado(item) {
         if (!item) return false;
 
@@ -643,7 +665,7 @@
         if (!lista) return;
 
         const itensDiretos = Array.from(lista.children).filter((node) =>
-            node?.matches?.(".item-historico[data-laudo-id]")
+            node?.matches?.(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]")
         );
 
         if (!itensDiretos.length) {
@@ -678,17 +700,17 @@
 
         const secaoPinados = document.getElementById("secao-laudos-pinados");
         if (secaoPinados) {
-            secaoPinados.hidden = !secaoPinados.querySelector(".item-historico[data-laudo-id]");
+            secaoPinados.hidden = !secaoPinados.querySelector(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]");
         }
 
         const secaoHistorico = document.getElementById("secao-laudos-historico");
         if (secaoHistorico) {
             secaoHistorico.querySelectorAll(".grupo-data").forEach((grupo) => {
-                if (!grupo.querySelector(".item-historico[data-laudo-id]")) {
+                if (!grupo.querySelector(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]")) {
                     grupo.remove();
                 }
             });
-            secaoHistorico.hidden = !secaoHistorico.querySelector(".item-historico[data-laudo-id]");
+            secaoHistorico.hidden = !secaoHistorico.querySelector(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]");
         }
     }
 
@@ -700,6 +722,8 @@
         const tituloHistorico = construirTituloHistorico(card);
         const previewHistorico = construirPreviewHistorico(card);
         item.dataset.laudoId = String(card.id);
+        item.dataset.sidebarThreadId = `laudo:${String(card.id)}`;
+        item.dataset.threadKind = "laudo";
         item.dataset.pinado = String(!!card.pinado);
         item.dataset.openThreadTab = "conversa";
         item.dataset.data = String(card.data_iso || "");
@@ -907,10 +931,191 @@
         return item;
     }
 
+    function criarItemHistoricoChatLivre(thread) {
+        const detail = thread && typeof thread === "object" ? thread : {};
+        const threadId = String(detail.id || "").trim();
+        if (!threadId) return null;
+
+        const item = document.createElement("div");
+        item.className = "inspetor-sidebar-report item-historico";
+        item.setAttribute("role", "button");
+        item.setAttribute("tabindex", "0");
+        item.dataset.sidebarThreadId = threadId;
+        item.dataset.threadKind = "free_chat";
+        item.dataset.pinado = String(!!detail.pinado);
+        item.dataset.data = String(detail.updated_at || "");
+        item.dataset.permiteExclusao = "true";
+        item.dataset.openThreadTab = "conversa";
+        item.title = `Abrir conversa ${String(detail.title || "Nova conversa").trim()}`.trim();
+        item.setAttribute("aria-label", item.title || "Abrir conversa");
+
+        if (detail.pinado) {
+            item.classList.add("pinado");
+        }
+
+        const texto = document.createElement("span");
+        texto.className = "texto-laudo-historico inspetor-sidebar-report__copy";
+
+        const titulo = document.createElement("span");
+        titulo.textContent = String(detail.title || "Nova conversa").trim() || "Nova conversa";
+        texto.appendChild(titulo);
+
+        const preview = document.createElement("span");
+        preview.className = "preview-mensagem";
+        const previewTexto = String(detail.preview || "").trim();
+        const tempo = formatarTempoRelativoSidebar(detail.updated_at);
+        preview.textContent = previewTexto ? `${previewTexto} • ${tempo}` : tempo;
+        texto.appendChild(preview);
+
+        const metaCanonica = document.createElement("small");
+        metaCanonica.className = "meta-canonica-laudo";
+        metaCanonica.textContent = "Chat livre";
+        texto.appendChild(metaCanonica);
+
+        const side = document.createElement("span");
+        side.className = "inspetor-sidebar-report__side";
+
+        const actions = document.createElement("span");
+        actions.className = "inspetor-sidebar-report__actions";
+
+        const botaoMenu = document.createElement("button");
+        botaoMenu.type = "button";
+        botaoMenu.className = "btn-acao-laudo btn-menu-laudo";
+        botaoMenu.dataset.acaoLaudo = "menu";
+        botaoMenu.setAttribute("aria-label", "Abrir ações da conversa");
+        botaoMenu.setAttribute("aria-haspopup", "menu");
+        botaoMenu.setAttribute("aria-expanded", "false");
+        botaoMenu.title = "Mais ações";
+        botaoMenu.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>';
+
+        const menu = document.createElement("span");
+        menu.className = "inspetor-sidebar-report__menu";
+        menu.setAttribute("role", "menu");
+        menu.setAttribute("aria-label", "Ações da conversa");
+        menu.hidden = true;
+
+        const labelPin = detail.pinado ? "Desafixar" : "Fixar";
+        menu.innerHTML = `
+            <button type="button" class="inspetor-sidebar-report__menu-item" data-acao-laudo="open" role="menuitem">
+                <span class="material-symbols-rounded" aria-hidden="true">chat</span>
+                <span>Abrir</span>
+            </button>
+            <button
+                type="button"
+                class="inspetor-sidebar-report__menu-item btn-pin-laudo"
+                data-acao-laudo="pin"
+                role="menuitem"
+                aria-label="${labelPin}"
+                aria-pressed="${detail.pinado ? "true" : "false"}"
+                title="${labelPin}"
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">${detail.pinado ? "keep" : "push_pin"}</span>
+                <span>${labelPin}</span>
+            </button>
+            <button
+                type="button"
+                class="inspetor-sidebar-report__menu-item inspetor-sidebar-report__menu-item--danger btn-deletar-laudo"
+                data-acao-laudo="delete"
+                role="menuitem"
+                aria-label="Excluir conversa"
+                title="Excluir conversa"
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                <span>Excluir</span>
+            </button>
+        `;
+
+        actions.appendChild(botaoMenu);
+        actions.appendChild(menu);
+        side.appendChild(actions);
+
+        item.appendChild(texto);
+        item.appendChild(side);
+        return item;
+    }
+
+    function encontrarItemChatLivre(threadId) {
+        const seguro = String(threadId || "").trim();
+        if (!seguro) return null;
+        return document.querySelector(
+            `.item-historico[data-sidebar-thread-id="${TP.escapeSel?.(seguro) || seguro}"][data-thread-kind="free_chat"]`
+        );
+    }
+
+    function sincronizarThreadChatLivreSidebar(thread, opts = {}) {
+        const detail = thread && typeof thread === "object" ? thread : {};
+        const threadId = String(detail.id || "").trim();
+        if (!threadId) return null;
+
+        const lista = getListaHistorico();
+        if (!lista) return null;
+
+        const itemNovo = criarItemHistoricoChatLivre(detail);
+        if (!itemNovo) return null;
+
+        const existente = encontrarItemChatLivre(threadId);
+        if (existente) {
+            existente.replaceWith(itemNovo);
+        } else if (detail.pinado) {
+            const secaoPinados = obterOuCriarSecaoPinados(lista);
+            secaoPinados.hidden = false;
+            const titulo = secaoPinados.querySelector(".secao-pinados-titulo");
+            secaoPinados.insertBefore(itemNovo, titulo?.nextSibling || null);
+        } else {
+            const secaoHistorico = obterOuCriarSecaoHistorico(lista);
+            secaoHistorico.hidden = false;
+            secaoHistorico.prepend(itemNovo);
+        }
+
+        if (opts.selecionar) {
+            TP.limparSelecaoAtual?.();
+            itemNovo.classList.add("ativo");
+            itemNovo.setAttribute("aria-current", "true");
+        }
+
+        normalizarSecoesHistorico(lista);
+        alternarEstadoVazioHistorico();
+        TP.bindItemHistorico?.(itemNovo);
+        return itemNovo;
+    }
+
+    function removerThreadChatLivreSidebar(threadId) {
+        const item = encontrarItemChatLivre(threadId);
+        if (!item) return false;
+        item.remove();
+        normalizarSecoesHistorico(getListaHistorico());
+        alternarEstadoVazioHistorico();
+        return true;
+    }
+
+    function renderizarThreadsChatLivreIniciais() {
+        const threads = window.TarielAPI?.listarThreadsChatLivre?.() || [];
+        threads.forEach((thread) => {
+            sincronizarThreadChatLivreSidebar(thread, { selecionar: false });
+        });
+    }
+
     function reposicionarItemHistoricoPorPin(laudoId, pinado) {
         const lista = getListaHistorico();
         const item = TP.getItemHistoricoPorId(laudoId);
         if (!lista || !item) return null;
+
+        if (String(item.dataset.threadKind || "").trim().toLowerCase() === "free_chat") {
+            if (pinado) {
+                const secaoPinados = obterOuCriarSecaoPinados(lista);
+                secaoPinados.hidden = false;
+                const titulo = secaoPinados.querySelector(".secao-pinados-titulo");
+                secaoPinados.insertBefore(item, titulo?.nextSibling || null);
+            } else {
+                const secaoHistorico = obterOuCriarSecaoHistorico(lista);
+                secaoHistorico.hidden = false;
+                secaoHistorico.prepend(item);
+            }
+
+            normalizarSecoesHistorico(lista);
+            alternarEstadoVazioHistorico();
+            return item;
+        }
 
         const dataIso = String(item.dataset.data || "");
         const dataBr = formatarDataIsoBr(dataIso);
@@ -1352,6 +1557,20 @@
             });
         });
 
+        document.addEventListener("tariel:free-chat-thread-synced", (event) => {
+            const thread = event.detail?.thread;
+            if (!thread?.id) return;
+            sincronizarThreadChatLivreSidebar(thread, {
+                selecionar: !!event.detail?.selecionar,
+            });
+        });
+
+        document.addEventListener("tariel:free-chat-thread-removed", (event) => {
+            const threadId = String(event.detail?.threadId || "").trim();
+            if (!threadId) return;
+            removerThreadChatLivreSidebar(threadId);
+        });
+
         window.addEventListener("pagehide", () => {
             clearTimeout(STATE_LOCAL.tentativaLaudoInicialTimer);
         });
@@ -1433,6 +1652,7 @@
         wirePopState();
         wireEventosLaudos();
         normalizarEstruturaHistoricoExistente();
+        renderizarThreadsChatLivreIniciais();
 
         if (!laudoInicial) return true;
 
@@ -1457,6 +1677,8 @@
         atualizarBadgeRelatorio,
         limparBadgesRelatorio,
         sincronizarCardLaudo,
+        sincronizarThreadChatLivreSidebar,
+        removerThreadChatLivreSidebar,
         normalizarEstruturaHistoricoExistente,
         setAtivoNoHistorico,
         selecionarThreadTab,

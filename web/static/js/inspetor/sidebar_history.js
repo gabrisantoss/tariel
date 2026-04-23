@@ -15,7 +15,7 @@
     function contarItensVisiveisSecaoSidebar(secao) {
         if (!secao) return 0;
 
-        return Array.from(secao.querySelectorAll(".item-historico[data-laudo-id]"))
+        return Array.from(secao.querySelectorAll(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]"))
             .filter((item) => itemSidebarHistoricoEstaVisivel(item))
             .length;
     }
@@ -68,7 +68,7 @@
         const ativa = resumo.ativa;
         const usaAbas = Array.isArray(el.sidebarLaudosTabButtons) && el.sidebarLaudosTabButtons.length > 0;
         const totalItens = el.sidebarHistoricoLista
-            ? el.sidebarHistoricoLista.querySelectorAll(".item-historico[data-laudo-id]").length
+            ? el.sidebarHistoricoLista.querySelectorAll(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]").length
             : 0;
 
         estado.sidebarLaudosTab = ativa;

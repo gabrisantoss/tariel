@@ -46,7 +46,18 @@
     }
 
     function resolverItemHistoricoAPartirEvento(target) {
-        return target?.closest?.(".item-historico[data-laudo-id]") || null;
+        return target?.closest?.(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]") || null;
+    }
+
+    function obterThreadIdDoEvento(target) {
+        const item = resolverItemHistoricoAPartirEvento(target);
+        if (item?.dataset?.sidebarThreadId) {
+            return String(item.dataset.sidebarThreadId);
+        }
+        if (item?.dataset?.laudoId) {
+            return `laudo:${String(item.dataset.laudoId)}`;
+        }
+        return "";
     }
 
     function obterLaudoIdDoEvento(target) {
@@ -61,6 +72,10 @@
             "";
 
         return viaData ? String(viaData) : "";
+    }
+
+    function itemEhChatLivre(item) {
+        return String(item?.dataset?.threadKind || "").trim().toLowerCase() === "free_chat";
     }
 
     function itemEhPinado(item) {
@@ -144,6 +159,20 @@
     }
 
     function abrirItemHistorico(item, origemBase = "historico_click") {
+        if (itemEhChatLivre(item)) {
+            const threadId = obterThreadIdDoEvento(item);
+            if (!threadId) return;
+
+            TP.limparSelecaoAtual?.();
+            item.classList.add("ativo");
+            item.setAttribute("aria-current", "true");
+            TP.emitir?.("tariel:free-chat-thread-open", {
+                threadId,
+                origem: origemBase,
+            });
+            return;
+        }
+
         const laudoId = item?.dataset?.laudoId;
         if (!laudoId) return;
 
@@ -267,6 +296,24 @@
     // =========================================================
 
     async function alternarPinLaudo(laudoId, itemEl, btn) {
+        if (itemEhChatLivre(itemEl)) {
+            const threadId = obterThreadIdDoEvento(itemEl);
+            const thread = window.TarielAPI?.alternarPinThreadChatLivre?.(threadId);
+            if (!thread) return null;
+            atualizarUIItemPin(itemEl, !!thread.pinado);
+            TP.reposicionarItemHistoricoPorPin?.(threadId, !!thread.pinado);
+            TP.emitir("tariel:free-chat-thread-synced", {
+                thread,
+                selecionar: itemEl?.classList?.contains("ativo"),
+            });
+            TP.toast(
+                thread.pinado ? "Conversa fixada." : "Conversa desafixada.",
+                "sucesso",
+                1800
+            );
+            return thread;
+        }
+
         const id = Number(laudoId);
         if (!Number.isFinite(id) || id <= 0) return null;
 
@@ -318,6 +365,30 @@
     // =========================================================
 
     async function excluirLaudo(laudoId, itemEl) {
+        if (itemEhChatLivre(itemEl)) {
+            const threadId = obterThreadIdDoEvento(itemEl);
+            if (!threadId) return null;
+
+            const confirmou = window.confirm("Deseja realmente excluir esta conversa?");
+            if (!confirmou) return null;
+
+            const removido = window.TarielAPI?.removerThreadChatLivre?.(threadId);
+            if (!removido) {
+                TP.toast("Não foi possível excluir a conversa agora.", "erro", 3200);
+                return null;
+            }
+
+            const eraAtivo = itemEl?.classList?.contains("ativo");
+            itemEl?.remove();
+
+            if (eraAtivo) {
+                limparSelecaoSemLaudo();
+            }
+
+            TP.toast("Conversa excluída.", "sucesso", 1800);
+            return true;
+        }
+
         const id = Number(laudoId);
         if (!Number.isFinite(id) || id <= 0) return null;
 
@@ -435,8 +506,8 @@
         if (!itemEl || itemEl.dataset.bound === "true") return;
         itemEl.dataset.bound = "true";
 
-        const laudoId = itemEl.dataset.laudoId;
-        if (!laudoId) return;
+        const threadId = itemEl.dataset.sidebarThreadId || itemEl.dataset.laudoId;
+        if (!threadId) return;
 
         itemEl.addEventListener("click", onClickItemHistorico);
         itemEl.addEventListener("keydown", onKeydownItemHistorico);
@@ -453,7 +524,7 @@
         if (!container) return;
 
         container
-            .querySelectorAll(".item-historico[data-laudo-id]")
+            .querySelectorAll(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]")
             .forEach((el) => bindItemHistorico(el));
 
         if (TP.state.observerHistorico) {
@@ -465,12 +536,12 @@
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType !== 1) return;
 
-                    if (node.matches?.(".item-historico[data-laudo-id]")) {
+                    if (node.matches?.(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]")) {
                         bindItemHistorico(node);
                     }
 
                     node
-                        .querySelectorAll?.(".item-historico[data-laudo-id]")
+                        .querySelectorAll?.(".item-historico[data-sidebar-thread-id], .item-historico[data-laudo-id]")
                         .forEach((el) => bindItemHistorico(el));
                 });
             });
@@ -584,6 +655,7 @@
 
     Object.assign(TP, {
         resolverItemHistoricoAPartirEvento,
+        obterThreadIdDoEvento,
         obterLaudoIdDoEvento,
         resolverProximoLaudoAposExclusao,
         atualizarUIItemPin,
