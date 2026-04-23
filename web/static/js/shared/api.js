@@ -555,8 +555,12 @@
             && (Date.now() - Number(ultimaCargaLaudo.at || 0)) < COOLDOWN_CARGA_LAUDO_MS;
     }
 
-    function adicionarAoHistorico(papel, texto) {
-        historicoConversa.push({ papel, texto });
+    function adicionarAoHistorico(papel, texto, meta = {}) {
+        historicoConversa.push({
+            papel,
+            texto,
+            criadoEmIso: String(meta?.criadoEmIso || new Date().toISOString()).trim(),
+        });
 
         if (historicoConversa.length > MAX_HISTORICO_LOCAL) {
             historicoConversa = historicoConversa.slice(-MAX_HISTORICO_LOCAL);
@@ -577,9 +581,35 @@
                 .map((item) => ({
                     papel: String(item?.papel || "").trim().toLowerCase() === "assistente" ? "assistente" : "usuario",
                     texto: String(item?.texto || "").trim(),
+                    criadoEmIso: String(item?.criadoEmIso || item?.created_at || "").trim(),
                 }))
                 .filter((item) => item.texto)
             : [];
+    }
+
+    function limparTextoTituloLivre(texto = "") {
+        return String(texto || "")
+            .replace(/\[(documento|imagem):?[^\]]*\]/gi, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function pontuarCandidatoTituloLivre(texto = "") {
+        const base = limparTextoTituloLivre(texto);
+        if (!base) return -1;
+
+        const lower = base.toLowerCase();
+        if (["oi", "ola", "olá", "bom dia", "boa tarde", "boa noite", "nova conversa"].includes(lower)) {
+            return 0;
+        }
+
+        let score = Math.min(base.length, 90);
+        if (base.includes("?")) score += 8;
+        if (/\b(laudo|inspe[cç][aã]o|nr-?\d+|equipamento|pdf|relat[oó]rio|an[aá]lise|conclus[aã]o)\b/i.test(base)) {
+            score += 14;
+        }
+        if (base.split(" ").length >= 6) score += 10;
+        return score;
     }
 
     function lerThreadsChatLivreStorage() {
@@ -602,14 +632,21 @@
     }
 
     function resumirTituloThreadLivre(mensagens = []) {
-        const primeiraUsuario = mensagens.find((item) => item?.papel === "usuario" && String(item?.texto || "").trim());
-        const base = String(primeiraUsuario?.texto || "Nova conversa").trim();
+        const candidatos = mensagens
+            .filter((item) => item?.papel === "usuario" && String(item?.texto || "").trim())
+            .slice(0, 3)
+            .map((item) => limparTextoTituloLivre(item.texto))
+            .filter(Boolean);
+        const base = candidatos
+            .sort((a, b) => pontuarCandidatoTituloLivre(b) - pontuarCandidatoTituloLivre(a))[0]
+            || "Nova conversa";
         return base.length > 56 ? `${base.slice(0, 56).trim()}...` : base;
     }
 
     function resumirPreviewThreadLivre(mensagens = []) {
         const ultima = [...mensagens].reverse().find((item) => String(item?.texto || "").trim());
-        const base = String(ultima?.texto || "").trim();
+        const prefixo = String(ultima?.papel || "").trim().toLowerCase() === "assistente" ? "IA: " : "";
+        const base = `${prefixo}${String(ultima?.texto || "").trim()}`.trim();
         return base.length > 72 ? `${base.slice(0, 72).trim()}...` : base;
     }
 
@@ -1117,7 +1154,9 @@
                     mostrarAcoesPosResposta(elIA, mensagem.texto);
                 }
                 if (mensagem.texto) {
-                    adicionarAoHistorico("assistente", mensagem.texto);
+                    adicionarAoHistorico("assistente", mensagem.texto, {
+                        criadoEmIso: mensagem.criadoEmIso,
+                    });
                     ultimoDiagnosticoBruto = mensagem.texto;
                 }
                 return;
@@ -1128,10 +1167,12 @@
                 null,
                 null,
                 `free-chat-user-${index + 1}`,
-                { omitirStatusEntrega: true }
+                { omitirStatusEntrega: true, criadoEmIso: mensagem.criadoEmIso }
             );
             if (mensagem.texto) {
-                adicionarAoHistorico("usuario", mensagem.texto);
+                adicionarAoHistorico("usuario", mensagem.texto, {
+                    criadoEmIso: mensagem.criadoEmIso,
+                });
             }
         });
 

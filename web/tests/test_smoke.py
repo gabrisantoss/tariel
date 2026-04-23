@@ -1760,6 +1760,7 @@ def test_chat_sidebar_e_modal_perfil_expoem_controles_essenciais() -> None:
 
 def test_chat_sidebar_history_runtime_mantem_resumo_e_destaque_da_conversa_ativa() -> None:
     raiz = Path(__file__).resolve().parents[1]
+    core_js = (raiz / "static" / "js" / "chat" / "chat_painel_core.js").read_text(encoding="utf-8")
     laudos_js = (raiz / "static" / "js" / "chat" / "chat_painel_laudos.js").read_text(encoding="utf-8")
     historico_acoes_js = (raiz / "static" / "js" / "chat" / "chat_painel_historico_acoes.js").read_text(encoding="utf-8")
     api_js = (raiz / "static" / "js" / "shared" / "api.js").read_text(encoding="utf-8")
@@ -1777,6 +1778,10 @@ def test_chat_sidebar_history_runtime_mantem_resumo_e_destaque_da_conversa_ativa
     assert "function listarThreadsChatLivre()" in api_js
     assert "function sincronizarThreadChatLivreAtiva({ selecionar = true } = {})" in api_js
     assert 'document.addEventListener("tariel:free-chat-thread-open"' in api_js
+    assert 'criadoEmIso: String(meta?.criadoEmIso || new Date().toISOString()).trim()' in api_js
+    assert 'const prefixo = String(ultima?.papel || "").trim().toLowerCase() === "assistente" ? "IA: " : "";' in api_js
+    assert "function limparTextoTituloLivre(texto = \"\")" in api_js
+    assert 'criadoEmIso: String(meta?.criadoEmIso || new Date().toISOString()).trim()' in core_js
     assert '.item-historico[data-sidebar-thread-id]' in sidebar_history_js
     assert ".inspetor-sidebar-report.ativo .inspetor-sidebar-report__copy > span:first-child" in visual_refinements_css
     assert "inset 3px 0 0 rgba(31, 94, 142, 0.84)" in visual_refinements_css

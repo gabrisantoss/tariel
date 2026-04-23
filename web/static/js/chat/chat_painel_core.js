@@ -698,7 +698,7 @@
         btn.classList.toggle("destaque", !btn.disabled);
     }
 
-    function adicionarAoHistorico(papelEntrada, conteudo) {
+    function adicionarAoHistorico(papelEntrada, conteudo, meta = {}) {
         const papel =
             String(papelEntrada || "").trim().toLowerCase() === "assistente"
                 ? "assistente"
@@ -707,7 +707,11 @@
         const texto = String(conteudo || "").trim();
         if (!texto) return;
 
-        STATE.historicoConversa.push({ papel, texto });
+        STATE.historicoConversa.push({
+            papel,
+            texto,
+            criadoEmIso: String(meta?.criadoEmIso || new Date().toISOString()).trim(),
+        });
 
         if (STATE.historicoConversa.length > 50) {
             STATE.historicoConversa = STATE.historicoConversa.slice(-50);
@@ -722,6 +726,7 @@
                           ? "assistente"
                           : "usuario",
                   texto: String(item?.texto || item?.content || ""),
+                  criadoEmIso: String(item?.criadoEmIso || item?.created_at || "").trim(),
               }))
             : [];
     }
