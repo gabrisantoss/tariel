@@ -343,6 +343,15 @@
         definirEstadoSidebar(!sidebarEstaAberta(sidebar));
     }
 
+    function sincronizarSidebarPorEvento(event) {
+        const detail = event?.detail && typeof event.detail === "object" ? event.detail : {};
+        if (typeof detail.aberta === "boolean") {
+            definirEstadoSidebar(detail.aberta);
+            return;
+        }
+        abrirFecharSidebar();
+    }
+
     function aplicarModoFoco(ativo) {
         const btnToggle = document.getElementById("btn-toggle-ui");
         const iconeToggle =
@@ -756,6 +765,7 @@
             overlay.addEventListener("click", fecharSidebarSilencioso);
         }
 
+        document.addEventListener("tariel:toggle-sidebar", sincronizarSidebarPorEvento);
         document.addEventListener("tariel:screen-synced", sincronizarSidebarOverlayPorContexto);
         sincronizarSidebarOverlayPorContexto();
 

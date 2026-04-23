@@ -1805,6 +1805,7 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     portal_main_html = (raiz / "templates" / "inspetor" / "_portal_main.html").read_text(encoding="utf-8")
     workspace_elements_js = (raiz / "static" / "js" / "inspetor" / "workspace_page_elements.js").read_text(encoding="utf-8")
     ui_bindings_js = (raiz / "static" / "js" / "inspetor" / "ui_bindings.js").read_text(encoding="utf-8")
+    shared_ui_js = (raiz / "static" / "js" / "shared" / "ui.js").read_text(encoding="utf-8")
     reboot_css = (raiz / "static" / "css" / "inspetor" / "reboot.css").read_text(encoding="utf-8")
     workspace_states_css = (raiz / "static" / "css" / "inspetor" / "workspace_states.css").read_text(encoding="utf-8")
     workspace_chrome_css = (raiz / "static" / "css" / "inspetor" / "workspace_chrome.css").read_text(encoding="utf-8")
@@ -1822,8 +1823,9 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     assert "btnWorkspaceToggleLeftSidebar" in workspace_elements_js
     assert "btnWorkspaceToggleRightRail" in workspace_elements_js
     assert "sincronizarBotaoSidebarEsquerda" in ui_bindings_js
+    assert 'new CustomEvent("tariel:toggle-sidebar"' in ui_bindings_js
+    assert 'document.addEventListener("tariel:toggle-sidebar", sincronizarSidebarPorEvento);' in shared_ui_js
     assert "typeof estado.workspaceRailExpanded !== \"boolean\"" in workspace_rail_js
-    assert "btn-toggle-ui" in ui_bindings_js
     assert "--workspace-thread-column-max: 1320px;" in workspace_chrome_css
     assert ".inspetor-sidebar-edge-toggle" in reboot_css
     assert '.chat-dashboard-grid[data-workspace-rail-visible="true"]' in reboot_css

@@ -564,14 +564,17 @@
                 });
             };
             const alternarSidebarEsquerda = () => {
-                document.getElementById("btn-toggle-ui")?.click();
+                document.dispatchEvent(new CustomEvent("tariel:toggle-sidebar", {
+                    detail: { origem: "workspace-shell-edge" },
+                    bubbles: true,
+                }));
                 window.setTimeout(sincronizarBotaoSidebarEsquerda, 0);
             };
             el.btnWorkspaceToggleLeftSidebar?.addEventListener("click", alternarSidebarEsquerda);
             el.btnSidebarEdgeToggle?.addEventListener("click", alternarSidebarEsquerda);
             sincronizarBotaoSidebarEsquerda();
             window.addEventListener("resize", sincronizarBotaoSidebarEsquerda);
-            document.getElementById("btn-toggle-ui")?.addEventListener("click", () => {
+            document.addEventListener("tariel:toggle-sidebar", () => {
                 window.setTimeout(sincronizarBotaoSidebarEsquerda, 0);
             });
             const alternarWorkspaceRail = () => {
