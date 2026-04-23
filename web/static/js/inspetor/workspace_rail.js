@@ -44,7 +44,7 @@
         const view = options.view ?? resolveWorkspaceView?.();
         const railVisivel = options.railVisivel ?? resolveRailVisibility?.();
         const railDisponivel = chromeTecnicoOperacional && !layoutCompacto && workspaceViewSuportaRail?.(view);
-        const botoes = [el.btnWorkspaceToggleRail, el.btnWorkspaceToggleRightRail].filter(Boolean);
+        const botoes = [el.btnWorkspaceToggleRail, el.btnWorkspaceToggleRightRail, el.btnRailEdgeToggle].filter(Boolean);
 
         botoes.forEach((botao) => {
             const icone = botao.querySelector(".material-symbols-rounded");

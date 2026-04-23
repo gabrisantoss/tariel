@@ -139,6 +139,7 @@
             botoesFinalizarInspecao: Array.from(documentRef.querySelectorAll("[data-finalizar-inspecao]")),
             btnRailFinalizarInspecao: documentRef.getElementById("btn-rail-finalizar-inspecao"),
             btnSidebarEdgeToggle: documentRef.getElementById("btn-sidebar-edge-toggle"),
+            btnRailEdgeToggle: documentRef.getElementById("btn-rail-edge-toggle"),
             btnWorkspaceToggleLeftSidebar: documentRef.getElementById("btn-workspace-toggle-left-sidebar"),
             btnWorkspaceToggleRightRail: documentRef.getElementById("btn-workspace-toggle-right-rail"),
             btnWorkspaceToggleRail: documentRef.getElementById("btn-workspace-toggle-rail"),

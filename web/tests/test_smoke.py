@@ -1819,7 +1819,9 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     assert 'id="btn-workspace-toggle-left-sidebar"' in workspace_header_html
     assert 'id="btn-workspace-toggle-right-rail"' in workspace_header_html
     assert 'id="btn-sidebar-edge-toggle"' in portal_main_html
+    assert 'id="btn-rail-edge-toggle"' in portal_main_html
     assert "btnSidebarEdgeToggle" in workspace_elements_js
+    assert "btnRailEdgeToggle" in workspace_elements_js
     assert "btnWorkspaceToggleLeftSidebar" in workspace_elements_js
     assert "btnWorkspaceToggleRightRail" in workspace_elements_js
     assert "sincronizarBotaoSidebarEsquerda" in ui_bindings_js
@@ -1828,5 +1830,6 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     assert "typeof estado.workspaceRailExpanded !== \"boolean\"" in workspace_rail_js
     assert "--workspace-thread-column-max: 1320px;" in workspace_chrome_css
     assert ".inspetor-sidebar-edge-toggle" in reboot_css
+    assert ".inspetor-rail-edge-toggle" in reboot_css
     assert '.chat-dashboard-grid[data-workspace-rail-visible="true"]' in reboot_css
     assert 'data-free-chat-conversation-active="true"][data-workspace-rail-visible="false"]' in workspace_states_css

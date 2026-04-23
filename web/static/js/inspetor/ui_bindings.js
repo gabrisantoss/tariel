@@ -590,6 +590,9 @@
             el.btnWorkspaceToggleRightRail?.addEventListener("click", () => {
                 alternarWorkspaceRail();
             });
+            el.btnRailEdgeToggle?.addEventListener("click", () => {
+                alternarWorkspaceRail();
+            });
             el.btnWorkspacePreview?.addEventListener("click", async () => {
                 definirBotaoPreviewCarregando(true);
                 try {
