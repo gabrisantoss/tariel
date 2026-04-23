@@ -442,6 +442,28 @@ body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused
     color: #233648;
 }
 
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-avatar {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-shell {
+    grid-template-columns: minmax(0, 1fr) !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--assistant .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--typing .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--mesa .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--assistant .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--typing .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--mesa .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--assistant .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--typing .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--mesa .workspace-message-shell {
+    max-width: 800px;
+}
+
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] #campo-mensagem::placeholder {
     color: var(--vf-text-soft) !important;
 }
