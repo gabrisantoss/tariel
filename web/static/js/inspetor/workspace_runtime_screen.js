@@ -159,6 +159,9 @@
     }
 
     function workspaceViewSuportaRail(view) {
+        if (view === "assistant_landing") {
+            return true;
+        }
         return view === "inspection_history"
             || view === "inspection_record"
             || view === "inspection_conversation";

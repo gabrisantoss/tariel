@@ -83,7 +83,7 @@
 
         if (botaoShellGlobal) {
             const icone = botaoShellGlobal.querySelector(".material-symbols-rounded");
-            botaoShellGlobal.hidden = !!layoutCompacto || !workspaceViewSuportaRail?.(view);
+            botaoShellGlobal.hidden = true;
             botaoShellGlobal.setAttribute("aria-expanded", railVisivel ? "true" : "false");
             botaoShellGlobal.dataset.tooltip = railVisivel ? "Fechar ferramentas" : "Ferramentas";
             botaoShellGlobal.title = botaoShellGlobal.dataset.tooltip;
