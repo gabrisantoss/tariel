@@ -51,6 +51,12 @@ from app.domains.admin.client_surface_policy import (
     AdminClienteSurfacePolicyForm,
     atualizar_politica_admin_cliente_por_superficie,
 )
+from app.domains.admin.client_catalog_import_routes import (
+    registrar_rotas_importacao_catalogo_cliente,
+)
+from app.domains.admin.client_catalog_lifecycle_routes import (
+    registrar_rotas_catalogo_lifecycle_cliente,
+)
 from app.domains.admin.client_employee_routes import registrar_rotas_funcionarios_cliente
 from app.domains.admin.client_support_routes import registrar_rotas_suporte_excepcional_cliente
 from app.domains.admin.services import (
@@ -62,8 +68,6 @@ from app.domains.admin.services import (
     get_platform_default_new_tenant_plan,
     get_support_exceptional_policy_snapshot,
     get_tenant_exceptional_support_state,
-    importar_familia_canonica_para_catalogo,
-    importar_familias_canonicas_para_catalogo,
     registrar_novo_cliente,
     resumir_catalogo_laudos_admin,
     sincronizar_portfolio_catalogo_empresa,
@@ -1164,85 +1168,6 @@ async def preview_catalogo_familia_admin(
     )
 
 
-@roteador_admin_clientes.post("/catalogo-laudos/familias/importar-canonico")
-async def importar_familia_canonica_catalogo_admin(
-    request: Request,
-    csrf_token: str = Form(default=""),
-    family_key: str = Form(...),
-    status_catalogo: str = Form(default="publicado"),
-    banco: Session = Depends(obter_banco),
-    usuario: Optional[Usuario] = Depends(obter_usuario_html),
-):
-    if not _verificar_acesso_admin(usuario):
-        return _redirect_login()
-
-    if not _validar_csrf(request, csrf_token):
-        return _redirect_err(URL_CATALOGO_LAUDOS, "Requisição inválida.")
-
-    def _operacao() -> RedirectResponse:
-        familia = importar_familia_canonica_para_catalogo(
-            banco,
-            family_key=family_key,
-            status_catalogo=status_catalogo,
-            criado_por_id=usuario.id if usuario else None,
-        )
-        logger.info(
-            "Família canônica importada para catálogo | family_key=%s | admin_id=%s",
-            familia.family_key,
-            usuario.id if usuario else None,
-        )
-        return _redirect_ok(
-            URL_CATALOGO_LAUDOS,
-            f"Família canônica {familia.family_key} importada para o catálogo oficial.",
-        )
-
-    return _executar_acao_admin_redirect(
-        url_erro=URL_CATALOGO_LAUDOS,
-        mensagem_log="Falha ao importar família canônica para o catálogo",
-        operacao=_operacao,
-        admin_id=usuario.id if usuario else None,
-        family_key=family_key,
-    )
-
-
-@roteador_admin_clientes.post("/catalogo-laudos/familias/importar-canonico-lote")
-async def importar_familias_canonicas_lote_catalogo_admin(
-    request: Request,
-    csrf_token: str = Form(default=""),
-    status_catalogo: str = Form(default="publicado"),
-    banco: Session = Depends(obter_banco),
-    usuario: Optional[Usuario] = Depends(obter_usuario_html),
-):
-    if not _verificar_acesso_admin(usuario):
-        return _redirect_login()
-
-    if not _validar_csrf(request, csrf_token):
-        return _redirect_err(URL_CATALOGO_LAUDOS, "Requisição inválida.")
-
-    def _operacao() -> RedirectResponse:
-        familias = importar_familias_canonicas_para_catalogo(
-            banco,
-            status_catalogo=status_catalogo,
-            criado_por_id=usuario.id if usuario else None,
-        )
-        logger.info(
-            "Lote de famílias canônicas importado | total=%s | admin_id=%s",
-            len(familias),
-            usuario.id if usuario else None,
-        )
-        return _redirect_ok(
-            URL_CATALOGO_LAUDOS,
-            f"{len(familias)} famílias canônicas importadas para o catálogo oficial.",
-        )
-
-    return _executar_acao_admin_redirect(
-        url_erro=URL_CATALOGO_LAUDOS,
-        mensagem_log="Falha ao importar lote de famílias canônicas para o catálogo",
-        operacao=_operacao,
-        admin_id=usuario.id if usuario else None,
-    )
-
-
 @roteador_admin_clientes.post("/catalogo-laudos/familias")
 async def salvar_familia_catalogo(
     request: Request,
@@ -1668,112 +1593,6 @@ async def salvar_release_tenant_catalogo(
         admin_id=usuario.id if usuario else None,
         family_key=family_key,
         tenant_id=tenant_id,
-    )
-
-
-@roteador_admin_clientes.post("/catalogo-laudos/familias/{family_key}/technical-status")
-async def atualizar_status_tecnico_catalogo(
-    request: Request,
-    family_key: str,
-    csrf_token: str = Form(default=""),
-    technical_status: str = Form(...),
-    banco: Session = Depends(obter_banco),
-    usuario: Optional[Usuario] = Depends(obter_usuario_html),
-):
-    if not _verificar_acesso_admin(usuario):
-        return _redirect_login()
-    if not _validar_csrf(request, csrf_token):
-        return _redirect_err(URL_CATALOGO_LAUDOS, "Requisição inválida.")
-
-    def _operacao() -> RedirectResponse:
-        detalhe = buscar_catalogo_familia_admin(banco, family_key)
-        if not detalhe:
-            raise ValueError("Família não encontrada.")
-        familia = detalhe["family_entity"]
-        upsert_familia_catalogo(
-            banco,
-            family_key=str(familia.family_key),
-            nome_exibicao=str(familia.nome_exibicao),
-            macro_categoria=str(getattr(familia, "macro_categoria", "") or ""),
-            nr_key=str(getattr(familia, "nr_key", "") or ""),
-            descricao=str(getattr(familia, "descricao", "") or ""),
-            status_catalogo="publicado" if str(technical_status).strip().lower() == "ready" else str(getattr(familia, "status_catalogo", "") or "rascunho"),
-            technical_status=technical_status,
-            catalog_classification=str(getattr(familia, "catalog_classification", "") or "family"),
-            schema_version=int(getattr(familia, "schema_version", 1) or 1),
-            evidence_policy_json_text=json.dumps(getattr(familia, "evidence_policy_json", None), ensure_ascii=False)
-            if getattr(familia, "evidence_policy_json", None) is not None
-            else "",
-            review_policy_json_text=json.dumps(getattr(familia, "review_policy_json", None), ensure_ascii=False)
-            if getattr(familia, "review_policy_json", None) is not None
-            else "",
-            output_schema_seed_json_text=json.dumps(getattr(familia, "output_schema_seed_json", None), ensure_ascii=False)
-            if getattr(familia, "output_schema_seed_json", None) is not None
-            else "",
-            governance_metadata_json_text=json.dumps(getattr(familia, "governance_metadata_json", None), ensure_ascii=False)
-            if getattr(familia, "governance_metadata_json", None) is not None
-            else "",
-            criado_por_id=usuario.id if usuario else None,
-        )
-        return _redirect_ok(URL_CATALOGO_LAUDOS, "Status técnico da família atualizado.")
-
-    return _executar_acao_admin_redirect(
-        url_erro=URL_CATALOGO_LAUDOS,
-        mensagem_log="Falha ao atualizar status técnico da família do catálogo",
-        operacao=_operacao,
-        admin_id=usuario.id if usuario else None,
-        family_key=family_key,
-    )
-
-
-@roteador_admin_clientes.post("/catalogo-laudos/familias/{family_key}/offer-lifecycle")
-async def atualizar_lifecycle_oferta_catalogo(
-    request: Request,
-    family_key: str,
-    csrf_token: str = Form(default=""),
-    lifecycle_status: str = Form(...),
-    banco: Session = Depends(obter_banco),
-    usuario: Optional[Usuario] = Depends(obter_usuario_html),
-):
-    if not _verificar_acesso_admin(usuario):
-        return _redirect_login()
-    if not _validar_csrf(request, csrf_token):
-        return _redirect_err(URL_CATALOGO_LAUDOS, "Requisição inválida.")
-
-    def _operacao() -> RedirectResponse:
-        detalhe = buscar_catalogo_familia_admin(banco, family_key)
-        if not detalhe or not detalhe.get("offer"):
-            raise ValueError("Oferta comercial não encontrada para a família.")
-        oferta = detalhe["offer"]
-        oferta_entity = getattr(detalhe["family_entity"], "oferta_comercial", None)
-        upsert_oferta_comercial_familia(
-            banco,
-            family_key=family_key,
-            offer_key=str(oferta.get("offer_key") or family_key),
-            nome_oferta=str(oferta.get("offer_name") or ""),
-            descricao_comercial=str(oferta.get("description") or ""),
-            pacote_comercial=str(oferta.get("package_name") or ""),
-            prazo_padrao_dias=str(getattr(oferta_entity, "prazo_padrao_dias", "") or ""),
-            lifecycle_status=lifecycle_status,
-            showcase_enabled=bool(oferta.get("showcase_enabled")),
-            versao_oferta=int(getattr(oferta_entity, "versao_oferta", 1) or 1),
-            material_real_status=str(getattr(oferta_entity, "material_real_status", "") or "sintetico"),
-            material_level=str(getattr(oferta_entity, "material_level", "") or "synthetic"),
-            escopo_comercial_text=json.dumps(list(oferta.get("scope_items") or []), ensure_ascii=False),
-            exclusoes_text=json.dumps(list(oferta.get("exclusion_items") or []), ensure_ascii=False),
-            insumos_minimos_text=json.dumps(list(oferta.get("minimum_inputs") or []), ensure_ascii=False),
-            variantes_comerciais_text=json.dumps(list(oferta.get("variants") or []), ensure_ascii=False),
-            template_default_code=str(oferta.get("template_default_code") or ""),
-            criado_por_id=usuario.id if usuario else None,
-        )
-        return _redirect_ok(URL_CATALOGO_LAUDOS, "Lifecycle da oferta comercial atualizado.")
-
-    return _executar_acao_admin_redirect(
-        url_erro=URL_CATALOGO_LAUDOS,
-        mensagem_log="Falha ao atualizar lifecycle da oferta comercial",
-        operacao=_operacao,
-        admin_id=usuario.id if usuario else None,
-        family_key=family_key,
     )
 
 
@@ -2289,6 +2108,14 @@ registrar_rotas_funcionarios_cliente(
     roteador_admin_clientes,
     executar_acao_admin_redirect=_executar_acao_admin_redirect,
     exigir_step_up_admin_ou_redirect=_exigir_step_up_admin_ou_redirect,
+)
+registrar_rotas_importacao_catalogo_cliente(
+    roteador_admin_clientes,
+    executar_acao_admin_redirect=_executar_acao_admin_redirect,
+)
+registrar_rotas_catalogo_lifecycle_cliente(
+    roteador_admin_clientes,
+    executar_acao_admin_redirect=_executar_acao_admin_redirect,
 )
 registrar_rotas_suporte_excepcional_cliente(
     roteador_admin_clientes,
