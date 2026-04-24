@@ -21,7 +21,6 @@
         const formatarLimitePlano = typeof helpers.formatarLimitePlano === "function" ? helpers.formatarLimitePlano : () => "";
         const formatarPercentual = typeof helpers.formatarPercentual === "function" ? helpers.formatarPercentual : () => "";
         const formatarVariacao = typeof helpers.formatarVariacao === "function" ? helpers.formatarVariacao : () => "";
-        const htmlBarrasHistorico = typeof helpers.htmlBarrasHistorico === "function" ? helpers.htmlBarrasHistorico : () => "";
         const obterNomePapel = typeof helpers.obterNomePapel === "function" ? helpers.obterNomePapel : (valor) => String(valor ?? "");
         const obterPlanoCatalogo = typeof helpers.obterPlanoCatalogo === "function" ? helpers.obterPlanoCatalogo : () => null;
         const ordenarPorPrioridade = typeof helpers.ordenarPorPrioridade === "function" ? helpers.ordenarPorPrioridade : (lista) => [...(lista || [])];
@@ -459,6 +458,91 @@
             });
             alert.appendChild(side);
             return alert;
+        }
+
+        function criarPillAdminNode({ kind, status, label, className = "pill" }) {
+            const pill = documentRef.createElement("span");
+            pill.className = className;
+            if (kind) pill.dataset.kind = texto(kind);
+            if (status) pill.dataset.status = texto(status);
+            pill.textContent = texto(label);
+            return pill;
+        }
+
+        function criarContextGuidanceAdminNode({ tone, eyebrow, title, detail, sideNode }) {
+            const guidance = documentRef.createElement("div");
+            guidance.className = "context-guidance";
+            guidance.dataset.tone = texto(tone).trim();
+
+            const copy = documentRef.createElement("div");
+            copy.className = "context-guidance-copy";
+            const eyebrowNode = documentRef.createElement("small");
+            eyebrowNode.textContent = texto(eyebrow);
+            copy.appendChild(eyebrowNode);
+            const titleNode = documentRef.createElement("strong");
+            titleNode.textContent = texto(title);
+            copy.appendChild(titleNode);
+            const detailNode = documentRef.createElement("p");
+            detailNode.textContent = texto(detail);
+            copy.appendChild(detailNode);
+            guidance.appendChild(copy);
+
+            if (sideNode) {
+                guidance.appendChild(sideNode);
+            }
+            return guidance;
+        }
+
+        function criarHealthBarsAdminNode(serie, tone) {
+            const lista = Array.isArray(serie) ? serie : [];
+            const maior = Math.max(...lista.map((item) => Number(item?.total || 0)), 1);
+            const bars = documentRef.createElement("div");
+            bars.className = "health-bars";
+            bars.dataset.tone = texto(tone || "aberto").trim();
+
+            lista.forEach((item) => {
+                const total = Number(item?.total || 0);
+                const altura = Math.max(10, Math.round((total / maior) * 100));
+                const bar = documentRef.createElement("div");
+                bar.className = "health-bar";
+                bar.title = `${texto(item?.label)}: ${total}`;
+
+                const fill = documentRef.createElement("div");
+                fill.className = `health-bar-fill${item?.atual ? " is-current" : ""}`;
+                fill.style.height = `${altura}%`;
+                bar.appendChild(fill);
+
+                const valueNode = documentRef.createElement("span");
+                valueNode.className = "health-bar-value";
+                valueNode.textContent = formatarInteiro(total);
+                bar.appendChild(valueNode);
+
+                const labelNode = documentRef.createElement("span");
+                labelNode.className = "health-bar-label";
+                labelNode.textContent = texto(item?.label);
+                bar.appendChild(labelNode);
+                bars.appendChild(bar);
+            });
+
+            return bars;
+        }
+
+        function criarHealthCardAdminNode({ tone, eyebrow, title, detail, pillLabel, serie }) {
+            const article = documentRef.createElement("article");
+            article.className = "health-card";
+            article.appendChild(criarContextGuidanceAdminNode({
+                tone,
+                eyebrow,
+                title,
+                detail,
+                sideNode: criarPillAdminNode({
+                    kind: "priority",
+                    status: tone,
+                    label: pillLabel,
+                }),
+            }));
+            article.appendChild(criarHealthBarsAdminNode(serie, tone));
+            return article;
         }
 
         function criarAdminActionButtonNode({ label, primary = false, ghost = false, act, kind, canal, target, origem }) {
@@ -1189,53 +1273,53 @@
             const saude = empresa?.saude_operacional;
             if (!empresa || !resumo || !historico || !saude) return;
 
-            resumo.innerHTML = `
-                <article class="metric-card" data-accent="${escapeAttr(saude.tone || "aprovado")}">
-                    <small>Status da operacao</small>
-                    <strong>${escapeHtml(saude.status || "Sem leitura")}</strong>
-                    <span class="metric-meta">${escapeHtml(saude.texto || "Sem observacoes adicionais.")}</span>
-                </article>
-                <article class="metric-card" data-accent="${escapeAttr(saude.tendencia_tone || "aberto")}">
-                    <small>Tendencia mensal</small>
-                    <strong>${escapeHtml(saude.tendencia_rotulo || "Estavel")}</strong>
-                    <span class="metric-meta">${escapeHtml(formatarVariacao(saude.variacao_mensal_percentual || 0))} em relacao ao mes anterior.</span>
-                </article>
-                <article class="metric-card" data-accent="live">
-                    <small>Equipe ativa em 14 dias</small>
-                    <strong>${escapeHtml(formatarInteiro(saude.usuarios_login_recente || 0))}</strong>
-                    <span class="metric-meta">${escapeHtml(formatarInteiro(saude.usuarios_sem_login_recente || 0))} ainda nao apareceram na janela recente.</span>
-                </article>
-                <article class="metric-card" data-accent="waiting">
-                    <small>Movimentos comerciais</small>
-                    <strong>${escapeHtml(formatarInteiro(saude.eventos_comerciais_60d || 0))}</strong>
-                    <span class="metric-meta">${escapeHtml(formatarInteiro(saude.primeiros_acessos_pendentes || 0))} primeiros acessos ainda pedem conclusao.</span>
-                </article>
-            `;
+            limparElemento(resumo);
+            [
+                {
+                    accent: saude.tone || "aprovado",
+                    label: "Status da operacao",
+                    value: saude.status || "Sem leitura",
+                    meta: saude.texto || "Sem observacoes adicionais.",
+                },
+                {
+                    accent: saude.tendencia_tone || "aberto",
+                    label: "Tendencia mensal",
+                    value: saude.tendencia_rotulo || "Estavel",
+                    meta: `${formatarVariacao(saude.variacao_mensal_percentual || 0)} em relacao ao mes anterior.`,
+                },
+                {
+                    accent: "live",
+                    label: "Equipe ativa em 14 dias",
+                    value: formatarInteiro(saude.usuarios_login_recente || 0),
+                    meta: `${formatarInteiro(saude.usuarios_sem_login_recente || 0)} ainda nao apareceram na janela recente.`,
+                },
+                {
+                    accent: "waiting",
+                    label: "Movimentos comerciais",
+                    value: formatarInteiro(saude.eventos_comerciais_60d || 0),
+                    meta: `${formatarInteiro(saude.primeiros_acessos_pendentes || 0)} primeiros acessos ainda pedem conclusao.`,
+                },
+            ].forEach((metric) => {
+                resumo.appendChild(criarMetricCardAdminNode(metric));
+            });
 
-            historico.innerHTML = `
-                <article class="health-card">
-                    <div class="context-guidance" data-tone="${escapeAttr(saude.tendencia_tone || "aberto")}">
-                        <div class="context-guidance-copy">
-                            <small>Ultimos 6 meses</small>
-                            <strong>${escapeHtml(saude.tendencia_rotulo || "Ritmo estavel")}</strong>
-                            <p>Mes atual: ${escapeHtml(formatarInteiro(saude.laudos_mes_atual || 0))} laudos. Mes anterior: ${escapeHtml(formatarInteiro(saude.laudos_mes_anterior || 0))}.</p>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="${escapeAttr(saude.tendencia_tone || "aberto")}">${escapeHtml(formatarVariacao(saude.variacao_mensal_percentual || 0))}</span>
-                    </div>
-                    ${htmlBarrasHistorico(saude.historico_mensal || [], saude.tendencia_tone || "aberto")}
-                </article>
-                <article class="health-card">
-                    <div class="context-guidance" data-tone="${escapeAttr(saude.tone || "aprovado")}">
-                        <div class="context-guidance-copy">
-                            <small>Pulso dos ultimos 14 dias</small>
-                            <strong>${escapeHtml(saude.status || "Sem leitura")}</strong>
-                            <p>${escapeHtml(formatarInteiro(saude.usuarios_login_recente || 0))} pessoas usaram o portal recentemente, com ${escapeHtml(formatarInteiro(saude.mix_equipe?.inspetores || 0))} pessoas de campo e ${escapeHtml(formatarInteiro(saude.mix_equipe?.revisores || 0))} pessoas de revisao no mix.</p>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="${escapeAttr(saude.tone || "aprovado")}">${escapeHtml(formatarInteiro(saude.eventos_comerciais_60d || 0))} eventos</span>
-                    </div>
-                    ${htmlBarrasHistorico(saude.historico_diario || [], saude.tone || "aprovado")}
-                </article>
-            `;
+            limparElemento(historico);
+            historico.appendChild(criarHealthCardAdminNode({
+                tone: saude.tendencia_tone || "aberto",
+                eyebrow: "Ultimos 6 meses",
+                title: saude.tendencia_rotulo || "Ritmo estavel",
+                detail: `Mes atual: ${formatarInteiro(saude.laudos_mes_atual || 0)} laudos. Mes anterior: ${formatarInteiro(saude.laudos_mes_anterior || 0)}.`,
+                pillLabel: formatarVariacao(saude.variacao_mensal_percentual || 0),
+                serie: saude.historico_mensal || [],
+            }));
+            historico.appendChild(criarHealthCardAdminNode({
+                tone: saude.tone || "aprovado",
+                eyebrow: "Pulso dos ultimos 14 dias",
+                title: saude.status || "Sem leitura",
+                detail: `${formatarInteiro(saude.usuarios_login_recente || 0)} pessoas usaram o portal recentemente, com ${formatarInteiro(saude.mix_equipe?.inspetores || 0)} pessoas de campo e ${formatarInteiro(saude.mix_equipe?.revisores || 0)} pessoas de revisao no mix.`,
+                pillLabel: `${formatarInteiro(saude.eventos_comerciais_60d || 0)} eventos`,
+                serie: saude.historico_diario || [],
+            }));
         }
 
         function renderSuporteDiagnostico() {

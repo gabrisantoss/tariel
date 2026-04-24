@@ -2717,3 +2717,37 @@ Impacto observado:
 - os blocos executivos mais visíveis do Portal Admin Cliente já usam o mesmo padrão DOM seguro dos cards recentes;
 - `portal_admin_surface.js` ainda tem `innerHTML` em resumo detalhado, saúde, política/auditoria e tabela de usuários;
 - o próximo pacote coerente é trocar `renderSaudeEmpresa`/auditoria para DOM seguro ou alternar para novo slice backend em `admin/client_routes.py`.
+
+## R66. Saúde operacional DOM do Portal Admin Cliente
+
+Resumo:
+
+- troquei `renderSaudeEmpresa` para montar métricas de saúde operacional por cards DOM seguros;
+- adicionei helpers DOM para guidance, pills e barras de histórico de saúde, preservando classes e `data-tone`;
+- removi a dependência local de `htmlBarrasHistorico` nessa superfície administrativa;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_admin_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_admin_surface.js` -> sem erro de sintaxe;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'admin or portal or cliente'` -> `32 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais` -> `1 passed, 42 deselected`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `326` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- a área de saúde operacional já não usa `innerHTML` para séries mensais/diárias;
+- `portal_admin_surface.js` ainda tem `innerHTML` em resumo detalhado, suporte diagnóstico, onboarding, auditoria, histórico de planos e tabela de usuários;
+- o próximo pacote coerente é atacar suporte diagnóstico/auditoria com helpers DOM reutilizando `criarPillAdminNode` e cards existentes.
