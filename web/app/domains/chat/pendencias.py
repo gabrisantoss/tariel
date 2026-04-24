@@ -12,6 +12,7 @@ from fastapi.routing import APIRouter
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 
+from app.domains.chat.app_context import logger
 from app.domains.chat.auth_helpers import usuario_nome
 from app.domains.chat.core_helpers import agora_utc, resposta_json_ok
 from app.domains.chat.laudo_access_helpers import obter_laudo_do_inspetor
@@ -25,7 +26,7 @@ from app.domains.chat.pendencias_helpers import (
 )
 from app.domains.chat.session_helpers import exigir_csrf
 from app.domains.chat.schemas import DadosPendencia
-from app.shared.database import MensagemLaudo, TipoMensagem, Usuario, obter_banco
+from app.shared.database import MensagemLaudo, TipoMensagem, Usuario, commit_ou_rollback_operacional, obter_banco
 from app.shared.security import exigir_inspetor
 from nucleo.gerador_laudos import GeradorLaudos
 
@@ -114,7 +115,11 @@ async def marcar_pendencias_laudo_como_lidas(
             synchronize_session=False,
         )
     )
-    banco.flush()
+    commit_ou_rollback_operacional(
+        banco,
+        logger_operacao=logger,
+        mensagem_erro="Falha ao marcar pendencias da mesa como lidas.",
+    )
 
     return resposta_json_ok({"ok": True, "laudo_id": laudo_id, "marcadas": int(marcadas)})
 
@@ -155,6 +160,11 @@ async def atualizar_pendencia_laudo(
 
     banco.flush()
     banco.refresh(mensagem)
+    commit_ou_rollback_operacional(
+        banco,
+        logger_operacao=logger,
+        mensagem_erro="Falha ao atualizar pendencia da mesa do inspetor.",
+    )
 
     resolvedor_nome = ""
     if mensagem.resolvida_por_id:

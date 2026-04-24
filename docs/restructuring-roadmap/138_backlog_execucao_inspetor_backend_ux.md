@@ -252,6 +252,26 @@ Hoje o backend ainda depende bastante de:
 - `teste`: `make hygiene-check`
 - `proximo`: aplicar o mesmo padrao nos comandos de `avaliar`/`responder` da Mesa e nos endpoints do revisor que ainda dependem de flush + commit implícito
 
+### Checkpoint local - 2026-04-24 - Mesa, Pendencias e Correcoes
+
+- `status`: segundo corte local da fronteira transacional fechado
+- `entrega`: `web/app/shared/database.py` ganhou `commit_ou_rollback_operacional_preservando_integridade`, preservando `IntegrityError` para replay idempotente sem deixar commit manual nos handlers
+- `entrega`: `web/app/domains/chat/mesa_message_routes.py` deixou de usar `banco.commit()` direto nos envios de mensagem e anexo do inspetor para a Mesa
+- `entrega`: `web/app/domains/chat/pendencias.py` passou a comitar explicitamente marcacao em lote e atualizacao individual de pendencia da Mesa
+- `entrega`: `web/app/domains/chat/corrections.py` passou a comitar explicitamente criacao e atualizacao de correcoes estruturadas do inspetor
+- `entrega`: `web/tests/test_transaction_contract.py` passou a travar o helper idempotente e os novos fluxos sem `banco.commit()` direto nos handlers da Mesa
+- `teste`: `python -m py_compile web/app/shared/database.py web/app/domains/chat/mesa_message_routes.py web/app/domains/chat/pendencias.py web/app/domains/chat/corrections.py web/tests/test_transaction_contract.py`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_transaction_contract.py -q`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_mesa_mobile_sync.py -q -k idempotencia`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k 'inspetor_envia_anexo_para_mesa_e_download_fica_protegido or revisor_responde_e_inspetor_visualiza_no_canal_mesa or revisor_responde_com_anexo_e_inspetor_recebe_no_canal_mesa'`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k 'inspetor_pendencias_marcar_lidas_atualiza_apenas_humano_eng or inspetor_pendencia_individual_registra_historico_e_reabre'`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k 'correcoes_estruturadas_do_inspetor_persistem_no_laudo or correcao_estruturada_aplicada_atualiza_documento_do_laudo or correcao_estruturada_aplicada_registra_checklist_e_evidencias'`
+- `teste`: `cd web && python -m ruff check app/shared/database.py app/domains/chat/mesa_message_routes.py app/domains/chat/pendencias.py app/domains/chat/corrections.py tests/test_transaction_contract.py`
+- `teste`: `git diff --check`
+- `teste`: `make verify`
+- `teste`: `make hygiene-check`
+- `proximo`: reduzir os `flush()` restantes nos services de Revisor/Mesa quando eles ainda estiverem acoplados a side effects ou retorno idempotente
+
 ### Validacao minima
 
 ```bash
@@ -298,6 +318,24 @@ Isso e fraco demais para um fluxo documental tecnico.
 - gate deixa de depender de string solta para reconhecer foto ou documento;
 - anexos novos em `Correcoes` entram como candidatos e nao vao automaticamente para o PDF;
 - testes travam o contrato tipado por familia e por fluxo.
+
+### Checkpoint local - 2026-04-24
+
+- `status`: primeiro corte local do contrato tipado fechado sem alterar o comportamento do gate
+- `entrega`: criado `web/app/domains/chat/evidence_contract.py` com `EvidenceClassification`, tipos (`text`, `photo`, `document`) e origens (`message`, `visual_learning`)
+- `entrega`: `web/app/domains/chat/gate_helpers.py` passou a consumir `classificar_evidencia_mensagem(...)` para contar textos, fotos, documentos e evidencias consolidadas
+- `entrega`: preservada a compatibilidade atual: placeholder de foto ainda conta como foto, documento ainda usa `media_helpers.py`, e mensagem textual com aprendizado visual vinculado pode contar como texto e foto
+- `entrega`: `web/docs/checklist_qualidade.md` passou a documentar o contrato tipado inicial
+- `entrega`: `web/tests/test_evidence_contract.py` cobre classificacao textual, foto por placeholder, foto por aprendizado visual, documento e comando de sistema sem evidencia
+- `teste`: `python -m py_compile web/app/domains/chat/evidence_contract.py web/app/domains/chat/gate_helpers.py web/tests/test_evidence_contract.py`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_evidence_contract.py -q`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_semantic_report_pack_catalog_fallback.py -q -k 'gate_qualidade_catalogado'`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k 'gate_reprovado or finalizacao_bloqueada or finalizacao_aprovada or inspetor_finalizacao_aprovada_com_evidencias_minimas'`
+- `teste`: `cd web && python -m ruff check app/domains/chat/evidence_contract.py app/domains/chat/gate_helpers.py tests/test_evidence_contract.py`
+- `teste`: `git diff --check`
+- `teste`: `make verify`
+- `teste`: `make hygiene-check`
+- `proximo`: enriquecer o contrato para anexos reais, origem/mime/vinculo ao caso e elegibilidade de emissao, antes de remover a compatibilidade por placeholder
 
 ### Validacao minima
 

@@ -3394,3 +3394,55 @@ Impacto observado:
 - `iniciar`, `finalizar` e `reabrir` laudo no Chat Inspetor deixaram de depender do commit implícito da dependency para persistir o resultado principal;
 - falhas de commit nesses fluxos agora passam pelo mesmo padrão de rollback e log operacional usado em outros comandos críticos;
 - o próximo pacote coerente é levar o mesmo padrão para comandos de Mesa/Revisor (`avaliar`, `responder`, anexos e side effects de revisão).
+
+## R85. Mesa, pendências e contrato inicial de evidência
+
+Resumo:
+
+- adicionei `commit_ou_rollback_operacional_preservando_integridade` em `web/app/shared/database.py` para comandos idempotentes que precisam preservar `IntegrityError` como replay;
+- removi `banco.commit()` direto de `web/app/domains/chat/mesa_message_routes.py` nos envios de mensagem e anexo do inspetor para a Mesa;
+- levei commit operacional explícito para `web/app/domains/chat/pendencias.py` e `web/app/domains/chat/corrections.py`;
+- criei `web/app/domains/chat/evidence_contract.py` com `EvidenceClassification`, tipos de evidência e origens;
+- `web/app/domains/chat/gate_helpers.py` passou a contar texto, foto, documento e evidência consolidada pelo contrato tipado inicial, preservando a compatibilidade de placeholders;
+- atualizei `web/docs/checklist_qualidade.md`, `PLANS.md`, `docs/STATUS_CANONICO.md` e `docs/restructuring-roadmap/138_backlog_execucao_inspetor_backend_ux.md`.
+
+Arquivos do ciclo:
+
+- `web/app/shared/database.py`
+- `web/app/domains/chat/mesa_message_routes.py`
+- `web/app/domains/chat/pendencias.py`
+- `web/app/domains/chat/corrections.py`
+- `web/app/domains/chat/evidence_contract.py`
+- `web/app/domains/chat/gate_helpers.py`
+- `web/tests/test_transaction_contract.py`
+- `web/tests/test_evidence_contract.py`
+- `web/docs/checklist_qualidade.md`
+- `PLANS.md`
+- `docs/STATUS_CANONICO.md`
+- `docs/restructuring-roadmap/138_backlog_execucao_inspetor_backend_ux.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `python -m py_compile web/app/shared/database.py web/app/domains/chat/mesa_message_routes.py web/app/domains/chat/pendencias.py web/app/domains/chat/corrections.py web/tests/test_transaction_contract.py` -> verde;
+- `python -m py_compile web/app/domains/chat/evidence_contract.py web/app/domains/chat/gate_helpers.py web/tests/test_evidence_contract.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_transaction_contract.py -q` -> `8 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_mesa_mobile_sync.py -q -k idempotencia` -> `1 passed, 8 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k 'inspetor_envia_anexo_para_mesa_e_download_fica_protegido or revisor_responde_e_inspetor_visualiza_no_canal_mesa or revisor_responde_com_anexo_e_inspetor_recebe_no_canal_mesa'` -> `3 passed, 185 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k 'inspetor_pendencias_marcar_lidas_atualiza_apenas_humano_eng or inspetor_pendencia_individual_registra_historico_e_reabre'` -> `2 passed, 186 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k 'correcoes_estruturadas_do_inspetor_persistem_no_laudo or correcao_estruturada_aplicada_atualiza_documento_do_laudo or correcao_estruturada_aplicada_registra_checklist_e_evidencias'` -> `3 passed, 17 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_evidence_contract.py -q` -> `4 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_semantic_report_pack_catalog_fallback.py -q -k 'gate_qualidade_catalogado'` -> `2 passed, 5 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k 'gate_reprovado or finalizacao_bloqueada or finalizacao_aprovada or inspetor_finalizacao_aprovada_com_evidencias_minimas'` -> `3 passed, 185 deselected`;
+- `cd web && python -m ruff check app/shared/database.py app/domains/chat/mesa_message_routes.py app/domains/chat/pendencias.py app/domains/chat/corrections.py tests/test_transaction_contract.py` -> verde;
+- `cd web && python -m ruff check app/domains/chat/evidence_contract.py app/domains/chat/gate_helpers.py tests/test_evidence_contract.py` -> verde;
+- `git diff --check` -> sem erros, apenas avisos antigos de normalizacao CRLF em arquivos ja existentes;
+- `make verify` -> `ruff`, `mypy`, testes web (`250 passed` + `6 passed`), mobile (`113 suites`/`420 tests`) e mesa/revisor (`95 passed`) verdes;
+- `make hygiene-check` -> `status=ok`.
+
+Impacto observado:
+
+- a fronteira transacional deixou de ter `banco.commit()` direto em `chat`, `revisor` e `mesa` no recorte inspecionado por `rg`;
+- os caminhos de Mesa do inspetor preservam idempotência sem depender de commit manual no handler;
+- o gate agora tem uma primeira camada de contrato explícito para classificar evidência, ainda sem quebrar compatibilidade com mensagens legadas;
+- o próximo pacote coerente é enriquecer evidência com anexos reais/mime/vínculo/elegibilidade e depois continuar reduzindo `flush` com side effects em Revisor/Mesa.

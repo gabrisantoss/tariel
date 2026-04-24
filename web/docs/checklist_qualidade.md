@@ -5,6 +5,7 @@ Fonte de verdade atual do gate de qualidade antes do envio do laudo para a mesa.
 ## Fonte de verdade no codigo
 
 - `app/domains/chat/gate_helpers.py`
+- `app/domains/chat/evidence_contract.py`
 - `app/domains/chat/laudo.py`
 - `app/domains/chat/laudo_state_helpers.py`
 
@@ -44,19 +45,22 @@ Fonte de verdade atual do gate de qualidade antes do envio do laudo para a mesa.
 
 ### Foto
 
-Hoje o gate reconhece foto por placeholders:
+Hoje a primeira classificacao tipada ainda preserva compatibilidade com placeholders:
 
 - `[imagem]`
 - `imagem enviada`
 - `[foto]`
 
+Tambem conta como foto quando a mensagem esta vinculada a `AprendizadoVisualIa` com `imagem_url`.
+
 ### Documento
 
-- Segue a deteccao de `mensagem_representa_documento(...)` em `media_helpers.py`.
+- Segue a classificacao `classificar_evidencia_mensagem(...)`, que usa a deteccao de `mensagem_representa_documento(...)` em `media_helpers.py`.
 
 ### Evidencia consolidada
 
-- Soma qualquer item que conte como texto, foto ou documento.
+- Soma qualquer item que conte como texto, foto ou documento no contrato `EvidenceClassification`.
+- Uma mensagem textual com evidencia visual vinculada pode contar como texto e foto, preservando a compatibilidade do gate atual.
 
 ### Parecer da IA
 

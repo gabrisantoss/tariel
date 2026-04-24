@@ -10,6 +10,7 @@ from fastapi.routing import APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
+from app.domains.chat.app_context import logger
 from app.domains.chat.core_helpers import agora_utc, resposta_json_ok
 from app.domains.chat.laudo_access_helpers import obter_laudo_do_inspetor
 from app.domains.chat.schemas import (
@@ -17,7 +18,7 @@ from app.domains.chat.schemas import (
     DadosStatusCorrecaoEstruturada,
 )
 from app.domains.chat.session_helpers import exigir_csrf
-from app.shared.database import Laudo, Usuario, obter_banco
+from app.shared.database import Laudo, Usuario, commit_ou_rollback_operacional, obter_banco
 from app.shared.security import exigir_inspetor
 
 
@@ -292,7 +293,11 @@ async def criar_correcao_estruturada_laudo(
     }
     correcoes = [*_lista_correcoes_laudo(laudo), item]
     _salvar_correcoes_laudo(laudo, correcoes)
-    banco.flush()
+    commit_ou_rollback_operacional(
+        banco,
+        logger_operacao=logger,
+        mensagem_erro="Falha ao criar correcao estruturada do inspetor.",
+    )
     return resposta_json_ok(
         {
             **_payload_correcoes(laudo),
@@ -333,7 +338,11 @@ async def atualizar_status_correcao_estruturada_laudo(
     if item_atualizado is None:
         raise HTTPException(status_code=404, detail="Correção estruturada não encontrada.")
     _salvar_correcoes_laudo(laudo, correcoes)
-    banco.flush()
+    commit_ou_rollback_operacional(
+        banco,
+        logger_operacao=logger,
+        mensagem_erro="Falha ao atualizar correcao estruturada do inspetor.",
+    )
     return resposta_json_ok(
         {
             **_payload_correcoes(laudo),

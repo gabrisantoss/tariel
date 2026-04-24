@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.paths import resolve_family_schemas_dir
-from app.domains.chat.media_helpers import mensagem_representa_documento
+from app.domains.chat.evidence_contract import classificar_evidencia_mensagem
 from app.domains.chat.normalization import nome_template_humano, normalizar_tipo_template
 from app.domains.chat.report_pack_helpers import atualizar_report_pack_draft_laudo
 from app.shared.database import AprendizadoVisualIa, Laudo, MensagemLaudo, TipoMensagem
@@ -843,45 +843,6 @@ def _build_gate_action_plan(
     }
 
 
-def _mensagem_eh_comando_sistema(conteudo: str) -> bool:
-    texto = (conteudo or "").strip()
-    if not texto:
-        return False
-
-    texto_lower = texto.lower()
-    return (
-        "[comando_sistema]" in texto_lower
-        or "[comando_rapido]" in texto_lower
-        or "comando_sistema finalizarlaudoagora" in texto_lower
-        or "solicitou encerramento e geração do laudo" in texto_lower
-        or "solicitou encerramento e geracao do laudo" in texto_lower
-    )
-
-
-def _mensagem_representa_foto(conteudo: str) -> bool:
-    texto = (conteudo or "").strip().lower()
-    return texto in {"[imagem]", "imagem enviada", "[foto]"}
-
-
-def _mensagem_representa_documento(conteudo: str) -> bool:
-    return mensagem_representa_documento(conteudo)
-
-
-def _mensagem_textual_relevante(conteudo: str) -> bool:
-    texto = (conteudo or "").strip()
-    if not texto:
-        return False
-    if _mensagem_eh_comando_sistema(texto):
-        return False
-    if _mensagem_representa_foto(texto):
-        return False
-    if _mensagem_representa_documento(texto):
-        return False
-
-    texto_util = re.sub(r"[\W_]+", "", texto, flags=re.UNICODE)
-    return len(texto_util) >= 8
-
-
 def _primeira_mensagem_qualificada(laudo: Laudo) -> bool:
     texto = (laudo.primeira_mensagem or "").strip()
     if not texto:
@@ -1036,17 +997,19 @@ def avaliar_gate_qualidade_laudo(banco: Session, laudo: Laudo) -> dict[str, Any]
 
     for item in mensagens_usuario:
         conteudo = (item.conteudo or "").strip()
-        eh_texto = _mensagem_textual_relevante(conteudo)
-        eh_foto = _mensagem_representa_foto(conteudo) or int(getattr(item, "id", 0) or 0) in mensagens_com_evidencia_visual
-        eh_documento = _mensagem_representa_documento(conteudo)
+        classificacao = classificar_evidencia_mensagem(
+            message_id=int(getattr(item, "id", 0) or 0) or None,
+            conteudo=conteudo,
+            possui_evidencia_visual=int(getattr(item, "id", 0) or 0) in mensagens_com_evidencia_visual,
+        )
 
-        if eh_texto:
+        if classificacao.counts_as_text:
             qtd_textos += 1
-        if eh_foto:
+        if classificacao.counts_as_photo:
             qtd_fotos += 1
-        if eh_documento:
+        if classificacao.counts_as_document:
             qtd_documentos += 1
-        qtd_evidencias += int(eh_texto) + int(eh_foto) + int(eh_documento)
+        qtd_evidencias += classificacao.evidence_units
 
     min_textos = int(regra.get("min_textos", 0) or 0)
     min_evidencias = int(regra.get("min_evidencias", 0) or 0)

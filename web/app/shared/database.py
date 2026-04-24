@@ -186,6 +186,23 @@ def commit_ou_rollback_operacional(
         raise
 
 
+def commit_ou_rollback_operacional_preservando_integridade(
+    banco: Session,
+    *,
+    logger_operacao: logging.Logger,
+    mensagem_erro: str,
+) -> None:
+    try:
+        banco.commit()
+    except IntegrityError:
+        banco.rollback()
+        raise
+    except Exception:
+        banco.rollback()
+        logger_operacao.error(mensagem_erro, exc_info=True)
+        raise
+
+
 def commit_ou_rollback_integridade(
     banco: Session,
     *,

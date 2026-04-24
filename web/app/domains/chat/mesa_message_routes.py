@@ -49,6 +49,7 @@ from app.shared.database import (
     MensagemLaudo,
     TipoMensagem,
     Usuario,
+    commit_ou_rollback_operacional_preservando_integridade,
     obter_banco,
 )
 from app.shared.operational_memory import registrar_validacao_evidencia
@@ -266,7 +267,11 @@ async def enviar_mensagem_mesa_laudo(
             anexos=[],
         )
         banco.flush()
-        banco.commit()
+        commit_ou_rollback_operacional_preservando_integridade(
+            banco,
+            logger_operacao=logger,
+            mensagem_erro="Falha ao confirmar envio de mensagem do inspetor para a mesa.",
+        )
     except IntegrityError:
         banco.rollback()
         mensagem_idempotente = carregar_mensagem_idempotente(
@@ -292,10 +297,6 @@ async def enviar_mensagem_mesa_laudo(
         raise
     except Exception:
         banco.rollback()
-        logger.error(
-            "Falha ao confirmar envio de mensagem do inspetor para a mesa.",
-            exc_info=True,
-        )
         raise
     contexto = aplicar_contexto_laudo_selecionado(request, banco, laudo, usuario)
 
@@ -434,7 +435,11 @@ async def enviar_mensagem_mesa_laudo_com_anexo(
             texto_limpo=texto_limpo,
             anexos=[anexo],
         )
-        banco.commit()
+        commit_ou_rollback_operacional_preservando_integridade(
+            banco,
+            logger_operacao=logger,
+            mensagem_erro="Falha ao confirmar envio de anexo do inspetor para a mesa.",
+        )
     except IntegrityError:
         banco.rollback()
         remover_arquivo_anexo_mesa(dados_arquivo.get("caminho_arquivo"))
@@ -462,10 +467,6 @@ async def enviar_mensagem_mesa_laudo_com_anexo(
     except Exception:
         banco.rollback()
         remover_arquivo_anexo_mesa(dados_arquivo.get("caminho_arquivo"))
-        logger.error(
-            "Falha ao confirmar envio de anexo do inspetor para a mesa.",
-            exc_info=True,
-        )
         raise
 
     contexto = aplicar_contexto_laudo_selecionado(request, banco, laudo, usuario)

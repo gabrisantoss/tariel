@@ -167,6 +167,8 @@ Ele está na fase de:
 - o primeiro lote do estado canônico do inspetor foi fechado localmente: `chat_index_page.js` passou a consumir bindings centralizados em `workspace_runtime_state.js`, e `/app/` sem query voltou a limpar o contexto ativo abrindo a home no SSR.
 - a entrada principal do inspetor foi simplificada localmente: `Nova inspeção` virou CTA primário no landing, anexos/fotos ficam no composer, e `Mesa`/`Áudio` aparecem como ações compactas governadas pelo estado.
 - os fluxos principais de `iniciar`, `finalizar` e `reabrir` laudo no Chat Inspetor começaram a usar commit operacional explícito nos services, reduzindo dependência do commit implícito por request.
+- os envios de mensagem/anexo do inspetor para a Mesa, pendências da Mesa e correções estruturadas do inspetor agora também têm commits operacionais explícitos nos caminhos de escrita principais, preservando replay idempotente onde necessário.
+- o gate de qualidade começou a usar um contrato tipado de evidência em `chat/evidence_contract.py`, preservando a compatibilidade atual de placeholders enquanto separa tipo e origem da evidência para a próxima rodada.
 
 ## O que ainda falta melhorar
 
@@ -184,7 +186,8 @@ Ele está na fase de:
 - quebra de hotspots como `admin/services.py`;
 - extração mais nítida do núcleo compartilhado de caso técnico para fora de compat layers legadas.
 - continuar drenando `mesa/service.py`, `admin/client_routes.py` e helpers documentais sem reabrir contrato de produto.
-- expandir a fronteira transacional explícita para comandos de Mesa/Revisor que ainda combinam `flush` com commit implícito por request.
+- expandir a fronteira transacional explícita para comandos de Mesa/Revisor que ainda combinam `flush` com side effects ou dependem do commit implícito por request.
+- enriquecer o contrato de evidência para anexos reais, mime, origem, vínculo ao caso e elegibilidade de emissão, antes de remover a compatibilidade por placeholder.
 
 ### Frontend web
 
@@ -225,7 +228,7 @@ Ele está na fase de:
 3. continuar a extração dos hotspots `admin/client_routes.py`, `chat_index_page.js`, `mesa/service.py` e superfícies do portal cliente, usando os novos logs críticos para priorizar gargalos reais;
 4. consolidar o pacote `docs/product-canonical-vision/`;
 5. refletir a matriz comercial por eixos nas superfícies administrativas e nos entitlements;
-6. continuar a fronteira transacional explícita do backend nos comandos de Mesa/Revisor;
+6. continuar a fronteira transacional explícita do backend nos serviços de Mesa/Revisor com `flush` e side effects;
 7. limpar visualmente `Finalizar`, `Configurações` e `Histórico` no app Android;
 8. validar no aparelho login, offline, anexos e mesa após esse ajuste;
 9. retomar o pipeline `document_view_model -> editor -> render`.
