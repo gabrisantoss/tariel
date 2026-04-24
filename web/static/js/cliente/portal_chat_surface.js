@@ -630,6 +630,62 @@
             `;
         }
 
+        function criarChatLaudoItem(laudo) {
+            const prioridade = prioridadeChat(laudo);
+            const item = documentRef.createElement("article");
+            item.className = "item";
+            if (Number(state.chat.laudoId) === Number(laudo.id)) {
+                item.classList.add("active");
+            }
+            item.dataset.chat = String(laudo.id || "");
+            item.tabIndex = 0;
+
+            const head = documentRef.createElement("div");
+            head.className = "item-head";
+            const title = documentRef.createElement("strong");
+            title.textContent = texto(laudo.titulo);
+            head.appendChild(title);
+            const badgeHtml = laudoBadge(laudo.status_card_label, laudo.status_card);
+            if (badgeHtml) {
+                head.insertAdjacentHTML("beforeend", badgeHtml);
+            }
+            item.appendChild(head);
+
+            const preview = documentRef.createElement("div");
+            preview.className = "item-preview";
+            preview.textContent = texto(laudo.preview || "Sem resumo da conversa ainda.");
+            item.appendChild(preview);
+
+            const footer = documentRef.createElement("div");
+            footer.className = "item-footer";
+
+            const prioridadeChip = documentRef.createElement("span");
+            prioridadeChip.className = "pill";
+            prioridadeChip.dataset.kind = "priority";
+            prioridadeChip.dataset.status = texto(prioridade.tone).trim();
+            prioridadeChip.textContent = texto(prioridade.badge);
+            footer.appendChild(prioridadeChip);
+
+            const templateChip = documentRef.createElement("span");
+            templateChip.className = "hero-chip";
+            templateChip.textContent = texto(laudo.tipo_template_label || "Inspecao");
+            footer.appendChild(templateChip);
+
+            if (laudoChatParado(laudo)) {
+                const esperaChip = documentRef.createElement("span");
+                esperaChip.className = "hero-chip";
+                esperaChip.textContent = resumoEsperaHoras(horasDesdeAtualizacao(laudo.atualizado_em));
+                footer.appendChild(esperaChip);
+            }
+
+            const data = documentRef.createElement("small");
+            data.textContent = texto(laudo.data_br || "Sem data");
+            footer.appendChild(data);
+
+            item.appendChild(footer);
+            return item;
+        }
+
         function renderChatList() {
             const laudos = ordenarPorPrioridade(filtrarLaudosChat(), prioridadeChat);
             const lista = $("lista-chat-laudos");
@@ -654,21 +710,10 @@
                 return;
             }
 
-            lista.innerHTML = laudos.map((laudo) => `
-                <article class="item ${Number(state.chat.laudoId) === Number(laudo.id) ? "active" : ""}" data-chat="${laudo.id}" tabindex="0">
-                    <div class="item-head">
-                        <strong>${escapeHtml(laudo.titulo)}</strong>
-                        ${laudoBadge(laudo.status_card_label, laudo.status_card)}
-                    </div>
-                    <div class="item-preview">${escapeHtml(laudo.preview || "Sem resumo da conversa ainda.")}</div>
-                    <div class="item-footer">
-                        <span class="pill" data-kind="priority" data-status="${prioridadeChat(laudo).tone}">${escapeHtml(prioridadeChat(laudo).badge)}</span>
-                        <span class="hero-chip">${escapeHtml(laudo.tipo_template_label || "Inspecao")}</span>
-                        ${laudoChatParado(laudo) ? `<span class="hero-chip">${escapeHtml(resumoEsperaHoras(horasDesdeAtualizacao(laudo.atualizado_em)))}</span>` : ""}
-                        <small>${escapeHtml(laudo.data_br || "Sem data")}</small>
-                    </div>
-                </article>
-            `).join("");
+            clearElement(lista);
+            laudos.forEach((laudo) => {
+                lista.appendChild(criarChatLaudoItem(laudo));
+            });
             atualizarResumoSecaoChat();
         }
 

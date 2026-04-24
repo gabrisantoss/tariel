@@ -2410,3 +2410,46 @@ Impacto observado:
 - `mesa/service.py` caiu para cerca de `1171` linhas e a próxima extração principal pode mirar `revisao_por_bloco` ou `montar_pacote_mesa_laudo`;
 - o Portal Cliente removeu `innerHTML` do miolo de mensagens de Chat/Mesa, ficando com HTML direto principalmente em cards/contextos maiores;
 - o Chat Inspetor ainda tem fallbacks `window.*`, mas a ponte já cobre mais acessos e permite remover compatibilidade com menos risco em ciclos futuros.
+
+## R58. Revisao por bloco da Mesa e cards DOM do Portal Cliente
+
+Resumo:
+
+- extraí a revisão por bloco do pacote da Mesa para `web/app/domains/mesa/package_block_review.py`, isolando inferência de seção, pendências abertas, devoluções ao inspetor e ordenação de status;
+- reduzi `mesa/service.py` para orquestração do pacote principal, sem alterar contrato externo, endpoint ou payload do pacote;
+- troquei os cards das filas principais de Chat/Mesa no Portal Cliente para criação por DOM, mantendo `innerHTML` fora das listas operacionais;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/app/domains/mesa/service.py`
+- `web/app/domains/mesa/package_block_review.py`
+- `web/static/js/cliente/portal_chat_surface.js`
+- `web/static/js/cliente/portal_mesa_surface.js`
+- `web/tests/test_smoke.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/app/domains/mesa/service.py web/app/domains/mesa/package_block_review.py` -> verde;
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/mesa/service.py app/domains/mesa/package_block_review.py` -> verde;
+- `node --check web/static/js/cliente/portal_shared_helpers.js && node --check web/static/js/cliente/portal.js && node --check web/static/js/cliente/portal_chat_surface.js && node --check web/static/js/cliente/portal_mesa_surface.js` -> sem erro de sintaxe;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_v2_reviewdesk_projection.py tests/test_revisor_mesa_api_side_effects.py -q -k 'pacote or package or coverage or revisao'` -> `4 passed, 8 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or mesa'` -> `11 passed, 21 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais` -> `1 passed, 42 deselected`;
+- `git diff --check` -> sem erros; apenas aviso de normalização CRLF em `web/app/domains/mesa/service.py`;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `323` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make mesa-smoke` -> `95 passed`;
+- `make mobile-ci` -> typecheck, lint, prettier e `113` suites/`420` testes verdes;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- `mesa/service.py` caiu para cerca de `849` linhas; o próximo slice natural é separar `montar_pacote_mesa_laudo`/orquestração final ou mover mais blocos documentais;
+- as listas principais de Chat/Mesa agora usam texto via `textContent` e atributos via `dataset`; os próximos `innerHTML` restantes estão em triagem, contexto e movimentos;
+- o próximo pacote coerente é atacar `portal_chat_surface.js`/`portal_mesa_surface.js` em triagem/contexto ou continuar o Admin CEO em `admin/client_routes.py`.

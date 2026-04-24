@@ -437,15 +437,27 @@
         return base;
       }
 
-      function renderMesaCaseSignals(laudo) {
+      function criarMesaCaseSignalsNode(laudo) {
         const resumo = resumirMomentoCanonicoMesa(laudo);
-        return `
-                <div class="item-case-signals" aria-label="Sinais canônicos do caso">
-                    <span class="item-case-signal">Fluxo ${escapeHtml(resumo.lifecycleLabel)}</span>
-                    <span class="item-case-signal">Owner ${escapeHtml(resumo.ownerLabel)}</span>
-                    <span class="item-case-signal item-case-signal--focus">${escapeHtml(resumo.label)}</span>
-                </div>
-            `;
+        const signals = documentRef.createElement("div");
+        signals.className = "item-case-signals";
+        signals.setAttribute("aria-label", "Sinais canônicos do caso");
+
+        [
+          `Fluxo ${resumo.lifecycleLabel}`,
+          `Owner ${resumo.ownerLabel}`,
+          resumo.label,
+        ].forEach((label, index) => {
+          const signal = documentRef.createElement("span");
+          signal.className =
+            index === 2
+              ? "item-case-signal item-case-signal--focus"
+              : "item-case-signal";
+          signal.textContent = texto(label);
+          signals.appendChild(signal);
+        });
+
+        return signals;
       }
 
       function renderMesaResolutionGuide(laudo) {
@@ -609,6 +621,68 @@
         }
       }
 
+      function criarMesaLaudoItem(laudo) {
+        const prioridade = prioridadeMesa(laudo);
+        const resumoCanonico = resumirMomentoCanonicoMesa(laudo);
+        const item = documentRef.createElement("article");
+        item.className = "item";
+        if (Number(state.mesa.laudoId) === Number(laudo.id)) {
+          item.classList.add("active");
+        }
+        item.dataset.mesa = String(laudo.id || "");
+        item.dataset.caseFlowSummary = texto(resumoCanonico.key).trim();
+        item.tabIndex = 0;
+
+        const head = documentRef.createElement("div");
+        head.className = "item-head";
+        const title = documentRef.createElement("strong");
+        title.textContent = texto(laudo.titulo);
+        head.appendChild(title);
+        const badgeHtml = laudoBadge(laudo.status_card_label, laudo.status_card);
+        if (badgeHtml) {
+          head.insertAdjacentHTML("beforeend", badgeHtml);
+        }
+        item.appendChild(head);
+
+        const preview = documentRef.createElement("div");
+        preview.className = "item-preview";
+        preview.textContent = texto(laudo.preview || "Sem resumo registrado.");
+        item.appendChild(preview);
+        item.appendChild(criarMesaCaseSignalsNode(laudo));
+
+        const footer = documentRef.createElement("div");
+        footer.className = "item-footer";
+
+        const prioridadeChip = documentRef.createElement("span");
+        prioridadeChip.className = "pill";
+        prioridadeChip.dataset.kind = "priority";
+        prioridadeChip.dataset.status = texto(prioridade.tone).trim();
+        prioridadeChip.textContent = texto(prioridade.badge);
+        footer.appendChild(prioridadeChip);
+
+        const pendenciasChip = documentRef.createElement("span");
+        pendenciasChip.className = "hero-chip";
+        pendenciasChip.textContent = `${formatarInteiro(laudo.pendencias_abertas || 0)} pendencias`;
+        footer.appendChild(pendenciasChip);
+
+        const whispersChip = documentRef.createElement("span");
+        whispersChip.className = "hero-chip";
+        whispersChip.textContent = `${formatarInteiro(laudo.whispers_nao_lidos || 0)} chamados`;
+        footer.appendChild(whispersChip);
+
+        if (laudoMesaParado(laudo)) {
+          const esperaChip = documentRef.createElement("span");
+          esperaChip.className = "hero-chip";
+          esperaChip.textContent = resumoEsperaHoras(
+            horasDesdeAtualizacao(laudo.atualizado_em),
+          );
+          footer.appendChild(esperaChip);
+        }
+
+        item.appendChild(footer);
+        return item;
+      }
+
       function renderMesaList() {
         const laudos = ordenarPorPrioridade(
           filtrarLaudosMesa(),
@@ -647,26 +721,10 @@
           return;
         }
 
-        lista.innerHTML = laudos
-          .map(
-            (laudo) => `
-                <article class="item ${Number(state.mesa.laudoId) === Number(laudo.id) ? "active" : ""}" data-mesa="${laudo.id}" data-case-flow-summary="${escapeAttr(resumirMomentoCanonicoMesa(laudo).key)}" tabindex="0">
-                    <div class="item-head">
-                        <strong>${escapeHtml(laudo.titulo)}</strong>
-                        ${laudoBadge(laudo.status_card_label, laudo.status_card)}
-                    </div>
-                    <div class="item-preview">${escapeHtml(laudo.preview || "Sem resumo registrado.")}</div>
-                    ${renderMesaCaseSignals(laudo)}
-                    <div class="item-footer">
-                        <span class="pill" data-kind="priority" data-status="${prioridadeMesa(laudo).tone}">${escapeHtml(prioridadeMesa(laudo).badge)}</span>
-                        <span class="hero-chip">${formatarInteiro(laudo.pendencias_abertas || 0)} pendencias</span>
-                        <span class="hero-chip">${formatarInteiro(laudo.whispers_nao_lidos || 0)} chamados</span>
-                        ${laudoMesaParado(laudo) ? `<span class="hero-chip">${escapeHtml(resumoEsperaHoras(horasDesdeAtualizacao(laudo.atualizado_em)))}</span>` : ""}
-                    </div>
-                </article>
-            `,
-          )
-          .join("");
+        clearElement(lista);
+        laudos.forEach((laudo) => {
+          lista.appendChild(criarMesaLaudoItem(laudo));
+        });
         atualizarResumoSecaoMesa();
       }
 

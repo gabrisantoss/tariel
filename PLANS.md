@@ -4237,6 +4237,8 @@ Atualizado em `2026-04-24`.
 - `Portal Cliente`: trocar renderizacao de mensagens Chat/Mesa para DOM seguro com helpers de texto/anexos.
 - `Chat Inspetor`: ampliar `chat_index_page_runtime.js` para cobrir API, payload de status, location, viewport e publicacao do runtime.
 - `Contrato legado`: cobrir por teste que `case_action_mode=read_only` e flags finas falsas sao apenas compatibilidade visual quando a superficie esta contratada.
+- `Mesa Avaliadora`: extrair revisao por bloco do pacote para `web/app/domains/mesa/package_block_review.py`, mantendo `service.py` como orquestrador.
+- `Portal Cliente`: trocar os cards das filas principais de Chat/Mesa para montagem DOM segura, removendo `innerHTML` das listas operacionais.
 
 ### Validacao deste slice
 
@@ -4250,6 +4252,19 @@ Atualizado em `2026-04-24`.
 - `make production-ops-check-strict`
 - `make uploads-restore-drill`
 - `make hygiene-check`
+- `PYTHONPATH=. python -m ruff check web/app/domains/mesa/service.py web/app/domains/mesa/package_block_review.py`
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/mesa/service.py app/domains/mesa/package_block_review.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_v2_reviewdesk_projection.py tests/test_revisor_mesa_api_side_effects.py -q -k 'pacote or package or coverage or revisao'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or mesa'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais`
+- `node --check web/static/js/cliente/portal_shared_helpers.js && node --check web/static/js/cliente/portal.js && node --check web/static/js/cliente/portal_chat_surface.js && node --check web/static/js/cliente/portal_mesa_surface.js`
+- `make web-ci`
+- `make mesa-smoke`
+- `make mobile-ci`
+- `make production-ops-check-strict`
+- `make uploads-restore-drill`
+- `make hygiene-check`
+- `make verify`
 - `PYTHONPATH=. python -m ruff check web/app/domains/mesa/service.py web/app/domains/mesa/package_official_issue.py web/tests/test_tenant_entitlements_critical.py`
 - `cd web && PYTHONPATH=. python -m py_compile app/domains/mesa/service.py app/domains/mesa/package_official_issue.py`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k 'case_action_mode_legado or superficies_contratuais or flags_finas'`

@@ -1592,7 +1592,8 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "window.TarielClientePortalMesaSurface" in portal_mesa_surface_js
     assert 'aria-current", ativa ? "page" : "false"' in portal_mesa_surface_js
     assert "function resumirMomentoCanonicoMesa(laudo)" in portal_mesa_surface_js
-    assert 'data-case-flow-summary="${escapeAttr(resumirMomentoCanonicoMesa(laudo).key)}"' in portal_mesa_surface_js
+    assert "function criarMesaLaudoItem(laudo)" in portal_mesa_surface_js
+    assert "item.dataset.caseFlowSummary = texto(resumoCanonico.key).trim();" in portal_mesa_surface_js
     assert "Momento canônico do caso" in portal_mesa_surface_js
     assert "window.TarielClienteMesaPage" in mesa_page_js
     assert "window.TarielClientePortalMesa" in portal_mesa_js
