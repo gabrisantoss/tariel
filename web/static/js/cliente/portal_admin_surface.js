@@ -663,6 +663,59 @@
             ]);
         }
 
+        function criarAuditFilterAdminNode(item, active) {
+            const button = documentRef.createElement("button");
+            button.className = `audit-filter${active ? " is-active" : ""}`;
+            button.type = "button";
+            button.dataset.auditFilter = texto(item?.key);
+            button.setAttribute("aria-pressed", active ? "true" : "false");
+            button.title = texto(item?.description);
+
+            const label = documentRef.createElement("span");
+            label.textContent = texto(item?.label);
+            button.appendChild(label);
+            const description = documentRef.createElement("small");
+            description.textContent = texto(item?.description);
+            button.appendChild(description);
+            return button;
+        }
+
+        function criarActivityItemAdminNode({ title, meta, tone, pillLabel, detail, chips = [] }) {
+            const article = documentRef.createElement("article");
+            article.className = "activity-item";
+
+            const head = documentRef.createElement("div");
+            head.className = "activity-head";
+            const copy = documentRef.createElement("div");
+            copy.className = "activity-copy";
+            const titleNode = documentRef.createElement("strong");
+            titleNode.textContent = texto(title);
+            copy.appendChild(titleNode);
+            const metaNode = documentRef.createElement("span");
+            metaNode.className = "activity-meta";
+            metaNode.textContent = texto(meta);
+            copy.appendChild(metaNode);
+            head.appendChild(copy);
+            head.appendChild(criarPillAdminNode({
+                kind: "priority",
+                status: tone,
+                label: pillLabel,
+            }));
+            article.appendChild(head);
+
+            if (texto(detail).trim()) {
+                const detailNode = documentRef.createElement("p");
+                detailNode.className = "activity-detail";
+                detailNode.textContent = texto(detail);
+                article.appendChild(detailNode);
+            }
+
+            article.appendChild(criarToolbarMetaAdminNode(
+                chips.filter((chip) => texto(chip).trim()).map((chip) => criarHeroChipAdminNode(chip))
+            ));
+            return article;
+        }
+
         function criarStageBriefCardAdminNode({ tone, eyebrow, title, detail, metrics = [], actions = [] }) {
             const article = documentRef.createElement("article");
             article.className = "stage-brief-card";
@@ -1763,106 +1816,104 @@
             }
 
             if (overviewContainer) {
-                overviewContainer.innerHTML = `
-                    <article class="metric-card" data-accent="live">
-                        <small>Itens visiveis</small>
-                        <strong>${escapeHtml(formatarInteiro(resumo.total))}</strong>
-                        <span class="metric-meta">${buscaAtual ? "Resultado apos busca e filtro atual." : "Historico atual conforme a secao selecionada."}</span>
-                    </article>
-                    <article class="metric-card" data-accent="aberto">
-                        <small>Foco administrativo</small>
-                        <strong>${escapeHtml(formatarInteiro(
+                limparElemento(overviewContainer);
+                [
+                    {
+                        accent: "live",
+                        label: "Itens visiveis",
+                        value: formatarInteiro(resumo.total),
+                        meta: buscaAtual ? "Resultado apos busca e filtro atual." : "Historico atual conforme a secao selecionada.",
+                    },
+                    {
+                        accent: "aberto",
+                        label: "Foco administrativo",
+                        value: formatarInteiro(
                             Number(resumo.categories.team || 0) + Number(resumo.categories.access || 0) + Number(resumo.categories.commercial || 0)
-                        ))}</strong>
-                        <span class="metric-meta">Equipe, acesso e comercial dentro do recorte atual.</span>
-                    </article>
-                    <article class="metric-card" data-accent="waiting">
-                        <small>Suporte e operacao</small>
-                        <strong>${escapeHtml(formatarInteiro(
+                        ),
+                        meta: "Equipe, acesso e comercial dentro do recorte atual.",
+                    },
+                    {
+                        accent: "waiting",
+                        label: "Suporte e operacao",
+                        value: formatarInteiro(
                             Number(resumo.categories.support || 0) + Number(resumo.categories.chat || 0) + Number(resumo.categories.mesa || 0)
-                        ))}</strong>
-                        <span class="metric-meta">Protocolos, chat e mesa sob o mesmo trilho cronologico.</span>
-                    </article>
-                    <article class="metric-card" data-accent="aprovado">
-                        <small>Escopo dominante</small>
-                        <strong>${escapeHtml(
-                            resumo.scopes.chat > resumo.scopes.admin && resumo.scopes.chat >= resumo.scopes.mesa
-                                ? "Chat"
-                                : resumo.scopes.mesa > resumo.scopes.admin
-                                    ? "Mesa"
-                                    : "Painel"
-                        )}</strong>
-                        <span class="metric-meta">${escapeHtml(formatarInteiro(todosItens.length))} itens totais na empresa antes do recorte.</span>
-                    </article>
-                `;
+                        ),
+                        meta: "Protocolos, chat e mesa sob o mesmo trilho cronologico.",
+                    },
+                    {
+                        accent: "aprovado",
+                        label: "Escopo dominante",
+                        value: resumo.scopes.chat > resumo.scopes.admin && resumo.scopes.chat >= resumo.scopes.mesa
+                            ? "Chat"
+                            : resumo.scopes.mesa > resumo.scopes.admin
+                                ? "Mesa"
+                                : "Painel",
+                        meta: `${formatarInteiro(todosItens.length)} itens totais na empresa antes do recorte.`,
+                    },
+                ].forEach((metric) => {
+                    overviewContainer.appendChild(criarMetricCardAdminNode(metric));
+                });
             }
 
             if (filtersContainer) {
-                filtersContainer.innerHTML = AUDIT_FILTERS.map((item) => `
-                    <button
-                        class="audit-filter${item.key === filtroAtual ? " is-active" : ""}"
-                        type="button"
-                        data-audit-filter="${escapeAttr(item.key)}"
-                        aria-pressed="${item.key === filtroAtual ? "true" : "false"}"
-                        title="${escapeAttr(item.description)}"
-                    >
-                        <span>${escapeHtml(item.label)}</span>
-                        <small>${escapeHtml(item.description)}</small>
-                    </button>
-                `).join("");
+                limparElemento(filtersContainer);
+                AUDIT_FILTERS.forEach((item) => {
+                    filtersContainer.appendChild(criarAuditFilterAdminNode(item, item.key === filtroAtual));
+                });
             }
 
+            limparElemento(container);
             if (!todosItens.length) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Nenhuma atividade registrada ainda</strong>
-                        <p>As alteracoes de plano, equipe e acesso passam a aparecer aqui conforme o portal for sendo usado.</p>
-                    </div>
-                `;
+                container.appendChild(criarEmptyStateAdminNode(
+                    "Nenhuma atividade registrada ainda",
+                    "As alteracoes de plano, equipe e acesso passam a aparecer aqui conforme o portal for sendo usado."
+                ));
                 return;
             }
 
             if (!itens.length) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Nenhum evento encontrado nesse recorte</strong>
-                        <p>${escapeHtml(
-                            buscaAtual
-                                ? `A busca "${buscaAtual}" nao encontrou eventos dentro do filtro atual.`
-                                : "Troque o filtro para recuperar outro trecho do historico operacional."
-                        )}</p>
-                    </div>
-                `;
+                container.appendChild(criarEmptyStateAdminNode(
+                    "Nenhum evento encontrado nesse recorte",
+                    buscaAtual
+                        ? `A busca "${buscaAtual}" nao encontrou eventos dentro do filtro atual.`
+                        : "Troque o filtro para recuperar outro trecho do historico operacional."
+                ));
                 return;
             }
 
-            container.innerHTML = agruparAuditoriaPorDia(itens).map((grupo) => `
-                <section class="activity-group">
-                    <header class="activity-group__header">
-                        <span class="activity-group__eyebrow">${escapeHtml(grupo.dateKey === "sem-data" ? "Sem data" : grupo.dateKey.split("-").reverse().join("/"))}</span>
-                        <strong>${escapeHtml(formatarInteiro(grupo.rows.length))} eventos</strong>
-                    </header>
-                    <div class="activity-group__items">
-                        ${grupo.rows.map((item) => `
-                            <article class="activity-item">
-                                <div class="activity-head">
-                                    <div class="activity-copy">
-                                        <strong>${escapeHtml(item.resumo || "Ação registrada")}</strong>
-                                        <span class="activity-meta">${escapeHtml(item.categoria_label || "Geral")} • ${escapeHtml(item.scope_label || "Painel")} • Por ${escapeHtml(item.ator_nome || "Sistema")} • ${escapeHtml(item.criado_em_label || "Agora")}</span>
-                                    </div>
-                                    <span class="pill" data-kind="priority" data-status="${escapeAttr(item.categoria === "support" ? "aguardando" : item.scope === "chat" || item.scope === "mesa" ? "aberto" : "aprovado")}">${escapeHtml(texto(item.acao || "evento").replaceAll("_", " "))}</span>
-                                </div>
-                                ${item.detalhe ? `<p class="activity-detail">${escapeHtml(item.detalhe)}</p>` : ""}
-                                <div class="toolbar-meta">
-                                    ${item.payload?.protocolo ? `<span class="hero-chip">Protocolo ${escapeHtml(item.payload.protocolo)}</span>` : ""}
-                                    ${item.alvo_nome ? `<span class="hero-chip">Alvo ${escapeHtml(item.alvo_nome)}</span>` : ""}
-                                    ${item.payload?.contexto ? `<span class="hero-chip">${escapeHtml(item.payload.contexto)}</span>` : ""}
-                                </div>
-                            </article>
-                        `).join("")}
-                    </div>
-                </section>
-            `).join("");
+            agruparAuditoriaPorDia(itens).forEach((grupo) => {
+                const section = documentRef.createElement("section");
+                section.className = "activity-group";
+                const header = documentRef.createElement("header");
+                header.className = "activity-group__header";
+                const eyebrow = documentRef.createElement("span");
+                eyebrow.className = "activity-group__eyebrow";
+                eyebrow.textContent = grupo.dateKey === "sem-data" ? "Sem data" : grupo.dateKey.split("-").reverse().join("/");
+                header.appendChild(eyebrow);
+                const total = documentRef.createElement("strong");
+                total.textContent = `${formatarInteiro(grupo.rows.length)} eventos`;
+                header.appendChild(total);
+                section.appendChild(header);
+
+                const itemsNode = documentRef.createElement("div");
+                itemsNode.className = "activity-group__items";
+                grupo.rows.forEach((item) => {
+                    itemsNode.appendChild(criarActivityItemAdminNode({
+                        title: item.resumo || "Ação registrada",
+                        meta: `${item.categoria_label || "Geral"} • ${item.scope_label || "Painel"} • Por ${item.ator_nome || "Sistema"} • ${item.criado_em_label || "Agora"}`,
+                        tone: item.categoria === "support" ? "aguardando" : item.scope === "chat" || item.scope === "mesa" ? "aberto" : "aprovado",
+                        pillLabel: texto(item.acao || "evento").replaceAll("_", " "),
+                        detail: item.detalhe || "",
+                        chips: [
+                            item.payload?.protocolo ? `Protocolo ${item.payload.protocolo}` : "",
+                            item.alvo_nome ? `Alvo ${item.alvo_nome}` : "",
+                            item.payload?.contexto || "",
+                        ],
+                    }));
+                });
+                section.appendChild(itemsNode);
+                container.appendChild(section);
+            });
         }
 
         function renderHistoricoPlanos() {

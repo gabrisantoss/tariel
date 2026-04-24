@@ -3181,3 +3181,36 @@ Impacto observado:
 - o histórico/preview de planos deixou de interpolar plano, ator, data, impacto e limites em `innerHTML`;
 - o padrão `criarToolbarMetaAdminNode` agora aceita classe customizada para reutilizar seções de toolbar sem voltar para HTML string;
 - `portal_admin_surface.js` ainda tem `innerHTML` em auditoria e tabela/resumo de usuários; o próximo pacote coerente é atacar auditoria ou a tabela de usuários.
+
+## R79. Auditoria Admin Cliente em DOM seguro
+
+Resumo:
+
+- troquei `renderAdminAuditoria` em `web/static/js/cliente/portal_admin_surface.js` de HTML interpolado para montagem DOM explícita;
+- os cards de resumo, filtros `data-audit-filter`, estados vazios, grupos por dia e itens da timeline agora usam `textContent`, `dataset` e helpers DOM;
+- o helper `criarActivityItemAdminNode` centraliza o padrão de item de atividade com pill, detalhe opcional e chips operacionais;
+- mantive Render real como pendência externa: sem aguardar deploy e sem aplicar alteração de disco/plano no provedor.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_admin_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_admin_surface.js` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py::test_templates_cliente_explicitam_abas_e_formularios_principais -q` -> `1 passed`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `335` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- a auditoria do Portal Admin Cliente deixou de interpolar resumo, filtro, busca, protocolo, alvo, contexto e detalhes em `innerHTML`;
+- `portal_admin_surface.js` agora tem `innerHTML` dinâmico relevante apenas no resumo/tabela de usuários, além do helper compatível `preencherHtmlNoElemento`;
+- o próximo pacote coerente é atacar `renderUsuarios` e decidir se `roleBadge`, `userStatusBadges` e editor de portais viram nós DOM ou continuam como compat HTML controlado.

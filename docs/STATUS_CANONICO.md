@@ -161,6 +161,7 @@ Ele está na fase de:
 - o Portal Admin Cliente agora monta o resumo detalhado de plano/capacidade por DOM seguro, mantendo dados do tenant fora de string HTML interpolada.
 - o Portal Admin Cliente agora monta o onboarding de equipe por DOM seguro, mantendo nomes, e-mails, status e ações rápidas fora de string HTML interpolada.
 - o Portal Admin Cliente agora monta histórico e preview de planos por DOM seguro, preservando o contrato do botão de interesse comercial sem interpolar dados de plano em HTML.
+- o Portal Admin Cliente agora monta auditoria operacional por DOM seguro, preservando filtros e timeline sem interpolar detalhes, protocolo ou alvo em HTML.
 
 ## O que ainda falta melhorar
 
