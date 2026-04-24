@@ -75,3 +75,4 @@ Observação do deploy publicado em 2026-04-24:
 - `/ready` ainda respondeu `production_ops_ready=false`, `uploads_storage_mode=local_fs`, `uploads_cleanup_enabled=false` e scheduler desligado;
 - portanto, o serviço `tariel-web-free` deve ser tratado como ambiente publicado/free, não como produção real fechada, até o plano/env do Render aplicar storage persistente, cleanup automático e restore drill operacional fora do workspace local.
 - o contrato local equivalente continua verde em `make production-ops-check-strict`, com `TARIEL_UPLOADS_STORAGE_MODE=persistent_disk`, backup obrigatório e restore drill obrigatório.
+- a correção real exige aplicar disco/envs no serviço Render publicado; não foi feito upgrade ou alteração de plano pago via CLI nesta rodada porque isso depende de autorização operacional explícita.

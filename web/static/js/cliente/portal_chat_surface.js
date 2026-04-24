@@ -30,6 +30,35 @@
             node.textContent = "";
             return true;
         };
+        const renderEmptyState = typeof helpers.renderEmptyState === "function" ? helpers.renderEmptyState : (target, options = {}) => {
+            if (!target) return false;
+            clearElement(target);
+            const empty = documentRef.createElement("div");
+            empty.className = "empty-state";
+            const title = documentRef.createElement("strong");
+            title.textContent = texto(options.title || "Nenhum item encontrado");
+            empty.appendChild(title);
+            const detail = texto(options.detail || "").trim();
+            if (detail) {
+                const paragraph = documentRef.createElement("p");
+                paragraph.textContent = detail;
+                empty.appendChild(paragraph);
+            }
+            target.appendChild(empty);
+            return true;
+        };
+        const renderGroupedSelectOptions = typeof helpers.renderGroupedSelectOptions === "function" ? helpers.renderGroupedSelectOptions : null;
+        const renderHeroChipList = typeof helpers.renderHeroChipList === "function" ? helpers.renderHeroChipList : (target, chips) => {
+            if (!target) return false;
+            clearElement(target);
+            (Array.isArray(chips) ? chips : []).forEach((chipText) => {
+                const chip = documentRef.createElement("span");
+                chip.className = "hero-chip";
+                chip.textContent = texto(chipText).trim();
+                target.appendChild(chip);
+            });
+            return true;
+        };
         const renderStaticContractHtml = typeof helpers.renderStaticContractHtml === "function" ? helpers.renderStaticContractHtml : null;
         const resumoEsperaHoras = typeof helpers.resumoEsperaHoras === "function" ? helpers.resumoEsperaHoras : () => "";
         const rotuloSituacaoChat = typeof helpers.rotuloSituacaoChat === "function" ? helpers.rotuloSituacaoChat : () => "";
@@ -393,33 +422,41 @@
                 );
                 if (seletor.dataset.catalogSignature !== assinatura) {
                     const valorAtual = texto(seletor.value).trim();
-                    const grupos = new Map();
-                    templateOptions.forEach((item) => {
-                        const grupo = texto(item?.group_label).trim() || "Catálogo oficial";
-                        if (!grupos.has(grupo)) {
-                            grupos.set(grupo, []);
-                        }
-                        grupos.get(grupo).push(item);
-                    });
-
-                    clearElement(seletor);
-                    grupos.forEach((itens, grupo) => {
-                        const optgroup = documentRef.createElement("optgroup");
-                        optgroup.label = grupo;
-                        itens.forEach((item) => {
-                            const option = documentRef.createElement("option");
-                            option.value = texto(item?.value).trim();
-                            option.textContent = texto(item?.label).trim() || option.value;
-                            optgroup.appendChild(option);
+                    if (renderGroupedSelectOptions) {
+                        renderGroupedSelectOptions(seletor, templateOptions, {
+                            currentValue: valorAtual,
+                            defaultGroupLabel: "Catálogo oficial",
+                            signature: assinatura,
                         });
-                        seletor.appendChild(optgroup);
-                    });
+                    } else {
+                        const grupos = new Map();
+                        templateOptions.forEach((item) => {
+                            const grupo = texto(item?.group_label).trim() || "Catálogo oficial";
+                            if (!grupos.has(grupo)) {
+                                grupos.set(grupo, []);
+                            }
+                            grupos.get(grupo).push(item);
+                        });
 
-                    const valorValido = templateOptions.some((item) => texto(item?.value).trim() === valorAtual)
-                        ? valorAtual
-                        : texto(templateOptions[0]?.value).trim();
-                    seletor.value = valorValido;
-                    seletor.dataset.catalogSignature = assinatura;
+                        clearElement(seletor);
+                        grupos.forEach((itens, grupo) => {
+                            const optgroup = documentRef.createElement("optgroup");
+                            optgroup.label = grupo;
+                            itens.forEach((item) => {
+                                const option = documentRef.createElement("option");
+                                option.value = texto(item?.value).trim();
+                                option.textContent = texto(item?.label).trim() || option.value;
+                                optgroup.appendChild(option);
+                            });
+                            seletor.appendChild(optgroup);
+                        });
+
+                        const valorValido = templateOptions.some((item) => texto(item?.value).trim() === valorAtual)
+                            ? valorAtual
+                            : texto(templateOptions[0]?.value).trim();
+                        seletor.value = valorValido;
+                        seletor.dataset.catalogSignature = assinatura;
+                    }
                 }
             }
 
@@ -598,20 +635,19 @@
             const filtroAtivo = rotuloSituacaoChat(state.ui.chatSituacao);
             if (!lista || !resumo) return;
 
-            resumo.innerHTML = `
-                <span class="hero-chip">${formatarInteiro(laudos.length)} laudos visiveis</span>
-                <span class="hero-chip">${formatarInteiro((state.bootstrap?.chat?.laudos || []).filter((item) => variantStatusLaudo(item.status_card) === "aberto").length)} abertos</span>
-                <span class="hero-chip">${formatarInteiro((state.bootstrap?.chat?.laudos || []).filter((item) => variantStatusLaudo(item.status_card) === "ajustes").length)} em ajuste</span>
-                ${filtroAtivo ? `<span class="hero-chip">Filtro rapido: ${escapeHtml(filtroAtivo)}</span>` : ""}
-            `;
+            const chipsResumo = [
+                `${formatarInteiro(laudos.length)} laudos visiveis`,
+                `${formatarInteiro((state.bootstrap?.chat?.laudos || []).filter((item) => variantStatusLaudo(item.status_card) === "aberto").length)} abertos`,
+                `${formatarInteiro((state.bootstrap?.chat?.laudos || []).filter((item) => variantStatusLaudo(item.status_card) === "ajustes").length)} em ajuste`,
+            ];
+            if (filtroAtivo) chipsResumo.push(`Filtro rapido: ${filtroAtivo}`);
+            renderHeroChipList(resumo, chipsResumo);
 
             if (!laudos.length) {
-                lista.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Nenhum laudo encontrado</strong>
-                        <p>Ajuste a busca ou crie um novo laudo para operar o chat por aqui.</p>
-                    </div>
-                `;
+                renderEmptyState(lista, {
+                    title: "Nenhum laudo encontrado",
+                    detail: "Ajuste a busca ou crie um novo laudo para operar o chat por aqui.",
+                });
                 atualizarResumoSecaoChat();
                 return;
             }

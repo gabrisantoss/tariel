@@ -131,6 +131,11 @@ Ele está na fase de:
 - o backend agora emite log production-safe para fluxos críticos lentos ou com erro 5xx, cobrindo cliente, chat do inspetor, Mesa/revisor e emissão documental sem vazar payload técnico.
 - `mesa/service.py` começou a perder responsabilidades internas para módulos dedicados, com a sumarização de mensagens/evidências/pendências da Mesa isolada em `mesa/package_message_summary.py`.
 - o portal cliente avançou na troca de HTML hardcoded por contratos estáticos allowlisted para estados read-only do Chat.
+- `admin/client_routes.py` começou a perder rotas de funcionários do cliente para `admin/client_employee_routes.py`, preservando que o Admin CEO governa contrato/superfícies e o Admin Cliente governa inspetores e avaliadores.
+- o pacote da Mesa ganhou `mesa/package_history.py`, isolando histórico de refazer, memória operacional de família e histórico de inspeção fora de `mesa/service.py`.
+- o portal cliente ganhou helpers compartilhados para empty state, chips e opções agrupadas, reduzindo `innerHTML` direto em listas de Chat/Mesa.
+- o Chat Inspetor ganhou uma ponte explícita de runtime em `chat_index_page_runtime.js`, reduzindo acoplamento direto de `chat_index_page.js` com globais de eventos, toast, boot e runtime.
+- o formulário de política por superfície do Admin CEO agora tem teste garantindo que `tenant_capability_*` legado enviado por payload antigo é ignorado e que permissões seguem derivadas do pacote/superfície contratada.
 
 ## O que ainda falta melhorar
 
@@ -178,18 +183,19 @@ Ele está na fase de:
 - mover os binários restantes entre 2 MiB e 10 MiB para LFS/storage conforme valor operacional e frequência de alteração;
 - executar restore drill real no provedor de storage externo quando o bucket/LFS definitivo dos assets pesados estiver definido.
 - transformar os novos logs de rota crítica em painel/alerta operacional real, com consulta no provedor de logs ou APM escolhido.
-- alinhar o serviço publicado `tariel-web-free` ao contrato production-ready; em 2026-04-24, o service id real confirmado pela Render CLI foi `srv-d795sq2a214c73alec20`, mas `/ready` ainda respondeu `production_ops_ready=false`, `uploads_storage_mode=local_fs` e cleanup desligado, indicando que o Render free atual ainda não aplica disco persistente/envs de produção real.
+- alinhar o serviço publicado `tariel-web-free` ao contrato production-ready; em 2026-04-24, o service id real confirmado pela Render CLI foi `srv-d795sq2a214c73alec20`, mas `/ready` ainda respondeu `production_ops_ready=false`, `uploads_storage_mode=local_fs` e cleanup desligado, indicando que o Render free atual ainda não aplica disco persistente/envs de produção real. Não aplicar upgrade/plano pago ou alteração de disco no provedor sem autorização explícita.
 
 ## Próximo corte oficial
 
-1. manter `make verify`, `make hygiene-check`, `make security-audit`, `make production-ops-check-strict`, `make uploads-restore-drill` e `make binary-assets-audit-strict` como pacote mínimo de promoção local;
-2. continuar a extração dos hotspots `mesa/service.py`, `admin/client_routes.py`, `chat_index_page.js` e superfícies do portal cliente, usando os novos logs críticos para priorizar gargalos reais;
-3. consolidar o pacote `docs/product-canonical-vision/`;
-4. refletir a matriz comercial por eixos nas superfícies administrativas e nos entitlements;
-5. reduzir desglobalização e compat layers do inspetor web;
-6. limpar visualmente `Finalizar`, `Configurações` e `Histórico` no app Android;
-7. validar no aparelho login, offline, anexos e mesa após esse ajuste;
-8. retomar o pipeline `document_view_model -> editor -> render`.
+1. decidir e aplicar a configuração real do Render para disco persistente/envs production-ready quando houver autorização operacional para plano/disco;
+2. manter `make verify`, `make hygiene-check`, `make security-audit`, `make production-ops-check-strict`, `make uploads-restore-drill` e `make binary-assets-audit-strict` como pacote mínimo de promoção local;
+3. continuar a extração dos hotspots `mesa/service.py`, `admin/client_routes.py`, `chat_index_page.js` e superfícies do portal cliente, usando os novos logs críticos para priorizar gargalos reais;
+4. consolidar o pacote `docs/product-canonical-vision/`;
+5. refletir a matriz comercial por eixos nas superfícies administrativas e nos entitlements;
+6. reduzir desglobalização e compat layers do inspetor web;
+7. limpar visualmente `Finalizar`, `Configurações` e `Histórico` no app Android;
+8. validar no aparelho login, offline, anexos e mesa após esse ajuste;
+9. retomar o pipeline `document_view_model -> editor -> render`.
 
 ## Regra de manutenção
 

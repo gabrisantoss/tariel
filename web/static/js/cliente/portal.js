@@ -847,8 +847,15 @@
     },
   );
 
-  const { clearElement, renderAnexos, renderAvisosOperacionais, renderStaticContractHtml } =
-    sharedHelpersModule;
+  const {
+    clearElement,
+    renderAnexos,
+    renderAvisosOperacionais,
+    renderEmptyState,
+    renderGroupedSelectOptions,
+    renderHeroChipList,
+    renderStaticContractHtml,
+  } = sharedHelpersModule;
 
   const adminModule = createRequiredModule("admin", createAdmin, {
     actions: {
@@ -1027,6 +1034,9 @@
       prioridadeChat,
       clearElement,
       renderAnexos,
+      renderEmptyState,
+      renderGroupedSelectOptions,
+      renderHeroChipList,
       renderStaticContractHtml,
       resumoEsperaHoras,
       rotuloSituacaoChat,
@@ -1089,6 +1099,8 @@
       prioridadeMesa,
       clearElement,
       renderAnexos,
+      renderEmptyState,
+      renderHeroChipList,
       renderStaticContractHtml,
       resumoEsperaHoras,
       rotuloSituacaoMesa,

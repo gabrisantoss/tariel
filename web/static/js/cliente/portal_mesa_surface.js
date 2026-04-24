@@ -62,6 +62,42 @@
               node.textContent = "";
               return true;
             };
+      const renderEmptyState =
+        typeof helpers.renderEmptyState === "function"
+          ? helpers.renderEmptyState
+          : (target, options = {}) => {
+              if (!target) return false;
+              clearElement(target);
+              const empty = documentRef.createElement("div");
+              empty.className = "empty-state";
+              const title = documentRef.createElement("strong");
+              title.textContent = texto(
+                options.title || "Nenhum item encontrado",
+              );
+              empty.appendChild(title);
+              const detail = texto(options.detail || "").trim();
+              if (detail) {
+                const paragraph = documentRef.createElement("p");
+                paragraph.textContent = detail;
+                empty.appendChild(paragraph);
+              }
+              target.appendChild(empty);
+              return true;
+            };
+      const renderHeroChipList =
+        typeof helpers.renderHeroChipList === "function"
+          ? helpers.renderHeroChipList
+          : (target, chips) => {
+              if (!target) return false;
+              clearElement(target);
+              (Array.isArray(chips) ? chips : []).forEach((chipText) => {
+                const chip = documentRef.createElement("span");
+                chip.className = "hero-chip";
+                chip.textContent = texto(chipText).trim();
+                target.appendChild(chip);
+              });
+              return true;
+            };
       const renderStaticContractHtml =
         typeof helpers.renderStaticContractHtml === "function"
           ? helpers.renderStaticContractHtml
@@ -584,19 +620,21 @@
           0,
         );
 
-        resumo.innerHTML = `
-                <span class="hero-chip">${formatarInteiro(totalPendencias)} pendencias abertas</span>
-                <span class="hero-chip">${formatarInteiro(totalWhispers)} chamados pendentes</span>
-                ${filtroAtivo ? `<span class="hero-chip">Filtro rapido: ${escapeHtml(filtroAtivo)}</span>` : ""}
-            `;
+        const chipsResumo = [
+          `${formatarInteiro(totalPendencias)} pendencias abertas`,
+          `${formatarInteiro(totalWhispers)} chamados pendentes`,
+        ];
+        if (filtroAtivo) {
+          chipsResumo.push(`Filtro rapido: ${filtroAtivo}`);
+        }
+        renderHeroChipList(resumo, chipsResumo);
 
         if (!laudos.length) {
-          lista.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Nenhum laudo na fila da mesa</strong>
-                        <p>Quando o chat da empresa enviar laudos para revisao, eles aparecem aqui.</p>
-                    </div>
-                `;
+          renderEmptyState(lista, {
+            title: "Nenhum laudo na fila da mesa",
+            detail:
+              "Quando o chat da empresa enviar laudos para revisao, eles aparecem aqui.",
+          });
           atualizarResumoSecaoMesa();
           return;
         }

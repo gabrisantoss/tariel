@@ -24,9 +24,9 @@ from sqlalchemy.orm import Session
 
 from app.domains.admin.client_routes import (
     registrar_novo_cliente,
-    resetar_senha_inspetor,
     roteador_admin_clientes,
 )
+from app.domains.admin.services import resetar_senha_inspetor
 from app.domains.admin.document_operations_summary import (
     build_document_operations_operational_summary,
 )

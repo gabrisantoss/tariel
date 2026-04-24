@@ -4224,3 +4224,25 @@ Atualizado em `2026-04-24`.
 - `make uploads-restore-drill`
 - `make hygiene-check`
 - `git diff --check`
+
+### Atualizacao deste slice
+
+- `Admin CEO`: extrair rotas de funcionarios do cliente para `web/app/domains/admin/client_employee_routes.py`.
+- `Mesa Avaliadora`: extrair historico de refazer, historico de inspecao e memoria operacional para `web/app/domains/mesa/package_history.py`.
+- `Portal Cliente`: adicionar helpers DOM seguros para empty state, chips e select agrupado, aplicando em listas de Chat/Mesa.
+- `Chat Inspetor`: criar `web/static/js/chat/chat_index_page_runtime.js` como ponte explicita de runtime/eventos/toast para reduzir `window.*` no arquivo principal.
+- `Contrato legado`: cobrir por teste que `tenant_capability_*` enviado por payload antigo no formulario de superficies e ignorado, mantendo permissao derivada do pacote contratado.
+- `Render real`: manter como bloqueio externo; o servico `srv-d795sq2a214c73alec20` precisa de disco/envs production-ready, mas nenhum upgrade/plano pago foi aplicado sem autorizacao.
+
+### Validacao deste slice
+
+- `PYTHONPATH=. python -m ruff check web/tests/test_admin_client_routes.py web/app/domains/admin/client_routes.py web/app/domains/admin/client_employee_routes.py web/app/domains/admin/routes.py web/app/domains/mesa/service.py web/app/domains/mesa/package_history.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py -q -k 'politica_operacional or definir_pacote_chat_inspetor_sem_mesa or ignora_flags_legacy or usuario_do_tenant or admin_cliente or inspetor or resetar or bloquear'`
+- `node --check web/static/js/cliente/portal_shared_helpers.js && node --check web/static/js/cliente/portal.js && node --check web/static/js/cliente/portal_chat_surface.js && node --check web/static/js/cliente/portal_mesa_surface.js && node --check web/static/js/chat/chat_index_page_runtime.js && node --check web/static/js/chat/chat_index_page.js`
+- `git diff --check`
+- `make web-ci`
+- `make mobile-ci`
+- `make mesa-smoke`
+- `make production-ops-check-strict`
+- `make uploads-restore-drill`
+- `make hygiene-check`

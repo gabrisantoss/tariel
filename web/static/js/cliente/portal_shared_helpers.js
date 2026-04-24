@@ -102,6 +102,117 @@
         return true;
       }
 
+      function renderEmptyState(target, options = {}) {
+        const container =
+          typeof target === "string" ? $(target) : target || null;
+        if (!container) return false;
+
+        clearElement(container);
+        const empty = documentRef.createElement("div");
+        empty.className = "empty-state";
+
+        const title = documentRef.createElement("strong");
+        title.textContent = texto(options.title || "Nenhum item encontrado");
+        empty.appendChild(title);
+
+        const detail = texto(options.detail || "").trim();
+        if (detail) {
+          const paragraph = documentRef.createElement("p");
+          paragraph.textContent = detail;
+          empty.appendChild(paragraph);
+        }
+
+        container.appendChild(empty);
+        return true;
+      }
+
+      function renderHeroChipList(target, chips) {
+        const container =
+          typeof target === "string" ? $(target) : target || null;
+        if (!container) return false;
+
+        clearElement(container);
+        (Array.isArray(chips) ? chips : [])
+          .map((item) => texto(item).trim())
+          .filter(Boolean)
+          .forEach((item) => {
+            const chip = documentRef.createElement("span");
+            chip.className = "hero-chip";
+            chip.textContent = item;
+            container.appendChild(chip);
+          });
+        return true;
+      }
+
+      function renderGroupedSelectOptions(target, options, config = {}) {
+        const select = typeof target === "string" ? $(target) : target || null;
+        if (!select) return null;
+
+        const itens = Array.isArray(options) ? options : [];
+        const valueOf =
+          typeof config.valueOf === "function"
+            ? config.valueOf
+            : (item) => texto(item?.value).trim();
+        const labelOf =
+          typeof config.labelOf === "function"
+            ? config.labelOf
+            : (item) => texto(item?.label).trim() || valueOf(item);
+        const groupOf =
+          typeof config.groupOf === "function"
+            ? config.groupOf
+            : (item) =>
+                texto(item?.group_label).trim() ||
+                texto(config.defaultGroupLabel || "Catálogo oficial").trim();
+        const signature = texto(
+          config.signature ||
+            JSON.stringify(
+              itens.map((item) => [valueOf(item), labelOf(item), groupOf(item)]),
+            ),
+        );
+
+        if (signature && select.dataset.catalogSignature === signature) {
+          return { changed: false, value: texto(select.value).trim() };
+        }
+
+        const valorAtual = texto(config.currentValue ?? select.value).trim();
+        clearElement(select);
+
+        const grupos = new Map();
+        itens.forEach((item) => {
+          const value = valueOf(item);
+          if (!value) return;
+          const group = groupOf(item) || "Catálogo oficial";
+          if (!grupos.has(group)) {
+            grupos.set(group, []);
+          }
+          grupos.get(group).push({ item, value });
+        });
+
+        grupos.forEach((grupoItens, grupo) => {
+          const optgroup = documentRef.createElement("optgroup");
+          optgroup.label = grupo;
+          grupoItens.forEach(({ item, value }) => {
+            const option = documentRef.createElement("option");
+            option.value = value;
+            option.textContent = labelOf(item);
+            optgroup.appendChild(option);
+          });
+          select.appendChild(optgroup);
+        });
+
+        const valoresValidos = itens.map((item) => valueOf(item)).filter(Boolean);
+        const valor = valoresValidos.includes(valorAtual)
+          ? valorAtual
+          : valoresValidos[0] || "";
+        select.value = valor;
+        if (signature) {
+          select.dataset.catalogSignature = signature;
+        } else {
+          delete select.dataset.catalogSignature;
+        }
+        return { changed: true, value: valor };
+      }
+
       function renderAnexos(anexos) {
         const itens = Array.isArray(anexos) ? anexos : [];
         if (!itens.length) return "";
@@ -166,8 +277,11 @@
 
       return {
         clearElement,
+        renderEmptyState,
         renderAnexos,
         renderAvisosOperacionais,
+        renderGroupedSelectOptions,
+        renderHeroChipList,
         renderStaticContractHtml,
       };
     };

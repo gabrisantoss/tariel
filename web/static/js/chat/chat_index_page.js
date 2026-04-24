@@ -14,10 +14,14 @@
     "use strict";
 
     const InspectorRuntime = window.TarielInspectorRuntime || null;
-    if (typeof InspectorRuntime?.guardOnce === "function") {
+    const ChatIndexRuntime = window.TarielChatIndexPageRuntime || null;
+    if (typeof ChatIndexRuntime?.guardOnce === "function") {
+        if (!ChatIndexRuntime.guardOnce(InspectorRuntime, "chat_index_page")) return;
+    } else if (typeof InspectorRuntime?.guardOnce === "function") {
         if (!InspectorRuntime.guardOnce("chat_index_page")) return;
+    } else if (window.__TARIEL_CHAT_INDEX_PAGE_WIRED__) {
+        return;
     } else {
-        if (window.__TARIEL_CHAT_INDEX_PAGE_WIRED__) return;
         window.__TARIEL_CHAT_INDEX_PAGE_WIRED__ = true;
     }
 
@@ -29,9 +33,13 @@
     const TEMPO_RECONEXAO_SSE_MS = 5000;
     const BREAKPOINT_LAYOUT_INSPETOR_COMPACTO = 1199;
     const resolvedRuntimeModules =
-        window.TarielInspectorWorkspaceRuntimeRegistry?.resolveInspectorRuntimeModules?.(InspectorRuntime) || {};
+        ChatIndexRuntime?.resolveModules?.(InspectorRuntime)
+        || window.TarielInspectorWorkspaceRuntimeRegistry?.resolveInspectorRuntimeModules?.(InspectorRuntime)
+        || {};
     const sharedGlobals =
-        resolvedRuntimeModules.sharedGlobals || {
+        ChatIndexRuntime?.resolveSharedGlobals?.(resolvedRuntimeModules)
+        || resolvedRuntimeModules.sharedGlobals
+        || {
             perf: window.TarielPerf || window.TarielCore?.TarielPerf || null,
             caseLifecycle: window.TarielCaseLifecycle,
         };
@@ -113,8 +121,11 @@
     };
 
     const EM_PRODUCAO =
-        window.location.hostname !== "localhost" &&
-        window.location.hostname !== "127.0.0.1";
+        ChatIndexRuntime?.isProductionLocation?.(window.location)
+        ?? (
+            window.location.hostname !== "localhost" &&
+            window.location.hostname !== "127.0.0.1"
+        );
     const LIMITE_RECONEXAO_SSE_OFFLINE = 3;
     const MAX_BYTES_ANEXO_MESA = 12 * 1024 * 1024;
     const CHAVE_FORCE_HOME_LANDING = "tariel_force_home_landing";
@@ -358,7 +369,9 @@
     // REFERÊNCIAS DOS ELEMENTOS DA PÁGINA
     // =========================================================
     const el =
-        window.TarielInspectorWorkspacePageElements?.buildInspectorPageElements?.(document) || {};
+        ChatIndexRuntime?.resolvePageElements?.(document)
+        || window.TarielInspectorWorkspacePageElements?.buildInspectorPageElements?.(document)
+        || {};
 
     const avisosEstadoInspector = new Set();
     const divergenciasEstadoInspector = new Map();
@@ -372,6 +385,10 @@
     // =========================================================
 
     function mostrarToast(mensagem, tipo = "info", duracao = 3000) {
+        if (typeof ChatIndexRuntime?.showToast === "function") {
+            ChatIndexRuntime.showToast(mensagem, tipo, duracao);
+            return;
+        }
         if (typeof window.mostrarToast === "function") {
             window.mostrarToast(mensagem, tipo, duracao);
         }
@@ -380,15 +397,17 @@
     function debugRuntime(...args) {
         if (EM_PRODUCAO) return;
 
+        if (typeof ChatIndexRuntime?.debug === "function") {
+            ChatIndexRuntime.debug(...args);
+            return;
+        }
         if (typeof window.TarielCore?.debug === "function") {
             window.TarielCore.debug(...args);
-            return;
         }
     }
 
     function logOnceRuntime(chave, nivel, ...args) {
-        if (typeof window.TarielCore?.logOnce === "function") {
-            window.TarielCore.logOnce(chave, nivel, ...args);
+        if (ChatIndexRuntime?.logOnce?.(chave, nivel, ...args)) {
             return;
         }
 
@@ -402,11 +421,8 @@
     }
 
     function emitirEventoTariel(nome, detail = {}) {
-        if (typeof window.TarielInspectorEvents?.emit === "function") {
-            window.TarielInspectorEvents.emit(nome, detail, {
-                target: document,
-                bubbles: true,
-            });
+        if (typeof ChatIndexRuntime?.emitInspectorEvent === "function") {
+            ChatIndexRuntime.emitInspectorEvent(nome, detail, document);
             return;
         }
 
@@ -417,10 +433,8 @@
     }
 
     function ouvirEventoTariel(nome, handler) {
-        if (typeof window.TarielInspectorEvents?.on === "function") {
-            return window.TarielInspectorEvents.on(nome, handler, {
-                target: document,
-            });
+        if (typeof ChatIndexRuntime?.onInspectorEvent === "function") {
+            return ChatIndexRuntime.onInspectorEvent(nome, handler, document);
         }
 
         document.addEventListener(nome, handler);

@@ -2314,3 +2314,54 @@ Impacto observado:
 - Admin Cliente mantém governança operacional de seus funcionários dentro das superfícies contratadas;
 - Mesa e portal cliente perderam mais um pedaço de lógica concentrada, sem mudança de contrato externo;
 - o ambiente publicado atual segue saudável, mas não production-ready: `/ready` em `https://tariel-web-free.onrender.com/ready` respondeu `production_ops_ready=false`, `uploads_storage_mode=local_fs` e cleanup desligado.
+
+## R56. Funcionarios do cliente, historico da Mesa e runtime do Chat Inspetor
+
+Resumo:
+
+- mantive Render real como bloqueio externo: o serviço `srv-d795sq2a214c73alec20` precisa de disco persistente/envs production-ready, mas nenhum upgrade/plano pago foi aplicado sem autorização explícita;
+- extraí de `admin/client_routes.py` as rotas de usuários/funcionários do cliente para `admin/client_employee_routes.py`, preservando que Admin Cliente governa inspetores e avaliadores dentro das superfícies contratadas;
+- extraí de `mesa/service.py` o histórico de refazer, histórico de inspeção e memória operacional de família para `mesa/package_history.py`;
+- adicionei helpers DOM seguros no portal cliente para empty state, chips e opções agrupadas, aplicando o primeiro corte nas listas de Chat/Mesa;
+- criei `chat_index_page_runtime.js` como ponte explícita para runtime/eventos/toast do Chat Inspetor, reduzindo acesso direto a globais no arquivo principal;
+- adicionei teste contra reentrada de `tenant_capability_*` legado no formulário de superfícies.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/client_routes.py`
+- `web/app/domains/admin/client_employee_routes.py`
+- `web/app/domains/admin/routes.py`
+- `web/app/domains/mesa/service.py`
+- `web/app/domains/mesa/package_history.py`
+- `web/static/js/cliente/portal_shared_helpers.js`
+- `web/static/js/cliente/portal.js`
+- `web/static/js/cliente/portal_chat_surface.js`
+- `web/static/js/cliente/portal_mesa_surface.js`
+- `web/static/js/chat/chat_index_page_runtime.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/templates/index.html`
+- `web/tests/test_admin_client_routes.py`
+- `docs/STATUS_CANONICO.md`
+- `docs/final-project-audit/08_production_ops_closure.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/tests/test_admin_client_routes.py web/app/domains/admin/client_routes.py web/app/domains/admin/client_employee_routes.py web/app/domains/admin/routes.py web/app/domains/mesa/service.py web/app/domains/mesa/package_history.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py -q -k 'politica_operacional or definir_pacote_chat_inspetor_sem_mesa or ignora_flags_legacy or usuario_do_tenant or admin_cliente or inspetor or resetar or bloquear'` -> `6 passed, 35 deselected`;
+- `node --check web/static/js/cliente/portal_shared_helpers.js && node --check web/static/js/cliente/portal.js && node --check web/static/js/cliente/portal_chat_surface.js && node --check web/static/js/cliente/portal_mesa_surface.js && node --check web/static/js/chat/chat_index_page_runtime.js && node --check web/static/js/chat/chat_index_page.js` -> sem erro de sintaxe.
+- `git diff --check` -> sem erros; apenas aviso de normalização CRLF em `web/app/domains/mesa/service.py` e `web/static/js/chat/chat_index_page.js`;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `321` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make mobile-ci` -> typecheck, lint, prettier e `113` suites/`420` testes verdes;
+- `make mesa-smoke` -> `95 passed`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`.
+
+Impacto observado:
+
+- o Admin CEO continua no contrato/superfícies do cliente, sem assumir governo operacional fino dos funcionários;
+- o Admin Cliente segue como autoridade sobre inspetores e avaliadores do próprio cliente dentro do contrato liberado;
+- `mesa/service.py` e `chat_index_page.js` perderam mais responsabilidades sem alterar endpoint, contrato público ou fluxo do usuário;
+- o próximo corte coerente é continuar extraindo emissão oficial da Mesa e cards/mensagens do portal cliente, depois atacar sidebar/histórico do inspetor com helper dedicado.

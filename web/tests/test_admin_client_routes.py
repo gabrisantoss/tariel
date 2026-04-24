@@ -23,6 +23,7 @@ from app.shared.database import (
     SessaoAtiva,
     Usuario,
 )
+from app.shared.tenant_admin_policy import summarize_tenant_admin_policy
 from tests.regras_rotas_criticas_support import ADMIN_TOTP_SECRET, _csrf_pagina, _login_admin
 
 
@@ -379,6 +380,47 @@ def test_admin_ceo_pode_definir_pacote_chat_inspetor_sem_mesa(
             "commercial_service_package": "inspector_chat",
             "tenant_portal_revisor_enabled": False,
         }
+
+
+def test_admin_ceo_ignora_flags_legacy_de_capability_no_formulario_de_superficies(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    _login_admin(client, "admin@empresa-a.test")
+    csrf = _csrf_pagina(client, f"/admin/clientes/{ids['empresa_a']}")
+
+    resposta = client.post(
+        f"/admin/clientes/{ids['empresa_a']}/politica-admin-cliente",
+        data={
+            "csrf_token": csrf,
+            "admin_cliente_commercial_service_package": "inspector_chat",
+            "admin_cliente_case_visibility_mode": "case_list",
+            "admin_cliente_case_action_mode": "case_actions",
+            "tenant_capability_reviewer_decision_enabled": "true",
+            "tenant_capability_reviewer_issue_enabled": "true",
+            "tenant_capability_inspector_send_to_mesa_enabled": "true",
+        },
+        follow_redirects=False,
+    )
+
+    assert resposta.status_code == 303
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        politica = empresa.admin_cliente_policy_json or {}
+        assert "tenant_capability_reviewer_decision_enabled" not in politica
+        assert "tenant_capability_reviewer_issue_enabled" not in politica
+        assert "tenant_capability_inspector_send_to_mesa_enabled" not in politica
+
+        resumo = summarize_tenant_admin_policy(politica)
+        assert resumo["commercial_service_package_effective"] == "inspector_chat"
+        assert resumo["tenant_capability_entitlements"]["reviewer_decision"] is False
+        assert resumo["tenant_capability_entitlements"]["reviewer_issue"] is False
+        assert resumo["tenant_capability_entitlements"]["inspector_send_to_mesa"] is False
 
 
 def test_admin_cliente_salva_signatario_governado_no_tenant(ambiente_critico) -> None:
