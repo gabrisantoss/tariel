@@ -79,6 +79,8 @@ class Settings:
     observability_client_request_header_name: str
     observability_trace_header_name: str
     observability_release: str
+    route_observability_enabled: bool
+    route_observability_slow_ms: int
     otel_enabled: bool
     otel_service_name: str
     otel_service_namespace: str
@@ -165,6 +167,8 @@ def get_settings() -> Settings:
         or "X-Client-Request-Id",
         observability_trace_header_name=env_str("OBSERVABILITY_TRACE_HEADER_NAME", "X-Trace-Id") or "X-Trace-Id",
         observability_release=env_str("OBSERVABILITY_RELEASE", env_str("APP_VERSAO", "2.0-SaaS")) or "2.0-SaaS",
+        route_observability_enabled=env_bool("TARIEL_ROUTE_OBSERVABILITY_ENABLED", em_producao),
+        route_observability_slow_ms=max(env_int("TARIEL_ROUTE_OBSERVABILITY_SLOW_MS", 1200), 1),
         otel_enabled=env_bool("OTEL_ENABLED", False),
         otel_service_name=env_str("OTEL_SERVICE_NAME", "tariel-web") or "tariel-web",
         otel_service_namespace=env_str("OTEL_SERVICE_NAMESPACE", "tariel") or "tariel",

@@ -25,6 +25,7 @@
         const parseDataIso = typeof helpers.parseDataIso === "function" ? helpers.parseDataIso : () => 0;
         const prioridadeChat = typeof helpers.prioridadeChat === "function" ? helpers.prioridadeChat : () => ({ tone: "aprovado", badge: "", acao: "" });
         const renderAnexos = typeof helpers.renderAnexos === "function" ? helpers.renderAnexos : () => "";
+        const renderStaticContractHtml = typeof helpers.renderStaticContractHtml === "function" ? helpers.renderStaticContractHtml : null;
         const resumoEsperaHoras = typeof helpers.resumoEsperaHoras === "function" ? helpers.resumoEsperaHoras : () => "";
         const rotuloSituacaoChat = typeof helpers.rotuloSituacaoChat === "function" ? helpers.rotuloSituacaoChat : () => "";
         const texto = typeof helpers.texto === "function" ? helpers.texto : (valor) => (valor == null ? "" : String(valor));
@@ -250,35 +251,18 @@
 
         function renderChatPolicyHints() {
             const readOnly = chatReadOnlyMode();
-            const newHint = $("chat-new-policy-hint");
-            const caseHint = $("chat-case-policy-hint");
-            const caseNote = $("chat-case-policy-note");
-            const messageNote = $("chat-message-policy-note");
             const uploadButton = $("btn-chat-upload-doc");
             const uploadInput = $("chat-upload-doc");
             const textarea = $("chat-mensagem");
             const sendButton = $("btn-chat-msg-enviar");
             const hasCaseSelected = Boolean(state.chat.laudoId);
+            const variant = readOnly ? "readOnly" : "editable";
 
-            if (newHint) {
-                newHint.innerHTML = readOnly ? '<span class="hero-chip">Somente acompanhamento</span>' : "";
-            }
-            if (caseHint) {
-                caseHint.innerHTML = readOnly ? '<span class="hero-chip">Somente acompanhamento</span>' : "";
-            }
-
-            if (caseNote) {
-                caseNote.hidden = !readOnly;
-                caseNote.innerHTML = readOnly
-                    ? '<div class="form-hint" data-tone="aguardando"><strong>Ações de estado indisponíveis</strong><span>Este tenant permite leitura do caso, mas não permite finalizar nem reabrir laudos pelo portal cliente.</span></div>'
-                    : "";
-            }
-
-            if (messageNote) {
-                messageNote.hidden = !readOnly;
-                messageNote.innerHTML = readOnly
-                    ? '<div class="form-hint" data-tone="aguardando"><strong>Escrita bloqueada</strong><span>Você pode acompanhar o caso e marcar avisos como lidos, mas não pode enviar mensagem, documento nem abrir novo laudo.</span></div>'
-                    : "";
+            if (renderStaticContractHtml) {
+                renderStaticContractHtml("chat-new-policy-hint", "chatReadOnlyHint", variant);
+                renderStaticContractHtml("chat-case-policy-hint", "chatReadOnlyHint", variant);
+                renderStaticContractHtml("chat-case-policy-note", "chatCasePolicyNote", variant, { hidden: !readOnly });
+                renderStaticContractHtml("chat-message-policy-note", "chatMessagePolicyNote", variant, { hidden: !readOnly });
             }
 
             if (uploadButton) {

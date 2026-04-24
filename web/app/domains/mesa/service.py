@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -32,9 +31,6 @@ from app.domains.mesa.contracts import (
     PacoteMesaLaudo,
     RevisaoPorBlocoItemPacoteMesa,
     RevisaoPorBlocoPacoteMesa,
-    ResumoEvidenciasMesa,
-    ResumoMensagensMesa,
-    ResumoPendenciasMesa,
     RevisaoPacoteMesa,
     SecaoDocumentoEstruturadoPacoteMesa,
     SignatarioGovernadoPacoteMesa,
@@ -42,10 +38,11 @@ from app.domains.mesa.contracts import (
 )
 from app.domains.mesa.attachments import serializar_anexos_mesa, texto_mensagem_mesa_visivel
 from app.domains.mesa.operational_tasks import extract_operational_context
+from app.domains.mesa.package_message_summary import build_mesa_message_package_summary
 from app.domains.mesa.semantics import build_mesa_message_semantics
 from app.domains.chat.laudo_state_helpers import resolver_snapshot_leitura_caso_tecnico
 from app.domains.chat.normalization import TIPOS_TEMPLATE_VALIDOS
-from app.shared.database import EvidenceValidation, Laudo, LaudoRevisao, MensagemLaudo, OperationalIrregularity, TipoMensagem
+from app.shared.database import EvidenceValidation, Laudo, LaudoRevisao, MensagemLaudo, OperationalIrregularity
 from app.shared.inspection_history import (
     build_human_override_summary,
     build_inspection_history_summary,
@@ -58,7 +55,6 @@ from app.v2.acl.technical_case_core import build_case_status_visual_label
 from app.v2.policy.governance import load_case_policy_governance_context
 from nucleo.inspetor.referencias_mensagem import extrair_referencia_do_texto
 
-REGEX_ARQUIVO_DOCUMENTO = re.compile(r"\.(?:pdf|docx?)\b", flags=re.IGNORECASE)
 SECTION_TITLES = {
     "identificacao": "Identificacao",
     "caracterizacao_do_equipamento": "Caracterizacao",
@@ -109,31 +105,6 @@ def _normalizar_data_utc(data: datetime | None) -> datetime | None:
     if data.tzinfo is None:
         return data.replace(tzinfo=timezone.utc)
     return data.astimezone(timezone.utc)
-
-
-def _texto_eh_foto(conteudo: str) -> bool:
-    texto = (conteudo or "").strip().lower()
-    return texto in {"[imagem]", "imagem enviada", "[foto]"}
-
-
-def _texto_eh_evidencia_textual(conteudo: str) -> bool:
-    texto = (conteudo or "").strip()
-    if not texto:
-        return False
-    if _texto_eh_foto(texto):
-        return False
-    if _texto_representa_documento(texto):
-        return False
-    return len(texto) >= 8
-
-
-def _texto_representa_documento(conteudo: str) -> bool:
-    texto = (conteudo or "").strip()
-    if not texto:
-        return False
-    if texto.lower().startswith("documento:"):
-        return True
-    return bool(REGEX_ARQUIVO_DOCUMENTO.search(texto))
 
 
 def _texto_limpo_curto(valor: Any) -> str | None:
@@ -1706,78 +1677,15 @@ def montar_pacote_mesa_laudo(
         .all()
     )
 
-    total_inspetor = 0
-    total_ia = 0
-    total_mesa = 0
-    total_outros = 0
-    evidencias_textuais = 0
-    evidencias_fotos = 0
-    evidencias_documentos = 0
-
-    for msg in mensagens:
-        tipo = str(msg.tipo or "")
-        _, texto_limpo = extrair_referencia_do_texto(msg.conteudo)
-
-        if tipo in {TipoMensagem.USER.value, TipoMensagem.HUMANO_INSP.value}:
-            total_inspetor += 1
-            if tipo != TipoMensagem.USER.value:
-                continue
-            if _texto_eh_foto(texto_limpo):
-                evidencias_fotos += 1
-            elif _texto_representa_documento(texto_limpo):
-                evidencias_documentos += 1
-            elif _texto_eh_evidencia_textual(texto_limpo):
-                evidencias_textuais += 1
-            continue
-
-        if tipo == TipoMensagem.IA.value:
-            total_ia += 1
-            continue
-
-        if tipo == TipoMensagem.HUMANO_ENG.value:
-            total_mesa += 1
-            continue
-
-        total_outros += 1
-
-    mensagens_mesa = [msg for msg in mensagens if msg.tipo == TipoMensagem.HUMANO_ENG.value]
-    pendencias_abertas = [msg for msg in mensagens_mesa if msg.resolvida_em is None]
-    pendencias_resolvidas = [msg for msg in mensagens_mesa if msg.resolvida_em is not None]
-    pendencias_resolvidas.sort(
-        key=lambda msg: (_normalizar_data_utc(msg.resolvida_em) or _normalizar_data_utc(msg.criado_em) or agora_utc()),
-        reverse=True,
+    mensagens_summary = build_mesa_message_package_summary(
+        mensagens,
+        laudo_criado_em=laudo.criado_em,
+        laudo_atualizado_em=laudo.atualizado_em,
+        limite_whispers=limite_whispers_seguro,
     )
-
-    whispers = [msg for msg in mensagens if msg.is_whisper]
-    whispers_recentes = list(reversed(whispers[-limite_whispers_seguro:]))
 
     revisoes = (
         banco.query(LaudoRevisao).filter(LaudoRevisao.laudo_id == laudo.id).order_by(LaudoRevisao.numero_versao.desc()).limit(limite_revisoes_seguro).all()
-    )
-
-    ultima_interacao = None
-    if mensagens:
-        ultima_interacao = _normalizar_data_utc(mensagens[-1].criado_em)
-    if ultima_interacao is None:
-        ultima_interacao = _normalizar_data_utc(laudo.atualizado_em) or _normalizar_data_utc(laudo.criado_em)
-
-    resumo_mensagens = ResumoMensagensMesa(
-        total=len(mensagens),
-        inspetor=total_inspetor,
-        ia=total_ia,
-        mesa=total_mesa,
-        sistema_outros=total_outros,
-    )
-    resumo_evidencias = ResumoEvidenciasMesa(
-        total=evidencias_textuais + evidencias_fotos + evidencias_documentos,
-        textuais=evidencias_textuais,
-        fotos=evidencias_fotos,
-        documentos=evidencias_documentos,
-    )
-    resumo_pendencias = ResumoPendenciasMesa(
-        total=len(mensagens_mesa),
-        abertas=len(pendencias_abertas),
-        resolvidas=len(pendencias_resolvidas),
     )
 
     revisoes_payload = [
@@ -1861,16 +1769,16 @@ def montar_pacote_mesa_laudo(
         criado_em=_normalizar_data_utc(laudo.criado_em) or agora_utc(),
         atualizado_em=_normalizar_data_utc(laudo.atualizado_em),
         tempo_em_campo_minutos=_tempo_em_campo_minutos(laudo.criado_em),
-        ultima_interacao_em=ultima_interacao,
+        ultima_interacao_em=mensagens_summary.ultima_interacao_em,
         inspetor_id=int(laudo.usuario_id) if laudo.usuario_id else None,
         revisor_id=revisor_id_publico,
         dados_formulario=getattr(laudo, "dados_formulario", None),
         documento_estruturado=documento_estruturado,
         revisao_por_bloco=revisao_por_bloco,
         parecer_ia=getattr(laudo, "parecer_ia", None),
-        resumo_mensagens=resumo_mensagens,
-        resumo_evidencias=resumo_evidencias,
-        resumo_pendencias=resumo_pendencias,
+        resumo_mensagens=mensagens_summary.resumo_mensagens,
+        resumo_evidencias=mensagens_summary.resumo_evidencias,
+        resumo_pendencias=mensagens_summary.resumo_pendencias,
         catalog_template_scope=catalog_template_scope,
         coverage_map=coverage_map,
         historico_inspecao=historico_inspecao,
@@ -1880,9 +1788,15 @@ def montar_pacote_mesa_laudo(
         emissao_oficial=emissao_oficial,
         historico_refazer_inspetor=historico_refazer_inspetor,
         memoria_operacional_familia=memoria_operacional_familia,
-        pendencias_abertas=[_serializar_mensagem_pacote(msg) for msg in pendencias_abertas[:limite_pendencias_seguro]],
-        pendencias_resolvidas_recentes=[_serializar_mensagem_pacote(msg) for msg in pendencias_resolvidas[:limite_pendencias_seguro]],
-        whispers_recentes=[_serializar_mensagem_pacote(msg) for msg in whispers_recentes],
+        pendencias_abertas=[
+            _serializar_mensagem_pacote(msg)
+            for msg in mensagens_summary.pendencias_abertas[:limite_pendencias_seguro]
+        ],
+        pendencias_resolvidas_recentes=[
+            _serializar_mensagem_pacote(msg)
+            for msg in mensagens_summary.pendencias_resolvidas[:limite_pendencias_seguro]
+        ],
+        whispers_recentes=[_serializar_mensagem_pacote(msg) for msg in mensagens_summary.whispers_recentes],
         revisoes_recentes=revisoes_payload,
     )
 

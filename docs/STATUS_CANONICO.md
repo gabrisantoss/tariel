@@ -128,6 +128,9 @@ Ele está na fase de:
 - `render.yaml` e `make production-ops-check-strict` já exigem disco persistente para uploads, backup obrigatório, restore drill obrigatório e sessão fail-closed em produção.
 - existe drill local executável de restore de uploads em `make uploads-restore-drill`, agora também dentro de `release-gate-real`.
 - os 12 PDFs/ZIPs rastreados acima de 10 MiB saíram do Git futuro e ficaram documentados em `docs/binary_asset_manifests/oversized_assets_2026-04-24.json`.
+- o backend agora emite log production-safe para fluxos críticos lentos ou com erro 5xx, cobrindo cliente, chat do inspetor, Mesa/revisor e emissão documental sem vazar payload técnico.
+- `mesa/service.py` começou a perder responsabilidades internas para módulos dedicados, com a sumarização de mensagens/evidências/pendências da Mesa isolada em `mesa/package_message_summary.py`.
+- o portal cliente avançou na troca de HTML hardcoded por contratos estáticos allowlisted para estados read-only do Chat.
 
 ## O que ainda falta melhorar
 
@@ -174,11 +177,12 @@ Ele está na fase de:
 - decidir política para vulnerabilidades moderadas transitivas do Expo quando a correção automática exigir downgrade incompatível;
 - mover os binários restantes entre 2 MiB e 10 MiB para LFS/storage conforme valor operacional e frequência de alteração;
 - executar restore drill real no provedor de storage externo quando o bucket/LFS definitivo dos assets pesados estiver definido.
+- transformar os novos logs de rota crítica em painel/alerta operacional real, com consulta no provedor de logs ou APM escolhido.
 
 ## Próximo corte oficial
 
 1. manter `make verify`, `make hygiene-check`, `make security-audit`, `make production-ops-check-strict`, `make uploads-restore-drill` e `make binary-assets-audit-strict` como pacote mínimo de promoção local;
-2. continuar a extração dos hotspots `mesa/service.py`, `admin/client_routes.py`, `chat_index_page.js` e superfícies do portal cliente;
+2. continuar a extração dos hotspots `mesa/service.py`, `admin/client_routes.py`, `chat_index_page.js` e superfícies do portal cliente, usando os novos logs críticos para priorizar gargalos reais;
 3. consolidar o pacote `docs/product-canonical-vision/`;
 4. refletir a matriz comercial por eixos nas superfícies administrativas e nos entitlements;
 5. reduzir desglobalização e compat layers do inspetor web;

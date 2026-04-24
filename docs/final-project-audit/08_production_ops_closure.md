@@ -27,6 +27,7 @@ Uploads e anexos:
 - backup obrigatorio: `TARIEL_UPLOADS_BACKUP_REQUIRED=1`
 - restore drill obrigatorio: `TARIEL_UPLOADS_RESTORE_DRILL_REQUIRED=1`
 - cleanup automatico habilitado no contrato de producao do Render, com dry-run estrito em `make uploads-cleanup-check`
+- observabilidade de rota crítica habilitada em produção por `TARIEL_ROUTE_OBSERVABILITY_ENABLED=1`, registrando apenas fluxos críticos lentos ou com erro 5xx
 
 Sessao:
 
@@ -57,6 +58,7 @@ A operacao real de producao pode ser considerada **fechada com rotina executavel
 - storage persistente, backup, restore e sessao multi-instancia agora estao explicitados e verificaveis;
 - o restore drill local verifica backup, extração e checksum de perfis, anexos da Mesa e aprendizados visuais;
 - a limpeza automatica de uploads fica habilitada por env e observavel por report/runtime.
+- os fluxos críticos do produto ficam visíveis nos logs de produção quando passarem do limite configurado por `TARIEL_ROUTE_OBSERVABILITY_SLOW_MS` ou falharem com erro de servidor.
 
 ## Leitura honesta
 
@@ -64,3 +66,4 @@ Depois desta fase, o gap principal de producao deixou de ser ambiguidade de poli
 
 - executar restore drill contra o storage externo definitivo quando ele for definido;
 - acompanhar o primeiro report real do cleanup no ambiente publicado.
+- consultar os primeiros logs reais de `observability_kind=critical_route` depois do deploy para calibrar o limite de lentidão.

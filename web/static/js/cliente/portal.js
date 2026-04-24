@@ -1025,6 +1025,7 @@
       persistirSelecao,
       prioridadeChat,
       renderAnexos,
+      renderStaticContractHtml,
       resumoEsperaHoras,
       rotuloSituacaoChat,
       sincronizarUrlDaSecao,

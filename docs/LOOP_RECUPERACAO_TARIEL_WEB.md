@@ -2116,3 +2116,67 @@ Impacto observado:
 - a árvore deixa de carregar quase 476 MiB de payload pesado no Git futuro sem perder rastreabilidade;
 - produção/restore agora tem rotina executável local além da política de env;
 - o próximo passo coerente é escolher outro slice pequeno em `mesa/service.py` ou `chat_index_page.js` e definir o storage externo/LFS definitivo dos assets migrados.
+
+## R53. Observabilidade crítica, Mesa summary e contratos HTML do Chat cliente
+
+Resumo:
+
+- adicionei uma camada production-safe de observabilidade para rotas críticas, habilitada no `render.yaml` por `TARIEL_ROUTE_OBSERVABILITY_ENABLED=1`;
+- a camada só registra log quando o fluxo crítico fica lento ou falha com 5xx, e cobre `cliente_bootstrap`, `cliente_chat`, `cliente_mesa`, `inspetor_chat`, `revisor_mesa` e `documento_oficial`;
+- extraí de `mesa/service.py` a sumarização de mensagens, evidências, pendências e whispers para `web/app/domains/mesa/package_message_summary.py`, sem alterar o contrato do pacote da Mesa;
+- no portal cliente, os avisos read-only do Chat passaram a usar contratos estáticos allowlisted em `portal_shared_helpers.js`, reduzindo HTML hardcoded diretamente na superfície de chat.
+
+Arquivos do ciclo:
+
+- `render.yaml`
+- `web/app/core/settings.py`
+- `web/app/core/http_runtime_support.py`
+- `web/app/core/route_observability.py`
+- `web/app/domains/mesa/package_message_summary.py`
+- `web/app/domains/mesa/service.py`
+- `web/static/js/cliente/portal.js`
+- `web/static/js/cliente/portal_chat_surface.js`
+- `web/static/js/cliente/portal_shared_helpers.js`
+- `web/tests/test_route_observability.py`
+- `docs/STATUS_CANONICO.md`
+- `docs/final-project-audit/08_production_ops_closure.md`
+- `PLANS.md`
+
+Validação local executada:
+
+- `python -m py_compile web/app/core/settings.py web/app/core/http_runtime_support.py web/app/core/route_observability.py web/app/domains/mesa/package_message_summary.py web/app/domains/mesa/service.py`
+- `node --check web/static/js/cliente/portal_shared_helpers.js`
+- `node --check web/static/js/cliente/portal_chat_surface.js`
+- `node --check web/static/js/cliente/portal.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_route_observability.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_mesa_mobile_sync.py -q -k resumo`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or portal'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k 'templates_cliente_explicitam_abas_e_formularios_principais'`
+- `make web-ci`
+- `make mesa-smoke`
+- `make production-ops-check-strict`
+- `make hygiene-check`
+- `make verify`
+- `make security-audit`
+- `make uploads-cleanup-check`
+- `make uploads-restore-drill`
+- `make binary-assets-audit-strict`
+- `git diff --check`
+
+Resultados:
+
+- `web-ci` verde com `mypy` em `315` arquivos fonte e `256` testes web críticos;
+- `make verify` verde, incluindo mobile com `113` suites e `420` testes;
+- `make security-audit` verde no critério atual, mantendo apenas vulnerabilidade moderada transitiva já conhecida em `uuid` via cadeia Expo/xcode;
+- `mesa-smoke` verde com `94 passed`;
+- produção strict continua `production_ready=true`, sem blockers;
+- restore drill passou com `3` arquivos verificados;
+- auditoria de binários segue com `147` arquivos rastreados, `138.2 MiB` e `0` oversized;
+- higiene do workspace segue `ok`.
+
+Impacto observado:
+
+- o próximo deploy passa a entregar sinal operacional útil sobre lentidão/falha nos fluxos que mais importam, sem expor conteúdo do caso;
+- a Mesa perdeu mais um bloco de regra interna do arquivo monolítico;
+- o Chat do portal cliente avançou na migração para contratos explícitos de HTML seguro;
+- o próximo passo coerente é transformar esses logs em consulta/alerta real e continuar drenando `chat_index_page.js` ou o pacote documental da Mesa.

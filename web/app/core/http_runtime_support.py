@@ -21,6 +21,7 @@ from app.core.perf_support import (
     encerrar_request_perf,
     iniciar_request_perf,
 )
+from app.core.route_observability import registrar_observabilidade_rota_critica
 from app.core.settings import get_settings
 from app.core.telemetry_support import (
     mark_current_span_exception,
@@ -250,6 +251,13 @@ class MiddlewareCorrelationID(BaseHTTPMiddleware):
                         "duration_ms": duracao_ms,
                     },
                 )
+                registrar_observabilidade_rota_critica(
+                    logger=self.logger,
+                    request=request,
+                    status_code=500,
+                    duration_ms=duracao_ms,
+                    error=type(exc).__name__,
+                )
                 raise
             else:
                 duracao_ms = round((time.perf_counter() - inicio) * 1000, 1)
@@ -286,6 +294,12 @@ class MiddlewareCorrelationID(BaseHTTPMiddleware):
                         "status_code": response.status_code,
                         "duration_ms": duracao_ms,
                     },
+                )
+                registrar_observabilidade_rota_critica(
+                    logger=self.logger,
+                    request=request,
+                    status_code=response.status_code,
+                    duration_ms=duracao_ms,
                 )
                 return response
             finally:

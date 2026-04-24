@@ -86,6 +86,10 @@ services:
         value: "1"
       - key: TARIEL_UPLOADS_RESTORE_DRILL_REQUIRED
         value: "1"
+      - key: TARIEL_ROUTE_OBSERVABILITY_ENABLED
+        value: "1"
+      - key: TARIEL_ROUTE_OBSERVABILITY_SLOW_MS
+        value: "1200"
       - key: SESSAO_FAIL_CLOSED_ON_DB_ERROR
         value: "1"
       - key: CHAVE_SECRETA_APP
