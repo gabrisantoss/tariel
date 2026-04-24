@@ -460,7 +460,53 @@
         return signals;
       }
 
-      function renderMesaResolutionGuide(laudo) {
+      function criarMesaContextBlockNode(labelText, valueText) {
+        const block = documentRef.createElement("div");
+        block.className = "context-block";
+        const label = documentRef.createElement("small");
+        label.textContent = texto(labelText);
+        block.appendChild(label);
+        const value = documentRef.createElement("strong");
+        value.textContent = texto(valueText);
+        block.appendChild(value);
+        return block;
+      }
+
+      function criarMesaContextGuidanceNode({
+        tone,
+        eyebrow,
+        title,
+        detail,
+        pillText,
+        pillTone,
+      }) {
+        const guidance = documentRef.createElement("div");
+        guidance.className = "context-guidance";
+        guidance.dataset.tone = texto(tone).trim();
+
+        const copy = documentRef.createElement("div");
+        copy.className = "context-guidance-copy";
+        const eyebrowNode = documentRef.createElement("small");
+        eyebrowNode.textContent = texto(eyebrow);
+        copy.appendChild(eyebrowNode);
+        const titleNode = documentRef.createElement("strong");
+        titleNode.textContent = texto(title);
+        copy.appendChild(titleNode);
+        const detailNode = documentRef.createElement("p");
+        detailNode.textContent = texto(detail);
+        copy.appendChild(detailNode);
+        guidance.appendChild(copy);
+
+        const pill = documentRef.createElement("span");
+        pill.className = "pill";
+        pill.dataset.kind = "priority";
+        pill.dataset.status = texto(pillTone || tone).trim();
+        pill.textContent = texto(pillText || title);
+        guidance.appendChild(pill);
+        return guidance;
+      }
+
+      function mesaResolutionGuideConfig(laudo) {
         const actions = laudoAllowedSurfaceActions(laudo);
         const canApprove = actions.includes("mesa_approve");
         const canReturn = actions.includes("mesa_return");
@@ -498,16 +544,42 @@
           tone = "aprovado";
         }
 
-        return `
-                <div class="context-guidance" data-tone="${escapeAttr(tone)}">
-                    <div class="context-guidance-copy">
-                        <small>Fase operacional da mesa</small>
-                        <strong>${escapeHtml(title)}</strong>
-                        <p>${escapeHtml(copy)}</p>
-                    </div>
-                    <span class="pill" data-kind="priority" data-status="${escapeAttr(tone)}">${escapeHtml(title)}</span>
-                </div>
-            `;
+        return { title, copy, tone };
+      }
+
+      function criarMesaResolutionGuideNode(laudo) {
+        const guide = mesaResolutionGuideConfig(laudo);
+        return criarMesaContextGuidanceNode({
+          tone: guide.tone,
+          eyebrow: "Fase operacional da mesa",
+          title: guide.title,
+          detail: guide.copy,
+          pillText: guide.title,
+          pillTone: guide.tone,
+        });
+      }
+
+      function criarMesaContextCaseSignalsNode(momentoCanonico) {
+        const signals = documentRef.createElement("div");
+        signals.className = "item-case-signals";
+        signals.setAttribute("aria-label", "Sinais canônicos do caso");
+
+        [
+          `Status ${momentoCanonico.statusVisualLabel}`,
+          `Fluxo ${momentoCanonico.lifecycleLabel}`,
+          `Owner ${momentoCanonico.ownerLabel}`,
+          momentoCanonico.label,
+        ].forEach((label, index) => {
+          const signal = documentRef.createElement("span");
+          signal.className =
+            index === 3
+              ? "item-case-signal item-case-signal--focus"
+              : "item-case-signal";
+          signal.textContent = texto(label);
+          signals.appendChild(signal);
+        });
+
+        return signals;
       }
 
       function mesaVisibilityPolicy() {
@@ -550,24 +622,22 @@
         return latest && typeof latest === "object" ? latest : null;
       }
 
-      function renderMesaHumanOverrideNotice(laudo) {
+      function criarMesaHumanOverrideNoticeNode(laudo) {
         const latest = mesaHumanOverrideLatest(laudo);
-        if (!latest) return "";
+        if (!latest) return null;
         const actorName = texto(latest.actor_name || "Validador humano");
         const reason = texto(
           latest.reason || "Justificativa interna registrada.",
         );
         const appliedAt = resumirMomentoIso(latest.applied_at);
-        return `
-                <div class="context-guidance" data-tone="aguardando">
-                    <div class="context-guidance-copy">
-                        <small>Override humano interno</small>
-                        <strong>${escapeHtml(actorName)}${appliedAt ? ` • ${escapeHtml(appliedAt)}` : ""}</strong>
-                        <p>${escapeHtml(reason)}</p>
-                    </div>
-                    <span class="pill" data-kind="priority" data-status="aguardando">Auditável</span>
-                </div>
-            `;
+        return criarMesaContextGuidanceNode({
+          tone: "aguardando",
+          eyebrow: "Override humano interno",
+          title: `${actorName}${appliedAt ? ` • ${appliedAt}` : ""}`,
+          detail: reason,
+          pillText: "Auditável",
+          pillTone: "aguardando",
+        });
       }
 
       function renderMesaPolicyHints() {
@@ -998,12 +1068,13 @@
         if (!contexto || !aprovar || !rejeitar) return;
 
         if (!alvo) {
-          contexto.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Selecione um laudo para revisar</strong>
-                        <p>O painel da mesa mostra pendencias, chamados e historico do laudo selecionado.</p>
-                    </div>
-                `;
+          clearElement(contexto);
+          contexto.appendChild(
+            criarMesaEmptyStateNode(
+              "Selecione um laudo para revisar",
+              "O painel da mesa mostra pendencias, chamados e historico do laudo selecionado.",
+            ),
+          );
           aprovar.disabled = true;
           rejeitar.disabled = true;
           $("mesa-titulo").textContent = "Selecione um laudo";
@@ -1022,75 +1093,90 @@
         aprovar.disabled = !canApprove;
         rejeitar.disabled = !canReturn;
 
-        contexto.innerHTML = `
-                <div class="context-card">
-                    <div class="context-head">
-                        <div>
-                            <div class="context-title">${escapeHtml(alvo.titulo)}</div>
-                            <div class="context-subtitle">${escapeHtml(alvo.preview || "Sem resumo de campo.")}</div>
-                        </div>
-                        <div class="context-actions">
-                            ${laudoBadge(alvo.status_card_label, alvo.status_card)}
-                        </div>
-                    </div>
-                    <div class="context-grid">
-                        <div class="context-block">
-                            <small>Pendencias abertas</small>
-                            <strong>${formatarInteiro(alvo.pendencias_abertas || 0)}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Chamados nao lidos</small>
-                            <strong>${formatarInteiro(alvo.whispers_nao_lidos || 0)}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Atualizado em</small>
-                            <strong>${escapeHtml(alvo.data_br || "Sem data")}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Fluxo do caso</small>
-                            <strong>${escapeHtml(`${humanizarLifecycleStatus(alvo.case_lifecycle_status)} / ${humanizarOwnerRole(alvo.active_owner_role)}`)}</strong>
-                        </div>
-                    </div>
-                    <div class="item-case-signals" aria-label="Sinais canônicos do caso">
-                        <span class="item-case-signal">Status ${escapeHtml(momentoCanonico.statusVisualLabel)}</span>
-                        <span class="item-case-signal">Fluxo ${escapeHtml(momentoCanonico.lifecycleLabel)}</span>
-                        <span class="item-case-signal">Owner ${escapeHtml(momentoCanonico.ownerLabel)}</span>
-                        <span class="item-case-signal item-case-signal--focus">${escapeHtml(momentoCanonico.label)}</span>
-                    </div>
-                    <div class="context-guidance" data-tone="${prioridade.tone}">
-                        <div class="context-guidance-copy">
-                            <small>Proximo passo recomendado</small>
-                            <strong>${escapeHtml(prioridade.badge)}</strong>
-                            <p>${escapeHtml(prioridade.acao)}</p>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="${prioridade.tone}">${escapeHtml(prioridade.badge)}</span>
-                    </div>
-                    <div class="context-guidance" data-tone="${momentoCanonico.tone}">
-                        <div class="context-guidance-copy">
-                            <small>Momento canônico do caso</small>
-                            <strong>${escapeHtml(momentoCanonico.label)}</strong>
-                            <p>${escapeHtml(momentoCanonico.detail)}</p>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="${momentoCanonico.tone}">${escapeHtml(momentoCanonico.lifecycleLabel)}</span>
-                    </div>
-                    ${renderMesaResolutionGuide(alvo)}
-                    ${renderMesaHumanOverrideNotice(alvo)}
-                    ${
-                      laudoMesaParado(alvo)
-                        ? `
-                        <div class="context-guidance" data-tone="aguardando">
-                            <div class="context-guidance-copy">
-                                <small>Fila parada</small>
-                                <strong>${escapeHtml(resumoEsperaHoras(horasDesdeAtualizacao(alvo.atualizado_em)))}</strong>
-                                <p>Vale revisar este laudo para nao deixar a mesa esfriar com pendencias ou resposta em aberto.</p>
-                            </div>
-                            <span class="pill" data-kind="priority" data-status="aguardando">Retomar</span>
-                        </div>
-                    `
-                        : ""
-                    }
-                </div>
-            `;
+        const card = documentRef.createElement("div");
+        card.className = "context-card";
+
+        const head = documentRef.createElement("div");
+        head.className = "context-head";
+        const copy = documentRef.createElement("div");
+        const title = documentRef.createElement("div");
+        title.className = "context-title";
+        title.textContent = texto(alvo.titulo);
+        copy.appendChild(title);
+        const subtitle = documentRef.createElement("div");
+        subtitle.className = "context-subtitle";
+        subtitle.textContent = texto(alvo.preview || "Sem resumo de campo.");
+        copy.appendChild(subtitle);
+        head.appendChild(copy);
+
+        const actions = documentRef.createElement("div");
+        actions.className = "context-actions";
+        const badgeHtml = laudoBadge(alvo.status_card_label, alvo.status_card);
+        if (badgeHtml) {
+          actions.insertAdjacentHTML("beforeend", badgeHtml);
+        }
+        head.appendChild(actions);
+        card.appendChild(head);
+
+        const grid = documentRef.createElement("div");
+        grid.className = "context-grid";
+        [
+          ["Pendencias abertas", formatarInteiro(alvo.pendencias_abertas || 0)],
+          ["Chamados nao lidos", formatarInteiro(alvo.whispers_nao_lidos || 0)],
+          ["Atualizado em", alvo.data_br || "Sem data"],
+          [
+            "Fluxo do caso",
+            `${humanizarLifecycleStatus(alvo.case_lifecycle_status)} / ${humanizarOwnerRole(alvo.active_owner_role)}`,
+          ],
+        ].forEach(([label, value]) => {
+          grid.appendChild(criarMesaContextBlockNode(label, value));
+        });
+        card.appendChild(grid);
+
+        card.appendChild(criarMesaContextCaseSignalsNode(momentoCanonico));
+        card.appendChild(
+          criarMesaContextGuidanceNode({
+            tone: prioridade.tone,
+            eyebrow: "Proximo passo recomendado",
+            title: prioridade.badge,
+            detail: prioridade.acao,
+            pillText: prioridade.badge,
+            pillTone: prioridade.tone,
+          }),
+        );
+        card.appendChild(
+          criarMesaContextGuidanceNode({
+            tone: momentoCanonico.tone,
+            eyebrow: "Momento canônico do caso",
+            title: momentoCanonico.label,
+            detail: momentoCanonico.detail,
+            pillText: momentoCanonico.lifecycleLabel,
+            pillTone: momentoCanonico.tone,
+          }),
+        );
+        card.appendChild(criarMesaResolutionGuideNode(alvo));
+
+        const overrideNotice = criarMesaHumanOverrideNoticeNode(alvo);
+        if (overrideNotice) {
+          card.appendChild(overrideNotice);
+        }
+
+        if (laudoMesaParado(alvo)) {
+          card.appendChild(
+            criarMesaContextGuidanceNode({
+              tone: "aguardando",
+              eyebrow: "Fila parada",
+              title: resumoEsperaHoras(horasDesdeAtualizacao(alvo.atualizado_em)),
+              detail:
+                "Vale revisar este laudo para nao deixar a mesa esfriar com pendencias ou resposta em aberto.",
+              pillText: "Retomar",
+              pillTone: "aguardando",
+            }),
+          );
+        }
+
+        clearElement(contexto);
+        contexto.appendChild(card);
         renderMesaPolicyHints();
         atualizarResumoSecaoMesa();
       }

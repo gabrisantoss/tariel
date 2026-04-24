@@ -144,6 +144,7 @@ Ele está na fase de:
 - a leitura interna de mensagens, revisões e serialização de mensagens do pacote da Mesa saiu de `mesa/service.py` para `mesa/package_read_models.py`, reduzindo o acoplamento da orquestração final.
 - a triagem principal de Chat/Mesa no Portal Cliente passou a montar filtros, destaque e empty state por DOM seguro, reduzindo mais dois blocos operacionais de `innerHTML`.
 - os blocos de movimentos recentes de Chat/Mesa no Portal Cliente passaram a ser montados por DOM seguro, preservando botões `abrir-prioridade` e chips operacionais.
+- os contextos selecionados de Chat/Mesa no Portal Cliente passaram a montar cards, sinais canônicos, guidance e avisos de override por DOM seguro, removendo `innerHTML` dos painéis de contexto.
 
 ## O que ainda falta melhorar
 

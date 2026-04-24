@@ -267,22 +267,59 @@
             return latest && typeof latest === "object" ? latest : null;
         }
 
-        function renderChatHumanOverrideNotice(laudo) {
+        function criarChatContextBlockNode(labelText, valueText) {
+            const block = documentRef.createElement("div");
+            block.className = "context-block";
+            const label = documentRef.createElement("small");
+            label.textContent = texto(labelText);
+            block.appendChild(label);
+            const value = documentRef.createElement("strong");
+            value.textContent = texto(valueText);
+            block.appendChild(value);
+            return block;
+        }
+
+        function criarChatContextGuidanceNode({ tone, eyebrow, title, detail, pillText, pillTone }) {
+            const guidance = documentRef.createElement("div");
+            guidance.className = "context-guidance";
+            guidance.dataset.tone = texto(tone).trim();
+
+            const copy = documentRef.createElement("div");
+            copy.className = "context-guidance-copy";
+            const eyebrowNode = documentRef.createElement("small");
+            eyebrowNode.textContent = texto(eyebrow);
+            copy.appendChild(eyebrowNode);
+            const titleNode = documentRef.createElement("strong");
+            titleNode.textContent = texto(title);
+            copy.appendChild(titleNode);
+            const detailNode = documentRef.createElement("p");
+            detailNode.textContent = texto(detail);
+            copy.appendChild(detailNode);
+            guidance.appendChild(copy);
+
+            const pill = documentRef.createElement("span");
+            pill.className = "pill";
+            pill.dataset.kind = "priority";
+            pill.dataset.status = texto(pillTone || tone).trim();
+            pill.textContent = texto(pillText || title);
+            guidance.appendChild(pill);
+            return guidance;
+        }
+
+        function criarChatHumanOverrideNoticeNode(laudo) {
             const latest = chatHumanOverrideLatest(laudo);
-            if (!latest) return "";
+            if (!latest) return null;
             const actorName = texto(latest.actor_name || "Validador humano");
             const reason = texto(latest.reason || "Justificativa interna registrada.");
             const appliedAt = resumirMomentoIso(latest.applied_at);
-            return `
-                <div class="context-guidance" data-tone="aguardando">
-                    <div class="context-guidance-copy">
-                        <small>Override humano interno</small>
-                        <strong>${escapeHtml(actorName)}${appliedAt ? ` • ${escapeHtml(appliedAt)}` : ""}</strong>
-                        <p>${escapeHtml(reason)}</p>
-                    </div>
-                    <span class="pill" data-kind="priority" data-status="aguardando">Auditável</span>
-                </div>
-            `;
+            return criarChatContextGuidanceNode({
+                tone: "aguardando",
+                eyebrow: "Override humano interno",
+                title: `${actorName}${appliedAt ? ` • ${appliedAt}` : ""}`,
+                detail: reason,
+                pillText: "Auditável",
+                pillTone: "aguardando",
+            });
         }
 
         function renderChatPolicyHints() {
@@ -854,12 +891,11 @@
             if (!contexto) return;
 
             if (!alvo) {
-                contexto.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Selecione um laudo do lado esquerdo</strong>
-                        <p>Quando um laudo for selecionado, o contexto operacional e o historico aparecem aqui.</p>
-                    </div>
-                `;
+                clearElement(contexto);
+                contexto.appendChild(criarChatEmptyStateNode(
+                    "Selecione um laudo do lado esquerdo",
+                    "Quando um laudo for selecionado, o contexto operacional e o historico aparecem aqui."
+                ));
                 if (finalizar) finalizar.disabled = true;
                 if (reabrir) reabrir.disabled = true;
                 if ($("chat-titulo")) {
@@ -879,56 +915,70 @@
             if (finalizar) finalizar.disabled = !canFinalize;
             if (reabrir) reabrir.disabled = !canReopen;
 
-            contexto.innerHTML = `
-                <div class="context-card">
-                    <div class="context-head">
-                        <div>
-                            <div class="context-title">${escapeHtml(alvo.titulo)}</div>
-                            <div class="context-subtitle">${escapeHtml(alvo.preview || "Sem resumo registrado.")}</div>
-                        </div>
-                        <div class="context-actions">
-                            ${laudoBadge(alvo.status_card_label, alvo.status_card)}
-                        </div>
-                    </div>
-                    <div class="context-grid">
-                        <div class="context-block">
-                            <small>Modelo atual</small>
-                            <strong>${escapeHtml(alvo.tipo_template_label || "Inspecao padrao")}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Ultima atualizacao</small>
-                            <strong>${escapeHtml(alvo.data_br || "Sem data")}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Setor</small>
-                            <strong>${escapeHtml(alvo.setor_industrial || "Geral")}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Fluxo do caso</small>
-                            <strong>${escapeHtml(`${humanizarLifecycleStatus(alvo.case_lifecycle_status)} / ${humanizarOwnerRole(alvo.active_owner_role)}`)}</strong>
-                        </div>
-                    </div>
-                    <div class="context-guidance" data-tone="${prioridade.tone}">
-                        <div class="context-guidance-copy">
-                            <small>Proximo passo recomendado</small>
-                            <strong>${escapeHtml(prioridade.badge)}</strong>
-                            <p>${escapeHtml(prioridade.acao)}</p>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="${prioridade.tone}">${escapeHtml(prioridade.badge)}</span>
-                    </div>
-                    ${renderChatHumanOverrideNotice(alvo)}
-                    ${laudoChatParado(alvo) ? `
-                        <div class="context-guidance" data-tone="aguardando">
-                            <div class="context-guidance-copy">
-                                <small>Item parado</small>
-                                <strong>${escapeHtml(resumoEsperaHoras(horasDesdeAtualizacao(alvo.atualizado_em)))}</strong>
-                                <p>Vale retomar este laudo para nao perder ritmo operacional no chat.</p>
-                            </div>
-                            <span class="pill" data-kind="priority" data-status="aguardando">Retomar</span>
-                        </div>
-                    ` : ""}
-                </div>
-            `;
+            const card = documentRef.createElement("div");
+            card.className = "context-card";
+
+            const head = documentRef.createElement("div");
+            head.className = "context-head";
+            const copy = documentRef.createElement("div");
+            const title = documentRef.createElement("div");
+            title.className = "context-title";
+            title.textContent = texto(alvo.titulo);
+            copy.appendChild(title);
+            const subtitle = documentRef.createElement("div");
+            subtitle.className = "context-subtitle";
+            subtitle.textContent = texto(alvo.preview || "Sem resumo registrado.");
+            copy.appendChild(subtitle);
+            head.appendChild(copy);
+
+            const actions = documentRef.createElement("div");
+            actions.className = "context-actions";
+            const badgeHtml = laudoBadge(alvo.status_card_label, alvo.status_card);
+            if (badgeHtml) {
+                actions.insertAdjacentHTML("beforeend", badgeHtml);
+            }
+            head.appendChild(actions);
+            card.appendChild(head);
+
+            const grid = documentRef.createElement("div");
+            grid.className = "context-grid";
+            [
+                ["Modelo atual", alvo.tipo_template_label || "Inspecao padrao"],
+                ["Ultima atualizacao", alvo.data_br || "Sem data"],
+                ["Setor", alvo.setor_industrial || "Geral"],
+                ["Fluxo do caso", `${humanizarLifecycleStatus(alvo.case_lifecycle_status)} / ${humanizarOwnerRole(alvo.active_owner_role)}`],
+            ].forEach(([label, value]) => {
+                grid.appendChild(criarChatContextBlockNode(label, value));
+            });
+            card.appendChild(grid);
+
+            card.appendChild(criarChatContextGuidanceNode({
+                tone: prioridade.tone,
+                eyebrow: "Proximo passo recomendado",
+                title: prioridade.badge,
+                detail: prioridade.acao,
+                pillText: prioridade.badge,
+                pillTone: prioridade.tone,
+            }));
+
+            const overrideNotice = criarChatHumanOverrideNoticeNode(alvo);
+            if (overrideNotice) {
+                card.appendChild(overrideNotice);
+            }
+
+            if (laudoChatParado(alvo)) {
+                card.appendChild(criarChatContextGuidanceNode({
+                    tone: "aguardando",
+                    eyebrow: "Item parado",
+                    title: resumoEsperaHoras(horasDesdeAtualizacao(alvo.atualizado_em)),
+                    detail: "Vale retomar este laudo para nao perder ritmo operacional no chat.",
+                    pillText: "Retomar",
+                    pillTone: "aguardando",
+                }));
+            }
+
+            clearElement(contexto);
+            contexto.appendChild(card);
             renderChatDocumentoPendente();
             atualizarResumoSecaoChat();
         }

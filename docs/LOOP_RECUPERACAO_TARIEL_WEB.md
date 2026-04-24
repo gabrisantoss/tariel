@@ -2560,3 +2560,41 @@ Impacto observado:
 - triagem e movimentos de Chat/Mesa já não dependem de HTML string para renderizar conteúdo operacional dinâmico;
 - os próximos `innerHTML` relevantes no Portal Cliente ficam concentrados em `renderChatContext`, `renderMesaContext`, resumo/capacidade e fallbacks de mensagem;
 - o próximo pacote coerente é atacar os contextos `renderChatContext`/`renderMesaContext`, que concentram sinais do caso e guidance operacional.
+
+## R62. Contextos DOM do Portal Cliente
+
+Resumo:
+
+- troquei `renderChatContext` para montagem DOM segura, incluindo estado vazio, card de contexto, blocos de metadata, guidance operacional, override humano e aviso de item parado;
+- troquei `renderMesaContext` para montagem DOM segura, incluindo estado vazio, sinais canônicos do caso, momento canônico, fase operacional da mesa, override humano e aviso de fila parada;
+- preservei classes, `dataset`, badges e habilitação de botões derivados de superfície contratada, sem alterar lifecycle nem permissão;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_chat_surface.js`
+- `web/static/js/cliente/portal_mesa_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_shared_helpers.js` -> sem erro de sintaxe;
+- `node --check web/static/js/cliente/portal.js` -> sem erro de sintaxe;
+- `node --check web/static/js/cliente/portal_chat_surface.js` -> sem erro de sintaxe;
+- `node --check web/static/js/cliente/portal_mesa_surface.js` -> sem erro de sintaxe;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or mesa'` -> `11 passed, 21 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais` -> `1 passed, 42 deselected`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `324` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- os painéis de contexto de Chat/Mesa já não dependem de `innerHTML` para conteúdo operacional dinâmico ou avisos de override;
+- os próximos `innerHTML` relevantes no Portal Cliente ficam em documento pendente, capacidade/resumo e fallback de mensagens;
+- o próximo pacote coerente pode atacar `renderChatCapacidade`/resumos do Portal Cliente ou alternar para o próximo slice backend em `admin/client_routes.py`/`mesa/service.py`.
