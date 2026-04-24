@@ -63,14 +63,10 @@
                             </div>
                         </div>
                         <div class="info-card">
-                            <div class="label">Atuação vigente</div>
-                            <div class="valor">{{ _admin_cliente_policy.get("case_action_mode_label", "Não definida") | e }}</div>
+                            <div class="label">Autoridade operacional</div>
+                            <div class="valor">Admin Cliente</div>
                             <div class="valor-auxiliar">
-                                {% if _policy.get("case_actions_enabled") %}
-                                O painel principal da empresa pode responder, abrir, reabrir e avaliar casos.
-                                {% else %}
-                                O painel principal da empresa acompanha sem agir nos casos.
-                                {% endif %}
+                                O Admin CEO governa o contrato do cliente. O Admin Cliente governa seus funcionarios, que neste produto sao inspetores e avaliadores.
                             </div>
                         </div>
                     </div>
@@ -165,17 +161,17 @@
                                 <option value="summary_only" {% if _admin_cliente_policy.get("case_visibility_mode") == "summary_only" %}selected{% endif %}>Somente resumos agregados</option>
                             </select>
                         </div>
+                        <input type="hidden" name="admin_cliente_case_action_mode" value="case_actions">
                         <div class="campo-form">
-                            <label for="admin-cliente-action-mode">
+                            <label>
                                 <span class="label-with-help">
-                                    <span>Atuacao operacional</span>
-                                    {{ help_icon("Define se o painel principal da empresa so acompanha os casos ou se tambem pode agir neles.", "Ajuda sobre atuacao operacional") }}
+                                    <span>Operação dos funcionários</span>
+                                    {{ help_icon("A rotina dos inspetores e avaliadores pertence ao Admin Cliente dentro das superficies contratadas.", "Ajuda sobre operacao dos funcionarios") }}
                                 </span>
                             </label>
-                            <select id="admin-cliente-action-mode" name="admin_cliente_case_action_mode">
-                                <option value="case_actions" {% if _admin_cliente_policy.get("case_action_mode") == "case_actions" %}selected{% endif %}>Pode agir nos casos</option>
-                                <option value="read_only" {% if _admin_cliente_policy.get("case_action_mode") == "read_only" %}selected{% endif %}>Somente acompanhamento</option>
-                            </select>
+                            <p class="campo-ajuda">
+                                Este painel altera contrato, superficies e limites do cliente; não bloqueia ações operacionais dos funcionarios.
+                            </p>
                         </div>
                         <div class="campo-form campo-form--full">
                             <div class="valor-auxiliar">

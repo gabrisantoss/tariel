@@ -4162,3 +4162,36 @@ Atualizado em `2026-04-24`.
 - 2026-04-23 23:20 BRT - Mesa passou a tratar `responder`/`responder-anexo` como resposta contextual que mantém o caso com a mesa, em vez de devolução implícita ao campo. Atualizei `laudo_state_helpers`, contratos/API de revisão, feedback da UI do portal cliente e do painel do revisor, e endureci os testes para exigir aprovação no mesmo caso após resposta contextual, incluindo ajuste do Playwright do comprador exigente da WF.
 - 2026-04-23 23:45 BRT - Consolidei a UX da `Mesa` no portal do inspetor sem mexer no restante do fluxo: a aba dedicada `inspection_mesa` passou a ser a experiência preferida fora de `dev`, enquanto os atalhos/widget paralelos continuam liberados em `dev` e com `devInspectorToolSimulation`. Ajustei `workspace_runtime_screen`, `workspace_screen`, `chat_painel_mesa` e a copy da aba dedicada para reforçar que a comunicação institucional com a mesa fica concentrada ali.
 - 2026-04-24 00:10 BRT - Fortaleci a aba `Mesa` do inspetor como canal principal: badge de novidades na aba, cards de leitura por tipo de evento (`comentário`, `pendência`, `decisão`), empty state guiado da revisão e rail reduzido a resumo com copy apontando para a aba `Mesa`. Também mantive o widget paralelo explicitamente marcado como fallback de desenvolvimento.
+
+### `PKT-ROUTE-CONTRACTS-01` - Contratos explícitos por rota crítica
+
+- `status`: em andamento em `2026-04-24`; iniciado pelo Chat Inspetor com classificação canônica de entrada para `/app/api/chat`.
+
+### Escopo
+
+- formalizar `intent -> action -> response_kind` para a rota principal do Chat Inspetor.
+- manter o endpoint único e os retornos atuais, reduzindo apenas o acoplamento decisório dentro do handler.
+- expor a classificação no detalhe da observabilidade de hotspot para facilitar auditoria por Admin CEO.
+- expor no diagnóstico do Admin Cliente um contrato de governança por rota, separando escopo comercial do Admin CEO e autoridade do Admin Cliente sobre seus funcionários.
+- remover a trava operacional fina por `case_action_mode`/`tenant_capability_*`: esses campos legados não autorizam o Admin CEO a bloquear ações de inspetores e avaliadores quando a superfície contratual está liberada.
+- manter bloqueio apenas por contrato/superfície/limite/suspensão do cliente.
+
+### Validação inicial
+
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/chat_stream_contract.py app/domains/chat/chat_stream_routes.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_chat_stream_contract.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_backend_hotspot_metrics.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_report_finalize_stream_binding.py tests/test_v2_document_hard_gate_10f.py tests/test_v2_document_hard_gate_10g.py -q`
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/cliente/route_contracts.py app/domains/cliente/diagnostics.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_route_contracts.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k diagnostico`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_route_contracts.py tests/test_cliente_portal_critico.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py tests/test_admin_client_routes.py tests/test_portais_acesso_critico.py tests/test_v2_tenant_admin_projection.py -q -k 'read_only or case_actions or politica or tenant_admin or entitlements'`
+- `node --check web/static/js/cliente/chat_page.js`
+- `node --check web/static/js/cliente/mesa_page.js`
+- `node --check web/static/js/cliente/portal_chat_surface.js`
+- `node --check web/static/js/cliente/portal_shared_helpers.js`
+- `git diff --check`
+- `make web-ci`
+- `make hygiene-check`

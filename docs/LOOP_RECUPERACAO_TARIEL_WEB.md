@@ -2181,3 +2181,77 @@ Impacto observado:
 - a Mesa perdeu mais um bloco de regra interna do arquivo monolítico;
 - o Chat do portal cliente avançou na migração para contratos explícitos de HTML seguro;
 - o próximo passo coerente é decidir o upgrade/configuração real do Render para storage persistente antes de chamar o ambiente publicado de produção fechada, e em paralelo transformar os logs críticos em consulta/alerta real.
+
+## R54. Contrato explícito inicial da rota principal do Chat Inspetor
+
+Resumo:
+
+- iniciei a frente de contratos por rota crítica pelo Chat Inspetor;
+- extraí a classificação de entrada de `/app/api/chat` para `chat_stream_contract.py`, com `intent`, `action` e `response_kind`;
+- mantive o endpoint e os retornos atuais, isolando apenas a decisão inicial entre chat livre sem laudo e fluxo de laudo/comando;
+- adicionei cobertura unitária para chat livre, laudo ativo, comando rápido, comando de finalização e mensagem para Mesa;
+- passei a expor a classificação no detalhe da observabilidade de hotspot, para facilitar leitura operacional no Admin CEO sem vazar conteúdo do caso.
+- depois do ajuste de governança definido em conversa, adicionei o contrato `ClientePortalRouteGovernanceV1` ao diagnóstico do Admin Cliente, explicitando que Admin CEO governa contrato/superfícies/limites do cliente e Admin Cliente governa seus funcionários, que neste projeto são inspetores e avaliadores.
+- removi a leitura de `case_action_mode=read_only` e de `tenant_capability_*` como bloqueio fino de ação operacional; esses campos legados agora são compatibilidade/diagnóstico, enquanto a autoridade operacional deriva das superfícies contratadas.
+
+Arquivos do ciclo:
+
+- `web/app/domains/chat/chat_stream_contract.py`
+- `web/app/domains/chat/chat_stream_routes.py`
+- `web/tests/test_chat_stream_contract.py`
+- `web/tests/test_backend_hotspot_metrics.py`
+- `web/app/domains/cliente/route_contracts.py`
+- `web/app/domains/cliente/diagnostics.py`
+- `web/app/shared/tenant_admin_policy.py`
+- `web/app/domains/cliente/common.py`
+- `web/templates/admin/novo_cliente.html`
+- `web/templates/admin/cliente_detalhe/_tab_acoes.html`
+- `web/static/js/cliente/chat_page.js`
+- `web/static/js/cliente/mesa_page.js`
+- `web/static/js/cliente/portal_chat_surface.js`
+- `web/static/js/cliente/portal_shared_helpers.js`
+- `web/tests/test_cliente_route_contracts.py`
+- `web/tests/test_cliente_portal_critico.py`
+- `web/tests/test_tenant_entitlements_critical.py`
+- `web/tests/test_admin_client_routes.py`
+- `PLANS.md`
+
+Validação local executada:
+
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/chat/chat_stream_contract.py app/domains/chat/chat_stream_routes.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_chat_stream_contract.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_backend_hotspot_metrics.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_report_finalize_stream_binding.py tests/test_v2_document_hard_gate_10f.py tests/test_v2_document_hard_gate_10g.py -q`
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/cliente/route_contracts.py app/domains/cliente/diagnostics.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_route_contracts.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k diagnostico`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_route_contracts.py tests/test_cliente_portal_critico.py -q`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_services.py tests/test_admin_client_routes.py tests/test_portais_acesso_critico.py tests/test_v2_tenant_admin_projection.py -q -k 'read_only or case_actions or politica or tenant_admin or entitlements'`
+- `node --check web/static/js/cliente/chat_page.js`
+- `node --check web/static/js/cliente/mesa_page.js`
+- `node --check web/static/js/cliente/portal_chat_surface.js`
+- `node --check web/static/js/cliente/portal_shared_helpers.js`
+- `git diff --check`
+- `make web-ci`
+- `make hygiene-check`
+
+Resultados:
+
+- `test_chat_stream_contract.py`: `5 passed`;
+- `test_backend_hotspot_metrics.py`: `4 passed`;
+- hard gate/finalização stream: `11 passed`.
+- `test_cliente_route_contracts.py`: `2 passed`;
+- diagnóstico do portal cliente: `1 passed`, `31 deselected`;
+- contrato completo do portal cliente: `35 passed`;
+- entitlements críticos: `19 passed`;
+- seleção admin/tenant policy: `10 passed`, `96 deselected`;
+- checagem JS cliente: `4` arquivos sem erro de sintaxe.
+- `make web-ci`: `ruff` verde, `mypy` verde em `317` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`.
+- `make hygiene-check`: `status=ok`.
+
+Impacto observado:
+
+- a rota `/app/api/chat` fica mais legível sem alterar persistência, IA, Mesa ou finalização;
+- o Admin Cliente agora expõe em diagnóstico a fronteira correta: contrato pertence ao Admin CEO; a governança dos funcionários do cliente pertence ao Admin Cliente;
+- o próximo corte coerente é fechar uma rodada ampla de validação e depois avançar para o próximo hotspot backend/frontend sem reabrir essa regra de governança.

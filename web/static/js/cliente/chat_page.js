@@ -147,7 +147,7 @@
             $("form-chat-laudo")?.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 if (!chatCaseActionsEnabled()) {
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
                 const empresa = state.bootstrap?.empresa;
@@ -185,7 +185,7 @@
 
             $("btn-chat-upload-doc")?.addEventListener("click", () => {
                 if (!chatCaseActionsEnabled()) {
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
                 $("chat-upload-doc")?.click();
@@ -194,7 +194,7 @@
             $("chat-upload-doc")?.addEventListener("change", async (event) => {
                 if (!chatCaseActionsEnabled()) {
                     event.target.value = "";
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
                 const arquivo = event.target?.files?.[0] || null;
@@ -205,7 +205,7 @@
             $("form-chat-msg")?.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 if (!chatCaseActionsEnabled()) {
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
                 if (!state.chat.laudoId) {
@@ -251,7 +251,7 @@
 
             $("btn-chat-finalizar")?.addEventListener("click", async (event) => {
                 if (!chatCaseActionsEnabled()) {
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
                 if (!state.chat.laudoId) return;
@@ -271,7 +271,7 @@
 
             $("btn-chat-reabrir")?.addEventListener("click", async (event) => {
                 if (!chatCaseActionsEnabled()) {
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
                 if (!state.chat.laudoId) return;

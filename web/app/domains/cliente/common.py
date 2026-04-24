@@ -13,7 +13,6 @@ from app.shared.security import exigir_admin_cliente
 from app.shared.tenant_access import obter_empresa_usuario
 from app.shared.tenant_admin_policy import (
     summarize_tenant_admin_policy,
-    tenant_admin_can_take_case_actions,
     tenant_admin_can_view_cases,
 )
 
@@ -91,16 +90,13 @@ def exigir_admin_cliente_com_acoes_casos(
     usuario: Usuario = Depends(exigir_admin_cliente),
     banco: Session = Depends(obter_banco),
 ) -> Usuario:
+    """Permite operacao do Admin Cliente dentro das superficies contratadas."""
+
     politica = obter_politica_operacional_admin_cliente(banco, usuario)
     if not tenant_admin_can_view_cases(politica):
         raise HTTPException(
             status_code=403,
             detail="Esta empresa usa o portal admin-cliente apenas com resumos agregados.",
-        )
-    if not tenant_admin_can_take_case_actions(politica):
-        raise HTTPException(
-            status_code=403,
-            detail="Esta empresa permite ao admin-cliente apenas acompanhamento, sem agir nos casos.",
         )
     return usuario
 

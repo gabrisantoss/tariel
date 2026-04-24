@@ -9,6 +9,7 @@ from starlette.requests import Request
 
 from app.domains.chat.app_context import PADRAO_SUPORTE_WHATSAPP
 from app.domains.cliente.common import AMBIENTE_APP
+from app.domains.cliente.route_contracts import build_cliente_route_governance_summary
 from app.shared.database import Usuario
 from app.shared.tenant_admin_policy import summarize_tenant_admin_operational_package
 from app.v2.contracts.envelopes import utc_now
@@ -93,6 +94,7 @@ def build_cliente_portal_diagnostic_payload(
         },
         "contexto_portal": portal_context,
         "visibility_policy": visibility_policy,
+        "route_governance": build_cliente_route_governance_summary(),
         "operational_package": operational_package,
         "empresa": empresa,
         "usuarios": {

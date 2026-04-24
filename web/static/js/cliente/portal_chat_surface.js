@@ -425,7 +425,7 @@
 
             nota.innerHTML = `
                 ${readOnly
-                    ? '<div class="form-hint" data-tone="aguardando"><strong>Somente acompanhamento</strong><span>Este tenant deixa o admin-cliente acompanhar casos visíveis, mas sem abrir novos laudos.</span></div>'
+                    ? '<div class="form-hint" data-tone="aguardando"><strong>Superfície indisponível</strong><span>O Chat precisa estar contratado para operar novos laudos pelo portal cliente.</span></div>'
                     : ""}
                 <div class="form-hint" data-tone="${tone}">
                     <strong>${atingiuTeto ? "Novos laudos bloqueados pelo plano" : emAtencao ? "Janela mensal quase no limite" : "Abertura de laudo dentro da capacidade"}</strong>

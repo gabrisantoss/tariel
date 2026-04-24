@@ -279,7 +279,7 @@ def test_admin_ceo_atualiza_politica_operacional_do_admin_cliente(ambiente_criti
     assert pagina.status_code == 200
     assert "Configuracao de acesso da empresa atualizada." in pagina.text
     assert "Somente resumos agregados" in pagina.text
-    assert "Somente acompanhamento" in pagina.text
+    assert "Autoridade operacional" in pagina.text
 
     with SessionLocal() as banco:
         empresa = banco.get(Empresa, ids["empresa_a"])

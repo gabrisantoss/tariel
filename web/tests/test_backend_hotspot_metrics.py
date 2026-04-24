@@ -44,7 +44,7 @@ def _build_hotspot_request(path: str, *, method: str = "POST") -> Request:
     return request
 
 
-def test_backend_hotspot_metrics_agregam_onboarding_bootstrap_e_bloqueio_governado_mesa(
+def test_backend_hotspot_metrics_agregam_onboarding_bootstrap_e_export_mesa_contratada(
     ambiente_critico,
 ) -> None:
     clear_backend_hotspot_metrics_for_tests()
@@ -93,14 +93,13 @@ def test_backend_hotspot_metrics_agregam_onboarding_bootstrap_e_bloqueio_governa
 
     _login_revisor(client, "revisor@empresa-a.test")
     resposta_export_pdf = client.get(f"/revisao/api/laudo/{laudo_id}/pacote/exportar-pdf")
-    assert resposta_export_pdf.status_code == 403
+    assert resposta_export_pdf.status_code == 200
 
     payload = get_backend_hotspot_operational_summary()
 
     assert payload["totals"]["observations"] >= 3
-    assert payload["totals"]["success"] >= 2
-    assert payload["totals"]["blocked"] >= 1
-    assert payload["totals"]["governed"] >= 1
+    assert payload["totals"]["success"] >= 3
+    assert payload["totals"]["blocked"] == 0
     assert any(
         row["endpoint"] == "admin_tenant_onboarding" and row["success"] >= 1
         for row in payload["by_endpoint"]
@@ -110,11 +109,11 @@ def test_backend_hotspot_metrics_agregam_onboarding_bootstrap_e_bloqueio_governa
         for row in payload["by_endpoint"]
     )
     assert any(
-        row["endpoint"] == "mesa_export_package_pdf" and row["blocked"] >= 1
+        row["endpoint"] == "mesa_export_package_pdf" and row["success"] >= 1
         for row in payload["by_endpoint"]
     )
     assert any(
-        row["surface"] == "mesa" and row["blocked"] >= 1
+        row["surface"] == "mesa" and row["success"] >= 1
         for row in payload["by_surface"]
     )
 
@@ -167,7 +166,7 @@ def test_chat_route_and_admin_summary_endpoint_expoem_backend_hotspot_observabil
         assert usuario is not None
         resposta = asyncio.run(
             chat_stream_routes.rota_chat(
-                dados=DadosChat(mensagem="teste observability", historico=[]),
+                dados=DadosChat(mensagem="teste observability", historico=[], laudo_id=321),
                 request=_build_hotspot_request("/app/api/chat"),
                 usuario=usuario,
                 banco=banco,
@@ -191,6 +190,12 @@ def test_chat_route_and_admin_summary_endpoint_expoem_backend_hotspot_observabil
     )
     assert any(
         item["endpoint"] == "chat_stream" and item["outcome"] == "ai_stream"
+        for item in payload["recent_events"]
+    )
+    assert any(
+        item["endpoint"] == "chat_stream"
+        and item["detail"].get("chat_intent") == "fluxo_laudo_ou_comando"
+        and item["detail"].get("chat_response_kind") == "case_stream_dispatch"
         for item in payload["recent_events"]
     )
 

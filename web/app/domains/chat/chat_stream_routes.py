@@ -16,9 +16,9 @@ from app.domains.chat.chat_stream_transport import (
     build_free_assistant_stream_response,
     build_whisper_stream_response,
 )
+from app.domains.chat.chat_stream_contract import classificar_chat_stream_route
 from app.domains.chat.free_chat_report import build_free_chat_report_response
 from app.domains.chat.ia_runtime import obter_cliente_ia_ativo
-from app.domains.chat.normalization import normalizar_tipo_template
 from app.domains.chat.report_finalize_stream_shadow import processar_finalizacao_stream_documental
 from app.domains.chat.schemas import DadosChat
 from app.domains.chat.session_helpers import exigir_csrf
@@ -26,10 +26,7 @@ from app.shared.database import Usuario, obter_banco
 from app.shared.backend_hotspot_metrics import observe_backend_hotspot
 from app.shared.security import exigir_inspetor
 from nucleo.inspetor.comandos_chat import (
-    analisar_comando_finalizacao,
-    analisar_comando_rapido_chat,
     analisar_pedido_relatorio_chat_livre,
-    mensagem_para_mesa,
 )
 
 roteador_chat_stream = APIRouter()
@@ -55,22 +52,14 @@ async def rota_chat(
         },
     ) as hotspot:
         exigir_csrf(request)
-        mensagem_limpa = str(getattr(dados, "mensagem", "") or "").strip()
-        comando_rapido, _ = analisar_comando_rapido_chat(mensagem_limpa)
-        comando_finalizacao, _ = analisar_comando_finalizacao(
-            mensagem_limpa,
-            normalizar_tipo_template=normalizar_tipo_template,
-        )
-        chat_livre_sem_laudo = (
-            not getattr(dados, "laudo_id", None)
-            and not getattr(dados, "iniciar_laudo", False)
-            and getattr(dados, "guided_inspection_draft", None) is None
-            and getattr(dados, "guided_inspection_context", None) is None
-            and not comando_rapido
-            and not comando_finalizacao
-            and not mensagem_para_mesa(mensagem_limpa)
-        )
-        if chat_livre_sem_laudo:
+        contrato_rota = classificar_chat_stream_route(dados)
+        hotspot.detail = {
+            **getattr(hotspot, "detail", {}),
+            "chat_intent": contrato_rota.intent,
+            "chat_action": contrato_rota.action,
+            "chat_response_kind": contrato_rota.response_kind,
+        }
+        if contrato_rota.eh_chat_livre_sem_laudo:
             cliente_ia_ativo = obter_cliente_ia_ativo()
             free_context = prepare_free_assistant_chat_route(
                 dados=dados,

@@ -343,9 +343,9 @@ def test_admin_cliente_respeita_governanca_de_casos_do_tenant(ambiente_critico) 
 
     assert resposta_lista_read_only.status_code == 200
     assert resposta_mesa_read_only.status_code == 200
-    assert resposta_criar_read_only.status_code == 403
-    assert "sem agir nos casos" in resposta_criar_read_only.json()["detail"]
-    assert resposta_responder_read_only.status_code == 403
+    assert resposta_criar_read_only.status_code == 200
+    assert int(resposta_criar_read_only.json()["laudo_id"]) > 0
+    assert resposta_responder_read_only.status_code == 404
 
 
 @pytest.mark.parametrize("rota_superficie", ["/cliente/chat", "/cliente/mesa"])
@@ -1793,6 +1793,9 @@ def test_admin_cliente_exporta_diagnostico_e_registra_suporte(ambiente_critico) 
     assert int(diagnostico["empresa"]["id"]) == ids["empresa_a"]
     assert diagnostico["contexto_portal"]["support_report_url"] == "/cliente/api/suporte/report"
     assert diagnostico["fronteiras"]["chat_scope"] == "company_scoped"
+    assert diagnostico["route_governance"]["contract_name"] == "ClientePortalRouteGovernanceV1"
+    assert "surface_availability" in diagnostico["route_governance"]["admin_ceo_contract_scope"]
+    assert "case_finalization" in diagnostico["route_governance"]["admin_cliente_operational_scope"]
     assert diagnostico["visibility_policy"]["technical_access_mode"] == "surface_scoped_operational"
     assert diagnostico["visibility_policy"]["audit_scope"] == "tenant_operational_timeline"
     assert diagnostico["operational_package"]["mobile_single_operator_enabled"] is False

@@ -36,28 +36,28 @@
 
       const STATIC_HTML_CONTRACTS = Object.freeze({
         mesaReplyPolicyHint: Object.freeze({
-          readOnly: '<span class="hero-chip">Somente acompanhamento</span>',
+          readOnly: '<span class="hero-chip">Superfície indisponível</span>',
           editable:
             '<span class="hero-chip">Resposta contextual mantém o caso na mesa</span>',
         }),
         mesaReplyPolicyNote: Object.freeze({
           readOnly:
-            '<div class="form-hint" data-tone="aguardando"><strong>Decisão da mesa indisponível</strong><span>Este tenant permite leitura do caso, mas não permite aprovar nem devolver laudos pelo portal cliente.</span></div>',
+            '<div class="form-hint" data-tone="aguardando"><strong>Mesa indisponível</strong><span>Esta superfície precisa estar contratada para operar avaliações pelo portal cliente.</span></div>',
           editable: "",
         }),
         mesaMessagePolicyNote: Object.freeze({
           readOnly:
-            '<div class="form-hint" data-tone="aguardando"><strong>Resposta bloqueada</strong><span>Você pode ler o histórico e marcar avisos como lidos, mas não pode responder, anexar nem resolver pendências.</span></div>',
+            '<div class="form-hint" data-tone="aguardando"><strong>Mesa indisponível</strong><span>Esta superfície precisa estar contratada para responder, anexar ou resolver pendências.</span></div>',
           editable:
             '<div class="form-hint" data-tone="aguardando"><strong>Resposta contextual</strong><span>Enviar resposta ou anexo não devolve o caso automaticamente. Use <em>Devolver</em> quando o laudo precisar voltar para correção.</span></div>',
         }),
         chatReadOnlyHint: Object.freeze({
-          readOnly: '<span class="hero-chip">Somente acompanhamento</span>',
+          readOnly: '<span class="hero-chip">Superfície indisponível</span>',
           editable: "",
         }),
         chatCasePolicyNote: Object.freeze({
           readOnly:
-            '<div class="form-hint" data-tone="aguardando"><strong>Ações de estado indisponíveis</strong><span>Este tenant permite leitura do caso, mas não permite finalizar nem reabrir laudos pelo portal cliente.</span></div>',
+            '<div class="form-hint" data-tone="aguardando"><strong>Chat indisponível</strong><span>Esta superfície precisa estar contratada para operar casos pelo portal cliente.</span></div>',
           editable: "",
         }),
         chatMessagePolicyNote: Object.freeze({

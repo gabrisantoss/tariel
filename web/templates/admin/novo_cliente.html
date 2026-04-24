@@ -269,17 +269,17 @@
                                 </select>
                             </div>
 
+                            <input type="hidden" name="admin_cliente_case_action_mode" value="case_actions">
                             <div class="campo-form">
-                                <label for="admin_cliente_case_action_mode">
+                                <label>
                                     <span class="label-with-help">
-                                        <span>Painel da empresa: atuacao operacional</span>
-                                        {{ help_icon("Define se a empresa so acompanha os casos ou se tambem pode agir neles.", "Ajuda sobre atuacao operacional") }}
+                                        <span>Autoridade operacional</span>
+                                        {{ help_icon("O Admin CEO define o contrato do cliente. O Admin Cliente governa seus funcionarios, que neste produto sao inspetores e avaliadores.", "Ajuda sobre autoridade operacional") }}
                                     </span>
                                 </label>
-                                <select id="admin_cliente_case_action_mode" name="admin_cliente_case_action_mode">
-                                    <option value="case_actions" selected>Pode agir nos casos</option>
-                                    <option value="read_only">Somente acompanhamento</option>
-                                </select>
+                                <p class="campo-ajuda">
+                                    O Admin Cliente decide a rotina operacional dos seus funcionarios dentro das superficies contratadas.
+                                </p>
                             </div>
 
                             <div class="campo-form campo-form--full">

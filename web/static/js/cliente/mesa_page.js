@@ -179,7 +179,7 @@
             $("form-mesa-msg")?.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 if (!mesaCaseActionsEnabled()) {
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
                 const laudoId = Number(state.mesa.laudoId || 0) || null;
@@ -232,7 +232,7 @@
                 const laudoId = Number(state.mesa.laudoId || 0) || null;
                 if (!button || !laudoId) return;
                 if (!mesaCaseActionsEnabled()) {
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
 
@@ -252,7 +252,7 @@
 
             $("btn-mesa-aprovar")?.addEventListener("click", async (event) => {
                 if (!mesaCaseActionsEnabled()) {
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
                 const laudoId = Number(state.mesa.laudoId || 0) || null;
@@ -282,7 +282,7 @@
 
             $("btn-mesa-rejeitar")?.addEventListener("click", async (event) => {
                 if (!mesaCaseActionsEnabled()) {
-                    feedback("Este tenant permite ao admin-cliente apenas acompanhamento, sem agir nos casos.", true);
+                    feedback("Esta superfície não está disponível para ação neste contexto.", true);
                     return;
                 }
                 const laudoId = Number(state.mesa.laudoId || 0) || null;

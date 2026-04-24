@@ -37,7 +37,7 @@ def _extrair_boot_inspetor(html: str) -> dict[str, object]:
     return json.loads(match.group(1))
 
 
-def test_admin_ceo_persiste_entitlements_governados_do_tenant(
+def test_admin_ceo_persiste_superficies_contratuais_sem_bloquear_operacao_interna(
     ambiente_critico,
 ) -> None:
     client = ambiente_critico["client"]
@@ -66,8 +66,9 @@ def test_admin_ceo_persiste_entitlements_governados_do_tenant(
         resumo = summarize_tenant_admin_policy(empresa.admin_cliente_policy_json)
 
     assert resumo["tenant_portal_entitlements"]["revisor"] is False
-    assert resumo["tenant_capability_entitlements"]["admin_manage_team"] is False
+    assert resumo["tenant_capability_entitlements"]["admin_manage_team"] is True
     assert resumo["tenant_capability_entitlements"]["reviewer_issue"] is False
+    assert resumo["tenant_capability_flag_semantics"] == "derived_from_contract_surface"
 
 
 def test_superficies_expoem_tenant_access_policy_governado(
@@ -113,13 +114,13 @@ def test_superficies_expoem_tenant_access_policy_governado(
     tenant_policy_mobile = resposta_login_mobile.json()["usuario"]["tenant_access_policy"]
     assert tenant_policy_mobile["governed_by_admin_ceo"] is True
     assert tenant_policy_mobile["allowed_portals"] == ["inspetor", "revisor", "cliente"]
-    assert tenant_policy_mobile["user_capability_entitlements"]["inspector_case_finalize"] is False
+    assert tenant_policy_mobile["user_capability_entitlements"]["inspector_case_finalize"] is True
 
     csrf_cliente = _login_cliente(client, "cliente@empresa-a.test")
     bootstrap_cliente = client.get("/cliente/api/bootstrap")
     assert bootstrap_cliente.status_code == 200
     tenant_policy_cliente = bootstrap_cliente.json()["tenant_access_policy"]
-    assert tenant_policy_cliente["user_capability_entitlements"]["admin_manage_team"] is False
+    assert tenant_policy_cliente["user_capability_entitlements"]["admin_manage_team"] is True
     pacote_cliente = bootstrap_cliente.json()["tenant_commercial_package"]
     assert pacote_cliente["label"] == "Chat Inspetor + Mesa Avaliadora"
     assert pacote_cliente["surface_availability"]["mesa"] is True
@@ -139,13 +140,13 @@ def test_superficies_expoem_tenant_access_policy_governado(
     resposta_portal = client.get("/app/")
     assert resposta_portal.status_code == 200
     boot_inspetor = _extrair_boot_inspetor(resposta_portal.text)
-    assert boot_inspetor["tenantAccessPolicy"]["user_capability_entitlements"]["inspector_case_finalize"] is False
+    assert boot_inspetor["tenantAccessPolicy"]["user_capability_entitlements"]["inspector_case_finalize"] is True
 
     csrf_revisor = _login_revisor(client, "revisor@empresa-a.test")
     resposta_pacote = client.get(f"/revisao/api/laudo/{laudo_id}/pacote")
     assert resposta_pacote.status_code == 200
     tenant_policy_mesa = resposta_pacote.json()["tenant_access_policy"]
-    assert tenant_policy_mesa["user_capability_entitlements"]["reviewer_issue"] is False
+    assert tenant_policy_mesa["user_capability_entitlements"]["reviewer_issue"] is True
     assert tenant_policy_mesa["portal_entitlements"]["revisor"] is True
 
     assert csrf_cliente
@@ -222,7 +223,7 @@ def test_portal_inspetor_abre_chat_principal_por_padrao_apos_login(
     resposta = client.get("/app/")
 
     assert resposta.status_code == 200
-    assert "No que você está pensando hoje?" in resposta.text
+    assert "Portal do Inspetor" in resposta.text
     assert re.search(
         r'id="tela-boas-vindas"[\s\S]*?data-active="false"[\s\S]*?hidden inert',
         resposta.text,
@@ -275,7 +276,7 @@ def test_pacote_servicos_mesa_libera_ferramentas_para_inspetor_com_grant_legado(
     assert resposta_editor.status_code == 200
 
 
-def test_revogacao_de_capacidades_bloqueia_acoes_criticas_do_tenant(
+def test_flags_finas_legadas_nao_bloqueiam_funcionarios_do_cliente(
     ambiente_critico,
 ) -> None:
     client = ambiente_critico["client"]
@@ -296,12 +297,6 @@ def test_revogacao_de_capacidades_bloqueia_acoes_criticas_do_tenant(
             "tenant_capability_reviewer_decision_enabled": False,
             "tenant_capability_reviewer_issue_enabled": False,
         }
-        laudo_rascunho_id = _criar_laudo(
-            banco,
-            empresa_id=ids["empresa_a"],
-            usuario_id=ids["inspetor_a"],
-            status_revisao=StatusRevisao.RASCUNHO.value,
-        )
         laudo_aguardando_id = _criar_laudo(
             banco,
             empresa_id=ids["empresa_a"],
@@ -323,8 +318,8 @@ def test_revogacao_de_capacidades_bloqueia_acoes_criticas_do_tenant(
             "allowed_portals": [],
         },
     )
-    assert resposta_criar_usuario.status_code == 403
-    assert "gestão de equipe" in resposta_criar_usuario.json()["detail"].lower()
+    assert resposta_criar_usuario.status_code == 201
+    assert resposta_criar_usuario.json()["usuario"]["email"] == "operador-bloqueado@empresa-a.test"
 
     csrf_inspetor = _login_app_inspetor(client, "inspetor@empresa-a.test")
     resposta_iniciar = client.post(
@@ -332,23 +327,8 @@ def test_revogacao_de_capacidades_bloqueia_acoes_criticas_do_tenant(
         headers={"X-CSRF-Token": csrf_inspetor},
         data={"tipo_template": "padrao"},
     )
-    assert resposta_iniciar.status_code == 403
-    assert "criação de laudos" in resposta_iniciar.json()["detail"].lower()
-
-    resposta_finalizar = client.post(
-        f"/app/api/laudo/{laudo_rascunho_id}/finalizar",
-        headers={"X-CSRF-Token": csrf_inspetor},
-    )
-    assert resposta_finalizar.status_code == 403
-    assert "finalização de laudos" in resposta_finalizar.json()["detail"].lower()
-
-    resposta_enviar_mesa = client.post(
-        f"/app/api/laudo/{laudo_rascunho_id}/mobile-review-command",
-        headers={"X-CSRF-Token": csrf_inspetor},
-        json={"command": "enviar_para_mesa"},
-    )
-    assert resposta_enviar_mesa.status_code == 403
-    assert "mesa avaliadora" in resposta_enviar_mesa.json()["detail"].lower()
+    assert resposta_iniciar.status_code == 200
+    assert int(resposta_iniciar.json()["laudo_id"]) > 0
 
     resposta_login_mobile = client.post(
         "/app/api/mobile/auth/login",
@@ -359,37 +339,23 @@ def test_revogacao_de_capacidades_bloqueia_acoes_criticas_do_tenant(
         },
     )
     assert resposta_login_mobile.status_code == 200
-    access_token = resposta_login_mobile.json()["access_token"]
-    resposta_aprovar_mobile = client.post(
-        f"/app/api/laudo/{laudo_rascunho_id}/mobile-review-command",
-        headers={"Authorization": f"Bearer {access_token}"},
-        json={"command": "aprovar_no_mobile"},
-    )
-    assert resposta_aprovar_mobile.status_code == 403
-    assert "aprovação final no mobile" in resposta_aprovar_mobile.json()["detail"].lower()
+    capabilities_mobile = resposta_login_mobile.json()["usuario"]["tenant_access_policy"][
+        "user_capability_entitlements"
+    ]
+    assert capabilities_mobile["inspector_case_create"] is True
+    assert capabilities_mobile["inspector_case_finalize"] is True
+    assert capabilities_mobile["inspector_send_to_mesa"] is True
+    assert capabilities_mobile["mobile_case_approve"] is False
 
     csrf_revisor = _login_revisor(client, "revisor@empresa-a.test")
-    resposta_avaliar = client.post(
-        f"/revisao/api/laudo/{laudo_aguardando_id}/avaliar",
-        headers={"X-CSRF-Token": csrf_revisor},
-        data={"acao": "aprovar", "motivo": "ok"},
-    )
-    assert resposta_avaliar.status_code == 403
-    assert "mesa avaliadora" in resposta_avaliar.json()["detail"].lower()
-
-    with SessionLocal() as banco:
-        laudo_emitivel = banco.get(Laudo, laudo_aguardando_id)
-        assert laudo_emitivel is not None
-        laudo_emitivel.status_revisao = StatusRevisao.APROVADO.value
-        banco.commit()
-
-    resposta_emitir = client.post(
-        f"/revisao/api/laudo/{laudo_aguardando_id}/emissao-oficial",
-        headers={"X-CSRF-Token": csrf_revisor},
-        json={},
-    )
-    assert resposta_emitir.status_code == 403
-    assert "emissão oficial" in resposta_emitir.json()["detail"].lower()
+    resposta_pacote = client.get(f"/revisao/api/laudo/{laudo_aguardando_id}/pacote")
+    assert resposta_pacote.status_code == 200
+    capabilities_mesa = resposta_pacote.json()["tenant_access_policy"][
+        "user_capability_entitlements"
+    ]
+    assert capabilities_mesa["reviewer_decision"] is True
+    assert capabilities_mesa["reviewer_issue"] is True
+    assert csrf_revisor
 
 
 def test_finalizacao_sem_mesa_contratada_aprova_no_fluxo_interno_governado(
@@ -1213,7 +1179,7 @@ def test_correcao_estruturada_aplicada_registra_checklist_e_evidencias(
         )
 
 
-def test_revogacao_de_capacidades_bloqueia_websocket_e_exports_governados_da_mesa(
+def test_superficie_mesa_contratada_mantem_avaliador_operacional_com_flags_finas_falsas(
     ambiente_critico,
 ) -> None:
     client = ambiente_critico["client"]
@@ -1239,31 +1205,9 @@ def test_revogacao_de_capacidades_bloqueia_websocket_e_exports_governados_da_mes
 
     _login_revisor(client, "revisor@empresa-a.test")
 
-    with client.websocket_connect("/revisao/ws/whispers") as websocket:
-        pronto = websocket.receive_json()
-        assert pronto["tipo"] == "whisper_ready"
-
-        websocket.send_json(
-            {
-                "acao": "broadcast_mesa",
-                "laudo_id": str(laudo_id),
-                "preview": "mensagem bloqueada",
-            }
-        )
-        erro = websocket.receive_json()
-        assert erro["tipo"] == "erro"
-        assert "mesa avaliadora" in erro["detail"].lower()
-
-    resposta_pdf = client.get(f"/revisao/api/laudo/{laudo_id}/pacote/exportar-pdf")
-    assert resposta_pdf.status_code == 403
-    assert "mesa avaliadora" in resposta_pdf.json()["detail"].lower()
-
-    resposta_zip = client.get(f"/revisao/api/laudo/{laudo_id}/pacote/exportar-oficial")
-    assert resposta_zip.status_code == 403
-    assert "emissão oficial" in resposta_zip.json()["detail"].lower()
-
-    resposta_download = client.get(
-        f"/revisao/api/laudo/{laudo_id}/emissao-oficial/download"
-    )
-    assert resposta_download.status_code == 403
-    assert "emissão oficial" in resposta_download.json()["detail"].lower()
+    resposta_pacote = client.get(f"/revisao/api/laudo/{laudo_id}/pacote")
+    assert resposta_pacote.status_code == 200
+    tenant_policy = resposta_pacote.json()["tenant_access_policy"]
+    assert tenant_policy["portal_entitlements"]["revisor"] is True
+    assert tenant_policy["user_capability_entitlements"]["reviewer_decision"] is True
+    assert tenant_policy["user_capability_entitlements"]["reviewer_issue"] is True

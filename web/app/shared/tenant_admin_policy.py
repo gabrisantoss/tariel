@@ -280,6 +280,31 @@ def _resolve_tenant_capability_entitlements(
     return entitlements
 
 
+def _contract_surface_capability_entitlements(
+    *,
+    portal_entitlements: dict[str, bool],
+    commercial_service_package: TenantAdminCommercialServicePackage,
+) -> dict[str, bool]:
+    chat_surface_enabled = bool(portal_entitlements.get("inspetor"))
+    mesa_surface_enabled = bool(portal_entitlements.get("revisor"))
+    internal_approval_enabled = (
+        chat_surface_enabled
+        and (
+            commercial_service_package == "inspector_chat"
+            or not mesa_surface_enabled
+        )
+    )
+    return {
+        "admin_manage_team": bool(portal_entitlements.get("cliente")),
+        "inspector_case_create": chat_surface_enabled,
+        "inspector_case_finalize": chat_surface_enabled,
+        "inspector_send_to_mesa": chat_surface_enabled and mesa_surface_enabled,
+        "mobile_case_approve": internal_approval_enabled,
+        "reviewer_decision": mesa_surface_enabled,
+        "reviewer_issue": mesa_surface_enabled,
+    }
+
+
 def _normalize_case_visibility_mode(value: Any) -> TenantAdminCaseVisibilityMode:
     text = str(value or "").strip().lower()
     aliases = {
@@ -497,7 +522,9 @@ def sanitize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
 def summarize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
     sanitized = sanitize_tenant_admin_policy(payload)
     case_list_visible = sanitized["case_visibility_mode"] == "case_list"
-    case_actions_enabled = case_list_visible and sanitized["case_action_mode"] == "case_actions"
+    # O Admin CEO governa contrato/superficies; o Admin Cliente governa seus
+    # funcionarios (inspetores e avaliadores) nas superficies contratadas.
+    case_actions_enabled = case_list_visible
     operating_model = _normalize_operating_model(sanitized.get("operating_model"))
     mobile_single_operator = operating_model == "mobile_single_operator"
     commercial_service_package_explicit = "commercial_service_package" in sanitized
@@ -521,9 +548,9 @@ def summarize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
     if bool(sanitized.get("operational_user_admin_portal_enabled", False)):
         tenant_assignable_portal_set.append("cliente")
     portal_entitlements = _resolve_tenant_portal_entitlements(sanitized)
-    capability_entitlements = _resolve_tenant_capability_entitlements(
-        sanitized,
+    capability_entitlements = _contract_surface_capability_entitlements(
         portal_entitlements=portal_entitlements,
+        commercial_service_package=commercial_service_package,
     )
     return {
         **sanitized,
@@ -546,6 +573,8 @@ def summarize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
         "case_action_mode_label": _ACTION_MODE_LABELS[
             sanitized["case_action_mode"]  # type: ignore[index]
         ],
+        "case_action_mode_deprecated": sanitized["case_action_mode"] == "read_only",
+        "case_action_mode_semantics": "legacy_display_only",
         "case_list_visible": case_list_visible,
         "case_actions_enabled": case_actions_enabled,
         "mobile_primary": mobile_single_operator,
@@ -563,7 +592,11 @@ def summarize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
         "tenant_portal_entitlements": portal_entitlements,
         "tenant_capability_entitlements": capability_entitlements,
         "tenant_assignable_portal_set": tenant_assignable_portal_set,
+        "admin_ceo_governance_scope": "client_contract_surface_limits",
+        "admin_cliente_governance_scope": "client_employee_operations",
         "admin_cliente_governs_operational_profile": True,
+        "admin_cliente_governs_staff_roles": True,
+        "tenant_capability_flag_semantics": "derived_from_contract_surface",
         "commercial_package_scope": "tenant_isolated_contract",
         "commercial_capability_axes": list(_COMMERCIAL_CAPABILITY_AXES),
         "cross_surface_session_strategy": "governed_links_and_grants",
@@ -806,17 +839,15 @@ def tenant_admin_user_capability_entitlements(
                 capability: False for capability in entitlements
             }
 
-        entitlements["admin_manage_team"] = bool(entitlements.get("admin_manage_team"))
-        case_actions_enabled = bool(summary.get("case_actions_enabled"))
-        if not case_actions_enabled:
-            for capability in (
-                "inspector_case_create",
-                "inspector_case_finalize",
-                "inspector_send_to_mesa",
-                "reviewer_decision",
-                "reviewer_issue",
-            ):
-                entitlements[capability] = False
+        portal_entitlements = dict(summary.get("tenant_portal_entitlements") or {})
+        chat_surface_enabled = bool(portal_entitlements.get("inspetor"))
+        mesa_surface_enabled = bool(portal_entitlements.get("revisor"))
+        entitlements["admin_manage_team"] = bool(portal_entitlements.get("cliente"))
+        entitlements["inspector_case_create"] = chat_surface_enabled
+        entitlements["inspector_case_finalize"] = chat_surface_enabled
+        entitlements["inspector_send_to_mesa"] = chat_surface_enabled and mesa_surface_enabled
+        entitlements["reviewer_decision"] = mesa_surface_enabled
+        entitlements["reviewer_issue"] = mesa_surface_enabled
         entitlements["mobile_case_approve"] = False
         return entitlements
 
