@@ -4248,6 +4248,7 @@ Atualizado em `2026-04-24`.
 - `Admin CEO`: extrair importação canônica e lifecycle/status do catálogo de laudos para `web/app/domains/admin/client_catalog_import_routes.py` e `web/app/domains/admin/client_catalog_lifecycle_routes.py`.
 - `Admin CEO`: extrair formulários de família, governança review, ofertas, modos, calibração e liberação tenant do catálogo para `web/app/domains/admin/client_catalog_form_routes.py`.
 - `Admin CEO`: extrair home, detalhe e preview PDF do catálogo para `web/app/domains/admin/client_catalog_view_routes.py`, mantendo URLs públicas e execução auditada.
+- `Admin CEO`: extrair sincronização do portfólio liberado e signatários governados do tenant para `web/app/domains/admin/client_tenant_catalog_routes.py`.
 - `Portal Admin Cliente`: trocar cards executivos e seletor de plano para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
 - `Mesa Avaliadora`: extrair verificação pública e anexo pack para `web/app/domains/mesa/package_document_support.py`.
 - `Portal Admin Cliente`: trocar resumo geral, briefs de capacidade/equipe/suporte, alerta de capacidade e nota de criação de usuário para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
@@ -4335,6 +4336,16 @@ Atualizado em `2026-04-24`.
 - `cd web && PYTHONPATH=. python -m py_compile app/domains/admin/client_routes.py app/domains/admin/client_catalog_view_routes.py app/domains/admin/client_catalog_form_routes.py app/domains/admin/client_catalog_import_routes.py app/domains/admin/client_catalog_lifecycle_routes.py`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py -q -k 'catalogo and (preview or renderiza or familia or ofertas or calibracao or liberacao or importa or lifecycle)'`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k 'catalogo or bootstrap_catalogo'`
+- `git diff --check`
+- `make web-ci`
+- `make production-ops-check-strict`
+- `make uploads-restore-drill`
+- `make hygiene-check`
+- `make verify`
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_catalog_routes.py web/tests/test_admin_client_routes.py`
+- `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_catalog_routes.py`
+- `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py -q -k 'signatario or sincroniza_portfolio'`
+- `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'admin or catalogo'`
 - `git diff --check`
 - `make web-ci`
 - `make production-ops-check-strict`

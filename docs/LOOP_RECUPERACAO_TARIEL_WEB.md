@@ -2897,3 +2897,40 @@ Impacto observado:
 - `client_routes.py` agora está abaixo de `1400` linhas e perdeu o bloco de preview PDF/runtime do catálogo;
 - o catálogo Admin CEO ficou dividido em visualização/preview, formulários, importação e lifecycle/status;
 - o próximo pacote backend coerente é extrair ações diretas de cliente restantes, como diagnóstico/export, signatário/portfolio ou política comercial; se alternar para frontend, o próximo ponto é `portal_admin_surface.js` por `innerHTML` restante.
+
+## R71. Catálogo contratual do tenant Admin CEO extraído
+
+Resumo:
+
+- extraí a sincronização do portfólio de laudos liberado por cliente para `web/app/domains/admin/client_tenant_catalog_routes.py`;
+- extraí o cadastro/edição de signatários governados do tenant para o mesmo módulo;
+- preservei as URLs públicas `/admin/clientes/{empresa_id}/catalogo-laudos` e `/admin/clientes/{empresa_id}/signatarios-governados`, validação CSRF, acesso Admin CEO, auditoria e redirects;
+- reduzi `web/app/domains/admin/client_routes.py` de `1395` para `1280` linhas;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/client_routes.py`
+- `web/app/domains/admin/client_tenant_catalog_routes.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_catalog_routes.py web/tests/test_admin_client_routes.py` -> verde;
+- `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_catalog_routes.py` -> verde;
+- `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py -q -k 'signatario or sincroniza_portfolio'` -> `2 passed, 39 deselected`;
+- `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'admin or catalogo'` -> `4 passed, 39 deselected`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `331` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- o Admin CEO separou mais claramente governança contratual de catálogo/signatário das ações gerais do cliente;
+- `client_routes.py` agora concentra principalmente onboarding/lista/detalhe, política operacional, diagnóstico/export, bloqueio e troca de plano;
+- o próximo pacote backend coerente é extrair o diagnóstico/export administrativo ou mover bloqueio/troca de plano para um módulo de operações sensíveis do tenant.
