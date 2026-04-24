@@ -160,6 +160,7 @@ Ele está na fase de:
 - a Mesa moveu verificação pública e anexo pack do pacote para `mesa/package_document_support.py`, reduzindo mais um bloco documental de `mesa/service.py`.
 - o Portal Admin Cliente agora monta o resumo detalhado de plano/capacidade por DOM seguro, mantendo dados do tenant fora de string HTML interpolada.
 - o Portal Admin Cliente agora monta o onboarding de equipe por DOM seguro, mantendo nomes, e-mails, status e ações rápidas fora de string HTML interpolada.
+- o Portal Admin Cliente agora monta histórico e preview de planos por DOM seguro, preservando o contrato do botão de interesse comercial sem interpolar dados de plano em HTML.
 
 ## O que ainda falta melhorar
 

@@ -629,9 +629,9 @@
             return empty;
         }
 
-        function criarToolbarMetaAdminNode(children = []) {
+        function criarToolbarMetaAdminNode(children = [], className = "toolbar-meta") {
             const toolbar = documentRef.createElement("div");
-            toolbar.className = "toolbar-meta";
+            toolbar.className = className;
             children.forEach((child) => {
                 if (child) toolbar.appendChild(child);
             });
@@ -1873,17 +1873,16 @@
                 const acao = texto(item?.acao);
                 return acao === "plano_interesse_registrado" || acao === "plano_alterado";
             });
+            limparElemento(container);
             if (!itens.length) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Nenhuma solicitacao comercial registrada ainda</strong>
-                        <p>Quando o portal registrar interesse em um novo plano, o impacto esperado fica listado aqui para consulta rapida.</p>
-                    </div>
-                `;
+                container.appendChild(criarEmptyStateAdminNode(
+                    "Nenhuma solicitacao comercial registrada ainda",
+                    "Quando o portal registrar interesse em um novo plano, o impacto esperado fica listado aqui para consulta rapida."
+                ));
                 return;
             }
 
-            container.innerHTML = itens.map((item) => {
+            itens.forEach((item) => {
                 const payload = item.payload || {};
                 const antes = texto(payload.plano_anterior || "").trim();
                 const depois = texto(payload.plano_sugerido || payload.plano_novo || "").trim();
@@ -1892,23 +1891,38 @@
                 const rotuloMovimento = acao === "plano_interesse_registrado"
                     ? "solicitacao"
                     : texto(payload.movimento || "plano");
-                return `
-                    <article class="activity-item">
-                        <div class="activity-head">
-                            <div class="activity-copy">
-                                <strong>${escapeHtml(item.resumo || "Solicitacao comercial")}</strong>
-                                <span class="activity-meta">Por ${escapeHtml(item.ator_nome || "Sistema")} • ${escapeHtml(item.criado_em_label || "Agora")}</span>
-                            </div>
-                            <span class="pill" data-kind="priority" data-status="aberto">${escapeHtml(rotuloMovimento)}</span>
-                        </div>
-                        <p class="activity-detail">${escapeHtml(impacto || "Impacto nao informado.")}</p>
-                        <div class="toolbar-meta">
-                            <span class="hero-chip">${antes ? `Antes: ${escapeHtml(antes)}` : "Antes nao informado"}</span>
-                            <span class="hero-chip">${depois ? `Depois: ${escapeHtml(depois)}` : "Depois nao informado"}</span>
-                        </div>
-                    </article>
-                `;
-            }).join("");
+
+                const article = documentRef.createElement("article");
+                article.className = "activity-item";
+                const head = documentRef.createElement("div");
+                head.className = "activity-head";
+                const copy = documentRef.createElement("div");
+                copy.className = "activity-copy";
+                const title = documentRef.createElement("strong");
+                title.textContent = texto(item.resumo || "Solicitacao comercial");
+                copy.appendChild(title);
+                const meta = documentRef.createElement("span");
+                meta.className = "activity-meta";
+                meta.textContent = `Por ${texto(item.ator_nome || "Sistema")} • ${texto(item.criado_em_label || "Agora")}`;
+                copy.appendChild(meta);
+                head.appendChild(copy);
+                head.appendChild(criarPillAdminNode({
+                    kind: "priority",
+                    status: "aberto",
+                    label: rotuloMovimento,
+                }));
+                article.appendChild(head);
+
+                const detail = documentRef.createElement("p");
+                detail.className = "activity-detail";
+                detail.textContent = impacto || "Impacto nao informado.";
+                article.appendChild(detail);
+                article.appendChild(criarToolbarMetaAdminNode([
+                    criarHeroChipAdminNode(antes ? `Antes: ${antes}` : "Antes nao informado"),
+                    criarHeroChipAdminNode(depois ? `Depois: ${depois}` : "Depois nao informado"),
+                ]));
+                container.appendChild(article);
+            });
         }
 
         function renderPreviewPlano() {
@@ -1920,7 +1934,7 @@
 
             const planoSelecionado = obterPlanoCatalogo(seletor.value) || obterPlanoCatalogo(empresa.plano_ativo);
             if (!planoSelecionado) {
-                container.innerHTML = "";
+                limparElemento(container);
                 if (botao) botao.disabled = false;
                 return;
             }
@@ -1928,36 +1942,46 @@
             const ehAtual = texto(planoSelecionado.plano) === texto(empresa.plano_ativo);
             const movimento = texto(planoSelecionado.movimento || (ehAtual ? "manter" : "upgrade"));
             const tone = ehAtual ? "aprovado" : movimento === "downgrade" ? "aguardando" : "aberto";
-            const chips = [];
-            chips.push(`<span class="hero-chip">Usuarios: ${escapeHtml(formatarLimitePlano(planoSelecionado.usuarios_max, "vaga", "vagas"))}</span>`);
-            chips.push(`<span class="hero-chip">Laudos/mes: ${escapeHtml(formatarLimitePlano(planoSelecionado.laudos_mes, "laudo", "laudos"))}</span>`);
-            chips.push(`<span class="hero-chip">${planoSelecionado.upload_doc ? "Envio de documentos liberado" : "Envio de documentos indisponivel"}</span>`);
-            chips.push(`<span class="hero-chip">${planoSelecionado.deep_research ? "Analise aprofundada liberada" : "Analise aprofundada indisponivel"}</span>`);
-            const acoes = ehAtual
-                ? ""
-                : `
-                    <div class="toolbar-meta toolbar-meta--section">
-                        <button class="btn" type="button" data-act="registrar-interesse-plano" data-origem="admin" data-plano="${escapeAttr(planoSelecionado.plano)}">Registrar interesse neste plano</button>
-                    </div>
-                `;
+            limparElemento(container);
+            const guidance = criarContextGuidanceAdminNode({
+                tone,
+                eyebrow: ehAtual ? "Plano atual em vigor" : "Impacto esperado da solicitacao",
+                title: planoSelecionado.plano,
+                detail: ehAtual
+                    ? `Este plano sustenta hoje ${state.bootstrap?.empresa?.capacidade_badge ? state.bootstrap.empresa.capacidade_badge.toLowerCase() : "a operacao atual"}.`
+                    : planoSelecionado.resumo_impacto || "Sem alteracao material detectada.",
+                sideNode: criarPillAdminNode({
+                    kind: "priority",
+                    status: tone,
+                    label: ehAtual ? "Plano atual" : movimento,
+                }),
+            });
+            if (!ehAtual) {
+                const copy = guidance.querySelector(".context-guidance-copy");
+                if (copy) {
+                    const paragraph = documentRef.createElement("p");
+                    paragraph.textContent = "A solicitacao fica registrada para a empresa, mas a mudanca comercial final e concluida pela Tariel.";
+                    copy.appendChild(paragraph);
+                }
+            }
+            container.appendChild(guidance);
+            container.appendChild(criarToolbarMetaAdminNode([
+                criarHeroChipAdminNode(`Usuarios: ${formatarLimitePlano(planoSelecionado.usuarios_max, "vaga", "vagas")}`),
+                criarHeroChipAdminNode(`Laudos/mes: ${formatarLimitePlano(planoSelecionado.laudos_mes, "laudo", "laudos")}`),
+                criarHeroChipAdminNode(planoSelecionado.upload_doc ? "Envio de documentos liberado" : "Envio de documentos indisponivel"),
+                criarHeroChipAdminNode(planoSelecionado.deep_research ? "Analise aprofundada liberada" : "Analise aprofundada indisponivel"),
+            ], "toolbar-meta toolbar-meta--section"));
 
-            container.innerHTML = `
-                <div class="context-guidance" data-tone="${tone}">
-                    <div class="context-guidance-copy">
-                        <small>${ehAtual ? "Plano atual em vigor" : "Impacto esperado da solicitacao"}</small>
-                        <strong>${escapeHtml(planoSelecionado.plano)}</strong>
-                        <p>${escapeHtml(ehAtual
-                            ? `Este plano sustenta hoje ${state.bootstrap?.empresa?.capacidade_badge ? state.bootstrap.empresa.capacidade_badge.toLowerCase() : "a operacao atual"}.`
-                            : planoSelecionado.resumo_impacto || "Sem alteracao material detectada.")}</p>
-                        ${ehAtual ? "" : `<p>A solicitacao fica registrada para a empresa, mas a mudanca comercial final e concluida pela Tariel.</p>`}
-                    </div>
-                    <span class="pill" data-kind="priority" data-status="${tone}">${escapeHtml(ehAtual ? "Plano atual" : movimento)}</span>
-                </div>
-                <div class="toolbar-meta toolbar-meta--section">
-                    ${chips.join("")}
-                </div>
-                ${acoes}
-            `;
+            if (!ehAtual) {
+                container.appendChild(criarToolbarMetaAdminNode([
+                    criarAdminActionButtonNode({
+                        label: "Registrar interesse neste plano",
+                        act: "registrar-interesse-plano",
+                        origem: "admin",
+                        dataset: { plano: planoSelecionado.plano },
+                    }),
+                ], "toolbar-meta toolbar-meta--section"));
+            }
 
             if (botao) {
                 botao.disabled = ehAtual;

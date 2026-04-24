@@ -3148,3 +3148,36 @@ Impacto observado:
 - o onboarding da equipe deixou de interpolar nome/e-mail/status de usuários em `innerHTML`;
 - os botões de filtro rápido e ação de usuário agora preservam o mesmo contrato via `dataset`, mas sem string HTML;
 - `portal_admin_surface.js` ainda tem `innerHTML` em auditoria, histórico/preview de planos e tabela de usuários; o próximo pacote coerente é atacar auditoria ou histórico de planos.
+
+## R78. Histórico e preview de planos Admin Cliente em DOM seguro
+
+Resumo:
+
+- troquei `renderHistoricoPlanos` e `renderPreviewPlano` em `web/static/js/cliente/portal_admin_surface.js` de HTML interpolado para montagem DOM explícita;
+- o histórico comercial agora renderiza estado vazio, cards de atividade, pills e chips de antes/depois com `textContent`;
+- o preview de plano agora renderiza guidance, chips de limite e botão `registrar-interesse-plano` por DOM seguro, preservando `data-act`, `data-origem` e `data-plano`;
+- mantive Render real como pendência externa: sem aguardar deploy e sem aplicar alteração de disco/plano no provedor.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_admin_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_admin_surface.js` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py::test_templates_cliente_explicitam_abas_e_formularios_principais -q` -> `1 passed`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `335` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- o histórico/preview de planos deixou de interpolar plano, ator, data, impacto e limites em `innerHTML`;
+- o padrão `criarToolbarMetaAdminNode` agora aceita classe customizada para reutilizar seções de toolbar sem voltar para HTML string;
+- `portal_admin_surface.js` ainda tem `innerHTML` em auditoria e tabela/resumo de usuários; o próximo pacote coerente é atacar auditoria ou a tabela de usuários.
