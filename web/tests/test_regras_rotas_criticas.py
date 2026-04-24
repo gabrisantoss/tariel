@@ -4406,6 +4406,72 @@ def test_inspetor_finalizacao_aprovada_quando_imagem_real_vem_do_chat_com_texto(
         assert laudo.status_revisao == StatusRevisao.AGUARDANDO.value
 
 
+def test_inspetor_finalizacao_aprovada_quando_foto_real_vem_de_anexo_mesa(ambiente_critico) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.primeira_mensagem = "Inspeção inicial em cabine elétrica com anexo real."
+
+        banco.add(
+            MensagemLaudo(
+                laudo_id=laudo_id,
+                remetente_id=ids["inspetor_a"],
+                tipo=TipoMensagem.USER.value,
+                conteudo="Registro textual do ponto crítico antes do fechamento.",
+            )
+        )
+        mensagem_anexo = MensagemLaudo(
+            laudo_id=laudo_id,
+            remetente_id=ids["inspetor_a"],
+            tipo=TipoMensagem.HUMANO_INSP.value,
+            conteudo="[ANEXO_MESA_SEM_TEXTO]",
+        )
+        banco.add(mensagem_anexo)
+        banco.flush()
+        banco.add(
+            AnexoMesa(
+                laudo_id=laudo_id,
+                mensagem_id=int(mensagem_anexo.id),
+                enviado_por_id=ids["inspetor_a"],
+                nome_original="evidencia-cabine.png",
+                nome_arquivo="evidencia-cabine.png",
+                mime_type="image/png",
+                categoria="imagem",
+                tamanho_bytes=128,
+                caminho_arquivo="/tmp/evidencia-cabine.png",
+            )
+        )
+        banco.add(
+            MensagemLaudo(
+                laudo_id=laudo_id,
+                tipo=TipoMensagem.IA.value,
+                conteudo="Parecer preliminar: a evidência anexada sustenta a conclusão técnica.",
+            )
+        )
+        banco.commit()
+
+    resposta = client.post(
+        f"/app/api/laudo/{laudo_id}/finalizar",
+        headers={"X-CSRF-Token": csrf},
+    )
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["success"] is True
+    assert corpo["estado"] == "aguardando"
+
+
 def test_inspetor_finalizacao_catalogada_persiste_laudo_output_canonico_nr13(ambiente_critico) -> None:
     client = ambiente_critico["client"]
     SessionLocal = ambiente_critico["SessionLocal"]

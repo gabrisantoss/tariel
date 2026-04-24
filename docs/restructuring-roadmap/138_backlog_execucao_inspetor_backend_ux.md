@@ -337,6 +337,20 @@ Isso e fraco demais para um fluxo documental tecnico.
 - `teste`: `make hygiene-check`
 - `proximo`: enriquecer o contrato para anexos reais, origem/mime/vinculo ao caso e elegibilidade de emissao, antes de remover a compatibilidade por placeholder
 
+### Checkpoint local - 2026-04-24 - Anexos reais no contrato de evidencia
+
+- `status`: segundo corte local do contrato tipado iniciado
+- `entrega`: `EvidenceClassification` passou a carregar `attachment_id`, `mime_type`, `raw_category` e `eligible_for_gate`
+- `entrega`: `classificar_anexo_mesa_evidencia(...)` classifica anexos reais da Mesa/Inspetor por categoria e mime, diferenciando foto e documento
+- `entrega`: `gate_helpers.py` passou a carregar `MensagemLaudo.anexos_mesa` com `selectinload` e somar anexos reais ao resumo de fotos/documentos/evidencias
+- `entrega`: `[ANEXO_MESA_SEM_TEXTO]` deixou de contar como texto; o que conta para o gate e o anexo vinculado
+- `entrega`: `tests/test_regras_rotas_criticas.py` ganhou finalizacao aprovada com foto real vinda de `AnexoMesa`
+- `teste`: `python -m py_compile web/app/domains/chat/evidence_contract.py web/app/domains/chat/gate_helpers.py web/tests/test_evidence_contract.py web/tests/test_regras_rotas_criticas.py`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_evidence_contract.py -q`
+- `teste`: `cd web && PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k 'finalizacao_aprovada_quando_foto_real_vem_de_anexo_mesa or finalizacao_aprovada_quando_imagem_real_vem_do_chat_com_texto or inspetor_finalizacao_aprovada_com_evidencias_minimas'`
+- `teste`: `cd web && python -m ruff check app/domains/chat/evidence_contract.py app/domains/chat/gate_helpers.py tests/test_evidence_contract.py tests/test_regras_rotas_criticas.py`
+- `proximo`: levar o contrato para selecao/elegibilidade de emissao e report pack, separando evidencia bruta de evidencia candidata ao PDF final
+
 ### Validacao minima
 
 ```bash

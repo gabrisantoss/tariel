@@ -4,8 +4,10 @@ from app.domains.chat.evidence_contract import (
     EVIDENCE_KIND_DOCUMENT,
     EVIDENCE_KIND_PHOTO,
     EVIDENCE_KIND_TEXT,
+    EVIDENCE_SOURCE_MESA_ATTACHMENT,
     EVIDENCE_SOURCE_MESSAGE,
     EVIDENCE_SOURCE_VISUAL_LEARNING,
+    classificar_anexo_mesa_evidencia,
     classificar_evidencia_mensagem,
 )
 
@@ -64,3 +66,29 @@ def test_classificar_comando_sistema_nao_gera_evidencia() -> None:
 
     assert resultado.kinds == ()
     assert resultado.evidence_units == 0
+
+
+def test_classificar_anexo_mesa_carrega_tipo_mime_e_vinculo() -> None:
+    foto = classificar_anexo_mesa_evidencia(
+        attachment_id=20,
+        message_id=15,
+        categoria="imagem",
+        mime_type="image/png",
+    )
+    documento = classificar_anexo_mesa_evidencia(
+        attachment_id=21,
+        message_id=15,
+        categoria="documento",
+        mime_type="application/pdf",
+    )
+
+    assert foto.kinds == (EVIDENCE_KIND_PHOTO,)
+    assert foto.sources == (EVIDENCE_SOURCE_MESA_ATTACHMENT,)
+    assert foto.attachment_id == 20
+    assert foto.message_id == 15
+    assert foto.mime_type == "image/png"
+    assert foto.eligible_for_gate is True
+
+    assert documento.kinds == (EVIDENCE_KIND_DOCUMENT,)
+    assert documento.attachment_id == 21
+    assert documento.mime_type == "application/pdf"

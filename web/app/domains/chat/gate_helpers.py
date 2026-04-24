@@ -7,10 +7,10 @@ import re
 from typing import Any, cast
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.paths import resolve_family_schemas_dir
-from app.domains.chat.evidence_contract import classificar_evidencia_mensagem
+from app.domains.chat.evidence_contract import classificar_anexo_mesa_evidencia, classificar_evidencia_mensagem
 from app.domains.chat.normalization import nome_template_humano, normalizar_tipo_template
 from app.domains.chat.report_pack_helpers import atualizar_report_pack_draft_laudo
 from app.shared.database import AprendizadoVisualIa, Laudo, MensagemLaudo, TipoMensagem
@@ -973,7 +973,13 @@ def avaliar_gate_qualidade_laudo(banco: Session, laudo: Laudo) -> dict[str, Any]
         REGRAS_GATE_QUALIDADE_TEMPLATE["padrao"],
     )
 
-    mensagens = banco.query(MensagemLaudo).filter(MensagemLaudo.laudo_id == laudo.id).order_by(MensagemLaudo.criado_em.asc()).all()
+    mensagens = (
+        banco.query(MensagemLaudo)
+        .filter(MensagemLaudo.laudo_id == laudo.id)
+        .options(selectinload(MensagemLaudo.anexos_mesa))
+        .order_by(MensagemLaudo.criado_em.asc())
+        .all()
+    )
     mensagens_usuario = [item for item in mensagens if item.tipo in (TipoMensagem.USER.value, TipoMensagem.HUMANO_INSP.value)]
     mensagens_ia = [item for item in mensagens if item.tipo == TipoMensagem.IA.value]
     mensagens_com_evidencia_visual = {
@@ -1010,6 +1016,19 @@ def avaliar_gate_qualidade_laudo(banco: Session, laudo: Laudo) -> dict[str, Any]
         if classificacao.counts_as_document:
             qtd_documentos += 1
         qtd_evidencias += classificacao.evidence_units
+
+        for anexo in list(getattr(item, "anexos_mesa", None) or []):
+            classificacao_anexo = classificar_anexo_mesa_evidencia(
+                attachment_id=int(getattr(anexo, "id", 0) or 0) or None,
+                message_id=int(getattr(item, "id", 0) or 0) or None,
+                categoria=str(getattr(anexo, "categoria", "") or ""),
+                mime_type=str(getattr(anexo, "mime_type", "") or ""),
+            )
+            if classificacao_anexo.counts_as_photo:
+                qtd_fotos += 1
+            if classificacao_anexo.counts_as_document:
+                qtd_documentos += 1
+            qtd_evidencias += classificacao_anexo.evidence_units
 
     min_textos = int(regra.get("min_textos", 0) or 0)
     min_evidencias = int(regra.get("min_evidencias", 0) or 0)

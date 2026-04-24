@@ -52,15 +52,18 @@ Hoje a primeira classificacao tipada ainda preserva compatibilidade com placehol
 - `[foto]`
 
 Tambem conta como foto quando a mensagem esta vinculada a `AprendizadoVisualIa` com `imagem_url`.
+Anexos reais da Mesa/Inspetor com `categoria=imagem` ou `mime_type` de imagem tambem contam como foto via contrato tipado.
 
 ### Documento
 
 - Segue a classificacao `classificar_evidencia_mensagem(...)`, que usa a deteccao de `mensagem_representa_documento(...)` em `media_helpers.py`.
+- Anexos reais com `categoria=documento` ou `mime_type` documental tambem contam como documento via `classificar_anexo_mesa_evidencia(...)`.
 
 ### Evidencia consolidada
 
 - Soma qualquer item que conte como texto, foto ou documento no contrato `EvidenceClassification`.
 - Uma mensagem textual com evidencia visual vinculada pode contar como texto e foto, preservando a compatibilidade do gate atual.
+- Mensagem sem texto real usada apenas como envelope de anexo, como `[ANEXO_MESA_SEM_TEXTO]`, nao conta como texto; o anexo vinculado e classificado pelo proprio tipo/mime.
 
 ### Parecer da IA
 

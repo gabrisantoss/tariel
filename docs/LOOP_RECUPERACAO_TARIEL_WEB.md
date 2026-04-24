@@ -3446,3 +3446,38 @@ Impacto observado:
 - os caminhos de Mesa do inspetor preservam idempotência sem depender de commit manual no handler;
 - o gate agora tem uma primeira camada de contrato explícito para classificar evidência, ainda sem quebrar compatibilidade com mensagens legadas;
 - o próximo pacote coerente é enriquecer evidência com anexos reais/mime/vínculo/elegibilidade e depois continuar reduzindo `flush` com side effects em Revisor/Mesa.
+
+## R86. Gate reconhece anexos reais pelo contrato de evidência
+
+Resumo:
+
+- ampliei `EvidenceClassification` com `attachment_id`, `mime_type`, `raw_category` e `eligible_for_gate`;
+- adicionei `classificar_anexo_mesa_evidencia(...)` para classificar `AnexoMesa` por categoria e mime;
+- `gate_helpers.py` passou a carregar `MensagemLaudo.anexos_mesa` com `selectinload` e somar anexos reais como foto/documento/evidência;
+- `[ANEXO_MESA_SEM_TEXTO]` deixou de contar como texto; o anexo vinculado passa a ser a evidência;
+- adicionei teste crítico cobrindo finalização aprovada com foto real vinda de `AnexoMesa`.
+
+Arquivos do ciclo:
+
+- `web/app/domains/chat/evidence_contract.py`
+- `web/app/domains/chat/gate_helpers.py`
+- `web/tests/test_evidence_contract.py`
+- `web/tests/test_regras_rotas_criticas.py`
+- `web/docs/checklist_qualidade.md`
+- `PLANS.md`
+- `docs/STATUS_CANONICO.md`
+- `docs/restructuring-roadmap/138_backlog_execucao_inspetor_backend_ux.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `python -m py_compile web/app/domains/chat/evidence_contract.py web/app/domains/chat/gate_helpers.py web/tests/test_evidence_contract.py web/tests/test_regras_rotas_criticas.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_evidence_contract.py -q` -> `5 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k 'finalizacao_aprovada_quando_foto_real_vem_de_anexo_mesa or finalizacao_aprovada_quando_imagem_real_vem_do_chat_com_texto or inspetor_finalizacao_aprovada_com_evidencias_minimas'` -> `3 passed, 186 deselected`;
+- `cd web && python -m ruff check app/domains/chat/evidence_contract.py app/domains/chat/gate_helpers.py tests/test_evidence_contract.py tests/test_regras_rotas_criticas.py` -> verde.
+
+Impacto observado:
+
+- o gate passa a reconhecer a evidência real anexada, não apenas a string da mensagem;
+- o placeholder de envelope de anexo deixa de inflar indevidamente os registros textuais;
+- o próximo pacote coerente é conectar essa classificação com seleção/elegibilidade de emissão no `report_pack_helpers.py`.

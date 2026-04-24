@@ -169,6 +169,7 @@ Ele está na fase de:
 - os fluxos principais de `iniciar`, `finalizar` e `reabrir` laudo no Chat Inspetor começaram a usar commit operacional explícito nos services, reduzindo dependência do commit implícito por request.
 - os envios de mensagem/anexo do inspetor para a Mesa, pendências da Mesa e correções estruturadas do inspetor agora também têm commits operacionais explícitos nos caminhos de escrita principais, preservando replay idempotente onde necessário.
 - o gate de qualidade começou a usar um contrato tipado de evidência em `chat/evidence_contract.py`, preservando a compatibilidade atual de placeholders enquanto separa tipo e origem da evidência para a próxima rodada.
+- o contrato de evidência do gate agora também reconhece anexos reais da Mesa/Inspetor por `categoria` e `mime_type`, e mensagens envelope como `[ANEXO_MESA_SEM_TEXTO]` deixam de contar como texto.
 
 ## O que ainda falta melhorar
 
@@ -187,7 +188,7 @@ Ele está na fase de:
 - extração mais nítida do núcleo compartilhado de caso técnico para fora de compat layers legadas.
 - continuar drenando `mesa/service.py`, `admin/client_routes.py` e helpers documentais sem reabrir contrato de produto.
 - expandir a fronteira transacional explícita para comandos de Mesa/Revisor que ainda combinam `flush` com side effects ou dependem do commit implícito por request.
-- enriquecer o contrato de evidência para anexos reais, mime, origem, vínculo ao caso e elegibilidade de emissão, antes de remover a compatibilidade por placeholder.
+- enriquecer o contrato de evidência para seleção/elegibilidade de emissão e report pack, separando evidência bruta, candidata e emitida antes de remover a compatibilidade por placeholder.
 
 ### Frontend web
 

@@ -12,6 +12,7 @@ EVIDENCE_KIND_PHOTO = "photo"
 EVIDENCE_KIND_DOCUMENT = "document"
 EVIDENCE_SOURCE_MESSAGE = "message"
 EVIDENCE_SOURCE_VISUAL_LEARNING = "visual_learning"
+EVIDENCE_SOURCE_MESA_ATTACHMENT = "mesa_attachment"
 
 
 @dataclass(frozen=True)
@@ -19,6 +20,10 @@ class EvidenceClassification:
     message_id: int | None
     kinds: tuple[str, ...]
     sources: tuple[str, ...]
+    attachment_id: int | None = None
+    mime_type: str = ""
+    raw_category: str = ""
+    eligible_for_gate: bool = True
 
     @property
     def counts_as_text(self) -> bool:
@@ -61,6 +66,8 @@ def mensagem_textual_relevante(conteudo: str) -> bool:
     texto = (conteudo or "").strip()
     if not texto:
         return False
+    if texto.lower() == "[anexo_mesa_sem_texto]":
+        return False
     if mensagem_eh_comando_sistema(texto):
         return False
     if mensagem_representa_foto_placeholder(texto):
@@ -98,13 +105,46 @@ def classificar_evidencia_mensagem(
     )
 
 
+def classificar_anexo_mesa_evidencia(
+    *,
+    attachment_id: int | None,
+    message_id: int | None,
+    categoria: str,
+    mime_type: str,
+) -> EvidenceClassification:
+    categoria_normalizada = str(categoria or "").strip().lower()
+    mime_normalizado = str(mime_type or "").strip().lower()
+    kinds: list[str] = []
+
+    if categoria_normalizada == "imagem" or mime_normalizado.startswith("image/"):
+        kinds.append(EVIDENCE_KIND_PHOTO)
+    elif categoria_normalizada == "documento" or mime_normalizado in {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }:
+        kinds.append(EVIDENCE_KIND_DOCUMENT)
+
+    return EvidenceClassification(
+        message_id=message_id,
+        kinds=tuple(kinds),
+        sources=(EVIDENCE_SOURCE_MESA_ATTACHMENT,),
+        attachment_id=attachment_id,
+        mime_type=mime_normalizado,
+        raw_category=categoria_normalizada,
+        eligible_for_gate=bool(kinds),
+    )
+
+
 __all__ = [
     "EVIDENCE_KIND_DOCUMENT",
     "EVIDENCE_KIND_PHOTO",
     "EVIDENCE_KIND_TEXT",
     "EVIDENCE_SOURCE_MESSAGE",
+    "EVIDENCE_SOURCE_MESA_ATTACHMENT",
     "EVIDENCE_SOURCE_VISUAL_LEARNING",
     "EvidenceClassification",
+    "classificar_anexo_mesa_evidencia",
     "classificar_evidencia_mensagem",
     "mensagem_eh_comando_sistema",
     "mensagem_representa_foto_placeholder",
