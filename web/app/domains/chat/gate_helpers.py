@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, cast
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -734,6 +734,115 @@ def _build_human_override_policy(
     }
 
 
+def _gate_next_steps_from_missing_items(
+    faltantes: list[dict[str, Any]],
+    *,
+    roteiro_template: dict[str, Any] | None,
+    human_override_policy: dict[str, Any] | None,
+) -> list[str]:
+    steps: list[str] = []
+    for item in faltantes:
+        if not isinstance(item, dict):
+            continue
+        item_id = str(item.get("id") or "").strip().lower()
+        categoria = str(item.get("categoria") or "").strip().lower()
+        titulo = str(item.get("titulo") or "pendência do gate").strip()
+        observacao = str(item.get("observacao") or "").strip()
+
+        if item_id == "campo_escopo_inicial":
+            steps.append("Defina no chat o ativo, a área e o risco principal da inspeção antes de finalizar.")
+        elif item_id == "campo_parecer_ia":
+            steps.append("Peça à IA uma consolidação técnica preliminar antes de enviar o caso.")
+        elif item_id == "evidencias_textuais":
+            steps.append("Registre achados, medições e contexto de campo em texto para sustentar o laudo.")
+        elif item_id == "evidencias_minimas":
+            steps.append("Complete a coleta combinando texto, fotos e documentos no mesmo caso técnico.")
+        elif item_id == "fotos_essenciais":
+            steps.append("Anexe as fotos essenciais dos pontos críticos antes de fechar o laudo.")
+        elif item_id == "formulario_estruturado":
+            steps.append("Materialize o formulário estruturado do template antes da finalização.")
+        elif item_id == "report_pack_incremental":
+            steps.append("Revise o draft incremental do report pack e resolva as pendências estruturadas do caso.")
+        elif categoria in {"foto", "image_slot"}:
+            steps.append(f"Feche a pendência fotográfica '{titulo}' com registro visual ou justificativa técnica rastreável.")
+        elif categoria in {"report_pack", "norma", "normative_item"}:
+            steps.append(observacao or f"Resolva a pendência estruturada '{titulo}' antes do envio.")
+        else:
+            steps.append(observacao or f"Resolva a pendência '{titulo}' antes da finalização.")
+
+    if not steps and isinstance(roteiro_template, dict):
+        for item in list(roteiro_template.get("itens") or [])[:3]:
+            if not isinstance(item, dict):
+                continue
+            descricao = str(item.get("descricao") or "").strip()
+            if descricao:
+                steps.append(descricao)
+
+    if isinstance(human_override_policy, dict) and bool(human_override_policy.get("available")):
+        steps.append(
+            "Se a coleta já estiver tecnicamente suficiente, aplique a exceção governada com justificativa interna auditável."
+        )
+
+    deduped: list[str] = []
+    vistos: set[str] = set()
+    for item in steps:
+        texto = " ".join(str(item or "").strip().split())
+        if not texto:
+            continue
+        chave = texto.lower()
+        if chave in vistos:
+            continue
+        vistos.add(chave)
+        deduped.append(texto)
+    return deduped[:6]
+
+
+def _build_gate_action_plan(
+    *,
+    faltantes: list[dict[str, Any]],
+    roteiro_template: dict[str, Any] | None,
+    human_override_policy: dict[str, Any] | None,
+) -> dict[str, Any]:
+    total_missing = len(faltantes)
+    primary_blocker_raw = next((item for item in faltantes if isinstance(item, dict)), None)
+    next_steps = _gate_next_steps_from_missing_items(
+        faltantes,
+        roteiro_template=roteiro_template,
+        human_override_policy=human_override_policy,
+    )
+    primary_blocker = (
+        {
+            "id": str(primary_blocker_raw.get("id") or "").strip() or None,
+            "title": str(primary_blocker_raw.get("titulo") or "Pendência do gate").strip(),
+            "category": str(primary_blocker_raw.get("categoria") or "").strip() or None,
+            "observation": str(primary_blocker_raw.get("observacao") or "").strip() or None,
+        }
+        if isinstance(primary_blocker_raw, dict)
+        else None
+    )
+    summary = (
+        "Gate de qualidade liberado."
+        if total_missing <= 0
+        else f"Finalização bloqueada por {total_missing} pendência(s) obrigatória(s)."
+    )
+    return {
+        "summary": summary,
+        "blocking_reason": (
+            str(primary_blocker.get("observation") or primary_blocker.get("title") or "").strip()
+            if isinstance(primary_blocker, dict)
+            else None
+        ),
+        "primary_blocker": primary_blocker,
+        "next_steps": next_steps,
+        "override_available": bool((human_override_policy or {}).get("available")),
+        "cta_label": (
+            "Aplicar exceção governada"
+            if bool((human_override_policy or {}).get("available"))
+            else "Completar coleta obrigatória"
+        ),
+    }
+
+
 def _mensagem_eh_comando_sistema(conteudo: str) -> bool:
     texto = (conteudo or "").strip()
     if not texto:
@@ -1091,6 +1200,11 @@ def avaliar_gate_qualidade_laudo(banco: Session, laudo: Laudo) -> dict[str, Any]
             },
         ),
     }
+    resultado["action_plan"] = _build_gate_action_plan(
+        faltantes=faltantes,
+        roteiro_template=roteiro_template,
+        human_override_policy=cast(dict[str, Any], resultado.get("human_override_policy") or {}),
+    )
     record_report_pack_gate_observation(
         laudo=laudo,
         report_pack_draft=report_pack_draft,

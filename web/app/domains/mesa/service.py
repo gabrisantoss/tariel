@@ -1658,6 +1658,8 @@ def _build_emissao_oficial_pacote(payload: dict[str, Any] | None) -> EmissaoOfic
     return EmissaoOficialPacoteMesa(
         issue_status=issue_status[:32],
         issue_status_label=issue_status_label[:120],
+        document_visual_state=_resumir_texto_curto(payload.get("document_visual_state"), limite=32),
+        document_visual_state_label=_resumir_texto_curto(payload.get("document_visual_state_label"), limite=120),
         ready_for_issue=bool(payload.get("ready_for_issue")),
         requires_human_signature=bool(payload.get("requires_human_signature", True)),
         compatible_signatory_count=int(payload.get("compatible_signatory_count") or 0),
@@ -1675,6 +1677,11 @@ def _build_emissao_oficial_pacote(payload: dict[str, Any] | None) -> EmissaoOfic
         reissue_recommended=bool(payload.get("reissue_recommended")),
         issue_action_label=_resumir_texto_curto(payload.get("issue_action_label"), limite=120),
         issue_action_enabled=bool(payload.get("issue_action_enabled")),
+        delivery_manifest=(
+            dict(payload.get("delivery_manifest") or {})
+            if isinstance(payload.get("delivery_manifest"), dict)
+            else {}
+        ),
         current_issue=current_issue,
     )
 

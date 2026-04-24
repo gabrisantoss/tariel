@@ -11,8 +11,11 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.domains.chat.laudo_state_helpers import (
+    build_case_operational_fields_from_case_snapshot,
+    build_case_operational_fields_from_legacy,
+)
 from app.shared.database import ApprovedCaseSnapshot, EmissaoOficialLaudo, Laudo, StatusRevisao
-from app.v2.acl.technical_case_core import build_case_status_visual_label
 
 
 @lru_cache(maxsize=256)
@@ -191,9 +194,8 @@ def _build_public_case_status_fields(
     banco: Session | None,
     *,
     laudo: Laudo,
-) -> dict[str, str | None]:
-    case_lifecycle_status: str | None = None
-    active_owner_role: str | None = None
+) -> dict[str, Any]:
+    case_snapshot = None
 
     if banco is not None:
         try:
@@ -203,44 +205,33 @@ def _build_public_case_status_fields(
         except Exception:
             case_snapshot = None
 
-        if case_snapshot is not None:
-            case_lifecycle_status = str(case_snapshot.case_lifecycle_status or "").strip() or None
-            active_owner_role = str(case_snapshot.active_owner_role or "").strip() or None
+    if case_snapshot is not None:
+        return build_case_operational_fields_from_case_snapshot(case_snapshot)
 
-    if not case_lifecycle_status or not active_owner_role:
-        review_status = _enum_value_text(getattr(laudo, "status_revisao", None)) or ""
-        reviewer_id = getattr(laudo, "revisado_por", None)
-        has_document_file = bool(_clean_text(getattr(laudo, "nome_arquivo_pdf", None)))
-        was_reopened = getattr(laudo, "reaberto_em", None) is not None
+    review_status = _enum_value_text(getattr(laudo, "status_revisao", None)) or ""
+    has_document_file = bool(_clean_text(getattr(laudo, "nome_arquivo_pdf", None)))
+    was_reopened = getattr(laudo, "reaberto_em", None) is not None
 
-        if was_reopened or review_status == StatusRevisao.REJEITADO.value:
-            case_lifecycle_status = "devolvido_para_correcao"
-        elif has_document_file:
-            case_lifecycle_status = "emitido"
-        elif review_status == StatusRevisao.APROVADO.value:
-            case_lifecycle_status = "aprovado"
-        elif review_status == StatusRevisao.AGUARDANDO.value:
-            case_lifecycle_status = "em_revisao_mesa" if reviewer_id else "aguardando_mesa"
-        elif int(getattr(laudo, "id", 0) or 0) > 0:
-            case_lifecycle_status = "laudo_em_coleta"
-        else:
-            case_lifecycle_status = "analise_livre"
+    if was_reopened or review_status == StatusRevisao.REJEITADO.value:
+        estado = "ajustes"
+    elif has_document_file or review_status == StatusRevisao.APROVADO.value:
+        estado = "aprovado"
+    elif review_status == StatusRevisao.AGUARDANDO.value:
+        estado = "aguardando"
+    elif int(getattr(laudo, "id", 0) or 0) > 0:
+        estado = "relatorio_ativo"
+    else:
+        estado = "sem_relatorio"
 
-        if case_lifecycle_status in {"aguardando_mesa", "em_revisao_mesa"}:
-            active_owner_role = "mesa"
-        elif case_lifecycle_status in {"aprovado", "emitido"}:
-            active_owner_role = "none"
-        else:
-            active_owner_role = "inspetor"
-
-    return {
-        "case_lifecycle_status": case_lifecycle_status,
-        "active_owner_role": active_owner_role,
-        "status_visual_label": build_case_status_visual_label(
-            lifecycle_status=case_lifecycle_status,
-            active_owner_role=active_owner_role,
-        ) or None,
-    }
+    return build_case_operational_fields_from_legacy(
+        laudo=laudo,
+        legacy_payload={
+            "estado": estado,
+            "laudo_id": int(getattr(laudo, "id", 0) or 0) or None,
+            "permite_reabrir": bool(was_reopened),
+            "status_card": estado,
+        },
+    )
 
 
 def build_public_verification_url(
@@ -343,6 +334,13 @@ def build_public_verification_payload(
         "case_lifecycle_status": case_status_fields["case_lifecycle_status"],
         "active_owner_role": case_status_fields["active_owner_role"],
         "status_visual_label": case_status_fields["status_visual_label"],
+        "case_operational_phase": str(case_status_fields.get("case_operational_phase") or "").strip() or None,
+        "case_operational_phase_label": str(case_status_fields.get("case_operational_phase_label") or "").strip() or None,
+        "case_operational_summary": str(case_status_fields.get("case_operational_summary") or "").strip() or None,
+        "review_phase": str(case_status_fields.get("review_phase") or "").strip() or None,
+        "review_phase_label": str(case_status_fields.get("review_phase_label") or "").strip() or None,
+        "next_action_label": str(case_status_fields.get("next_action_label") or "").strip() or None,
+        "next_action_summary": str(case_status_fields.get("next_action_summary") or "").strip() or None,
         "status_revisao": _enum_value_text(getattr(laudo, "status_revisao", None)),
         "status_conformidade": _enum_value_text(getattr(laudo, "status_conformidade", None)),
         "criado_em": getattr(laudo, "criado_em", None),

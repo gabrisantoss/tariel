@@ -88,6 +88,31 @@
                         <p>Preencha os dados principais. O primeiro responsavel da empresa recebe uma senha temporaria e cria a senha definitiva no primeiro login.</p>
                     </div>
 
+                    <section class="admin-map" aria-label="Presets comerciais sugeridos">
+                        <div class="setup-summary">
+                            <strong>Presets comerciais sugeridos</strong>
+                            <p>Use estes cenários como leitura rápida antes de escolher pacote e modelo operacional da empresa.</p>
+                        </div>
+                        <div class="admin-map-grid">
+                            <article class="admin-map-card" tabindex="0">
+                                <strong>Cliente com Inspetor</strong>
+                                <span>Operação de campo sem fila de Mesa, com fechamento interno do caso.</span>
+                            </article>
+                            <article class="admin-map-card" tabindex="0">
+                                <strong>Cliente com Inspetor + Mesa</strong>
+                                <span>Fluxo clássico com campo, revisão humana e emissão governada pela análise.</span>
+                            </article>
+                            <article class="admin-map-card" tabindex="0">
+                                <strong>Cliente com emissão premium</strong>
+                                <span>Tenant com documento oficial, verificação pública, histórico de emissão e branding mais forte.</span>
+                            </article>
+                            <article class="admin-map-card" tabindex="0">
+                                <strong>Cliente mobile principal</strong>
+                                <span>Uma pessoa concentra app, campo e continuidade web conforme o contrato permitir.</span>
+                            </article>
+                        </div>
+                    </section>
+
                     <form method="post" action="/admin/novo-cliente">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 

@@ -379,8 +379,23 @@
         };
     }
 
+    function mesaWidgetFallbackDevAtivo() {
+        const ambiente = String(window.TARIEL?.ambiente || "").trim().toLowerCase();
+        if (["dev", "development", "local"].includes(ambiente)) {
+            return true;
+        }
+        return !!window.TARIEL?.devInspectorToolSimulation;
+    }
+
+    function mesaWidgetAtuaComoAtalhoDeAba() {
+        return !mesaWidgetFallbackDevAtivo()
+            && el.painelMesaWidget?.dataset?.workspaceEmbedded !== "true";
+    }
+
     function renderizarResumoOperacionalMesa() {
         const resumo = obterResumoOperacionalMesa();
+        const modoDevFallback = mesaWidgetFallbackDevAtivo()
+            && el.painelMesaWidget?.dataset?.workspaceEmbedded !== "true";
 
         atualizarStatusMesa(resumo.status, resumo.descricao);
 
@@ -409,6 +424,12 @@
             el.mesaWidgetChipNaoLidas.textContent = visivel ? resumo.chipNaoLidas : "";
             el.mesaWidgetChipNaoLidas.className = "mesa-widget-chip nao-lidas";
         }
+        if (el.mesaWidgetModeBadge) {
+            el.mesaWidgetModeBadge.hidden = !modoDevFallback;
+        }
+        if (el.workspaceMesaCardMode) {
+            el.workspaceMesaCardMode.hidden = !modoDevFallback;
+        }
 
         atualizarContextoWorkspaceAtivo();
     }
@@ -433,7 +454,17 @@
         el.btnMesaWidgetToggle.disabled = capabilityBlocked;
         el.btnMesaWidgetToggle.setAttribute("aria-disabled", String(capabilityBlocked));
 
-        const partes = [aberto ? "Fechar canal da mesa avaliadora" : "Abrir canal da mesa avaliadora"];
+        const fallbackDev = mesaWidgetFallbackDevAtivo();
+        const atalhoAba = mesaWidgetAtuaComoAtalhoDeAba();
+        const partes = [
+            atalhoAba
+                ? "Abrir aba Mesa"
+                : (
+                    fallbackDev
+                        ? (aberto ? "Fechar atalho de desenvolvimento da mesa avaliadora" : "Abrir atalho de desenvolvimento da mesa avaliadora")
+                        : (aberto ? "Fechar canal da mesa avaliadora" : "Abrir canal da mesa avaliadora")
+                )
+        ];
         if (resumo?.titulo) {
             partes.push(resumo.titulo);
         }
@@ -453,7 +484,11 @@
         if (label) {
             label.textContent = capabilityBlocked
                 ? "Canal governado"
-                : (aberto ? "Fechar canal" : "Abrir canal");
+                : (
+                    atalhoAba
+                        ? "Abrir aba Mesa"
+                        : (fallbackDev ? (aberto ? "Fechar atalho" : "Atalho dev") : (aberto ? "Fechar canal" : "Abrir canal"))
+                );
         }
     }
 
@@ -492,6 +527,9 @@
         if (el.painelMesaWidget) {
             el.painelMesaWidget.dataset.widgetScope = permitido ? "workspace-inspection" : "hidden";
             el.painelMesaWidget.dataset.widgetState = estado.mesaWidgetAberto ? "open" : "closed";
+            el.painelMesaWidget.dataset.widgetMode = el.painelMesaWidget.dataset.workspaceEmbedded === "true"
+                ? "workspace-primary"
+                : (mesaWidgetFallbackDevAtivo() ? "dev-fallback" : "parallel");
             const ariaHidden = !permitido || !estado.mesaWidgetAberto || el.painelMesaWidget.hidden;
             el.painelMesaWidget.setAttribute("aria-hidden", String(ariaHidden));
         }
@@ -1163,6 +1201,17 @@
     }
 
     async function toggleMesaWidget() {
+        if (
+            mesaWidgetAtuaComoAtalhoDeAba() &&
+            typeof window.TarielInspectorState?.atualizarThreadWorkspace === "function"
+        ) {
+            window.TarielInspectorState.atualizarThreadWorkspace("mesa", {
+                persistirURL: true,
+                replaceURL: true,
+            });
+            return;
+        }
+
         if (estado.mesaWidgetAberto) {
             fecharMesaWidget();
             return;

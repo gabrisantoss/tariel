@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 import app.domains.admin.services as admin_services
@@ -1244,6 +1244,540 @@ def test_admin_cliente_bootstrap_mesa_expoe_status_visual_label_canonico(
     assert laudo_mesa["case_lifecycle_status"] == "emitido"
     assert laudo_mesa["active_owner_role"] == "none"
     assert laudo_mesa["status_visual_label"] == "Emitido / Responsavel: conclusao"
+
+
+def test_admin_cliente_bootstrap_documentos_expoe_biblioteca_documental_minima(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="spda",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.nome_arquivo_pdf = "laudo_spda_emitido.pdf"
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
+    assert resposta_documentos.status_code == 200
+    corpo = resposta_documentos.json()
+    assert "documentos" in corpo
+    assert corpo["documentos"]["summary"]["total_documents"] >= 1
+    item = next(item for item in corpo["documentos"]["items"] if int(item["laudo_id"]) == laudo_id)
+    assert item["document_type"] == "laudo"
+    assert item["document_type_label"] == "Inspeção SPDA"
+    assert item["pdf_present"] is True
+    assert item["verification_url"].endswith(str(item["codigo_hash"]))
+    assert item["hash_short"] == str(item["codigo_hash"])[-6:]
+    assert item["issue_status_label"]
+    assert item["document_visual_state"] in {"official", "draft", "in_review", "historical", "internal"}
+    assert item["document_visual_state_label"]
+    assert item["document_summary_card"]["hash"] == str(item["codigo_hash"])[-6:]
+    assert item["document_package_sections"]["counts"]["documento_oficial"] >= 1
+    assert any(step["key"] == "aprovado" for step in item["document_timeline"])
+
+
+def test_admin_cliente_bootstrap_documentos_agrega_art_pie_e_prontuario(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr10_prontuario",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.nome_arquivo_pdf = "prontuario_qgbt07.pdf"
+        laudo.catalog_family_label = "NR10 · Prontuario instalacoes eletricas"
+        laudo.dados_formulario = {
+            "documentacao_e_registros": {
+                "documentos_disponiveis": "PIE: PIE QGBT-07 atualizado. ART: ART 2026-00155. Diagrama: rev.04.",
+                "observacoes_documentais": "Prontuario eletrico consolidado para o painel QGBT-07.",
+                "prontuario": {
+                    "referencias_texto": "DOC_777 - prontuario_qgbt07.pdf",
+                    "observacao": "Prontuario revisado com rastreabilidade documental.",
+                },
+            }
+        }
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
+    assert resposta_documentos.status_code == 200
+    corpo = resposta_documentos.json()
+    summary = corpo["documentos"]["summary"]
+    item = next(item for item in corpo["documentos"]["items"] if int(item["laudo_id"]) == laudo_id)
+
+    assert summary["documents_with_art"] >= 1
+    assert summary["documents_with_pie"] >= 1
+    assert summary["documents_with_prontuario"] >= 1
+    assert any(int(doc["laudo_id"]) == laudo_id for doc in summary["with_art_items"])
+    assert any(int(doc["laudo_id"]) == laudo_id for doc in summary["with_pie_items"])
+    assert any(int(doc["laudo_id"]) == laudo_id for doc in summary["with_prontuario_items"])
+    assert item["document_signals"]["count"] >= 3
+    assert item["document_signals"]["present_labels"] == ["ART vinculada", "PIE", "Prontuário"]
+
+
+def test_admin_cliente_bootstrap_documentos_resume_status_operacional_nr35_para_wf(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_aprovado_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr35_linha_vida",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo_reprovado_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr35_linha_vida",
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+        laudo_pendente_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr35_linha_vida",
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+
+        laudo_aprovado = banco.get(Laudo, laudo_aprovado_id)
+        laudo_reprovado = banco.get(Laudo, laudo_reprovado_id)
+        laudo_pendente = banco.get(Laudo, laudo_pendente_id)
+        assert laudo_aprovado is not None
+        assert laudo_reprovado is not None
+        assert laudo_pendente is not None
+
+        laudo_aprovado.catalog_family_key = "nr35_inspecao_linha_de_vida"
+        laudo_aprovado.dados_formulario = {
+            "objeto_inspecao": {"tipo_linha_de_vida": "Vertical"},
+            "componentes_inspecionados": {
+                "fixacao_dos_pontos": {"condicao": "C"},
+                "condicao_cabo_aco": {"condicao": "C"},
+            },
+            "registros_fotograficos": [{"titulo": "Inicio"}, {"titulo": "Fim"}],
+            "conclusao": {
+                "status": "Aprovado",
+                "status_operacional": "liberado",
+                "proxima_inspecao_periodica": "Fevereiro de 2027",
+            },
+        }
+
+        laudo_reprovado.catalog_family_key = "nr35_inspecao_linha_de_vida"
+        laudo_reprovado.dados_formulario = {
+            "objeto_inspecao": {"tipo_linha_de_vida": "Horizontal"},
+            "componentes_inspecionados": {
+                "fixacao_dos_pontos": {"condicao": "NC"},
+                "condicao_cabo_aco": {"condicao": "NC"},
+                "condicao_esticador": {"condicao": "NA"},
+            },
+            "registros_fotograficos": [{"titulo": "Vista geral"}],
+            "conclusao": {
+                "status": "Reprovado",
+                "status_operacional": "bloqueio",
+                "acao_requerida": "corrigir_e_revalidar",
+                "proxima_inspecao_periodica": "Após correção",
+            },
+        }
+
+        laudo_pendente.catalog_family_key = "nr35_inspecao_linha_de_vida"
+        laudo_pendente.dados_formulario = {
+            "objeto_inspecao": {"tipo_linha_de_vida": "Horizontal"},
+            "componentes_inspecionados": {
+                "fixacao_dos_pontos": {"condicao": "NA"},
+                "condicao_cabo_aco": {"condicao": "NA"},
+            },
+            "conclusao": {
+                "status": "Pendente",
+                "status_operacional": "complementar_inspecao",
+                "proxima_inspecao_periodica": "Inspeção complementar",
+            },
+        }
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
+    assert resposta_documentos.status_code == 200
+    corpo = resposta_documentos.json()
+    summary = corpo["documentos"]["summary"]
+
+    assert summary["nr35_approved"] >= 1
+    assert summary["nr35_reproved"] >= 1
+    assert summary["nr35_pending"] >= 1
+
+    item_aprovado = next(item for item in corpo["documentos"]["items"] if int(item["laudo_id"]) == laudo_aprovado_id)
+    assert item_aprovado["nr35_summary"]["conclusion_status"] == "Aprovado"
+    assert item_aprovado["nr35_summary"]["operational_status"] == "liberado"
+    assert item_aprovado["nr35_summary"]["line_type"] == "Vertical"
+    assert item_aprovado["nr35_summary"]["component_counts"] == {"C": 2, "NC": 0, "NA": 0}
+    assert item_aprovado["nr35_summary"]["photo_count"] == 2
+
+    item_reprovado = next(item for item in corpo["documentos"]["items"] if int(item["laudo_id"]) == laudo_reprovado_id)
+    assert item_reprovado["nr35_summary"]["conclusion_status"] == "Reprovado"
+    assert item_reprovado["nr35_summary"]["operational_status"] == "bloqueio"
+    assert item_reprovado["nr35_summary"]["component_counts"] == {"C": 0, "NC": 2, "NA": 1}
+
+    item_pendente = next(item for item in corpo["documentos"]["items"] if int(item["laudo_id"]) == laudo_pendente_id)
+    assert item_pendente["nr35_summary"]["conclusion_status"] == "Pendente"
+    assert item_pendente["nr35_summary"]["operational_status"] == "complementar_inspecao"
+    assert item_pendente["nr35_summary"]["component_counts"] == {"C": 0, "NC": 0, "NA": 2}
+
+
+def test_admin_cliente_bootstrap_ativos_agrega_unidade_ativo_e_proxima_inspecao_para_wf(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr35_linha_vida",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.catalog_family_key = "nr35_inspecao_linha_de_vida"
+        laudo.dados_formulario = {
+            "informacoes_gerais": {
+                "unidade": "Moinho 03",
+            },
+            "identificacao": {
+                "localizacao": "Caixa de expedição 01 interna",
+                "objeto_principal": "Linha de vida interna",
+            },
+            "objeto_inspecao": {
+                "tipo_linha_de_vida": "Horizontal",
+            },
+            "documentacao_e_registros": {
+                "proxima_inspecao_planejada": "Abril de 2027",
+            },
+            "conclusao": {
+                "status": "Aprovado",
+                "status_operacional": "liberado",
+            },
+        }
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta_ativos = client.get("/cliente/api/bootstrap?surface=ativos")
+    assert resposta_ativos.status_code == 200
+    corpo = resposta_ativos.json()
+    assert "ativos" in corpo
+    summary = corpo["ativos"]["summary"]
+    item = next(item for item in corpo["ativos"]["items"] if int(item["laudo_id"]) == laudo_id)
+
+    assert summary["total_assets"] >= 1
+    assert summary["total_units"] >= 1
+    assert summary["healthy_assets"] >= 1
+    assert item["unit_label"] == "Moinho 03"
+    assert item["location_label"] == "Caixa de expedição 01 interna"
+    assert item["asset_label"] == "Linha de vida interna"
+    assert item["asset_type"] == "Horizontal"
+    assert item["next_due_at"] == "Abril de 2027"
+    assert item["health_status"] == "healthy"
+    assert item["service_keys"] == ["nr35"]
+
+
+def test_admin_cliente_bootstrap_servicos_agrega_carteira_contratada_para_wf(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_nr35_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr35_linha_vida",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo_spda_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="spda",
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+        laudo_pie_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr10_prontuario",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+
+        laudo_nr35 = banco.get(Laudo, laudo_nr35_id)
+        laudo_spda = banco.get(Laudo, laudo_spda_id)
+        laudo_pie = banco.get(Laudo, laudo_pie_id)
+        assert laudo_nr35 is not None
+        assert laudo_spda is not None
+        assert laudo_pie is not None
+
+        laudo_nr35.catalog_family_key = "nr35_inspecao_linha_de_vida"
+        laudo_nr35.nome_arquivo_pdf = "wf_nr35.pdf"
+        laudo_nr35.dados_formulario = {
+            "informacoes_gerais": {"unidade": "Planta A"},
+            "identificacao": {"objeto_principal": "Linha de vida superior"},
+            "documentacao_e_registros": {"proxima_inspecao_planejada": "2027-04-01"},
+            "conclusao": {"status": "Aprovado", "status_operacional": "liberado"},
+        }
+
+        laudo_spda.catalog_family_key = "spda_inspecao"
+        laudo_spda.dados_formulario = {
+            "informacoes_gerais": {"unidade": "Planta B"},
+            "documentacao_e_registros": {"proxima_inspecao_planejada": "2026-10-10"},
+            "conclusao": {"status": "Pendente", "status_operacional": "complementar_inspecao"},
+        }
+
+        laudo_pie.catalog_family_key = "nr10_pie_prontuario"
+        laudo_pie.nome_arquivo_pdf = "pie_qgbt.pdf"
+        laudo_pie.dados_formulario = {
+            "informacoes_gerais": {"unidade": "Planta A"},
+            "documentacao_e_registros": {
+                "documentos_disponiveis": "PIE consolidado e ART vinculada.",
+            },
+            "conclusao": {"status": "Aprovado", "status_operacional": "liberado"},
+        }
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta_servicos = client.get("/cliente/api/bootstrap?surface=servicos")
+    assert resposta_servicos.status_code == 200
+    corpo = resposta_servicos.json()
+    assert "servicos" in corpo
+    summary = corpo["servicos"]["summary"]
+    itens = corpo["servicos"]["items"]
+
+    assert summary["total_services"] >= 3
+    assert summary["attention_services"] >= 1
+    assert summary["healthy_services"] >= 1
+
+    item_nr35 = next(item for item in itens if item["service_key"] == "nr35")
+    assert item_nr35["label"] == "NR35"
+    assert item_nr35["assets_covered"] >= 1
+    assert item_nr35["units_covered"] >= 1
+    assert item_nr35["documents_ready"] >= 1
+
+    item_spda = next(item for item in itens if item["service_key"] == "spda")
+    assert item_spda["label"] == "SPDA"
+    assert item_spda["status"] == "attention"
+    assert item_spda["open_findings"] >= 1
+
+    item_pie = next(item for item in itens if item["service_key"] == "pie")
+    assert item_pie["label"] == "PIE"
+    assert item_pie["documents_total"] >= 1
+
+
+def test_admin_cliente_bootstrap_recorrencia_agrega_vencimentos_e_atrasos_para_wf(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    hoje = date.today()
+
+    with SessionLocal() as banco:
+        laudo_proximo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr35_linha_vida",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo_atrasado_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="spda",
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+        laudo_planejado_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr10_prontuario",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+
+        laudo_proximo = banco.get(Laudo, laudo_proximo_id)
+        laudo_atrasado = banco.get(Laudo, laudo_atrasado_id)
+        laudo_planejado = banco.get(Laudo, laudo_planejado_id)
+        assert laudo_proximo is not None
+        assert laudo_atrasado is not None
+        assert laudo_planejado is not None
+
+        laudo_proximo.catalog_family_key = "nr35_inspecao_linha_de_vida"
+        laudo_proximo.dados_formulario = {
+            "informacoes_gerais": {"unidade": "Planta A"},
+            "identificacao": {"objeto_principal": "Linha de vida superior"},
+            "documentacao_e_registros": {"proxima_inspecao_planejada": (hoje + timedelta(days=10)).isoformat()},
+            "conclusao": {"status": "Aprovado", "status_operacional": "liberado"},
+        }
+
+        laudo_atrasado.catalog_family_key = "spda_inspecao"
+        laudo_atrasado.dados_formulario = {
+            "informacoes_gerais": {"unidade": "Planta B"},
+            "identificacao": {"objeto_principal": "Malha SPDA 02"},
+            "documentacao_e_registros": {"proxima_inspecao_planejada": (hoje - timedelta(days=5)).isoformat()},
+            "conclusao": {"status": "Pendente", "status_operacional": "complementar_inspecao"},
+        }
+
+        laudo_planejado.catalog_family_key = "nr10_pie_prontuario"
+        laudo_planejado.dados_formulario = {
+            "informacoes_gerais": {"unidade": "Planta C"},
+            "identificacao": {"objeto_principal": "PIE QGBT-01"},
+            "documentacao_e_registros": {"proxima_inspecao_planejada": (hoje + timedelta(days=70)).isoformat()},
+            "conclusao": {"status": "Aprovado", "status_operacional": "liberado"},
+        }
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta = client.get("/cliente/api/bootstrap?surface=recorrencia")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert "recorrencia" in corpo
+    summary = corpo["recorrencia"]["summary"]
+    itens = corpo["recorrencia"]["items"]
+
+    assert summary["total_events"] >= 3
+    assert summary["next_30_days"] >= 1
+    assert summary["overdue"] >= 1
+    assert summary["scheduled"] >= 1
+
+    item_proximo = next(item for item in itens if int(item["laudo_id"]) == laudo_proximo_id)
+    assert item_proximo["status"] == "next_30_days"
+    assert item_proximo["status_label"] == "Próximos 30 dias"
+    assert item_proximo["plan_label"] == "Plano preventivo"
+
+    item_atrasado = next(item for item in itens if int(item["laudo_id"]) == laudo_atrasado_id)
+    assert item_atrasado["status"] == "overdue"
+    assert item_atrasado["status_label"] == "Atrasado"
+
+    item_planejado = next(item for item in itens if int(item["laudo_id"]) == laudo_planejado_id)
+    assert item_planejado["status"] == "scheduled"
+    assert item_planejado["action_label"] == "Programar reinspeção"
+
+
+def test_admin_cliente_bootstrap_expoe_onboarding_guiado_e_hints_por_superficie(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta = client.get("/cliente/api/bootstrap?surface=servicos")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    guided = corpo["guided_onboarding"]
+
+    assert guided["progress"]["total"] >= 1
+    step_keys = {item["key"] for item in guided["steps"]}
+    assert "primeiro_acesso" in step_keys
+    assert "primeiro_envio_mesa" in step_keys
+    assert guided["next_step"]["key"] in {"primeiro_acesso", "primeiro_laudo", "primeiro_envio_mesa", "documentos", "recorrencia"}
+    assert guided["surface_empty_hints"]["servicos"]["action_kind"] == "chat-section"
+    assert guided["surface_empty_hints"]["servicos"]["action_target"] == "form-chat-laudo"
+    assert "carteira" in guided["surface_empty_hints"]["servicos"]["title"].lower()
+
+
+def test_admin_cliente_bootstrap_expoe_pacote_contratado_e_observabilidade_executiva(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat_mesa_reviewer_services",
+            "case_visibility_mode": "case_list",
+            "case_action_mode": "case_actions",
+            "operating_model": "standard",
+        }
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="spda",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.nome_arquivo_pdf = "laudo_spda_emitido.pdf"
+        banco.add(
+            MensagemLaudo(
+                laudo_id=laudo_id,
+                remetente_id=ids["revisor_a"],
+                tipo=TipoMensagem.HUMANO_ENG.value,
+                conteudo="Pendência aberta para ajuste documental.",
+                lida=False,
+                custo_api_reais=Decimal("0.0000"),
+            )
+        )
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta = client.get("/cliente/api/bootstrap")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    pacote = corpo["tenant_commercial_overview"]
+    observability = corpo["operational_observability"]
+
+    assert pacote["package_label"] == "Chat Inspetor + Mesa + servicos no Inspetor"
+    assert pacote["mesa_contracted"] is True
+    assert pacote["official_issue_included"] is True
+    assert any(item["key"] == "cliente" for item in pacote["available_surfaces"])
+    assert observability["executive_metrics"]["issued"] >= 1
+    assert observability["executive_metrics"]["awaiting_mesa"] >= 0
+    assert observability["blocking_reason"]
+    assert any(item["kind"] in {"mesa", "documento", "recorrencia"} for item in observability["pending_center"])
+    assert [item["key"] for item in observability["operational_timeline"]] == [
+        "criado",
+        "enviado",
+        "comentado",
+        "devolvido",
+        "aprovado",
+        "emitido",
+        "reaberto",
+    ]
 
 
 def test_admin_cliente_exporta_diagnostico_e_registra_suporte(ambiente_critico) -> None:

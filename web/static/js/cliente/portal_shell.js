@@ -15,6 +15,10 @@
 
         const api = typeof helpers.api === "function" ? helpers.api : async () => null;
         const abrirSecaoAdmin = typeof helpers.abrirSecaoAdmin === "function" ? helpers.abrirSecaoAdmin : () => "overview";
+        const abrirSecaoServicos = typeof helpers.abrirSecaoServicos === "function" ? helpers.abrirSecaoServicos : () => "overview";
+        const abrirSecaoRecorrencia = typeof helpers.abrirSecaoRecorrencia === "function" ? helpers.abrirSecaoRecorrencia : () => "overview";
+        const abrirSecaoAtivos = typeof helpers.abrirSecaoAtivos === "function" ? helpers.abrirSecaoAtivos : () => "overview";
+        const abrirSecaoDocumentos = typeof helpers.abrirSecaoDocumentos === "function" ? helpers.abrirSecaoDocumentos : () => "overview";
         const abrirSecaoChat = typeof helpers.abrirSecaoChat === "function" ? helpers.abrirSecaoChat : () => "overview";
         const abrirSecaoMesa = typeof helpers.abrirSecaoMesa === "function" ? helpers.abrirSecaoMesa : () => "overview";
         const construirPrioridadesPortal = typeof helpers.construirPrioridadesPortal === "function" ? helpers.construirPrioridadesPortal : () => [];
@@ -29,7 +33,15 @@
         const persistirSelecao = typeof helpers.persistirSelecao === "function" ? helpers.persistirSelecao : () => null;
         const prioridadeEmpresa = typeof helpers.prioridadeEmpresa === "function" ? helpers.prioridadeEmpresa : () => ({ tone: "aprovado", badge: "", acao: "" });
         const renderAdmin = typeof helpers.renderAdmin === "function" ? helpers.renderAdmin : () => null;
+        const renderServicosLista = typeof helpers.renderServicosLista === "function" ? helpers.renderServicosLista : () => null;
+        const renderServicosResumo = typeof helpers.renderServicosResumo === "function" ? helpers.renderServicosResumo : () => null;
+        const renderRecorrenciaLista = typeof helpers.renderRecorrenciaLista === "function" ? helpers.renderRecorrenciaLista : () => null;
+        const renderRecorrenciaResumo = typeof helpers.renderRecorrenciaResumo === "function" ? helpers.renderRecorrenciaResumo : () => null;
+        const renderAtivosLista = typeof helpers.renderAtivosLista === "function" ? helpers.renderAtivosLista : () => null;
+        const renderAtivosResumo = typeof helpers.renderAtivosResumo === "function" ? helpers.renderAtivosResumo : () => null;
         const renderAvisosOperacionais = typeof helpers.renderAvisosOperacionais === "function" ? helpers.renderAvisosOperacionais : () => null;
+        const renderDocumentosLista = typeof helpers.renderDocumentosLista === "function" ? helpers.renderDocumentosLista : () => null;
+        const renderDocumentosResumo = typeof helpers.renderDocumentosResumo === "function" ? helpers.renderDocumentosResumo : () => null;
         const renderChatCapacidade = typeof helpers.renderChatCapacidade === "function" ? helpers.renderChatCapacidade : () => null;
         const renderChatContext = typeof helpers.renderChatContext === "function" ? helpers.renderChatContext : () => null;
         const renderChatList = typeof helpers.renderChatList === "function" ? helpers.renderChatList : () => null;
@@ -56,7 +68,7 @@
         const storageMesaKey = storageKeys.mesa || "tariel.cliente.mesa.laudo";
 
         function normalizarSurface(surface) {
-            return surface === "chat" || surface === "mesa" ? surface : "admin";
+            return ["servicos", "recorrencia", "ativos", "documentos", "chat", "mesa"].includes(surface) ? surface : "admin";
         }
 
         function surfaceJaCarregada(surface) {
@@ -89,6 +101,30 @@
                     ...payload.chat,
                 };
             }
+            if (payload?.servicos) {
+                proximo.servicos = {
+                    ...(atual.servicos || {}),
+                    ...payload.servicos,
+                };
+            }
+            if (payload?.recorrencia) {
+                proximo.recorrencia = {
+                    ...(atual.recorrencia || {}),
+                    ...payload.recorrencia,
+                };
+            }
+            if (payload?.ativos) {
+                proximo.ativos = {
+                    ...(atual.ativos || {}),
+                    ...payload.ativos,
+                };
+            }
+            if (payload?.documentos) {
+                proximo.documentos = {
+                    ...(atual.documentos || {}),
+                    ...payload.documentos,
+                };
+            }
             if (payload?.mesa) {
                 proximo.mesa = {
                     ...(atual.mesa || {}),
@@ -105,6 +141,10 @@
             const tenantAdmin = bootstrap.tenant_admin_projection?.payload || null;
 
             const totalUsuarios = Number(tenantAdmin?.user_summary?.total_users || bootstrap.usuarios?.length || 0);
+            const totalServicos = Number(bootstrap.servicos?.summary?.total_services || bootstrap.servicos?.items?.length || 0);
+            const totalRecorrencia = Number(bootstrap.recorrencia?.summary?.total_events || bootstrap.recorrencia?.items?.length || 0);
+            const totalAtivos = Number(bootstrap.ativos?.summary?.total_assets || bootstrap.ativos?.items?.length || 0);
+            const totalDocumentos = Number(bootstrap.documentos?.summary?.total_documents || bootstrap.documentos?.items?.length || 0);
             const totalLaudosChat = Number(tenantAdmin?.case_counts?.total_cases || bootstrap.chat?.laudos?.length || 0);
             const totalMesaQuente = Number(
                 (tenantAdmin?.review_counts?.pending_review || 0)
@@ -114,6 +154,10 @@
             ).length;
 
             $("tab-admin-count").textContent = formatarInteiro(totalUsuarios);
+            $("tab-servicos-count").textContent = formatarInteiro(totalServicos);
+            $("tab-recorrencia-count").textContent = formatarInteiro(totalRecorrencia);
+            $("tab-ativos-count").textContent = formatarInteiro(totalAtivos);
+            $("tab-documentos-count").textContent = formatarInteiro(totalDocumentos);
             $("tab-chat-count").textContent = formatarInteiro(totalLaudosChat);
             $("tab-mesa-count").textContent = formatarInteiro(totalMesaQuente || bootstrap.mesa?.laudos?.length || 0);
         }
@@ -340,6 +384,34 @@
             abrirSecaoAdmin(state.ui?.adminSection || state.ui?.sections?.admin || "overview", { ensureRendered: false, syncUrl: false });
         }
 
+        function renderServicosSurface() {
+            if (!surfaceJaCarregada("servicos")) return;
+            renderServicosResumo();
+            renderServicosLista();
+            abrirSecaoServicos(state.ui?.servicosSection || state.ui?.sections?.servicos || "overview", { syncUrl: false });
+        }
+
+        function renderRecorrenciaSurface() {
+            if (!surfaceJaCarregada("recorrencia")) return;
+            renderRecorrenciaResumo();
+            renderRecorrenciaLista();
+            abrirSecaoRecorrencia(state.ui?.recorrenciaSection || state.ui?.sections?.recorrencia || "overview", { syncUrl: false });
+        }
+
+        function renderAtivosSurface() {
+            if (!surfaceJaCarregada("ativos")) return;
+            renderAtivosResumo();
+            renderAtivosLista();
+            abrirSecaoAtivos(state.ui?.ativosSection || state.ui?.sections?.ativos || "overview", { syncUrl: false });
+        }
+
+        function renderDocumentosSurface() {
+            if (!surfaceJaCarregada("documentos")) return;
+            renderDocumentosResumo();
+            renderDocumentosLista();
+            abrirSecaoDocumentos(state.ui?.documentosSection || state.ui?.sections?.documentos || "overview", { syncUrl: false });
+        }
+
         function renderChatSurface() {
             if (!surfaceJaCarregada("chat")) return;
             renderChatResumo();
@@ -370,6 +442,22 @@
             const surfaceAtiva = normalizarSurface(surface);
             if (surfaceAtiva === "admin") {
                 renderAdminSurface();
+                return;
+            }
+            if (surfaceAtiva === "servicos") {
+                renderServicosSurface();
+                return;
+            }
+            if (surfaceAtiva === "recorrencia") {
+                renderRecorrenciaSurface();
+                return;
+            }
+            if (surfaceAtiva === "ativos") {
+                renderAtivosSurface();
+                return;
+            }
+            if (surfaceAtiva === "documentos") {
+                renderDocumentosSurface();
                 return;
             }
             if (surfaceAtiva === "chat") {

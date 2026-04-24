@@ -1232,6 +1232,22 @@ body.pagina-chat-dashboard-v2 .workspace-channel-tab[aria-disabled="true"] {
     box-shadow: none;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-channel-tab__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    min-height: 18px;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(31, 94, 142, 0.14);
+    color: var(--vf-accent) !important;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+}
+
 body.pagina-chat-dashboard-v2 .workspace-channel-note {
     margin: 0;
     max-width: 56ch;
@@ -1319,6 +1335,65 @@ body.pagina-chat-dashboard-v2 .workspace-mesa-sidebar {
     min-width: 0;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-mesa-events {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-operational-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-event-card {
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-event-card__eyebrow {
+    color: var(--vf-text-soft) !important;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-event-card strong {
+    color: var(--vf-text) !important;
+    font-size: 16px;
+    line-height: 1.35;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-event-card p {
+    margin: 0;
+    color: var(--vf-text-muted) !important;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-panel--empty {
+    border-style: dashed;
+    background: rgba(247, 250, 252, 0.96);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-empty-checklist {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--vf-text-muted) !important;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-empty-checklist li + li {
+    margin-top: 8px;
+}
+
 body.pagina-chat-dashboard-v2 .workspace-mesa-panel {
     display: grid;
     gap: 12px;
@@ -1358,6 +1433,59 @@ body.pagina-chat-dashboard-v2 .workspace-mesa-panel__description {
     color: var(--vf-text-muted) !important;
     font-size: 13px;
     line-height: 1.55;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-panel__meta {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(241, 245, 249, 0.84);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-panel__meta-label {
+    color: var(--vf-text-soft) !important;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-panel__meta strong {
+    color: var(--vf-text) !important;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-operational-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-operational-list__item {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(248, 250, 252, 0.92);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-operational-list__item strong {
+    color: var(--vf-text) !important;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-mesa-operational-list__item span,
+body.pagina-chat-dashboard-v2 .workspace-mesa-operational-empty {
+    color: var(--vf-text-muted) !important;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 body.pagina-chat-dashboard-v2 .workspace-mesa-widget-host {
@@ -1493,6 +1621,14 @@ body.pagina-chat-dashboard-v2 .painel-mesa-widget--workspace .rodape-mesa-widget
     }
 
     body.pagina-chat-dashboard-v2 .workspace-mesa-content {
+        grid-template-columns: 1fr;
+    }
+
+    body.pagina-chat-dashboard-v2 .workspace-mesa-events {
+        grid-template-columns: 1fr;
+    }
+
+    body.pagina-chat-dashboard-v2 .workspace-mesa-operational-grid {
         grid-template-columns: 1fr;
     }
 

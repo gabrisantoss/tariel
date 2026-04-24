@@ -91,6 +91,105 @@ function buildHistorySignalCounts(items: readonly HistoryDrawerPanelItem[]) {
   );
 }
 
+function buildHistoryResumeSuggestion(
+  items: readonly HistoryDrawerPanelItem[],
+): {
+  title: string;
+  detail: string;
+  emphasis: string;
+} | null {
+  if (!items.length) {
+    return null;
+  }
+
+  const pick =
+    items.find((item) => item.official_issue_summary?.primary_pdf_diverged) ||
+    items.find((item) => {
+      const summary = buildReportPackDraftSummary(item.report_pack_draft);
+      return Boolean(summary?.autonomyReady || summary?.readyForStructuredForm);
+    }) ||
+    items.find((item) => {
+      const lifecycleStatus = resolverCaseLifecycleStatus({
+        card: {
+          ...item,
+          tipo_template: item.tipo_template || undefined,
+        },
+      });
+      return (
+        lifecycleStatus === "aguardando_mesa" ||
+        lifecycleStatus === "em_revisao_mesa" ||
+        lifecycleStatus === "devolvido_para_correcao"
+      );
+    }) ||
+    items[0];
+
+  const reportPackSummary = buildReportPackDraftSummary(pick.report_pack_draft);
+  const lifecycleStatus = resolverCaseLifecycleStatus({
+    card: {
+      ...pick,
+      tipo_template: pick.tipo_template || undefined,
+    },
+  });
+  const inspectionContext =
+    reportPackSummary?.inspectionContextLabel?.trim() || "";
+  const governanceDetail = pick.official_issue_summary?.detail?.trim() || "";
+
+  if (pick.official_issue_summary?.primary_pdf_diverged) {
+    return {
+      title: pick.titulo || "Documento com reemissão pendente",
+      detail:
+        governanceDetail ||
+        "O PDF oficial atual divergiu da última emissão congelada. Retome este caso para reemitir com rastreabilidade.",
+      emphasis: "Reemitir documento",
+    };
+  }
+
+  if (
+    reportPackSummary?.autonomyReady ||
+    reportPackSummary?.readyForStructuredForm
+  ) {
+    return {
+      title: pick.titulo || "Caso pronto para validar",
+      detail:
+        inspectionContext ||
+        "O pré-laudo já atingiu a base mínima para seguir em Finalizar e passar pelo gate de qualidade.",
+      emphasis: "Abrir Finalizar",
+    };
+  }
+
+  if (
+    lifecycleStatus === "aguardando_mesa" ||
+    lifecycleStatus === "em_revisao_mesa"
+  ) {
+    return {
+      title: pick.titulo || "Caso em revisão",
+      detail:
+        governanceDetail ||
+        "A revisão humana já foi aberta. Use a aba Mesa ou a central de atividade para acompanhar o retorno.",
+      emphasis: "Acompanhar mesa",
+    };
+  }
+
+  if (lifecycleStatus === "devolvido_para_correcao") {
+    return {
+      title: pick.titulo || "Caso devolvido",
+      detail:
+        governanceDetail ||
+        "Há pendências de correção registradas. Retome a coleta no chat antes de tentar finalizar novamente.",
+      emphasis: "Corrigir no chat",
+    };
+  }
+
+  return {
+    title: pick.titulo || "Retomar operação",
+    detail:
+      inspectionContext ||
+      pick.preview ||
+      "Continue a coleta técnica deste caso a partir do último contexto registrado.",
+    emphasis: "Retomar coleta",
+  };
+}
+
 function buildHistorySummaryText(
   items: readonly HistoryDrawerPanelItem[],
   buscaHistorico: string,
@@ -164,6 +263,9 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
   );
   const totalHistorico = totalVisiveis + conversasOcultasTotal;
   const exibirBusca = totalHistorico > 0 || Boolean(buscaHistorico.trim());
+  const resumeSuggestion = buscaHistorico.trim()
+    ? null
+    : buildHistoryResumeSuggestion(itensVisiveis);
 
   return (
     <Animated.View
@@ -297,6 +399,31 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
             >
               {signals.guided} guiados · {signals.chatLivre} em chat livre
             </Text>
+          ) : null}
+          {resumeSuggestion ? (
+            <View
+              style={styles.historyResumeCard}
+              testID="history-resume-suggestion-card"
+            >
+              <View style={styles.historyResumeHeader}>
+                <View style={styles.historyResumeCopy}>
+                  <Text style={styles.historyResumeEyebrow}>
+                    Retomada sugerida
+                  </Text>
+                  <Text style={styles.historyResumeTitle}>
+                    {resumeSuggestion.title}
+                  </Text>
+                </View>
+                <View style={styles.historyResumeEmphasisPill}>
+                  <Text style={styles.historyResumeEmphasisText}>
+                    {resumeSuggestion.emphasis}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.historyResumeDetail}>
+                {resumeSuggestion.detail}
+              </Text>
+            </View>
           ) : null}
         </View>
       ) : null}

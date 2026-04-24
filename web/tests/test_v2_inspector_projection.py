@@ -81,6 +81,10 @@ def test_shape_da_projecao_canonica_do_inspetor() -> None:
     assert dumped["payload"]["case_lifecycle_status"] == "aguardando_mesa"
     assert dumped["payload"]["case_workflow_mode"] == "laudo_com_mesa"
     assert dumped["payload"]["active_owner_role"] == "mesa"
+    assert dumped["payload"]["case_operational_phase"] == "decision_ready"
+    assert dumped["payload"]["case_operational_phase_label"] == "Decisão disponível"
+    assert dumped["payload"]["review_phase"] == "decision_ready"
+    assert dumped["payload"]["next_action_label"] == "Aprovar ou devolver"
     assert dumped["payload"]["allowed_next_lifecycle_statuses"] == [
         "em_revisao_mesa",
         "devolvido_para_correcao",
@@ -174,7 +178,15 @@ def test_adapter_da_projecao_reconstroi_payload_legado() -> None:
 
     assert adapted.compatible is True
     assert adapted.divergences == []
-    assert adapted.payload == legacy_payload
+    assert adapted.payload["estado"] == legacy_payload["estado"]
+    assert adapted.payload["laudo_id"] == legacy_payload["laudo_id"]
+    assert adapted.payload["case_lifecycle_status"] == legacy_payload["case_lifecycle_status"]
+    assert adapted.payload["case_workflow_mode"] == legacy_payload["case_workflow_mode"]
+    assert adapted.payload["active_owner_role"] == legacy_payload["active_owner_role"]
+    assert adapted.payload["case_operational_phase"] == "field_collection"
+    assert adapted.payload["case_operational_phase_label"] == "Campo em coleta"
+    assert adapted.payload["review_phase"] == "waiting_field_return"
+    assert adapted.payload["next_action_label"] == "Aguardar reenvio do inspetor"
 
 
 def test_case_core_expande_lifecycle_canonico_sem_quebrar_case_status() -> None:

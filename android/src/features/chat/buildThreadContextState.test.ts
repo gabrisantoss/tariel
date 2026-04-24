@@ -877,12 +877,28 @@ describe("buildThreadContextState", () => {
           value: "Mesa obrigatória",
         }),
         expect.objectContaining({
+          key: "current-owner",
+          value: "Inspetor",
+        }),
+        expect.objectContaining({
           key: "next-step",
           value: "Corrigir e revisar",
         }),
         expect.objectContaining({
+          key: "expected-decision",
+          value: "Parecer da mesa",
+        }),
+        expect.objectContaining({
+          key: "suggested-route",
+          value: "Abrir mesa",
+        }),
+        expect.objectContaining({
           key: "blockers",
           value: "1 bloqueio documental · 2 pendências do pré-laudo",
+        }),
+        expect.objectContaining({
+          key: "blocking-reason",
+          value: "Pendências do caso",
         }),
       ]),
     );

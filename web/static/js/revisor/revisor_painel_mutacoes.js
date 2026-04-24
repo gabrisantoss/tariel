@@ -119,7 +119,10 @@
                     limparAnexoResposta();
                     await carregarLaudo(laudoId, { forcar: true });
                 }
-                showStatus("Mensagem enviada para o inspetor.", "send");
+                showStatus(
+                    respostaPayload?.next_action_summary || "Mensagem enviada para o inspetor.",
+                    "send"
+                );
             } catch (erro) {
                 showStatus("Erro ao enviar mensagem.", "error");
                 console.error("[Tariel] Falha ao responder:", erro);

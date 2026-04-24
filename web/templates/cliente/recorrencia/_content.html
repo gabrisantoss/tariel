@@ -1,0 +1,111 @@
+<section id="panel-recorrencia" class="panel panel--recorrencia{% if (cliente_tab_inicial | default('admin')) == 'recorrencia' %} active{% endif %}">
+    {% set recorrencia_secao_inicial = cliente_recorrencia_section_inicial | default('overview') %}
+    <div class="section-intro section-intro--surface">
+        <div>
+            <h2>Agenda de recorrência</h2>
+            <p>Acompanhe próximos vencimentos, atrasos e o plano preventivo ativo por empresa.</p>
+        </div>
+    </div>
+
+    <div
+        class="surface-nav surface-nav--recorrencia"
+        data-surface-nav="recorrencia"
+        data-surface-active-section="{{ recorrencia_secao_inicial | e }}"
+    >
+        <div class="surface-nav__intro">
+            <span class="surface-nav__eyebrow">Agenda operacional</span>
+            <strong>Reinspeções e vencimentos</strong>
+            <p>O cliente vê o que vence primeiro e o que já ficou para trás.</p>
+        </div>
+        <div id="recorrencia-section-summary" class="surface-nav__status" aria-live="polite">
+            <span class="surface-nav__status-label">Seção ativa</span>
+            <strong id="recorrencia-section-summary-title">Visão geral da agenda</strong>
+            <span id="recorrencia-section-summary-meta">Próximos 30 dias, atrasados e plano preventivo no mesmo painel.</span>
+        </div>
+
+        <div class="surface-tabs" role="tablist" aria-label="Seções da agenda de recorrência">
+            <a
+                href="{{ cliente_surface_routes.recorrencia | default('/cliente/recorrencia') | e }}?sec=overview"
+                class="surface-tab{% if recorrencia_secao_inicial == 'overview' %} is-active{% endif %}"
+                id="recorrencia-section-tab-overview"
+                data-recorrencia-section-tab="overview"
+                role="tab"
+                aria-selected="{{ 'true' if recorrencia_secao_inicial == 'overview' else 'false' }}"
+                aria-current="{{ 'page' if recorrencia_secao_inicial == 'overview' else 'false' }}"
+                tabindex="{{ '0' if recorrencia_secao_inicial == 'overview' else '-1' }}"
+            >
+                <span class="surface-tab__label">Visão geral</span>
+                <span class="surface-tab__meta">Agenda preventiva</span>
+                <span class="surface-tab__footer">
+                    <span id="recorrencia-section-count-overview" class="surface-tab__count">eventos no tenant</span>
+                </span>
+            </a>
+        </div>
+    </div>
+
+    <div class="surface-stage-panels">
+        <section
+            id="recorrencia-overview"
+            class="surface-stage surface-stage--recorrencia"
+            data-recorrencia-panel="overview"
+            {% if recorrencia_secao_inicial != 'overview' %}hidden{% endif %}
+        >
+            <div class="surface-stage__grid surface-stage__grid--recorrencia">
+                <article class="surface-card">
+                    <div class="surface-card__header">
+                        <div>
+                            <span class="surface-card__eyebrow">Resumo</span>
+                            <h3>Agenda preventiva</h3>
+                        </div>
+                    </div>
+                    <div id="recorrencia-resumo-geral" class="surface-metric-grid" aria-live="polite">
+                        <div class="metric-card">
+                            <span class="metric-card__label">Eventos mapeados</span>
+                            <strong id="recorrencia-total">0</strong>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-card__label">Próximos 30 dias</span>
+                            <strong id="recorrencia-proximos-30">0</strong>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-card__label">Atrasados</span>
+                            <strong id="recorrencia-atrasados">0</strong>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-card__label">Plano preventivo</span>
+                            <strong id="recorrencia-planejados">0</strong>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="surface-card">
+                    <div class="surface-card__header">
+                        <div>
+                            <span class="surface-card__eyebrow">Leitura executiva</span>
+                            <h3>Próxima ação</h3>
+                        </div>
+                    </div>
+                    <div id="recorrencia-alerta-principal" class="empty-state">
+                        <strong>Nenhum vencimento mapeado.</strong>
+                        <p>Os prazos aparecerão aqui conforme os ativos do tenant forem consolidando próximas inspeções.</p>
+                    </div>
+                </article>
+            </div>
+
+            <article class="surface-card">
+                <div class="surface-card__header">
+                    <div>
+                        <span class="surface-card__eyebrow">Agenda</span>
+                        <h3>Próximos 30 dias, atrasados e plano preventivo</h3>
+                    </div>
+                </div>
+                <div id="agenda-recorrencia-lista" class="recorrencia-lista" aria-live="polite">
+                    <div class="empty-state">
+                        <strong>Sem eventos até agora.</strong>
+                        <p>Quando os ativos tiverem vencimentos planejados, a agenda aparecerá aqui.</p>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </div>
+</section>

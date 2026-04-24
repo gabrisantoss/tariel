@@ -297,7 +297,7 @@
 
         <section class="technical-record-card technical-record-card--mesa">
             <div class="technical-record-card__header">
-                <h3>Falar com a mesa</h3>
+                <h3>Mesa</h3>
                 <div class="technical-record-card__header-meta">
                     <button
                         type="button"
@@ -307,7 +307,7 @@
                         aria-expanded="false"
                     >
                         <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
-                        <span class="label-btn-mesa-widget" data-mesa-toggle-label>Abrir canal</span>
+                        <span class="label-btn-mesa-widget" data-mesa-toggle-label>Abrir aba Mesa</span>
                     </button>
                     <button type="button" class="workspace-rail-toggle" data-rail-toggle="mesa" aria-expanded="false">
                         <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
@@ -315,8 +315,11 @@
                 </div>
             </div>
             <div class="workspace-rail-card__body" data-rail-body="mesa" hidden>
-                <span class="workspace-rail-card__eyebrow">Validação externa</span>
-                <p class="workspace-rail-card__description" id="workspace-mesa-card-text">Envie para revisão quando terminar a coleta principal.</p>
+                <span class="workspace-rail-card__eyebrow">Canal principal na aba Mesa</span>
+                <p class="workspace-rail-card__description" id="workspace-mesa-card-text">Use a aba <strong>Mesa</strong> para acompanhar revisão, pendências e respostas institucionais. Este botão só vira canal paralelo em <strong>dev</strong>.</p>
+                <p id="workspace-mesa-card-mode" class="workspace-rail-card__description workspace-rail-card__description--mesa-dev" hidden>
+                    Em desenvolvimento, este botão permanece como atalho paralelo. No fluxo principal, prefira a aba <strong>Mesa</strong>.
+                </p>
 
                 <div class="workspace-mesa-card__chips">
                     <span id="workspace-mesa-card-status" class="workspace-mesa-card-chip">Canal disponível</span>

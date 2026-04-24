@@ -108,6 +108,8 @@ def test_build_official_issue_package_resume_anexos_e_signatarios(ambiente_criti
     assert anexo_pack["delivery_manifest"]["ready_for_issue"] is True
     assert "documentos/laudo_nr13.pdf" in anexo_pack["delivery_manifest"]["present_archive_paths"]
     assert emissao_oficial["delivery_manifest"]["public_payload_mode"] == "human_validated_pdf"
+    assert emissao_oficial["delivery_manifest"]["document_visual_state"] in {"official", "draft", "in_review", "historical", "internal"}
+    assert emissao_oficial["delivery_manifest"]["document_sections"]["counts"]["documento_oficial"] >= 1
     trail_keys = [item["event_key"] for item in emissao_oficial["audit_trail"]]
     assert trail_keys == [
         "review_approval",
@@ -559,6 +561,12 @@ def test_emitir_oficialmente_transacional_congela_bundle_e_reaproveita_registro(
             assert registro.manifest_json["catalog_binding_trace"]["tenant_release_status"] == "active"
             assert registro.manifest_json["case_status"] == "approved"
             assert registro.manifest_json["active_owner_role"] == "none"
+            assert registro.manifest_json["case_operational_phase"] == "issued"
+            assert registro.manifest_json["case_operational_phase_label"] == "Emissão concluída"
+            assert registro.manifest_json["review_phase"] == "decision_closed"
+            assert registro.manifest_json["next_action_label"] == "Aguardar emissão ou reabertura"
+            assert registro.manifest_json["document_visual_state"] in {"official", "draft", "in_review", "historical", "internal"}
+            assert registro.manifest_json["document_sections"]["counts"]["documento_oficial"] >= 1
 
             segunda = emitir_oficialmente_transacional(
                 banco,

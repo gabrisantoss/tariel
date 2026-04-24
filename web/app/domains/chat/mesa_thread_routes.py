@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.domains.chat.app_context import logger
 from app.domains.chat.core_helpers import resposta_json_ok
 from app.domains.chat.laudo_access_helpers import obter_laudo_do_inspetor
+from app.domains.chat.laudo_state_helpers import build_case_runtime_legacy_payload
 from app.domains.chat.mesa_common import (
     _carregar_thread_mesa_mobile_estado,
     _construir_contexto_canonico_mobile_inspetor,
@@ -107,43 +108,14 @@ async def listar_mensagens_mesa_laudo(
                 has_active_report=True,
             )
 
-        laudo_card = (
-            payload_legado.get("laudo_card")
-            if isinstance(payload_legado.get("laudo_card"), dict)
-            else {}
+        legacy_payload = build_case_runtime_legacy_payload(
+            laudo=laudo,
+            legacy_public_state=payload_legado.get("estado"),
+            allows_reopen=payload_legado.get("permite_reabrir"),
+            has_interaction=bool(mensagens_resumo),
+            laudo_card=payload_legado.get("laudo_card"),
+            base_payload=payload_legado,
         )
-        legacy_payload = {
-            "estado": str(payload_legado.get("estado") or "sem_relatorio"),
-            "laudo_id": int(laudo.id),
-            "status_card": laudo_card.get("status_card"),
-            "permite_reabrir": bool(payload_legado.get("permite_reabrir")),
-            "tem_interacao": bool(mensagens_resumo),
-            "laudo_card": payload_legado.get("laudo_card"),
-            "case_lifecycle_status": (
-                payload_legado.get("case_lifecycle_status")
-                or laudo_card.get("case_lifecycle_status")
-            ),
-            "case_workflow_mode": (
-                payload_legado.get("case_workflow_mode")
-                or laudo_card.get("case_workflow_mode")
-            ),
-            "active_owner_role": (
-                payload_legado.get("active_owner_role")
-                or laudo_card.get("active_owner_role")
-            ),
-            "allowed_next_lifecycle_statuses": (
-                payload_legado.get("allowed_next_lifecycle_statuses")
-                or laudo_card.get("allowed_next_lifecycle_statuses")
-            ),
-            "allowed_lifecycle_transitions": (
-                payload_legado.get("allowed_lifecycle_transitions")
-                or laudo_card.get("allowed_lifecycle_transitions")
-            ),
-            "allowed_surface_actions": (
-                payload_legado.get("allowed_surface_actions")
-                or laudo_card.get("allowed_surface_actions")
-            ),
-        }
         source_channel = _resolver_source_channel(
             request,
             mobile_channel="android_mesa_thread",

@@ -3,11 +3,15 @@ services:
     name: tariel-web
     runtime: python
     rootDir: web
-    plan: free
+    plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: true
+    disk:
+      name: tariel-web-uploads
+      mountPath: /opt/render/project/src/web/static/uploads
+      sizeGB: 5
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.3
@@ -57,13 +61,13 @@ services:
       - key: DB_POOL_RECYCLE
         value: "300"
       - key: PASTA_UPLOADS_PERFIS
-        value: static/uploads/perfis
+        value: /opt/render/project/src/web/static/uploads/perfis
       - key: PASTA_ANEXOS_MESA
-        value: static/uploads/mesa_anexos
+        value: /opt/render/project/src/web/static/uploads/mesa_anexos
       - key: PASTA_APRENDIZADOS_VISUAIS_IA
-        value: static/uploads/aprendizados_ia
+        value: /opt/render/project/src/web/static/uploads/aprendizados_ia
       - key: TARIEL_UPLOADS_STORAGE_MODE
-        value: local_fs
+        value: persistent_disk
       - key: TARIEL_UPLOADS_PROFILE_RETENTION_DAYS
         value: "365"
       - key: TARIEL_UPLOADS_MESA_RETENTION_DAYS
@@ -79,9 +83,9 @@ services:
       - key: TARIEL_UPLOADS_CLEANUP_MAX_DELETIONS_PER_RUN
         value: "200"
       - key: TARIEL_UPLOADS_BACKUP_REQUIRED
-        value: "0"
+        value: "1"
       - key: TARIEL_UPLOADS_RESTORE_DRILL_REQUIRED
-        value: "0"
+        value: "1"
       - key: SESSAO_FAIL_CLOSED_ON_DB_ERROR
         value: "1"
       - key: CHAVE_SECRETA_APP

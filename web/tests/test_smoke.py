@@ -310,6 +310,21 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'data-tab="historico"' in workspace_toolbar_html
     assert 'data-tab="anexos"' in workspace_toolbar_html
     assert 'data-tab="mesa"' in workspace_toolbar_html
+    assert 'id="workspace-tab-badge-mesa"' in workspace_toolbar_html
+    assert "canal dedicado da mesa avaliadora" in workspace_mesa_html
+    assert 'id="workspace-channel-badge-mesa"' in workspace_mesa_html
+    assert 'id="workspace-mesa-empty-state"' in workspace_mesa_html
+    assert 'id="workspace-mesa-event-comment-title"' in workspace_mesa_html
+    assert 'id="workspace-mesa-event-pendency-title"' in workspace_mesa_html
+    assert 'id="workspace-mesa-event-decision-title"' in workspace_mesa_html
+    assert 'id="workspace-mesa-pending-title"' in workspace_mesa_html
+    assert 'id="workspace-mesa-pending-list"' in workspace_mesa_html
+    assert 'id="workspace-mesa-attachments-title"' in workspace_mesa_html
+    assert 'id="workspace-mesa-attachments-list"' in workspace_mesa_html
+    assert 'id="workspace-mesa-card-mode"' in workspace_rail_html
+    assert "Canal principal na aba Mesa" in workspace_rail_html
+    assert "Use a aba <strong>Mesa</strong>" in workspace_rail_html
+    assert 'id="mesa-widget-mode-badge"' in mesa_widget_html
     assert "thread-breadcrumb" not in workspace_toolbar_html
     assert 'aria-label="Ferramentas do laudo"' in workspace_rail_html
     assert 'data-rail-tool-action="templates"' in workspace_rail_html
@@ -318,6 +333,36 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'data-rail-tool-action="official_pdf"' in workspace_rail_html
     assert 'data-rail-tool-action="technical_package"' in workspace_rail_html
     assert "preparar-emissao?tool=pdf" in ui_bindings_js
+    assert "mesaCanalParaleloLiberadoNoAmbiente" in (
+        raiz / "static" / "js" / "inspetor" / "workspace_runtime_screen.js"
+    ).read_text(encoding="utf-8")
+    assert "mesaCanalParaleloLiberadoNoAmbiente" in (
+        raiz / "static" / "js" / "inspetor" / "workspace_screen.js"
+    ).read_text(encoding="utf-8")
+    assert "mesaCanalParaleloLiberadoNoAmbiente" in (
+        raiz / "static" / "js" / "chat" / "chat_painel_mesa.js"
+    ).read_text(encoding="utf-8")
+    assert "mesaWidgetFallbackDevAtivo" in (
+        raiz / "static" / "js" / "inspetor" / "mesa_widget.js"
+    ).read_text(encoding="utf-8")
+    assert "workspaceTabBadgeMesa" in workspace_page_elements_js
+    assert "workspaceMesaEmptyState" in workspace_page_elements_js
+    assert "workspaceMesaEventDecisionTitle" in workspace_page_elements_js
+    assert "workspaceMesaPendingTitle" in workspace_page_elements_js
+    assert "workspaceMesaAttachmentsTitle" in workspace_page_elements_js
+    assert "badgeTotal" in workspace_mesa_status_js
+    assert "workspaceMesaEventCommentTitle" in workspace_mesa_status_js
+    assert "workspaceMesaPendingList" in workspace_mesa_status_js
+    assert "workspaceMesaAttachmentsList" in workspace_mesa_status_js
+    assert "workspace-channel-tab__badge" in workspace_states_css
+    assert "workspace-mesa-events" in workspace_states_css
+    assert "workspace-mesa-operational-grid" in workspace_states_css
+    assert "thread-tab__badge" in (
+        raiz / "static" / "css" / "inspetor" / "workspace_chrome.css"
+    ).read_text(encoding="utf-8")
+    assert "workspace-rail-card__description--mesa-dev" in visual_refinements_css
+    assert "mesa-widget-mode-badge" in visual_refinements_css
+    assert 'data-widget-mode="dev-fallback"' in visual_refinements_css
     assert "preparar-emissao?tool=pacote" in ui_bindings_js
     assert "/assinatura" in ui_bindings_js
     assert "precisa-aprovar" in ui_bindings_js
@@ -363,6 +408,10 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="area-mensagens"' in workspace_conversation_html
     assert 'id="btn-ir-fim-chat"' in workspace_conversation_html
     assert 'id="workspace-mesa-stage"' in workspace_mesa_html
+    assert 'id="workspace-mesa-stage-phase"' in workspace_mesa_html
+    assert 'id="workspace-mesa-stage-phase-detail"' in workspace_mesa_html
+    assert 'id="workspace-mesa-stage-next-action-label"' in workspace_mesa_html
+    assert 'id="workspace-mesa-stage-last-updated"' in workspace_mesa_html
     assert 'id="workspace-mesa-stage-status-visual"' in workspace_mesa_html
     assert 'id="workspace-mesa-stage-lifecycle"' in workspace_mesa_html
     assert 'id="workspace-mesa-stage-owner"' in workspace_mesa_html
@@ -417,6 +466,10 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="banner-notificacao-engenharia"' in portal_main_html
     assert '/static/js/inspetor/workspace_status_payload.js' in index_html
     assert 'documentRef.getElementById("workspace-mesa-stage-status-visual")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-mesa-stage-phase")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-mesa-stage-phase-detail")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-mesa-stage-next-action-label")' in workspace_page_elements_js
+    assert 'documentRef.getElementById("workspace-mesa-stage-last-updated")' in workspace_page_elements_js
     assert 'documentRef.getElementById("workspace-readiness")' in workspace_page_elements_js
     assert 'documentRef.getElementById("workspace-readiness-chip")' in workspace_page_elements_js
     assert 'documentRef.getElementById("workspace-history-readiness")' in workspace_page_elements_js
@@ -430,15 +483,19 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "function construirResumoReadinessWorkspace(snapshot = {})" in governance_js
     assert "function renderizarReadinessHistoricoWorkspace()" in governance_js
     assert "function obterPayloadStatusRelatorioWorkspaceAtual(" in workspace_status_payload_js
+    assert "function resolverCampoPrimarioStatusWorkspace(" in workspace_status_payload_js
     assert "normalizarPublicVerificationSeguro" in workspace_status_payload_js
     assert "TarielInspectorWorkspaceStatusPayload" in workspace_status_payload_js
     assert "TarielInspectorWorkspaceStatusPayload?.obterPayloadStatusRelatorioWorkspaceAtual" in chat_index_js
+    assert "case_operational_phase" in workspace_status_payload_js
     assert "Pronto para emissão oficial" in governance_js
     assert "Completar prontidão antes de emitir" in governance_js
     assert "function resumirMomentoCanonicoMesaInspector(context = {})" in workspace_mesa_status_js
+    assert "function resumirTempoMesaInspector(valorIso = \"\")" in workspace_mesa_status_js
     assert "workspaceMesaStageMomentDetail" in workspace_mesa_status_js
     assert ".workspace-mesa-signals" in workspace_states_css
     assert ".workspace-mesa-signal--focus" in workspace_states_css
+    assert ".workspace-mesa-panel__meta" in workspace_states_css
     assert ".inspetor-sidebar-report:hover .inspetor-sidebar-report__actions > .btn-deletar-laudo" in visual_refinements_css
     assert ".btn-deletar-laudo:focus-visible" in visual_refinements_css
     assert "function promoverConversaLivreNoPrimeiroEnvio()" in shared_api_js
@@ -1178,15 +1235,28 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     )
     portal_runtime_js = (raiz / "static" / "js" / "cliente" / "portal_runtime.js").read_text(encoding="utf-8")
     portal_priorities_js = (raiz / "static" / "js" / "cliente" / "portal_priorities.js").read_text(encoding="utf-8")
+    portal_admin_overview_surface_js = (raiz / "static" / "js" / "cliente" / "portal_admin_overview_surface.js").read_text(encoding="utf-8")
     portal_admin_surface_js = (raiz / "static" / "js" / "cliente" / "portal_admin_surface.js").read_text(encoding="utf-8")
     painel_page_js = (raiz / "static" / "js" / "cliente" / "painel_page.js").read_text(encoding="utf-8")
     portal_admin_js = (raiz / "static" / "js" / "cliente" / "portal_admin.js").read_text(encoding="utf-8")
+    portal_servicos_surface_js = (raiz / "static" / "js" / "cliente" / "portal_servicos_surface.js").read_text(encoding="utf-8")
+    servicos_page_js = (raiz / "static" / "js" / "cliente" / "servicos_page.js").read_text(encoding="utf-8")
+    portal_servicos_js = (raiz / "static" / "js" / "cliente" / "portal_servicos.js").read_text(encoding="utf-8")
+    portal_recorrencia_surface_js = (raiz / "static" / "js" / "cliente" / "portal_recorrencia_surface.js").read_text(encoding="utf-8")
+    recorrencia_page_js = (raiz / "static" / "js" / "cliente" / "recorrencia_page.js").read_text(encoding="utf-8")
+    portal_recorrencia_js = (raiz / "static" / "js" / "cliente" / "portal_recorrencia.js").read_text(encoding="utf-8")
+    portal_ativos_surface_js = (raiz / "static" / "js" / "cliente" / "portal_ativos_surface.js").read_text(encoding="utf-8")
+    ativos_page_js = (raiz / "static" / "js" / "cliente" / "ativos_page.js").read_text(encoding="utf-8")
+    portal_ativos_js = (raiz / "static" / "js" / "cliente" / "portal_ativos.js").read_text(encoding="utf-8")
     portal_chat_surface_js = (raiz / "static" / "js" / "cliente" / "portal_chat_surface.js").read_text(encoding="utf-8")
     chat_page_js = (raiz / "static" / "js" / "cliente" / "chat_page.js").read_text(encoding="utf-8")
     portal_chat_js = (raiz / "static" / "js" / "cliente" / "portal_chat.js").read_text(encoding="utf-8")
     portal_mesa_surface_js = (raiz / "static" / "js" / "cliente" / "portal_mesa_surface.js").read_text(encoding="utf-8")
     mesa_page_js = (raiz / "static" / "js" / "cliente" / "mesa_page.js").read_text(encoding="utf-8")
     portal_mesa_js = (raiz / "static" / "js" / "cliente" / "portal_mesa.js").read_text(encoding="utf-8")
+    portal_documentos_surface_js = (raiz / "static" / "js" / "cliente" / "portal_documentos_surface.js").read_text(encoding="utf-8")
+    documentos_page_js = (raiz / "static" / "js" / "cliente" / "documentos_page.js").read_text(encoding="utf-8")
+    portal_documentos_js = (raiz / "static" / "js" / "cliente" / "portal_documentos.js").read_text(encoding="utf-8")
     portal_shared_helpers_js = (raiz / "static" / "js" / "cliente" / "portal_shared_helpers.js").read_text(encoding="utf-8")
     portal_shell_js = (raiz / "static" / "js" / "cliente" / "portal_shell.js").read_text(encoding="utf-8")
     portal_bindings_js = (raiz / "static" / "js" / "cliente" / "portal_bindings.js").read_text(encoding="utf-8")
@@ -1195,10 +1265,18 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     portal_components_css = (raiz / "static" / "css" / "cliente" / "portal_components.css").read_text(encoding="utf-8")
     portal_workspace_css = (raiz / "static" / "css" / "cliente" / "portal_workspace.css").read_text(encoding="utf-8")
     portal_admin_surface_css = (raiz / "static" / "css" / "cliente" / "portal_admin_surface.css").read_text(encoding="utf-8")
+    portal_servicos_surface_css = (raiz / "static" / "css" / "cliente" / "portal_servicos_surface.css").read_text(encoding="utf-8")
+    portal_recorrencia_surface_css = (raiz / "static" / "css" / "cliente" / "portal_recorrencia_surface.css").read_text(encoding="utf-8")
+    portal_ativos_surface_css = (raiz / "static" / "css" / "cliente" / "portal_ativos_surface.css").read_text(encoding="utf-8")
     portal_chat_surface_css = (raiz / "static" / "css" / "cliente" / "portal_chat_surface.css").read_text(encoding="utf-8")
     portal_mesa_surface_css = (raiz / "static" / "css" / "cliente" / "portal_mesa_surface.css").read_text(encoding="utf-8")
+    portal_documentos_surface_css = (raiz / "static" / "css" / "cliente" / "portal_documentos_surface.css").read_text(encoding="utf-8")
     portal_admin_theme_css = (raiz / "static" / "css" / "cliente" / "portal_admin_theme.css").read_text(encoding="utf-8")
-    portal_admin_bundle_js = portal_admin_surface_js + "\n" + painel_page_js + "\n" + portal_admin_js
+    portal_admin_bundle_js = portal_admin_overview_surface_js + "\n" + portal_admin_surface_js + "\n" + painel_page_js + "\n" + portal_admin_js
+    portal_servicos_bundle_js = portal_servicos_surface_js + "\n" + servicos_page_js + "\n" + portal_servicos_js
+    portal_recorrencia_bundle_js = portal_recorrencia_surface_js + "\n" + recorrencia_page_js + "\n" + portal_recorrencia_js
+    portal_ativos_bundle_js = portal_ativos_surface_js + "\n" + ativos_page_js + "\n" + portal_ativos_js
+    portal_documentos_bundle_js = portal_documentos_surface_js + "\n" + documentos_page_js + "\n" + portal_documentos_js
     portal_chat_bundle_js = portal_chat_surface_js + "\n" + chat_page_js + "\n" + portal_chat_js
     portal_mesa_bundle_js = portal_mesa_surface_js + "\n" + mesa_page_js + "\n" + portal_mesa_js
 
@@ -1215,6 +1293,10 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'class="cliente-tabs-shell"' in portal_cliente_main
     assert '{% include "cliente/_primary_tabs.html" %}' in portal_cliente_main
     assert '{% include "cliente/painel/_content.html" %}' in portal_cliente_main
+    assert '{% include "cliente/servicos/_content.html" %}' in portal_cliente_main
+    assert '{% include "cliente/recorrencia/_content.html" %}' in portal_cliente_main
+    assert '{% include "cliente/ativos/_content.html" %}' in portal_cliente_main
+    assert '{% include "cliente/documentos/_content.html" %}' in portal_cliente_main
     assert '{% include "cliente/chat/_content.html" %}' in portal_cliente_main
     assert '{% include "cliente/mesa/_content.html" %}' in portal_cliente_main
     assert '{% include "cliente/_scripts.html" %}' in portal_cliente_main
@@ -1237,6 +1319,10 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert '{% include "cliente/mesa/_reply.html" %}' in portal_cliente
     assert 'id="hero-prioridades"' in portal_cliente
     assert 'id="tab-admin"' in portal_cliente
+    assert 'id="tab-servicos"' in portal_cliente
+    assert 'id="tab-recorrencia"' in portal_cliente
+    assert 'id="tab-ativos"' in portal_cliente
+    assert 'id="tab-documentos"' in portal_cliente
     assert 'id="tab-chat"' in portal_cliente
     assert 'id="tab-mesa"' in portal_cliente
     assert 'aria-label="Navegação principal do portal da empresa"' in portal_cliente
@@ -1248,6 +1334,8 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'id="btn-admin-credencial-ocultar"' in portal_cliente
     assert 'id="admin-onboarding-resumo"' in portal_cliente
     assert 'id="admin-onboarding-lista"' in portal_cliente
+    assert 'id="admin-guided-onboarding-summary"' in portal_cliente
+    assert 'id="admin-guided-onboarding-lista"' in portal_cliente
     assert 'id="admin-saude-resumo"' in portal_cliente
     assert 'id="admin-saude-historico"' in portal_cliente
     assert 'id="empresa-alerta-capacidade"' in portal_cliente
@@ -1271,6 +1359,20 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'id="chat-busca-laudos"' in portal_cliente
     assert 'id="mesa-busca-laudos"' in portal_cliente
     assert 'id="chat-resumo-geral"' in portal_cliente
+    assert 'id="servicos-resumo-geral"' in portal_cliente
+    assert 'id="servicos-contratados-grid"' in portal_cliente
+    assert 'id="recorrencia-resumo-geral"' in portal_cliente
+    assert 'id="agenda-recorrencia-lista"' in portal_cliente
+    assert 'id="ativos-resumo-geral"' in portal_cliente
+    assert 'id="ativos-industriais-lista"' in portal_cliente
+    assert 'id="documentos-resumo-geral"' in portal_cliente
+    assert 'id="documentos-lista"' in portal_cliente
+    assert 'id="documentos-com-art-lista"' in portal_cliente
+    assert 'id="documentos-com-pie-lista"' in portal_cliente
+    assert 'id="documentos-com-prontuario-lista"' in portal_cliente
+    assert 'id="documentos-nr35-aprovados"' in portal_cliente
+    assert 'id="documentos-nr35-reprovados"' in portal_cliente
+    assert 'id="documentos-nr35-pendentes"' in portal_cliente
     assert 'id="chat-triagem"' in portal_cliente
     assert 'id="chat-movimentos"' in portal_cliente
     assert 'id="chat-alertas-operacionais"' in portal_cliente
@@ -1300,6 +1402,26 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'id="admin-section-count-team"' in portal_cliente
     assert 'id="admin-section-count-support"' in portal_cliente
     assert 'data-chat-panel="overview"' in portal_cliente
+    assert 'data-servicos-panel="overview"' in portal_cliente
+    assert 'data-servicos-section-tab="overview"' in portal_cliente
+    assert 'data-surface-nav="servicos"' in portal_cliente
+    assert 'id="servicos-section-summary-title"' in portal_cliente
+    assert 'id="servicos-section-count-overview"' in portal_cliente
+    assert 'data-recorrencia-panel="overview"' in portal_cliente
+    assert 'data-recorrencia-section-tab="overview"' in portal_cliente
+    assert 'data-surface-nav="recorrencia"' in portal_cliente
+    assert 'id="recorrencia-section-summary-title"' in portal_cliente
+    assert 'id="recorrencia-section-count-overview"' in portal_cliente
+    assert 'data-ativos-panel="overview"' in portal_cliente
+    assert 'data-ativos-section-tab="overview"' in portal_cliente
+    assert 'data-surface-nav="ativos"' in portal_cliente
+    assert 'id="ativos-section-summary-title"' in portal_cliente
+    assert 'id="ativos-section-count-overview"' in portal_cliente
+    assert 'data-documentos-panel="overview"' in portal_cliente
+    assert 'data-documentos-section-tab="overview"' in portal_cliente
+    assert 'data-surface-nav="documentos"' in portal_cliente
+    assert 'id="documentos-section-summary-title"' in portal_cliente
+    assert 'id="documentos-section-count-overview"' in portal_cliente
     assert 'data-chat-panel="new"' in portal_cliente
     assert 'data-chat-panel="queue"' in portal_cliente
     assert 'data-chat-panel="case"' in portal_cliente
@@ -1331,9 +1453,17 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'id="mesa-section-count-reply"' in portal_cliente
     assert 'data-stage-state="idle"' in portal_cliente
     assert 'data-cliente-tab-inicial="{{ cliente_tab_inicial | default(\'admin\') | e }}"' in portal_cliente
+    assert 'data-cliente-servicos-section-inicial="{{ cliente_servicos_section_inicial | default(\'overview\') | e }}"' in portal_cliente
+    assert 'data-cliente-recorrencia-section-inicial="{{ cliente_recorrencia_section_inicial | default(\'overview\') | e }}"' in portal_cliente
+    assert 'data-cliente-ativos-section-inicial="{{ cliente_ativos_section_inicial | default(\'overview\') | e }}"' in portal_cliente
     assert 'data-cliente-chat-section-inicial="{{ cliente_chat_section_inicial | default(\'overview\') | e }}"' in portal_cliente
     assert 'data-cliente-mesa-section-inicial="{{ cliente_mesa_section_inicial | default(\'overview\') | e }}"' in portal_cliente
+    assert 'data-cliente-documentos-section-inicial="{{ cliente_documentos_section_inicial | default(\'overview\') | e }}"' in portal_cliente
     assert 'data-cliente-route-admin="{{ cliente_surface_routes.admin | default(\'/cliente/painel\') | e }}"' in portal_cliente
+    assert 'data-cliente-route-servicos="{{ cliente_surface_routes.servicos | default(\'/cliente/servicos\') | e }}"' in portal_cliente
+    assert 'data-cliente-route-recorrencia="{{ cliente_surface_routes.recorrencia | default(\'/cliente/recorrencia\') | e }}"' in portal_cliente
+    assert 'data-cliente-route-ativos="{{ cliente_surface_routes.ativos | default(\'/cliente/ativos\') | e }}"' in portal_cliente
+    assert 'data-cliente-route-documentos="{{ cliente_surface_routes.documentos | default(\'/cliente/documentos\') | e }}"' in portal_cliente
     assert 'data-cliente-route-chat="{{ cliente_surface_routes.chat | default(\'/cliente/chat\') | e }}"' in portal_cliente
     assert 'data-cliente-route-mesa="{{ cliente_surface_routes.mesa | default(\'/cliente/mesa\') | e }}"' in portal_cliente
     assert "/static/css/admin/admin_icons.css" in portal_cliente
@@ -1342,25 +1472,46 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "/static/css/cliente/portal.css?v={{ v_app }}" in portal_cliente
     assert "/static/css/cliente/portal_workspace.css?v={{ v_app }}" in portal_cliente
     assert "/static/css/cliente/portal_admin_surface.css?v={{ v_app }}" in portal_cliente
+    assert "/static/css/cliente/portal_servicos_surface.css?v={{ v_app }}" in portal_cliente
+    assert "/static/css/cliente/portal_recorrencia_surface.css?v={{ v_app }}" in portal_cliente
+    assert "/static/css/cliente/portal_ativos_surface.css?v={{ v_app }}" in portal_cliente
     assert "/static/css/cliente/portal_chat_surface.css?v={{ v_app }}" in portal_cliente
     assert "/static/css/cliente/portal_mesa_surface.css?v={{ v_app }}" in portal_cliente
+    assert "/static/css/cliente/portal_documentos_surface.css?v={{ v_app }}" in portal_cliente
     assert "/static/css/cliente/portal_admin_theme.css?v={{ v_app }}" in portal_cliente
     assert 'class="panel panel--admin{% if (cliente_tab_inicial | default(\'admin\')) == \'admin\' %} active{% endif %}"' in portal_cliente
+    assert 'class="panel panel--servicos{% if (cliente_tab_inicial | default(\'admin\')) == \'servicos\' %} active{% endif %}"' in portal_cliente
+    assert 'class="panel panel--recorrencia{% if (cliente_tab_inicial | default(\'admin\')) == \'recorrencia\' %} active{% endif %}"' in portal_cliente
+    assert 'class="panel panel--ativos{% if (cliente_tab_inicial | default(\'admin\')) == \'ativos\' %} active{% endif %}"' in portal_cliente
+    assert 'class="panel panel--documentos{% if (cliente_tab_inicial | default(\'admin\')) == \'documentos\' %} active{% endif %}"' in portal_cliente
     assert 'class="panel panel--chat{% if (cliente_tab_inicial | default(\'admin\')) == \'chat\' %} active{% endif %}"' in portal_cliente
     assert 'class="panel panel--mesa{% if (cliente_tab_inicial | default(\'admin\')) == \'mesa\' %} active{% endif %}"' in portal_cliente
     assert 'class="surface-tabs"' in portal_cliente
     assert 'class="surface-stage-panels"' in portal_cliente
     assert "{% if perf_mode %}" in portal_cliente
     assert "/static/js/shared/api-core.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/portal_admin_overview_surface.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/portal_admin_surface.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/portal_servicos_surface.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/portal_recorrencia_surface.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/portal_ativos_surface.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/portal_documentos_surface.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/portal_chat_surface.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/portal_mesa_surface.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/painel_page.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/servicos_page.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/recorrencia_page.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/ativos_page.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/documentos_page.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/chat_page.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/mesa_page.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/portal_runtime.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/portal_priorities.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/portal_admin.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/portal_servicos.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/portal_recorrencia.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/portal_ativos.js?v={{ v_app }}" in portal_cliente
+    assert "/static/js/cliente/portal_documentos.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/portal_chat.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/portal_mesa.js?v={{ v_app }}" in portal_cliente
     assert "/static/js/cliente/portal_shared_helpers.js?v={{ v_app }}" in portal_cliente
@@ -1371,6 +1522,10 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'data-portal-module="runtime"' in portal_cliente
     assert 'data-portal-module="priorities"' in portal_cliente
     assert 'data-portal-module="admin"' in portal_cliente
+    assert 'data-portal-module="servicos"' in portal_cliente
+    assert 'data-portal-module="recorrencia"' in portal_cliente
+    assert 'data-portal-module="ativos"' in portal_cliente
+    assert 'data-portal-module="documentos"' in portal_cliente
     assert 'data-portal-module="chat"' in portal_cliente
     assert 'data-portal-module="mesa"' in portal_cliente
     assert 'data-portal-module="sharedHelpers"' in portal_cliente
@@ -1381,6 +1536,10 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
         "/static/js/cliente/portal_runtime.js?v={{ v_app }}",
         "/static/js/cliente/portal_priorities.js?v={{ v_app }}",
         "/static/js/cliente/portal_admin.js?v={{ v_app }}",
+        "/static/js/cliente/portal_servicos.js?v={{ v_app }}",
+        "/static/js/cliente/portal_recorrencia.js?v={{ v_app }}",
+        "/static/js/cliente/portal_ativos.js?v={{ v_app }}",
+        "/static/js/cliente/portal_documentos.js?v={{ v_app }}",
         "/static/js/cliente/portal_chat.js?v={{ v_app }}",
         "/static/js/cliente/portal_mesa.js?v={{ v_app }}",
         "/static/js/cliente/portal_shared_helpers.js?v={{ v_app }}",
@@ -1391,14 +1550,39 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     for anterior, posterior in zip(portal_scripts, portal_scripts[1:], strict=False):
         assert portal_cliente.index(anterior) < portal_cliente.index(posterior)
     assert "window.TarielClientePortalRuntime" in portal_runtime_js
+    assert "extractApiErrorMessage" in portal_runtime_js
     assert "window.TarielClientePortalPriorities" in portal_priorities_js
+    assert "window.TarielClientePortalAdminOverviewSurface" in portal_admin_overview_surface_js
+    assert "renderGuidedOnboardingOverview" in portal_admin_overview_surface_js
+    assert "renderCommercialPackageOverview" in portal_admin_overview_surface_js
+    assert "renderOperationalObservabilityOverview" in portal_admin_overview_surface_js
+    assert "renderPendingCenterOverview" in portal_admin_overview_surface_js
     assert "window.TarielClientePortalAdminSurface" in portal_admin_surface_js
     assert 'aria-current", ativa ? "page" : "false"' in portal_admin_surface_js
     assert "function resumirMomentoCanonicoTenantAdmin()" in portal_admin_surface_js
+    assert "adminOverviewSurface?.renderGuidedOnboardingOverview?.()" in portal_admin_surface_js
     assert "Momento canonico do tenant" in portal_admin_surface_js
     assert "Momento canonico:" in portal_admin_surface_js
     assert "window.TarielClientePainelPage" in painel_page_js
     assert "window.TarielClientePortalAdmin" in portal_admin_js
+    assert "window.TarielClientePortalServicosSurface" in portal_servicos_surface_js
+    assert "window.TarielClienteServicosPage" in servicos_page_js
+    assert "window.TarielClientePortalServicos" in portal_servicos_js
+    assert "window.TarielClientePortalRecorrenciaSurface" in portal_recorrencia_surface_js
+    assert "window.TarielClienteRecorrenciaPage" in recorrencia_page_js
+    assert "window.TarielClientePortalRecorrencia" in portal_recorrencia_js
+    assert "window.TarielClientePortalAtivosSurface" in portal_ativos_surface_js
+    assert "window.TarielClienteAtivosPage" in ativos_page_js
+    assert "window.TarielClientePortalAtivos" in portal_ativos_js
+    assert "window.TarielClientePortalDocumentosSurface" in portal_documentos_surface_js
+    assert "window.TarielClienteDocumentosPage" in documentos_page_js
+    assert "window.TarielClientePortalDocumentos" in portal_documentos_js
+    assert "renderSignalList" in portal_documentos_surface_js
+    assert "renderSummaryCard" in portal_documentos_surface_js
+    assert "documentos-summary-card" in portal_documentos_surface_js
+    assert "document-card__nr35" in portal_documentos_surface_css
+    assert ".document-summary-card" in portal_documentos_surface_css
+    assert ".document-card__timeline" in portal_documentos_surface_css
     assert "window.TarielClientePortalChatSurface" in portal_chat_surface_js
     assert 'aria-current", ativa ? "page" : "false"' in portal_chat_surface_js
     assert "window.TarielClienteChatPage" in chat_page_js
@@ -1411,12 +1595,17 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "window.TarielClienteMesaPage" in mesa_page_js
     assert "window.TarielClientePortalMesa" in portal_mesa_js
     assert "window.TarielClientePortalSharedHelpers" in portal_shared_helpers_js
+    assert "renderStaticContractHtml" in portal_shared_helpers_js
+    assert "mesaMessagePolicyNote" in portal_shared_helpers_js
     assert "window.TarielClientePortalShell" in portal_shell_js
     assert "window.TarielClientePortalBindings" in portal_bindings_js
     assert "function definirTab(nome, persistir = true, options = {})" in portal_runtime_js
     assert "function sincronizarTabComUrl({ replace = false } = {})" in portal_runtime_js
     assert "function tabAtualDaUrl()" in portal_runtime_js
-    assert 'const INITIAL_TAB = ["admin", "chat", "mesa"].includes(bodyDataset.clienteTabInicial)' in portal_js
+    assert "const INITIAL_TAB = [" in portal_js
+    for portal_tab in ("admin", "servicos", "recorrencia", "ativos", "documentos", "chat", "mesa"):
+        assert f'"{portal_tab}"' in portal_js
+    assert "].includes(bodyDataset.clienteTabInicial)" in portal_js
     assert "const ROUTE_MAP = Object.freeze({" in portal_js
     assert "const PORTAL_BOOT_CONTRACT" in portal_js
     assert "const PORTAL_BRIDGE_SPECS" in portal_js
@@ -1432,6 +1621,23 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "plano_sugerido" in portal_shared_helpers_js
     assert "tenant_admin_projection" in portal_shell_js
     assert "tenant_admin_projection" in portal_admin_bundle_js
+    assert "TarielClientePortalServicos" in portal_js
+    assert "renderServicosLista" in portal_servicos_bundle_js
+    assert ".service-card" in portal_servicos_surface_css
+    assert "TarielClientePortalRecorrencia" in portal_js
+    assert "renderRecorrenciaLista" in portal_recorrencia_bundle_js
+    assert ".recorrencia-card" in portal_recorrencia_surface_css
+    assert "TarielClientePortalAtivos" in portal_js
+    assert "renderAtivosLista" in portal_ativos_bundle_js
+    assert ".asset-card" in portal_ativos_surface_css
+    assert "TarielClientePortalDocumentos" in portal_js
+    assert "renderDocumentosLista" in portal_documentos_bundle_js
+    assert ".document-card" in portal_documentos_surface_css
+    assert "renderDocumentosResumo" in portal_shell_js
+    assert "servicos" in portal_runtime_js
+    assert "recorrencia" in portal_runtime_js
+    assert "ativos" in portal_runtime_js
+    assert "documentos" in portal_runtime_js
     dashboard_admin = (raiz / "templates" / "admin" / "dashboard.html").read_text(encoding="utf-8")
     clientes_admin = (raiz / "templates" / "admin" / "clientes.html").read_text(encoding="utf-8")
     admin_dashboard_css = (raiz / "static" / "css" / "admin" / "admin_dashboard.css").read_text(encoding="utf-8")
@@ -1460,6 +1666,12 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "/cliente/api/bootstrap?surface=" in portal_shell_js
     assert "chat-alertas-operacionais" in portal_shell_js
     assert "admin-saude-resumo" in portal_admin_bundle_js
+    assert "admin-commercial-package-summary" in portal_admin_bundle_js
+    assert "admin-observability-summary" in portal_admin_bundle_js
+    assert "admin-pending-center-lista" in portal_admin_bundle_js
+    assert "adminOverviewSurface?.renderCommercialPackageOverview?.()" in portal_admin_surface_js
+    assert "adminOverviewSurface?.renderOperationalObservabilityOverview?.()" in portal_admin_surface_js
+    assert "adminOverviewSurface?.renderPendingCenterOverview?.()" in portal_admin_surface_js
     assert "saude_operacional" in portal_admin_bundle_js
     assert "/cliente/api/empresa/plano/interesse" in portal_admin_bundle_js
     assert "requestIdleCallback" in portal_admin_surface_js
@@ -1470,6 +1682,14 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "btn-admin-credencial-copiar" in painel_page_js
     assert "abrirSecaoChat" in portal_chat_bundle_js
     assert "resolverSecaoChatPorTarget" in portal_chat_bundle_js
+    assert "abrirSecaoServicos" in portal_servicos_bundle_js
+    assert "resolverSecaoServicosPorTarget" in portal_servicos_bundle_js
+    assert "abrirSecaoRecorrencia" in portal_recorrencia_bundle_js
+    assert "resolverSecaoRecorrenciaPorTarget" in portal_recorrencia_bundle_js
+    assert "abrirSecaoAtivos" in portal_ativos_bundle_js
+    assert "resolverSecaoAtivosPorTarget" in portal_ativos_bundle_js
+    assert "abrirSecaoDocumentos" in portal_documentos_bundle_js
+    assert "resolverSecaoDocumentosPorTarget" in portal_documentos_bundle_js
     assert "abrirSecaoMesa" in portal_mesa_bundle_js
     assert "resolverSecaoMesaPorTarget" in portal_mesa_bundle_js
     assert "preparar-upgrade" in portal_bindings_js
@@ -1477,11 +1697,29 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "await bootstrapPortal({ surface: tab, carregarDetalhes: true, force: false })" in portal_bindings_js
     assert "abrir-prioridade" in portal_bindings_js
     assert "data-admin-section-tab" in portal_admin_bundle_js
+    assert "data-servicos-section-tab" in portal_bindings_js
+    assert "data-recorrencia-section-tab" in portal_bindings_js
+    assert "data-ativos-section-tab" in portal_bindings_js
     assert "data-chat-section-tab" in portal_bindings_js
+    assert "data-documentos-section-tab" in portal_bindings_js
     assert "data-mesa-section-tab" in portal_bindings_js
+    assert 'kind === "servicos-section"' in portal_bindings_js
+    assert 'kind === "recorrencia-section"' in portal_bindings_js
+
+    novo_cliente_admin = (raiz / "templates" / "admin" / "novo_cliente.html").read_text(encoding="utf-8")
+    assert "Presets comerciais sugeridos" in novo_cliente_admin
+    assert "Cliente com Inspetor + Mesa" in novo_cliente_admin
+    assert "Cliente com emissão premium" in novo_cliente_admin
+    assert "Cliente mobile principal" in novo_cliente_admin
+    assert 'kind === "ativos-section"' in portal_bindings_js
+    assert 'kind === "documentos-section"' in portal_bindings_js
     assert 'kind === "chat-section"' in portal_bindings_js
     assert 'kind === "mesa-section"' in portal_bindings_js
     assert "function renderAdminSurface()" in portal_shell_js
+    assert "function renderServicosSurface()" in portal_shell_js
+    assert "function renderRecorrenciaSurface()" in portal_shell_js
+    assert "function renderAtivosSurface()" in portal_shell_js
+    assert "function renderDocumentosSurface()" in portal_shell_js
     assert "function renderChatSurface()" in portal_shell_js
     assert "function renderMesaSurface()" in portal_shell_js
     assert "function renderSurface(surface)" in portal_shell_js

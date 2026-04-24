@@ -1278,6 +1278,11 @@ body.pagina-chat-dashboard-v2 .painel-mesa-widget {
     box-shadow: 0 22px 46px rgba(15, 23, 42, 0.12) !important;
 }
 
+body.pagina-chat-dashboard-v2 .painel-mesa-widget[data-widget-mode="dev-fallback"] {
+    border-style: dashed !important;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08) !important;
+}
+
 body.pagina-chat-dashboard-v2 .painel-mesa-widget--workspace {
     width: 100%;
     max-width: none;
@@ -1305,6 +1310,28 @@ body.pagina-chat-dashboard-v2 .cabecalho-mesa-widget-texto {
     gap: 6px;
 }
 
+body.pagina-chat-dashboard-v2 .cabecalho-mesa-widget-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+body.pagina-chat-dashboard-v2 .mesa-widget-mode-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 9px;
+    border: 1px dashed rgba(44, 110, 165, 0.28);
+    border-radius: 999px;
+    background: rgba(240, 247, 252, 0.94);
+    color: #2b6088;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+}
+
 body.pagina-chat-dashboard-v2 .cabecalho-mesa-widget strong,
 body.pagina-chat-dashboard-v2 .mesa-widget-resumo strong {
     color: var(--vf-text) !important;
@@ -1318,6 +1345,17 @@ body.pagina-chat-dashboard-v2 .mesa-widget-ref-link span,
 body.pagina-chat-dashboard-v2 .mesa-widget-resolucao,
 body.pagina-chat-dashboard-v2 .texto-vazio-pendencias {
     color: var(--vf-text-muted) !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-rail-card__description--mesa-dev {
+    margin-top: -2px;
+    padding: 10px 12px;
+    border: 1px dashed rgba(44, 110, 165, 0.24);
+    border-radius: 12px;
+    background: rgba(243, 248, 253, 0.82);
+    color: #456179 !important;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 body.pagina-chat-dashboard-v2 .status-conexao-mesa-widget,

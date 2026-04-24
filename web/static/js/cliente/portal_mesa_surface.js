@@ -1,329 +1,500 @@
 (function () {
-    "use strict";
+  "use strict";
 
-    if (window.TarielClientePortalMesaSurface) return;
+  if (window.TarielClientePortalMesaSurface) return;
 
-    window.TarielClientePortalMesaSurface = function createTarielClientePortalMesaSurface(config = {}) {
-        const state = config.state || {};
-        const documentRef = config.documentRef || document;
-        const $ = typeof config.getById === "function"
-            ? config.getById
-            : (id) => documentRef.getElementById(id);
-        const helpers = config.helpers || {};
-        const filters = config.filters || {};
+  window.TarielClientePortalMesaSurface =
+    function createTarielClientePortalMesaSurface(config = {}) {
+      const state = config.state || {};
+      const documentRef = config.documentRef || document;
+      const $ =
+        typeof config.getById === "function"
+          ? config.getById
+          : (id) => documentRef.getElementById(id);
+      const helpers = config.helpers || {};
+      const filters = config.filters || {};
 
-        const escapeAttr = typeof helpers.escapeAttr === "function" ? helpers.escapeAttr : (valor) => String(valor ?? "");
-        const escapeHtml = typeof helpers.escapeHtml === "function" ? helpers.escapeHtml : (valor) => String(valor ?? "");
-        const formatarInteiro = typeof helpers.formatarInteiro === "function" ? helpers.formatarInteiro : (valor) => String(Number(valor || 0));
-        const horasDesdeAtualizacao = typeof helpers.horasDesdeAtualizacao === "function" ? helpers.horasDesdeAtualizacao : () => 0;
-        const laudoBadge = typeof helpers.laudoBadge === "function" ? helpers.laudoBadge : () => "";
-        const laudoMesaParado = typeof helpers.laudoMesaParado === "function" ? helpers.laudoMesaParado : () => false;
-        const ordenarPorPrioridade = typeof helpers.ordenarPorPrioridade === "function" ? helpers.ordenarPorPrioridade : (lista) => [...(lista || [])];
-        const parseDataIso = typeof helpers.parseDataIso === "function" ? helpers.parseDataIso : () => 0;
-        const prioridadeMesa = typeof helpers.prioridadeMesa === "function" ? helpers.prioridadeMesa : () => ({ tone: "aprovado", badge: "", acao: "" });
-        const renderAnexos = typeof helpers.renderAnexos === "function" ? helpers.renderAnexos : () => "";
-        const resumoEsperaHoras = typeof helpers.resumoEsperaHoras === "function" ? helpers.resumoEsperaHoras : () => "";
-        const rotuloSituacaoMesa = typeof helpers.rotuloSituacaoMesa === "function" ? helpers.rotuloSituacaoMesa : () => "";
-        const texto = typeof helpers.texto === "function" ? helpers.texto : (valor) => (valor == null ? "" : String(valor));
-        const textoComQuebras = typeof helpers.textoComQuebras === "function" ? helpers.textoComQuebras : (valor) => escapeHtml(valor);
-        const sincronizarUrlDaSecao = typeof helpers.sincronizarUrlDaSecao === "function" ? helpers.sincronizarUrlDaSecao : () => null;
-        const variantStatusLaudo = typeof helpers.variantStatusLaudo === "function" ? helpers.variantStatusLaudo : () => "aguardando";
+      const escapeAttr =
+        typeof helpers.escapeAttr === "function"
+          ? helpers.escapeAttr
+          : (valor) => String(valor ?? "");
+      const escapeHtml =
+        typeof helpers.escapeHtml === "function"
+          ? helpers.escapeHtml
+          : (valor) => String(valor ?? "");
+      const formatarInteiro =
+        typeof helpers.formatarInteiro === "function"
+          ? helpers.formatarInteiro
+          : (valor) => String(Number(valor || 0));
+      const horasDesdeAtualizacao =
+        typeof helpers.horasDesdeAtualizacao === "function"
+          ? helpers.horasDesdeAtualizacao
+          : () => 0;
+      const laudoBadge =
+        typeof helpers.laudoBadge === "function"
+          ? helpers.laudoBadge
+          : () => "";
+      const laudoMesaParado =
+        typeof helpers.laudoMesaParado === "function"
+          ? helpers.laudoMesaParado
+          : () => false;
+      const ordenarPorPrioridade =
+        typeof helpers.ordenarPorPrioridade === "function"
+          ? helpers.ordenarPorPrioridade
+          : (lista) => [...(lista || [])];
+      const parseDataIso =
+        typeof helpers.parseDataIso === "function"
+          ? helpers.parseDataIso
+          : () => 0;
+      const prioridadeMesa =
+        typeof helpers.prioridadeMesa === "function"
+          ? helpers.prioridadeMesa
+          : () => ({ tone: "aprovado", badge: "", acao: "" });
+      const renderAnexos =
+        typeof helpers.renderAnexos === "function"
+          ? helpers.renderAnexos
+          : () => "";
+      const renderStaticContractHtml =
+        typeof helpers.renderStaticContractHtml === "function"
+          ? helpers.renderStaticContractHtml
+          : null;
+      const resumoEsperaHoras =
+        typeof helpers.resumoEsperaHoras === "function"
+          ? helpers.resumoEsperaHoras
+          : () => "";
+      const rotuloSituacaoMesa =
+        typeof helpers.rotuloSituacaoMesa === "function"
+          ? helpers.rotuloSituacaoMesa
+          : () => "";
+      const texto =
+        typeof helpers.texto === "function"
+          ? helpers.texto
+          : (valor) => (valor == null ? "" : String(valor));
+      const textoComQuebras =
+        typeof helpers.textoComQuebras === "function"
+          ? helpers.textoComQuebras
+          : (valor) => escapeHtml(valor);
+      const sincronizarUrlDaSecao =
+        typeof helpers.sincronizarUrlDaSecao === "function"
+          ? helpers.sincronizarUrlDaSecao
+          : () => null;
+      const variantStatusLaudo =
+        typeof helpers.variantStatusLaudo === "function"
+          ? helpers.variantStatusLaudo
+          : () => "aguardando";
 
-        const filtrarLaudosMesa = typeof filters.filtrarLaudosMesa === "function" ? filters.filtrarLaudosMesa : () => [];
-        const SECTION_ORDER = Object.freeze(["overview", "queue", "pending", "reply"]);
-        const SECTION_META = Object.freeze({
-            overview: Object.freeze({
-                title: "Visao geral",
-                meta: "Panorama da analise da mesa.",
-            }),
-            queue: Object.freeze({
-                title: "Fila de revisao",
-                meta: "Selecao do laudo a revisar.",
-            }),
-            pending: Object.freeze({
-                title: "Pendencias",
-                meta: "Chamados, triagem e movimentos que pedem resposta.",
-            }),
-            reply: Object.freeze({
-                title: "Responder",
-                meta: "Contexto, decisao e resposta da mesa.",
-            }),
+      const filtrarLaudosMesa =
+        typeof filters.filtrarLaudosMesa === "function"
+          ? filters.filtrarLaudosMesa
+          : () => [];
+      const SECTION_ORDER = Object.freeze([
+        "overview",
+        "queue",
+        "pending",
+        "reply",
+      ]);
+      const SECTION_META = Object.freeze({
+        overview: Object.freeze({
+          title: "Visao geral",
+          meta: "Panorama da analise da mesa.",
+        }),
+        queue: Object.freeze({
+          title: "Fila de revisao",
+          meta: "Selecao do laudo a revisar.",
+        }),
+        pending: Object.freeze({
+          title: "Pendencias",
+          meta: "Chamados, triagem e movimentos que pedem resposta.",
+        }),
+        reply: Object.freeze({
+          title: "Responder",
+          meta: "Contexto, decisao e resposta da mesa.",
+        }),
+      });
+      const TARGET_TO_SECTION = Object.freeze({
+        "mesa-overview": "overview",
+        "mesa-resumo-geral": "overview",
+        "mesa-queue": "queue",
+        "mesa-busca-laudos": "queue",
+        "mesa-lista-resumo": "queue",
+        "lista-mesa-laudos": "queue",
+        "mesa-pending": "pending",
+        "mesa-alertas-operacionais": "pending",
+        "mesa-triagem": "pending",
+        "mesa-movimentos": "pending",
+        "mesa-reply": "reply",
+        "mesa-contexto": "reply",
+        "mesa-resumo": "reply",
+        "mesa-mensagens": "reply",
+        "mesa-resposta": "reply",
+        "mesa-arquivo": "reply",
+        "mesa-motivo": "reply",
+        "form-mesa-msg": "reply",
+        "btn-mesa-aprovar": "reply",
+        "btn-mesa-rejeitar": "reply",
+      });
+
+      function normalizarSecaoMesa(valor) {
+        const secao = texto(valor).trim().toLowerCase();
+        return SECTION_ORDER.includes(secao) ? secao : "overview";
+      }
+
+      function resolverSecaoMesaPorTarget(targetId) {
+        const alvo = texto(targetId).trim().replace(/^#/, "");
+        if (!alvo) return null;
+        if (TARGET_TO_SECTION[alvo]) return TARGET_TO_SECTION[alvo];
+        return SECTION_ORDER.includes(alvo) ? alvo : null;
+      }
+
+      function obterBotoesSecaoMesa() {
+        return Array.from(
+          documentRef.querySelectorAll("[data-mesa-section-tab]"),
+        );
+      }
+
+      function obterPaineisSecaoMesa() {
+        return Array.from(documentRef.querySelectorAll("[data-mesa-panel]"));
+      }
+
+      function definirTextoNoElemento(id, valor) {
+        const node = $(id);
+        if (!node) return;
+        node.textContent = texto(valor);
+      }
+
+      function atualizarResumoSecaoMesa() {
+        const secaoAtiva = normalizarSecaoMesa(
+          state.ui?.mesaSection || state.ui?.sections?.mesa || "overview",
+        );
+        const definicao = SECTION_META[secaoAtiva] || SECTION_META.overview;
+        const nav = documentRef.querySelector('[data-surface-nav="mesa"]');
+        const laudos = state.bootstrap?.mesa?.laudos || [];
+        const laudosFiltrados = filtrarLaudosMesa();
+        const laudoAtivo = obterLaudoMesaSelecionado();
+        const totalPendencias = laudos.reduce(
+          (acc, item) => acc + Number(item.pendencias_abertas || 0),
+          0,
+        );
+        const totalWhispers = laudos.reduce(
+          (acc, item) => acc + Number(item.whispers_nao_lidos || 0),
+          0,
+        );
+        const contagens = {
+          overview: `${formatarInteiro(laudos.length)} laudos no radar`,
+          queue: `${formatarInteiro(laudosFiltrados.length)} itens na fila`,
+          pending: `${formatarInteiro(totalPendencias)} pendencias e ${formatarInteiro(totalWhispers)} chamados`,
+          reply: texto(laudoAtivo?.titulo || "Sem laudo selecionado"),
+        };
+
+        if (nav) {
+          nav.dataset.surfaceActiveSection = secaoAtiva;
+        }
+        definirTextoNoElemento("mesa-section-summary-title", definicao.title);
+        definirTextoNoElemento("mesa-section-summary-meta", definicao.meta);
+        definirTextoNoElemento(
+          "mesa-section-count-overview",
+          contagens.overview,
+        );
+        definirTextoNoElemento("mesa-section-count-queue", contagens.queue);
+        definirTextoNoElemento("mesa-section-count-pending", contagens.pending);
+        definirTextoNoElemento("mesa-section-count-reply", contagens.reply);
+      }
+
+      function abrirSecaoMesa(
+        secao,
+        { focusTab = false, syncUrl = true } = {},
+      ) {
+        const secaoAtiva = normalizarSecaoMesa(secao || state.ui?.mesaSection);
+        state.ui.mesaSection = secaoAtiva;
+        state.ui.sections = state.ui.sections || {};
+        state.ui.sections.mesa = secaoAtiva;
+
+        const tabAtiva =
+          obterBotoesSecaoMesa().find(
+            (button) => button.dataset.mesaSectionTab === secaoAtiva,
+          ) || null;
+        obterBotoesSecaoMesa().forEach((button) => {
+          const ativa = button.dataset.mesaSectionTab === secaoAtiva;
+          button.classList.toggle("is-active", ativa);
+          button.setAttribute("aria-selected", ativa ? "true" : "false");
+          button.setAttribute("aria-current", ativa ? "page" : "false");
+          button.setAttribute("tabindex", ativa ? "0" : "-1");
         });
-        const TARGET_TO_SECTION = Object.freeze({
-            "mesa-overview": "overview",
-            "mesa-resumo-geral": "overview",
-            "mesa-queue": "queue",
-            "mesa-busca-laudos": "queue",
-            "mesa-lista-resumo": "queue",
-            "lista-mesa-laudos": "queue",
-            "mesa-pending": "pending",
-            "mesa-alertas-operacionais": "pending",
-            "mesa-triagem": "pending",
-            "mesa-movimentos": "pending",
-            "mesa-reply": "reply",
-            "mesa-contexto": "reply",
-            "mesa-resumo": "reply",
-            "mesa-mensagens": "reply",
-            "mesa-resposta": "reply",
-            "mesa-arquivo": "reply",
-            "mesa-motivo": "reply",
-            "form-mesa-msg": "reply",
-            "btn-mesa-aprovar": "reply",
-            "btn-mesa-rejeitar": "reply",
+        obterPaineisSecaoMesa().forEach((panel) => {
+          panel.hidden = panel.dataset.mesaPanel !== secaoAtiva;
         });
+        atualizarResumoSecaoMesa();
 
-        function normalizarSecaoMesa(valor) {
-            const secao = texto(valor).trim().toLowerCase();
-            return SECTION_ORDER.includes(secao) ? secao : "overview";
+        if (focusTab && tabAtiva) {
+          tabAtiva.focus();
+        }
+        if (syncUrl && state.ui?.tab === "mesa") {
+          sincronizarUrlDaSecao("mesa", secaoAtiva);
+        }
+        return secaoAtiva;
+      }
+
+      function obterLaudoMesaSelecionado() {
+        return (
+          (state.bootstrap?.mesa?.laudos || []).find(
+            (laudo) => Number(laudo.id) === Number(state.mesa.laudoId),
+          ) || null
+        );
+      }
+
+      function obterLaudoMesaPorId(laudoId) {
+        return (
+          (state.bootstrap?.mesa?.laudos || []).find(
+            (laudo) => Number(laudo.id) === Number(laudoId),
+          ) || null
+        );
+      }
+
+      function humanizarLifecycleStatus(valor) {
+        const mapa = {
+          analise_livre: "Analise livre",
+          pre_laudo: "Pre-laudo",
+          laudo_em_coleta: "Laudo guiado",
+          aguardando_mesa: "Aguardando mesa",
+          em_revisao_mesa: "Em revisao na mesa",
+          devolvido_para_correcao: "Devolvido para correcao",
+          aprovado: "Aprovado",
+          emitido: "Emitido",
+        };
+        const chave = texto(valor).trim().toLowerCase();
+        return mapa[chave] || "Fluxo legado";
+      }
+
+      function humanizarOwnerRole(valor) {
+        const mapa = {
+          inspetor: "Responsavel: campo",
+          mesa: "Responsavel: mesa",
+          none: "Responsavel: conclusao",
+        };
+        const chave = texto(valor).trim().toLowerCase();
+        return mapa[chave] || "Responsavel nao definido";
+      }
+
+      function laudoAllowedSurfaceActions(laudo) {
+        return Array.isArray(laudo?.allowed_surface_actions)
+          ? laudo.allowed_surface_actions
+              .map((item) => texto(item).trim())
+              .filter(Boolean)
+          : [];
+      }
+
+      function laudoHasSurfaceAction(laudo, actionKey) {
+        return laudoAllowedSurfaceActions(laudo).includes(
+          texto(actionKey).trim(),
+        );
+      }
+
+      function resumirMomentoCanonicoMesa(laudo) {
+        const lifecycleStatus = texto(laudo?.case_lifecycle_status)
+          .trim()
+          .toLowerCase();
+        const ownerRole = texto(laudo?.active_owner_role).trim().toLowerCase();
+        const statusVisualLabel = texto(
+          laudo?.status_visual_label ||
+            laudo?.status_revisao ||
+            laudo?.status_card_label ||
+            "Em revisao",
+        ).trim();
+
+        const base = {
+          key: "case_monitoring",
+          label: "Monitorar caso",
+          detail: "Caso em acompanhamento operacional.",
+          tone: "aguardando",
+          lifecycleLabel: humanizarLifecycleStatus(lifecycleStatus),
+          ownerLabel: humanizarOwnerRole(ownerRole),
+          statusVisualLabel,
+        };
+
+        if (
+          laudoHasSurfaceAction(laudo, "mesa_approve") ||
+          laudoHasSurfaceAction(laudo, "mesa_return")
+        ) {
+          return {
+            ...base,
+            key: "decision_ready",
+            label: "Decisao disponivel",
+            detail:
+              "A mesa ja pode aprovar ou devolver com orientacao objetiva.",
+            tone: "aprovado",
+          };
         }
 
-        function resolverSecaoMesaPorTarget(targetId) {
-            const alvo = texto(targetId).trim().replace(/^#/, "");
-            if (!alvo) return null;
-            if (TARGET_TO_SECTION[alvo]) return TARGET_TO_SECTION[alvo];
-            return SECTION_ORDER.includes(alvo) ? alvo : null;
+        if (laudoHasSurfaceAction(laudo, "chat_finalize")) {
+          return {
+            ...base,
+            key: "waiting_field_send",
+            label: "Aguardando envio do campo",
+            detail:
+              "A coleta ficou pronta, mas o caso ainda depende do envio formal para a mesa.",
+            tone: "aguardando",
+          };
         }
 
-        function obterBotoesSecaoMesa() {
-            return Array.from(documentRef.querySelectorAll("[data-mesa-section-tab]"));
+        if (ownerRole === "inspetor") {
+          return {
+            ...base,
+            key: "field_owner",
+            label: "Campo em acao",
+            detail:
+              "O caso esta com o inspetor e pede retorno, evidencia ou novo envio.",
+            tone:
+              lifecycleStatus === "devolvido_para_correcao"
+                ? "ajustes"
+                : "aberto",
+          };
         }
 
-        function obterPaineisSecaoMesa() {
-            return Array.from(documentRef.querySelectorAll("[data-mesa-panel]"));
+        if (ownerRole === "mesa") {
+          return {
+            ...base,
+            key: "mesa_owner",
+            label: "Mesa em acao",
+            detail:
+              "A validacao humana da mesa segue como proximo passo do caso.",
+            tone: "aberto",
+          };
         }
 
-        function definirTextoNoElemento(id, valor) {
-            const node = $(id);
-            if (!node) return;
-            node.textContent = texto(valor);
+        if (lifecycleStatus === "aprovado") {
+          return {
+            ...base,
+            key: "issue_ready",
+            label: "Pronto para emissao",
+            detail:
+              "O caso ja foi aprovado e aguarda a etapa final documental.",
+            tone: "aprovado",
+          };
         }
 
-        function atualizarResumoSecaoMesa() {
-            const secaoAtiva = normalizarSecaoMesa(state.ui?.mesaSection || state.ui?.sections?.mesa || "overview");
-            const definicao = SECTION_META[secaoAtiva] || SECTION_META.overview;
-            const nav = documentRef.querySelector('[data-surface-nav="mesa"]');
-            const laudos = state.bootstrap?.mesa?.laudos || [];
-            const laudosFiltrados = filtrarLaudosMesa();
-            const laudoAtivo = obterLaudoMesaSelecionado();
-            const totalPendencias = laudos.reduce((acc, item) => acc + Number(item.pendencias_abertas || 0), 0);
-            const totalWhispers = laudos.reduce((acc, item) => acc + Number(item.whispers_nao_lidos || 0), 0);
-            const contagens = {
-                overview: `${formatarInteiro(laudos.length)} laudos no radar`,
-                queue: `${formatarInteiro(laudosFiltrados.length)} itens na fila`,
-                pending: `${formatarInteiro(totalPendencias)} pendencias e ${formatarInteiro(totalWhispers)} chamados`,
-                reply: texto(laudoAtivo?.titulo || "Sem laudo selecionado"),
-            };
-
-            if (nav) {
-                nav.dataset.surfaceActiveSection = secaoAtiva;
-            }
-            definirTextoNoElemento("mesa-section-summary-title", definicao.title);
-            definirTextoNoElemento("mesa-section-summary-meta", definicao.meta);
-            definirTextoNoElemento("mesa-section-count-overview", contagens.overview);
-            definirTextoNoElemento("mesa-section-count-queue", contagens.queue);
-            definirTextoNoElemento("mesa-section-count-pending", contagens.pending);
-            definirTextoNoElemento("mesa-section-count-reply", contagens.reply);
+        if (lifecycleStatus === "emitido") {
+          return {
+            ...base,
+            key: "issued",
+            label: "Emissao concluida",
+            detail: "O caso ja fechou o ciclo atual com documento emitido.",
+            tone: "aprovado",
+          };
         }
 
-        function abrirSecaoMesa(secao, { focusTab = false, syncUrl = true } = {}) {
-            const secaoAtiva = normalizarSecaoMesa(secao || state.ui?.mesaSection);
-            state.ui.mesaSection = secaoAtiva;
-            state.ui.sections = state.ui.sections || {};
-            state.ui.sections.mesa = secaoAtiva;
+        return base;
+      }
 
-            const tabAtiva = obterBotoesSecaoMesa().find((button) => button.dataset.mesaSectionTab === secaoAtiva) || null;
-            obterBotoesSecaoMesa().forEach((button) => {
-                const ativa = button.dataset.mesaSectionTab === secaoAtiva;
-                button.classList.toggle("is-active", ativa);
-                button.setAttribute("aria-selected", ativa ? "true" : "false");
-                button.setAttribute("aria-current", ativa ? "page" : "false");
-                button.setAttribute("tabindex", ativa ? "0" : "-1");
-            });
-            obterPaineisSecaoMesa().forEach((panel) => {
-                panel.hidden = panel.dataset.mesaPanel !== secaoAtiva;
-            });
-            atualizarResumoSecaoMesa();
-
-            if (focusTab && tabAtiva) {
-                tabAtiva.focus();
-            }
-            if (syncUrl && state.ui?.tab === "mesa") {
-                sincronizarUrlDaSecao("mesa", secaoAtiva);
-            }
-            return secaoAtiva;
-        }
-
-        function obterLaudoMesaSelecionado() {
-            return (state.bootstrap?.mesa?.laudos || []).find((laudo) => Number(laudo.id) === Number(state.mesa.laudoId)) || null;
-        }
-
-        function obterLaudoMesaPorId(laudoId) {
-            return (state.bootstrap?.mesa?.laudos || []).find((laudo) => Number(laudo.id) === Number(laudoId)) || null;
-        }
-
-        function humanizarLifecycleStatus(valor) {
-            const mapa = {
-                analise_livre: "Analise livre",
-                pre_laudo: "Pre-laudo",
-                laudo_em_coleta: "Laudo guiado",
-                aguardando_mesa: "Aguardando mesa",
-                em_revisao_mesa: "Em revisao na mesa",
-                devolvido_para_correcao: "Devolvido para correcao",
-                aprovado: "Aprovado",
-                emitido: "Emitido",
-            };
-            const chave = texto(valor).trim().toLowerCase();
-            return mapa[chave] || "Fluxo legado";
-        }
-
-        function humanizarOwnerRole(valor) {
-            const mapa = {
-                inspetor: "Responsavel: campo",
-                mesa: "Responsavel: mesa",
-                none: "Responsavel: conclusao",
-            };
-            const chave = texto(valor).trim().toLowerCase();
-            return mapa[chave] || "Responsavel nao definido";
-        }
-
-        function laudoAllowedSurfaceActions(laudo) {
-            return Array.isArray(laudo?.allowed_surface_actions)
-                ? laudo.allowed_surface_actions.map((item) => texto(item).trim()).filter(Boolean)
-                : [];
-        }
-
-        function laudoHasSurfaceAction(laudo, actionKey) {
-            return laudoAllowedSurfaceActions(laudo).includes(texto(actionKey).trim());
-        }
-
-        function resumirMomentoCanonicoMesa(laudo) {
-            const lifecycleStatus = texto(laudo?.case_lifecycle_status).trim().toLowerCase();
-            const ownerRole = texto(laudo?.active_owner_role).trim().toLowerCase();
-            const statusVisualLabel = texto(
-                laudo?.status_visual_label
-                || laudo?.status_revisao
-                || laudo?.status_card_label
-                || "Em revisao"
-            ).trim();
-
-            const base = {
-                key: "case_monitoring",
-                label: "Monitorar caso",
-                detail: "Caso em acompanhamento operacional.",
-                tone: "aguardando",
-                lifecycleLabel: humanizarLifecycleStatus(lifecycleStatus),
-                ownerLabel: humanizarOwnerRole(ownerRole),
-                statusVisualLabel,
-            };
-
-            if (laudoHasSurfaceAction(laudo, "mesa_approve") || laudoHasSurfaceAction(laudo, "mesa_return")) {
-                return {
-                    ...base,
-                    key: "decision_ready",
-                    label: "Decisao disponivel",
-                    detail: "A mesa ja pode aprovar ou devolver com orientacao objetiva.",
-                    tone: "aprovado",
-                };
-            }
-
-            if (laudoHasSurfaceAction(laudo, "chat_finalize")) {
-                return {
-                    ...base,
-                    key: "waiting_field_send",
-                    label: "Aguardando envio do campo",
-                    detail: "A coleta ficou pronta, mas o caso ainda depende do envio formal para a mesa.",
-                    tone: "aguardando",
-                };
-            }
-
-            if (ownerRole === "inspetor") {
-                return {
-                    ...base,
-                    key: "field_owner",
-                    label: "Campo em acao",
-                    detail: "O caso esta com o inspetor e pede retorno, evidencia ou novo envio.",
-                    tone: lifecycleStatus === "devolvido_para_correcao" ? "ajustes" : "aberto",
-                };
-            }
-
-            if (ownerRole === "mesa") {
-                return {
-                    ...base,
-                    key: "mesa_owner",
-                    label: "Mesa em acao",
-                    detail: "A validacao humana da mesa segue como proximo passo do caso.",
-                    tone: "aberto",
-                };
-            }
-
-            if (lifecycleStatus === "aprovado") {
-                return {
-                    ...base,
-                    key: "issue_ready",
-                    label: "Pronto para emissao",
-                    detail: "O caso ja foi aprovado e aguarda a etapa final documental.",
-                    tone: "aprovado",
-                };
-            }
-
-            if (lifecycleStatus === "emitido") {
-                return {
-                    ...base,
-                    key: "issued",
-                    label: "Emissao concluida",
-                    detail: "O caso ja fechou o ciclo atual com documento emitido.",
-                    tone: "aprovado",
-                };
-            }
-
-            return base;
-        }
-
-        function renderMesaCaseSignals(laudo) {
-            const resumo = resumirMomentoCanonicoMesa(laudo);
-            return `
+      function renderMesaCaseSignals(laudo) {
+        const resumo = resumirMomentoCanonicoMesa(laudo);
+        return `
                 <div class="item-case-signals" aria-label="Sinais canônicos do caso">
                     <span class="item-case-signal">Fluxo ${escapeHtml(resumo.lifecycleLabel)}</span>
                     <span class="item-case-signal">Owner ${escapeHtml(resumo.ownerLabel)}</span>
                     <span class="item-case-signal item-case-signal--focus">${escapeHtml(resumo.label)}</span>
                 </div>
             `;
+      }
+
+      function renderMesaResolutionGuide(laudo) {
+        const actions = laudoAllowedSurfaceActions(laudo);
+        const canApprove = actions.includes("mesa_approve");
+        const canReturn = actions.includes("mesa_return");
+        const lifecycleStatus = texto(laudo?.case_lifecycle_status)
+          .trim()
+          .toLowerCase();
+        const ownerRole = texto(laudo?.active_owner_role).trim().toLowerCase();
+
+        let title = "Responder e consolidar contexto";
+        let copy =
+          "A mesa ainda está qualificando o caso antes da decisão final.";
+        let tone = "aberto";
+
+        if (canApprove || canReturn) {
+          title = "Decisão pronta na mesa";
+          copy =
+            "O caso já permite aprovar ou devolver com motivo explícito no mesmo fluxo.";
+          tone = "aprovado";
+        } else if (
+          ownerRole === "inspetor" ||
+          lifecycleStatus === "devolvido_para_correcao"
+        ) {
+          title = "Aguardando retorno do campo";
+          copy =
+            "A mesa já devolveu o caso e agora depende de correção e novo envio do inspetor.";
+          tone = "aguardando";
+        } else if (
+          lifecycleStatus === "aprovado" ||
+          lifecycleStatus === "emitido" ||
+          ownerRole === "none"
+        ) {
+          title = "Ciclo de revisão encerrado";
+          copy =
+            "A etapa da mesa já foi concluída e o caso segue para emissão ou reabertura.";
+          tone = "aprovado";
         }
 
-        function mesaVisibilityPolicy() {
-            return state.bootstrap?.tenant_admin_projection?.payload?.visibility_policy || {};
-        }
+        return `
+                <div class="context-guidance" data-tone="${escapeAttr(tone)}">
+                    <div class="context-guidance-copy">
+                        <small>Fase operacional da mesa</small>
+                        <strong>${escapeHtml(title)}</strong>
+                        <p>${escapeHtml(copy)}</p>
+                    </div>
+                    <span class="pill" data-kind="priority" data-status="${escapeAttr(tone)}">${escapeHtml(title)}</span>
+                </div>
+            `;
+      }
 
-        function mesaCaseActionsEnabled() {
-            return Boolean(mesaVisibilityPolicy().case_actions_enabled);
-        }
+      function mesaVisibilityPolicy() {
+        return (
+          state.bootstrap?.tenant_admin_projection?.payload
+            ?.visibility_policy || {}
+        );
+      }
 
-        function mesaReadOnlyMode() {
-            const policy = mesaVisibilityPolicy();
-            return Boolean(policy.case_list_visible) && !Boolean(policy.case_actions_enabled);
-        }
+      function mesaCaseActionsEnabled() {
+        return Boolean(mesaVisibilityPolicy().case_actions_enabled);
+      }
 
-        function resumirMomentoIso(valor) {
-            const textoIso = texto(valor).trim();
-            if (!textoIso) return "";
-            return textoIso.replace("T", " ").replace(/\.\d+/, "").replace("+00:00", " UTC");
-        }
+      function mesaReadOnlyMode() {
+        const policy = mesaVisibilityPolicy();
+        return (
+          Boolean(policy.case_list_visible) &&
+          !Boolean(policy.case_actions_enabled)
+        );
+      }
 
-        function mesaHumanOverrideLatest(laudo) {
-            const envelope = laudo && typeof laudo.human_override_summary === "object"
-                ? laudo.human_override_summary
-                : null;
-            const latest = envelope && typeof envelope.latest === "object" ? envelope.latest : null;
-            return latest && typeof latest === "object" ? latest : null;
-        }
+      function resumirMomentoIso(valor) {
+        const textoIso = texto(valor).trim();
+        if (!textoIso) return "";
+        return textoIso
+          .replace("T", " ")
+          .replace(/\.\d+/, "")
+          .replace("+00:00", " UTC");
+      }
 
-        function renderMesaHumanOverrideNotice(laudo) {
-            const latest = mesaHumanOverrideLatest(laudo);
-            if (!latest) return "";
-            const actorName = texto(latest.actor_name || "Validador humano");
-            const reason = texto(latest.reason || "Justificativa interna registrada.");
-            const appliedAt = resumirMomentoIso(latest.applied_at);
-            return `
+      function mesaHumanOverrideLatest(laudo) {
+        const envelope =
+          laudo && typeof laudo.human_override_summary === "object"
+            ? laudo.human_override_summary
+            : null;
+        const latest =
+          envelope && typeof envelope.latest === "object"
+            ? envelope.latest
+            : null;
+        return latest && typeof latest === "object" ? latest : null;
+      }
+
+      function renderMesaHumanOverrideNotice(laudo) {
+        const latest = mesaHumanOverrideLatest(laudo);
+        if (!latest) return "";
+        const actorName = texto(latest.actor_name || "Validador humano");
+        const reason = texto(
+          latest.reason || "Justificativa interna registrada.",
+        );
+        const appliedAt = resumirMomentoIso(latest.applied_at);
+        return `
                 <div class="context-guidance" data-tone="aguardando">
                     <div class="context-guidance-copy">
                         <small>Override humano interno</small>
@@ -333,85 +504,98 @@
                     <span class="pill" data-kind="priority" data-status="aguardando">Auditável</span>
                 </div>
             `;
+      }
+
+      function renderMesaPolicyHints() {
+        const readOnly = mesaReadOnlyMode();
+        const textarea = $("mesa-resposta");
+        const arquivo = $("mesa-arquivo");
+        const motivo = $("mesa-motivo");
+        const sendButton = $("btn-mesa-msg-enviar");
+        const approveButton = $("btn-mesa-aprovar");
+        const rejectButton = $("btn-mesa-rejeitar");
+        const hasCaseSelected = Boolean(state.mesa.laudoId);
+        const variant = readOnly ? "readOnly" : "editable";
+
+        if (renderStaticContractHtml) {
+          renderStaticContractHtml(
+            "mesa-reply-policy-hint",
+            "mesaReplyPolicyHint",
+            variant,
+          );
+          renderStaticContractHtml(
+            "mesa-reply-policy-note",
+            "mesaReplyPolicyNote",
+            variant,
+            { hidden: !readOnly },
+          );
+          renderStaticContractHtml(
+            "mesa-message-policy-note",
+            "mesaMessagePolicyNote",
+            variant,
+            { hidden: false },
+          );
         }
 
-        function renderMesaPolicyHints() {
-            const readOnly = mesaReadOnlyMode();
-            const replyHint = $("mesa-reply-policy-hint");
-            const replyNote = $("mesa-reply-policy-note");
-            const messageNote = $("mesa-message-policy-note");
-            const textarea = $("mesa-resposta");
-            const arquivo = $("mesa-arquivo");
-            const motivo = $("mesa-motivo");
-            const sendButton = $("btn-mesa-msg-enviar");
-            const approveButton = $("btn-mesa-aprovar");
-            const rejectButton = $("btn-mesa-rejeitar");
-            const hasCaseSelected = Boolean(state.mesa.laudoId);
-
-            if (replyHint) {
-                replyHint.innerHTML = readOnly ? '<span class="hero-chip">Somente acompanhamento</span>' : "";
-            }
-            if (replyNote) {
-                replyNote.hidden = !readOnly;
-                replyNote.innerHTML = readOnly
-                    ? '<div class="form-hint" data-tone="aguardando"><strong>Decisão da mesa indisponível</strong><span>Este tenant permite leitura do caso, mas não permite aprovar nem devolver laudos pelo portal cliente.</span></div>'
-                    : "";
-            }
-            if (messageNote) {
-                messageNote.hidden = !readOnly;
-                messageNote.innerHTML = readOnly
-                    ? '<div class="form-hint" data-tone="aguardando"><strong>Resposta bloqueada</strong><span>Você pode ler o histórico e marcar avisos como lidos, mas não pode responder, anexar nem resolver pendências.</span></div>'
-                    : "";
-            }
-
-            if (textarea) {
-                textarea.disabled = readOnly || !hasCaseSelected;
-            }
-            if (arquivo) {
-                arquivo.disabled = readOnly || !hasCaseSelected;
-            }
-            if (motivo) {
-                motivo.disabled = readOnly || !hasCaseSelected;
-            }
-            if (sendButton) {
-                sendButton.disabled = readOnly || !hasCaseSelected;
-            }
-            if (approveButton) {
-                approveButton.disabled = readOnly || !hasCaseSelected;
-            }
-            if (rejectButton) {
-                rejectButton.disabled = readOnly || !hasCaseSelected;
-            }
+        if (textarea) {
+          textarea.disabled = readOnly || !hasCaseSelected;
         }
+        if (arquivo) {
+          arquivo.disabled = readOnly || !hasCaseSelected;
+        }
+        if (motivo) {
+          motivo.disabled = readOnly || !hasCaseSelected;
+        }
+        if (sendButton) {
+          sendButton.disabled = readOnly || !hasCaseSelected;
+        }
+        if (approveButton) {
+          approveButton.disabled = readOnly || !hasCaseSelected;
+        }
+        if (rejectButton) {
+          rejectButton.disabled = readOnly || !hasCaseSelected;
+        }
+      }
 
-        function renderMesaList() {
-            const laudos = ordenarPorPrioridade(filtrarLaudosMesa(), prioridadeMesa);
-            const lista = $("lista-mesa-laudos");
-            const resumo = $("mesa-lista-resumo");
-            const filtroAtivo = rotuloSituacaoMesa(state.ui.mesaSituacao);
-            if (!lista || !resumo) return;
+      function renderMesaList() {
+        const laudos = ordenarPorPrioridade(
+          filtrarLaudosMesa(),
+          prioridadeMesa,
+        );
+        const lista = $("lista-mesa-laudos");
+        const resumo = $("mesa-lista-resumo");
+        const filtroAtivo = rotuloSituacaoMesa(state.ui.mesaSituacao);
+        if (!lista || !resumo) return;
 
-            const totalPendencias = (state.bootstrap?.mesa?.laudos || []).reduce((acc, item) => acc + Number(item.pendencias_abertas || 0), 0);
-            const totalWhispers = (state.bootstrap?.mesa?.laudos || []).reduce((acc, item) => acc + Number(item.whispers_nao_lidos || 0), 0);
+        const totalPendencias = (state.bootstrap?.mesa?.laudos || []).reduce(
+          (acc, item) => acc + Number(item.pendencias_abertas || 0),
+          0,
+        );
+        const totalWhispers = (state.bootstrap?.mesa?.laudos || []).reduce(
+          (acc, item) => acc + Number(item.whispers_nao_lidos || 0),
+          0,
+        );
 
-            resumo.innerHTML = `
+        resumo.innerHTML = `
                 <span class="hero-chip">${formatarInteiro(totalPendencias)} pendencias abertas</span>
                 <span class="hero-chip">${formatarInteiro(totalWhispers)} chamados pendentes</span>
                 ${filtroAtivo ? `<span class="hero-chip">Filtro rapido: ${escapeHtml(filtroAtivo)}</span>` : ""}
             `;
 
-            if (!laudos.length) {
-                lista.innerHTML = `
+        if (!laudos.length) {
+          lista.innerHTML = `
                     <div class="empty-state">
                         <strong>Nenhum laudo na fila da mesa</strong>
                         <p>Quando o chat da empresa enviar laudos para revisao, eles aparecem aqui.</p>
                     </div>
                 `;
-                atualizarResumoSecaoMesa();
-                return;
-            }
+          atualizarResumoSecaoMesa();
+          return;
+        }
 
-            lista.innerHTML = laudos.map((laudo) => `
+        lista.innerHTML = laudos
+          .map(
+            (laudo) => `
                 <article class="item ${Number(state.mesa.laudoId) === Number(laudo.id) ? "active" : ""}" data-mesa="${laudo.id}" data-case-flow-summary="${escapeAttr(resumirMomentoCanonicoMesa(laudo).key)}" tabindex="0">
                     <div class="item-head">
                         <strong>${escapeHtml(laudo.titulo)}</strong>
@@ -426,26 +610,43 @@
                         ${laudoMesaParado(laudo) ? `<span class="hero-chip">${escapeHtml(resumoEsperaHoras(horasDesdeAtualizacao(laudo.atualizado_em)))}</span>` : ""}
                     </div>
                 </article>
-            `).join("");
-            atualizarResumoSecaoMesa();
-        }
+            `,
+          )
+          .join("");
+        atualizarResumoSecaoMesa();
+      }
 
-        function renderMesaTriagem() {
-            const container = $("mesa-triagem");
-            const laudos = state.bootstrap?.mesa?.laudos || [];
-            if (!container) return;
+      function renderMesaTriagem() {
+        const container = $("mesa-triagem");
+        const laudos = state.bootstrap?.mesa?.laudos || [];
+        if (!container) return;
 
-            const responder = ordenarPorPrioridade(laudos.filter((item) => Number(item?.whispers_nao_lidos || 0) > 0), prioridadeMesa);
-            const pendencias = ordenarPorPrioridade(laudos.filter((item) => Number(item?.pendencias_abertas || 0) > 0), prioridadeMesa);
-            const aguardando = ordenarPorPrioridade(
-                laudos.filter((item) => variantStatusLaudo(item.status_card) === "aguardando" && Number(item?.whispers_nao_lidos || 0) <= 0 && Number(item?.pendencias_abertas || 0) <= 0),
-                prioridadeMesa
-            );
-            const parados = ordenarPorPrioridade(laudos.filter((item) => laudoMesaParado(item)), prioridadeMesa);
-            const filtroAtivo = rotuloSituacaoMesa(state.ui.mesaSituacao);
-            const destaque = responder[0] || pendencias[0] || parados[0] || aguardando[0] || null;
+        const responder = ordenarPorPrioridade(
+          laudos.filter((item) => Number(item?.whispers_nao_lidos || 0) > 0),
+          prioridadeMesa,
+        );
+        const pendencias = ordenarPorPrioridade(
+          laudos.filter((item) => Number(item?.pendencias_abertas || 0) > 0),
+          prioridadeMesa,
+        );
+        const aguardando = ordenarPorPrioridade(
+          laudos.filter(
+            (item) =>
+              variantStatusLaudo(item.status_card) === "aguardando" &&
+              Number(item?.whispers_nao_lidos || 0) <= 0 &&
+              Number(item?.pendencias_abertas || 0) <= 0,
+          ),
+          prioridadeMesa,
+        );
+        const parados = ordenarPorPrioridade(
+          laudos.filter((item) => laudoMesaParado(item)),
+          prioridadeMesa,
+        );
+        const filtroAtivo = rotuloSituacaoMesa(state.ui.mesaSituacao);
+        const destaque =
+          responder[0] || pendencias[0] || parados[0] || aguardando[0] || null;
 
-            container.innerHTML = `
+        container.innerHTML = `
                 <div class="toolbar-meta">
                     <button class="btn" type="button" data-act="filtrar-mesa-status" data-situacao="responder">Ver respostas novas</button>
                     <button class="btn" type="button" data-act="filtrar-mesa-status" data-situacao="pendencias">Ver pendencias</button>
@@ -454,7 +655,9 @@
                     <button class="btn ghost" type="button" data-act="limpar-mesa-filtro">Limpar filtro rapido</button>
                     ${filtroAtivo ? `<span class="hero-chip">Filtro rapido: ${escapeHtml(filtroAtivo)}</span>` : ""}
                 </div>
-                ${destaque ? `
+                ${
+                  destaque
+                    ? `
                     <article class="activity-item">
                         <div class="activity-head">
                             <div class="activity-copy">
@@ -468,34 +671,39 @@
                             <button class="btn" type="button" data-act="abrir-prioridade" data-kind="mesa-laudo" data-canal="mesa" data-laudo="${escapeAttr(String(destaque.id || ""))}" data-target="mesa-contexto">Abrir laudo prioritario</button>
                         </div>
                     </article>
-                ` : `
+                `
+                    : `
                     <div class="empty-state">
                         <strong>Mesa em dia</strong>
                         <p>Nenhum chamado ou pendencia urgente apareceu agora. Use os filtros rapidos para revisar a fila por estado.</p>
                     </div>
-                `}
+                `
+                }
             `;
-            atualizarResumoSecaoMesa();
-        }
+        atualizarResumoSecaoMesa();
+      }
 
-        function renderMesaMovimentos() {
-            const container = $("mesa-movimentos");
-            const laudos = ordenarPorPrioridade(state.bootstrap?.mesa?.laudos || [], (item) => ({
-                score: parseDataIso(item?.atualizado_em),
-            })).slice(0, 3);
-            if (!container) return;
+      function renderMesaMovimentos() {
+        const container = $("mesa-movimentos");
+        const laudos = ordenarPorPrioridade(
+          state.bootstrap?.mesa?.laudos || [],
+          (item) => ({
+            score: parseDataIso(item?.atualizado_em),
+          }),
+        ).slice(0, 3);
+        if (!container) return;
 
-            if (!laudos.length) {
-                container.innerHTML = `
+        if (!laudos.length) {
+          container.innerHTML = `
                     <div class="empty-state">
                         <strong>Sem movimentos recentes na mesa</strong>
                         <p>Assim que a empresa receber chamados, pendencias ou aprovacoes, o resumo aparece aqui.</p>
                     </div>
                 `;
-                return;
-            }
+          return;
+        }
 
-            container.innerHTML = `
+        container.innerHTML = `
                 <article class="activity-item">
                     <div class="activity-head">
                         <div class="activity-copy">
@@ -505,7 +713,9 @@
                         <span class="hero-chip">${formatarInteiro(laudos.length)} recentes</span>
                     </div>
                     <div class="activity-list">
-                        ${laudos.map((laudo) => `
+                        ${laudos
+                          .map(
+                            (laudo) => `
                             <article class="activity-item">
                                 <div class="activity-head">
                                     <div class="activity-copy">
@@ -522,45 +732,49 @@
                                     <button class="btn" type="button" data-act="abrir-prioridade" data-kind="mesa-laudo" data-canal="mesa" data-laudo="${escapeAttr(String(laudo.id || ""))}" data-target="mesa-contexto">Abrir laudo</button>
                                 </div>
                             </article>
-                        `).join("")}
+                        `,
+                          )
+                          .join("")}
                     </div>
                 </article>
             `;
-            atualizarResumoSecaoMesa();
-        }
+        atualizarResumoSecaoMesa();
+      }
 
-        function renderMesaContext() {
-            const alvo = obterLaudoMesaSelecionado();
-            const contexto = $("mesa-contexto");
-            const aprovar = $("btn-mesa-aprovar");
-            const rejeitar = $("btn-mesa-rejeitar");
-            const caseActionsEnabled = mesaCaseActionsEnabled();
-            if (!contexto || !aprovar || !rejeitar) return;
+      function renderMesaContext() {
+        const alvo = obterLaudoMesaSelecionado();
+        const contexto = $("mesa-contexto");
+        const aprovar = $("btn-mesa-aprovar");
+        const rejeitar = $("btn-mesa-rejeitar");
+        const caseActionsEnabled = mesaCaseActionsEnabled();
+        if (!contexto || !aprovar || !rejeitar) return;
 
-            if (!alvo) {
-                contexto.innerHTML = `
+        if (!alvo) {
+          contexto.innerHTML = `
                     <div class="empty-state">
                         <strong>Selecione um laudo para revisar</strong>
                         <p>O painel da mesa mostra pendencias, chamados e historico do laudo selecionado.</p>
                     </div>
                 `;
-                aprovar.disabled = true;
-                rejeitar.disabled = true;
-                $("mesa-titulo").textContent = "Selecione um laudo";
-                renderMesaPolicyHints();
-                atualizarResumoSecaoMesa();
-                return;
-            }
+          aprovar.disabled = true;
+          rejeitar.disabled = true;
+          $("mesa-titulo").textContent = "Selecione um laudo";
+          renderMesaPolicyHints();
+          atualizarResumoSecaoMesa();
+          return;
+        }
 
-            const prioridade = prioridadeMesa(alvo);
-            const momentoCanonico = resumirMomentoCanonicoMesa(alvo);
-            const canApprove = caseActionsEnabled && laudoHasSurfaceAction(alvo, "mesa_approve");
-            const canReturn = caseActionsEnabled && laudoHasSurfaceAction(alvo, "mesa_return");
-            $("mesa-titulo").textContent = alvo.titulo || "Laudo selecionado";
-            aprovar.disabled = !canApprove;
-            rejeitar.disabled = !canReturn;
+        const prioridade = prioridadeMesa(alvo);
+        const momentoCanonico = resumirMomentoCanonicoMesa(alvo);
+        const canApprove =
+          caseActionsEnabled && laudoHasSurfaceAction(alvo, "mesa_approve");
+        const canReturn =
+          caseActionsEnabled && laudoHasSurfaceAction(alvo, "mesa_return");
+        $("mesa-titulo").textContent = alvo.titulo || "Laudo selecionado";
+        aprovar.disabled = !canApprove;
+        rejeitar.disabled = !canReturn;
 
-            contexto.innerHTML = `
+        contexto.innerHTML = `
                 <div class="context-card">
                     <div class="context-head">
                         <div>
@@ -611,8 +825,11 @@
                         </div>
                         <span class="pill" data-kind="priority" data-status="${momentoCanonico.tone}">${escapeHtml(momentoCanonico.lifecycleLabel)}</span>
                     </div>
+                    ${renderMesaResolutionGuide(alvo)}
                     ${renderMesaHumanOverrideNotice(alvo)}
-                    ${laudoMesaParado(alvo) ? `
+                    ${
+                      laudoMesaParado(alvo)
+                        ? `
                         <div class="context-guidance" data-tone="aguardando">
                             <div class="context-guidance-copy">
                                 <small>Fila parada</small>
@@ -621,28 +838,46 @@
                             </div>
                             <span class="pill" data-kind="priority" data-status="aguardando">Retomar</span>
                         </div>
-                    ` : ""}
+                    `
+                        : ""
+                    }
                 </div>
             `;
-            renderMesaPolicyHints();
-            atualizarResumoSecaoMesa();
-        }
+        renderMesaPolicyHints();
+        atualizarResumoSecaoMesa();
+      }
 
-        function renderMesaResumoGeral() {
-            const container = $("mesa-resumo-geral");
-            const laudos = state.bootstrap?.mesa?.laudos || [];
-            const selecionado = obterLaudoMesaSelecionado();
-            const prioridade = selecionado ? prioridadeMesa(selecionado) : null;
-            const momentoSelecionado = selecionado ? resumirMomentoCanonicoMesa(selecionado) : null;
-            if (!container) return;
+      function renderMesaResumoGeral() {
+        const container = $("mesa-resumo-geral");
+        const laudos = state.bootstrap?.mesa?.laudos || [];
+        const selecionado = obterLaudoMesaSelecionado();
+        const prioridade = selecionado ? prioridadeMesa(selecionado) : null;
+        const momentoSelecionado = selecionado
+          ? resumirMomentoCanonicoMesa(selecionado)
+          : null;
+        if (!container) return;
 
-            const comAcaoAgora = laudos.filter((item) => Number(item.pendencias_abertas || 0) > 0 || Number(item.whispers_nao_lidos || 0) > 0).length;
-            const totalPendencias = laudos.reduce((acc, item) => acc + Number(item.pendencias_abertas || 0), 0);
-            const totalWhispers = laudos.reduce((acc, item) => acc + Number(item.whispers_nao_lidos || 0), 0);
-            const prontosParaRevisar = laudos.filter((item) => resumirMomentoCanonicoMesa(item).key === "decision_ready").length;
-            const emCampo = laudos.filter((item) => resumirMomentoCanonicoMesa(item).key === "field_owner").length;
+        const comAcaoAgora = laudos.filter(
+          (item) =>
+            Number(item.pendencias_abertas || 0) > 0 ||
+            Number(item.whispers_nao_lidos || 0) > 0,
+        ).length;
+        const totalPendencias = laudos.reduce(
+          (acc, item) => acc + Number(item.pendencias_abertas || 0),
+          0,
+        );
+        const totalWhispers = laudos.reduce(
+          (acc, item) => acc + Number(item.whispers_nao_lidos || 0),
+          0,
+        );
+        const prontosParaRevisar = laudos.filter(
+          (item) => resumirMomentoCanonicoMesa(item).key === "decision_ready",
+        ).length;
+        const emCampo = laudos.filter(
+          (item) => resumirMomentoCanonicoMesa(item).key === "field_owner",
+        ).length;
 
-            container.innerHTML = `
+        container.innerHTML = `
                 <article class="metric-card" data-accent="attention">
                     <small>Acao agora</small>
                     <strong>${formatarInteiro(comAcaoAgora)}</strong>
@@ -658,27 +893,27 @@
                     <strong>${formatarInteiro(prontosParaRevisar)}</strong>
                     <span class="metric-meta">${formatarInteiro(emCampo)} caso(s) ainda estao com o campo como owner ativo.</span>
                 </article>
-                <article class="metric-card" data-accent="${momentoSelecionado ? momentoSelecionado.tone : (prioridade ? prioridade.tone : "done")}">
+                <article class="metric-card" data-accent="${momentoSelecionado ? momentoSelecionado.tone : prioridade ? prioridade.tone : "done"}">
                     <small>Foco do laudo selecionado</small>
-                    <strong>${escapeHtml(momentoSelecionado ? momentoSelecionado.label : (prioridade ? prioridade.badge : "Sem selecao"))}</strong>
+                    <strong>${escapeHtml(momentoSelecionado ? momentoSelecionado.label : prioridade ? prioridade.badge : "Sem selecao")}</strong>
                     <span class="metric-meta">${escapeHtml(momentoSelecionado ? momentoSelecionado.detail : "Escolha um laudo da fila para ver a acao recomendada.")}</span>
                 </article>
             `;
-            atualizarResumoSecaoMesa();
+        atualizarResumoSecaoMesa();
+      }
+
+      function renderMesaResumo() {
+        const pacote = state.mesa.pacote;
+        const container = $("mesa-resumo");
+        if (!container) return;
+
+        if (!pacote) {
+          container.innerHTML = "";
+          atualizarResumoSecaoMesa();
+          return;
         }
 
-        function renderMesaResumo() {
-            const pacote = state.mesa.pacote;
-            const container = $("mesa-resumo");
-            if (!container) return;
-
-            if (!pacote) {
-                container.innerHTML = "";
-                atualizarResumoSecaoMesa();
-                return;
-            }
-
-            container.innerHTML = `
+        container.innerHTML = `
                 <article class="metric-card">
                     <small>Pendencias abertas</small>
                     <strong>${formatarInteiro(pacote.resumo_pendencias?.abertas || 0)}</strong>
@@ -695,49 +930,52 @@
                     <span class="metric-meta">${formatarInteiro(pacote.resumo_evidencias?.documentos || 0)} documentos e ${formatarInteiro(pacote.resumo_evidencias?.fotos || 0)} fotos</span>
                 </article>
             `;
-            atualizarResumoSecaoMesa();
+        atualizarResumoSecaoMesa();
+      }
+
+      function tituloMensagemMesa(mensagem) {
+        if (mensagem.is_whisper) return "Chamado do inspetor";
+        if (texto(mensagem.tipo) === "humano_eng") {
+          return mensagem.lida ? "Pendencia resolvida" : "Pendencia da mesa";
         }
+        return "Resposta da mesa";
+      }
 
-        function tituloMensagemMesa(mensagem) {
-            if (mensagem.is_whisper) return "Chamado do inspetor";
-            if (texto(mensagem.tipo) === "humano_eng") {
-                return mensagem.lida ? "Pendencia resolvida" : "Pendencia da mesa";
-            }
-            return "Resposta da mesa";
-        }
+      function classeMensagemMesa(mensagem) {
+        if (mensagem.is_whisper) return "msg--whisper";
+        if (texto(mensagem.tipo) === "humano_eng") return "msg--mesa";
+        return "msg--assistente";
+      }
 
-        function classeMensagemMesa(mensagem) {
-            if (mensagem.is_whisper) return "msg--whisper";
-            if (texto(mensagem.tipo) === "humano_eng") return "msg--mesa";
-            return "msg--assistente";
-        }
+      function renderMesaMensagens() {
+        const container = $("mesa-mensagens");
+        const mensagens = Array.isArray(state.mesa.mensagens)
+          ? state.mesa.mensagens
+          : [];
+        if (!container) return;
 
-        function renderMesaMensagens() {
-            const container = $("mesa-mensagens");
-            const mensagens = Array.isArray(state.mesa.mensagens) ? state.mesa.mensagens : [];
-            if (!container) return;
-
-            if (!mensagens.length) {
-                container.innerHTML = `
+        if (!mensagens.length) {
+          container.innerHTML = `
                     <div class="empty-state">
                         <strong>Nada carregado ainda</strong>
                         <p>As respostas da mesa, chamados e anexos deste laudo aparecem aqui.</p>
                     </div>
                 `;
-                atualizarResumoSecaoMesa();
-                return;
-            }
+          atualizarResumoSecaoMesa();
+          return;
+        }
 
-            container.innerHTML = mensagens.map((mensagem) => {
-                const pendencia = texto(mensagem.tipo) === "humano_eng";
-                const statusPendencia = pendencia
-                    ? `<span class="pill" data-kind="status" data-status="${mensagem.lida ? "ativo" : "temporaria"}">${mensagem.lida ? "Resolvida" : "Aberta"}</span>`
-                    : "";
-                const resolucao = mensagem.resolvida_em_label
-                    ? `<div class="msg-time">Resolvida em ${escapeHtml(mensagem.resolvida_em_label)}${mensagem.resolvida_por_nome ? ` por ${escapeHtml(mensagem.resolvida_por_nome)}` : ""}</div>`
-                    : "";
+        container.innerHTML = mensagens
+          .map((mensagem) => {
+            const pendencia = texto(mensagem.tipo) === "humano_eng";
+            const statusPendencia = pendencia
+              ? `<span class="pill" data-kind="status" data-status="${mensagem.lida ? "ativo" : "temporaria"}">${mensagem.lida ? "Resolvida" : "Aberta"}</span>`
+              : "";
+            const resolucao = mensagem.resolvida_em_label
+              ? `<div class="msg-time">Resolvida em ${escapeHtml(mensagem.resolvida_em_label)}${mensagem.resolvida_por_nome ? ` por ${escapeHtml(mensagem.resolvida_por_nome)}` : ""}</div>`
+              : "";
 
-                return `
+            return `
                     <article class="msg ${classeMensagemMesa(mensagem)}">
                         <div class="msg-head">
                             <div class="msg-meta">
@@ -749,32 +987,37 @@
                         <div class="msg-body">${textoComQuebras(mensagem.texto || "(sem conteudo)")}</div>
                         ${resolucao}
                         ${renderAnexos(mensagem.anexos)}
-                        ${pendencia ? `
+                        ${
+                          pendencia
+                            ? `
                             <div class="msg-actions">
                                 <button class="btn" data-act="toggle-pendencia" data-id="${mensagem.id}" data-lida="${mensagem.lida ? "1" : "0"}" type="button">
                                     ${mensagem.lida ? "Reabrir pendencia" : "Marcar resolvida"}
                                 </button>
                             </div>
-                        ` : ""}
+                        `
+                            : ""
+                        }
                     </article>
                 `;
-            }).join("");
-            atualizarResumoSecaoMesa();
-        }
+          })
+          .join("");
+        atualizarResumoSecaoMesa();
+      }
 
-        return {
-            abrirSecaoMesa,
-            laudoHasSurfaceAction,
-            obterLaudoMesaPorId,
-            obterLaudoMesaSelecionado,
-            resolverSecaoMesaPorTarget,
-            renderMesaContext,
-            renderMesaList,
-            renderMesaMensagens,
-            renderMesaMovimentos,
-            renderMesaResumo,
-            renderMesaResumoGeral,
-            renderMesaTriagem,
-        };
+      return {
+        abrirSecaoMesa,
+        laudoHasSurfaceAction,
+        obterLaudoMesaPorId,
+        obterLaudoMesaSelecionado,
+        resolverSecaoMesaPorTarget,
+        renderMesaContext,
+        renderMesaList,
+        renderMesaMensagens,
+        renderMesaMovimentos,
+        renderMesaResumo,
+        renderMesaResumoGeral,
+        renderMesaTriagem,
+      };
     };
 })();

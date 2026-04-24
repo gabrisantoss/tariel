@@ -1,0 +1,115 @@
+.panel--documentos .surface-stage__grid--documents {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.documentos-lista {
+    display: grid;
+    gap: 1rem;
+}
+
+.documentos-signal-lista {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.document-signal-card {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.875rem 0.95rem;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(248, 250, 252, 0.9);
+}
+
+.document-card {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.document-card__head,
+.document-card__meta,
+.document-card__footer {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.document-card__head h4 {
+    margin: 0.5rem 0 0;
+}
+
+.document-card__meta,
+.document-card__footer,
+.document-card__status,
+.document-card__muted,
+.document-card__summary p {
+    color: rgba(15, 23, 42, 0.72);
+}
+
+.document-card__summary {
+    margin: 0.9rem 0;
+}
+
+.document-card__nr35 {
+    display: grid;
+    gap: 0.35rem;
+    margin-bottom: 0.9rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.9rem;
+    background: rgba(241, 245, 249, 0.95);
+    color: rgba(15, 23, 42, 0.82);
+}
+
+.document-card__signals {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+}
+
+.document-card__timeline,
+.document-card__package {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+}
+
+.document-summary-card {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.document-summary-card__head {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.document-summary-card__head h4 {
+    margin: 0.5rem 0 0;
+}
+
+.document-card__summary p {
+    margin: 0;
+}
+
+.document-card__link {
+    color: #0f766e;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.document-card__link:hover,
+.document-card__link:focus-visible {
+    text-decoration: underline;
+}

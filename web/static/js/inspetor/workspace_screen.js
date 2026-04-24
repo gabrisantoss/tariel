@@ -5,6 +5,14 @@
         return global.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true;
     }
 
+    function mesaCanalParaleloLiberadoNoAmbiente() {
+        const ambiente = String(global.TARIEL?.ambiente || "").trim().toLowerCase();
+        if (["dev", "development", "local"].includes(ambiente)) {
+            return true;
+        }
+        return !!global.TARIEL?.devInspectorToolSimulation;
+    }
+
     function resolveMesaWidgetDisponibilidade(screen, dependencies = {}) {
         const {
             estado = {},
@@ -39,11 +47,18 @@
         }
 
         const view = resolveWorkspaceView?.(screenAtual);
+        if (view === "inspection_mesa") {
+            return true;
+        }
+
+        if (!mesaCanalParaleloLiberadoNoAmbiente()) {
+            return false;
+        }
+
         return [
             "inspection_history",
             "inspection_record",
             "inspection_conversation",
-            "inspection_mesa",
         ].includes(view);
     }
 

@@ -583,10 +583,11 @@ def aplicar_feedback_mesa_ao_laudo(
     laudo: Laudo,
     *,
     occurred_at: datetime | None = None,
+    signal_pending_reopen: bool = True,
     cache: CacheResumoLaudoRequest | None = None,
 ) -> datetime:
     timestamp = occurred_at or _agora_utc_state()
-    if laudo_deve_sinalizar_reabertura_pendente_apos_feedback_mesa(
+    if signal_pending_reopen and laudo_deve_sinalizar_reabertura_pendente_apos_feedback_mesa(
         banco,
         laudo,
         cache=cache,
@@ -700,25 +701,278 @@ def serializar_contexto_case_lifecycle_legado(
     legacy_payload: dict[str, Any] | None = None,
     tenant_id: object | None = None,
 ) -> dict[str, Any]:
+    return build_case_operational_fields_from_legacy(
+        laudo=laudo,
+        legacy_payload=legacy_payload,
+        tenant_id=tenant_id,
+    )
+
+
+def build_case_operational_fields_from_legacy(
+    *,
+    laudo: Laudo | None,
+    legacy_payload: dict[str, Any] | None = None,
+    tenant_id: object | None = None,
+) -> dict[str, Any]:
     snapshot = build_technical_case_status_snapshot_from_legacy(
         tenant_id=tenant_id if tenant_id is not None else getattr(laudo, "empresa_id", ""),
         legacy_payload=legacy_payload or {},
         laudo=laudo,
     )
+    return build_case_operational_fields_from_case_snapshot(snapshot)
+
+
+def build_case_runtime_legacy_payload(
+    *,
+    laudo: Laudo | object | None,
+    legacy_public_state: object = "",
+    allows_reopen: object = None,
+    has_interaction: object = False,
+    laudo_card: dict[str, Any] | None = None,
+    base_payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    payload_base = base_payload if isinstance(base_payload, dict) else {}
+    card = laudo_card if isinstance(laudo_card, dict) else {}
+
+    def _pick(*values: object, default: object = None) -> object:
+        for value in values:
+            if value is None:
+                continue
+            if isinstance(value, str) and not value.strip():
+                continue
+            return value
+        return default
+
     return {
-        "case_lifecycle_status": snapshot.case_lifecycle_status,
-        "case_workflow_mode": snapshot.workflow_mode,
-        "active_owner_role": snapshot.active_owner_role,
+        "estado": str(_pick(payload_base.get("estado"), legacy_public_state, default="sem_relatorio") or "sem_relatorio"),
+        "laudo_id": int(
+            _pick(payload_base.get("laudo_id"), getattr(laudo, "id", 0), default=0) or 0
+        ),
+        "status_card": _pick(payload_base.get("status_card"), card.get("status_card")),
+        "permite_reabrir": bool(
+            _pick(payload_base.get("permite_reabrir"), allows_reopen, default=False)
+        ),
+        "tem_interacao": bool(
+            _pick(payload_base.get("tem_interacao"), has_interaction, default=False)
+        ),
+        "laudo_card": card or payload_base.get("laudo_card"),
+        "case_status": str(_pick(payload_base.get("case_status"), card.get("case_status"), default="") or ""),
+        "case_lifecycle_status": str(
+            _pick(
+                payload_base.get("case_lifecycle_status"),
+                card.get("case_lifecycle_status"),
+                default="",
+            )
+            or ""
+        ),
+        "case_workflow_mode": str(
+            _pick(
+                payload_base.get("case_workflow_mode"),
+                card.get("case_workflow_mode"),
+                default="",
+            )
+            or ""
+        ),
+        "active_owner_role": str(
+            _pick(
+                payload_base.get("active_owner_role"),
+                card.get("active_owner_role"),
+                default="",
+            )
+            or ""
+        ),
+        "case_operational_phase": str(
+            _pick(
+                payload_base.get("case_operational_phase"),
+                card.get("case_operational_phase"),
+                default="",
+            )
+            or ""
+        ),
+        "case_operational_phase_label": str(
+            _pick(
+                payload_base.get("case_operational_phase_label"),
+                card.get("case_operational_phase_label"),
+                default="",
+            )
+            or ""
+        ),
+        "case_operational_summary": str(
+            _pick(
+                payload_base.get("case_operational_summary"),
+                card.get("case_operational_summary"),
+                default="",
+            )
+            or ""
+        ),
+        "review_phase": str(_pick(payload_base.get("review_phase"), card.get("review_phase"), default="") or ""),
+        "review_phase_label": str(
+            _pick(payload_base.get("review_phase_label"), card.get("review_phase_label"), default="")
+            or ""
+        ),
+        "next_action_label": str(
+            _pick(payload_base.get("next_action_label"), card.get("next_action_label"), default="")
+            or ""
+        ),
+        "next_action_summary": str(
+            _pick(payload_base.get("next_action_summary"), card.get("next_action_summary"), default="")
+            or ""
+        ),
+        "allowed_next_lifecycle_statuses": list(
+            _pick(
+                payload_base.get("allowed_next_lifecycle_statuses"),
+                card.get("allowed_next_lifecycle_statuses"),
+                default=[],
+            )
+            or []
+        ),
+        "allowed_lifecycle_transitions": list(
+            _pick(
+                payload_base.get("allowed_lifecycle_transitions"),
+                card.get("allowed_lifecycle_transitions"),
+                default=[],
+            )
+            or []
+        ),
+        "allowed_surface_actions": list(
+            _pick(
+                payload_base.get("allowed_surface_actions"),
+                card.get("allowed_surface_actions"),
+                default=[],
+            )
+            or []
+        ),
+    }
+
+
+def build_case_operational_fields_from_case_snapshot(
+    snapshot: TechnicalCaseStatusSnapshot,
+) -> dict[str, Any]:
+    return {
+        "case_status": str(snapshot.canonical_status or ""),
+        "case_lifecycle_status": str(snapshot.case_lifecycle_status or ""),
+        "case_workflow_mode": str(snapshot.workflow_mode or ""),
+        "active_owner_role": str(snapshot.active_owner_role or ""),
         "status_visual_label": build_case_status_visual_label(
             lifecycle_status=snapshot.case_lifecycle_status,
             active_owner_role=snapshot.active_owner_role,
         ),
-        "allowed_next_lifecycle_statuses": list(snapshot.allowed_next_lifecycle_statuses),
+        "allowed_next_lifecycle_statuses": [
+            str(item or "").strip()
+            for item in list(snapshot.allowed_next_lifecycle_statuses or [])
+            if str(item or "").strip()
+        ],
         "allowed_lifecycle_transitions": [
             item.model_dump(mode="python")
-            for item in snapshot.allowed_lifecycle_transitions
+            for item in list(snapshot.allowed_lifecycle_transitions or [])
         ],
-        "allowed_surface_actions": list(snapshot.allowed_surface_actions),
+        "allowed_surface_actions": [
+            str(item or "").strip()
+            for item in list(snapshot.allowed_surface_actions or [])
+            if str(item or "").strip()
+        ],
+        **build_case_operational_phase_fields_from_case_snapshot(snapshot),
+        **build_review_phase_fields_from_case_snapshot(snapshot),
+    }
+
+
+def build_case_operational_phase_fields_from_case_snapshot(
+    snapshot: TechnicalCaseStatusSnapshot,
+) -> dict[str, str]:
+    lifecycle_status = str(snapshot.case_lifecycle_status or "").strip().lower()
+    owner_role = str(snapshot.active_owner_role or "").strip().lower()
+    allowed_actions = {
+        str(item or "").strip().lower()
+        for item in list(snapshot.allowed_surface_actions or [])
+        if str(item or "").strip()
+    }
+
+    if lifecycle_status == "emitido":
+        return {
+            "case_operational_phase": "issued",
+            "case_operational_phase_label": "Emissão concluída",
+            "case_operational_summary": "O documento oficial já foi emitido e o ciclo atual do caso está encerrado.",
+        }
+    if lifecycle_status == "aprovado" or owner_role == "none":
+        return {
+            "case_operational_phase": "issue_ready",
+            "case_operational_phase_label": "Pronto para emissão",
+            "case_operational_summary": "A decisão humana foi concluída e o caso segue para emissão ou reabertura governada.",
+        }
+    if lifecycle_status == "devolvido_para_correcao":
+        return {
+            "case_operational_phase": "returned_to_field",
+            "case_operational_phase_label": "Devolvido para correção",
+            "case_operational_summary": "O caso voltou ao campo com pendências objetivas antes de um novo envio para revisão.",
+        }
+    if "mesa_approve" in allowed_actions or "mesa_return" in allowed_actions:
+        return {
+            "case_operational_phase": "decision_ready",
+            "case_operational_phase_label": "Decisão disponível",
+            "case_operational_summary": "A mesa já pode aprovar ou devolver o caso sem depender de novo complemento.",
+        }
+    if owner_role == "mesa":
+        return {
+            "case_operational_phase": "mesa_review",
+            "case_operational_phase_label": "Mesa em análise",
+            "case_operational_summary": "A revisão humana da mesa é a etapa operacional ativa deste caso.",
+        }
+    if "chat_finalize" in allowed_actions:
+        return {
+            "case_operational_phase": "ready_to_send",
+            "case_operational_phase_label": "Pronto para envio",
+            "case_operational_summary": "O campo já reuniu contexto suficiente e o próximo passo é enviar formalmente o caso para revisão.",
+        }
+    if owner_role == "inspetor":
+        return {
+            "case_operational_phase": "field_collection",
+            "case_operational_phase_label": "Campo em coleta",
+            "case_operational_summary": "O inspetor ainda está reunindo evidências, contexto e estrutura técnica do caso.",
+        }
+    return {
+        "case_operational_phase": "case_monitoring",
+        "case_operational_phase_label": "Monitorar caso",
+        "case_operational_summary": "O caso segue em acompanhamento operacional enquanto os sinais de lifecycle evoluem.",
+    }
+
+
+def build_review_phase_fields_from_case_snapshot(
+    snapshot: TechnicalCaseStatusSnapshot,
+) -> dict[str, str]:
+    lifecycle_status = str(snapshot.case_lifecycle_status or "").strip().lower()
+    owner_role = str(snapshot.active_owner_role or "").strip().lower()
+    allowed_actions = {
+        str(item or "").strip().lower()
+        for item in list(snapshot.allowed_surface_actions or [])
+        if str(item or "").strip()
+    }
+
+    if lifecycle_status in {"aprovado", "emitido"} or owner_role == "none":
+        return {
+            "review_phase": "decision_closed",
+            "review_phase_label": "Decisão concluída",
+            "next_action_label": "Aguardar emissão ou reabertura",
+            "next_action_summary": "A mesa já concluiu a decisão humana deste caso.",
+        }
+    if owner_role == "inspetor" or lifecycle_status == "devolvido_para_correcao":
+        return {
+            "review_phase": "waiting_field_return",
+            "review_phase_label": "Aguardando correção do campo",
+            "next_action_label": "Aguardar reenvio do inspetor",
+            "next_action_summary": "O caso voltou para correção e depende de novo envio do campo.",
+        }
+    if "mesa_approve" in allowed_actions or "mesa_return" in allowed_actions:
+        return {
+            "review_phase": "decision_ready",
+            "review_phase_label": "Pronto para decisão",
+            "next_action_label": "Aprovar ou devolver",
+            "next_action_summary": "A mesa já pode decidir o desfecho técnico do caso.",
+        }
+    return {
+        "review_phase": "reply_in_progress",
+        "review_phase_label": "Em resposta da mesa",
+        "next_action_label": "Responder ou abrir pendência",
+        "next_action_summary": "A mesa ainda está complementando o caso antes da decisão final.",
     }
 
 

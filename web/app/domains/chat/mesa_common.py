@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.domains.chat.attachment_policy import (
     build_mobile_attachment_policy_payload,
 )
+from app.domains.chat.laudo_state_helpers import build_case_runtime_legacy_payload
 from app.domains.chat.mensagem_helpers import serializar_mensagem_mesa
 from app.domains.chat.mesa_mobile_support import (
     carregar_mensagens_mesa_por_laudo_ids,
@@ -204,40 +205,13 @@ def _construir_contexto_canonico_mobile_inspetor(
         banco=banco,
         usuario=usuario,
         laudo=laudo,
-        legacy_payload={
-            "estado": str(legacy_public_state or "sem_relatorio"),
-            "laudo_id": int(laudo.id),
-            "status_card": (
-                laudo_card.get("status_card") if isinstance(laudo_card, dict) else None
-            ),
-            "permite_reabrir": bool(allows_reopen),
-            "tem_interacao": bool(mensagens),
-            "laudo_card": laudo_card,
-            "case_lifecycle_status": (
-                laudo_card.get("case_lifecycle_status") if isinstance(laudo_card, dict) else None
-            ),
-            "case_workflow_mode": (
-                laudo_card.get("case_workflow_mode") if isinstance(laudo_card, dict) else None
-            ),
-            "active_owner_role": (
-                laudo_card.get("active_owner_role") if isinstance(laudo_card, dict) else None
-            ),
-            "allowed_next_lifecycle_statuses": (
-                laudo_card.get("allowed_next_lifecycle_statuses")
-                if isinstance(laudo_card, dict)
-                else None
-            ),
-            "allowed_lifecycle_transitions": (
-                laudo_card.get("allowed_lifecycle_transitions")
-                if isinstance(laudo_card, dict)
-                else None
-            ),
-            "allowed_surface_actions": (
-                laudo_card.get("allowed_surface_actions")
-                if isinstance(laudo_card, dict)
-                else None
-            ),
-        },
+        legacy_payload=build_case_runtime_legacy_payload(
+            laudo=laudo,
+            legacy_public_state=legacy_public_state,
+            allows_reopen=allows_reopen,
+            has_interaction=bool(mensagens),
+            laudo_card=laudo_card,
+        ),
         source_channel=source_channel,
         template_key=getattr(laudo, "tipo_template", None),
         family_key=getattr(laudo, "catalog_family_key", None),

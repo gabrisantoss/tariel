@@ -134,6 +134,8 @@ describe("HistoryDrawerPanel", () => {
     expect(getByText("1 reemissão recomendada")).toBeTruthy();
     expect(getByText("1 guiados · 1 em chat livre")).toBeTruthy();
     expect(getByText("0 em andamento · 2 na mesa · 0 concluidos")).toBeTruthy();
+    expect(getByText("Retomada sugerida")).toBeTruthy();
+    expect(getByText("Reemitir documento")).toBeTruthy();
   });
 
   it("enriquece a busca com sinais operacionais quando houver match guiado ou com reemissão", () => {
@@ -262,6 +264,12 @@ describe("HistoryDrawerPanel", () => {
 
     expect(getByTestId("history-item-meta-80").props.children).toBe(
       "Operacao · Mesa avaliadora · Aprovar no mobile",
+    );
+    expect(getByTestId("history-item-owner-80").props.children).toBe(
+      "Owner · Mesa avaliadora",
+    );
+    expect(getByTestId("history-item-route-80").props.children).toBe(
+      "Rota · Tratar na mesa",
     );
     expect(getByTestId("history-item-validation-badge-80")).toBeTruthy();
     expect(getByTestId("history-item-entry-mode-80").props.children).toBe(

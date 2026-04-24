@@ -19,19 +19,31 @@
     <link rel="stylesheet" href="/static/css/cliente/portal.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/cliente/portal_workspace.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/cliente/portal_admin_surface.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/cliente/portal_servicos_surface.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/cliente/portal_recorrencia_surface.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/cliente/portal_ativos_surface.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/cliente/portal_chat_surface.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/cliente/portal_mesa_surface.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/cliente/portal_documentos_surface.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/cliente/portal_admin_theme.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/shared/official_visual_system.css?v={{ v_app }}">
 </head>
 <body
     data-cliente-tab-inicial="{{ cliente_tab_inicial | default('admin') | e }}"
     data-cliente-admin-section-inicial="{{ cliente_admin_section_inicial | default('overview') | e }}"
+    data-cliente-servicos-section-inicial="{{ cliente_servicos_section_inicial | default('overview') | e }}"
+    data-cliente-recorrencia-section-inicial="{{ cliente_recorrencia_section_inicial | default('overview') | e }}"
+    data-cliente-ativos-section-inicial="{{ cliente_ativos_section_inicial | default('overview') | e }}"
     data-cliente-chat-section-inicial="{{ cliente_chat_section_inicial | default('overview') | e }}"
     data-cliente-mesa-section-inicial="{{ cliente_mesa_section_inicial | default('overview') | e }}"
+    data-cliente-documentos-section-inicial="{{ cliente_documentos_section_inicial | default('overview') | e }}"
     data-cliente-route-admin="{{ cliente_surface_routes.admin | default('/cliente/painel') | e }}"
+    data-cliente-route-servicos="{{ cliente_surface_routes.servicos | default('/cliente/servicos') | e }}"
+    data-cliente-route-recorrencia="{{ cliente_surface_routes.recorrencia | default('/cliente/recorrencia') | e }}"
+    data-cliente-route-ativos="{{ cliente_surface_routes.ativos | default('/cliente/ativos') | e }}"
     data-cliente-route-chat="{{ cliente_surface_routes.chat | default('/cliente/chat') | e }}"
     data-cliente-route-mesa="{{ cliente_surface_routes.mesa | default('/cliente/mesa') | e }}"
+    data-cliente-route-documentos="{{ cliente_surface_routes.documentos | default('/cliente/documentos') | e }}"
 >
     <div class="cliente-app">
         <div class="cliente-tabs-shell">
@@ -41,8 +53,12 @@
         <div class="cliente-shell">
             <main class="cliente-main">
                 {% include "cliente/painel/_content.html" %}
+                {% include "cliente/servicos/_content.html" %}
+                {% include "cliente/recorrencia/_content.html" %}
+                {% include "cliente/ativos/_content.html" %}
                 {% include "cliente/chat/_content.html" %}
                 {% include "cliente/mesa/_content.html" %}
+                {% include "cliente/documentos/_content.html" %}
             </main>
         </div>
     </div>

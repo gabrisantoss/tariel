@@ -8,6 +8,8 @@ from app.domains.chat.laudo_state_helpers import (
     aplicar_decisao_mesa_ao_laudo,
     aplicar_finalizacao_inspetor_ao_laudo,
     aplicar_reabertura_manual_ao_laudo,
+    build_case_operational_fields_from_case_snapshot,
+    build_case_runtime_legacy_payload,
     laudo_deve_sinalizar_reabertura_pendente_apos_feedback_mesa,
     laudo_permite_transicao_decisao_mesa,
     laudo_permite_transicao_finalizacao_inspetor,
@@ -114,6 +116,67 @@ def test_autoridade_lifecycle_unificada_define_regras_base() -> None:
         ajustes.inspector_block_detail(surface="mesa_reply")
         == "Laudo com ajustes da mesa precisa ser reaberto antes de responder."
     )
+
+
+def test_builder_operacional_do_caso_expande_campos_centrais_sem_heuristica_local() -> None:
+    snapshot = _snapshot_stub(
+        _laudo_stub(status_revisao=StatusRevisao.AGUARDANDO.value, revisado_por=41),
+        estado="aguardando",
+        status_card="aguardando",
+        permite_reabrir=False,
+    )
+
+    payload = build_case_operational_fields_from_case_snapshot(snapshot)
+
+    assert payload["case_status"] == "needs_reviewer"
+    assert payload["case_lifecycle_status"] == "em_revisao_mesa"
+    assert payload["active_owner_role"] == "mesa"
+    assert payload["case_operational_phase"] == "decision_ready"
+    assert payload["case_operational_phase_label"] == "Decisão disponível"
+    assert payload["review_phase"] == "decision_ready"
+    assert payload["next_action_label"] == "Aprovar ou devolver"
+    assert "mesa_approve" in payload["allowed_surface_actions"]
+
+
+def test_payload_legado_minimo_do_runtime_prioriza_top_level_e_preserva_fallback_do_card() -> None:
+    laudo = _laudo_stub(status_revisao=StatusRevisao.AGUARDANDO.value)
+    payload = build_case_runtime_legacy_payload(
+        laudo=laudo,
+        legacy_public_state="aguardando",
+        allows_reopen=False,
+        has_interaction=True,
+        laudo_card={
+            "status_card": "aguardando",
+            "case_lifecycle_status": "aguardando_mesa",
+            "case_workflow_mode": "laudo_com_mesa",
+            "active_owner_role": "mesa",
+            "case_operational_phase": "mesa_review",
+            "allowed_surface_actions": ["mesa_approve", "mesa_return"],
+        },
+        base_payload={
+            "case_status": "needs_reviewer",
+            "case_operational_phase": "decision_ready",
+            "case_operational_phase_label": "Decisão disponível",
+            "case_operational_summary": "A mesa já pode decidir o desfecho técnico do caso.",
+            "review_phase": "decision_ready",
+            "review_phase_label": "Pronto para decisão",
+            "next_action_label": "Aprovar ou devolver",
+            "next_action_summary": "A mesa já pode decidir o desfecho técnico do caso.",
+        },
+    )
+
+    assert payload["laudo_id"] == 101
+    assert payload["estado"] == "aguardando"
+    assert payload["tem_interacao"] is True
+    assert payload["case_status"] == "needs_reviewer"
+    assert payload["case_lifecycle_status"] == "aguardando_mesa"
+    assert payload["case_workflow_mode"] == "laudo_com_mesa"
+    assert payload["active_owner_role"] == "mesa"
+    assert payload["case_operational_phase"] == "decision_ready"
+    assert payload["case_operational_phase_label"] == "Decisão disponível"
+    assert payload["review_phase"] == "decision_ready"
+    assert payload["next_action_label"] == "Aprovar ou devolver"
+    assert payload["allowed_surface_actions"] == ["mesa_approve", "mesa_return"]
 
 
 def test_aplicar_feedback_mesa_sinaliza_reabertura_pendente_quando_exigido(

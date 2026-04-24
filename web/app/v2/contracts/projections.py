@@ -8,6 +8,9 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.domains.chat.laudo_state_helpers import (
+    build_case_operational_fields_from_case_snapshot,
+)
 from app.domains.mesa.contracts import PacoteMesaLaudo
 from app.v2.acl.technical_case_core import TechnicalCaseStatusSnapshot
 from app.v2.contracts.collaboration import (
@@ -50,6 +53,13 @@ class InspectorCaseViewProjectionPayload(BaseModel):
     case_lifecycle_status: str
     case_workflow_mode: str
     active_owner_role: str
+    case_operational_phase: str | None = None
+    case_operational_phase_label: str | None = None
+    case_operational_summary: str | None = None
+    review_phase: str | None = None
+    review_phase_label: str | None = None
+    next_action_label: str | None = None
+    next_action_summary: str | None = None
     allowed_next_lifecycle_statuses: list[str] = Field(default_factory=list)
     allowed_lifecycle_transitions: list[dict[str, Any]] = Field(default_factory=list)
     allowed_surface_actions: list[str] = Field(default_factory=list)
@@ -416,6 +426,9 @@ def build_inspector_case_view_projection(
     case_ref = case_snapshot.case_ref
     canonical_status = case_snapshot.canonical_status
     case_lifecycle_fields = _projection_case_lifecycle_fields(case_snapshot)
+    case_operational_fields = build_case_operational_fields_from_case_snapshot(
+        case_snapshot
+    )
     provenance_fields = _projection_provenance_fields(case_snapshot.content_origin_summary)
     policy_fields = _projection_policy_fields(policy_decision)
     document_fields = _projection_document_fields(document_facade)
@@ -425,6 +438,31 @@ def build_inspector_case_view_projection(
         case_lifecycle_status=case_lifecycle_fields["case_lifecycle_status"],
         case_workflow_mode=case_lifecycle_fields["case_workflow_mode"],
         active_owner_role=case_lifecycle_fields["active_owner_role"],
+        case_operational_phase=str(
+            case_operational_fields.get("case_operational_phase") or ""
+        )
+        or None,
+        case_operational_phase_label=str(
+            case_operational_fields.get("case_operational_phase_label") or ""
+        )
+        or None,
+        case_operational_summary=str(
+            case_operational_fields.get("case_operational_summary") or ""
+        )
+        or None,
+        review_phase=str(case_operational_fields.get("review_phase") or "") or None,
+        review_phase_label=str(
+            case_operational_fields.get("review_phase_label") or ""
+        )
+        or None,
+        next_action_label=str(
+            case_operational_fields.get("next_action_label") or ""
+        )
+        or None,
+        next_action_summary=str(
+            case_operational_fields.get("next_action_summary") or ""
+        )
+        or None,
         allowed_next_lifecycle_statuses=list(
             case_lifecycle_fields["allowed_next_lifecycle_statuses"]
         ),

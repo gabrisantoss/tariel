@@ -5,6 +5,14 @@
         return global.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true;
     }
 
+    function mesaCanalParaleloLiberadoNoAmbiente() {
+        const ambiente = String(global.TARIEL?.ambiente || "").trim().toLowerCase();
+        if (["dev", "development", "local"].includes(ambiente)) {
+            return true;
+        }
+        return !!global.TARIEL?.devInspectorToolSimulation;
+    }
+
     function resolverMatrizVisibilidadeInspector(screen, snapshot = {}, dependencies = {}) {
         const screenBase = screen === "new_inspection"
             ? (snapshot.inspectorBaseScreen || dependencies.resolveInspectorBaseScreen?.())
@@ -41,7 +49,11 @@
         const contextRail = inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo && !compacto
             ? "visible"
             : "hidden";
-        const mesaEntry = mesaDisponivel && inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo
+        const mesaEntry = mesaDisponivel
+            && inspectionAtivo
+            && workspaceView !== "inspection_mesa"
+            && !conversaLivreFocada
+            && !overlayAtivo
             ? (compacto ? "composer" : "rail")
             : "hidden";
         const finalizeEntry = inspectionAtivo && workspaceView !== "inspection_mesa" && !overlayAtivo && !!laudoAtivoId
@@ -72,7 +84,13 @@
             inspectionAtivo,
             quickDock,
             contextRail,
-            mesaWidget: mesaDisponivel && inspectionAtivo && !conversaLivreFocada && !overlayAtivo ? "contextual" : "hidden",
+            mesaWidget: mesaDisponivel
+                && mesaCanalParaleloLiberadoNoAmbiente()
+                && inspectionAtivo
+                && !conversaLivreFocada
+                && !overlayAtivo
+                ? "contextual"
+                : "hidden",
             novaInspecaoEntry,
             abrirChatEntry,
             landingNewInspection: assistantAtivo && !overlayAtivo ? "visible" : "hidden",

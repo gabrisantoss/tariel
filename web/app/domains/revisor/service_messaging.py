@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.domains.chat.laudo_state_helpers import (
     aplicar_feedback_mesa_ao_laudo,
     aplicar_decisao_mesa_ao_laudo,
+    build_case_operational_fields_from_case_snapshot,
     laudo_permite_transicao_decisao_mesa,
     obter_detalhe_bloqueio_avaliacao_mesa,
     resolver_snapshot_leitura_caso_tecnico,
@@ -52,31 +53,45 @@ from app.shared.operational_memory_hooks import (
     record_return_to_inspector_irregularity,
     resolve_open_return_to_inspector_irregularities,
 )
-from app.v2.acl.technical_case_core import build_case_status_visual_label
 from app.v2.report_pack_rollout_metrics import record_report_pack_review_decision
 from nucleo.inspetor.referencias_mensagem import compor_texto_com_referencia
 
 
 def _build_avaliacao_case_fields(case_snapshot) -> dict[str, Any]:
+    payload = build_case_operational_fields_from_case_snapshot(case_snapshot)
     return {
-        "case_status": str(case_snapshot.canonical_status or ""),
-        "case_lifecycle_status": str(case_snapshot.case_lifecycle_status or ""),
-        "case_workflow_mode": str(case_snapshot.workflow_mode or ""),
-        "active_owner_role": str(case_snapshot.active_owner_role or ""),
-        "allowed_next_lifecycle_statuses": [
-            str(item or "").strip()
-            for item in list(case_snapshot.allowed_next_lifecycle_statuses or [])
-            if str(item or "").strip()
-        ],
-        "allowed_surface_actions": [
-            str(item or "").strip()
-            for item in list(case_snapshot.allowed_surface_actions or [])
-            if str(item or "").strip()
-        ],
-        "status_visual_label": build_case_status_visual_label(
-            lifecycle_status=case_snapshot.case_lifecycle_status,
-            active_owner_role=case_snapshot.active_owner_role,
-        ),
+        "case_status": str(payload.get("case_status") or ""),
+        "case_lifecycle_status": str(payload.get("case_lifecycle_status") or ""),
+        "case_workflow_mode": str(payload.get("case_workflow_mode") or ""),
+        "active_owner_role": str(payload.get("active_owner_role") or ""),
+        "allowed_next_lifecycle_statuses": list(payload.get("allowed_next_lifecycle_statuses") or []),
+        "allowed_surface_actions": list(payload.get("allowed_surface_actions") or []),
+        "status_visual_label": str(payload.get("status_visual_label") or ""),
+        "case_operational_phase": str(payload.get("case_operational_phase") or ""),
+        "case_operational_phase_label": str(payload.get("case_operational_phase_label") or ""),
+        "case_operational_summary": str(payload.get("case_operational_summary") or ""),
+        "review_phase": str(payload.get("review_phase") or ""),
+        "review_phase_label": str(payload.get("review_phase_label") or ""),
+        "next_action_label": str(payload.get("next_action_label") or ""),
+        "next_action_summary": str(payload.get("next_action_summary") or ""),
+    }
+
+
+def _build_chat_feedback_case_fields(case_snapshot) -> dict[str, Any]:
+    payload = build_case_operational_fields_from_case_snapshot(case_snapshot)
+    return {
+        "case_lifecycle_status": str(payload.get("case_lifecycle_status") or ""),
+        "active_owner_role": str(payload.get("active_owner_role") or ""),
+        "allowed_next_lifecycle_statuses": list(payload.get("allowed_next_lifecycle_statuses") or []),
+        "allowed_surface_actions": list(payload.get("allowed_surface_actions") or []),
+        "status_visual_label": str(payload.get("status_visual_label") or ""),
+        "case_operational_phase": str(payload.get("case_operational_phase") or ""),
+        "case_operational_phase_label": str(payload.get("case_operational_phase_label") or ""),
+        "case_operational_summary": str(payload.get("case_operational_summary") or ""),
+        "review_phase": str(payload.get("review_phase") or ""),
+        "review_phase_label": str(payload.get("review_phase_label") or ""),
+        "next_action_label": str(payload.get("next_action_label") or ""),
+        "next_action_summary": str(payload.get("next_action_summary") or ""),
     }
 
 
@@ -386,6 +401,7 @@ def registrar_resposta_chat_revisor(
         banco,
         laudo,
         occurred_at=_agora_utc(),
+        signal_pending_reopen=False,
     )
     commit_ou_rollback_operacional(
         banco,
@@ -399,6 +415,7 @@ def registrar_resposta_chat_revisor(
         revisor_nome,
         len(texto_limpo),
     )
+    decision_snapshot = resolver_snapshot_leitura_caso_tecnico(banco, laudo)
     return RespostaChatResult(
         laudo_id=laudo.id,
         inspetor_id=laudo.usuario_id,
@@ -406,6 +423,8 @@ def registrar_resposta_chat_revisor(
         referencia_mensagem_id=referencia_mensagem_id,
         texto_notificacao=texto_limpo,
         mensagem_payload=_serializar_mensagem(mensagem_salva, com_data_longa=True),
+        feedback_mode="contextual",
+        **_build_chat_feedback_case_fields(decision_snapshot),
     )
 
 
@@ -617,6 +636,7 @@ def registrar_resposta_chat_com_anexo_revisor(
             banco,
             laudo,
             occurred_at=_agora_utc(),
+            signal_pending_reopen=False,
         )
         commit_ou_rollback_operacional(
             banco,
@@ -632,6 +652,7 @@ def registrar_resposta_chat_com_anexo_revisor(
         mensagem_salva.conteudo,
         anexos=[anexo],
     )
+    decision_snapshot = resolver_snapshot_leitura_caso_tecnico(banco, laudo)
     return RespostaChatAnexoResult(
         laudo_id=laudo.id,
         inspetor_id=laudo.usuario_id,
@@ -639,6 +660,8 @@ def registrar_resposta_chat_com_anexo_revisor(
         referencia_mensagem_id=referencia_mensagem_id,
         texto_notificacao=resumo_notificacao,
         mensagem_payload=_serializar_mensagem(mensagem_salva, com_data_longa=True),
+        feedback_mode="contextual",
+        **_build_chat_feedback_case_fields(decision_snapshot),
     )
 
 

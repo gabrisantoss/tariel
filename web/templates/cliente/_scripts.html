@@ -1,17 +1,30 @@
 {% if perf_mode %}
 <script src="/static/js/shared/api-core.js?v={{ v_app }}" defer></script>
 {% endif %}
+<script src="/static/js/cliente/portal_admin_overview_surface.js?v={{ v_app }}" defer></script>
 <script src="/static/js/cliente/portal_admin_surface.js?v={{ v_app }}" defer></script>
+<script src="/static/js/cliente/portal_servicos_surface.js?v={{ v_app }}" defer></script>
+<script src="/static/js/cliente/portal_recorrencia_surface.js?v={{ v_app }}" defer></script>
+<script src="/static/js/cliente/portal_ativos_surface.js?v={{ v_app }}" defer></script>
 <script src="/static/js/cliente/portal_chat_surface.js?v={{ v_app }}" defer></script>
 <script src="/static/js/cliente/portal_mesa_surface.js?v={{ v_app }}" defer></script>
+<script src="/static/js/cliente/portal_documentos_surface.js?v={{ v_app }}" defer></script>
 <script src="/static/js/cliente/painel_page.js?v={{ v_app }}" defer></script>
+<script src="/static/js/cliente/servicos_page.js?v={{ v_app }}" defer></script>
+<script src="/static/js/cliente/recorrencia_page.js?v={{ v_app }}" defer></script>
+<script src="/static/js/cliente/ativos_page.js?v={{ v_app }}" defer></script>
 <script src="/static/js/cliente/chat_page.js?v={{ v_app }}" defer></script>
 <script src="/static/js/cliente/mesa_page.js?v={{ v_app }}" defer></script>
+<script src="/static/js/cliente/documentos_page.js?v={{ v_app }}" defer></script>
 <!-- Contrato canonico de entrypoint do portal cliente. Nao reordenar sem atualizar portal.js, smoke e docs 34/35. -->
-<!-- Ordem obrigatoria: runtime -> priorities -> admin -> chat -> mesa -> sharedHelpers -> shell -> bindings -> portal -->
+<!-- Ordem obrigatoria: runtime -> priorities -> admin -> servicos -> recorrencia -> ativos -> documentos -> chat -> mesa -> sharedHelpers -> shell -> bindings -> portal -->
 <script src="/static/js/cliente/portal_runtime.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="runtime"></script>
 <script src="/static/js/cliente/portal_priorities.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="priorities"></script>
 <script src="/static/js/cliente/portal_admin.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="admin"></script>
+<script src="/static/js/cliente/portal_servicos.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="servicos"></script>
+<script src="/static/js/cliente/portal_recorrencia.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="recorrencia"></script>
+<script src="/static/js/cliente/portal_ativos.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="ativos"></script>
+<script src="/static/js/cliente/portal_documentos.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="documentos"></script>
 <script src="/static/js/cliente/portal_chat.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="chat"></script>
 <script src="/static/js/cliente/portal_mesa.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="mesa"></script>
 <script src="/static/js/cliente/portal_shared_helpers.js?v={{ v_app }}" defer data-portal-contract="cliente" data-portal-module="sharedHelpers"></script>

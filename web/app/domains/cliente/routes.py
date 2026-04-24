@@ -294,6 +294,48 @@ async def superficie_chat_cliente(
     return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="chat")
 
 
+@roteador_cliente.get("/servicos", response_class=HTMLResponse)
+async def superficie_servicos_cliente(
+    request: Request,
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
+        return _redirect_login_cliente()
+
+    assert usuario is not None
+    empresa = _empresa_usuario(banco, usuario)
+    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="servicos")
+
+
+@roteador_cliente.get("/recorrencia", response_class=HTMLResponse)
+async def superficie_recorrencia_cliente(
+    request: Request,
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
+        return _redirect_login_cliente()
+
+    assert usuario is not None
+    empresa = _empresa_usuario(banco, usuario)
+    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="recorrencia")
+
+
+@roteador_cliente.get("/ativos", response_class=HTMLResponse)
+async def superficie_ativos_cliente(
+    request: Request,
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
+        return _redirect_login_cliente()
+
+    assert usuario is not None
+    empresa = _empresa_usuario(banco, usuario)
+    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="ativos")
+
+
 @roteador_cliente.get("/mesa", response_class=HTMLResponse)
 async def superficie_mesa_cliente(
     request: Request,
@@ -306,6 +348,20 @@ async def superficie_mesa_cliente(
     assert usuario is not None
     empresa = _empresa_usuario(banco, usuario)
     return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="mesa")
+
+
+@roteador_cliente.get("/documentos", response_class=HTMLResponse)
+async def superficie_documentos_cliente(
+    request: Request,
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
+        return _redirect_login_cliente()
+
+    assert usuario is not None
+    empresa = _empresa_usuario(banco, usuario)
+    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="documentos")
 
 
 @roteador_cliente.get("/api/bootstrap")

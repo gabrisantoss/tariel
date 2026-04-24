@@ -136,9 +136,17 @@ def test_mesa_mobile_delta_e_resumo_refletem_novas_mensagens(ambiente_critico) -
 
     resposta_resumo = client.get(f"/app/api/laudo/{laudo_id}/mesa/resumo")
     assert resposta_resumo.status_code == 200
-    resumo = resposta_resumo.json()["resumo"]
+    corpo_resumo = resposta_resumo.json()
+    resumo = corpo_resumo["resumo"]
     assert resumo["ultima_mensagem_preview"] == "Retorno novo da mesa para sync."
     assert resumo["ultima_mensagem_tipo"] == TipoMensagem.HUMANO_ENG.value
+    assert corpo_resumo["case_operational_phase"] == "field_collection"
+    assert corpo_resumo["case_operational_phase_label"] == "Campo em coleta"
+    assert corpo_resumo["case_operational_summary"]
+    assert corpo_resumo["review_phase"] == "waiting_field_return"
+    assert corpo_resumo["review_phase_label"] == "Aguardando correção do campo"
+    assert corpo_resumo["next_action_label"] == "Aguardar reenvio do inspetor"
+    assert corpo_resumo["next_action_summary"]
 
 
 def test_feed_mobile_mesa_retorna_apenas_laudos_alterados_desde_cursor(ambiente_critico) -> None:

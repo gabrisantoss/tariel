@@ -197,16 +197,17 @@
 
                 const button = event.submitter || event.target.querySelector('button[type="submit"]');
                 await withBusy(button, "Respondendo...", async () => {
+                    let respostaMesa;
                     if (arquivo) {
                         const formData = new FormData();
                         formData.append("arquivo", arquivo);
                         formData.append("texto", resposta);
-                        await api(`/cliente/api/mesa/laudos/${laudoId}/responder-anexo`, {
+                        respostaMesa = await api(`/cliente/api/mesa/laudos/${laudoId}/responder-anexo`, {
                             method: "POST",
                             body: formData,
                         });
                     } else {
-                        await api(`/cliente/api/mesa/laudos/${laudoId}/responder`, {
+                        respostaMesa = await api(`/cliente/api/mesa/laudos/${laudoId}/responder`, {
                             method: "POST",
                             body: { texto: resposta },
                         });
@@ -218,7 +219,11 @@
                     if (Number(state.mesa.laudoId || 0) === laudoId) {
                         await loadMesa(laudoId, { silencioso: true, force: true });
                     }
-                    feedback("Resposta registrada na mesa avaliadora.");
+                    feedback(
+                        respostaMesa?.next_action_summary
+                            || respostaMesa?.texto_notificacao
+                            || "Resposta registrada na mesa avaliadora."
+                    );
                 }).catch((erro) => feedback(erro.message || "Falha ao responder a mesa.", true));
             });
 
@@ -259,7 +264,7 @@
                 }
                 const button = event.currentTarget;
                 await withBusy(button, "Aprovando...", async () => {
-                    await api(`/cliente/api/mesa/laudos/${laudoId}/avaliar`, {
+                    const respostaMesa = await api(`/cliente/api/mesa/laudos/${laudoId}/avaliar`, {
                         method: "POST",
                         body: { acao: "aprovar", motivo: "" },
                     });
@@ -267,7 +272,11 @@
                     if (Number(state.mesa.laudoId || 0) === laudoId) {
                         await loadMesa(laudoId, { silencioso: true, force: true });
                     }
-                    feedback("Laudo aprovado pela mesa.");
+                    feedback(
+                        respostaMesa?.next_action_summary
+                            || respostaMesa?.status_visual_label
+                            || "Laudo aprovado pela mesa."
+                    );
                 }).catch((erro) => feedback(erro.message || "Falha ao aprovar laudo.", true));
             });
 
@@ -292,7 +301,7 @@
 
                 const button = event.currentTarget;
                 await withBusy(button, "Devolvendo...", async () => {
-                    await api(`/cliente/api/mesa/laudos/${laudoId}/avaliar`, {
+                    const respostaMesa = await api(`/cliente/api/mesa/laudos/${laudoId}/avaliar`, {
                         method: "POST",
                         body: { acao: "rejeitar", motivo },
                     });
@@ -300,7 +309,11 @@
                     if (Number(state.mesa.laudoId || 0) === laudoId) {
                         await loadMesa(laudoId, { silencioso: true, force: true });
                     }
-                    feedback("Laudo devolvido para ajustes.");
+                    feedback(
+                        respostaMesa?.next_action_summary
+                            || respostaMesa?.texto_notificacao
+                            || "Laudo devolvido para ajustes."
+                    );
                 }).catch((erro) => feedback(erro.message || "Falha ao rejeitar laudo.", true));
             });
         }

@@ -26,9 +26,17 @@ def _payload_from_projection(projection: InspectorCaseViewProjectionV1) -> dict[
         "permite_edicao": bool(payload["allows_edit"]),
         "permite_reabrir": bool(payload["allows_reopen"]),
         "tem_interacao": bool(payload["has_interaction"]),
+        "case_status": payload["case_status"],
         "case_lifecycle_status": payload["case_lifecycle_status"],
         "case_workflow_mode": payload["case_workflow_mode"],
         "active_owner_role": payload["active_owner_role"],
+        "case_operational_phase": payload.get("case_operational_phase"),
+        "case_operational_phase_label": payload.get("case_operational_phase_label"),
+        "case_operational_summary": payload.get("case_operational_summary"),
+        "review_phase": payload.get("review_phase"),
+        "review_phase_label": payload.get("review_phase_label"),
+        "next_action_label": payload.get("next_action_label"),
+        "next_action_summary": payload.get("next_action_summary"),
         "allowed_next_lifecycle_statuses": list(
             payload["allowed_next_lifecycle_statuses"]
         ),

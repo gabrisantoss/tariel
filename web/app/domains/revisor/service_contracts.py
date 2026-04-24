@@ -25,6 +25,13 @@ class AvaliacaoLaudoResult:
     allowed_next_lifecycle_statuses: list[str] = field(default_factory=list)
     allowed_surface_actions: list[str] = field(default_factory=list)
     status_visual_label: str = ""
+    case_operational_phase: str = ""
+    case_operational_phase_label: str = ""
+    case_operational_summary: str = ""
+    review_phase: str = ""
+    review_phase_label: str = ""
+    next_action_label: str = ""
+    next_action_summary: str = ""
 
 
 @dataclass(slots=True)
@@ -44,6 +51,19 @@ class RespostaChatResult:
     referencia_mensagem_id: int | None
     texto_notificacao: str
     mensagem_payload: dict[str, Any] | None = None
+    case_lifecycle_status: str = ""
+    active_owner_role: str = ""
+    allowed_next_lifecycle_statuses: list[str] = field(default_factory=list)
+    allowed_surface_actions: list[str] = field(default_factory=list)
+    status_visual_label: str = ""
+    feedback_mode: str = ""
+    case_operational_phase: str = ""
+    case_operational_phase_label: str = ""
+    case_operational_summary: str = ""
+    review_phase: str = ""
+    review_phase_label: str = ""
+    next_action_label: str = ""
+    next_action_summary: str = ""
 
 
 @dataclass(slots=True)
@@ -54,6 +74,19 @@ class RespostaChatAnexoResult:
     referencia_mensagem_id: int | None
     texto_notificacao: str
     mensagem_payload: dict[str, Any]
+    case_lifecycle_status: str = ""
+    active_owner_role: str = ""
+    allowed_next_lifecycle_statuses: list[str] = field(default_factory=list)
+    allowed_surface_actions: list[str] = field(default_factory=list)
+    status_visual_label: str = ""
+    feedback_mode: str = ""
+    case_operational_phase: str = ""
+    case_operational_phase_label: str = ""
+    case_operational_summary: str = ""
+    review_phase: str = ""
+    review_phase_label: str = ""
+    next_action_label: str = ""
+    next_action_summary: str = ""
 
 
 @dataclass(slots=True)

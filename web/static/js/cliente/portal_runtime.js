@@ -24,9 +24,17 @@
             hero: ".cliente-hero",
             tabs: ".cliente-tabs",
             panelAdmin: "#panel-admin",
+            panelServicos: "#panel-servicos",
+            panelRecorrencia: "#panel-recorrencia",
+            panelAtivos: "#panel-ativos",
+            panelDocumentos: "#panel-documentos",
             panelChat: "#panel-chat",
             panelMesa: "#panel-mesa",
             listaUsuarios: "#lista-usuarios",
+            listaServicos: "#servicos-contratados-grid",
+            listaRecorrencia: "#agenda-recorrencia-lista",
+            listaAtivos: "#ativos-industriais-lista",
+            listaDocumentos: "#documentos-lista",
             listaChat: "#lista-chat-laudos",
             listaMesa: "#lista-mesa-laudos",
             mensagensChat: "#chat-mensagens",
@@ -56,6 +64,10 @@
 
         const routeMap = Object.freeze({
             admin: texto(config.routeMap?.admin).trim() || "/cliente/painel",
+            servicos: texto(config.routeMap?.servicos).trim() || "/cliente/servicos",
+            recorrencia: texto(config.routeMap?.recorrencia).trim() || "/cliente/recorrencia",
+            ativos: texto(config.routeMap?.ativos).trim() || "/cliente/ativos",
+            documentos: texto(config.routeMap?.documentos).trim() || "/cliente/documentos",
             chat: texto(config.routeMap?.chat).trim() || "/cliente/chat",
             mesa: texto(config.routeMap?.mesa).trim() || "/cliente/mesa",
         });
@@ -68,6 +80,26 @@
                     governanca: "support",
                 }),
                 values: Object.freeze(["overview", "capacity", "team", "support"]),
+            }),
+            ativos: Object.freeze({
+                default: "overview",
+                aliases: Object.freeze({}),
+                values: Object.freeze(["overview"]),
+            }),
+            servicos: Object.freeze({
+                default: "overview",
+                aliases: Object.freeze({}),
+                values: Object.freeze(["overview"]),
+            }),
+            recorrencia: Object.freeze({
+                default: "overview",
+                aliases: Object.freeze({}),
+                values: Object.freeze(["overview"]),
+            }),
+            documentos: Object.freeze({
+                default: "overview",
+                aliases: Object.freeze({}),
+                values: Object.freeze(["overview"]),
             }),
             chat: Object.freeze({
                 default: "overview",
@@ -83,7 +115,7 @@
         });
         const initialTab = (() => {
             const candidato = texto(config.initialTab).trim().toLowerCase();
-            if (candidato === "admin" || candidato === "chat" || candidato === "mesa") {
+            if (candidato === "admin" || candidato === "servicos" || candidato === "recorrencia" || candidato === "ativos" || candidato === "documentos" || candidato === "chat" || candidato === "mesa") {
                 return candidato;
             }
             return "admin";
@@ -194,6 +226,34 @@
             }, erro ? 5200 : 3600);
         }
 
+        function extractApiErrorMessage(data) {
+            if (typeof data === "string") {
+                return data || "Falha na operacao.";
+            }
+            const detail = data?.detail ?? data;
+            if (!detail || typeof detail !== "object") {
+                return JSON.stringify(detail || data || "Falha na operacao.");
+            }
+            if (typeof detail.mensagem === "string" && detail.mensagem.trim()) {
+                return detail.mensagem.trim();
+            }
+            if (typeof detail.message === "string" && detail.message.trim()) {
+                return detail.message.trim();
+            }
+            if (typeof detail.validation_error === "string" && detail.validation_error.trim()) {
+                return detail.validation_error.trim();
+            }
+            if (typeof detail.action_plan?.summary === "string" && detail.action_plan.summary.trim()) {
+                const firstStep = Array.isArray(detail.action_plan?.next_steps) && detail.action_plan.next_steps.length
+                    ? String(detail.action_plan.next_steps[0] || "").trim()
+                    : "";
+                return firstStep
+                    ? `${detail.action_plan.summary.trim()} ${firstStep}`
+                    : detail.action_plan.summary.trim();
+            }
+            return JSON.stringify(detail);
+        }
+
         async function api(url, options = {}) {
             return perfAsync(
                 "cliente.api",
@@ -222,7 +282,7 @@
                         : await response.text();
 
                     if (!response.ok) {
-                        const detail = typeof data === "string" ? data : data?.detail || JSON.stringify(data);
+                        const detail = extractApiErrorMessage(data);
                         throw new Error(detail || "Falha na operacao.");
                     }
 
@@ -286,12 +346,20 @@
         }
 
         function registrarSecaoAtiva(surface, secao) {
-            const surfaceAtiva = surface === "chat" || surface === "mesa" ? surface : "admin";
+            const surfaceAtiva = ["chat", "mesa", "documentos", "ativos", "servicos", "recorrencia"].includes(surface) ? surface : "admin";
             const secaoAtiva = normalizarSecao(surfaceAtiva, secao);
             state.ui.sections = state.ui.sections || {};
             state.ui.sections[surfaceAtiva] = secaoAtiva;
             if (surfaceAtiva === "admin") {
                 state.ui.adminSection = secaoAtiva;
+            } else if (surfaceAtiva === "servicos") {
+                state.ui.servicosSection = secaoAtiva;
+            } else if (surfaceAtiva === "recorrencia") {
+                state.ui.recorrenciaSection = secaoAtiva;
+            } else if (surfaceAtiva === "ativos") {
+                state.ui.ativosSection = secaoAtiva;
+            } else if (surfaceAtiva === "documentos") {
+                state.ui.documentosSection = secaoAtiva;
             } else if (surfaceAtiva === "chat") {
                 state.ui.chatSection = secaoAtiva;
             } else {
@@ -302,6 +370,10 @@
 
         function tabAtualDaUrl() {
             const atual = _normalizarPath(locationRef?.pathname || "");
+            if (atual === _normalizarPath(routeMap.servicos)) return "servicos";
+            if (atual === _normalizarPath(routeMap.recorrencia)) return "recorrencia";
+            if (atual === _normalizarPath(routeMap.ativos)) return "ativos";
+            if (atual === _normalizarPath(routeMap.documentos)) return "documentos";
             if (atual === _normalizarPath(routeMap.chat)) return "chat";
             if (atual === _normalizarPath(routeMap.mesa)) return "mesa";
             if (atual === _normalizarPath(routeMap.admin)) return "admin";
@@ -377,7 +449,7 @@
 
             try {
                 const salvo = localStorageRef.getItem(storageKeys.tab || "tariel.cliente.tab");
-                if (salvo === "admin" || salvo === "chat" || salvo === "mesa") {
+                if (salvo === "admin" || salvo === "servicos" || salvo === "recorrencia" || salvo === "ativos" || salvo === "documentos" || salvo === "chat" || salvo === "mesa") {
                     state.ui.tab = salvo;
                 }
             } catch (_) {}
@@ -385,7 +457,7 @@
 
         function definirTab(nome, persistir = true, options = {}) {
             perfSync("cliente.definirTab", () => {
-                const tab = nome === "chat" || nome === "mesa" ? nome : "admin";
+                const tab = ["servicos", "recorrencia", "ativos", "documentos", "chat", "mesa"].includes(nome) ? nome : "admin";
                 const secao = options.fromUrl
                     ? secaoAtualDaUrl(tab)
                     : normalizarSecao(tab, options.section || state.ui?.sections?.[tab] || obterSecaoPadrao(tab));

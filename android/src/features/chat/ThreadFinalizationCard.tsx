@@ -32,6 +32,15 @@ export function ThreadFinalizationCard({
   const highlightedInsights = insights.filter((item) =>
     ["next-step", "blockers", "delivery"].includes(item.key),
   );
+  const operationalPlanInsights = [
+    insights.find((item) => item.key === "current-owner"),
+    insights.find((item) => item.key === "next-step"),
+    insights.find((item) => item.key === "expected-decision"),
+    insights.find((item) => item.key === "suggested-route"),
+    insights.find((item) => item.key === "blockers"),
+    insights.find((item) => item.key === "blocking-reason"),
+    insights.find((item) => item.key === "delivery"),
+  ].filter((item): item is ThreadInsight => Boolean(item));
   const visibleDetailedInsights = (
     highlightedInsights.length ? highlightedInsights : insights
   ).slice(0, 3);
@@ -193,6 +202,46 @@ export function ThreadFinalizationCard({
     </View>
   );
 
+  const renderOperationalPlan = (items: ThreadInsight[]) => (
+    <View style={styles.threadOperationalPlanGrid}>
+      {items.map((item) => (
+        <View
+          key={item.key}
+          style={[
+            styles.threadOperationalPlanCard,
+            item.tone === "accent"
+              ? styles.threadOperationalPlanCardAccent
+              : item.tone === "success"
+                ? styles.threadOperationalPlanCardSuccess
+                : item.tone === "danger"
+                  ? styles.threadOperationalPlanCardDanger
+                  : null,
+          ]}
+          testID={`thread-finalization-plan-${item.key}`}
+        >
+          <View style={styles.threadOperationalPlanHeader}>
+            <MaterialCommunityIcons
+              color={
+                item.tone === "accent"
+                  ? colors.accent
+                  : item.tone === "success"
+                    ? colors.success
+                    : item.tone === "danger"
+                      ? colors.danger
+                      : colors.textSecondary
+              }
+              name={item.icon}
+              size={16}
+            />
+            <Text style={styles.threadOperationalPlanLabel}>{item.label}</Text>
+          </View>
+          <Text style={styles.threadOperationalPlanValue}>{item.value}</Text>
+          <Text style={styles.threadOperationalPlanDetail}>{item.detail}</Text>
+        </View>
+      ))}
+    </View>
+  );
+
   return (
     <View
       style={[styles.threadHeaderCard, styles.threadHeaderFinalizationCard]}
@@ -276,6 +325,15 @@ export function ThreadFinalizationCard({
           <View style={styles.threadActionRow}>
             {actions.map((item) => renderAction(item))}
           </View>
+        </View>
+      ) : null}
+
+      {operationalPlanInsights.length ? (
+        <View style={styles.threadFinalizationSection}>
+          <Text style={styles.threadFinalizationSectionLabel}>
+            Plano operacional
+          </Text>
+          {renderOperationalPlan(operationalPlanInsights)}
         </View>
       ) : null}
 

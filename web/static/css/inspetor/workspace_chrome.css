@@ -751,6 +751,21 @@ body.pagina-chat-dashboard-v2 .thread-tab__icon {
     opacity: 0.78;
 }
 
+body.pagina-chat-dashboard-v2 .thread-tab__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    min-height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(31, 94, 142, 0.14);
+    color: var(--vf-accent) !important;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+}
+
 body.pagina-chat-dashboard-v2 .thread-tab[aria-selected="true"],
 body.pagina-chat-dashboard-v2 .thread-tab.ativo {
     border-color: rgba(31, 94, 142, 0.16) !important;

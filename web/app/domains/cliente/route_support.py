@@ -47,22 +47,38 @@ URL_LOGIN_INSPETOR = "/app/login"
 URL_LOGIN_REVISOR = "/revisao/login"
 URL_PAINEL = "/cliente/painel"
 URL_EQUIPE = "/cliente/equipe"
+URL_SERVICOS = "/cliente/servicos"
+URL_RECORRENCIA = "/cliente/recorrencia"
 URL_CHAT = "/cliente/chat"
 URL_MESA = "/cliente/mesa"
+URL_ATIVOS = "/cliente/ativos"
+URL_DOCUMENTOS = "/cliente/documentos"
 CLIENTE_SURFACE_ROUTES = {
     "admin": URL_PAINEL,
+    "servicos": URL_SERVICOS,
+    "recorrencia": URL_RECORRENCIA,
+    "ativos": URL_ATIVOS,
     "chat": URL_CHAT,
     "mesa": URL_MESA,
+    "documentos": URL_DOCUMENTOS,
 }
 CLIENTE_SURFACE_SECTION_DEFAULTS = {
     "admin": "overview",
+    "servicos": "overview",
+    "recorrencia": "overview",
+    "ativos": "overview",
     "chat": "overview",
     "mesa": "overview",
+    "documentos": "overview",
 }
 CLIENTE_SURFACE_SECTION_OPTIONS = {
     "admin": {"overview", "capacity", "team", "support"},
+    "servicos": {"overview"},
+    "recorrencia": {"overview"},
+    "ativos": {"overview"},
     "chat": {"overview", "new", "queue", "case"},
     "mesa": {"overview", "queue", "pending", "reply"},
+    "documentos": {"overview"},
 }
 CLIENTE_SURFACE_SECTION_ALIASES = {
     "admin": {
@@ -70,8 +86,12 @@ CLIENTE_SURFACE_SECTION_ALIASES = {
         "equipe": "team",
         "governanca": "support",
     },
+    "servicos": {},
+    "recorrencia": {},
+    "ativos": {},
     "chat": {},
     "mesa": {},
+    "documentos": {},
 }
 PORTAL_TROCA_SENHA_CLIENTE = "cliente"
 CHAVE_TROCA_SENHA_UID = "troca_senha_uid"
@@ -418,7 +438,13 @@ def _render_portal_cliente(
     tenant_admin_policy = summarize_tenant_admin_policy(
         getattr(empresa, "admin_cliente_policy_json", None)
     )
-    surface_availability = tenant_admin_surface_availability(tenant_admin_policy)
+    surface_availability = {
+        "servicos": True,
+        "recorrencia": True,
+        "ativos": True,
+        "documentos": True,
+        **tenant_admin_surface_availability(tenant_admin_policy),
+    }
     tab_resolvida = _normalizar_tab_cliente(tab_inicial)
     if not surface_availability.get(tab_resolvida, False):
         tab_resolvida = "admin"
@@ -432,8 +458,20 @@ def _render_portal_cliente(
             "empresa": empresa,
             "cliente_tab_inicial": tab_resolvida,
             "cliente_admin_section_inicial": secao_resolvida if tab_resolvida == "admin" else CLIENTE_SURFACE_SECTION_DEFAULTS["admin"],
+            "cliente_servicos_section_inicial": (
+                secao_resolvida if tab_resolvida == "servicos" else CLIENTE_SURFACE_SECTION_DEFAULTS["servicos"]
+            ),
+            "cliente_recorrencia_section_inicial": (
+                secao_resolvida if tab_resolvida == "recorrencia" else CLIENTE_SURFACE_SECTION_DEFAULTS["recorrencia"]
+            ),
+            "cliente_ativos_section_inicial": (
+                secao_resolvida if tab_resolvida == "ativos" else CLIENTE_SURFACE_SECTION_DEFAULTS["ativos"]
+            ),
             "cliente_chat_section_inicial": secao_resolvida if tab_resolvida == "chat" else CLIENTE_SURFACE_SECTION_DEFAULTS["chat"],
             "cliente_mesa_section_inicial": secao_resolvida if tab_resolvida == "mesa" else CLIENTE_SURFACE_SECTION_DEFAULTS["mesa"],
+            "cliente_documentos_section_inicial": (
+                secao_resolvida if tab_resolvida == "documentos" else CLIENTE_SURFACE_SECTION_DEFAULTS["documentos"]
+            ),
             "cliente_surface_availability": surface_availability,
             "cliente_surface_routes": CLIENTE_SURFACE_ROUTES,
             "portal_switch_links": usuario_portal_switch_links(

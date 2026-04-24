@@ -118,6 +118,67 @@
         };
     }
 
+    function resolverCampoPrimarioStatusWorkspace(
+        principal = null,
+        fallback = null,
+        campo = "",
+        {
+            cardFallback = true,
+            defaultValue = "",
+            normalizer = null,
+        } = {},
+    ) {
+        const chave = String(campo || "").trim();
+        if (!chave) {
+            return typeof normalizer === "function"
+                ? normalizer(defaultValue)
+                : defaultValue;
+        }
+
+        const candidatos = [
+            principal?.[chave],
+            fallback?.[chave],
+        ];
+        if (cardFallback) {
+            candidatos.push(
+                principal?.laudo_card?.[chave],
+                fallback?.laudo_card?.[chave],
+            );
+        }
+
+        for (const valor of candidatos) {
+            if (
+                valor !== undefined
+                && valor !== null
+                && !(typeof valor === "string" && !String(valor).trim())
+            ) {
+                return typeof normalizer === "function" ? normalizer(valor) : valor;
+            }
+        }
+
+        return typeof normalizer === "function"
+            ? normalizer(defaultValue)
+            : defaultValue;
+    }
+
+    function resolverListaPrimariaStatusWorkspace(
+        principal = null,
+        fallback = null,
+        campo = "",
+        normalizer = (valor) => valor,
+    ) {
+        const valor = resolverCampoPrimarioStatusWorkspace(
+            principal,
+            fallback,
+            campo,
+            {
+                defaultValue: [],
+                normalizer: (item) => (Array.isArray(item) ? item : []),
+            }
+        );
+        return normalizer(valor);
+    }
+
     function obterPayloadStatusRelatorioWorkspaceAtual(
         dependencies = {},
     ) {
@@ -156,62 +217,126 @@
             return {};
         }
 
-        const allowedNextLifecycleStatuses = (
-            Array.isArray(snapshot?.allowed_next_lifecycle_statuses)
-                ? snapshot.allowed_next_lifecycle_statuses
-                : Array.isArray(snapshot?.laudo_card?.allowed_next_lifecycle_statuses)
-                    ? snapshot.laudo_card.allowed_next_lifecycle_statuses
-                    : Array.isArray(fallback?.allowed_next_lifecycle_statuses)
-                        ? fallback.allowed_next_lifecycle_statuses
-                        : Array.isArray(fallback?.laudo_card?.allowed_next_lifecycle_statuses)
-                            ? fallback.laudo_card.allowed_next_lifecycle_statuses
-                            : []
+        const allowedNextLifecycleStatuses = resolverListaPrimariaStatusWorkspace(
+            snapshot,
+            fallback,
+            "allowed_next_lifecycle_statuses",
+            (valor) => valor
         )
             .map((item) => normalizarCaseLifecycleStatusSeguro(item))
             .filter(Boolean);
         const allowedLifecycleTransitions = normalizarAllowedLifecycleTransitionsSeguro(
-            Array.isArray(snapshot?.allowed_lifecycle_transitions)
-                ? snapshot.allowed_lifecycle_transitions
-                : Array.isArray(snapshot?.laudo_card?.allowed_lifecycle_transitions)
-                    ? snapshot.laudo_card.allowed_lifecycle_transitions
-                    : Array.isArray(fallback?.allowed_lifecycle_transitions)
-                        ? fallback.allowed_lifecycle_transitions
-                        : Array.isArray(fallback?.laudo_card?.allowed_lifecycle_transitions)
-                            ? fallback.laudo_card.allowed_lifecycle_transitions
-                            : []
+            resolverListaPrimariaStatusWorkspace(
+                snapshot,
+                fallback,
+                "allowed_lifecycle_transitions",
+                (valor) => valor
+            )
         );
         const allowedSurfaceActions = normalizarAllowedSurfaceActionsSeguro(
-            Array.isArray(snapshot?.allowed_surface_actions)
-                ? snapshot.allowed_surface_actions
-                : Array.isArray(snapshot?.laudo_card?.allowed_surface_actions)
-                    ? snapshot.laudo_card.allowed_surface_actions
-                    : Array.isArray(fallback?.allowed_surface_actions)
-                        ? fallback.allowed_surface_actions
-                        : Array.isArray(fallback?.laudo_card?.allowed_surface_actions)
-                            ? fallback.laudo_card.allowed_surface_actions
-                            : []
+            resolverListaPrimariaStatusWorkspace(
+                snapshot,
+                fallback,
+                "allowed_surface_actions",
+                (valor) => valor
+            )
         );
-        const caseLifecycleStatus = normalizarCaseLifecycleStatusSeguro(
-            snapshot?.case_lifecycle_status ||
-            snapshot?.laudo_card?.case_lifecycle_status ||
-            fallback?.case_lifecycle_status ||
-            fallback?.laudo_card?.case_lifecycle_status ||
-            ""
+        const caseLifecycleStatus = resolverCampoPrimarioStatusWorkspace(
+            snapshot,
+            fallback,
+            "case_lifecycle_status",
+            {
+                normalizer: normalizarCaseLifecycleStatusSeguro,
+            }
         );
         const caseWorkflowMode = String(
-            snapshot?.case_workflow_mode ||
-            snapshot?.laudo_card?.case_workflow_mode ||
-            fallback?.case_workflow_mode ||
-            fallback?.laudo_card?.case_workflow_mode ||
-            ""
+            resolverCampoPrimarioStatusWorkspace(
+                snapshot,
+                fallback,
+                "case_workflow_mode",
+                {
+                    defaultValue: "",
+                }
+            ) || ""
         ).trim().toLowerCase();
-        const activeOwnerRole = normalizarActiveOwnerRoleSeguro(
-            snapshot?.active_owner_role ||
-            snapshot?.laudo_card?.active_owner_role ||
-            fallback?.active_owner_role ||
-            fallback?.laudo_card?.active_owner_role ||
-            ""
+        const activeOwnerRole = resolverCampoPrimarioStatusWorkspace(
+            snapshot,
+            fallback,
+            "active_owner_role",
+            {
+                normalizer: normalizarActiveOwnerRoleSeguro,
+            }
         );
+        const caseOperationalPhase = String(
+            resolverCampoPrimarioStatusWorkspace(
+                snapshot,
+                fallback,
+                "case_operational_phase",
+                {
+                    defaultValue: "",
+                }
+            ) || ""
+        ).trim();
+        const caseOperationalPhaseLabel = String(
+            resolverCampoPrimarioStatusWorkspace(
+                snapshot,
+                fallback,
+                "case_operational_phase_label",
+                {
+                    defaultValue: "",
+                }
+            ) || ""
+        ).trim();
+        const caseOperationalSummary = String(
+            resolverCampoPrimarioStatusWorkspace(
+                snapshot,
+                fallback,
+                "case_operational_summary",
+                {
+                    defaultValue: "",
+                }
+            ) || ""
+        ).trim();
+        const reviewPhase = String(
+            resolverCampoPrimarioStatusWorkspace(
+                snapshot,
+                fallback,
+                "review_phase",
+                {
+                    defaultValue: "",
+                }
+            ) || ""
+        ).trim();
+        const reviewPhaseLabel = String(
+            resolverCampoPrimarioStatusWorkspace(
+                snapshot,
+                fallback,
+                "review_phase_label",
+                {
+                    defaultValue: "",
+                }
+            ) || ""
+        ).trim();
+        const nextActionLabel = String(
+            resolverCampoPrimarioStatusWorkspace(
+                snapshot,
+                fallback,
+                "next_action_label",
+                {
+                    defaultValue: "",
+                }
+            ) || ""
+        ).trim();
+        const nextActionSummary = String(
+            resolverCampoPrimarioStatusWorkspace(
+                snapshot,
+                fallback,
+                "next_action_summary",
+                {
+                    defaultValue: "",
+                }
+            ) || ""
+        ).trim();
 
         return {
             ...(fallback || {}),
@@ -230,6 +355,13 @@
                     case_lifecycle_status: caseLifecycleStatus,
                     case_workflow_mode: caseWorkflowMode,
                     active_owner_role: activeOwnerRole,
+                    case_operational_phase: caseOperationalPhase,
+                    case_operational_phase_label: caseOperationalPhaseLabel,
+                    case_operational_summary: caseOperationalSummary,
+                    review_phase: reviewPhase,
+                    review_phase_label: reviewPhaseLabel,
+                    next_action_label: nextActionLabel,
+                    next_action_summary: nextActionSummary,
                     allowed_next_lifecycle_statuses: allowedNextLifecycleStatuses,
                     allowed_lifecycle_transitions: allowedLifecycleTransitions,
                     allowed_surface_actions: allowedSurfaceActions,
@@ -238,6 +370,13 @@
             case_lifecycle_status: caseLifecycleStatus,
             case_workflow_mode: caseWorkflowMode,
             active_owner_role: activeOwnerRole,
+            case_operational_phase: caseOperationalPhase,
+            case_operational_phase_label: caseOperationalPhaseLabel,
+            case_operational_summary: caseOperationalSummary,
+            review_phase: reviewPhase,
+            review_phase_label: reviewPhaseLabel,
+            next_action_label: nextActionLabel,
+            next_action_summary: nextActionSummary,
             allowed_next_lifecycle_statuses: allowedNextLifecycleStatuses,
             allowed_lifecycle_transitions: allowedLifecycleTransitions,
             allowed_surface_actions: allowedSurfaceActions,

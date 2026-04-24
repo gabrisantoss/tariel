@@ -17,6 +17,10 @@
         const aplicarFiltroUsuariosRapido = typeof actions.aplicarFiltroUsuariosRapido === "function" ? actions.aplicarFiltroUsuariosRapido : () => null;
         const aplicarFiltrosUsuarios = typeof actions.aplicarFiltrosUsuarios === "function" ? actions.aplicarFiltrosUsuarios : () => null;
         const abrirSecaoAdmin = typeof actions.abrirSecaoAdmin === "function" ? actions.abrirSecaoAdmin : () => "overview";
+        const abrirSecaoServicos = typeof actions.abrirSecaoServicos === "function" ? actions.abrirSecaoServicos : () => "overview";
+        const abrirSecaoRecorrencia = typeof actions.abrirSecaoRecorrencia === "function" ? actions.abrirSecaoRecorrencia : () => "overview";
+        const abrirSecaoAtivos = typeof actions.abrirSecaoAtivos === "function" ? actions.abrirSecaoAtivos : () => "overview";
+        const abrirSecaoDocumentos = typeof actions.abrirSecaoDocumentos === "function" ? actions.abrirSecaoDocumentos : () => "overview";
         const abrirSecaoChat = typeof actions.abrirSecaoChat === "function" ? actions.abrirSecaoChat : () => "overview";
         const abrirSecaoMesa = typeof actions.abrirSecaoMesa === "function" ? actions.abrirSecaoMesa : () => "overview";
         const atualizarBuscaChat = typeof actions.atualizarBuscaChat === "function" ? actions.atualizarBuscaChat : () => null;
@@ -30,9 +34,21 @@
         const loadMesa = typeof actions.loadMesa === "function" ? actions.loadMesa : async () => null;
         const prepararUpgradeGuiado = typeof actions.prepararUpgradeGuiado === "function" ? actions.prepararUpgradeGuiado : async () => null;
         const registrarInteressePlano = typeof actions.registrarInteressePlano === "function" ? actions.registrarInteressePlano : async () => null;
+        const renderServicosLista = typeof actions.renderServicosLista === "function" ? actions.renderServicosLista : () => null;
+        const renderServicosResumo = typeof actions.renderServicosResumo === "function" ? actions.renderServicosResumo : () => null;
+        const renderRecorrenciaLista = typeof actions.renderRecorrenciaLista === "function" ? actions.renderRecorrenciaLista : () => null;
+        const renderRecorrenciaResumo = typeof actions.renderRecorrenciaResumo === "function" ? actions.renderRecorrenciaResumo : () => null;
+        const renderAtivosLista = typeof actions.renderAtivosLista === "function" ? actions.renderAtivosLista : () => null;
+        const renderAtivosResumo = typeof actions.renderAtivosResumo === "function" ? actions.renderAtivosResumo : () => null;
+        const renderDocumentosLista = typeof actions.renderDocumentosLista === "function" ? actions.renderDocumentosLista : () => null;
+        const renderDocumentosResumo = typeof actions.renderDocumentosResumo === "function" ? actions.renderDocumentosResumo : () => null;
         const renderPreviewPlano = typeof actions.renderPreviewPlano === "function" ? actions.renderPreviewPlano : () => null;
         const renderUsuarios = typeof actions.renderUsuarios === "function" ? actions.renderUsuarios : () => null;
         const resolverSecaoAdminPorTarget = typeof actions.resolverSecaoAdminPorTarget === "function" ? actions.resolverSecaoAdminPorTarget : () => null;
+        const resolverSecaoServicosPorTarget = typeof actions.resolverSecaoServicosPorTarget === "function" ? actions.resolverSecaoServicosPorTarget : () => null;
+        const resolverSecaoRecorrenciaPorTarget = typeof actions.resolverSecaoRecorrenciaPorTarget === "function" ? actions.resolverSecaoRecorrenciaPorTarget : () => null;
+        const resolverSecaoAtivosPorTarget = typeof actions.resolverSecaoAtivosPorTarget === "function" ? actions.resolverSecaoAtivosPorTarget : () => null;
+        const resolverSecaoDocumentosPorTarget = typeof actions.resolverSecaoDocumentosPorTarget === "function" ? actions.resolverSecaoDocumentosPorTarget : () => null;
         const resolverSecaoChatPorTarget = typeof actions.resolverSecaoChatPorTarget === "function" ? actions.resolverSecaoChatPorTarget : () => null;
         const resolverSecaoMesaPorTarget = typeof actions.resolverSecaoMesaPorTarget === "function" ? actions.resolverSecaoMesaPorTarget : () => null;
 
@@ -120,6 +136,46 @@
                 });
             });
 
+            documentRef.querySelectorAll("[data-documentos-section-tab]").forEach((button) => {
+                button.addEventListener("click", (event) => {
+                    if (deveUsarNavegacaoNativa(event)) {
+                        return;
+                    }
+                    event.preventDefault();
+                    abrirSecaoDocumentos(button.dataset.documentosSectionTab, { focusTab: true });
+                });
+            });
+
+            documentRef.querySelectorAll("[data-servicos-section-tab]").forEach((button) => {
+                button.addEventListener("click", (event) => {
+                    if (deveUsarNavegacaoNativa(event)) {
+                        return;
+                    }
+                    event.preventDefault();
+                    abrirSecaoServicos(button.dataset.servicosSectionTab, { focusTab: true });
+                });
+            });
+
+            documentRef.querySelectorAll("[data-recorrencia-section-tab]").forEach((button) => {
+                button.addEventListener("click", (event) => {
+                    if (deveUsarNavegacaoNativa(event)) {
+                        return;
+                    }
+                    event.preventDefault();
+                    abrirSecaoRecorrencia(button.dataset.recorrenciaSectionTab, { focusTab: true });
+                });
+            });
+
+            documentRef.querySelectorAll("[data-ativos-section-tab]").forEach((button) => {
+                button.addEventListener("click", (event) => {
+                    if (deveUsarNavegacaoNativa(event)) {
+                        return;
+                    }
+                    event.preventDefault();
+                    abrirSecaoAtivos(button.dataset.ativosSectionTab, { focusTab: true });
+                });
+            });
+
             documentRef.querySelectorAll("[data-admin-section-tab]").forEach((button) => {
                 button.addEventListener("click", (event) => {
                     if (deveUsarNavegacaoNativa(event)) {
@@ -150,6 +206,10 @@
 
             bindArrowNavigation(".cliente-tab");
             bindArrowNavigation("[data-admin-section-tab]");
+            bindArrowNavigation("[data-servicos-section-tab]");
+            bindArrowNavigation("[data-recorrencia-section-tab]");
+            bindArrowNavigation("[data-ativos-section-tab]");
+            bindArrowNavigation("[data-documentos-section-tab]");
             bindArrowNavigation("[data-chat-section-tab]");
             bindArrowNavigation("[data-mesa-section-tab]");
         }
@@ -206,6 +266,54 @@
                 });
                 abrirSecaoChat(resolverSecaoChatPorTarget(button.dataset.target || "") || "overview");
                 scrollToPortalSection(button.dataset.target || "chat-overview");
+                return;
+            }
+
+            if (kind === "documentos-section") {
+                definirTab("documentos");
+                await bootstrapPortal({ surface: "documentos", carregarDetalhes: true, force: false }).catch((erro) => {
+                    feedback(erro.message || "Falha ao preparar a superfície documental.", true);
+                });
+                abrirSecaoDocumentos(resolverSecaoDocumentosPorTarget(button.dataset.target || "") || "overview");
+                renderDocumentosResumo();
+                renderDocumentosLista();
+                scrollToPortalSection(button.dataset.target || "documentos-overview");
+                return;
+            }
+
+            if (kind === "servicos-section") {
+                definirTab("servicos");
+                await bootstrapPortal({ surface: "servicos", carregarDetalhes: true, force: false }).catch((erro) => {
+                    feedback(erro.message || "Falha ao preparar a superfície de serviços.", true);
+                });
+                abrirSecaoServicos(resolverSecaoServicosPorTarget(button.dataset.target || "") || "overview");
+                renderServicosResumo();
+                renderServicosLista();
+                scrollToPortalSection(button.dataset.target || "servicos-overview");
+                return;
+            }
+
+            if (kind === "recorrencia-section") {
+                definirTab("recorrencia");
+                await bootstrapPortal({ surface: "recorrencia", carregarDetalhes: true, force: false }).catch((erro) => {
+                    feedback(erro.message || "Falha ao preparar a superfície de recorrência.", true);
+                });
+                abrirSecaoRecorrencia(resolverSecaoRecorrenciaPorTarget(button.dataset.target || "") || "overview");
+                renderRecorrenciaResumo();
+                renderRecorrenciaLista();
+                scrollToPortalSection(button.dataset.target || "recorrencia-overview");
+                return;
+            }
+
+            if (kind === "ativos-section") {
+                definirTab("ativos");
+                await bootstrapPortal({ surface: "ativos", carregarDetalhes: true, force: false }).catch((erro) => {
+                    feedback(erro.message || "Falha ao preparar a superfície de ativos.", true);
+                });
+                abrirSecaoAtivos(resolverSecaoAtivosPorTarget(button.dataset.target || "") || "overview");
+                renderAtivosResumo();
+                renderAtivosLista();
+                scrollToPortalSection(button.dataset.target || "ativos-overview");
                 return;
             }
 

@@ -83,6 +83,10 @@ def test_verificacao_publica_por_hash_retorna_payload_json(ambiente_critico) -> 
     assert payload["case_lifecycle_status"] == "aprovado"
     assert payload["active_owner_role"] == "none"
     assert payload["status_visual_label"] == "Aprovado / Responsavel: conclusao"
+    assert payload["case_operational_phase"] == "issue_ready"
+    assert payload["case_operational_phase_label"] == "Pronto para emissão"
+    assert payload["review_phase"] == "decision_closed"
+    assert payload["next_action_label"] == "Aguardar emissão ou reabertura"
     assert payload["verification_url"].endswith(f"/app/public/laudo/verificar/{codigo_hash}")
     assert payload["qr_image_data_uri"].startswith("data:image/png;base64,")
 

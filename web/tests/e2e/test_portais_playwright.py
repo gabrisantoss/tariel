@@ -1118,6 +1118,34 @@ def _login_cliente_primeiro_acesso(
     expect(page).to_have_url(re.compile(rf"{re.escape(base_url)}/cliente/painel(?:\?sec=overview)?/?$"))
 
 
+def _login_operacional_primeiro_acesso(
+    page: Page,
+    *,
+    base_url: str,
+    portal: str,
+    email: str,
+    senha_temporaria: str,
+    nova_senha: str,
+    rota_sucesso_regex: str,
+) -> None:
+    login_path = f"{base_url}/{portal}/login"
+    troca_path = f"{base_url}/{portal}/trocar-senha"
+    page.goto(login_path, wait_until="domcontentloaded")
+    page.locator('input[name="email"]').fill(email)
+    page.locator('input[name="senha"]').fill(senha_temporaria)
+    page.locator('button[type="submit"]').first.click()
+    expect(page).to_have_url(re.compile(rf"{re.escape(troca_path)}/?$"))
+
+    page.locator('input[name="senha_atual"]').fill(senha_temporaria)
+    page.locator('input[name="nova_senha"]').fill(nova_senha)
+    page.locator('input[name="confirmar_senha"]').fill(nova_senha)
+    page.locator('button[type="submit"]').first.click()
+    expect(page).to_have_url(
+        re.compile(rota_sucesso_regex),
+        timeout=_LOGIN_REDIRECT_TIMEOUT_MS,
+    )
+
+
 def _regex_url_admin_cliente_pos_cadastro(base_url: str) -> re.Pattern[str]:
     return re.compile(
         rf"{re.escape(base_url)}/admin/clientes/\d+(?:/acesso-inicial)?/?(?:\?.*)?$"
@@ -3701,6 +3729,616 @@ def test_e2e_fluxo_bilateral_inspetor_e_revisor_no_canal_mesa(
         contexto_revisor.close()
 
 
+def test_e2e_admin_ceo_onboard_empresa_e_admin_cliente_valida_contrato_como_comprador_exigente(
+    browser: Browser,
+    live_server_url: str,
+    live_server_database_url: str | None,
+    credenciais_seed: dict[str, dict[str, str]],
+) -> None:
+    contexto_admin = browser.new_context()
+    contexto_cliente = browser.new_context(accept_downloads=True)
+    contexto_inspetor_wf = browser.new_context()
+    contexto_revisor_wf = browser.new_context()
+
+    try:
+        page_admin = contexto_admin.new_page()
+        _fazer_login(
+            page_admin,
+            base_url=live_server_url,
+            portal="admin",
+            email=credenciais_seed["admin"]["email"],
+            senha=credenciais_seed["admin"]["senha"],
+            rota_sucesso_regex=rf"{re.escape(live_server_url)}/admin/painel/?$",
+        )
+
+        sufixo = uuid.uuid4().hex[:8]
+        nome_empresa = f"WF Engenharia Integrada {sufixo}"
+        email_cliente = f"cliente.wf.{sufixo}@empresa.test"
+        email_inspetor = f"inspetor.wf.{sufixo}@empresa.test"
+        email_revisor = f"mesa.wf.{sufixo}@empresa.test"
+        email_extra = f"extra.wf.{sufixo}@empresa.test"
+        senha_temporaria = _provisionar_cliente_via_admin(
+            page_admin,
+            base_url=live_server_url,
+            nome=nome_empresa,
+            email=email_cliente,
+            cnpj=f"{uuid.uuid4().int % 10**14:014d}",
+            segmento="Inspecoes NR, SPDA, PIE, LOTO e integridade industrial",
+            cidade_estado="Ribeirao Preto/SP",
+            nome_responsavel="Gabriel Alves",
+            observacoes=(
+                "Cliente E2E com perfil de comprador exigente da WF para validar "
+                "admin-cliente, operacao tecnica e governanca do contrato."
+            ),
+            plano="Ilimitado",
+        )
+        assert senha_temporaria, "Provisionamento do admin-cliente sem senha temporária."
+
+        page_admin.goto(f"{live_server_url}/admin/clientes", wait_until="domcontentloaded")
+        linha_cliente = page_admin.locator("tbody tr").filter(has_text=nome_empresa).first
+        expect(linha_cliente).to_be_visible(timeout=10000)
+        expect(linha_cliente).to_contain_text("Ilimitado")
+
+        page_cliente = contexto_cliente.new_page()
+        nova_senha_cliente = f"WfCliente@{sufixo}12345"
+        _login_cliente_primeiro_acesso(
+            page_cliente,
+            base_url=live_server_url,
+            email=email_cliente,
+            senha_temporaria=senha_temporaria,
+            nova_senha=nova_senha_cliente,
+        )
+
+        expect(page_cliente.locator("#tab-admin")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#tab-chat")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#tab-mesa")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#empresa-cards")).to_contain_text("Ilimitado", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text(nome_empresa, timeout=10000)
+
+        bootstrap = _api_fetch(page_cliente, path="/cliente/api/bootstrap")
+        assert bootstrap["status"] == 200, bootstrap
+        assert bootstrap["body"]["empresa"]["nome_fantasia"] == nome_empresa
+        assert bootstrap["body"]["tenant_commercial_package"]["label"]
+        assert bootstrap["body"]["tenant_commercial_package"]["surface_availability"]["chat"] is True
+        assert bootstrap["body"]["tenant_commercial_package"]["surface_availability"]["mesa"] is True
+
+        resumo_empresa = _api_fetch(page_cliente, path="/cliente/api/empresa/resumo")
+        assert resumo_empresa["status"] == 200, resumo_empresa
+        assert resumo_empresa["body"]["plano_ativo"] == "Ilimitado"
+        assert resumo_empresa["body"]["laudos_mes_limite"] is None
+        assert resumo_empresa["body"]["usuarios_max"] is None
+
+        page_cliente.goto(f"{live_server_url}/cliente/painel?sec=support", wait_until="domcontentloaded")
+        expect(page_cliente.locator("#admin-support")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#btn-exportar-diagnostico")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#btn-reportar-suporte")).to_be_visible(timeout=10000)
+
+        diagnostico = _api_fetch_bytes(page_cliente, path="/cliente/api/diagnostico")
+        assert diagnostico["status"] == 200, diagnostico
+        assert "application/json" in str(diagnostico["contentType"]).lower(), diagnostico["contentType"]
+        payload_diagnostico = json.loads(bytes(diagnostico["body"] or b"{}").decode("utf-8"))
+        assert payload_diagnostico["portal"] == "cliente"
+        assert payload_diagnostico["empresa"]["nome_fantasia"] == nome_empresa
+        assert payload_diagnostico["fronteiras"]["admin_scope"] == "tenant_admin_only"
+
+        suporte = _api_fetch(
+            page_cliente,
+            path="/cliente/api/suporte/report",
+            method="POST",
+            json_body={
+                "tipo": "feedback",
+                "titulo": "Cobertura contratual da operacao WF",
+                "mensagem": (
+                    "Como cliente comprador, preciso acompanhar equipe, laudos, pendencias "
+                    "de mesa, suporte e diagnostico sem depender de contato externo."
+                ),
+                "email_retorno": email_cliente,
+                "contexto": "buyer-e2e",
+            },
+        )
+        assert suporte["status"] == 200, suporte
+        assert suporte["body"]["success"] is True
+        assert re.match(r"CLI-[A-Z0-9]{8}$", str(suporte["body"]["protocolo"]))
+
+        resposta_inspetor = _api_fetch(
+            page_cliente,
+            path="/cliente/api/usuarios",
+            method="POST",
+            json_body={
+                "nome": "Inspetor WF",
+                "email": email_inspetor,
+                "nivel_acesso": "inspetor",
+                "telefone": "16999990001",
+                "crea": "",
+                "allowed_portals": ["inspetor"],
+            },
+        )
+        resposta_revisor = _api_fetch(
+            page_cliente,
+            path="/cliente/api/usuarios",
+            method="POST",
+            json_body={
+                "nome": "Mesa WF",
+                "email": email_revisor,
+                "nivel_acesso": "revisor",
+                "telefone": "16999990002",
+                "crea": "123456/SP",
+                "allowed_portals": ["revisor"],
+            },
+        )
+        resposta_extra = _api_fetch(
+            page_cliente,
+            path="/cliente/api/usuarios",
+            method="POST",
+            json_body={
+                "nome": "Operador Temporario WF",
+                "email": email_extra,
+                "nivel_acesso": "inspetor",
+                "telefone": "16999990003",
+                "crea": "",
+                "allowed_portals": ["inspetor"],
+            },
+        )
+        assert resposta_inspetor["status"] == 201, resposta_inspetor
+        assert resposta_revisor["status"] == 201, resposta_revisor
+        assert resposta_extra["status"] == 201, resposta_extra
+        assert str(resposta_inspetor["body"]["senha_temporaria"]).strip()
+        assert str(resposta_revisor["body"]["senha_temporaria"]).strip()
+
+        inspetor_id = int(resposta_inspetor["body"]["usuario"]["id"])
+        revisor_id = int(resposta_revisor["body"]["usuario"]["id"])
+        extra_id = int(resposta_extra["body"]["usuario"]["id"])
+        senha_temporaria_inspetor = str(resposta_inspetor["body"]["senha_temporaria"]).strip()
+        senha_temporaria_revisor = str(resposta_revisor["body"]["senha_temporaria"]).strip()
+
+        reset_inspetor = _api_fetch(
+            page_cliente,
+            path=f"/cliente/api/usuarios/{inspetor_id}/resetar-senha",
+            method="POST",
+        )
+        assert reset_inspetor["status"] == 200, reset_inspetor
+        senha_temporaria_inspetor = str(reset_inspetor["body"]["senha_temporaria"]).strip()
+
+        bloqueio_revisor = _api_fetch(
+            page_cliente,
+            path=f"/cliente/api/usuarios/{revisor_id}/bloqueio",
+            method="PATCH",
+        )
+        desbloqueio_revisor = _api_fetch(
+            page_cliente,
+            path=f"/cliente/api/usuarios/{revisor_id}/bloqueio",
+            method="PATCH",
+        )
+        exclusao_extra = _api_fetch(
+            page_cliente,
+            path=f"/cliente/api/usuarios/{extra_id}",
+            method="DELETE",
+        )
+        assert bloqueio_revisor["status"] == 200, bloqueio_revisor
+        assert bloqueio_revisor["body"]["usuario"]["ativo"] is False
+        assert desbloqueio_revisor["status"] == 200, desbloqueio_revisor
+        assert desbloqueio_revisor["body"]["usuario"]["ativo"] is True
+        assert exclusao_extra["status"] == 200, exclusao_extra
+
+        page_cliente.goto(f"{live_server_url}/cliente/painel?sec=team", wait_until="domcontentloaded")
+        expect(page_cliente.locator("#admin-team")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#lista-usuarios")).to_contain_text(email_inspetor, timeout=10000)
+        expect(page_cliente.locator("#lista-usuarios")).to_contain_text(email_revisor, timeout=10000)
+        expect(page_cliente.locator("#lista-usuarios")).not_to_contain_text(email_extra)
+
+        page_inspetor_wf = contexto_inspetor_wf.new_page()
+        nova_senha_inspetor = f"WfInspetor@{sufixo}12345"
+        _login_operacional_primeiro_acesso(
+            page_inspetor_wf,
+            base_url=live_server_url,
+            portal="app",
+            email=email_inspetor,
+            senha_temporaria=senha_temporaria_inspetor,
+            nova_senha=nova_senha_inspetor,
+            rota_sucesso_regex=rf"{re.escape(live_server_url)}/app/?$",
+        )
+        expect(page_inspetor_wf.locator("#painel-chat")).to_be_visible(timeout=10000)
+        laudo_operacional_id = _iniciar_inspecao_via_api(page_inspetor_wf, tipo_template="padrao")
+        texto_operacional = f"Solicitacao operacional WF no inspetor {sufixo}"
+        envio_operacional = _api_fetch(
+            page_inspetor_wf,
+            path=f"/app/api/laudo/{laudo_operacional_id}/mesa/mensagem",
+            method="POST",
+            json_body={"texto": texto_operacional},
+        )
+        assert envio_operacional["status"] == 201, envio_operacional
+
+        page_revisor_wf = contexto_revisor_wf.new_page()
+        nova_senha_revisor = f"WfRevisor@{sufixo}12345"
+        _login_operacional_primeiro_acesso(
+            page_revisor_wf,
+            base_url=live_server_url,
+            portal="revisao",
+            email=email_revisor,
+            senha_temporaria=senha_temporaria_revisor,
+            nova_senha=nova_senha_revisor,
+            rota_sucesso_regex=rf"{re.escape(live_server_url)}/revisao/painel/?$",
+        )
+        _abrir_laudo_no_revisor(page_revisor_wf, laudo_operacional_id)
+        _abrir_painel_decisao_mesa_no_revisor(page_revisor_wf)
+        expect(page_revisor_wf.locator("#view-timeline")).to_contain_text(
+            re.compile(r"operacional WF", re.IGNORECASE),
+            timeout=10000,
+        )
+        texto_retorno_operacional = f"Retorno da mesa WF no portal revisor {sufixo}"
+        page_revisor_wf.locator("#input-resposta").fill(texto_retorno_operacional)
+        page_revisor_wf.locator("#btn-enviar-msg").click()
+        expect(
+            page_revisor_wf.locator("#view-timeline .bolha.engenharia", has_text=texto_retorno_operacional).first
+        ).to_be_visible(timeout=10000)
+        historico_mesa_operacional = _api_fetch(
+            page_inspetor_wf,
+            path=f"/app/api/laudo/{laudo_operacional_id}/mesa/mensagens",
+            method="GET",
+        )
+        assert historico_mesa_operacional["status"] == 200, historico_mesa_operacional
+        assert any(
+            item["tipo"] == "humano_eng" and texto_retorno_operacional in item["texto"]
+            for item in historico_mesa_operacional["body"]["itens"]
+        )
+
+        page_cliente.goto(f"{live_server_url}/cliente/chat?sec=new", wait_until="domcontentloaded")
+        expect(page_cliente.locator("#chat-new")).to_be_visible(timeout=10000)
+        page_cliente.wait_for_function(
+            "() => document.querySelectorAll('#chat-tipo-template option').length >= 1",
+            timeout=10000,
+        )
+        page_cliente.locator("#chat-tipo-template").select_option("padrao")
+        page_cliente.locator("#btn-chat-laudo-criar").click()
+        expect(page_cliente).to_have_url(
+            re.compile(rf"{re.escape(live_server_url)}/cliente/chat(?:\?sec=case)?/?$"),
+            timeout=10000,
+        )
+        expect(page_cliente.locator("#chat-case")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#chat-contexto")).to_be_visible(timeout=10000)
+
+        laudos_chat = _api_fetch(page_cliente, path="/cliente/api/chat/laudos")
+        assert laudos_chat["status"] == 200, laudos_chat
+        itens_chat = list(laudos_chat["body"]["itens"])
+        assert itens_chat, "Portal cliente não retornou laudos após criação."
+        laudo_id = int(itens_chat[0]["id"])
+
+        texto_chat = (
+            "@mesa Solicito abertura do caso WF para RTI, SPDA, PIE, LOTO e pendencias "
+            f"de NR com envio para mesa {sufixo}"
+        )
+        envio_chat = _api_fetch(
+            page_cliente,
+            path="/cliente/api/chat/mensagem",
+            method="POST",
+            json_body={
+                "laudo_id": laudo_id,
+                "mensagem": texto_chat,
+                "historico": [],
+                "setor": "geral",
+                "modo": "detalhado",
+            },
+        )
+        assert envio_chat["status"] == 200, envio_chat
+        page_cliente.reload(wait_until="domcontentloaded")
+        page_cliente.goto(f"{live_server_url}/cliente/chat?sec=case", wait_until="domcontentloaded")
+        expect(page_cliente.locator("#chat-mensagens")).to_contain_text(
+            "@mesa Solicito abertura do caso WF para RTI, SPDA, PIE, LOTO e pendencias de NR",
+            timeout=10000,
+        )
+
+        _seed_gate_qualidade_minimo_e2e(
+            live_server_database_url,
+            laudo_id=laudo_id,
+        )
+        _seed_report_pack_pronto_para_emissao_e2e(
+            live_server_database_url,
+            laudo_id=laudo_id,
+        )
+
+        finalizacao = _api_fetch(
+            page_cliente,
+            path=f"/cliente/api/chat/laudos/{laudo_id}/finalizar",
+            method="POST",
+        )
+        if finalizacao["status"] == 422:
+            detalhe_gate = finalizacao["body"]["detail"]
+            policy_override = dict(detalhe_gate.get("human_override_policy") or {})
+            assert policy_override.get("available") is True, finalizacao
+            finalizacao = _api_fetch(
+                page_cliente,
+                path=f"/cliente/api/chat/laudos/{laudo_id}/finalizar",
+                method="POST",
+                form_body={
+                    "quality_gate_override": "true",
+                    "quality_gate_override_reason": (
+                        "Cliente WF validou a rastreabilidade técnica do caso e assumiu a "
+                        "justificativa interna obrigatória para envio à mesa."
+                    ),
+                },
+            )
+        assert finalizacao["status"] == 200, finalizacao
+        assert finalizacao["body"]["success"] is True
+        assert finalizacao["body"]["review_mode_final"] == "mesa_required"
+
+        page_cliente.goto(f"{live_server_url}/cliente/mesa?sec=queue", wait_until="domcontentloaded")
+        expect(page_cliente.locator("#mesa-queue")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator(f'#lista-mesa-laudos [data-mesa="{laudo_id}"]')).to_be_visible(timeout=10000)
+        page_cliente.locator(f'#lista-mesa-laudos [data-mesa="{laudo_id}"]').click()
+        expect(page_cliente).to_have_url(
+            re.compile(rf"{re.escape(live_server_url)}/cliente/mesa\?sec=reply/?$"),
+            timeout=10000,
+        )
+        expect(page_cliente.locator("#mesa-reply")).to_be_visible(timeout=10000)
+
+        texto_mesa = f"Pendencia tecnica WF validada pela mesa {sufixo}"
+        page_cliente.locator("#mesa-resposta").fill(texto_mesa)
+        page_cliente.locator("#mesa-arquivo").set_input_files(
+            {
+                "name": "retorno-wf.png",
+                "mimeType": "image/png",
+                "buffer": base64.b64decode(PNG_1X1_TRANSPARENTE_B64),
+            }
+        )
+        page_cliente.locator("#btn-mesa-msg-enviar").click()
+        expect(page_cliente.locator("#mesa-mensagens")).to_contain_text(texto_mesa, timeout=10000)
+        expect(page_cliente.locator("#mesa-mensagens")).to_contain_text("retorno-wf.png", timeout=10000)
+
+        pacote_mesa = _api_fetch(
+            page_cliente,
+            path=f"/cliente/api/mesa/laudos/{laudo_id}/pacote",
+            method="GET",
+        )
+        assert pacote_mesa["status"] == 200, pacote_mesa
+        assert isinstance(pacote_mesa["body"], dict)
+        assert "pendencias_abertas" in pacote_mesa["body"]
+        assert "whispers_recentes" in pacote_mesa["body"]
+
+        aprovacao = _api_fetch(
+            page_cliente,
+            path=f"/cliente/api/mesa/laudos/{laudo_id}/avaliar",
+            method="POST",
+            json_body={"acao": "aprovar", "motivo": ""},
+        )
+        assert aprovacao["status"] == 200, aprovacao
+        assert str(aprovacao["body"]["status_revisao"]).strip().lower() == "aprovado"
+
+        reabertura = _api_fetch(
+            page_cliente,
+            path=f"/cliente/api/chat/laudos/{laudo_id}/reabrir",
+            method="POST",
+            json_body={"issued_document_policy": "keep_visible"},
+        )
+        assert reabertura["status"] == 200, reabertura
+        assert reabertura["body"]["success"] is True
+
+        page_cliente.goto(f"{live_server_url}/cliente/chat?sec=case", wait_until="domcontentloaded")
+        expect(page_cliente.locator("#chat-case")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#chat-contexto")).to_be_visible(timeout=10000)
+
+        auditoria = _api_fetch(page_cliente, path="/cliente/api/auditoria?limite=50")
+        assert auditoria["status"] == 200, auditoria
+        acoes = {item["acao"] for item in auditoria["body"]["itens"]}
+        assert "suporte_reportado" in acoes
+        assert "usuario_criado" in acoes
+        assert "senha_resetada" in acoes
+        assert "usuario_bloqueio_alterado" in acoes
+        assert "usuario_excluido" in acoes
+        assert "chat_laudo_criado" in acoes
+        assert "chat_mensagem_enviada" in acoes
+        assert "chat_laudo_finalizado" in acoes
+        assert "mesa_resposta_com_anexo" in acoes
+        assert "mesa_laudo_avaliado" in acoes
+        assert "chat_laudo_reaberto" in acoes
+    finally:
+        contexto_admin.close()
+        contexto_cliente.close()
+        contexto_inspetor_wf.close()
+        contexto_revisor_wf.close()
+
+
+def _login_cliente_futuro_wf(
+    browser: Browser,
+    *,
+    live_server_url: str,
+    credenciais_seed: dict[str, dict[str, str]],
+    sufixo_contexto: str,
+) -> tuple[object, object]:
+    contexto_admin = browser.new_context()
+    contexto_cliente = browser.new_context()
+
+    page_admin = contexto_admin.new_page()
+    _fazer_login(
+        page_admin,
+        base_url=live_server_url,
+        portal="admin",
+        email=credenciais_seed["admin"]["email"],
+        senha=credenciais_seed["admin"]["senha"],
+        rota_sucesso_regex=rf"{re.escape(live_server_url)}/admin/painel/?$",
+    )
+
+    nome_empresa = f"WF Contrato Futuro {sufixo_contexto}"
+    email_cliente = f"cliente.future.{sufixo_contexto}@empresa.test"
+    senha_temporaria = _provisionar_cliente_via_admin(
+        page_admin,
+        base_url=live_server_url,
+        nome=nome_empresa,
+        email=email_cliente,
+        cnpj=f"{uuid.uuid4().int % 10**14:014d}",
+        segmento="WF vertical industrial",
+        cidade_estado="Ribeirao Preto/SP",
+        nome_responsavel="Diretoria WF",
+        observacoes=(
+            "Contrato futuro esperado por comprador industrial: carteira por servico, ativo, documento e recorrencia."
+        ),
+        plano="Ilimitado",
+    )
+
+    page_cliente = contexto_cliente.new_page()
+    _login_cliente_primeiro_acesso(
+        page_cliente,
+        base_url=live_server_url,
+        email=email_cliente,
+        senha_temporaria=senha_temporaria,
+        nova_senha=f"Futuro@{sufixo_contexto}12345",
+    )
+    for tipo_template in ("rti", "spda", "pie", "loto", "avcb"):
+        resposta_laudo = _api_fetch(
+            page_cliente,
+            path="/cliente/api/chat/laudos",
+            method="POST",
+            form_body={"tipo_template": tipo_template},
+        )
+        assert resposta_laudo["status"] == 200, resposta_laudo
+    return contexto_admin, contexto_cliente
+
+
+def test_e2e_contrato_futuro_wf_exige_superficie_de_servicos_contratados(
+    browser: Browser,
+    live_server_url: str,
+    credenciais_seed: dict[str, dict[str, str]],
+) -> None:
+    sufixo = uuid.uuid4().hex[:8]
+    contexto_admin, contexto_cliente = _login_cliente_futuro_wf(
+        browser,
+        live_server_url=live_server_url,
+        credenciais_seed=credenciais_seed,
+        sufixo_contexto=sufixo,
+    )
+
+    try:
+        page_cliente = contexto_cliente.new_page()
+        page_cliente.goto(f"{live_server_url}/cliente/servicos", wait_until="domcontentloaded")
+        expect(page_cliente).to_have_url(
+            re.compile(rf"{re.escape(live_server_url)}/cliente/servicos(?:\?sec=overview)?/?$"),
+            timeout=10000,
+        )
+        expect(page_cliente.locator("#tab-servicos")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#servicos-contratados-grid")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("RTI", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("SPDA", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("PIE", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("LOTO", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("AVCB", timeout=10000)
+
+        bootstrap_servicos = _api_fetch(page_cliente, path="/cliente/api/bootstrap?surface=servicos")
+        assert bootstrap_servicos["status"] == 200, bootstrap_servicos
+        assert bootstrap_servicos["body"]["tenant_commercial_package"]["surface_availability"]["servicos"] is True
+        assert "servicos" in bootstrap_servicos["body"]
+        assert "summary" in bootstrap_servicos["body"]["servicos"]
+    finally:
+        contexto_admin.close()
+        contexto_cliente.close()
+
+
+def test_e2e_contrato_futuro_wf_exige_superficie_de_ativos_e_locais_funcionais(
+    browser: Browser,
+    live_server_url: str,
+    credenciais_seed: dict[str, dict[str, str]],
+) -> None:
+    sufixo = uuid.uuid4().hex[:8]
+    contexto_admin, contexto_cliente = _login_cliente_futuro_wf(
+        browser,
+        live_server_url=live_server_url,
+        credenciais_seed=credenciais_seed,
+        sufixo_contexto=sufixo,
+    )
+
+    try:
+        page_cliente = contexto_cliente.new_page()
+        page_cliente.goto(f"{live_server_url}/cliente/ativos", wait_until="domcontentloaded")
+        expect(page_cliente).to_have_url(
+            re.compile(rf"{re.escape(live_server_url)}/cliente/ativos(?:\?sec=overview)?/?$"),
+            timeout=10000,
+        )
+        expect(page_cliente.locator("#tab-ativos")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#ativos-industriais-lista")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("Unidade / planta", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("Equipamento / ativo", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("Próxima inspeção", timeout=10000)
+
+        bootstrap_ativos = _api_fetch(page_cliente, path="/cliente/api/bootstrap?surface=ativos")
+        assert bootstrap_ativos["status"] == 200, bootstrap_ativos
+        assert bootstrap_ativos["body"]["tenant_commercial_package"]["surface_availability"]["ativos"] is True
+        assert "ativos" in bootstrap_ativos["body"]
+        assert "summary" in bootstrap_ativos["body"]["ativos"]
+    finally:
+        contexto_admin.close()
+        contexto_cliente.close()
+
+
+def test_e2e_contrato_futuro_wf_exige_central_documental_com_arts_e_prontuarios(
+    browser: Browser,
+    live_server_url: str,
+    credenciais_seed: dict[str, dict[str, str]],
+) -> None:
+    sufixo = uuid.uuid4().hex[:8]
+    contexto_admin, contexto_cliente = _login_cliente_futuro_wf(
+        browser,
+        live_server_url=live_server_url,
+        credenciais_seed=credenciais_seed,
+        sufixo_contexto=sufixo,
+    )
+
+    try:
+        page_cliente = contexto_cliente.new_page()
+        page_cliente.goto(f"{live_server_url}/cliente/documentos", wait_until="domcontentloaded")
+        expect(page_cliente).to_have_url(
+            re.compile(rf"{re.escape(live_server_url)}/cliente/documentos(?:\?sec=overview)?/?$"),
+            timeout=10000,
+        )
+        expect(page_cliente.locator("#tab-documentos")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#documentos-com-art-lista")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("ART vinculada", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("PIE", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("Prontuário", timeout=10000)
+
+        bootstrap_documentos = _api_fetch(page_cliente, path="/cliente/api/bootstrap?surface=documentos")
+        assert bootstrap_documentos["status"] == 200, bootstrap_documentos
+        assert bootstrap_documentos["body"]["tenant_commercial_package"]["surface_availability"]["documentos"] is True
+        assert "documentos" in bootstrap_documentos["body"]
+        assert "summary" in bootstrap_documentos["body"]["documentos"]
+    finally:
+        contexto_admin.close()
+        contexto_cliente.close()
+
+
+def test_e2e_contrato_futuro_wf_exige_agenda_de_recorrencia_e_vencimentos(
+    browser: Browser,
+    live_server_url: str,
+    credenciais_seed: dict[str, dict[str, str]],
+) -> None:
+    sufixo = uuid.uuid4().hex[:8]
+    contexto_admin, contexto_cliente = _login_cliente_futuro_wf(
+        browser,
+        live_server_url=live_server_url,
+        credenciais_seed=credenciais_seed,
+        sufixo_contexto=sufixo,
+    )
+
+    try:
+        page_cliente = contexto_cliente.new_page()
+        page_cliente.goto(f"{live_server_url}/cliente/recorrencia", wait_until="domcontentloaded")
+        expect(page_cliente).to_have_url(
+            re.compile(rf"{re.escape(live_server_url)}/cliente/recorrencia(?:\?sec=overview)?/?$"),
+            timeout=10000,
+        )
+        expect(page_cliente.locator("#tab-recorrencia")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("#agenda-recorrencia-lista")).to_be_visible(timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("Próximos 30 dias", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("Atrasados", timeout=10000)
+        expect(page_cliente.locator("body")).to_contain_text("Plano preventivo", timeout=10000)
+
+        bootstrap_recorrencia = _api_fetch(page_cliente, path="/cliente/api/bootstrap?surface=recorrencia")
+        assert bootstrap_recorrencia["status"] == 200, bootstrap_recorrencia
+        assert bootstrap_recorrencia["body"]["tenant_commercial_package"]["surface_availability"]["recorrencia"] is True
+        assert "recorrencia" in bootstrap_recorrencia["body"]
+        assert "summary" in bootstrap_recorrencia["body"]["recorrencia"]
+    finally:
+        contexto_admin.close()
+        contexto_cliente.close()
+
+
 def test_e2e_revisor_ui_responde_e_inspetor_recebe(
     browser: Browser,
     live_server_url: str,
@@ -3759,6 +4397,89 @@ def test_e2e_revisor_ui_responde_e_inspetor_recebe(
         )
         assert historico_mesa["status"] == 200
         assert any(item["tipo"] == "humano_eng" and texto_resposta in item["texto"] for item in historico_mesa["body"]["itens"])
+    finally:
+        contexto_inspetor.close()
+        contexto_revisor.close()
+
+
+def test_e2e_aba_mesa_exibe_sinais_operacionais_e_pendencia_aberta(
+    browser: Browser,
+    live_server_url: str,
+    credenciais_seed: dict[str, dict[str, str]],
+) -> None:
+    contexto_inspetor = browser.new_context()
+    contexto_revisor = browser.new_context()
+
+    try:
+        page_inspetor = contexto_inspetor.new_page()
+        _fazer_login(
+            page_inspetor,
+            base_url=live_server_url,
+            portal="app",
+            email=credenciais_seed["inspetor"]["email"],
+            senha=credenciais_seed["inspetor"]["senha"],
+            rota_sucesso_regex=rf"{re.escape(live_server_url)}/app/?$",
+        )
+
+        laudo_id = _iniciar_inspecao_via_api(page_inspetor, tipo_template="padrao")
+        texto_inicial = f"Solicitação mesa flagship {uuid.uuid4().hex[:8]}"
+        envio_inspetor = _api_fetch(
+            page_inspetor,
+            path=f"/app/api/laudo/{laudo_id}/mesa/mensagem",
+            method="POST",
+            json_body={"texto": texto_inicial},
+        )
+        assert envio_inspetor["status"] == 201
+
+        page_revisor = contexto_revisor.new_page()
+        _fazer_login(
+            page_revisor,
+            base_url=live_server_url,
+            portal="revisao",
+            email=credenciais_seed["revisor"]["email"],
+            senha=credenciais_seed["revisor"]["senha"],
+            rota_sucesso_regex=rf"{re.escape(live_server_url)}/revisao/painel/?$",
+        )
+
+        _abrir_laudo_no_revisor(page_revisor, laudo_id)
+        texto_resposta = f"Pendência flagship mesa {uuid.uuid4().hex[:8]}"
+        page_revisor.locator("#input-resposta").fill(texto_resposta)
+        page_revisor.locator("#btn-enviar-msg").click()
+        expect(page_revisor.locator("#view-timeline .bolha.engenharia", has_text=texto_resposta).first).to_be_visible(timeout=10000)
+
+        _carregar_laudo_no_inspetor(page_inspetor, laudo_id)
+        _selecionar_thread_tab_workspace(page_inspetor, "mesa")
+        _esperar_contexto_workspace_inspetor(
+            page_inspetor,
+            laudo_id=laudo_id,
+            aba="mesa",
+            view="inspection_mesa",
+        )
+
+        expect(page_inspetor.locator("#workspace-mesa-stage")).to_be_visible(timeout=10000)
+        expect(page_inspetor.locator("#workspace-mesa-stage-phase")).not_to_have_text(
+            re.compile(r"^\s*$"),
+            timeout=10000,
+        )
+        expect(page_inspetor.locator("#workspace-mesa-stage-phase-detail")).not_to_have_text(
+            re.compile(r"^\s*$"),
+            timeout=10000,
+        )
+        expect(page_inspetor.locator("#workspace-mesa-stage-next-action-label")).not_to_have_text(
+            re.compile(r"^\s*$"),
+            timeout=10000,
+        )
+        expect(page_inspetor.locator("#workspace-mesa-stage-last-updated")).not_to_have_text(
+            re.compile(r"^\s*$"),
+            timeout=10000,
+        )
+        expect(page_inspetor.locator("#workspace-mesa-pending-title")).to_contain_text(
+            re.compile(r"pend[êe]ncia", re.IGNORECASE),
+            timeout=10000,
+        )
+        expect(page_inspetor.locator("#workspace-mesa-pending-list")).to_be_visible(timeout=10000)
+        expect(page_inspetor.locator("#workspace-mesa-pending-list")).to_contain_text(texto_resposta, timeout=10000)
+        expect(page_inspetor.locator("#workspace-mesa-empty-state")).to_be_hidden()
     finally:
         contexto_inspetor.close()
         contexto_revisor.close()
@@ -3945,6 +4666,82 @@ def test_e2e_revisor_anexa_arquivo_e_inspetor_visualiza_no_widget_mesa(
             ).first
         ).to_be_visible(timeout=10000)
         expect(page_inspetor.locator("#mesa-widget-lista .anexo-mesa-link", has_text="retorno-mesa.png").first).to_be_visible(timeout=10000)
+    finally:
+        contexto_inspetor.close()
+        contexto_revisor.close()
+
+
+def test_e2e_aba_mesa_destaca_anexos_recentes_da_revisao(
+    browser: Browser,
+    live_server_url: str,
+    credenciais_seed: dict[str, dict[str, str]],
+) -> None:
+    contexto_inspetor = browser.new_context()
+    contexto_revisor = browser.new_context()
+
+    try:
+        page_inspetor = contexto_inspetor.new_page()
+        _fazer_login(
+            page_inspetor,
+            base_url=live_server_url,
+            portal="app",
+            email=credenciais_seed["inspetor"]["email"],
+            senha=credenciais_seed["inspetor"]["senha"],
+            rota_sucesso_regex=rf"{re.escape(live_server_url)}/app/?$",
+        )
+
+        laudo_id = _iniciar_inspecao_via_api(page_inspetor, tipo_template="padrao")
+        envio_inspetor = _api_fetch(
+            page_inspetor,
+            path=f"/app/api/laudo/{laudo_id}/mesa/mensagem",
+            method="POST",
+            json_body={"texto": f"Abertura anexo flagship {uuid.uuid4().hex[:8]}"},
+        )
+        assert envio_inspetor["status"] == 201
+
+        page_revisor = contexto_revisor.new_page()
+        _fazer_login(
+            page_revisor,
+            base_url=live_server_url,
+            portal="revisao",
+            email=credenciais_seed["revisor"]["email"],
+            senha=credenciais_seed["revisor"]["senha"],
+            rota_sucesso_regex=rf"{re.escape(live_server_url)}/revisao/painel/?$",
+        )
+
+        _abrir_laudo_no_revisor(page_revisor, laudo_id)
+        page_revisor.locator("#input-anexo-resposta").set_input_files(
+            {
+                "name": "flagship-retorno-mesa.png",
+                "mimeType": "image/png",
+                "buffer": base64.b64decode(PNG_1X1_TRANSPARENTE_B64),
+            }
+        )
+        page_revisor.locator("#input-resposta").fill("Segue anexo da mesa para o fluxo flagship.")
+        page_revisor.locator("#btn-enviar-msg").click()
+        expect(
+            page_revisor.locator("#view-timeline .anexo-mensagem-link", has_text="flagship-retorno-mesa.png").first
+        ).to_be_visible(timeout=10000)
+
+        _carregar_laudo_no_inspetor(page_inspetor, laudo_id)
+        _selecionar_thread_tab_workspace(page_inspetor, "mesa")
+        _esperar_contexto_workspace_inspetor(
+            page_inspetor,
+            laudo_id=laudo_id,
+            aba="mesa",
+            view="inspection_mesa",
+        )
+
+        expect(page_inspetor.locator("#workspace-mesa-attachments-title")).to_contain_text(
+            re.compile(r"anexo", re.IGNORECASE),
+            timeout=10000,
+        )
+        expect(page_inspetor.locator("#workspace-mesa-attachments-list")).to_be_visible(timeout=10000)
+        expect(page_inspetor.locator("#workspace-mesa-attachments-list")).to_contain_text(
+            "flagship-retorno-mesa.png",
+            timeout=10000,
+        )
+        expect(page_inspetor.locator("#workspace-mesa-attachments-empty")).to_be_hidden()
     finally:
         contexto_inspetor.close()
         contexto_revisor.close()

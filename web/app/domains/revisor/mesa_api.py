@@ -134,6 +134,13 @@ async def avaliar_laudo(
                 "allowed_next_lifecycle_statuses": list(resultado.allowed_next_lifecycle_statuses),
                 "allowed_surface_actions": list(resultado.allowed_surface_actions),
                 "status_visual_label": resultado.status_visual_label,
+                "case_operational_phase": resultado.case_operational_phase,
+                "case_operational_phase_label": resultado.case_operational_phase_label,
+                "case_operational_summary": resultado.case_operational_summary,
+                "review_phase": resultado.review_phase,
+                "review_phase_label": resultado.review_phase_label,
+                "next_action_label": resultado.next_action_label,
+                "next_action_summary": resultado.next_action_summary,
                 "motivo": resultado.motivo,
                 "idempotent_replay": bool(resultado.idempotent_replay),
             }
@@ -205,7 +212,25 @@ async def responder_chat_campo(
         result=resultado,
     )
 
-    return JSONResponse({"success": True})
+    return JSONResponse(
+        {
+            "success": True,
+            "case_lifecycle_status": resultado.case_lifecycle_status,
+            "active_owner_role": resultado.active_owner_role,
+            "allowed_next_lifecycle_statuses": list(resultado.allowed_next_lifecycle_statuses),
+            "allowed_surface_actions": list(resultado.allowed_surface_actions),
+            "status_visual_label": resultado.status_visual_label,
+            "feedback_mode": resultado.feedback_mode,
+            "case_operational_phase": resultado.case_operational_phase,
+            "case_operational_phase_label": resultado.case_operational_phase_label,
+            "case_operational_summary": resultado.case_operational_summary,
+            "review_phase": resultado.review_phase,
+            "review_phase_label": resultado.review_phase_label,
+            "next_action_label": resultado.next_action_label,
+            "next_action_summary": resultado.next_action_summary,
+            "texto_notificacao": resultado.texto_notificacao,
+        }
+    )
 
 
 @roteador_revisor.post(
@@ -252,6 +277,20 @@ async def responder_chat_campo_com_anexo(
         {
             "success": True,
             "mensagem": resultado.mensagem_payload,
+            "case_lifecycle_status": resultado.case_lifecycle_status,
+            "active_owner_role": resultado.active_owner_role,
+            "allowed_next_lifecycle_statuses": list(resultado.allowed_next_lifecycle_statuses),
+            "allowed_surface_actions": list(resultado.allowed_surface_actions),
+            "status_visual_label": resultado.status_visual_label,
+            "feedback_mode": resultado.feedback_mode,
+            "case_operational_phase": resultado.case_operational_phase,
+            "case_operational_phase_label": resultado.case_operational_phase_label,
+            "case_operational_summary": resultado.case_operational_summary,
+            "review_phase": resultado.review_phase,
+            "review_phase_label": resultado.review_phase_label,
+            "next_action_label": resultado.next_action_label,
+            "next_action_summary": resultado.next_action_summary,
+            "texto_notificacao": resultado.texto_notificacao,
         }
     )
 

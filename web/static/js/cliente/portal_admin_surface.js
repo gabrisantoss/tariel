@@ -37,6 +37,20 @@
 
         const filtrarUsuarios = typeof filters.filtrarUsuarios === "function" ? filters.filtrarUsuarios : () => [];
         const rotuloSituacaoUsuarios = typeof labels.rotuloSituacaoUsuarios === "function" ? labels.rotuloSituacaoUsuarios : () => "";
+        const adminOverviewSurface = typeof windowRef.TarielClientePortalAdminOverviewSurface === "function"
+            ? windowRef.TarielClientePortalAdminOverviewSurface({
+                state,
+                documentRef,
+                getById: $,
+                helpers: {
+                    escapeAttr,
+                    escapeHtml,
+                    formatarInteiro,
+                },
+                obterTenantAdminPayload,
+                prioridadeEmpresa,
+            })
+            : null;
 
         const STAGE_IDS = Object.freeze({
             overview: "admin-overview",
@@ -76,8 +90,19 @@
             "admin-resumo-geral": "overview",
             "admin-executive-brief": "overview",
             "empresa-cards": "overview",
+            "admin-guided-onboarding": "overview",
+            "admin-guided-onboarding-summary": "overview",
+            "admin-guided-onboarding-lista": "overview",
             "admin-saude-resumo": "overview",
             "admin-saude-historico": "overview",
+            "admin-commercial-package": "overview",
+            "admin-commercial-package-summary": "overview",
+            "admin-commercial-package-lista": "overview",
+            "admin-observability-executive": "overview",
+            "admin-observability-summary": "overview",
+            "admin-observability-timeline": "overview",
+            "admin-pending-center": "overview",
+            "admin-pending-center-lista": "overview",
             "admin-capacity": "capacity",
             "admin-capacity-brief": "capacity",
             "admin-planos": "capacity",
@@ -774,43 +799,23 @@
         }
 
         function renderOverviewBrief() {
-            const container = $("admin-executive-brief");
-            const empresa = state.bootstrap?.empresa;
-            if (!container || !empresa) return;
-            const tenantAdmin = obterTenantAdminPayload();
-            const prioridade = prioridadeEmpresa(empresa, state.bootstrap?.usuarios || []);
-            const totalCasos = Number(tenantAdmin?.case_counts?.total_cases || 0);
-            const casosAbertos = Number(tenantAdmin?.case_counts?.open_cases || 0);
-            const revisoesAtivas = Number(tenantAdmin?.review_counts?.pending_review || 0)
-                + Number(tenantAdmin?.review_counts?.in_review || 0);
+            adminOverviewSurface?.renderOverviewBrief?.();
+        }
 
-            container.innerHTML = `
-                <article class="stage-brief-card" data-tone="${escapeAttr(prioridade.tone || "aprovado")}">
-                    <div class="stage-brief-card__copy">
-                        <span class="stage-brief-card__eyebrow">Resumo executivo</span>
-                        <strong>${escapeHtml(prioridade.badge || "Empresa sob controle")}</strong>
-                        <p>${escapeHtml(prioridade.acao || "A operacao da empresa segue visivel em uma regua unica de capacidade, equipe e suporte.")}</p>
-                    </div>
-                    <div class="stage-brief-card__metrics">
-                        <div class="context-block">
-                            <small>Casos monitorados</small>
-                            <strong>${escapeHtml(formatarInteiro(totalCasos))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Casos abertos</small>
-                            <strong>${escapeHtml(formatarInteiro(casosAbertos))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Revisoes em curso</small>
-                            <strong>${escapeHtml(formatarInteiro(revisoesAtivas))}</strong>
-                        </div>
-                    </div>
-                    <div class="stage-brief-card__actions">
-                        <button class="btn" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="admin-saude-resumo" data-origem="admin">Ver pulso da operacao</button>
-                        <button class="btn ghost" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="admin-capacity-brief" data-origem="admin">Abrir capacidade</button>
-                    </div>
-                </article>
-            `;
+        function renderGuidedOnboardingOverview() {
+            adminOverviewSurface?.renderGuidedOnboardingOverview?.();
+        }
+
+        function renderCommercialPackageOverview() {
+            adminOverviewSurface?.renderCommercialPackageOverview?.();
+        }
+
+        function renderOperationalObservabilityOverview() {
+            adminOverviewSurface?.renderOperationalObservabilityOverview?.();
+        }
+
+        function renderPendingCenterOverview() {
+            adminOverviewSurface?.renderPendingCenterOverview?.();
         }
 
         function renderCapacityBrief() {
@@ -1659,6 +1664,10 @@
                 renderOverviewBrief();
                 renderAdminResumo();
                 renderEmpresaCards();
+                renderCommercialPackageOverview();
+                renderOperationalObservabilityOverview();
+                renderPendingCenterOverview();
+                renderGuidedOnboardingOverview();
                 renderSaudeEmpresa();
             } else if (targetStage === "capacity") {
                 renderCapacityBrief();

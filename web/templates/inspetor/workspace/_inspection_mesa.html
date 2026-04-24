@@ -20,6 +20,7 @@
                         aria-selected="true"
                     >
                         Mesa Avaliadora
+                        <span id="workspace-channel-badge-mesa" class="workspace-channel-tab__badge" hidden>0</span>
                     </button>
                 </div>
                 <a
@@ -34,7 +35,7 @@
                 </a>
             </div>
             <p class="workspace-channel-note">
-                Acompanhe o estado da revisão, o que ainda falta no caso e toda a conversa com a mesa no mesmo fluxo.
+                Este é o canal dedicado da mesa avaliadora. A conversa institucional da revisão fica concentrada aqui, sem misturar o contexto técnico das outras abas.
             </p>
         </div>
 
@@ -44,6 +45,11 @@
                     <span>Status da mesa</span>
                     <strong id="workspace-mesa-stage-status">Canal disponível</strong>
                     <p id="workspace-mesa-stage-summary">Abra o canal para alinhar dúvidas, pendências e evidências com a mesa.</p>
+                </article>
+                <article class="workspace-mesa-overview-card">
+                    <span>Situação da revisão</span>
+                    <strong id="workspace-mesa-stage-phase">Em monitoramento</strong>
+                    <p id="workspace-mesa-stage-phase-detail">A fase operacional da revisão aparecerá aqui conforme o caso evoluir.</p>
                 </article>
                 <article class="workspace-mesa-overview-card">
                     <span>Pendências abertas</span>
@@ -69,9 +75,76 @@
                             <span class="workspace-mesa-panel__eyebrow">Próxima ação</span>
                             <strong id="workspace-mesa-stage-next-step">Use o canal para alinhar dúvidas ou anexar novas evidências.</strong>
                         </div>
+                        <div class="workspace-mesa-panel__meta">
+                            <span class="workspace-mesa-panel__meta-label">Ação esperada</span>
+                            <strong id="workspace-mesa-stage-next-action-label">Acompanhar revisão</strong>
+                        </div>
                         <p class="workspace-mesa-panel__description">
                             A conversa abaixo reúne pedidos da mesa, respostas já enviadas e o histórico recente deste caso.
                         </p>
+                    </section>
+
+                    <section class="workspace-mesa-events" aria-label="Leitura rápida dos eventos da mesa">
+                        <article class="workspace-mesa-event-card">
+                            <span class="workspace-mesa-event-card__eyebrow">Comentário técnico</span>
+                            <strong id="workspace-mesa-event-comment-title">Sem comentários recentes</strong>
+                            <p id="workspace-mesa-event-comment-detail">A mesa ainda não registrou retornos contextuais neste caso.</p>
+                        </article>
+                        <article class="workspace-mesa-event-card">
+                            <span class="workspace-mesa-event-card__eyebrow">Pendência</span>
+                            <strong id="workspace-mesa-event-pendency-title">Nenhuma pendência aberta</strong>
+                            <p id="workspace-mesa-event-pendency-detail">Quando a mesa pedir ajuste ou evidência, isso aparecerá aqui.</p>
+                        </article>
+                        <article class="workspace-mesa-event-card">
+                            <span class="workspace-mesa-event-card__eyebrow">Decisão</span>
+                            <strong id="workspace-mesa-event-decision-title">Sem decisão final</strong>
+                            <p id="workspace-mesa-event-decision-detail">A aprovação ou devolução formal do caso ainda não foi registrada.</p>
+                        </article>
+                    </section>
+
+                    <section class="workspace-mesa-operational-grid" aria-label="Pendências e anexos recentes da mesa">
+                        <section class="workspace-mesa-panel" aria-label="Pendências abertas da mesa">
+                            <div class="workspace-mesa-panel__head">
+                                <span class="workspace-mesa-panel__eyebrow">Pendências abertas</span>
+                                <strong id="workspace-mesa-pending-title">Nenhum pedido aberto da mesa</strong>
+                            </div>
+                            <p id="workspace-mesa-pending-detail" class="workspace-mesa-panel__description">
+                                Quando a mesa pedir evidência, ajuste ou correção objetiva, isso aparecerá aqui.
+                            </p>
+                            <ul id="workspace-mesa-pending-list" class="workspace-mesa-operational-list" hidden></ul>
+                            <p id="workspace-mesa-pending-empty" class="workspace-mesa-operational-empty">
+                                Sem pendências abertas neste momento.
+                            </p>
+                        </section>
+
+                        <section class="workspace-mesa-panel" aria-label="Anexos recentes da mesa">
+                            <div class="workspace-mesa-panel__head">
+                                <span class="workspace-mesa-panel__eyebrow">Anexos recentes</span>
+                                <strong id="workspace-mesa-attachments-title">Nenhum anexo recente da mesa</strong>
+                            </div>
+                            <p id="workspace-mesa-attachments-detail" class="workspace-mesa-panel__description">
+                                Arquivos enviados pela revisão aparecem aqui para facilitar a resposta do campo.
+                            </p>
+                            <ul id="workspace-mesa-attachments-list" class="workspace-mesa-operational-list" hidden></ul>
+                            <p id="workspace-mesa-attachments-empty" class="workspace-mesa-operational-empty">
+                                Sem anexos recentes da mesa neste caso.
+                            </p>
+                        </section>
+                    </section>
+
+                    <section id="workspace-mesa-empty-state" class="workspace-mesa-panel workspace-mesa-panel--empty" aria-label="Como usar a aba Mesa" hidden>
+                        <div class="workspace-mesa-panel__head">
+                            <span class="workspace-mesa-panel__eyebrow">Sem conversa ainda</span>
+                            <strong id="workspace-mesa-empty-title">Esta aba concentra a comunicação institucional com a mesa</strong>
+                        </div>
+                        <p id="workspace-mesa-empty-detail" class="workspace-mesa-panel__description">
+                            Quando a revisão começar, você verá aqui comentários técnicos, pendências, anexos e decisões formais do caso.
+                        </p>
+                        <ul class="workspace-mesa-empty-checklist">
+                            <li>Acompanhe pedidos de ajuste ou evidência sem misturar isso ao contexto técnico das outras abas.</li>
+                            <li>Responda à mesa com evidências e anexos pelo canal desta aba.</li>
+                            <li>Use a próxima ação e os sinais canônicos para entender se o caso aguarda envio, retorno ou decisão.</li>
+                        </ul>
                     </section>
 
                     <div id="workspace-mesa-widget-host" class="workspace-mesa-widget-host"></div>
@@ -95,6 +168,10 @@
                             <div>
                                 <dt>Último movimento</dt>
                                 <dd id="workspace-mesa-stage-last-movement">Sem atualização recente.</dd>
+                            </div>
+                            <div>
+                                <dt>Última atualização</dt>
+                                <dd id="workspace-mesa-stage-last-updated">Sem atualização operacional recente.</dd>
                             </div>
                         </dl>
                     </section>

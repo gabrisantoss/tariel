@@ -819,6 +819,51 @@ export const chatThreadStyles = {
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
+  threadOperationalPlanGrid: {
+    gap: spacing.sm,
+  },
+  threadOperationalPlanCard: {
+    gap: spacing.xs,
+    padding: spacing.md,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.surfaceStroke,
+    backgroundColor: colors.surfacePanelRaised,
+  },
+  threadOperationalPlanCardAccent: {
+    borderColor: colors.accentMuted,
+    backgroundColor: colors.accentWash,
+  },
+  threadOperationalPlanCardSuccess: {
+    borderColor: colors.successSoft,
+    backgroundColor: colors.successWash,
+  },
+  threadOperationalPlanCardDanger: {
+    borderColor: colors.dangerSoft,
+    backgroundColor: colors.dangerWash,
+  },
+  threadOperationalPlanHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  threadOperationalPlanLabel: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  threadOperationalPlanValue: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  threadOperationalPlanDetail: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 17,
+  },
   threadTabs: {
     flexDirection: "row",
     gap: spacing.xs,

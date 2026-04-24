@@ -173,6 +173,51 @@ export const historyStyles = {
     fontSize: 12,
     lineHeight: 17,
   },
+  historyResumeCard: {
+    gap: spacing.xs,
+    padding: spacing.md,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.accentMuted,
+    backgroundColor: colors.surfaceCanvas,
+  },
+  historyResumeHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  historyResumeCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  historyResumeEyebrow: {
+    color: colors.accent,
+    ...typography.eyebrow,
+  },
+  historyResumeTitle: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  historyResumeDetail: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  historyResumeEmphasisPill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 7,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentWash,
+    borderWidth: 1,
+    borderColor: colors.accentMuted,
+  },
+  historyResumeEmphasisText: {
+    color: colors.accent,
+    fontSize: 11,
+    fontWeight: "800",
+  },
   historyFilterRow: {
     flexDirection: "row",
     flexWrap: "wrap",

@@ -352,6 +352,8 @@ class EmissaoOficialAtualPacoteMesa(BaseModel):
 class EmissaoOficialPacoteMesa(BaseModel):
     issue_status: str = Field(..., min_length=2, max_length=32)
     issue_status_label: str = Field(..., min_length=2, max_length=120)
+    document_visual_state: str | None = Field(default=None, max_length=32)
+    document_visual_state_label: str | None = Field(default=None, max_length=120)
     ready_for_issue: bool = False
     requires_human_signature: bool = True
     compatible_signatory_count: int = Field(default=0, ge=0)
@@ -369,6 +371,7 @@ class EmissaoOficialPacoteMesa(BaseModel):
     reissue_recommended: bool = False
     issue_action_label: str | None = Field(default=None, max_length=120)
     issue_action_enabled: bool = False
+    delivery_manifest: dict[str, Any] = Field(default_factory=dict)
     current_issue: EmissaoOficialAtualPacoteMesa | None = None
 
 

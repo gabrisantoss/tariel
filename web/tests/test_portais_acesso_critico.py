@@ -242,6 +242,10 @@ def test_admin_cliente_login_funciona_e_painel_abre(ambiente_critico) -> None:
 
     resposta_painel = client.get("/cliente/painel")
     resposta_painel_team = client.get("/cliente/painel?sec=team")
+    resposta_servicos = client.get("/cliente/servicos")
+    resposta_recorrencia = client.get("/cliente/recorrencia")
+    resposta_ativos = client.get("/cliente/ativos")
+    resposta_documentos = client.get("/cliente/documentos")
     resposta_chat = client.get("/cliente/chat")
     resposta_chat_queue = client.get("/cliente/chat?sec=queue")
     resposta_mesa = client.get("/cliente/mesa")
@@ -252,6 +256,26 @@ def test_admin_cliente_login_funciona_e_painel_abre(ambiente_critico) -> None:
     assert 'data-cliente-tab-inicial="admin"' in resposta_painel.text
     assert resposta_painel_team.status_code == 200
     assert 'data-cliente-admin-section-inicial="team"' in resposta_painel_team.text
+
+    assert resposta_servicos.status_code == 200
+    assert 'data-cliente-tab-inicial="servicos"' in resposta_servicos.text
+    assert 'id="servicos-contratados-grid"' in resposta_servicos.text
+    assert 'id="servicos-resumo-geral"' in resposta_servicos.text
+
+    assert resposta_recorrencia.status_code == 200
+    assert 'data-cliente-tab-inicial="recorrencia"' in resposta_recorrencia.text
+    assert 'id="agenda-recorrencia-lista"' in resposta_recorrencia.text
+    assert 'id="recorrencia-resumo-geral"' in resposta_recorrencia.text
+
+    assert resposta_ativos.status_code == 200
+    assert 'data-cliente-tab-inicial="ativos"' in resposta_ativos.text
+    assert 'id="ativos-industriais-lista"' in resposta_ativos.text
+    assert 'id="ativos-resumo-geral"' in resposta_ativos.text
+
+    assert resposta_documentos.status_code == 200
+    assert 'data-cliente-tab-inicial="documentos"' in resposta_documentos.text
+    assert 'id="documentos-lista"' in resposta_documentos.text
+    assert 'id="documentos-resumo-geral"' in resposta_documentos.text
 
     assert resposta_chat.status_code == 200
     assert 'data-cliente-tab-inicial="chat"' in resposta_chat.text
@@ -362,6 +386,10 @@ def test_admin_cliente_bootstrap_fica_restrito_a_propria_empresa(ambiente_critic
     _login_cliente(client, "cliente@empresa-a.test")
 
     resposta = client.get("/cliente/api/bootstrap")
+    resposta_servicos = client.get("/cliente/api/bootstrap?surface=servicos")
+    resposta_recorrencia = client.get("/cliente/api/bootstrap?surface=recorrencia")
+    resposta_ativos = client.get("/cliente/api/bootstrap?surface=ativos")
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
     resposta_chat = client.get("/cliente/api/bootstrap?surface=chat")
     resposta_admin = client.get("/cliente/api/bootstrap?surface=admin")
     resposta_mesa = client.get("/cliente/api/bootstrap?surface=mesa")
@@ -378,6 +406,52 @@ def test_admin_cliente_bootstrap_fica_restrito_a_propria_empresa(ambiente_critic
     assert corpo["empresa"]["total_usuarios"] == 3
     assert corpo["empresa"]["usuarios_em_uso"] == 3
     assert "tenant_admin_projection" in corpo
+
+    assert resposta_servicos.status_code == 200
+    corpo_servicos = resposta_servicos.json()
+    assert corpo_servicos["empresa"]["nome_fantasia"] == "Empresa A"
+    assert "servicos" in corpo_servicos
+    assert "usuarios" not in corpo_servicos
+    assert "auditoria" not in corpo_servicos
+    assert "chat" not in corpo_servicos
+    assert "mesa" not in corpo_servicos
+    assert "documentos" not in corpo_servicos
+    assert "ativos" not in corpo_servicos
+    assert "tenant_admin_projection" in corpo_servicos
+
+    assert resposta_recorrencia.status_code == 200
+    corpo_recorrencia = resposta_recorrencia.json()
+    assert corpo_recorrencia["empresa"]["nome_fantasia"] == "Empresa A"
+    assert "recorrencia" in corpo_recorrencia
+    assert "usuarios" not in corpo_recorrencia
+    assert "auditoria" not in corpo_recorrencia
+    assert "chat" not in corpo_recorrencia
+    assert "mesa" not in corpo_recorrencia
+    assert "documentos" not in corpo_recorrencia
+    assert "ativos" not in corpo_recorrencia
+    assert "servicos" not in corpo_recorrencia
+    assert "tenant_admin_projection" in corpo_recorrencia
+
+    assert resposta_ativos.status_code == 200
+    corpo_ativos = resposta_ativos.json()
+    assert corpo_ativos["empresa"]["nome_fantasia"] == "Empresa A"
+    assert "ativos" in corpo_ativos
+    assert "usuarios" not in corpo_ativos
+    assert "auditoria" not in corpo_ativos
+    assert "chat" not in corpo_ativos
+    assert "mesa" not in corpo_ativos
+    assert "documentos" not in corpo_ativos
+    assert "tenant_admin_projection" in corpo_ativos
+
+    assert resposta_documentos.status_code == 200
+    corpo_documentos = resposta_documentos.json()
+    assert corpo_documentos["empresa"]["nome_fantasia"] == "Empresa A"
+    assert "documentos" in corpo_documentos
+    assert "usuarios" not in corpo_documentos
+    assert "auditoria" not in corpo_documentos
+    assert "chat" not in corpo_documentos
+    assert "mesa" not in corpo_documentos
+    assert "tenant_admin_projection" in corpo_documentos
 
     assert resposta_chat.status_code == 200
     corpo_chat = resposta_chat.json()

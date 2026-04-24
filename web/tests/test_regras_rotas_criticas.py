@@ -7025,6 +7025,9 @@ def test_api_chat_comando_finalizar_retorna_payload_gate_quando_reprovado(ambien
     assert detalhe["aprovado"] is False
     assert isinstance(detalhe["faltantes"], list)
     assert len(detalhe["faltantes"]) >= 1
+    assert detalhe["action_plan"]["summary"].startswith("Finalização bloqueada")
+    assert isinstance(detalhe["action_plan"]["next_steps"], list)
+    assert len(detalhe["action_plan"]["next_steps"]) >= 1
 
     with SessionLocal() as banco:
         laudo = (
@@ -7596,7 +7599,14 @@ def test_revisor_responde_e_inspetor_visualiza_no_canal_mesa(ambiente_critico) -
         json={"texto": "Mesa avaliadora: incluir foto da placa de identificação."},
     )
     assert resposta_revisor.status_code == 200
-    assert resposta_revisor.json()["success"] is True
+    corpo_resposta = resposta_revisor.json()
+    assert corpo_resposta["success"] is True
+    assert corpo_resposta["feedback_mode"] == "contextual"
+    assert corpo_resposta["review_phase"] in {"decision_ready", "waiting_field_return"}
+    assert corpo_resposta["next_action_label"] in {
+        "Aprovar ou devolver",
+        "Aguardar reenvio do inspetor",
+    }
 
     with TestClient(main.app) as client_inspetor:
         _login_app_inspetor(client_inspetor, "inspetor@empresa-a.test")
@@ -7635,6 +7645,9 @@ def test_revisor_responde_com_anexo_e_inspetor_recebe_no_canal_mesa(ambiente_cri
     assert resposta_revisor.status_code == 200
     corpo_revisor = resposta_revisor.json()
     assert corpo_revisor["success"] is True
+    assert corpo_revisor["feedback_mode"] == "contextual"
+    assert corpo_revisor["review_phase"] in {"decision_ready", "waiting_field_return"}
+    assert corpo_revisor["next_action_summary"]
     assert corpo_revisor["mensagem"]["anexos"][0]["nome"] == "checklist.pdf"
     assert corpo_revisor["mensagem"]["anexos"][0]["categoria"] == "documento"
 
@@ -7688,9 +7701,21 @@ def test_laudo_com_ajustes_exige_reabertura_manual_para_chat_e_mesa(ambiente_cri
             headers={"X-CSRF-Token": csrf_revisor},
             json={"texto": "Mesa: complementar foto da proteção lateral."},
         )
+        resposta_devolucao = client_revisor.post(
+            f"/revisao/api/laudo/{laudo_id}/avaliar",
+            headers={"X-CSRF-Token": csrf_revisor},
+            data={
+                "acao": "rejeitar",
+                "motivo": "Complementar foto da proteção lateral.",
+                "csrf_token": "",
+            },
+        )
 
     assert resposta_revisor.status_code == 200
     assert resposta_revisor.json()["success"] is True
+    assert resposta_revisor.json()["feedback_mode"] == "contextual"
+    assert resposta_devolucao.status_code == 200
+    assert resposta_devolucao.json()["acao"] == "rejeitar"
 
     resposta_mensagens = client_inspetor.get(f"/app/api/laudo/{laudo_id}/mensagens")
     assert resposta_mensagens.status_code == 200
@@ -7831,6 +7856,16 @@ def test_revisor_historico_reflete_retorno_do_inspetor_apos_reabertura(ambiente_
 
         assert resposta_revisor.status_code == 200
         assert resposta_revisor.json()["success"] is True
+        resposta_devolucao = client_revisor.post(
+            f"/revisao/api/laudo/{laudo_id}/avaliar",
+            headers={"X-CSRF-Token": csrf_revisor},
+            data={
+                "acao": "rejeitar",
+                "motivo": "Complementar evidência visual da proteção lateral.",
+                "csrf_token": "",
+            },
+        )
+        assert resposta_devolucao.status_code == 200
 
         resposta_reabrir = client_inspetor.post(
             f"/app/api/laudo/{laudo_id}/reabrir",
@@ -9174,12 +9209,60 @@ def test_revisor_rejeitar_via_api_com_header_sem_motivo_assume_padrao(ambiente_c
     assert corpo["success"] is True
     assert corpo["acao"] == "rejeitar"
     assert corpo["motivo"] == "Devolvido pela mesa sem motivo detalhado."
+    assert corpo["review_phase"] == "waiting_field_return"
+    assert corpo["next_action_label"] == "Aguardar reenvio do inspetor"
 
     with SessionLocal() as banco:
         laudo = banco.get(Laudo, laudo_id)
         assert laudo is not None
         assert laudo.status_revisao == StatusRevisao.REJEITADO.value
         assert laudo.motivo_rejeicao == "Devolvido pela mesa sem motivo detalhado."
+
+
+def test_revisor_pode_responder_e_aprovar_no_mesmo_caso(ambiente_critico) -> None:
+    client_revisor = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf_revisor = _login_revisor(client_revisor, "revisor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+
+    resposta = client_revisor.post(
+        f"/revisao/api/laudo/{laudo_id}/responder",
+        headers={"X-CSRF-Token": csrf_revisor},
+        json={"texto": "Mesa registrou contexto adicional antes da decisão final."},
+    )
+
+    assert resposta.status_code == 200
+    corpo_resposta = resposta.json()
+    assert corpo_resposta["review_phase"] == "decision_ready"
+    assert corpo_resposta["case_operational_phase"] == "decision_ready"
+    assert corpo_resposta["case_operational_phase_label"] == "Decisão disponível"
+    assert "mesa_approve" in corpo_resposta["allowed_surface_actions"]
+
+    aprovacao = client_revisor.post(
+        f"/revisao/api/laudo/{laudo_id}/avaliar",
+        headers={"X-CSRF-Token": csrf_revisor},
+        data={"acao": "aprovar", "motivo": "", "csrf_token": ""},
+    )
+
+    assert aprovacao.status_code == 200
+    corpo_aprovacao = aprovacao.json()
+    assert corpo_aprovacao["success"] is True
+    assert corpo_aprovacao["acao"] == "aprovar"
+    assert corpo_aprovacao["case_operational_phase"] == "issue_ready"
+    assert corpo_aprovacao["review_phase"] == "decision_closed"
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        assert laudo.status_revisao == StatusRevisao.APROVADO.value
 
 
 def test_inspetor_login_permite_bloqueio_temporario_expirado(ambiente_critico) -> None:

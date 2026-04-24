@@ -12,6 +12,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.domains.chat.laudo_state_helpers import (
+    build_case_operational_fields_from_case_snapshot,
     resolver_snapshot_leitura_caso_tecnico,
     serializar_resumo_reabertura_documento_emitido,
 )
@@ -517,6 +518,26 @@ def gerar_exportacao_pacote_mesa_laudo_zip(
                     mime_type="application/json",
                 )
             )
+            current_issue_payload = (
+                dict(emissao_oficial_payload.get("current_issue") or {})
+                if isinstance(emissao_oficial_payload.get("current_issue"), dict)
+                else {}
+            )
+            if current_issue_payload:
+                issue_number = str(current_issue_payload.get("issue_number") or "emissao_ativa").strip() or "emissao_ativa"
+                artifacts.append(
+                    _write_zip_bytes_artifact(
+                        zip_file,
+                        archive_path=f"historico_emissoes/{issue_number}.json",
+                        payload=_json_bytes(current_issue_payload),
+                        label="Emissão oficial ativa",
+                        category="json",
+                        source="official_issue_history",
+                        required=False,
+                        mime_type="application/json",
+                        summary="Resumo da emissão oficial congelada e suas ligações de reemissão.",
+                    )
+                )
             artifacts.append(
                 _write_zip_bytes_artifact(
                     zip_file,
@@ -708,23 +729,14 @@ def gerar_exportacao_pacote_mesa_laudo_zip(
                 "tipo_template": str(pacote.tipo_template or ""),
                 "family_key": str(getattr(laudo, "catalog_family_key", "") or ""),
                 "status_revisao": str(pacote.status_revisao or ""),
-                "case_status": case_snapshot.canonical_status,
-                "case_lifecycle_status": case_snapshot.case_lifecycle_status,
-                "case_workflow_mode": case_snapshot.workflow_mode,
-                "active_owner_role": case_snapshot.active_owner_role,
-                "allowed_next_lifecycle_statuses": list(case_snapshot.allowed_next_lifecycle_statuses),
-                "allowed_surface_actions": list(case_snapshot.allowed_surface_actions),
-                "status_visual_label": str(
-                    build_case_status_visual_label(
-                        lifecycle_status=case_snapshot.case_lifecycle_status,
-                        active_owner_role=case_snapshot.active_owner_role,
-                    )
-                    or ""
-                ),
+                **build_case_operational_fields_from_case_snapshot(case_snapshot),
                 "status_conformidade": str(pacote.status_conformidade or ""),
                 "issue_status": str(emissao_oficial_payload.get("issue_status") or ""),
                 "issue_status_label": str(emissao_oficial_payload.get("issue_status_label") or ""),
+                "document_visual_state": str(emissao_oficial_payload.get("document_visual_state") or ""),
+                "document_visual_state_label": str(emissao_oficial_payload.get("document_visual_state_label") or ""),
                 "ready_for_issue": bool(emissao_oficial_payload.get("ready_for_issue")),
+                "document_sections": dict((emissao_oficial_payload.get("delivery_manifest") or {}).get("document_sections") or {}),
                 "catalog_binding_trace": catalog_binding_trace,
                 "artifact_count": len(artifacts) + 1,
                 "materialized_artifact_count": sum(1 for item in artifacts if bool(item.get("present"))),

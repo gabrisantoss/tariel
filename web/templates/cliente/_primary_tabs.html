@@ -19,6 +19,74 @@
         <span class="tab-badge" id="tab-admin-count">0</span>
     </a>
     <a
+        id="tab-servicos"
+        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'servicos' %} active{% endif %}"
+        data-tab="servicos"
+        href="{{ cliente_surface_routes.servicos | default('/cliente/servicos') | e }}?sec={{ cliente_servicos_section_inicial | default('overview') | e }}"
+        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'servicos' else 'false' }}"
+        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'servicos' else 'false' }}"
+    >
+        <span class="tab-main">
+            <span class="material-symbols-rounded" aria-hidden="true">business_center</span>
+            <span class="tab-copy">
+                <span class="tab-title">Serviços</span>
+                <span class="tab-desc">Escopo contratado e pendências</span>
+            </span>
+        </span>
+        <span class="tab-badge" id="tab-servicos-count">0</span>
+    </a>
+    <a
+        id="tab-recorrencia"
+        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'recorrencia' %} active{% endif %}"
+        data-tab="recorrencia"
+        href="{{ cliente_surface_routes.recorrencia | default('/cliente/recorrencia') | e }}?sec={{ cliente_recorrencia_section_inicial | default('overview') | e }}"
+        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'recorrencia' else 'false' }}"
+        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'recorrencia' else 'false' }}"
+    >
+        <span class="tab-main">
+            <span class="material-symbols-rounded" aria-hidden="true">event_upcoming</span>
+            <span class="tab-copy">
+                <span class="tab-title">Recorrência</span>
+                <span class="tab-desc">Agenda, vencimentos e reinspeções</span>
+            </span>
+        </span>
+        <span class="tab-badge" id="tab-recorrencia-count">0</span>
+    </a>
+    <a
+        id="tab-ativos"
+        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'ativos' %} active{% endif %}"
+        data-tab="ativos"
+        href="{{ cliente_surface_routes.ativos | default('/cliente/ativos') | e }}?sec={{ cliente_ativos_section_inicial | default('overview') | e }}"
+        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'ativos' else 'false' }}"
+        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'ativos' else 'false' }}"
+    >
+        <span class="tab-main">
+            <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+            <span class="tab-copy">
+                <span class="tab-title">Ativos</span>
+                <span class="tab-desc">Unidades, equipamentos e inspeções</span>
+            </span>
+        </span>
+        <span class="tab-badge" id="tab-ativos-count">0</span>
+    </a>
+    <a
+        id="tab-documentos"
+        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'documentos' %} active{% endif %}"
+        data-tab="documentos"
+        href="{{ cliente_surface_routes.documentos | default('/cliente/documentos') | e }}?sec={{ cliente_documentos_section_inicial | default('overview') | e }}"
+        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'documentos' else 'false' }}"
+        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'documentos' else 'false' }}"
+    >
+        <span class="tab-main">
+            <span class="material-symbols-rounded" aria-hidden="true">folder_managed</span>
+            <span class="tab-copy">
+                <span class="tab-title">Documentos</span>
+                <span class="tab-desc">Laudos emitidos e trilha técnica</span>
+            </span>
+        </span>
+        <span class="tab-badge" id="tab-documentos-count">0</span>
+    </a>
+    <a
         id="tab-chat"
         class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'chat' %} active{% endif %}"
         data-tab="chat"

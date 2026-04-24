@@ -3,7 +3,7 @@ WEB_PYTHON := $(shell [ -x web/.venv-linux/bin/python ] && echo web/.venv-linux/
 WEB_PYTHON_IN_WEB := $(shell [ -x web/.venv-linux/bin/python ] && echo ./.venv-linux/bin/python || echo python)
 PRE_COMMIT := $(WEB_PYTHON) -m pre_commit
 
-.PHONY: help doctor bootstrap hooks-install web-lint web-test web-ci mesa-smoke mesa-acceptance document-acceptance document-pdf-qa document-pdf-qa-full observability-acceptance hygiene-check hygiene-acceptance v2-acceptance post-plan-benchmarks contract-check smoke-web demo-local-reset full-regression-audit full-regression-audit-critical full-regression-audit-hosted full-regression-audit-human full-regression-audit-exhaustive full-regression-audit-exhaustive-hosted full-regression-audit-exhaustive-human mobile-install mobile-lint mobile-typecheck mobile-test mobile-format-check mobile-baseline mobile-preview mobile-wifi mobile-acceptance mobile-ci smoke-mobile verify production-ops-check production-ops-check-strict uploads-cleanup-check uploads-cleanup-apply post-deploy-cleanup-observation release-gate-hosted release-gate-real release-gate final-product-stamp clean-generated baseline-snapshot ci
+.PHONY: help doctor bootstrap hooks-install web-lint web-test web-ci mesa-smoke mesa-acceptance document-acceptance document-pdf-qa document-pdf-qa-full observability-acceptance hygiene-check binary-assets-audit hygiene-acceptance v2-acceptance post-plan-benchmarks contract-check smoke-web demo-local-reset full-regression-audit full-regression-audit-critical full-regression-audit-hosted full-regression-audit-human full-regression-audit-exhaustive full-regression-audit-exhaustive-hosted full-regression-audit-exhaustive-human mobile-install mobile-lint mobile-typecheck mobile-test mobile-format-check mobile-baseline mobile-preview mobile-wifi mobile-acceptance mobile-ci smoke-mobile verify production-ops-check production-ops-check-strict uploads-cleanup-check uploads-cleanup-apply post-deploy-cleanup-observation release-gate-hosted release-gate-real release-gate final-product-stamp clean-generated baseline-snapshot ci
 
 help: ## Lista comandos úteis do repositório
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -74,6 +74,9 @@ observability-acceptance: ## Executa o runner oficial da Fase 10 - Observabilida
 
 hygiene-check: ## Valida a política de artifacts, ignores e disciplina operacional local
 	python3 scripts/check_workspace_hygiene.py
+
+binary-assets-audit: ## Audita binarios rastreados no Git sem alterar historico
+	python3 scripts/audit_tracked_binaries.py
 
 hygiene-acceptance: ## Executa o runner oficial da Fase 11 - Higiene permanente e governança
 	python3 scripts/run_hygiene_phase_acceptance.py
@@ -151,6 +154,7 @@ production-ops-check: ## Imprime e valida o resumo operacional canônico de prod
 
 production-ops-check-strict: ## Valida a política canônica de produção no modo estrito
 	AMBIENTE=production \
+	DATABASE_URL=$${TARIEL_PRODUCTION_OPS_DATABASE_URL:-sqlite:////tmp/tariel-production-ops-check.db} \
 	PASTA_UPLOADS_PERFIS=/opt/render/project/src/web/static/uploads/perfis \
 	PASTA_ANEXOS_MESA=/opt/render/project/src/web/static/uploads/mesa_anexos \
 	PASTA_APRENDIZADOS_VISUAIS_IA=/opt/render/project/src/web/static/uploads/aprendizados_ia \

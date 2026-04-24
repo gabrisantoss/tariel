@@ -1,6 +1,13 @@
 import type { BuildThreadContextStateInput } from "../common/inspectorDerivedStateTypes";
 import { buildReportPackDraftSummary } from "./reportPackHelpers";
 
+import {
+  resolverAllowedLifecycleTransitions,
+  resolverCaseOwnerRole,
+  rotuloCaseOwnerRole,
+  targetThreadCaseLifecycle,
+} from "./caseLifecycle";
+
 export function rotuloModoHandoffMesa(
   reviewMode: string | null | undefined,
 ): string {
@@ -292,6 +299,230 @@ function resumirProximoPassoFinalizacao(params: {
   };
 }
 
+function resumirDecisaoEsperada(params: {
+  reviewMode: string;
+  emitted: boolean;
+  issueInProgress: boolean;
+  canChatFinalize: boolean;
+}) {
+  if (params.emitted) {
+    return {
+      detail:
+        "O documento oficial já foi emitido. A decisão esperada agora é acompanhar distribuição ou reabrir só se iniciar um novo ciclo.",
+      icon: "check-decagram-outline" as const,
+      key: "expected-decision",
+      label: "Decisão esperada",
+      tone: "success" as const,
+      value: "Acompanhar emissão",
+    };
+  }
+
+  if (params.issueInProgress) {
+    return {
+      detail:
+        "A trilha oficial já foi aberta. A decisão esperada agora é concluir a emissão e confirmar o PDF final congelado.",
+      icon: "file-certificate-outline" as const,
+      key: "expected-decision",
+      label: "Decisão esperada",
+      tone: "accent" as const,
+      value: "Concluir emissão",
+    };
+  }
+
+  if (params.reviewMode === "mesa_required") {
+    return {
+      detail:
+        "A empresa exige parecer humano da Mesa antes do PDF final. O mobile deve preparar o caso para esse handoff.",
+      icon: "clipboard-alert-outline" as const,
+      key: "expected-decision",
+      label: "Decisão esperada",
+      tone: "danger" as const,
+      value: "Parecer da mesa",
+    };
+  }
+
+  if (params.reviewMode === "mobile_review_allowed") {
+    return {
+      detail:
+        "A decisão humana pode acontecer no app ou escalar para a Mesa, conforme a governança ativa do caso.",
+      icon: "account-check-outline" as const,
+      key: "expected-decision",
+      label: "Decisão esperada",
+      tone: "accent" as const,
+      value: "Validação humana",
+    };
+  }
+
+  return {
+    detail: params.canChatFinalize
+      ? "O inspetor já pode concluir a validação humana no app mantendo o rastro formal do caso."
+      : "O caso caminha para validação final do inspetor assim que o gate e a trilha documental estiverem coerentes.",
+    icon: "check-circle-outline" as const,
+    key: "expected-decision",
+    label: "Decisão esperada",
+    tone: params.canChatFinalize ? ("success" as const) : ("accent" as const),
+    value: "Validação final no app",
+  };
+}
+
+function resumirMotivoBloqueio(params: {
+  blockerCount: number;
+  attentionCount: number;
+  blockedSections: string[];
+  reportPackSummary:
+    | {
+        missingEvidenceMessages?: string[];
+        readinessDetail?: string;
+      }
+    | null
+    | undefined;
+  issueIntegrityDiverged: boolean;
+}) {
+  if (params.issueIntegrityDiverged) {
+    return {
+      detail:
+        "O PDF atual divergiu da emissão oficial congelada. A operação precisa reemitir antes de distribuir a versão vigente.",
+      icon: "alert-circle-outline" as const,
+      key: "blocking-reason",
+      label: "Motivo do bloqueio",
+      tone: "danger" as const,
+      value: "PDF divergente",
+    };
+  }
+
+  const missingEvidenceMessage =
+    params.reportPackSummary?.missingEvidenceMessages?.find((item) =>
+      String(item || "").trim(),
+    );
+  if (params.blockerCount > 0) {
+    return {
+      detail:
+        missingEvidenceMessage ||
+        (params.blockedSections.length
+          ? `A etapa dominante ainda está em ${params.blockedSections.join(" · ")}.`
+          : params.reportPackSummary?.readinessDetail ||
+            "Ainda há pendências documentais ou do pré-laudo segurando o fechamento."),
+      icon: "alert-circle-outline" as const,
+      key: "blocking-reason",
+      label: "Motivo do bloqueio",
+      tone: "danger" as const,
+      value: params.blockedSections[0] || "Pendências do caso",
+    };
+  }
+
+  if (params.attentionCount > 0) {
+    return {
+      detail:
+        params.reportPackSummary?.readinessDetail ||
+        "A base fecha, mas ainda existem pontos de revisão fina antes da emissão.",
+      icon: "progress-clock" as const,
+      key: "blocking-reason",
+      label: "Motivo do bloqueio",
+      tone: "accent" as const,
+      value: "Revisão fina pendente",
+    };
+  }
+
+  return {
+    detail:
+      "O caso não tem bloqueio dominante neste momento. O restante do fluxo depende só da decisão humana prevista para esta política.",
+    icon: "check-decagram-outline" as const,
+    key: "blocking-reason",
+    label: "Motivo do bloqueio",
+    tone: "success" as const,
+    value: "Sem bloqueio dominante",
+  };
+}
+
+function resumirRotaSugeridaFinalizacao(params: {
+  caseLifecycleStatus: string;
+  reviewMode: string;
+  canChatFinalize: boolean;
+  canChatReopen: boolean;
+  transitions: ReturnType<typeof resolverAllowedLifecycleTransitions>;
+  ownerRole: string;
+}) {
+  const preferredTransition = params.transitions[0] || null;
+  if (preferredTransition?.preferred_surface === "mesa") {
+    return {
+      detail:
+        "A próxima superfície dominante do caso é a Mesa. Use esse handoff para concluir a decisão humana exigida.",
+      icon: "clipboard-alert-outline" as const,
+      key: "suggested-route",
+      label: "Rota sugerida",
+      tone: "danger" as const,
+      value: "Abrir mesa",
+    };
+  }
+  if (preferredTransition?.preferred_surface === "chat") {
+    return {
+      detail:
+        "O caso ainda depende de coleta ou correção no chat antes de voltar ao fluxo final.",
+      icon: "message-processing-outline" as const,
+      key: "suggested-route",
+      label: "Rota sugerida",
+      tone: "accent" as const,
+      value: "Voltar ao chat",
+    };
+  }
+  if (preferredTransition?.preferred_surface === "mobile") {
+    return {
+      detail:
+        "A próxima leitura principal continua sendo esta própria aba de Finalizar, sem troca de superfície.",
+      icon: "check-circle-outline" as const,
+      key: "suggested-route",
+      label: "Rota sugerida",
+      tone: "success" as const,
+      value: "Seguir em finalizar",
+    };
+  }
+  if (params.reviewMode === "mesa_required" || params.ownerRole === "mesa") {
+    return {
+      detail:
+        "A política e o owner atual do caso apontam a Mesa como próxima etapa principal.",
+      icon: "clipboard-alert-outline" as const,
+      key: "suggested-route",
+      label: "Rota sugerida",
+      tone: "danger" as const,
+      value: "Abrir mesa",
+    };
+  }
+  if (params.canChatFinalize) {
+    return {
+      detail:
+        "A base do caso já permite concluir a validação sem sair do fluxo atual do app.",
+      icon: "check-circle-outline" as const,
+      key: "suggested-route",
+      label: "Rota sugerida",
+      tone: "success" as const,
+      value: "Seguir em finalizar",
+    };
+  }
+  if (
+    params.canChatReopen ||
+    targetThreadCaseLifecycle(params.caseLifecycleStatus as any) === "chat"
+  ) {
+    return {
+      detail:
+        "Ainda existe trabalho operacional no chat antes da próxima decisão humana final.",
+      icon: "message-processing-outline" as const,
+      key: "suggested-route",
+      label: "Rota sugerida",
+      tone: "accent" as const,
+      value: "Voltar ao chat",
+    };
+  }
+  return {
+    detail:
+      "Acompanhe o status atual do caso e siga a próxima transição liberada pela governança ativa.",
+    icon: "progress-clock" as const,
+    key: "suggested-route",
+    label: "Rota sugerida",
+    tone: "accent" as const,
+    value: "Acompanhar fluxo",
+  };
+}
+
 export function resumirContextoFinalizacao(params: {
   canChatFinalize: boolean;
   canChatReopen: boolean;
@@ -337,6 +568,15 @@ export function resumirContextoFinalizacao(params: {
     .slice(0, 3);
   const emitted = caseLifecycleStatus === "emitido";
   const issueInProgress = Boolean(currentIssueNumber) && !emitted;
+  const ownerRole = resolverCaseOwnerRole({
+    conversation: params.conversaAtiva,
+    lifecycleStatus: caseLifecycleStatus as any,
+  });
+  const ownerRoleLabel = rotuloCaseOwnerRole(ownerRole);
+  const allowedLifecycleTransitions = resolverAllowedLifecycleTransitions({
+    conversation: params.conversaAtiva,
+    lifecycleStatus: caseLifecycleStatus as any,
+  });
   const blockerBreakdown = resumirComposicaoBloqueios({
     documentBlockers,
     pendingCount,
@@ -408,6 +648,27 @@ export function resumirContextoFinalizacao(params: {
     primaryPdfDiverged: issueIntegrity.diverged,
     primaryPdfVersionDetail: issueIntegrity.versionDetail,
     reviewMode,
+  });
+  const expectedDecisionInsight = resumirDecisaoEsperada({
+    reviewMode,
+    emitted,
+    issueInProgress,
+    canChatFinalize,
+  });
+  const blockingReasonInsight = resumirMotivoBloqueio({
+    blockerCount,
+    attentionCount,
+    blockedSections,
+    reportPackSummary: params.reportPackSummary,
+    issueIntegrityDiverged: issueIntegrity.diverged,
+  });
+  const suggestedRouteInsight = resumirRotaSugeridaFinalizacao({
+    caseLifecycleStatus,
+    reviewMode,
+    canChatFinalize,
+    canChatReopen,
+    transitions: allowedLifecycleTransitions,
+    ownerRole,
   });
 
   return {
@@ -494,6 +755,29 @@ export function resumirContextoFinalizacao(params: {
             : ("account-check-outline" as const),
       },
       {
+        key: "current-owner",
+        label: "Owner atual",
+        value: ownerRoleLabel,
+        detail:
+          ownerRole === "mesa"
+            ? "A Mesa domina o próximo movimento do caso neste momento."
+            : ownerRole === "none"
+              ? "O ciclo técnico principal já foi concluído e o restante é acompanhamento documental."
+              : "O inspetor segue como dono do próximo avanço operacional.",
+        tone:
+          ownerRole === "mesa"
+            ? ("danger" as const)
+            : ownerRole === "none"
+              ? ("success" as const)
+              : ("accent" as const),
+        icon:
+          ownerRole === "mesa"
+            ? ("clipboard-alert-outline" as const)
+            : ownerRole === "none"
+              ? ("check-decagram-outline" as const)
+              : ("account-outline" as const),
+      },
+      {
         key: "delivery",
         label: "Entrega final",
         value: deliveryLabel,
@@ -553,7 +837,10 @@ export function resumirContextoFinalizacao(params: {
             ? ("alert-circle-outline" as const)
             : ("check-decagram-outline" as const),
       },
+      blockingReasonInsight,
       nextStepInsight,
+      expectedDecisionInsight,
+      suggestedRouteInsight,
       {
         key: "governance",
         label: "Assinatura",

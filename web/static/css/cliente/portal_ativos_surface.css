@@ -1,0 +1,53 @@
+.panel--ativos .surface-stage__grid--ativos {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.ativos-lista {
+    display: grid;
+    gap: 1rem;
+}
+
+.asset-card {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.asset-card__head,
+.asset-card__meta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.asset-card__head h4 {
+    margin: 0.5rem 0 0;
+}
+
+.asset-card__meta,
+.asset-card__status {
+    color: rgba(15, 23, 42, 0.72);
+}
+
+.asset-card__nr35 {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 0.9rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.9rem;
+    background: rgba(241, 245, 249, 0.95);
+    color: rgba(15, 23, 42, 0.82);
+}
+
+.asset-card__signals {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.9rem;
+}

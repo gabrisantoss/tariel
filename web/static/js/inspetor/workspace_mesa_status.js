@@ -1,6 +1,30 @@
 (function () {
     "use strict";
 
+    function resumirTempoMesaInspector(valorIso = "") {
+        const texto = String(valorIso || "").trim();
+        if (!texto) return "Sem atualização operacional recente.";
+
+        try {
+            const data = new Date(texto);
+            if (Number.isNaN(data.getTime())) {
+                return "Sem atualização operacional recente.";
+            }
+
+            const diffMs = Date.now() - data.getTime();
+            const diffMin = Math.max(1, Math.round(diffMs / 60000));
+            if (diffMin < 60) return `há ${diffMin}min`;
+
+            const diffHoras = Math.round(diffMin / 60);
+            if (diffHoras < 24) return `há ${diffHoras} horas`;
+
+            const diffDias = Math.round(diffHoras / 24);
+            return diffDias <= 1 ? "ontem" : `há ${diffDias} dias`;
+        } catch (_) {
+            return "Sem atualização operacional recente.";
+        }
+    }
+
     function atualizarStatusChatWorkspace(status = "pronto", texto = "", dependencies = {}) {
         const estado = dependencies.estado || {};
         const normalizado = ["respondendo", "documento", "interrompido", "erro", "mesa", "pronto"]
@@ -19,6 +43,7 @@
         const el = dependencies.el || {};
         const resumo = dependencies.obterResumoOperacionalMesa?.() || {};
         const snapshot = dependencies.obterPayloadStatusRelatorioWorkspaceAtual?.() || {};
+        const mensagens = Array.isArray(estado.mesaWidgetMensagens) ? estado.mesaWidgetMensagens : [];
         const evidencias = dependencies.contarEvidenciasWorkspace?.() || 0;
         const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
         const naoLidas = Number(estado.mesaWidgetNaoLidas || 0) || 0;
@@ -41,7 +66,7 @@
             ?? resumo.titulo
             ?? "Status visual indisponível"
         ).trim() || "Status visual indisponível";
-        const momentoCanonico = resumirMomentoCanonicoMesaInspector(
+        const momentoCanonicoFallback = resumirMomentoCanonicoMesaInspector(
             {
                 lifecycleStatus,
                 ownerRole,
@@ -50,6 +75,30 @@
                 resumoMesa: resumo,
                 snapshot,
             }
+        );
+        const reviewPhaseLabel = String(snapshot?.review_phase_label || "").trim();
+        const nextActionLabel = String(snapshot?.next_action_label || "").trim();
+        const nextActionSummary = String(snapshot?.next_action_summary || "").trim();
+        const operationalPhase = String(snapshot?.case_operational_phase || "").trim();
+        const operationalPhaseLabel = String(snapshot?.case_operational_phase_label || "").trim();
+        const operationalSummary = String(snapshot?.case_operational_summary || "").trim();
+        const momentoCanonico = {
+            ...momentoCanonicoFallback,
+            key: operationalPhase || momentoCanonicoFallback.key,
+            label: operationalPhaseLabel || momentoCanonicoFallback.label,
+            detail: operationalSummary || momentoCanonicoFallback.detail,
+        };
+        const ultimaMensagem = mensagens.length ? mensagens[mensagens.length - 1] : null;
+        const ultimaAtualizacao = resumirTempoMesaInspector(
+            ultimaMensagem?.created_at
+            || ultimaMensagem?.createdAt
+            || ultimaMensagem?.criado_em_iso
+            || ultimaMensagem?.data
+            || snapshot?.updated_at
+            || snapshot?.updatedAt
+            || snapshot?.laudo_card?.updated_at
+            || snapshot?.laudo_card?.updatedAt
+            || ""
         );
         let proximoPasso = "Use o canal para alinhar dúvidas ou anexar novas evidências.";
 
@@ -61,12 +110,76 @@
             proximoPasso = "Aguarde a resposta da mesa ou complemente o caso com novo contexto.";
         } else if (momentoCanonico.key === "decision_ready") {
             proximoPasso = "Consolide o caso e aguarde a decisão final da mesa.";
-        } else if (momentoCanonico.key === "field_owner") {
+        } else if (
+            momentoCanonico.key === "returned_to_field"
+            || momentoCanonico.key === "field_collection"
+        ) {
             proximoPasso = "Complete os ajustes pedidos e prepare um novo envio para revisão.";
+        }
+        const badgeTotal = Math.max(naoLidas, 0) + Math.max(pendencias, 0);
+        const comentariosMesa = mensagens.filter((item) => {
+            const itemKind = String(item?.item_kind || "").trim().toLowerCase();
+            const messageKind = String(item?.message_kind || "").trim().toLowerCase();
+            const tipo = String(item?.tipo || "").trim().toLowerCase();
+            const pendencyState = String(item?.pendency_state || "").trim().toLowerCase();
+            const entradaMesa = messageKind === "mesa_pendency" || itemKind === "pendency" || tipo === "humano_eng";
+            return entradaMesa && pendencyState !== "open" && pendencyState !== "resolved";
+        }).length;
+        let comentarioTitle = "Sem comentários recentes";
+        let comentarioDetail = "A mesa ainda não registrou retornos contextuais neste caso.";
+        if (comentariosMesa > 0) {
+            comentarioTitle = `${comentariosMesa} comentário${comentariosMesa > 1 ? "s" : ""} técnico${comentariosMesa > 1 ? "s" : ""}`;
+            comentarioDetail = "Retornos contextuais da mesa já aparecem na linha do tempo deste caso.";
+        }
+        let pendenciaTitle = "Nenhuma pendência aberta";
+        let pendenciaDetail = "Quando a mesa pedir ajuste ou evidência, isso aparecerá aqui.";
+        if (pendencias > 0) {
+            pendenciaTitle = `${pendencias} pendência${pendencias > 1 ? "s" : ""} aberta${pendencias > 1 ? "s" : ""}`;
+            pendenciaDetail = "O caso depende de resposta objetiva do campo antes de avançar na revisão.";
+        }
+        let decisaoTitle = "Sem decisão final";
+        let decisaoDetail = "A aprovação ou devolução formal do caso ainda não foi registrada.";
+        if (momentoCanonico.key === "decision_ready") {
+            decisaoTitle = "Decisão pronta para a mesa";
+            decisaoDetail = "O caso já reúne contexto suficiente para aprovação ou devolução formal.";
+        } else if (
+            momentoCanonico.key === "returned_to_field"
+            || momentoCanonico.key === "field_collection"
+        ) {
+            decisaoTitle = "Caso devolvido para correção";
+            decisaoDetail = "A mesa já decidiu pelo retorno ao campo e agora aguarda novo envio.";
+        } else if (momentoCanonico.key === "issue_ready" || momentoCanonico.key === "issued") {
+            decisaoTitle = momentoCanonico.key === "issued" ? "Decisão concluída" : "Aprovado pela mesa";
+            decisaoDetail = momentoCanonico.detail;
+        }
+        const pendenciasAbertasItens = mensagens.filter((item) => {
+            const itemKind = String(item?.item_kind || "").trim().toLowerCase();
+            const messageKind = String(item?.message_kind || "").trim().toLowerCase();
+            const tipo = String(item?.tipo || "").trim().toLowerCase();
+            const pendencyState = String(item?.pendency_state || "").trim().toLowerCase();
+            const entradaMesa = messageKind === "mesa_pendency" || itemKind === "pendency" || tipo === "humano_eng";
+            return entradaMesa && pendencyState === "open";
+        });
+        const anexosMesaRecentes = [];
+        for (const item of [...mensagens].reverse()) {
+            const tipo = String(item?.tipo || "").trim().toLowerCase();
+            if (tipo !== "humano_eng") continue;
+            const anexos = Array.isArray(item?.anexos) ? item.anexos : [];
+            for (const anexo of anexos) {
+                anexosMesaRecentes.push({
+                    nome: String(anexo?.nome || "Anexo").trim() || "Anexo",
+                    categoria: String(anexo?.categoria || "").trim() || "arquivo",
+                    data: String(item?.data || "").trim(),
+                });
+            }
+            if (anexosMesaRecentes.length >= 4) break;
         }
 
         if (el.workspaceMesaCardText) {
             el.workspaceMesaCardText.textContent = resumo.descricao;
+        }
+        if (el.workspaceMesaCardMode) {
+            el.workspaceMesaCardMode.hidden = true;
         }
         if (el.workspaceMesaCardStatus) {
             el.workspaceMesaCardStatus.textContent = resumo.chipStatus || resumo.titulo;
@@ -78,6 +191,12 @@
         }
         if (el.workspaceMesaStageStatus) {
             el.workspaceMesaStageStatus.textContent = resumo.chipStatus || resumo.titulo;
+        }
+        if (el.workspaceMesaStagePhase) {
+            el.workspaceMesaStagePhase.textContent = reviewPhaseLabel || momentoCanonico.label;
+        }
+        if (el.workspaceMesaStagePhaseDetail) {
+            el.workspaceMesaStagePhaseDetail.textContent = nextActionSummary || momentoCanonico.detail;
         }
         if (el.workspaceMesaStagePendencias) {
             el.workspaceMesaStagePendencias.textContent = String(pendencias);
@@ -92,7 +211,10 @@
             el.workspaceMesaStageSummary.textContent = resumo.descricao;
         }
         if (el.workspaceMesaStageNextStep) {
-            el.workspaceMesaStageNextStep.textContent = proximoPasso;
+            el.workspaceMesaStageNextStep.textContent = nextActionSummary || proximoPasso;
+        }
+        if (el.workspaceMesaStageNextActionLabel) {
+            el.workspaceMesaStageNextActionLabel.textContent = nextActionLabel || "Acompanhar revisão";
         }
         if (el.workspaceMesaStageTemplate) {
             el.workspaceMesaStageTemplate.textContent = modelo;
@@ -105,6 +227,9 @@
         }
         if (el.workspaceMesaStageLastMovement) {
             el.workspaceMesaStageLastMovement.textContent = ultimoMovimento;
+        }
+        if (el.workspaceMesaStageLastUpdated) {
+            el.workspaceMesaStageLastUpdated.textContent = ultimaAtualizacao;
         }
         if (el.workspaceMesaStageStatusVisual) {
             el.workspaceMesaStageStatusVisual.textContent = `Status ${statusVisualLabel}`;
@@ -121,6 +246,99 @@
         if (el.workspaceMesaStageMomentDetail) {
             el.workspaceMesaStageMomentDetail.textContent = momentoCanonico.detail;
         }
+        if (el.workspaceMesaEventCommentTitle) {
+            el.workspaceMesaEventCommentTitle.textContent = comentarioTitle;
+        }
+        if (el.workspaceMesaEventCommentDetail) {
+            el.workspaceMesaEventCommentDetail.textContent = comentarioDetail;
+        }
+        if (el.workspaceMesaEventPendencyTitle) {
+            el.workspaceMesaEventPendencyTitle.textContent = pendenciaTitle;
+        }
+        if (el.workspaceMesaEventPendencyDetail) {
+            el.workspaceMesaEventPendencyDetail.textContent = pendenciaDetail;
+        }
+        if (el.workspaceMesaEventDecisionTitle) {
+            el.workspaceMesaEventDecisionTitle.textContent = decisaoTitle;
+        }
+        if (el.workspaceMesaEventDecisionDetail) {
+            el.workspaceMesaEventDecisionDetail.textContent = decisaoDetail;
+        }
+        if (el.workspaceMesaPendingTitle) {
+            el.workspaceMesaPendingTitle.textContent = pendenciasAbertasItens.length > 0
+                ? `${pendenciasAbertasItens.length} pendência${pendenciasAbertasItens.length > 1 ? "s" : ""} aguardando retorno`
+                : "Nenhum pedido aberto da mesa";
+        }
+        if (el.workspaceMesaPendingDetail) {
+            el.workspaceMesaPendingDetail.textContent = pendenciasAbertasItens.length > 0
+                ? "Responda primeiro os pedidos abaixo para destravar a revisão."
+                : "Quando a mesa pedir evidência, ajuste ou correção objetiva, isso aparecerá aqui.";
+        }
+        if (el.workspaceMesaPendingList) {
+            el.workspaceMesaPendingList.innerHTML = "";
+            const itens = pendenciasAbertasItens.slice(-3).reverse();
+            for (const item of itens) {
+                const li = document.createElement("li");
+                li.className = "workspace-mesa-operational-list__item";
+                const texto = String(item?.texto || "").trim() || "Pendência aberta pela mesa.";
+                const data = String(item?.data || "").trim();
+                li.innerHTML = `
+                    <strong>${escaparHtmlMesaInspector(texto)}</strong>
+                    <span>${escaparHtmlMesaInspector(data || "Ação esperada: responder pelo canal da mesa.")}</span>
+                `;
+                el.workspaceMesaPendingList.appendChild(li);
+            }
+            el.workspaceMesaPendingList.hidden = itens.length <= 0;
+        }
+        if (el.workspaceMesaPendingEmpty) {
+            el.workspaceMesaPendingEmpty.hidden = pendenciasAbertasItens.length > 0;
+        }
+        if (el.workspaceMesaAttachmentsTitle) {
+            el.workspaceMesaAttachmentsTitle.textContent = anexosMesaRecentes.length > 0
+                ? `${anexosMesaRecentes.length} anexo${anexosMesaRecentes.length > 1 ? "s" : ""} recente${anexosMesaRecentes.length > 1 ? "s" : ""} da mesa`
+                : "Nenhum anexo recente da mesa";
+        }
+        if (el.workspaceMesaAttachmentsDetail) {
+            el.workspaceMesaAttachmentsDetail.textContent = anexosMesaRecentes.length > 0
+                ? "Use estes arquivos como referência para responder à revisão sem procurar no histórico inteiro."
+                : "Arquivos enviados pela revisão aparecem aqui para facilitar a resposta do campo.";
+        }
+        if (el.workspaceMesaAttachmentsList) {
+            el.workspaceMesaAttachmentsList.innerHTML = "";
+            for (const anexo of anexosMesaRecentes.slice(0, 4)) {
+                const li = document.createElement("li");
+                li.className = "workspace-mesa-operational-list__item";
+                li.innerHTML = `
+                    <strong>${escaparHtmlMesaInspector(anexo.nome)}</strong>
+                    <span>${escaparHtmlMesaInspector(`${anexo.categoria}${anexo.data ? ` • ${anexo.data}` : ""}`)}</span>
+                `;
+                el.workspaceMesaAttachmentsList.appendChild(li);
+            }
+            el.workspaceMesaAttachmentsList.hidden = anexosMesaRecentes.length <= 0;
+        }
+        if (el.workspaceMesaAttachmentsEmpty) {
+            el.workspaceMesaAttachmentsEmpty.hidden = anexosMesaRecentes.length > 0;
+        }
+        if (el.workspaceMesaEmptyState) {
+            const vazio = mensagens.length <= 0;
+            el.workspaceMesaEmptyState.hidden = !vazio;
+        }
+        if (el.workspaceMesaEmptyTitle) {
+            el.workspaceMesaEmptyTitle.textContent = pendencias > 0
+                ? "A mesa já sinalizou itens para correção neste caso"
+                : "Esta aba concentra a comunicação institucional com a mesa";
+        }
+        if (el.workspaceMesaEmptyDetail) {
+            el.workspaceMesaEmptyDetail.textContent = pendencias > 0
+                ? "Mesmo sem conversa longa no histórico, use esta aba para responder às pendências, anexar evidências e acompanhar o próximo passo da revisão."
+                : "Quando a revisão começar, você verá aqui comentários técnicos, pendências, anexos e decisões formais do caso.";
+        }
+        [el.workspaceTabBadgeMesa, el.workspaceChannelBadgeMesa].forEach((node) => {
+            if (!node) return;
+            const visivel = badgeTotal > 0;
+            node.hidden = !visivel;
+            node.textContent = visivel ? String(Math.min(badgeTotal, 99)) : "0";
+        });
     }
 
     function humanizarLifecycleMesaInspector(valor = "") {
@@ -134,6 +352,15 @@
         if (chave === "aprovado") return "Aprovado";
         if (chave === "emitido") return "Emitido";
         return "Fluxo legado";
+    }
+
+    function escaparHtmlMesaInspector(valor = "") {
+        return String(valor || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
     }
 
     function humanizarOwnerMesaInspector(valor = "") {

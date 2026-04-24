@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.domains.chat.app_context import logger
 from app.domains.chat.laudo_state_helpers import (
+    build_case_runtime_legacy_payload,
     laudo_permite_edicao_inspetor,
     laudo_permite_reabrir,
     laudo_possui_historico_visivel,
@@ -350,8 +351,6 @@ def montar_feed_mesa_mobile(
         try:
             resumo_payload = legacy_item.get("resumo")
             resumo_legacy = resumo_payload if isinstance(resumo_payload, dict) else {}
-            laudo_card_payload = legacy_item.get("laudo_card")
-            laudo_card = laudo_card_payload if isinstance(laudo_card_payload, dict) else {}
             if v2_provenance_enabled():
                 message_counters = load_message_origin_counters(
                     banco,
@@ -363,38 +362,14 @@ def montar_feed_mesa_mobile(
                     has_active_report=True,
                 )
 
-            legacy_payload = {
-                "estado": str(legacy_item.get("estado") or "sem_relatorio"),
-                "laudo_id": int(laudo.id),
-                "status_card": laudo_card.get("status_card"),
-                "permite_reabrir": bool(legacy_item.get("permite_reabrir")),
-                "tem_interacao": bool(mensagens),
-                "laudo_card": legacy_item.get("laudo_card"),
-                "case_lifecycle_status": (
-                    legacy_item.get("case_lifecycle_status")
-                    or laudo_card.get("case_lifecycle_status")
-                ),
-                "case_workflow_mode": (
-                    legacy_item.get("case_workflow_mode")
-                    or laudo_card.get("case_workflow_mode")
-                ),
-                "active_owner_role": (
-                    legacy_item.get("active_owner_role")
-                    or laudo_card.get("active_owner_role")
-                ),
-                "allowed_next_lifecycle_statuses": (
-                    legacy_item.get("allowed_next_lifecycle_statuses")
-                    or laudo_card.get("allowed_next_lifecycle_statuses")
-                ),
-                "allowed_lifecycle_transitions": (
-                    legacy_item.get("allowed_lifecycle_transitions")
-                    or laudo_card.get("allowed_lifecycle_transitions")
-                ),
-                "allowed_surface_actions": (
-                    legacy_item.get("allowed_surface_actions")
-                    or laudo_card.get("allowed_surface_actions")
-                ),
-            }
+            legacy_payload = build_case_runtime_legacy_payload(
+                laudo=laudo,
+                legacy_public_state=legacy_item.get("estado"),
+                allows_reopen=legacy_item.get("permite_reabrir"),
+                has_interaction=bool(mensagens),
+                laudo_card=legacy_item.get("laudo_card"),
+                base_payload=legacy_item,
+            )
             runtime_bundle = build_technical_case_context_bundle(
                 banco=banco,
                 usuario=usuario,

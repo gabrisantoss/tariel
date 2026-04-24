@@ -6,9 +6,11 @@ import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import {
   resolverAllowedSurfaceActions,
+  resolverAllowedLifecycleTransitions,
   resolverCaseLifecycleStatus,
   resolverCaseOwnerRole,
   resumirCaseSurfaceActions,
+  targetThreadCaseLifecycle,
   rotuloCaseLifecycle,
   rotuloCaseOwnerRole,
 } from "../chat/caseLifecycle";
@@ -90,6 +92,44 @@ function formatReportPackMeta(
     .join(" · ");
 }
 
+function resumirRotaSugeridaHistorico(params: {
+  lifecycleStatus: string;
+  ownerRole: string;
+  transitions: ReturnType<typeof resolverAllowedLifecycleTransitions>;
+  allowedSurfaceActions: ReturnType<typeof resolverAllowedSurfaceActions>;
+}): string {
+  if (
+    params.allowedSurfaceActions.includes("mesa_approve") ||
+    params.allowedSurfaceActions.includes("mesa_return")
+  ) {
+    return "Tratar na mesa";
+  }
+  const preferredTransition = params.transitions[0] || null;
+  if (preferredTransition?.preferred_surface === "mesa") {
+    return "Abrir mesa";
+  }
+  if (preferredTransition?.preferred_surface === "chat") {
+    return "Retomar chat";
+  }
+  if (preferredTransition?.preferred_surface === "mobile") {
+    return "Abrir finalizar";
+  }
+  if (params.allowedSurfaceActions.includes("chat_finalize")) {
+    return "Validar em finalizar";
+  }
+  if (params.allowedSurfaceActions.includes("chat_reopen")) {
+    return "Reabrir no chat";
+  }
+  if (params.allowedSurfaceActions.includes("system_issue")) {
+    return "Emitir documento";
+  }
+  return targetThreadCaseLifecycle(params.lifecycleStatus as any) === "mesa"
+    ? "Acompanhar mesa"
+    : params.ownerRole === "none"
+      ? "Acompanhar emissão"
+      : "Retomar coleta";
+}
+
 export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
   ativo,
   containerTestID,
@@ -168,6 +208,10 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
     lifecycleStatus,
     ownerRole,
   });
+  const allowedLifecycleTransitions = resolverAllowedLifecycleTransitions({
+    card: cardAdapter,
+    lifecycleStatus,
+  });
   const metaResumo = [
     rotuloCaseOwnerRole(ownerRole),
     resumirCaseSurfaceActions(allowedSurfaceActions, 1),
@@ -193,7 +237,28 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
   const entryModeMeta = [entryModeLabel, entryModeReason]
     .filter(Boolean)
     .join(" · ");
+  const ownerLabel = rotuloCaseOwnerRole(ownerRole);
+  const routeSuggestion = resumirRotaSugeridaHistorico({
+    lifecycleStatus,
+    ownerRole,
+    transitions: allowedLifecycleTransitions,
+    allowedSurfaceActions,
+  });
   const detailPills = [
+    ownerLabel
+      ? {
+          key: "owner",
+          label: `Owner · ${ownerLabel}`,
+          testID: `history-item-owner-${item.id}`,
+        }
+      : null,
+    routeSuggestion
+      ? {
+          key: "route",
+          label: `Rota · ${routeSuggestion}`,
+          testID: `history-item-route-${item.id}`,
+        }
+      : null,
     metaResumo
       ? {
           key: "operation",

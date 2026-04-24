@@ -91,6 +91,14 @@
         );
     }
 
+    function mesaCanalParaleloLiberadoNoAmbiente() {
+        const ambiente = String(window.TARIEL?.ambiente || "").trim().toLowerCase();
+        if (["dev", "development", "local"].includes(ambiente)) {
+            return true;
+        }
+        return !!window.TARIEL?.devInspectorToolSimulation;
+    }
+
     function possuiWidgetMesaDedicado() {
         return Boolean(
             mesaWidgetDedicadoPermitidoNoContextoAtual() &&
@@ -105,6 +113,16 @@
     }
 
     function abrirWidgetMesaDedicado(texto = "") {
+        if (!mesaCanalParaleloLiberadoNoAmbiente()) {
+            if (typeof window.TarielInspectorState?.atualizarThreadWorkspace === "function") {
+                window.TarielInspectorState.atualizarThreadWorkspace("mesa", {
+                    persistirURL: true,
+                    replaceURL: true,
+                });
+            }
+            return null;
+        }
+
         if (!possuiWidgetMesaDedicado()) return null;
 
         if (!obterLaudoAtivo()) {
@@ -252,6 +270,9 @@
             return true;
         }
         if (resultadoWidget === false) return false;
+        if (!mesaCanalParaleloLiberadoNoAmbiente()) {
+            return true;
+        }
 
         const campo = obterCampoMensagem();
         if (!campo) return false;

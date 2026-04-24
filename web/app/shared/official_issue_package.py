@@ -15,6 +15,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.paths import WEB_ROOT
+from app.domains.chat.laudo_state_helpers import (
+    build_case_operational_fields_from_case_snapshot,
+)
 from app.domains.chat.laudo_state_helpers import resolver_snapshot_leitura_caso_tecnico
 from app.shared.database import (
     AnexoMesa,
@@ -25,8 +28,6 @@ from app.shared.database import (
     Usuario,
 )
 from app.shared.public_verification import build_public_verification_payload
-from app.v2.acl.technical_case_core import build_case_status_visual_label
-
 _DOCUMENT_LIKE_REQUIREMENT_KINDS = {"document", "documento", "pack", "attachment", "pdf"}
 _SIGNATORY_EXPIRING_SOON_WINDOW = timedelta(days=30)
 _FILENAME_SANITIZE_RE = re.compile(r"[^A-Za-z0-9._-]+")
@@ -49,6 +50,20 @@ _OFFICIAL_ISSUE_REISSUE_REASON_LABELS = {
     "primary_pdf_diverged": "divergência do PDF principal",
     "signatory_changed": "troca de signatário",
     "package_manifest_changed": "mudança no pacote governado",
+}
+_DELIVERY_SECTION_LABELS = {
+    "documento_oficial": "Documento oficial",
+    "historico_emissoes": "Histórico de emissões",
+    "anexos_mesa": "Anexos da mesa",
+    "evidencias_selecionadas": "Evidências selecionadas",
+    "trilha_interna": "Trilha interna",
+}
+_DOCUMENT_VISUAL_STATE_LABELS = {
+    "official": "Oficial",
+    "draft": "Rascunho",
+    "in_review": "Em revisão",
+    "historical": "Histórico",
+    "internal": "Interno",
 }
 
 
@@ -150,32 +165,88 @@ def _join_human_list(items: list[str]) -> str:
 
 
 def _serialize_official_issue_case_snapshot(case_snapshot: Any) -> dict[str, Any]:
-    case_status = str(getattr(case_snapshot, "canonical_status", "") or "")
-    case_lifecycle_status = str(getattr(case_snapshot, "case_lifecycle_status", "") or "")
-    case_workflow_mode = str(getattr(case_snapshot, "workflow_mode", "") or "")
-    active_owner_role = str(getattr(case_snapshot, "active_owner_role", "") or "")
-    allowed_next_lifecycle_statuses = [
-        str(item or "").strip()
-        for item in list(getattr(case_snapshot, "allowed_next_lifecycle_statuses", []) or [])
-        if str(item or "").strip()
-    ]
-    allowed_surface_actions = [
-        str(item or "").strip()
-        for item in list(getattr(case_snapshot, "allowed_surface_actions", []) or [])
-        if str(item or "").strip()
-    ]
-    return {
-        "case_status": case_status,
-        "case_lifecycle_status": case_lifecycle_status,
-        "case_workflow_mode": case_workflow_mode,
-        "active_owner_role": active_owner_role,
-        "allowed_next_lifecycle_statuses": allowed_next_lifecycle_statuses,
-        "allowed_surface_actions": allowed_surface_actions,
-        "status_visual_label": build_case_status_visual_label(
-            lifecycle_status=case_lifecycle_status,
-            active_owner_role=active_owner_role,
-        ),
+    return build_case_operational_fields_from_case_snapshot(case_snapshot)
+
+
+def _build_delivery_sections_from_items(
+    items: list[dict[str, Any]],
+    *,
+    active_issue_number: str | None = None,
+    reissue_of_issue_number: str | None = None,
+) -> dict[str, Any]:
+    sections: dict[str, dict[str, Any]] = {
+        key: {"key": key, "label": label, "count": 0, "items": []}
+        for key, label in _DELIVERY_SECTION_LABELS.items()
     }
+
+    def _append(section_key: str, archive_path: str, label: str) -> None:
+        path = str(archive_path or "").strip()
+        if not path:
+            return
+        bucket = sections[section_key]
+        bucket["items"].append({"archive_path": path, "label": label})
+        bucket["count"] += 1
+
+    for item in list(items or []):
+        if not bool(item.get("present")):
+            continue
+        path = str(item.get("archive_path") or "").strip()
+        source = str(item.get("source") or "").strip().lower()
+        category = str(item.get("category") or "").strip().lower()
+        label = _clean_text(item.get("label"), limit=180) or path
+        if source == "mesa_attachment" or path.startswith("anexos_mesa/"):
+            _append("anexos_mesa", path, label)
+        elif category in {"verification", "pdf"} or source in {"public_verification", "laudo_runtime"}:
+            _append("documento_oficial", path, label)
+        elif source in {"report_pack_runtime", "canonical_document"}:
+            _append("evidencias_selecionadas", path, label)
+        else:
+            _append("trilha_interna", path, label)
+
+    if active_issue_number:
+        _append(
+            "historico_emissoes",
+            f"historico_emissoes/{active_issue_number}.json",
+            f"Emissão {active_issue_number}",
+        )
+    if reissue_of_issue_number:
+        _append(
+            "historico_emissoes",
+            f"historico_emissoes/{reissue_of_issue_number}.json",
+            f"Substitui {reissue_of_issue_number}",
+        )
+
+    return {
+        "items": [sections[key] for key in _DELIVERY_SECTION_LABELS],
+        "counts": {key: int(bucket["count"]) for key, bucket in sections.items()},
+    }
+
+
+def _resolve_document_visual_state(
+    *,
+    case_fields: dict[str, Any],
+    ready_for_issue: bool,
+    current_issue: dict[str, Any] | None = None,
+    reissue_recommended: bool = False,
+    pdf_present: bool = False,
+) -> tuple[str, str]:
+    issue = dict(current_issue or {})
+    issue_state = str(issue.get("issue_state") or "").strip().lower()
+    lifecycle = str(case_fields.get("case_lifecycle_status") or "").strip().lower()
+    review_phase = str(case_fields.get("review_phase") or "").strip().lower()
+    if issue_state in {"superseded", "revoked"}:
+        state = "historical"
+    elif issue and not reissue_recommended:
+        state = "official"
+    elif issue and reissue_recommended:
+        state = "historical"
+    elif review_phase in {"awaiting_field", "mesa_context", "review_in_progress"} or lifecycle in {"aguardando", "em_revisao"}:
+        state = "in_review"
+    elif ready_for_issue or pdf_present:
+        state = "draft"
+    else:
+        state = "internal"
+    return state, _DOCUMENT_VISUAL_STATE_LABELS[state]
 
 
 def _case_ready_for_official_issue(case_fields: dict[str, Any]) -> bool:
@@ -713,6 +784,13 @@ def build_official_issue_fingerprint(
         "case_lifecycle_status": _clean_text(manifest_payload.get("case_lifecycle_status"), limit=40),
         "case_workflow_mode": _clean_text(manifest_payload.get("case_workflow_mode"), limit=40),
         "active_owner_role": _clean_text(manifest_payload.get("active_owner_role"), limit=24),
+        "case_operational_phase": _clean_text(manifest_payload.get("case_operational_phase"), limit=40),
+        "case_operational_phase_label": _clean_text(manifest_payload.get("case_operational_phase_label"), limit=120),
+        "case_operational_summary": _clean_text(manifest_payload.get("case_operational_summary"), limit=240),
+        "review_phase": _clean_text(manifest_payload.get("review_phase"), limit=40),
+        "review_phase_label": _clean_text(manifest_payload.get("review_phase_label"), limit=120),
+        "next_action_label": _clean_text(manifest_payload.get("next_action_label"), limit=120),
+        "next_action_summary": _clean_text(manifest_payload.get("next_action_summary"), limit=240),
         "allowed_next_lifecycle_statuses": _normalize_key_list(
             manifest_payload.get("allowed_next_lifecycle_statuses")
         ),
@@ -979,6 +1057,7 @@ def build_anexo_pack_summary(
         ],
         "artifact_count": sum(1 for item in items if item["present"]),
         "ready_for_issue": ready_for_issue,
+        "document_sections": _build_delivery_sections_from_items(items),
     }
 
     return {
@@ -1424,6 +1503,22 @@ def build_official_issue_summary(
             )
             audit_trail.insert(1, {"event_key": "official_issue_document_integrity", **document_integrity_event})
 
+    document_visual_state, document_visual_state_label = _resolve_document_visual_state(
+        case_fields=case_fields,
+        ready_for_issue=ready_for_issue,
+        current_issue=current_issue,
+        reissue_recommended=reissue_recommended,
+        pdf_present=bool(anexo_summary.get("pdf_present")),
+    )
+    delivery_manifest = dict(anexo_summary.get("delivery_manifest") or {})
+    delivery_manifest["document_visual_state"] = document_visual_state
+    delivery_manifest["document_visual_state_label"] = document_visual_state_label
+    delivery_manifest["document_sections"] = _build_delivery_sections_from_items(
+        list(anexo_summary.get("items") or []),
+        active_issue_number=_clean_text((current_issue or {}).get("issue_number"), limit=80),
+        reissue_of_issue_number=_clean_text((current_issue or {}).get("reissue_of_issue_number"), limit=80),
+    )
+
     return {
         **case_fields,
         "issue_status": issue_status,
@@ -1441,7 +1536,9 @@ def build_official_issue_summary(
         "signatories": list(signatory_summary.get("signatories") or []),
         "blockers": blockers,
         "audit_trail": audit_trail,
-        "delivery_manifest": dict(anexo_summary.get("delivery_manifest") or {}),
+        "delivery_manifest": delivery_manifest,
+        "document_visual_state": document_visual_state,
+        "document_visual_state_label": document_visual_state_label,
         "already_issued": already_issued,
         "reissue_recommended": reissue_recommended,
         "issue_action_label": "Reemitir oficialmente" if already_issued else "Emitir oficialmente",
