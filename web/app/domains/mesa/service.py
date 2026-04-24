@@ -8,14 +8,11 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.domains.mesa.contracts import (
-    AnexoPackItemPacoteMesa,
-    AnexoPackPacoteMesa,
     DocumentoEstruturadoPacoteMesa,
     EventoMesa,
     NotificacaoMesa,
     PacoteMesaLaudo,
     SecaoDocumentoEstruturadoPacoteMesa,
-    VerificacaoPublicaPacoteMesa,
 )
 from app.domains.mesa.package_block_review import (
     build_revisao_por_bloco_pacote as _build_revisao_por_bloco_pacote,
@@ -25,6 +22,10 @@ from app.domains.mesa.package_history import (
     build_historico_inspecao_pacote as _build_historico_inspecao_pacote,
     build_historico_refazer_inspetor_pacote as _build_historico_refazer_inspetor_pacote,
     build_memoria_operacional_familia_pacote as _build_memoria_operacional_familia_pacote,
+)
+from app.domains.mesa.package_document_support import (
+    build_anexo_pack_pacote as _build_anexo_pack_pacote,
+    build_verificacao_publica_pacote as _build_verificacao_publica_pacote,
 )
 from app.domains.mesa.package_message_summary import build_mesa_message_package_summary
 from app.domains.mesa.package_official_issue import (
@@ -41,7 +42,6 @@ from app.domains.chat.normalization import TIPOS_TEMPLATE_VALIDOS
 from app.shared.database import Laudo
 from app.shared.inspection_history import build_human_override_summary
 from app.shared.official_issue_package import build_official_issue_package
-from app.shared.public_verification import build_public_verification_payload
 from app.shared.tenant_report_catalog import build_tenant_template_option_snapshot
 from app.v2.acl.technical_case_core import build_case_status_visual_label
 from app.v2.policy.governance import load_case_policy_governance_context
@@ -591,74 +591,6 @@ def criar_notificacao(
         laudo_id=laudo_id,
         origem=origem,
         resumo=resumo,
-    )
-
-
-def _build_verificacao_publica_pacote(
-    laudo: Laudo,
-    *,
-    case_snapshot: Any | None = None,
-) -> VerificacaoPublicaPacoteMesa:
-    payload = build_public_verification_payload(laudo=laudo)
-    status_visual_label = build_case_status_visual_label(
-        lifecycle_status=getattr(case_snapshot, "case_lifecycle_status", None),
-        active_owner_role=getattr(case_snapshot, "active_owner_role", None),
-    )
-    return VerificacaoPublicaPacoteMesa(
-        codigo_hash=str(payload.get("codigo_hash") or ""),
-        hash_short=str(payload.get("hash_short") or ""),
-        verification_url=str(payload.get("verification_url") or ""),
-        qr_payload=str(payload.get("qr_payload") or ""),
-        qr_image_data_uri=_resumir_texto_curto(payload.get("qr_image_data_uri"), limite=12000),
-        empresa_nome=_resumir_texto_curto(payload.get("empresa_nome"), limite=160),
-        status_revisao=_resumir_texto_curto(payload.get("status_revisao"), limite=40),
-        status_visual_label=_resumir_texto_curto(status_visual_label, limite=120),
-        status_conformidade=_resumir_texto_curto(payload.get("status_conformidade"), limite=40),
-        approved_at=_normalizar_data_utc(payload.get("approved_at")),
-        approval_version=int(payload.get("approval_version") or 0) or None,
-        document_outcome=_resumir_texto_curto(payload.get("document_outcome"), limite=80),
-    )
-
-
-def _build_anexo_pack_pacote(payload: dict[str, Any] | None) -> AnexoPackPacoteMesa | None:
-    if not isinstance(payload, dict):
-        return None
-    items = []
-    for item in list(payload.get("items") or []):
-        if not isinstance(item, dict):
-            continue
-        item_key = _texto_limpo_curto(item.get("item_key"))
-        label = _texto_limpo_curto(item.get("label"))
-        category = _texto_limpo_curto(item.get("category"))
-        source = _texto_limpo_curto(item.get("source"))
-        if not item_key or not label or not category or not source:
-            continue
-        items.append(
-            AnexoPackItemPacoteMesa(
-                item_key=item_key[:160],
-                label=label[:180],
-                category=category[:40],
-                required=bool(item.get("required")),
-                present=bool(item.get("present")),
-                source=source[:40],
-                summary=_resumir_texto_curto(item.get("summary"), limite=280),
-                mime_type=_resumir_texto_curto(item.get("mime_type"), limite=120),
-                size_bytes=int(item.get("size_bytes") or 0) if item.get("size_bytes") is not None else None,
-                file_name=_resumir_texto_curto(item.get("file_name"), limite=220),
-                archive_path=_resumir_texto_curto(item.get("archive_path"), limite=260),
-            )
-        )
-    return AnexoPackPacoteMesa(
-        total_items=int(payload.get("total_items") or 0),
-        total_required=int(payload.get("total_required") or 0),
-        total_present=int(payload.get("total_present") or 0),
-        missing_required_count=int(payload.get("missing_required_count") or 0),
-        document_count=int(payload.get("document_count") or 0),
-        image_count=int(payload.get("image_count") or 0),
-        virtual_count=int(payload.get("virtual_count") or 0),
-        ready_for_issue=bool(payload.get("ready_for_issue")),
-        missing_items=_normalizar_lista_textos(payload.get("missing_items")),
-        items=items,
     )
 
 

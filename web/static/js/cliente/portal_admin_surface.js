@@ -373,6 +373,49 @@
             node.innerHTML = html;
         }
 
+        function limparElemento(target) {
+            if (!target) return false;
+            if (typeof target.replaceChildren === "function") {
+                target.replaceChildren();
+            } else {
+                target.textContent = "";
+            }
+            return true;
+        }
+
+        function criarMetricCardAdminNode({ accent, label, value, meta }) {
+            const card = documentRef.createElement("article");
+            card.className = "metric-card";
+            if (accent) {
+                card.dataset.accent = texto(accent).trim();
+            }
+            const labelNode = documentRef.createElement("small");
+            labelNode.textContent = texto(label);
+            card.appendChild(labelNode);
+            const valueNode = documentRef.createElement("strong");
+            valueNode.textContent = texto(value);
+            card.appendChild(valueNode);
+            const metaNode = documentRef.createElement("span");
+            metaNode.className = "metric-meta";
+            metaNode.textContent = texto(meta);
+            card.appendChild(metaNode);
+            return card;
+        }
+
+        function renderAdminSelectOptions(select, options, selectedValue) {
+            if (!select) return;
+            limparElemento(select);
+            (Array.isArray(options) ? options : []).forEach((item) => {
+                const value = texto(item).trim();
+                if (!value) return;
+                const option = documentRef.createElement("option");
+                option.value = value;
+                option.textContent = value;
+                option.selected = value === texto(selectedValue).trim();
+                select.appendChild(option);
+            });
+        }
+
         function htmlContextBlock(label, value) {
             return `
                 <div class="context-block">
@@ -609,28 +652,38 @@
                 ? `${governance.operatingModelLabel}. ${formatarInteiro(governance.operationalUsersInUse)} de ${formatarInteiro(governance.operationalUserLimit)} conta operacional ocupada.`
                 : "Perfis operacionais seguem a regra padrão contratada para esta empresa.";
 
-            $("empresa-cards").innerHTML = `
-                <article class="metric-card" data-accent="${empresa.status_bloqueio ? "attention" : "done"}">
-                    <small>Plano em operacao</small>
-                    <strong>${escapeHtml(empresa.plano_ativo)}</strong>
-                    <span class="metric-meta">${empresa.status_bloqueio ? "Empresa bloqueada" : "Empresa liberada para operar"}</span>
-                </article>
-                <article class="metric-card" data-accent="${empresa.usuarios_restantes === 0 && empresa.usuarios_max != null ? "attention" : "live"}">
-                    <small>Equipe em uso</small>
-                    <strong>${formatarInteiro(tenantAdmin?.user_summary?.total_users || empresa.usuarios_em_uso || empresa.total_usuarios)}</strong>
-                    <span class="metric-meta">${resumoUsuarios}. ${formatarInteiro(empresa.admins_cliente)} administradores da empresa, ${formatarInteiro(empresa.inspetores)} pessoas de campo e ${formatarInteiro(empresa.revisores)} pessoas de revisao.</span>
-                </article>
-                <article class="metric-card" data-accent="${empresa.laudos_restantes === 0 && empresa.laudos_mes_limite != null ? "attention" : "aberto"}">
-                    <small>Laudos deste mes</small>
-                    <strong>${formatarInteiro(empresa.laudos_mes_atual || 0)}</strong>
-                    <span class="metric-meta">${resumoLaudos}. ${empresa.laudos_mes_limite == null ? "Contrato sem limite mensal fixo." : `Limite de ${formatarInteiro(empresa.laudos_mes_limite)} laudos.`}</span>
-                </article>
-                <article class="metric-card" data-accent="${capacidadeTone}">
-                    <small>Folga comercial</small>
-                    <strong>${formatarPercentual(empresa.uso_percentual)}</strong>
-                    <span class="metric-meta">${usoValor}. ${escapeHtml(riscoLabel)}</span>
-                </article>
-            `;
+            const empresaCards = $("empresa-cards");
+            if (empresaCards) {
+                limparElemento(empresaCards);
+                [
+                    {
+                        accent: empresa.status_bloqueio ? "attention" : "done",
+                        label: "Plano em operacao",
+                        value: empresa.plano_ativo,
+                        meta: empresa.status_bloqueio ? "Empresa bloqueada" : "Empresa liberada para operar",
+                    },
+                    {
+                        accent: empresa.usuarios_restantes === 0 && empresa.usuarios_max != null ? "attention" : "live",
+                        label: "Equipe em uso",
+                        value: formatarInteiro(tenantAdmin?.user_summary?.total_users || empresa.usuarios_em_uso || empresa.total_usuarios),
+                        meta: `${resumoUsuarios}. ${formatarInteiro(empresa.admins_cliente)} administradores da empresa, ${formatarInteiro(empresa.inspetores)} pessoas de campo e ${formatarInteiro(empresa.revisores)} pessoas de revisao.`,
+                    },
+                    {
+                        accent: empresa.laudos_restantes === 0 && empresa.laudos_mes_limite != null ? "attention" : "aberto",
+                        label: "Laudos deste mes",
+                        value: formatarInteiro(empresa.laudos_mes_atual || 0),
+                        meta: `${resumoLaudos}. ${empresa.laudos_mes_limite == null ? "Contrato sem limite mensal fixo." : `Limite de ${formatarInteiro(empresa.laudos_mes_limite)} laudos.`}`,
+                    },
+                    {
+                        accent: capacidadeTone,
+                        label: "Folga comercial",
+                        value: formatarPercentual(empresa.uso_percentual),
+                        meta: `${usoValor}. ${riscoLabel}`,
+                    },
+                ].forEach((metric) => {
+                    empresaCards.appendChild(criarMetricCardAdminNode(metric));
+                });
+            }
 
             $("empresa-resumo-detalhado").innerHTML = `
                 <div class="stack">
@@ -698,9 +751,7 @@
 
             const plano = $("empresa-plano");
             if (plano) {
-                plano.innerHTML = (empresa.planos_disponiveis || [])
-                    .map((item) => `<option value="${escapeAttr(item)}" ${item === empresa.plano_ativo ? "selected" : ""}>${escapeHtml(item)}</option>`)
-                    .join("");
+                renderAdminSelectOptions(plano, empresa.planos_disponiveis || [], empresa.plano_ativo);
             }
 
             if (alertaCapacidade) {

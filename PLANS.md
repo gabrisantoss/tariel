@@ -4244,6 +4244,9 @@ Atualizado em `2026-04-24`.
 - `Portal Cliente`: trocar movimentos recentes de Chat/Mesa para DOM seguro, preservando botões de abrir prioridade e chips de contagem.
 - `Portal Cliente`: trocar os contextos selecionados de Chat/Mesa para DOM seguro, preservando cards, sinais canônicos, guidance, override humano e estados vazios.
 - `Portal Cliente`: zerar `innerHTML` direto em `portal_chat_surface.js` e `portal_mesa_surface.js`, cobrindo documento pendente, capacidade, resumos e fallback de mensagens.
+- `Admin CEO`: extrair suporte excepcional do cliente para `web/app/domains/admin/client_support_routes.py`, mantendo governança por janela auditada e sem interferir nos funcionários do cliente.
+- `Portal Admin Cliente`: trocar cards executivos e seletor de plano para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
+- `Mesa Avaliadora`: extrair verificação pública e anexo pack para `web/app/domains/mesa/package_document_support.py`.
 
 ### Validacao deste slice
 
@@ -4274,6 +4277,12 @@ Atualizado em `2026-04-24`.
 - `rg -n "innerHTML" web/static/js/cliente/portal_chat_surface.js web/static/js/cliente/portal_mesa_surface.js`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or mesa'`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais`
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_support_routes.py web/app/domains/mesa/service.py web/app/domains/mesa/package_document_support.py`
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/admin/client_routes.py app/domains/admin/client_support_routes.py app/domains/mesa/service.py app/domains/mesa/package_document_support.py`
+- `node --check web/static/js/cliente/portal_admin_surface.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py -q -k 'suporte_excepcional or politica_operacional or bloquear or trocar_plano or admin_cliente'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'admin or portal or cliente'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_v2_reviewdesk_projection.py tests/test_revisor_mesa_api_side_effects.py -q -k 'pacote or package or coverage or revisao'`
 - `PYTHONPATH=. python -m ruff check web/app/domains/mesa/service.py web/app/domains/mesa/package_block_review.py`
 - `cd web && PYTHONPATH=. python -m py_compile app/domains/mesa/service.py app/domains/mesa/package_block_review.py`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_v2_reviewdesk_projection.py tests/test_revisor_mesa_api_side_effects.py -q -k 'pacote or package or coverage or revisao'`

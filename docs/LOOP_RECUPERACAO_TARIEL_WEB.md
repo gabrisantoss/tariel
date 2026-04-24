@@ -2636,3 +2636,50 @@ Impacto observado:
 - `portal_chat_surface.js` e `portal_mesa_surface.js` não têm mais uso direto de `innerHTML` para renderização dinâmica;
 - ainda existem usos controlados em helpers compartilhados (`renderStaticContractHtml`) e HTML allowlisted, que podem virar contratos DOM em outro slice se necessário;
 - o próximo pacote coerente deve alternar para backend (`admin/client_routes.py` ou `mesa/service.py`) ou seguir no Inspetor web para reduzir `window.*` em `chat_index_page.js`.
+
+## R64. Admin CEO suporte, Portal Admin DOM parcial e Mesa documento
+
+Resumo:
+
+- extraí as rotas de abrir/encerrar suporte excepcional do cliente para `web/app/domains/admin/client_support_routes.py`;
+- preservei o contrato de governança: Admin CEO abre/encerra janela auditada de suporte, mas não assume a gestão direta de inspetores/avaliadores do cliente;
+- reduzi `web/app/domains/admin/client_routes.py` para cerca de `2297` linhas;
+- troquei os cards executivos de `empresa-cards` e o seletor `empresa-plano` do Portal Admin Cliente para montagem DOM segura;
+- extraí verificação pública e anexo pack do pacote da Mesa para `web/app/domains/mesa/package_document_support.py`, reduzindo `mesa/service.py` para cerca de `731` linhas;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/client_routes.py`
+- `web/app/domains/admin/client_support_routes.py`
+- `web/static/js/cliente/portal_admin_surface.js`
+- `web/app/domains/mesa/service.py`
+- `web/app/domains/mesa/package_document_support.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_support_routes.py web/tests/test_admin_client_routes.py` -> verde;
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/admin/client_routes.py app/domains/admin/client_support_routes.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py -q -k 'suporte_excepcional or politica_operacional or bloquear or trocar_plano or admin_cliente'` -> `4 passed, 37 deselected`;
+- `node --check web/static/js/cliente/portal_admin_surface.js` -> sem erro de sintaxe;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'admin or portal or cliente'` -> `32 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais` -> `1 passed, 42 deselected`;
+- `PYTHONPATH=. python -m ruff check web/app/domains/mesa/service.py web/app/domains/mesa/package_document_support.py` -> verde;
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/mesa/service.py app/domains/mesa/package_document_support.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_v2_reviewdesk_projection.py tests/test_revisor_mesa_api_side_effects.py -q -k 'pacote or package or coverage or revisao'` -> `4 passed, 8 deselected`;
+- `git diff --check` -> sem erros; aviso esperado de normalização CRLF em `web/app/domains/mesa/service.py`;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `326` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make mesa-smoke` -> `95 passed`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- `client_routes.py` ainda é grande, mas perdeu mais uma responsabilidade de governança sensível;
+- `portal_admin_surface.js` ainda tem `innerHTML`, agora com um primeiro padrão DOM para cards/seletor que pode ser reaplicado nos resumos e auditoria;
+- `mesa/service.py` ficou mais próximo de orquestração final, mas ainda pode perder documento estruturado/catálogo/verificação de escopo em próximos slices.

@@ -146,6 +146,9 @@ Ele está na fase de:
 - os blocos de movimentos recentes de Chat/Mesa no Portal Cliente passaram a ser montados por DOM seguro, preservando botões `abrir-prioridade` e chips operacionais.
 - os contextos selecionados de Chat/Mesa no Portal Cliente passaram a montar cards, sinais canônicos, guidance e avisos de override por DOM seguro, removendo `innerHTML` dos painéis de contexto.
 - `portal_chat_surface.js` e `portal_mesa_surface.js` não possuem mais `innerHTML` direto; documento pendente, capacidade, resumos e fallback de mensagens agora usam nós DOM/texto.
+- o Admin CEO passou a ter as rotas de suporte excepcional do cliente isoladas em `admin/client_support_routes.py`, preservando que o Admin CEO governa janela auditada de suporte e não a gestão direta dos funcionários do cliente.
+- o Portal Admin Cliente começou a trocar os cards executivos e o seletor de plano para DOM seguro em `portal_admin_surface.js`, reduzindo `innerHTML` na área administrativa.
+- a Mesa moveu verificação pública e anexo pack do pacote para `mesa/package_document_support.py`, reduzindo mais um bloco documental de `mesa/service.py`.
 
 ## O que ainda falta melhorar
 
