@@ -136,6 +136,7 @@ Ele está na fase de:
 - `admin/client_routes.py` agora também delega o catálogo contratual do tenant para `admin/client_tenant_catalog_routes.py`, separando portfólio liberado e signatários governados das ações gerais do cliente.
 - `admin/client_routes.py` agora delega o export administrativo de diagnóstico do tenant para `admin/client_diagnostic_routes.py`, preservando step-up, fronteiras de governança e contrato JSON.
 - `admin/client_routes.py` agora delega bloqueio/desbloqueio e troca de plano para `admin/client_tenant_sensitive_routes.py`, isolando operações sensíveis com step-up e auditoria.
+- `admin/client_routes.py` agora delega a política operacional por superfície para `admin/client_surface_policy_routes.py`, mantendo o contrato Admin CEO como governança de contratação/superfícies.
 - o pacote da Mesa ganhou `mesa/package_history.py`, isolando histórico de refazer, memória operacional de família e histórico de inspeção fora de `mesa/service.py`.
 - o portal cliente ganhou helpers compartilhados para empty state, chips e opções agrupadas, reduzindo `innerHTML` direto em listas de Chat/Mesa.
 - o Chat Inspetor ganhou uma ponte explícita de runtime em `chat_index_page_runtime.js`, reduzindo acoplamento direto de `chat_index_page.js` com globais de eventos, toast, boot e runtime.

@@ -3008,3 +3008,40 @@ Impacto observado:
 - as operações de maior risco operacional do Admin CEO saíram do monólito e ficaram isoladas em um módulo próprio com step-up obrigatório;
 - `client_routes.py` está perto de sair do hotspot principal, concentrando agora onboarding/lista/detalhe e política operacional;
 - o próximo pacote backend coerente é extrair política operacional por superfície para rotas próprias ou alternar para frontend e atacar `innerHTML` restante em `portal_admin_surface.js`.
+
+## R74. Política por superfície Admin CEO extraída
+
+Resumo:
+
+- extraí o endpoint `/admin/clientes/{empresa_id}/politica-admin-cliente` para `web/app/domains/admin/client_surface_policy_routes.py`;
+- preservei URL pública, validação CSRF, execução auditada via `_executar_acao_admin_redirect`, mensagens e formulário `AdminClienteSurfacePolicyForm`;
+- mantive `web/app/domains/admin/client_surface_policy.py` como serviço de aplicação da política contratual por superfície;
+- reduzi `web/app/domains/admin/client_routes.py` de `1013` para `960` linhas;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/client_routes.py`
+- `web/app/domains/admin/client_surface_policy_routes.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_surface_policy_routes.py web/app/domains/admin/client_surface_policy.py web/tests/test_admin_client_routes.py` -> verde;
+- `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_surface_policy_routes.py web/app/domains/admin/client_surface_policy.py` -> verde;
+- `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py -q -k 'politica_operacional or mobile_single_operator or pacote_chat or flags_legacy'` -> `4 passed, 37 deselected`;
+- `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'admin or catalogo'` -> `4 passed, 39 deselected`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `334` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- a governança de superfícies contratadas ficou fora do roteador monolítico e continua separada da gestão direta de funcionários do cliente;
+- `client_routes.py` saiu abaixo de `1000` linhas e agora concentra principalmente onboarding, lista/detalhe e helpers compartilhados de detalhe/visibilidade;
+- o próximo pacote coerente pode ser extrair onboarding/cadastro para módulo próprio ou alternar para frontend e atacar `innerHTML` restante em `portal_admin_surface.js`.

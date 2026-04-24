@@ -4251,6 +4251,7 @@ Atualizado em `2026-04-24`.
 - `Admin CEO`: extrair sincronização do portfólio liberado e signatários governados do tenant para `web/app/domains/admin/client_tenant_catalog_routes.py`.
 - `Admin CEO`: extrair export administrativo de diagnóstico do tenant para `web/app/domains/admin/client_diagnostic_routes.py`, preservando step-up e contrato `PlatformTenantOperationalDiagnosticV1`.
 - `Admin CEO`: extrair bloqueio/desbloqueio e troca de plano para `web/app/domains/admin/client_tenant_sensitive_routes.py`, preservando step-up, auditoria e URLs públicas.
+- `Admin CEO`: extrair política operacional por superfície para `web/app/domains/admin/client_surface_policy_routes.py`, mantendo `client_surface_policy.py` como serviço de aplicação.
 - `Portal Admin Cliente`: trocar cards executivos e seletor de plano para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
 - `Mesa Avaliadora`: extrair verificação pública e anexo pack para `web/app/domains/mesa/package_document_support.py`.
 - `Portal Admin Cliente`: trocar resumo geral, briefs de capacidade/equipe/suporte, alerta de capacidade e nota de criação de usuário para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
@@ -4367,6 +4368,16 @@ Atualizado em `2026-04-24`.
 - `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_sensitive_routes.py web/tests/test_admin_client_routes.py`
 - `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_sensitive_routes.py`
 - `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py -q -k 'motivo_para_bloqueio or troca_plano'`
+- `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'admin or catalogo'`
+- `git diff --check`
+- `make web-ci`
+- `make production-ops-check-strict`
+- `make uploads-restore-drill`
+- `make hygiene-check`
+- `make verify`
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_surface_policy_routes.py web/app/domains/admin/client_surface_policy.py web/tests/test_admin_client_routes.py`
+- `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_surface_policy_routes.py web/app/domains/admin/client_surface_policy.py`
+- `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py -q -k 'politica_operacional or mobile_single_operator or pacote_chat or flags_legacy'`
 - `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'admin or catalogo'`
 - `git diff --check`
 - `make web-ci`
