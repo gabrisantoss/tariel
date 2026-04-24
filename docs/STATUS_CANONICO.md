@@ -134,6 +134,7 @@ Ele está na fase de:
 - `admin/client_routes.py` começou a perder rotas de funcionários do cliente para `admin/client_employee_routes.py`, preservando que o Admin CEO governa contrato/superfícies e o Admin Cliente governa inspetores e avaliadores.
 - `admin/client_routes.py` também começou a perder rotas do catálogo de laudos para módulos dedicados, com visualização/preview, formulários de família/modos/ofertas/calibração/liberação, importação canônica e lifecycle/status comercial extraídos.
 - `admin/client_routes.py` agora também delega o catálogo contratual do tenant para `admin/client_tenant_catalog_routes.py`, separando portfólio liberado e signatários governados das ações gerais do cliente.
+- `admin/client_routes.py` agora delega o export administrativo de diagnóstico do tenant para `admin/client_diagnostic_routes.py`, preservando step-up, fronteiras de governança e contrato JSON.
 - o pacote da Mesa ganhou `mesa/package_history.py`, isolando histórico de refazer, memória operacional de família e histórico de inspeção fora de `mesa/service.py`.
 - o portal cliente ganhou helpers compartilhados para empty state, chips e opções agrupadas, reduzindo `innerHTML` direto em listas de Chat/Mesa.
 - o Chat Inspetor ganhou uma ponte explícita de runtime em `chat_index_page_runtime.js`, reduzindo acoplamento direto de `chat_index_page.js` com globais de eventos, toast, boot e runtime.

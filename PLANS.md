@@ -4249,6 +4249,7 @@ Atualizado em `2026-04-24`.
 - `Admin CEO`: extrair formulários de família, governança review, ofertas, modos, calibração e liberação tenant do catálogo para `web/app/domains/admin/client_catalog_form_routes.py`.
 - `Admin CEO`: extrair home, detalhe e preview PDF do catálogo para `web/app/domains/admin/client_catalog_view_routes.py`, mantendo URLs públicas e execução auditada.
 - `Admin CEO`: extrair sincronização do portfólio liberado e signatários governados do tenant para `web/app/domains/admin/client_tenant_catalog_routes.py`.
+- `Admin CEO`: extrair export administrativo de diagnóstico do tenant para `web/app/domains/admin/client_diagnostic_routes.py`, preservando step-up e contrato `PlatformTenantOperationalDiagnosticV1`.
 - `Portal Admin Cliente`: trocar cards executivos e seletor de plano para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
 - `Mesa Avaliadora`: extrair verificação pública e anexo pack para `web/app/domains/mesa/package_document_support.py`.
 - `Portal Admin Cliente`: trocar resumo geral, briefs de capacidade/equipe/suporte, alerta de capacidade e nota de criação de usuário para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
@@ -4345,6 +4346,16 @@ Atualizado em `2026-04-24`.
 - `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_catalog_routes.py web/tests/test_admin_client_routes.py`
 - `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_catalog_routes.py`
 - `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py -q -k 'signatario or sincroniza_portfolio'`
+- `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'admin or catalogo'`
+- `git diff --check`
+- `make web-ci`
+- `make production-ops-check-strict`
+- `make uploads-restore-drill`
+- `make hygiene-check`
+- `make verify`
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_diagnostic_routes.py web/tests/test_admin_client_routes.py`
+- `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_diagnostic_routes.py`
+- `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py::test_admin_geral_troca_plano_reset_seguro_e_exporta_bundle_administrativo -q`
 - `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'admin or catalogo'`
 - `git diff --check`
 - `make web-ci`
