@@ -49,11 +49,14 @@ from app.domains.admin.portal_support import (
     _validar_csrf,
     _verificar_acesso_admin,
 )
+from app.domains.admin.client_surface_policy import (
+    AdminClienteSurfacePolicyForm,
+    atualizar_politica_admin_cliente_por_superficie,
+)
 from app.domains.admin.services import (
     alternar_bloqueio,
     alternar_bloqueio_usuario_empresa,
     alterar_plano,
-    atualizar_politica_admin_cliente_empresa,
     buscar_catalogo_familia_admin,
     buscar_detalhe_cliente,
     buscar_todos_clientes,
@@ -606,7 +609,6 @@ def _processar_cadastro_cliente(
     nome_responsavel: str = "",
     observacoes: str = "",
     admin_cliente_case_visibility_mode: str = "",
-    admin_cliente_case_action_mode: str = "",
     admin_cliente_operating_model: str = "",
     admin_cliente_mobile_web_inspector_enabled: str = "",
     admin_cliente_mobile_web_review_enabled: str = "",
@@ -656,7 +658,6 @@ def _processar_cadastro_cliente(
             nome_responsavel=nome_responsavel,
             observacoes=observacoes,
             admin_cliente_case_visibility_mode=admin_cliente_case_visibility_mode,
-            admin_cliente_case_action_mode=admin_cliente_case_action_mode,
             admin_cliente_operating_model=admin_cliente_operating_model,
             admin_cliente_mobile_web_inspector_enabled=admin_cliente_mobile_web_inspector_enabled,
             admin_cliente_mobile_web_review_enabled=admin_cliente_mobile_web_review_enabled,
@@ -758,7 +759,6 @@ async def processar_novo_cliente(
     nome_responsavel: str = Form(default=""),
     observacoes: str = Form(default=""),
     admin_cliente_case_visibility_mode: str = Form(default=""),
-    admin_cliente_case_action_mode: str = Form(default=""),
     admin_cliente_operating_model: str = Form(default=""),
     admin_cliente_mobile_web_inspector_enabled: str = Form(default=""),
     admin_cliente_mobile_web_review_enabled: str = Form(default=""),
@@ -795,7 +795,6 @@ async def processar_novo_cliente(
         nome_responsavel=nome_responsavel,
         observacoes=observacoes,
         admin_cliente_case_visibility_mode=admin_cliente_case_visibility_mode,
-        admin_cliente_case_action_mode=admin_cliente_case_action_mode,
         admin_cliente_operating_model=admin_cliente_operating_model,
         admin_cliente_mobile_web_inspector_enabled=admin_cliente_mobile_web_inspector_enabled,
         admin_cliente_mobile_web_review_enabled=admin_cliente_mobile_web_review_enabled,
@@ -823,7 +822,6 @@ async def cadastrar_empresa(
     email: str = Form(...),
     plano: str = Form(...),
     admin_cliente_case_visibility_mode: str = Form(default=""),
-    admin_cliente_case_action_mode: str = Form(default=""),
     admin_cliente_operating_model: str = Form(default=""),
     admin_cliente_mobile_web_inspector_enabled: str = Form(default=""),
     admin_cliente_mobile_web_review_enabled: str = Form(default=""),
@@ -856,7 +854,6 @@ async def cadastrar_empresa(
         email=email,
         plano=plano,
         admin_cliente_case_visibility_mode=admin_cliente_case_visibility_mode,
-        admin_cliente_case_action_mode=admin_cliente_case_action_mode,
         admin_cliente_operating_model=admin_cliente_operating_model,
         admin_cliente_mobile_web_inspector_enabled=admin_cliente_mobile_web_inspector_enabled,
         admin_cliente_mobile_web_review_enabled=admin_cliente_mobile_web_review_enabled,
@@ -1940,18 +1937,10 @@ async def atualizar_politica_operacional_admin_cliente(
     csrf_token: str = Form(default=""),
     admin_cliente_commercial_service_package: str = Form(default=""),
     admin_cliente_case_visibility_mode: str = Form(default=""),
-    admin_cliente_case_action_mode: str = Form(default=""),
     admin_cliente_operating_model: str = Form(default=""),
     tenant_portal_cliente_enabled: str = Form(default=""),
     tenant_portal_inspetor_enabled: str = Form(default=""),
     tenant_portal_revisor_enabled: str = Form(default=""),
-    tenant_capability_admin_manage_team_enabled: str = Form(default=""),
-    tenant_capability_inspector_case_create_enabled: str = Form(default=""),
-    tenant_capability_inspector_case_finalize_enabled: str = Form(default=""),
-    tenant_capability_inspector_send_to_mesa_enabled: str = Form(default=""),
-    tenant_capability_mobile_case_approve_enabled: str = Form(default=""),
-    tenant_capability_reviewer_decision_enabled: str = Form(default=""),
-    tenant_capability_reviewer_issue_enabled: str = Form(default=""),
     admin_cliente_mobile_web_inspector_enabled: str = Form(default=""),
     admin_cliente_mobile_web_review_enabled: str = Form(default=""),
     admin_cliente_operational_user_cross_portal_enabled: str = Form(default=""),
@@ -1966,41 +1955,22 @@ async def atualizar_politica_operacional_admin_cliente(
         return _redirect_err(f"{URL_CLIENTES}/{empresa_id}", "Requisição inválida.")
 
     def _operacao() -> RedirectResponse:
-        politica = atualizar_politica_admin_cliente_empresa(
-            banco,
-            empresa_id=int(empresa_id),
-            commercial_service_package=admin_cliente_commercial_service_package,
-            case_visibility_mode=admin_cliente_case_visibility_mode,
-            case_action_mode=admin_cliente_case_action_mode,
-            operating_model=admin_cliente_operating_model,
-            tenant_portal_cliente_enabled=tenant_portal_cliente_enabled,
-            tenant_portal_inspetor_enabled=tenant_portal_inspetor_enabled,
-            tenant_portal_revisor_enabled=tenant_portal_revisor_enabled,
-            tenant_capability_admin_manage_team_enabled=tenant_capability_admin_manage_team_enabled,
-            tenant_capability_inspector_case_create_enabled=tenant_capability_inspector_case_create_enabled,
-            tenant_capability_inspector_case_finalize_enabled=tenant_capability_inspector_case_finalize_enabled,
-            tenant_capability_inspector_send_to_mesa_enabled=tenant_capability_inspector_send_to_mesa_enabled,
-            tenant_capability_mobile_case_approve_enabled=tenant_capability_mobile_case_approve_enabled,
-            tenant_capability_reviewer_decision_enabled=tenant_capability_reviewer_decision_enabled,
-            tenant_capability_reviewer_issue_enabled=tenant_capability_reviewer_issue_enabled,
-            mobile_web_inspector_enabled=admin_cliente_mobile_web_inspector_enabled,
-            mobile_web_review_enabled=admin_cliente_mobile_web_review_enabled,
-            operational_user_cross_portal_enabled=admin_cliente_operational_user_cross_portal_enabled,
-            operational_user_admin_portal_enabled=admin_cliente_operational_user_admin_portal_enabled,
-        )
-        registrar_auditoria_admin_empresa_segura(
+        atualizar_politica_admin_cliente_por_superficie(
             banco,
             empresa_id=int(empresa_id),
             ator_usuario_id=usuario.id if usuario else None,
-            acao="tenant_admin_client_policy_updated",
-            resumo="Configuracao de acesso da empresa atualizada.",
-            detalhe=(
-                f"Pacote: {str(politica['commercial_service_package_label'])}. "
-                f"Modelo: {str(politica['operating_model_label'])}. "
-                f"Visibilidade: {str(politica['case_visibility_mode_label'])}. "
-                f"Ação: {str(politica['case_action_mode_label'])}."
+            form=AdminClienteSurfacePolicyForm(
+                commercial_service_package=admin_cliente_commercial_service_package,
+                case_visibility_mode=admin_cliente_case_visibility_mode,
+                operating_model=admin_cliente_operating_model,
+                tenant_portal_cliente_enabled=tenant_portal_cliente_enabled,
+                tenant_portal_inspetor_enabled=tenant_portal_inspetor_enabled,
+                tenant_portal_revisor_enabled=tenant_portal_revisor_enabled,
+                mobile_web_inspector_enabled=admin_cliente_mobile_web_inspector_enabled,
+                mobile_web_review_enabled=admin_cliente_mobile_web_review_enabled,
+                operational_user_cross_portal_enabled=admin_cliente_operational_user_cross_portal_enabled,
+                operational_user_admin_portal_enabled=admin_cliente_operational_user_admin_portal_enabled,
             ),
-            payload=politica,
         )
         return _redirect_ok(
             f"{URL_CLIENTES}/{empresa_id}",

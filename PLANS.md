@@ -4195,3 +4195,32 @@ Atualizado em `2026-04-24`.
 - `git diff --check`
 - `make web-ci`
 - `make hygiene-check`
+
+### `PKT-GOVERNANCA-SUPERFICIES-02` - Remocao de travas legadas e slices estruturais
+
+- `status`: em andamento em `2026-04-24`; executa a sequência pós-governança para manter Admin CEO no contrato do cliente e Admin Cliente na governança dos funcionários.
+
+### Escopo
+
+- restaurar o baseline de Mesa ajustando `mobile_case_approve` para derivar da superfície Inspetor contratada.
+- remover `case_action_mode` e `tenant_capability_*` da UI/API administrativa de política do Admin Cliente, mantendo compatibilidade interna para dados legados.
+- extrair a aplicação da política por superfície do Admin CEO para `client_surface_policy.py`.
+- extrair o `coverage map` do pacote da Mesa para `package_coverage.py`.
+- cobrir WebSocket/whispers da Mesa quando a superfície está contratada e flags finas legadas estão falsas.
+- reduzir `innerHTML` direto no portal cliente com helper seguro `clearElement`.
+- confirmar o service id real do Render e o estado de readiness publicado.
+
+### Validação planejada
+
+- `make verify`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_revisor_ws.py -q -k 'mesa_contratada or superficie_indisponivel or fluxo_basico'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py -q -k 'politica_operacional or mobile_single_operator or pacote_chat'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_mesa_mobile_sync.py -q -k 'coverage or pacote or resumo or mobile_review_command_aprovar'`
+- `node --check web/static/js/cliente/portal_shared_helpers.js`
+- `node --check web/static/js/cliente/portal.js`
+- `node --check web/static/js/cliente/portal_chat_surface.js`
+- `node --check web/static/js/cliente/portal_mesa_surface.js`
+- `make production-ops-check-strict`
+- `make uploads-restore-drill`
+- `make hygiene-check`
+- `git diff --check`

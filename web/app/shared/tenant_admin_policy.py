@@ -287,19 +287,12 @@ def _contract_surface_capability_entitlements(
 ) -> dict[str, bool]:
     chat_surface_enabled = bool(portal_entitlements.get("inspetor"))
     mesa_surface_enabled = bool(portal_entitlements.get("revisor"))
-    internal_approval_enabled = (
-        chat_surface_enabled
-        and (
-            commercial_service_package == "inspector_chat"
-            or not mesa_surface_enabled
-        )
-    )
     return {
         "admin_manage_team": bool(portal_entitlements.get("cliente")),
         "inspector_case_create": chat_surface_enabled,
         "inspector_case_finalize": chat_surface_enabled,
         "inspector_send_to_mesa": chat_surface_enabled and mesa_surface_enabled,
-        "mobile_case_approve": internal_approval_enabled,
+        "mobile_case_approve": chat_surface_enabled,
         "reviewer_decision": mesa_surface_enabled,
         "reviewer_issue": mesa_surface_enabled,
     }

@@ -182,7 +182,7 @@ async def websocket_whispers(websocket: WebSocket):
             if acao == "broadcast_mesa":
                 if not bool(dados_usuario.get("reviewer_decision_enabled", True)):
                     if not await _enviar_erro_ws(
-                        "A revisão da Mesa Avaliadora está desabilitada para esta empresa pelo Admin-CEO."
+                        "A superfície Mesa Avaliadora não está disponível para esta empresa."
                     ):
                         break
                     continue

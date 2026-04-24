@@ -240,6 +240,7 @@
         temporaryCompat: false,
         dependsOnScriptOrder: true,
         exportShape: Object.freeze([
+          "clearElement",
           "renderAnexos",
           "renderAvisosOperacionais",
           "renderStaticContractHtml",
@@ -846,7 +847,7 @@
     },
   );
 
-  const { renderAnexos, renderAvisosOperacionais, renderStaticContractHtml } =
+  const { clearElement, renderAnexos, renderAvisosOperacionais, renderStaticContractHtml } =
     sharedHelpersModule;
 
   const adminModule = createRequiredModule("admin", createAdmin, {
@@ -1024,6 +1025,7 @@
       perfSnapshot,
       persistirSelecao,
       prioridadeChat,
+      clearElement,
       renderAnexos,
       renderStaticContractHtml,
       resumoEsperaHoras,
@@ -1085,6 +1087,7 @@
       perfSnapshot,
       persistirSelecao,
       prioridadeMesa,
+      clearElement,
       renderAnexos,
       renderStaticContractHtml,
       resumoEsperaHoras,

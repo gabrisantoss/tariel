@@ -54,6 +54,14 @@
         typeof helpers.renderAnexos === "function"
           ? helpers.renderAnexos
           : () => "";
+      const clearElement =
+        typeof helpers.clearElement === "function"
+          ? helpers.clearElement
+          : (node) => {
+              if (!node) return false;
+              node.textContent = "";
+              return true;
+            };
       const renderStaticContractHtml =
         typeof helpers.renderStaticContractHtml === "function"
           ? helpers.renderStaticContractHtml
@@ -908,7 +916,7 @@
         if (!container) return;
 
         if (!pacote) {
-          container.innerHTML = "";
+          clearElement(container);
           atualizarResumoSecaoMesa();
           return;
         }

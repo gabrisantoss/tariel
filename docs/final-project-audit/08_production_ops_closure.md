@@ -70,7 +70,8 @@ Depois desta fase, o gap principal de producao deixou de ser ambiguidade de poli
 
 Observação do deploy publicado em 2026-04-24:
 
-- o commit `2a78d8a` ficou `live` no Render em `https://tariel-web-free.onrender.com`;
+- o serviço real publicado no workspace atual é `tariel-web-free`, service id `srv-d795sq2a214c73alec20`, em `https://tariel-web-free.onrender.com`;
 - `/health` respondeu `status=ok`, banco/realtime prontos;
 - `/ready` ainda respondeu `production_ops_ready=false`, `uploads_storage_mode=local_fs`, `uploads_cleanup_enabled=false` e scheduler desligado;
 - portanto, o serviço `tariel-web-free` deve ser tratado como ambiente publicado/free, não como produção real fechada, até o plano/env do Render aplicar storage persistente, cleanup automático e restore drill operacional fora do workspace local.
+- o contrato local equivalente continua verde em `make production-ops-check-strict`, com `TARIEL_UPLOADS_STORAGE_MODE=persistent_disk`, backup obrigatório e restore drill obrigatório.

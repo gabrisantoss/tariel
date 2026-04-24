@@ -90,6 +90,18 @@
         return true;
       }
 
+      function clearElement(target) {
+        const container =
+          typeof target === "string" ? $(target) : target || null;
+        if (!container) return false;
+        if (typeof container.replaceChildren === "function") {
+          container.replaceChildren();
+        } else {
+          container.textContent = "";
+        }
+        return true;
+      }
+
       function renderAnexos(anexos) {
         const itens = Array.isArray(anexos) ? anexos : [];
         if (!itens.length) return "";
@@ -126,7 +138,7 @@
           state.bootstrap?.empresa?.avisos_operacionais || []
         ).filter((item) => texto(item?.canal) === canal);
         if (!avisos.length) {
-          container.innerHTML = "";
+          clearElement(container);
           return;
         }
 
@@ -153,6 +165,7 @@
       }
 
       return {
+        clearElement,
         renderAnexos,
         renderAvisosOperacionais,
         renderStaticContractHtml,

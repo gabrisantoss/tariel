@@ -2255,3 +2255,62 @@ Impacto observado:
 - a rota `/app/api/chat` fica mais legível sem alterar persistência, IA, Mesa ou finalização;
 - o Admin Cliente agora expõe em diagnóstico a fronteira correta: contrato pertence ao Admin CEO; a governança dos funcionários do cliente pertence ao Admin Cliente;
 - o próximo corte coerente é fechar uma rodada ampla de validação e depois avançar para o próximo hotspot backend/frontend sem reabrir essa regra de governança.
+
+## R55. Sequencia de governanca por superficies e cortes estruturais
+
+Resumo:
+
+- corrigi o baseline de Mesa: `mobile_case_approve` volta a derivar da superficie Inspetor contratada, sem depender do pacote comercial de Mesa;
+- removi `case_action_mode` e `tenant_capability_*` da UI/API administrativa de politica do Admin Cliente; os campos seguem apenas como compatibilidade interna para dados legados;
+- extraí de `client_routes.py` a aplicação da política por superfície para `client_surface_policy.py`;
+- extraí de `mesa/service.py` o mapa de cobertura do pacote para `package_coverage.py`;
+- adicionei cobertura WebSocket/whispers garantindo que Mesa contratada continua operando mesmo com flags finas legadas falsas;
+- reduzi limpeza direta por `innerHTML` no portal cliente com o helper `clearElement`;
+- confirmei via Render CLI que o service id real do serviço publicado é `srv-d795sq2a214c73alec20` (`tariel-web-free`).
+
+Arquivos do ciclo:
+
+- `web/app/shared/tenant_admin_policy.py`
+- `web/app/domains/admin/client_routes.py`
+- `web/app/domains/admin/client_surface_policy.py`
+- `web/app/domains/mesa/service.py`
+- `web/app/domains/mesa/package_coverage.py`
+- `web/app/domains/revisor/ws.py`
+- `web/static/js/cliente/portal.js`
+- `web/static/js/cliente/portal_shared_helpers.js`
+- `web/static/js/cliente/portal_chat_surface.js`
+- `web/static/js/cliente/portal_mesa_surface.js`
+- `web/templates/admin/novo_cliente.html`
+- `web/templates/admin/cliente_detalhe/_tab_acoes.html`
+- `web/tests/test_admin_client_routes.py`
+- `web/tests/test_admin_services.py`
+- `web/tests/test_mesa_mobile_sync.py`
+- `web/tests/test_revisor_ws.py`
+- `web/tests/test_tenant_entitlements_critical.py`
+- `docs/STATUS_CANONICO.md`
+- `docs/final-project-audit/08_production_ops_closure.md`
+- `PLANS.md`
+
+Validação local executada ate aqui:
+
+- `cd web && PYTHONPATH=. python -m pytest tests/test_mesa_mobile_sync.py::test_mobile_review_command_aprovar_no_mobile_fecha_caso_autonomo -q` -> `1 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py::test_flags_finas_legadas_nao_bloqueiam_funcionarios_do_cliente tests/test_admin_services.py::test_pacote_comercial_mesa_com_servicos_no_inspetor_libera_cross_portal -q` -> `2 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py -q -k 'politica_operacional or mobile_single_operator or pacote_chat'` -> `3 passed, 37 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_mesa_mobile_sync.py -q -k 'coverage or pacote or resumo or mobile_review_command_aprovar'` -> `2 passed, 7 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_v2_reviewdesk_projection.py tests/test_revisor_mesa_api_side_effects.py -q -k 'pacote or package or coverage'` -> `4 passed, 8 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_revisor_ws.py -q -k 'mesa_contratada or superficie_indisponivel or fluxo_basico'` -> `3 passed, 15 deselected`;
+- `node --check web/static/js/cliente/portal_shared_helpers.js && node --check web/static/js/cliente/portal.js && node --check web/static/js/cliente/portal_chat_surface.js && node --check web/static/js/cliente/portal_mesa_surface.js`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais` -> `1 passed, 42 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or mesa or diagnostico'` -> `12 passed, 20 deselected`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados.
+- `make verify` -> `ruff` verde, `mypy` verde em `319` source files, web crítico `250 passed`, tenant access `6 passed`, mobile `113` suites/`420` testes e mesa-smoke `95 passed`;
+- `make hygiene-check` -> `status=ok`;
+- `git diff --check` -> sem erros; apenas aviso de normalização CRLF em `web/app/domains/mesa/service.py`.
+
+Impacto observado:
+
+- Admin CEO passa a alterar contrato/superfícies/limites sem expor trava operacional fina na UI/API;
+- Admin Cliente mantém governança operacional de seus funcionários dentro das superfícies contratadas;
+- Mesa e portal cliente perderam mais um pedaço de lógica concentrada, sem mudança de contrato externo;
+- o ambiente publicado atual segue saudável, mas não production-ready: `/ready` em `https://tariel-web-free.onrender.com/ready` respondeu `production_ops_ready=false`, `uploads_storage_mode=local_fs` e cleanup desligado.

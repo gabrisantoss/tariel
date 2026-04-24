@@ -25,6 +25,11 @@
         const parseDataIso = typeof helpers.parseDataIso === "function" ? helpers.parseDataIso : () => 0;
         const prioridadeChat = typeof helpers.prioridadeChat === "function" ? helpers.prioridadeChat : () => ({ tone: "aprovado", badge: "", acao: "" });
         const renderAnexos = typeof helpers.renderAnexos === "function" ? helpers.renderAnexos : () => "";
+        const clearElement = typeof helpers.clearElement === "function" ? helpers.clearElement : (node) => {
+            if (!node) return false;
+            node.textContent = "";
+            return true;
+        };
         const renderStaticContractHtml = typeof helpers.renderStaticContractHtml === "function" ? helpers.renderStaticContractHtml : null;
         const resumoEsperaHoras = typeof helpers.resumoEsperaHoras === "function" ? helpers.resumoEsperaHoras : () => "";
         const rotuloSituacaoChat = typeof helpers.rotuloSituacaoChat === "function" ? helpers.rotuloSituacaoChat : () => "";
@@ -301,7 +306,7 @@
 
             if (!documentoChatPendenteAtivo()) {
                 container.hidden = true;
-                container.innerHTML = "";
+                clearElement(container);
                 return;
             }
 
@@ -380,7 +385,7 @@
             if (!empresa || !nota) return;
 
             if (seletor && governadoSemTemplates) {
-                seletor.innerHTML = "";
+                clearElement(seletor);
                 delete seletor.dataset.catalogSignature;
             } else if (seletor && templateOptions.length) {
                 const assinatura = JSON.stringify(
@@ -397,7 +402,7 @@
                         grupos.get(grupo).push(item);
                     });
 
-                    seletor.innerHTML = "";
+                    clearElement(seletor);
                     grupos.forEach((itens, grupo) => {
                         const optgroup = documentRef.createElement("optgroup");
                         optgroup.label = grupo;

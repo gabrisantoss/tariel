@@ -10,7 +10,7 @@ from starlette.websockets import WebSocketDisconnect
 
 import app.domains.revisor.routes as rotas_revisor
 import app.domains.revisor.ws as ws
-from app.shared.database import SessaoAtiva, Usuario
+from app.shared.database import Empresa, SessaoAtiva, Usuario
 from app.shared.database import NivelAcesso
 from tests.regras_rotas_criticas_support import _login_revisor
 
@@ -125,6 +125,43 @@ def test_revisor_websocket_recupera_sessao_do_banco_apos_limpar_cache_local(ambi
         pronto = websocket.receive_json()
         assert pronto["tipo"] == "whisper_ready"
         assert len(seguranca.SESSOES_ATIVAS) == 1
+
+
+def test_revisor_websocket_mantem_whispers_com_mesa_contratada_e_flags_legadas_falsas(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "case_visibility_mode": "case_list",
+            "tenant_portal_revisor_enabled": True,
+            "tenant_capability_reviewer_decision_enabled": False,
+            "tenant_capability_reviewer_issue_enabled": False,
+        }
+        banco.commit()
+
+    _login_revisor(client, "revisor@empresa-a.test")
+
+    with client.websocket_connect("/revisao/ws/whispers") as websocket:
+        pronto = websocket.receive_json()
+        assert pronto["tipo"] == "whisper_ready"
+
+        websocket.send_json(
+            {
+                "acao": "broadcast_mesa",
+                "laudo_id": "19",
+                "preview": "mensagem importante",
+            }
+        )
+        broadcast = websocket.receive_json()
+        assert broadcast["tipo"] == "whisper_ping"
+        assert broadcast["laudo_id"] == 19
+        assert broadcast["collaboration_delta"]["event_kind"] == "new_whisper"
 
 
 def test_revisor_websocket_rejeita_usuario_bloqueado(ambiente_critico) -> None:
@@ -348,7 +385,7 @@ def test_websocket_whispers_broadcast_mesa_sucesso(monkeypatch: pytest.MonkeyPat
     assert fake_manager.disconnected == [(11, 5, fake_websocket)]
 
 
-def test_websocket_whispers_bloqueia_broadcast_mesa_quando_capability_foi_revogada(
+def test_websocket_whispers_bloqueia_broadcast_mesa_quando_superficie_indisponivel(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake_manager = _FakeWsManager()
@@ -381,7 +418,7 @@ def test_websocket_whispers_bloqueia_broadcast_mesa_quando_capability_foi_revoga
     assert fake_manager.broadcasts == []
     assert fake_websocket.enviados[1] == {
         "tipo": "erro",
-        "detail": "A revisão da Mesa Avaliadora está desabilitada para esta empresa pelo Admin-CEO.",
+        "detail": "A superfície Mesa Avaliadora não está disponível para esta empresa.",
     }
     assert fake_manager.disconnected == [(11, 5, fake_websocket)]
 

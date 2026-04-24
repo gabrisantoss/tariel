@@ -384,7 +384,7 @@ def test_pacote_comercial_mesa_com_servicos_no_inspetor_libera_cross_portal(
         assert resumo["tenant_capability_entitlements"]["inspector_send_to_mesa"] is True
         assert resumo["tenant_capability_entitlements"]["reviewer_decision"] is True
         assert resumo["tenant_capability_entitlements"]["reviewer_issue"] is True
-        assert resumo["tenant_capability_entitlements"]["mobile_case_approve"] is False
+        assert resumo["tenant_capability_entitlements"]["mobile_case_approve"] is True
 
         inspetor = banco.get(Usuario, ids["inspetor_a"])
         assert inspetor is not None

@@ -345,7 +345,7 @@ def test_flags_finas_legadas_nao_bloqueiam_funcionarios_do_cliente(
     assert capabilities_mobile["inspector_case_create"] is True
     assert capabilities_mobile["inspector_case_finalize"] is True
     assert capabilities_mobile["inspector_send_to_mesa"] is True
-    assert capabilities_mobile["mobile_case_approve"] is False
+    assert capabilities_mobile["mobile_case_approve"] is True
 
     csrf_revisor = _login_revisor(client, "revisor@empresa-a.test")
     resposta_pacote = client.get(f"/revisao/api/laudo/{laudo_aguardando_id}/pacote")
