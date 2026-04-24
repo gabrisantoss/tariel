@@ -2,10 +2,14 @@
 
 Esta pasta existe para receber o raw import externo da familia `nr10_inspecao_instalacoes_eletricas`.
 
-Arquivos esperados aqui:
+Arquivos esperados aqui, migrados para storage externo/LFS em `2026-04-24`:
 
 - `nr10_inspecao_instalacoes_eletricas.zip`
 - `nr10_inspecao_instalacoes_eletricas_referencia_sintetica.pdf`
+
+Manifesto versionado:
+
+- `docs/binary_asset_manifests/oversized_assets_2026-04-24.json`
 
 Uso correto:
 

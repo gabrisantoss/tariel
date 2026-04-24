@@ -152,7 +152,8 @@ def _editor_laudo_context_payload(
         if str(item.get("status") or "pendente").strip().lower() in {"pendente", "enviada_ia"}
     )
     _, emissao_oficial = build_official_issue_package(banco, laudo=laudo)
-    current_issue = emissao_oficial.get("current_issue") if isinstance(emissao_oficial.get("current_issue"), dict) else {}
+    current_issue_raw = emissao_oficial.get("current_issue")
+    current_issue = current_issue_raw if isinstance(current_issue_raw, dict) else {}
 
     return {
         "active": True,

@@ -72,7 +72,7 @@ def build_operational_observability_cliente(
     case_counts = dict(tenant_payload.get("case_counts") or {})
     review_counts = dict(tenant_payload.get("review_counts") or {})
     document_counts = dict(tenant_payload.get("document_counts") or {})
-    pending_center = []
+    pending_center: list[dict[str, Any]] = []
     for item in list(laudos_mesa or []):
         pendencias = int(item.get("pendencias_abertas") or 0)
         if pendencias <= 0:
@@ -120,7 +120,7 @@ def build_operational_observability_cliente(
     elif overdue > 0:
         blocking_reason = "Existem vencimentos atrasados na agenda preventiva."
     elif pending_center:
-        blocking_reason = pending_center[0]["detail"]
+        blocking_reason = str(pending_center[0].get("detail") or "")
     else:
         blocking_reason = "Nenhum bloqueio operacional dominante foi detectado."
     timeline = [

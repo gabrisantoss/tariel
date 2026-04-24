@@ -2058,3 +2058,61 @@ Impacto observado:
 - o pacote web fica promovível sem arrastar o ruído atual do mobile;
 - a preparação para o Render passa a ter fronteira explícita entre o que é serviço web e o que é frente paralela Android;
 - o próximo passo coerente é commitar apenas o pacote web/docs, fazer `push` para o GitHub e acompanhar o deploy automático do Render.
+
+## R52. Baseline verde, mypy progressivo, segurança e restore
+
+Resumo:
+
+- criei o checkpoint Git `964a348` da árvore verde antes do novo pacote;
+- zerei os 28 erros de `mypy` e incluí `web-typecheck` dentro de `web-ci`;
+- rodei o pacote de segurança com `pip-audit` isolado em `.test-artifacts`, corrigi pinos Python vulneráveis, atualizei o Expo SDK 55 por patch e mantive o audit mobile bloqueando vulnerabilidade alta de runtime;
+- removi os 12 binários rastreados acima de 10 MiB, mantendo manifesto de path, tamanho e SHA-256;
+- fechei um slice backend em `cliente/routes.py`, um slice frontend em `portal_admin_surface.js` e adicionei drill local de restore de uploads ao gate real.
+
+Arquivos e superfícies do ciclo:
+
+- `Makefile`
+- `scripts/run_python_security_audit.py`
+- `scripts/run_uploads_restore_drill.py`
+- `web/requirements.txt`
+- `android/package.json`
+- `android/package-lock.json`
+- `web/app/domains/*`
+- `web/static/js/cliente/portal_admin_surface.js`
+- `web/tests/test_material_reference_packages.py`
+- `docs/binary_asset_manifests/oversized_assets_2026-04-24.json`
+- `docs/STATUS_CANONICO.md`
+- `docs/final-project-audit/08_production_ops_closure.md`
+- `docs/tracked_binary_assets_audit.md`
+- `PLANS.md`
+
+Validação local executada:
+
+- `make verify`
+- `make hygiene-check`
+- `make security-audit`
+- `make production-ops-check-strict`
+- `make uploads-cleanup-check`
+- `make uploads-restore-drill`
+- `make binary-assets-audit-strict`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_material_reference_packages.py -q`
+- `cd android && npx expo install --check`
+- `node --check web/static/js/cliente/portal_admin_surface.js`
+- `git diff --check`
+
+Resultados:
+
+- `make verify` verde;
+- `mypy`: `Success: no issues found in 313 source files`;
+- mobile: `420 passed`;
+- Mesa: `94 passed`;
+- binários rastreados: `147`, total `138.2 MiB`, oversized `0`;
+- produção strict: `production_ready=true`, blockers `[]`;
+- restore drill: `status=passed`, `3` arquivos verificados.
+
+Impacto observado:
+
+- a baseline voltou a ficar promovível com tipagem progressiva no gate principal;
+- a árvore deixa de carregar quase 476 MiB de payload pesado no Git futuro sem perder rastreabilidade;
+- produção/restore agora tem rotina executável local além da política de env;
+- o próximo passo coerente é escolher outro slice pequeno em `mesa/service.py` ou `chat_index_page.js` e definir o storage externo/LFS definitivo dos assets migrados.

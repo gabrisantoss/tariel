@@ -1848,7 +1848,7 @@ def _build_runtime_document_view_model(
     return build_catalog_document_view_model(
         payload if isinstance(payload, dict) else {},
         audience="admin" if render_mode == RENDER_MODE_ADMIN_PDF else "client",
-        render_mode=render_mode,
+        render_mode=render_mode or RENDER_MODE_CLIENT_PDF_FILLED,
     )
 
 
@@ -2019,7 +2019,7 @@ def resolve_template_preview_payload(
         inspetor=inspetor,
         empresa=empresa,
         data=data,
-        render_mode=render_mode,
+        render_mode=render_mode or RENDER_MODE_CLIENT_PDF_FILLED,
     )
     return payload if isinstance(payload, dict) else {}
 

@@ -785,15 +785,15 @@ def _gate_next_steps_from_missing_items(
 
     deduped: list[str] = []
     vistos: set[str] = set()
-    for item in steps:
-        texto = " ".join(str(item or "").strip().split())
-        if not texto:
+    for step_text in steps:
+        texto_step = " ".join(str(step_text or "").strip().split())
+        if not texto_step:
             continue
-        chave = texto.lower()
+        chave = texto_step.lower()
         if chave in vistos:
             continue
         vistos.add(chave)
-        deduped.append(texto)
+        deduped.append(texto_step)
     return deduped[:6]
 
 

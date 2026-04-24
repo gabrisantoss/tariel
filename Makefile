@@ -3,7 +3,7 @@ WEB_PYTHON := $(shell [ -x web/.venv-linux/bin/python ] && echo web/.venv-linux/
 WEB_PYTHON_IN_WEB := $(shell [ -x web/.venv-linux/bin/python ] && echo ./.venv-linux/bin/python || echo python)
 PRE_COMMIT := $(WEB_PYTHON) -m pre_commit
 
-.PHONY: help doctor bootstrap hooks-install web-lint web-test web-ci mesa-smoke mesa-acceptance document-acceptance document-pdf-qa document-pdf-qa-full observability-acceptance hygiene-check binary-assets-audit hygiene-acceptance v2-acceptance post-plan-benchmarks contract-check smoke-web demo-local-reset full-regression-audit full-regression-audit-critical full-regression-audit-hosted full-regression-audit-human full-regression-audit-exhaustive full-regression-audit-exhaustive-hosted full-regression-audit-exhaustive-human mobile-install mobile-lint mobile-typecheck mobile-test mobile-format-check mobile-baseline mobile-preview mobile-wifi mobile-acceptance mobile-ci smoke-mobile verify production-ops-check production-ops-check-strict uploads-cleanup-check uploads-cleanup-apply post-deploy-cleanup-observation release-gate-hosted release-gate-real release-gate final-product-stamp clean-generated baseline-snapshot ci
+.PHONY: help doctor bootstrap hooks-install web-lint web-typecheck web-test web-ci mesa-smoke mesa-acceptance document-acceptance document-pdf-qa document-pdf-qa-full observability-acceptance hygiene-check binary-assets-audit binary-assets-audit-strict hygiene-acceptance v2-acceptance post-plan-benchmarks contract-check smoke-web demo-local-reset full-regression-audit full-regression-audit-critical full-regression-audit-hosted full-regression-audit-human full-regression-audit-exhaustive full-regression-audit-exhaustive-hosted full-regression-audit-exhaustive-human mobile-install mobile-lint mobile-typecheck mobile-test mobile-format-check mobile-baseline mobile-preview mobile-wifi mobile-acceptance mobile-ci smoke-mobile python-security-audit mobile-security-audit security-audit verify production-ops-check production-ops-check-strict uploads-restore-drill uploads-cleanup-check uploads-cleanup-apply post-deploy-cleanup-observation release-gate-hosted release-gate-real release-gate final-product-stamp clean-generated baseline-snapshot ci
 
 help: ## Lista comandos úteis do repositório
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -29,11 +29,14 @@ hooks-install: ## Instala hooks de pre-commit e pre-push
 web-lint: ## Roda ruff no workspace web
 	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m ruff check .
 
+web-typecheck: ## Roda mypy progressivo no workspace web
+	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m mypy --config-file pyproject.toml
+
 web-test: ## Roda a suíte crítica do workspace web
 	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q tests/test_smoke.py tests/test_regras_rotas_criticas.py tests/test_inspetor_comandos_dominio.py tests/test_inspetor_confianca_dominio.py tests/test_operational_memory.py
 	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q tests/test_tenant_access.py
 
-web-ci: web-lint web-test ## Executa os checks principais do web
+web-ci: web-lint web-typecheck web-test ## Executa os checks principais do web
 
 mesa-smoke: ## Executa o gate oficial local da Mesa SSR
 	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q \
@@ -77,6 +80,9 @@ hygiene-check: ## Valida a política de artifacts, ignores e disciplina operacio
 
 binary-assets-audit: ## Audita binarios rastreados no Git sem alterar historico
 	python3 scripts/audit_tracked_binaries.py
+
+binary-assets-audit-strict: ## Falha se houver binario rastreado acima de 10 MiB
+	python3 scripts/audit_tracked_binaries.py --strict --threshold-mb 10
 
 hygiene-acceptance: ## Executa o runner oficial da Fase 11 - Higiene permanente e governança
 	python3 scripts/run_hygiene_phase_acceptance.py
@@ -147,6 +153,14 @@ mobile-ci: mobile-baseline ## Executa os checks principais do mobile
 
 smoke-mobile: mobile-acceptance ## Executa smoke real controlado do workspace mobile via emulator + Maestro
 
+python-security-audit: ## Audita dependencias Python em venv descartavel local
+	python3 scripts/run_python_security_audit.py
+
+mobile-security-audit: ## Audita dependencias mobile de runtime com severidade alta
+	cd android && npm audit --omit=dev --audit-level=high
+
+security-audit: python-security-audit mobile-security-audit ## Executa auditoria de seguranca Python + mobile runtime
+
 verify: web-ci mobile-ci mesa-smoke ## Gate principal local do repositório
 
 production-ops-check: ## Imprime e valida o resumo operacional canônico de produção
@@ -168,6 +182,9 @@ production-ops-check-strict: ## Valida a política canônica de produção no mo
 	SESSAO_FAIL_CLOSED_ON_DB_ERROR=1 \
 	python3 scripts/run_production_ops_check.py --json --strict
 
+uploads-restore-drill: ## Executa drill local de backup/restore de uploads persistentes
+	python3 scripts/run_uploads_restore_drill.py --json
+
 uploads-cleanup-check: ## Executa dry-run estrito do cleanup seguro de uploads/anexos
 	python3 scripts/run_uploads_cleanup.py --json --strict
 
@@ -179,7 +196,7 @@ post-deploy-cleanup-observation: ## Observa a primeira execucao automatica do cl
 
 release-gate-hosted: verify mesa-acceptance document-acceptance observability-acceptance ## Gate canônico executável em CI hospedada, sem depender de Android real
 
-release-gate-real: release-gate-hosted smoke-mobile production-ops-check-strict uploads-cleanup-check ## Gate canônico de pronto real do produto, incluindo mobile real e operação de produção
+release-gate-real: release-gate-hosted smoke-mobile production-ops-check-strict uploads-restore-drill uploads-cleanup-check ## Gate canônico de pronto real do produto, incluindo mobile real e operação de produção
 
 release-gate: release-gate-real ## Alias oficial do gate canônico de release
 

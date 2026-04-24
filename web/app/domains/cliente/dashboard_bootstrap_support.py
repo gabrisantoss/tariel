@@ -67,6 +67,10 @@ def _texto_curto(value: Any, *, fallback: str | None = None) -> str | None:
     return fallback
 
 
+def _isoformat_or_empty(value: Any) -> str:
+    return value.isoformat() if hasattr(value, "isoformat") else ""
+
+
 def serializar_usuario_cliente(usuario: Usuario) -> dict[str, Any]:
     nivel = int(usuario.nivel_acesso or 0)
     allowed_portals = tenant_admin_effective_user_portal_grants(
@@ -658,7 +662,7 @@ def _serializar_ativo_cliente(banco: Session, laudo: Laudo) -> dict[str, Any]:
         "service_keys": _service_keys_for_laudo(laudo),
         "health_status": health_status,
         "health_label": health_label,
-        "last_inspection_at": getattr(laudo, "atualizado_em", None).isoformat() if getattr(laudo, "atualizado_em", None) else "",
+        "last_inspection_at": _isoformat_or_empty(getattr(laudo, "atualizado_em", None)),
         "next_due_at": next_due,
         "latest_report_id": int(laudo.id),
         "latest_report_title": asset_label,
@@ -737,12 +741,14 @@ def listar_recorrencia_empresa(banco: Session, usuario: Usuario) -> list[dict[st
                 "action_label": "Programar reinspeção" if status != "overdue" else "Regularizar reinspeção",
             }
         )
-    eventos.sort(
-        key=lambda item: (
-            999999 if item.get("days_until_due") is None else int(item.get("days_until_due")),
+    def _recorrencia_sort_key(item: dict[str, Any]) -> tuple[int, str]:
+        days_until_due = item.get("days_until_due")
+        return (
+            999999 if days_until_due is None else int(days_until_due),
             str(item.get("asset_label") or ""),
         )
-    )
+
+    eventos.sort(key=_recorrencia_sort_key)
     return eventos
 
 
@@ -945,7 +951,7 @@ def _serializar_documento_cliente(banco: Session, laudo: Laudo) -> dict[str, Any
         "issue_action_label": str(emissao_oficial.get("issue_action_label") or "").strip() or None,
         "issue_number": issue_number or None,
         "issue_state_label": issue_state_label or None,
-        "issued_at": current_issue.get("issued_at").isoformat() if current_issue.get("issued_at") else None,
+        "issued_at": _isoformat_or_empty(current_issue.get("issued_at")) or None,
         "signatory_name": str(current_issue.get("signatory_name") or "").strip() or None,
         "document_signals": sinais_documentais,
         "document_package_sections": package_sections,
@@ -958,8 +964,8 @@ def _serializar_documento_cliente(banco: Session, laudo: Laudo) -> dict[str, Any
             else "Verificação pública ainda não materializada."
         ),
         "latest_timeline_summary": str((latest_event or {}).get("summary") or "").strip() or None,
-        "updated_at": getattr(laudo, "atualizado_em", None).isoformat() if getattr(laudo, "atualizado_em", None) else "",
-        "created_at": getattr(laudo, "criado_em", None).isoformat() if getattr(laudo, "criado_em", None) else "",
+        "updated_at": _isoformat_or_empty(getattr(laudo, "atualizado_em", None)),
+        "created_at": _isoformat_or_empty(getattr(laudo, "criado_em", None)),
     }
 
 

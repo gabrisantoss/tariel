@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
@@ -69,9 +69,9 @@ def _serializar_release_catalogo_familia(
         oferta=oferta,
         summarize_release_contract_governance=admin_services.summarize_release_contract_governance,
         offer_lifecycle_resolvido=admin_services._offer_lifecycle_resolvido,
-        label_catalogo=admin_services._label_catalogo,
-        release_status_labels=admin_services._CATALOGO_RELEASE_STATUS_LABELS,
-        catalogo_modelo_label=admin_services._catalogo_modelo_label,
+        label_catalogo=cast(Any, admin_services._label_catalogo),
+        release_status_labels=cast(Any, admin_services._CATALOGO_RELEASE_STATUS_LABELS),
+        catalogo_modelo_label=cast(Any, admin_services._catalogo_modelo_label),
         normalizar_datetime_admin=admin_services._normalizar_datetime_admin,
         formatar_data_admin=admin_services._formatar_data_admin,
         resumir_governanca_release_policy=admin_services._resumir_governanca_release_policy,
@@ -93,8 +93,8 @@ def _historico_catalogo_familia(
         formatar_data_admin=admin_services._formatar_data_admin,
         catalog_offer_variants=admin_services.catalog_offer_variants,
         offer_lifecycle_resolvido=admin_services._offer_lifecycle_resolvido,
-        catalogo_modelo_label=admin_services._catalogo_modelo_label,
-        catalogo_texto_leitura=admin_services._catalogo_texto_leitura,
+        catalogo_modelo_label=cast(Any, admin_services._catalogo_modelo_label),
+        catalogo_texto_leitura=cast(Any, admin_services._catalogo_texto_leitura),
     )
 
 

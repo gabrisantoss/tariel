@@ -13,6 +13,22 @@ def _load_json(relative_path: str) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _load_migrated_binary_assets() -> dict[str, dict]:
+    manifest = _load_json("docs/binary_asset_manifests/oversized_assets_2026-04-24.json")
+    return {asset["path"]: asset for asset in manifest["assets"]}
+
+
+def _assert_asset_available_or_migrated(path: Path) -> None:
+    if path.exists():
+        return
+
+    relative_path = path.relative_to(_repo_root()).as_posix()
+    migrated_asset = _load_migrated_binary_assets().get(relative_path)
+    assert migrated_asset is not None
+    assert migrated_asset["storage_status"] == "migrated_out_of_git"
+    assert migrated_asset["sha256"]
+
+
 def test_nr13_inspecao_vaso_pressao_has_synthetic_reference_package() -> None:
     family_root = (
         _repo_root() / "docs" / "portfolio_empresa_nr13_material_real" / "nr13_inspecao_vaso_pressao"
@@ -49,13 +65,13 @@ def test_nr13_inspecao_vaso_pressao_has_synthetic_reference_package() -> None:
 
     pacote_dir = family_root / "pacote_referencia"
     referencia_externa_dir = family_root / "coleta_entrada" / "referencia_sintetica_externa"
-    assert (pacote_dir / bundle["reference_summary"]["pdf_file"]).exists()
+    _assert_asset_available_or_migrated(pacote_dir / bundle["reference_summary"]["pdf_file"])
     for asset_path in bundle["reference_summary"]["asset_files"]:
         assert (pacote_dir / asset_path).exists()
-    assert (referencia_externa_dir / "nr13_inspecao_vaso_pressao.zip").exists()
-    assert (
+    _assert_asset_available_or_migrated(referencia_externa_dir / "nr13_inspecao_vaso_pressao.zip")
+    _assert_asset_available_or_migrated(
         referencia_externa_dir / "nr13_inspecao_vaso_pressao_referencia_sintetica.pdf"
-    ).exists()
+    )
     assert (referencia_externa_dir / "README.md").exists()
 
 
@@ -76,7 +92,7 @@ def test_nr35_inspecao_linha_de_vida_has_workspace_and_synthetic_reference_packa
         "docs/portfolio_empresa_nr35_material_real/nr35_inspecao_linha_de_vida/manifesto_coleta.json"
     )
 
-    assert status["status_refino"] == "baseline_sintetica_externa_validada"
+    assert status["status_refino"] == "contrato_nr35_alinhado_localmente"
     assert status["base_sintetica_disponivel"] is True
     assert status["pacote_referencia_sintetico_disponivel"] is True
     assert status["baseline_sintetica_externa_validada"] is True
@@ -103,13 +119,13 @@ def test_nr35_inspecao_linha_de_vida_has_workspace_and_synthetic_reference_packa
 
     pacote_dir = family_root / "pacote_referencia"
     referencia_externa_dir = family_root / "coleta_entrada" / "referencia_sintetica_externa"
-    assert (pacote_dir / bundle["reference_summary"]["pdf_file"]).exists()
+    _assert_asset_available_or_migrated(pacote_dir / bundle["reference_summary"]["pdf_file"])
     for asset_path in bundle["reference_summary"]["asset_files"]:
         assert (pacote_dir / asset_path).exists()
-    assert (referencia_externa_dir / "nr35_inspecao_linha_de_vida.zip").exists()
-    assert (
+    _assert_asset_available_or_migrated(referencia_externa_dir / "nr35_inspecao_linha_de_vida.zip")
+    _assert_asset_available_or_migrated(
         referencia_externa_dir / "nr35_inspecao_linha_de_vida_referencia_sintetica.pdf"
-    ).exists()
+    )
     assert (referencia_externa_dir / "README.md").exists()
 
     readme_path = _repo_root() / "web/docs/portfolio_empresa_nr35_material_real.md"

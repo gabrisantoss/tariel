@@ -29,6 +29,10 @@ def _texto_curto(value: Any, *, fallback: str | None = None) -> str | None:
     return fallback
 
 
+def _isoformat_or_none(value: Any) -> str | None:
+    return value.isoformat() if hasattr(value, "isoformat") else None
+
+
 def document_visual_state(
     *,
     emissao_oficial: dict[str, Any],
@@ -153,7 +157,7 @@ def build_document_summary_card(
         "current_version": _texto_curto(current_issue.get("issue_number"), fallback="v0000"),
         "issued_by": _texto_curto(((current_issue.get("issued_by_snapshot") or {}) or {}).get("nome"))
         or _texto_curto(current_issue.get("signatory_name")),
-        "issued_at": current_issue.get("issued_at").isoformat() if current_issue.get("issued_at") else None,
+        "issued_at": _isoformat_or_none(current_issue.get("issued_at")),
         "replaces_issue": _texto_curto(current_issue.get("reissue_of_issue_number")),
         "hash": _texto_curto(verificacao_publica.get("hash_short")),
         "case_status": _texto_curto(payload_laudo.get("status_visual_label")),

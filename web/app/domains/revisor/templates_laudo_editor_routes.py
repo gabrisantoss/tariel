@@ -421,9 +421,10 @@ async def preview_template_editor_laudo(
     if normalizar_modo_editor(getattr(template, "modo_editor", None)) != MODO_EDITOR_RICO:
         raise HTTPException(status_code=409, detail="Template não está no modo editor rico.")
 
+    laudo_id_preview = getattr(dados, "laudo_id", None)
     laudo_preview = (
-        _obter_laudo_empresa(banco, int(dados.laudo_id), usuario.empresa_id)
-        if getattr(dados, "laudo_id", None) is not None
+        _obter_laudo_empresa(banco, int(laudo_id_preview), usuario.empresa_id)
+        if laudo_id_preview is not None
         else None
     )
     dados_formulario = _obter_dados_formulario_preview(

@@ -645,7 +645,7 @@ def persist_chat_user_message(
 
     mensagem_para_ia = anexar_contexto_aprendizado_na_mensagem(
         mensagem_base_para_ia,
-        contexto_aprendizado=contexto_aprendizado_ia,
+        contexto_aprendizado=contexto_aprendizado_ia or "",
     )
 
     return ChatPersistedMessageContext(

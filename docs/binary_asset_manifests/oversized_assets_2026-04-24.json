@@ -1,0 +1,120 @@
+{
+  "generated_at": "2026-04-24",
+  "migration": "oversized_tracked_binary_assets_above_10_mib",
+  "policy": "Keep manifest metadata in Git; store heavy PDF/ZIP assets in LFS or external versioned storage.",
+  "threshold_bytes": 10485760,
+  "threshold_human": "10.0 MiB",
+  "asset_count": 12,
+  "total_size_bytes": 499076640,
+  "total_size_human": "475.9 MiB",
+  "assets": [
+    {
+      "path": "docs/portfolio_empresa_nr10_material_real/nr10_inspecao_instalacoes_eletricas/coleta_entrada/referencia_sintetica_externa/nr10_inspecao_instalacoes_eletricas.zip",
+      "size_bytes": 62949108,
+      "size_human": "60.0 MiB",
+      "sha256": "69218bc0247e0188fab0645bb01d343b06701b6d3afab3676f2385994e895a83",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr13_material_real/nr13_inspecao_vaso_pressao/coleta_entrada/referencia_sintetica_externa/nr13_inspecao_vaso_pressao.zip",
+      "size_bytes": 56543862,
+      "size_human": "53.9 MiB",
+      "sha256": "bac2bab81115d46b2e124523ed6ff9e0f252e51fda1abe4200bc13adc08529c7",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr35_material_real/nr35_inspecao_linha_de_vida/coleta_entrada/referencia_sintetica_externa/nr35_inspecao_linha_de_vida.zip",
+      "size_bytes": 48909601,
+      "size_human": "46.6 MiB",
+      "sha256": "409df1a750e7a200ec1684e59c35c360ff91f54c3abdf0ce60fbc141aea92f73",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr13_material_real/nr13_inspecao_caldeira/coleta_entrada/referencia_sintetica_externa/nr13_inspecao_caldeira.zip",
+      "size_bytes": 47067613,
+      "size_human": "44.9 MiB",
+      "sha256": "882a5f2dd62c85259b9a695a4ccd838114354b05f88f2965ee059450320b77e2",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr10_material_real/nr10_inspecao_instalacoes_eletricas/coleta_entrada/referencia_sintetica_externa/nr10_inspecao_instalacoes_eletricas_referencia_sintetica.pdf",
+      "size_bytes": 40576964,
+      "size_human": "38.7 MiB",
+      "sha256": "40b7b52b8ec5658f4ddda93375c83110b98c3a3029eb6ef569cd337abf5163bb",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr10_material_real/nr10_inspecao_instalacoes_eletricas/pacote_referencia/pdf/nr10_inspecao_instalacoes_eletricas_referencia_sintetica.pdf",
+      "size_bytes": 40576964,
+      "size_human": "38.7 MiB",
+      "sha256": "40b7b52b8ec5658f4ddda93375c83110b98c3a3029eb6ef569cd337abf5163bb",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr13_material_real/nr13_inspecao_vaso_pressao/coleta_entrada/referencia_sintetica_externa/nr13_inspecao_vaso_pressao_referencia_sintetica.pdf",
+      "size_bytes": 37725167,
+      "size_human": "36.0 MiB",
+      "sha256": "a008c12a475065c98ae1cf3a57719ba8ab2409f61ed89abb0ac07f38607a8b3a",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr13_material_real/nr13_inspecao_vaso_pressao/pacote_referencia/pdf/nr13_inspecao_vaso_pressao_referencia_sintetica.pdf",
+      "size_bytes": 37725167,
+      "size_human": "36.0 MiB",
+      "sha256": "a008c12a475065c98ae1cf3a57719ba8ab2409f61ed89abb0ac07f38607a8b3a",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr35_material_real/nr35_inspecao_linha_de_vida/coleta_entrada/referencia_sintetica_externa/nr35_inspecao_linha_de_vida_referencia_sintetica.pdf",
+      "size_bytes": 32598861,
+      "size_human": "31.1 MiB",
+      "sha256": "a385b34485cecf536be74f41cbbc049f5a3dad1f2d2a9cb098a89118f43d7f36",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr35_material_real/nr35_inspecao_linha_de_vida/pacote_referencia/pdf/nr35_inspecao_linha_de_vida_referencia_sintetica.pdf",
+      "size_bytes": 32598861,
+      "size_human": "31.1 MiB",
+      "sha256": "a385b34485cecf536be74f41cbbc049f5a3dad1f2d2a9cb098a89118f43d7f36",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr13_material_real/nr13_inspecao_caldeira/coleta_entrada/referencia_sintetica_externa/nr13_inspecao_caldeira_referencia_sintetica.pdf",
+      "size_bytes": 30902236,
+      "size_human": "29.5 MiB",
+      "sha256": "0dd28c60df2bb7a6360ef4456c646ec3f7206d3f4c7c54ffecee5d9eb6db584c",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    },
+    {
+      "path": "docs/portfolio_empresa_nr13_material_real/nr13_inspecao_caldeira/pacote_referencia/pdf/nr13_inspecao_caldeira_referencia_sintetica.pdf",
+      "size_bytes": 30902236,
+      "size_human": "29.5 MiB",
+      "sha256": "0dd28c60df2bb7a6360ef4456c646ec3f7206d3f4c7c54ffecee5d9eb6db584c",
+      "storage_status": "migrated_out_of_git",
+      "preferred_storage": "Git LFS or external versioned object storage",
+      "restore_note": "Restore this file from external storage using the exact path and sha256 before regenerating the reference package."
+    }
+  ]
+}

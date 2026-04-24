@@ -61,6 +61,29 @@ _CLIENTE_PORTAL_BRIDGE_CONTRACT = (
 
 roteador_cliente = APIRouter()
 
+
+def _render_superficie_cliente(
+    request: Request,
+    *,
+    usuario: Optional[Usuario],
+    banco: Session,
+    tab_inicial: str,
+    secao_inicial: str | None = None,
+) -> HTMLResponse | RedirectResponse:
+    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
+        return _redirect_login_cliente()
+
+    assert usuario is not None
+    empresa = _empresa_usuario(banco, usuario)
+    return _render_portal_cliente(
+        request,
+        usuario=usuario,
+        empresa=empresa,
+        tab_inicial=tab_inicial,
+        secao_inicial=secao_inicial,
+    )
+
+
 @roteador_cliente.get("/", include_in_schema=False)
 async def raiz_cliente(
     request: Request,
@@ -252,12 +275,7 @@ async def painel_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return _redirect_login_cliente()
-
-    assert usuario is not None
-    empresa = _empresa_usuario(banco, usuario)
-    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="admin")
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="admin")
 
 
 @roteador_cliente.get("/equipe", response_class=HTMLResponse)
@@ -266,15 +284,10 @@ async def equipe_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return _redirect_login_cliente()
-
-    assert usuario is not None
-    empresa = _empresa_usuario(banco, usuario)
-    return _render_portal_cliente(
+    return _render_superficie_cliente(
         request,
         usuario=usuario,
-        empresa=empresa,
+        banco=banco,
         tab_inicial="admin",
         secao_inicial="team",
     )
@@ -286,12 +299,7 @@ async def superficie_chat_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return _redirect_login_cliente()
-
-    assert usuario is not None
-    empresa = _empresa_usuario(banco, usuario)
-    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="chat")
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="chat")
 
 
 @roteador_cliente.get("/servicos", response_class=HTMLResponse)
@@ -300,12 +308,7 @@ async def superficie_servicos_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return _redirect_login_cliente()
-
-    assert usuario is not None
-    empresa = _empresa_usuario(banco, usuario)
-    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="servicos")
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="servicos")
 
 
 @roteador_cliente.get("/recorrencia", response_class=HTMLResponse)
@@ -314,12 +317,7 @@ async def superficie_recorrencia_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return _redirect_login_cliente()
-
-    assert usuario is not None
-    empresa = _empresa_usuario(banco, usuario)
-    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="recorrencia")
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="recorrencia")
 
 
 @roteador_cliente.get("/ativos", response_class=HTMLResponse)
@@ -328,12 +326,7 @@ async def superficie_ativos_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return _redirect_login_cliente()
-
-    assert usuario is not None
-    empresa = _empresa_usuario(banco, usuario)
-    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="ativos")
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="ativos")
 
 
 @roteador_cliente.get("/mesa", response_class=HTMLResponse)
@@ -342,12 +335,7 @@ async def superficie_mesa_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return _redirect_login_cliente()
-
-    assert usuario is not None
-    empresa = _empresa_usuario(banco, usuario)
-    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="mesa")
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="mesa")
 
 
 @roteador_cliente.get("/documentos", response_class=HTMLResponse)
@@ -356,12 +344,7 @@ async def superficie_documentos_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return _redirect_login_cliente()
-
-    assert usuario is not None
-    empresa = _empresa_usuario(banco, usuario)
-    return _render_portal_cliente(request, usuario=usuario, empresa=empresa, tab_inicial="documentos")
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="documentos")
 
 
 @roteador_cliente.get("/api/bootstrap")

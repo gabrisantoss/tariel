@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 import logging
 import re
 from datetime import datetime, timezone
@@ -502,19 +501,6 @@ resetar_senha_usuario_empresa = _tenant_user_services.resetar_senha_usuario_empr
 
 def _agora_utc() -> datetime:
     return datetime.now(timezone.utc)
-
-
-def _normalizar_datetime_admin(valor: datetime | None) -> datetime | None:
-    if not isinstance(valor, datetime):
-        return None
-    if valor.tzinfo is None:
-        return valor.replace(tzinfo=timezone.utc)
-    return valor.astimezone(timezone.utc)
-
-
-def _max_datetime_admin(valores: Iterable[datetime | None]) -> datetime | None:
-    candidatos = [valor for valor in valores if isinstance(valor, datetime)]
-    return max(candidatos) if candidatos else None
 
 
 def _dict_payload_admin(valor: Any) -> dict[str, Any]:

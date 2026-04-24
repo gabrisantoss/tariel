@@ -373,6 +373,15 @@
             node.innerHTML = html;
         }
 
+        function htmlContextBlock(label, value) {
+            return `
+                <div class="context-block">
+                    <small>${escapeHtml(label)}</small>
+                    <strong>${escapeHtml(value)}</strong>
+                </div>
+            `;
+        }
+
         function normalizarFiltroAuditoriaAdmin(valor) {
             const filtro = texto(valor).trim().toLowerCase();
             if (!filtro || filtro === "all" || filtro === "todos") return "all";
@@ -833,18 +842,9 @@
                         <p>${escapeHtml(texto(empresa.capacidade_acao).trim() || "Use o resumo abaixo para entender impacto, folga e proximo passo comercial sem reabrir a tela em blocos concorrentes.")}</p>
                     </div>
                     <div class="stage-brief-card__metrics">
-                        <div class="context-block">
-                            <small>Laudos restantes</small>
-                            <strong>${empresa.laudos_restantes == null ? "Livre" : escapeHtml(formatarInteiro(empresa.laudos_restantes))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Usuarios restantes</small>
-                            <strong>${empresa.usuarios_restantes == null ? "Livre" : escapeHtml(formatarInteiro(empresa.usuarios_restantes))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Plano sugerido</small>
-                            <strong>${escapeHtml(planoSugerido || "Sem upgrade")}</strong>
-                        </div>
+                        ${htmlContextBlock("Laudos restantes", empresa.laudos_restantes == null ? "Livre" : formatarInteiro(empresa.laudos_restantes))}
+                        ${htmlContextBlock("Usuarios restantes", empresa.usuarios_restantes == null ? "Livre" : formatarInteiro(empresa.usuarios_restantes))}
+                        ${htmlContextBlock("Plano sugerido", planoSugerido || "Sem upgrade")}
                     </div>
                     <div class="stage-brief-card__actions">
                         ${planoSugerido
@@ -897,22 +897,13 @@
                         )}</p>
                     </div>
                     <div class="stage-brief-card__metrics">
-                        <div class="context-block">
-                            <small>Total operacional</small>
-                            <strong>${escapeHtml(formatarInteiro(total))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Primeiros acessos</small>
-                            <strong>${escapeHtml(formatarInteiro(temporarios))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Bloqueados</small>
-                            <strong>${escapeHtml(formatarInteiro(bloqueados))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>${escapeHtml(governance.enabled ? "Superficies liberadas" : "Modelo atual")}</small>
-                            <strong>${escapeHtml(governance.enabled ? governance.surfacesSummary : "Perfis distribuidos")}</strong>
-                        </div>
+                        ${htmlContextBlock("Total operacional", formatarInteiro(total))}
+                        ${htmlContextBlock("Primeiros acessos", formatarInteiro(temporarios))}
+                        ${htmlContextBlock("Bloqueados", formatarInteiro(bloqueados))}
+                        ${htmlContextBlock(
+                            governance.enabled ? "Superficies liberadas" : "Modelo atual",
+                            governance.enabled ? governance.surfacesSummary : "Perfis distribuidos"
+                        )}
                     </div>
                     <div class="stage-brief-card__actions">
                         <button class="btn" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="admin-onboarding-lista" data-origem="admin">Abrir ativacao</button>
@@ -946,18 +937,12 @@
                         )}</p>
                     </div>
                     <div class="stage-brief-card__metrics">
-                        <div class="context-block">
-                            <small>Itens no historico</small>
-                            <strong>${escapeHtml(formatarInteiro(obterAuditoriaAdmin().length))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Suporte recente</small>
-                            <strong>${suporteRecente?.payload?.protocolo ? escapeHtml(suporteRecente.payload.protocolo) : "Sem protocolo"}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Escopo maximo</small>
-                            <strong>${escapeHtml(texto(visibilityPolicy.exceptional_support_scope_level).replaceAll("_", " ") || "administrative")}</strong>
-                        </div>
+                        ${htmlContextBlock("Itens no historico", formatarInteiro(obterAuditoriaAdmin().length))}
+                        ${htmlContextBlock("Suporte recente", suporteRecente?.payload?.protocolo || "Sem protocolo")}
+                        ${htmlContextBlock(
+                            "Escopo maximo",
+                            texto(visibilityPolicy.exceptional_support_scope_level).replaceAll("_", " ") || "administrative"
+                        )}
                     </div>
                     <div class="stage-brief-card__actions">
                         <button class="btn" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="admin-auditoria-lista" data-origem="admin">Abrir historico</button>

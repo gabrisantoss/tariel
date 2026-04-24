@@ -1,8 +1,8 @@
 # Status Canônico
 
-Data de referência: 2026-04-13
-Branch operacional: `feature/canonical-case-lifecycle-v1`
-Repositório remoto: `gstarielio-hash/tariel-web`
+Data de referência: 2026-04-24
+Branch operacional: `main`
+Repositório remoto: `gabrisantoss/tariel`
 
 ## Objetivo
 
@@ -122,6 +122,12 @@ Ele está na fase de:
 - comunicação do dev client Android com backend local voltou a funcionar com correção de runtime de env e base URL;
 - `preferencias_ia_mobile` agora trafegam como contexto interno e já não devem aparecer como texto visível em chat, histórico ou preview;
 - a superfície principal do app já separa melhor `Chat`, `Mesa` e `Finalizar`, reduzindo parte da poluição operacional na conversa.
+- a baseline local foi restaurada e checkpointada em `964a348`, com `make verify` verde antes do corte atual.
+- `web-ci` agora inclui `mypy` progressivo via `make web-typecheck`, e o workspace web está sem erros de tipagem no recorte atual.
+- o pacote de segurança ganhou `make security-audit`, cobrindo `pip-audit` pinado para Python e `npm audit --omit=dev --audit-level=high` no mobile.
+- `render.yaml` e `make production-ops-check-strict` já exigem disco persistente para uploads, backup obrigatório, restore drill obrigatório e sessão fail-closed em produção.
+- existe drill local executável de restore de uploads em `make uploads-restore-drill`, agora também dentro de `release-gate-real`.
+- os 12 PDFs/ZIPs rastreados acima de 10 MiB saíram do Git futuro e ficaram documentados em `docs/binary_asset_manifests/oversized_assets_2026-04-24.json`.
 
 ## O que ainda falta melhorar
 
@@ -138,6 +144,7 @@ Ele está na fase de:
 - desacoplamento restante entre `cliente`, `chat` e `revisor`;
 - quebra de hotspots como `admin/services.py`;
 - extração mais nítida do núcleo compartilhado de caso técnico para fora de compat layers legadas.
+- continuar drenando `mesa/service.py`, `admin/client_routes.py` e helpers documentais sem reabrir contrato de produto.
 
 ### Frontend web
 
@@ -145,6 +152,7 @@ Ele está na fase de:
 - quebra do runtime do inspetor em módulos menores;
 - redução de compat layers legadas;
 - levar mais sinais canônicos para histórico, observabilidade e telas administrativas.
+- seguir trocando renderização manual por helpers escapados e contratos explícitos de superfície no portal cliente e no inspetor.
 
 ### Mobile
 
@@ -152,6 +160,7 @@ Ele está na fase de:
 - reuso de contexto do ativo e da inspeção;
 - limpeza visual de `Finalizar`, `Configurações` e `Histórico`;
 - possibilidade de fechar mais fluxos sem depender da web, conforme pacote.
+- manter Expo SDK 55 em patch atual e atualizar o runtime local de Node para `>=22.13.0` ou versão LTS compatível antes de tratar warnings de engine como erro.
 
 ### Documento
 
@@ -159,11 +168,18 @@ Ele está na fase de:
 - reduzir fallback visível fraco;
 - enriquecer pacote final de entrega.
 
+### Operação e segurança
+
+- hashificar `web/requirements.txt` em etapa futura para reduzir aviso do `pip-audit --no-deps`;
+- decidir política para vulnerabilidades moderadas transitivas do Expo quando a correção automática exigir downgrade incompatível;
+- mover os binários restantes entre 2 MiB e 10 MiB para LFS/storage conforme valor operacional e frequência de alteração;
+- executar restore drill real no provedor de storage externo quando o bucket/LFS definitivo dos assets pesados estiver definido.
+
 ## Próximo corte oficial
 
-1. manter este arquivo como referência curta;
-2. consolidar o pacote `docs/product-canonical-vision/`;
-3. continuar a extração do núcleo compartilhado de `caso técnico`;
+1. manter `make verify`, `make hygiene-check`, `make security-audit`, `make production-ops-check-strict`, `make uploads-restore-drill` e `make binary-assets-audit-strict` como pacote mínimo de promoção local;
+2. continuar a extração dos hotspots `mesa/service.py`, `admin/client_routes.py`, `chat_index_page.js` e superfícies do portal cliente;
+3. consolidar o pacote `docs/product-canonical-vision/`;
 4. refletir a matriz comercial por eixos nas superfícies administrativas e nos entitlements;
 5. reduzir desglobalização e compat layers do inspetor web;
 6. limpar visualmente `Finalizar`, `Configurações` e `Histórico` no app Android;

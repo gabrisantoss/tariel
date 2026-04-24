@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Literal
+from typing import Any, Iterable, Literal, cast
 
 from pydantic import ValidationError
 from sqlalchemy import select
@@ -743,11 +743,24 @@ def build_case_runtime_legacy_payload(
             return value
         return default
 
+    def _pick_int(*values: object, default: int = 0) -> int:
+        value = _pick(*values, default=default)
+        try:
+            return int(cast(Any, value) or default)
+        except (TypeError, ValueError):
+            return default
+
+    def _pick_list(*values: object) -> list[Any]:
+        value = _pick(*values, default=[])
+        if isinstance(value, list):
+            return list(value)
+        if isinstance(value, tuple):
+            return list(value)
+        return []
+
     return {
         "estado": str(_pick(payload_base.get("estado"), legacy_public_state, default="sem_relatorio") or "sem_relatorio"),
-        "laudo_id": int(
-            _pick(payload_base.get("laudo_id"), getattr(laudo, "id", 0), default=0) or 0
-        ),
+        "laudo_id": _pick_int(payload_base.get("laudo_id"), getattr(laudo, "id", 0)),
         "status_card": _pick(payload_base.get("status_card"), card.get("status_card")),
         "permite_reabrir": bool(
             _pick(payload_base.get("permite_reabrir"), allows_reopen, default=False)
@@ -818,29 +831,17 @@ def build_case_runtime_legacy_payload(
             _pick(payload_base.get("next_action_summary"), card.get("next_action_summary"), default="")
             or ""
         ),
-        "allowed_next_lifecycle_statuses": list(
-            _pick(
-                payload_base.get("allowed_next_lifecycle_statuses"),
-                card.get("allowed_next_lifecycle_statuses"),
-                default=[],
-            )
-            or []
+        "allowed_next_lifecycle_statuses": _pick_list(
+            payload_base.get("allowed_next_lifecycle_statuses"),
+            card.get("allowed_next_lifecycle_statuses"),
         ),
-        "allowed_lifecycle_transitions": list(
-            _pick(
-                payload_base.get("allowed_lifecycle_transitions"),
-                card.get("allowed_lifecycle_transitions"),
-                default=[],
-            )
-            or []
+        "allowed_lifecycle_transitions": _pick_list(
+            payload_base.get("allowed_lifecycle_transitions"),
+            card.get("allowed_lifecycle_transitions"),
         ),
-        "allowed_surface_actions": list(
-            _pick(
-                payload_base.get("allowed_surface_actions"),
-                card.get("allowed_surface_actions"),
-                default=[],
-            )
-            or []
+        "allowed_surface_actions": _pick_list(
+            payload_base.get("allowed_surface_actions"),
+            card.get("allowed_surface_actions"),
         ),
     }
 
