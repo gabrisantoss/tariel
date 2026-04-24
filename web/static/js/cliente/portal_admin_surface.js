@@ -469,6 +469,21 @@
             return pill;
         }
 
+        function criarHeroChipAdminNode(label) {
+            const chip = documentRef.createElement("span");
+            chip.className = "hero-chip";
+            chip.textContent = texto(label);
+            return chip;
+        }
+
+        function criarFeatureChipAdminNode({ enabled = true, label }) {
+            const chip = documentRef.createElement("span");
+            chip.className = "feature-chip";
+            chip.dataset.enabled = enabled ? "true" : "false";
+            chip.textContent = texto(label);
+            return chip;
+        }
+
         function criarSupportPolicyCardAdminNode({ label, value, detail }) {
             const article = documentRef.createElement("article");
             article.className = "support-policy-card";
@@ -916,68 +931,123 @@
                 });
             }
 
-            $("empresa-resumo-detalhado").innerHTML = `
-                <div class="stack">
-                    <div class="status-strip">
-                        <span class="pill" data-kind="laudo" data-status="${empresa.status_bloqueio ? "ajustes" : "aberto"}">${empresa.status_bloqueio ? "Conta bloqueada" : "Operacao liberada"}</span>
-                        <span class="pill" data-kind="role">CNPJ ${escapeHtml(empresa.cnpj || "nao informado")}</span>
-                    </div>
-                    <div class="usage-strip">
-                        <div class="context-head">
-                            <div>
-                                <small>Consumo mensal monitorado</small>
-                                <strong>${formatarInteiro(empresa.laudos_mes_atual || 0)} laudos criados neste mes</strong>
-                            </div>
-                            <span class="pill" data-kind="laudo" data-status="${capacidadeTone}">${formatarPercentual(empresa.uso_percentual)}</span>
-                        </div>
-                        <div class="progress-track"><div class="progress-bar" data-progress="${escapeAttr(String(progresso))}"></div></div>
-                        <div class="toolbar-meta">
-                            <span class="hero-chip">Limite mensal: ${empresa.laudos_mes_limite == null ? "sem teto" : formatarInteiro(empresa.laudos_mes_limite)}</span>
-                            <span class="hero-chip">Laudos restantes: ${empresa.laudos_restantes == null ? "sem teto" : formatarInteiro(empresa.laudos_restantes)}</span>
-                            <span class="hero-chip">Limite de usuarios: ${empresa.usuarios_max == null ? "sem teto" : formatarInteiro(empresa.usuarios_max)}</span>
-                            <span class="hero-chip">Vagas restantes: ${empresa.usuarios_restantes == null ? "sem teto" : formatarInteiro(empresa.usuarios_restantes)}</span>
-                        </div>
-                    </div>
-                    <div class="context-grid">
-                        <div class="context-block">
-                            <small>Equipe ocupando o plano</small>
-                            <strong>${formatarInteiro(tenantAdmin?.user_summary?.total_users || empresa.usuarios_em_uso || empresa.total_usuarios)}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Margem de usuarios</small>
-                            <strong>${escapeHtml(resumoUsuarios)}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Laudos na janela atual</small>
-                            <strong>${formatarInteiro(empresa.laudos_mes_atual || 0)}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Margem do mes</small>
-                            <strong>${escapeHtml(resumoLaudos)}</strong>
-                        </div>
-                    </div>
-                    <div class="chip-list">
-                        <span class="feature-chip" data-enabled="${empresa.upload_doc ? "true" : "false"}">Envio de documentos ${empresa.upload_doc ? "ativo" : "indisponivel"}</span>
-                        <span class="feature-chip" data-enabled="${empresa.deep_research ? "true" : "false"}">Analise aprofundada ${empresa.deep_research ? "ativa" : "indisponivel"}</span>
-                        <span class="feature-chip" data-enabled="true">Responsavel ${escapeHtml(empresa.nome_responsavel || "nao informado")}</span>
-                        <span class="feature-chip" data-enabled="true">Base ${escapeHtml(empresa.cidade_estado || "nao informada")}</span>
-                        <span class="feature-chip" data-enabled="true">Processamento acumulado ${formatarInteiro(empresa.mensagens_processadas || 0)}</span>
-                        <span class="feature-chip" data-enabled="${governance.enabled ? "true" : "false"}">Modelo operacional ${escapeHtml(governance.operatingModelLabel)}</span>
-                        <span class="feature-chip" data-enabled="${governance.enabled ? "true" : "false"}">${escapeHtml(governance.enabled ? `Continuidades: ${governance.surfacesSummary}` : "Equipe distribuida por perfis da empresa")}</span>
-                    </div>
-                    <div class="context-guidance" data-tone="${prioridade.tone}">
-                        <div class="context-guidance-copy">
-                            <small>Proximo foco da administracao</small>
-                            <strong>${escapeHtml(prioridade.badge)}</strong>
-                            <p>${escapeHtml(prioridade.acao)}</p>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="${prioridade.tone}">${escapeHtml(prioridade.badge)}</span>
-                    </div>
-                </div>
-            `;
-            const barraProgresso = documentRef.querySelector("#empresa-resumo-detalhado .progress-bar");
-            if (barraProgresso) {
-                barraProgresso.style.width = `${progresso}%`;
+            const resumoDetalhado = $("empresa-resumo-detalhado");
+            if (resumoDetalhado) {
+                limparElemento(resumoDetalhado);
+                const stack = documentRef.createElement("div");
+                stack.className = "stack";
+
+                const statusStrip = documentRef.createElement("div");
+                statusStrip.className = "status-strip";
+                statusStrip.appendChild(criarPillAdminNode({
+                    kind: "laudo",
+                    status: empresa.status_bloqueio ? "ajustes" : "aberto",
+                    label: empresa.status_bloqueio ? "Conta bloqueada" : "Operacao liberada",
+                }));
+                statusStrip.appendChild(criarPillAdminNode({
+                    kind: "role",
+                    label: `CNPJ ${empresa.cnpj || "nao informado"}`,
+                }));
+                stack.appendChild(statusStrip);
+
+                const usageStrip = documentRef.createElement("div");
+                usageStrip.className = "usage-strip";
+                const contextHead = documentRef.createElement("div");
+                contextHead.className = "context-head";
+                const consumoCopy = documentRef.createElement("div");
+                const consumoLabel = documentRef.createElement("small");
+                consumoLabel.textContent = "Consumo mensal monitorado";
+                consumoCopy.appendChild(consumoLabel);
+                const consumoValor = documentRef.createElement("strong");
+                consumoValor.textContent = `${formatarInteiro(empresa.laudos_mes_atual || 0)} laudos criados neste mes`;
+                consumoCopy.appendChild(consumoValor);
+                contextHead.appendChild(consumoCopy);
+                contextHead.appendChild(criarPillAdminNode({
+                    kind: "laudo",
+                    status: capacidadeTone,
+                    label: formatarPercentual(empresa.uso_percentual),
+                }));
+                usageStrip.appendChild(contextHead);
+
+                const progressTrack = documentRef.createElement("div");
+                progressTrack.className = "progress-track";
+                const progressBar = documentRef.createElement("div");
+                progressBar.className = "progress-bar";
+                progressBar.dataset.progress = String(progresso);
+                progressBar.style.width = `${progresso}%`;
+                progressTrack.appendChild(progressBar);
+                usageStrip.appendChild(progressTrack);
+
+                const toolbarMeta = documentRef.createElement("div");
+                toolbarMeta.className = "toolbar-meta";
+                [
+                    `Limite mensal: ${empresa.laudos_mes_limite == null ? "sem teto" : formatarInteiro(empresa.laudos_mes_limite)}`,
+                    `Laudos restantes: ${empresa.laudos_restantes == null ? "sem teto" : formatarInteiro(empresa.laudos_restantes)}`,
+                    `Limite de usuarios: ${empresa.usuarios_max == null ? "sem teto" : formatarInteiro(empresa.usuarios_max)}`,
+                    `Vagas restantes: ${empresa.usuarios_restantes == null ? "sem teto" : formatarInteiro(empresa.usuarios_restantes)}`,
+                ].forEach((label) => {
+                    toolbarMeta.appendChild(criarHeroChipAdminNode(label));
+                });
+                usageStrip.appendChild(toolbarMeta);
+                stack.appendChild(usageStrip);
+
+                const contextGrid = documentRef.createElement("div");
+                contextGrid.className = "context-grid";
+                [
+                    {
+                        label: "Equipe ocupando o plano",
+                        value: formatarInteiro(tenantAdmin?.user_summary?.total_users || empresa.usuarios_em_uso || empresa.total_usuarios),
+                    },
+                    { label: "Margem de usuarios", value: resumoUsuarios },
+                    { label: "Laudos na janela atual", value: formatarInteiro(empresa.laudos_mes_atual || 0) },
+                    { label: "Margem do mes", value: resumoLaudos },
+                ].forEach((item) => {
+                    contextGrid.appendChild(criarContextBlockAdminNode(item.label, item.value));
+                });
+                stack.appendChild(contextGrid);
+
+                const chipList = documentRef.createElement("div");
+                chipList.className = "chip-list";
+                [
+                    {
+                        enabled: Boolean(empresa.upload_doc),
+                        label: `Envio de documentos ${empresa.upload_doc ? "ativo" : "indisponivel"}`,
+                    },
+                    {
+                        enabled: Boolean(empresa.deep_research),
+                        label: `Analise aprofundada ${empresa.deep_research ? "ativa" : "indisponivel"}`,
+                    },
+                    { label: `Responsavel ${empresa.nome_responsavel || "nao informado"}` },
+                    { label: `Base ${empresa.cidade_estado || "nao informada"}` },
+                    { label: `Processamento acumulado ${formatarInteiro(empresa.mensagens_processadas || 0)}` },
+                    {
+                        enabled: Boolean(governance.enabled),
+                        label: `Modelo operacional ${governance.operatingModelLabel}`,
+                    },
+                    {
+                        enabled: Boolean(governance.enabled),
+                        label: governance.enabled
+                            ? `Continuidades: ${governance.surfacesSummary}`
+                            : "Equipe distribuida por perfis da empresa",
+                    },
+                ].forEach((chip) => {
+                    chipList.appendChild(criarFeatureChipAdminNode(chip));
+                });
+                stack.appendChild(chipList);
+
+                stack.appendChild(criarContextGuidanceAdminNode({
+                    tone: prioridade.tone,
+                    eyebrow: "Proximo foco da administracao",
+                    title: prioridade.badge,
+                    detail: prioridade.acao,
+                    sideNode: criarPillAdminNode({
+                        kind: "priority",
+                        status: prioridade.tone,
+                        label: prioridade.badge,
+                    }),
+                }));
+
+                resumoDetalhado.appendChild(stack);
             }
 
             const plano = $("empresa-plano");

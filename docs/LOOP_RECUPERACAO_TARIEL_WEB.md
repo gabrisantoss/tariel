@@ -3082,3 +3082,36 @@ Impacto observado:
 - o roteador principal de clientes saiu do hotspot severo e agora concentra lista/detalhe e helpers compartilhados de visibilidade/leitura;
 - o ciclo de onboarding ficou coeso em um módulo com sessão temporária, credenciais e tela de acesso inicial;
 - o próximo pacote coerente é atacar `innerHTML` restante em `portal_admin_surface.js` ou fazer uma limpeza final nos helpers remanescentes de `client_routes.py`.
+
+## R76. Resumo detalhado Admin Cliente em DOM seguro
+
+Resumo:
+
+- troquei o bloco `empresa-resumo-detalhado` em `web/static/js/cliente/portal_admin_surface.js` de string HTML interpolada para montagem DOM explícita;
+- adicionei helpers pequenos para `hero-chip` e `feature-chip`, reaproveitando `textContent`, `dataset` e os helpers DOM já existentes;
+- preservei classes, `data-*`, barra de progresso, pills, chips de capacidade e guidance visual do Admin Cliente;
+- mantive Render real como pendência externa: sem aguardar deploy e sem aplicar alteração de disco/plano no provedor.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_admin_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_admin_surface.js` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py::test_templates_cliente_explicitam_abas_e_formularios_principais -q` -> `1 passed`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `335` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- o resumo detalhado do plano/capacidade no Portal Admin Cliente deixou de renderizar dados do tenant via `innerHTML`;
+- o padrão DOM seguro usado nos cards administrativos ficou mais reaproveitável para os próximos blocos;
+- `portal_admin_surface.js` ainda tem `innerHTML` em onboarding, auditoria, histórico de planos e tabela de usuários; o próximo pacote coerente é atacar auditoria/histórico ou a tabela de usuários.

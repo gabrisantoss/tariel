@@ -158,6 +158,7 @@ Ele está na fase de:
 - o Portal Admin Cliente agora monta saúde operacional e barras de histórico por DOM seguro, sem depender de HTML string para séries mensais/diárias.
 - o Portal Admin Cliente agora monta suporte diagnóstico, política de suporte e protocolo por DOM seguro, preservando escopo técnico mínimo e trilha auditável.
 - a Mesa moveu verificação pública e anexo pack do pacote para `mesa/package_document_support.py`, reduzindo mais um bloco documental de `mesa/service.py`.
+- o Portal Admin Cliente agora monta o resumo detalhado de plano/capacidade por DOM seguro, mantendo dados do tenant fora de string HTML interpolada.
 
 ## O que ainda falta melhorar
 
@@ -183,6 +184,7 @@ Ele está na fase de:
 - redução de compat layers legadas;
 - levar mais sinais canônicos para histórico, observabilidade e telas administrativas.
 - seguir trocando renderização manual por helpers escapados e contratos explícitos de superfície no portal cliente e no inspetor.
+- concluir a remoção gradual de `innerHTML` restante no Portal Admin Cliente, começando por auditoria, histórico de planos e tabela de usuários.
 
 ### Mobile
 
