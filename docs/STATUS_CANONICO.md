@@ -159,6 +159,7 @@ Ele está na fase de:
 - o Portal Admin Cliente agora monta suporte diagnóstico, política de suporte e protocolo por DOM seguro, preservando escopo técnico mínimo e trilha auditável.
 - a Mesa moveu verificação pública e anexo pack do pacote para `mesa/package_document_support.py`, reduzindo mais um bloco documental de `mesa/service.py`.
 - o Portal Admin Cliente agora monta o resumo detalhado de plano/capacidade por DOM seguro, mantendo dados do tenant fora de string HTML interpolada.
+- o Portal Admin Cliente agora monta o onboarding de equipe por DOM seguro, mantendo nomes, e-mails, status e ações rápidas fora de string HTML interpolada.
 
 ## O que ainda falta melhorar
 

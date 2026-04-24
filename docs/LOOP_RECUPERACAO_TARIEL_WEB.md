@@ -3115,3 +3115,36 @@ Impacto observado:
 - o resumo detalhado do plano/capacidade no Portal Admin Cliente deixou de renderizar dados do tenant via `innerHTML`;
 - o padrão DOM seguro usado nos cards administrativos ficou mais reaproveitável para os próximos blocos;
 - `portal_admin_surface.js` ainda tem `innerHTML` em onboarding, auditoria, histórico de planos e tabela de usuários; o próximo pacote coerente é atacar auditoria/histórico ou a tabela de usuários.
+
+## R77. Onboarding de equipe Admin Cliente em DOM seguro
+
+Resumo:
+
+- troquei `renderOnboardingEquipe` em `web/static/js/cliente/portal_admin_surface.js` de HTML interpolado para montagem DOM explícita;
+- o resumo de primeiros acessos, sem login, bloqueios e revisores sem login agora reaproveita `criarMetricCardAdminNode`;
+- a lista de pendências, estado vazio e ações rápidas agora usam `textContent`, `dataset` e helpers DOM, preservando `filtrar-usuarios-status`, `limpar-filtro-usuarios`, `toggle-user`, `reset-user` e `abrir-prioridade`;
+- mantive Render real como pendência externa: sem aguardar deploy e sem aplicar alteração de disco/plano no provedor.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_admin_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_admin_surface.js` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py::test_templates_cliente_explicitam_abas_e_formularios_principais -q` -> `1 passed`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `335` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- o onboarding da equipe deixou de interpolar nome/e-mail/status de usuários em `innerHTML`;
+- os botões de filtro rápido e ação de usuário agora preservam o mesmo contrato via `dataset`, mas sem string HTML;
+- `portal_admin_surface.js` ainda tem `innerHTML` em auditoria, histórico/preview de planos e tabela de usuários; o próximo pacote coerente é atacar auditoria ou histórico de planos.

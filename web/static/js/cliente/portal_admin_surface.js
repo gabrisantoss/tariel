@@ -600,7 +600,7 @@
             return article;
         }
 
-        function criarAdminActionButtonNode({ label, primary = false, ghost = false, act, kind, canal, target, origem }) {
+        function criarAdminActionButtonNode({ label, primary = false, ghost = false, act, kind, canal, target, origem, dataset = {} }) {
             const button = documentRef.createElement("button");
             button.className = primary ? "btn primary" : ghost ? "btn ghost" : "btn";
             button.type = "button";
@@ -609,8 +609,58 @@
             if (canal) button.dataset.canal = texto(canal);
             if (target) button.dataset.target = texto(target);
             if (origem) button.dataset.origem = texto(origem);
+            Object.entries(dataset || {}).forEach(([key, value]) => {
+                if (value == null) return;
+                button.dataset[key] = texto(value);
+            });
             button.textContent = texto(label);
             return button;
+        }
+
+        function criarEmptyStateAdminNode(title, detail) {
+            const empty = documentRef.createElement("div");
+            empty.className = "empty-state";
+            const titleNode = documentRef.createElement("strong");
+            titleNode.textContent = texto(title);
+            empty.appendChild(titleNode);
+            const detailNode = documentRef.createElement("p");
+            detailNode.textContent = texto(detail);
+            empty.appendChild(detailNode);
+            return empty;
+        }
+
+        function criarToolbarMetaAdminNode(children = []) {
+            const toolbar = documentRef.createElement("div");
+            toolbar.className = "toolbar-meta";
+            children.forEach((child) => {
+                if (child) toolbar.appendChild(child);
+            });
+            return toolbar;
+        }
+
+        function criarOnboardingEquipeQuickActionsAdminNode() {
+            return criarToolbarMetaAdminNode([
+                criarAdminActionButtonNode({
+                    label: "Ver primeiros acessos",
+                    act: "filtrar-usuarios-status",
+                    dataset: { situacao: "temporarios" },
+                }),
+                criarAdminActionButtonNode({
+                    label: "Ver sem login",
+                    act: "filtrar-usuarios-status",
+                    dataset: { situacao: "sem_login" },
+                }),
+                criarAdminActionButtonNode({
+                    label: "Ver bloqueados",
+                    act: "filtrar-usuarios-status",
+                    dataset: { situacao: "bloqueados" },
+                }),
+                criarAdminActionButtonNode({
+                    label: "Limpar filtro rapido",
+                    ghost: true,
+                    act: "limpar-filtro-usuarios",
+                }),
+            ]);
         }
 
         function criarStageBriefCardAdminNode({ tone, eyebrow, title, detail, metrics = [], actions = [] }) {
@@ -1586,97 +1636,113 @@
             );
             const revisoresSemLogin = semLogin.filter((item) => slugPapel(item) === "revisor");
 
-            resumo.innerHTML = `
-                <article class="metric-card" data-accent="waiting">
-                    <small>Primeiros acessos</small>
-                    <strong>${formatarInteiro(temporarios.length)}</strong>
-                    <span class="metric-meta">Usuarios com senha temporaria ainda pendente de ativacao.</span>
-                </article>
-                <article class="metric-card" data-accent="aberto">
-                    <small>Sem login</small>
-                    <strong>${formatarInteiro(semLogin.length)}</strong>
-                    <span class="metric-meta">Cadastros criados que ainda nao entraram nenhuma vez.</span>
-                </article>
-                <article class="metric-card" data-accent="attention">
-                    <small>Bloqueados</small>
-                    <strong>${formatarInteiro(bloqueados.length)}</strong>
-                    <span class="metric-meta">Acessos travados que podem segurar a operacao da empresa.</span>
-                </article>
-                <article class="metric-card" data-accent="live">
-                    <small>Mesa sem login</small>
-                    <strong>${formatarInteiro(revisoresSemLogin.length)}</strong>
-                    <span class="metric-meta">Pessoas da revisao que ainda nao ativaram o acesso.</span>
-                </article>
-            `;
+            limparElemento(resumo);
+            [
+                {
+                    accent: "waiting",
+                    label: "Primeiros acessos",
+                    value: formatarInteiro(temporarios.length),
+                    meta: "Usuarios com senha temporaria ainda pendente de ativacao.",
+                },
+                {
+                    accent: "aberto",
+                    label: "Sem login",
+                    value: formatarInteiro(semLogin.length),
+                    meta: "Cadastros criados que ainda nao entraram nenhuma vez.",
+                },
+                {
+                    accent: "attention",
+                    label: "Bloqueados",
+                    value: formatarInteiro(bloqueados.length),
+                    meta: "Acessos travados que podem segurar a operacao da empresa.",
+                },
+                {
+                    accent: "live",
+                    label: "Mesa sem login",
+                    value: formatarInteiro(revisoresSemLogin.length),
+                    meta: "Pessoas da revisao que ainda nao ativaram o acesso.",
+                },
+            ].forEach((metric) => {
+                resumo.appendChild(criarMetricCardAdminNode(metric));
+            });
 
             const pendenciasMap = new Map();
             [...temporarios, ...bloqueados, ...semLogin].forEach((item) => {
                 if (item?.id != null) pendenciasMap.set(Number(item.id), item);
             });
             const pendencias = ordenarPorPrioridade([...pendenciasMap.values()], prioridadeUsuario).slice(0, 4);
-
-            const quickActions = `
-                <div class="toolbar-meta">
-                    <button class="btn" type="button" data-act="filtrar-usuarios-status" data-situacao="temporarios">Ver primeiros acessos</button>
-                    <button class="btn" type="button" data-act="filtrar-usuarios-status" data-situacao="sem_login">Ver sem login</button>
-                    <button class="btn" type="button" data-act="filtrar-usuarios-status" data-situacao="bloqueados">Ver bloqueados</button>
-                    <button class="btn ghost" type="button" data-act="limpar-filtro-usuarios">Limpar filtro rapido</button>
-                </div>
-            `;
+            limparElemento(lista);
+            const quickActions = criarOnboardingEquipeQuickActionsAdminNode();
 
             if (!pendencias.length) {
-                lista.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Equipe principal ativada</strong>
-                        <p>Nao ha ativacao pendente agora. Novos primeiros acessos e bloqueios vao aparecer aqui.</p>
-                    </div>
-                    ${quickActions}
-                `;
+                lista.appendChild(criarEmptyStateAdminNode(
+                    "Equipe principal ativada",
+                    "Nao ha ativacao pendente agora. Novos primeiros acessos e bloqueios vao aparecer aqui."
+                ));
+                lista.appendChild(quickActions);
                 return;
             }
 
-            lista.innerHTML = `
-                ${quickActions}
-                ${pendencias.map((usuario) => {
-                    const prioridade = prioridadeUsuario(usuario);
-                    const papel = slugPapel(usuario);
-                    const detalhe =
-                        !usuario.ativo
-                            ? `${usuario.nome || "Usuario"} esta bloqueado e pode estar segurando a rotina da empresa.`
-                            : usuario.senha_temporaria_ativa
-                                ? `${usuario.nome || "Usuario"} ainda precisa concluir o primeiro acesso.`
-                                : `${usuario.nome || "Usuario"} foi criado, mas ainda nao entrou nenhuma vez.`;
+            lista.appendChild(quickActions);
+            pendencias.forEach((usuario) => {
+                const prioridade = prioridadeUsuario(usuario);
+                const papel = slugPapel(usuario);
+                const detalhe =
+                    !usuario.ativo
+                        ? `${usuario.nome || "Usuario"} esta bloqueado e pode estar segurando a rotina da empresa.`
+                        : usuario.senha_temporaria_ativa
+                            ? `${usuario.nome || "Usuario"} ainda precisa concluir o primeiro acesso.`
+                            : `${usuario.nome || "Usuario"} foi criado, mas ainda nao entrou nenhuma vez.`;
 
-                    return `
-                        <article class="activity-item">
-                            <div class="activity-head">
-                                <div class="activity-copy">
-                                    <strong>${escapeHtml(usuario.nome || "Usuario")}</strong>
-                                    <span class="activity-meta">${escapeHtml(usuario.email || "Sem e-mail")} • ${escapeHtml(obterNomePapel(papel))}</span>
-                                </div>
-                                <span class="pill" data-kind="priority" data-status="${escapeAttr(prioridade.tone)}">${escapeHtml(prioridade.badge)}</span>
-                            </div>
-                            <p class="activity-detail">${escapeHtml(detalhe)}</p>
-                            <div class="toolbar-meta">
-                                ${!usuario.ativo
-                                    ? `<button class="btn" type="button" data-act="toggle-user" data-user="${escapeAttr(String(usuario.id || ""))}">Desbloquear agora</button>`
-                                    : `<button class="btn" type="button" data-act="reset-user" data-user="${escapeAttr(String(usuario.id || ""))}">Gerar nova senha</button>`}
-                                <button
-                                    class="btn"
-                                    type="button"
-                                    data-act="abrir-prioridade"
-                                    data-kind="admin-user"
-                                    data-canal="admin"
-                                    data-target="lista-usuarios"
-                                    data-user="${escapeAttr(String(usuario.id || ""))}"
-                                    data-busca="${escapeAttr(usuario.email || usuario.nome || "")}"
-                                    data-papel="${escapeAttr(papel)}"
-                                >Abrir cadastro</button>
-                            </div>
-                        </article>
-                    `;
-                }).join("")}
-            `;
+                const article = documentRef.createElement("article");
+                article.className = "activity-item";
+
+                const head = documentRef.createElement("div");
+                head.className = "activity-head";
+                const copy = documentRef.createElement("div");
+                copy.className = "activity-copy";
+                const title = documentRef.createElement("strong");
+                title.textContent = texto(usuario.nome || "Usuario");
+                copy.appendChild(title);
+                const meta = documentRef.createElement("span");
+                meta.className = "activity-meta";
+                meta.textContent = `${texto(usuario.email || "Sem e-mail")} • ${obterNomePapel(papel)}`;
+                copy.appendChild(meta);
+                head.appendChild(copy);
+                head.appendChild(criarPillAdminNode({
+                    kind: "priority",
+                    status: prioridade.tone,
+                    label: prioridade.badge,
+                }));
+                article.appendChild(head);
+
+                const detail = documentRef.createElement("p");
+                detail.className = "activity-detail";
+                detail.textContent = detalhe;
+                article.appendChild(detail);
+
+                const userId = String(usuario.id || "");
+                article.appendChild(criarToolbarMetaAdminNode([
+                    criarAdminActionButtonNode({
+                        label: !usuario.ativo ? "Desbloquear agora" : "Gerar nova senha",
+                        act: !usuario.ativo ? "toggle-user" : "reset-user",
+                        dataset: { user: userId },
+                    }),
+                    criarAdminActionButtonNode({
+                        label: "Abrir cadastro",
+                        act: "abrir-prioridade",
+                        kind: "admin-user",
+                        canal: "admin",
+                        target: "lista-usuarios",
+                        dataset: {
+                            user: userId,
+                            busca: usuario.email || usuario.nome || "",
+                            papel,
+                        },
+                    }),
+                ]));
+                lista.appendChild(article);
+            });
         }
 
         function renderAdminAuditoria() {
