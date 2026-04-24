@@ -3045,3 +3045,40 @@ Impacto observado:
 - a governança de superfícies contratadas ficou fora do roteador monolítico e continua separada da gestão direta de funcionários do cliente;
 - `client_routes.py` saiu abaixo de `1000` linhas e agora concentra principalmente onboarding, lista/detalhe e helpers compartilhados de detalhe/visibilidade;
 - o próximo pacote coerente pode ser extrair onboarding/cadastro para módulo próprio ou alternar para frontend e atacar `innerHTML` restante em `portal_admin_surface.js`.
+
+## R75. Onboarding Admin CEO extraído
+
+Resumo:
+
+- extraí `/admin/novo-cliente`, `/admin/cadastrar-empresa` e `/admin/clientes/{empresa_id}/acesso-inicial` para `web/app/domains/admin/client_onboarding_routes.py`;
+- preservei o bundle temporário de credenciais, fallback legado de flash, criação de equipe inicial, compatibilidade de monkeypatch via `registrar_novo_cliente` e hot spot de acesso inicial;
+- mantive `client_routes.py` como agregador de rotas e reexportando `registrar_novo_cliente` para import legado de `admin/routes.py`;
+- reduzi `web/app/domains/admin/client_routes.py` de `960` para `397` linhas;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/client_routes.py`
+- `web/app/domains/admin/client_onboarding_routes.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_onboarding_routes.py web/tests/test_admin_client_routes.py` -> verde;
+- `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_onboarding_routes.py` -> verde;
+- `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py -q -k 'cadastrar_empresa or pacote_inicial or novo_cliente'` -> `2 passed, 39 deselected`;
+- `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'admin or catalogo'` -> `4 passed, 39 deselected`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `335` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- o roteador principal de clientes saiu do hotspot severo e agora concentra lista/detalhe e helpers compartilhados de visibilidade/leitura;
+- o ciclo de onboarding ficou coeso em um módulo com sessão temporária, credenciais e tela de acesso inicial;
+- o próximo pacote coerente é atacar `innerHTML` restante em `portal_admin_surface.js` ou fazer uma limpeza final nos helpers remanescentes de `client_routes.py`.
