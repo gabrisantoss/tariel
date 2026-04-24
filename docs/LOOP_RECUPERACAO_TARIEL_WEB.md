@@ -3282,3 +3282,115 @@ Impacto observado:
 - a visão executiva do Portal Admin Cliente deixou de interpolar dados de onboarding, pacote, observabilidade e pendências em `innerHTML`;
 - `portal_admin_surface.js` e `portal_admin_overview_surface.js` agora estão no padrão DOM seguro para renderização dinâmica;
 - o próximo pacote coerente pode atacar `portal_shell.js` ou as superfícies verticais (`servicos`, `ativos`, `documentos`, `recorrencia`), que ainda possuem HTML string dinâmico.
+
+## R82. Estado canônico inicial do Inspetor
+
+Resumo:
+
+- centralizei os bindings de estado do inspetor em `web/static/js/inspetor/workspace_runtime_state.js` por meio de `criarBindingsEstadoInspector`;
+- reduzi `web/static/js/chat/chat_index_page.js`, que agora consome o pacote autoritativo para URL, snapshots, autoridade, espelhamento em `dataset`/`storage`, sincronização e retomada de home;
+- corrigi o SSR de `/app/` sem query em `web/app/domains/chat/session_helpers.py`, mantendo a limpeza do contexto ativo e abrindo a home como tela ativa;
+- registrei a execução no backlog estrutural do inspetor/backend/UX.
+
+Arquivos do ciclo:
+
+- `web/static/js/inspetor/workspace_runtime_state.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/app/domains/chat/session_helpers.py`
+- `web/tests/test_smoke.py`
+- `PLANS.md`
+- `docs/STATUS_CANONICO.md`
+- `docs/restructuring-roadmap/138_backlog_execucao_inspetor_backend_ux.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/inspetor/workspace_runtime_state.js` -> verde;
+- `node --check web/static/js/chat/chat_index_page.js` -> verde;
+- `python -m py_compile web/app/domains/chat/session_helpers.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_inspector_active_report_authority.py tests/test_app_boot_query_reduction.py -q` -> `5 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k 'templates_chat_mantem_controles_essenciais_de_ui or workspace'` -> `2 passed, 41 deselected`;
+- `git diff --check` -> sem erros;
+- `make verify` -> `ruff`, `mypy`, testes web, mobile e mesa verdes;
+- `make hygiene-check` -> `status=ok`.
+
+Impacto observado:
+
+- o runtime do inspetor tem menos lógica de reconciliação local dentro de `chat_index_page.js`;
+- o ponto único `workspace_runtime_state.js` passou a ser a fachada para sincronizar estado autoritativo, espelhos e compatibilidade;
+- o próximo pacote coerente é simplificar a jornada principal do inspetor, reduzindo CTAs e modos simultâneos na entrada inicial.
+
+## R83. Entrada principal do Inspetor mais simples
+
+Resumo:
+
+- movi o CTA principal `Nova inspeção` para o landing do assistente em `web/templates/inspetor/workspace/_assistant_landing.html`;
+- removi a faixa redundante de ações do rodapé em `web/templates/inspetor/_workspace.html`;
+- mantive `btn-anexo` e `btn-foto-rapida` como gatilhos legados escondidos para compatibilidade, enquanto `Anexar` e `Foto` seguem visíveis dentro do composer;
+- reposicionei `Mesa` e `Áudio` como botões compactos do composer, preservando a governança de visibilidade da Mesa;
+- propaguei a restrição de plano sem PDF para o botão visível de anexo do composer em `web/static/js/shared/app_shell.js`.
+
+Arquivos do ciclo:
+
+- `web/templates/inspetor/workspace/_assistant_landing.html`
+- `web/templates/inspetor/_workspace.html`
+- `web/static/css/inspetor/visual_refinements.css`
+- `web/static/css/inspetor/workspace_states.css`
+- `web/static/js/shared/app_shell.js`
+- `web/tests/test_smoke.py`
+- `PLANS.md`
+- `docs/STATUS_CANONICO.md`
+- `docs/restructuring-roadmap/138_backlog_execucao_inspetor_backend_ux.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/shared/app_shell.js` -> verde;
+- `node --check web/static/js/chat/chat_index_page.js` -> verde;
+- `node --check web/static/js/inspetor/workspace_runtime_state.js` -> verde;
+- `python -m py_compile web/app/domains/chat/session_helpers.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k 'templates_chat_mantem_controles_essenciais_de_ui or workspace'` -> `2 passed, 41 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_inspector_active_report_authority.py tests/test_app_boot_query_reduction.py -q` -> `5 passed`;
+- `git diff --check` -> sem erros;
+- `make verify` -> `ruff`, `mypy`, testes web, mobile e mesa verdes;
+- `make hygiene-check` -> `status=ok`.
+
+Impacto observado:
+
+- a primeira entrada do inspetor passa a ter uma ação principal clara, com o chat abaixo como alternativa natural;
+- o composer concentra anexos, foto, áudio, envio e Mesa compacta em um único lugar, reduzindo botões paralelos;
+- o próximo pacote coerente é iniciar a `Fase 2` pela fronteira transacional explícita do backend, salvo se for necessário validar visualmente o landing com Playwright antes.
+
+## R84. Commit operacional explícito no ciclo principal do laudo
+
+Resumo:
+
+- troquei o `banco.commit()` direto de criação de laudo em `web/app/domains/chat/laudo_service.py` por `commit_ou_rollback_operacional`;
+- `finalizar_relatorio_resposta` e `reabrir_laudo_resposta` em `web/app/domains/chat/laudo_decision_services.py` passaram a comitar explicitamente dentro do service depois da montagem do payload;
+- `tests/test_transaction_contract.py` passou a cobrir o helper de commit operacional e a travar que `laudo_service.py`/`laudo_decision_services.py` não voltem a usar `banco.commit()` direto;
+- mantive `obter_banco()` como fallback transacional enquanto a migração segue por fluxos críticos.
+
+Arquivos do ciclo:
+
+- `web/app/domains/chat/laudo_service.py`
+- `web/app/domains/chat/laudo_decision_services.py`
+- `web/tests/test_transaction_contract.py`
+- `PLANS.md`
+- `docs/STATUS_CANONICO.md`
+- `docs/restructuring-roadmap/138_backlog_execucao_inspetor_backend_ux.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `python -m py_compile web/app/domains/chat/laudo_service.py web/app/domains/chat/laudo_decision_services.py web/tests/test_transaction_contract.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_transaction_contract.py -q` -> `5 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k 'iniciar_relatorio_sem_tipo_assume_padrao_por_resiliencia or inspetor_finalizacao_aprovada_com_evidencias_minimas or reabrir'` -> `3 passed, 185 deselected`;
+- `git diff --check` -> sem erros;
+- `make verify` -> `ruff`, `mypy`, testes web, mobile e mesa verdes;
+- `make hygiene-check` -> `status=ok`.
+
+Impacto observado:
+
+- `iniciar`, `finalizar` e `reabrir` laudo no Chat Inspetor deixaram de depender do commit implícito da dependency para persistir o resultado principal;
+- falhas de commit nesses fluxos agora passam pelo mesmo padrão de rollback e log operacional usado em outros comandos críticos;
+- o próximo pacote coerente é levar o mesmo padrão para comandos de Mesa/Revisor (`avaliar`, `responder`, anexos e side effects de revisão).

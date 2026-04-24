@@ -160,6 +160,42 @@ body.pagina-chat-dashboard-v2 .workspace-assistant-landing__hero .workspace-offi
     text-align: left;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-assistant-landing__actions {
+    display: flex;
+    justify-content: center;
+    width: min(100%, 760px);
+    margin-top: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-assistant-primary-action {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 0 18px;
+    border: 1px solid rgba(31, 94, 142, 0.22);
+    border-radius: 999px;
+    background: var(--vf-accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 14px 28px rgba(31, 94, 142, 0.22);
+    transition:
+        transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 160ms ease-out,
+        background-color 160ms ease-out;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-assistant-primary-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 32px rgba(31, 94, 142, 0.26);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-assistant-primary-action .material-symbols-rounded {
+    font-size: 18px;
+}
+
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .rodape-entrada {
     position: static;
     display: flex;
@@ -737,7 +773,7 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistan
     border-radius: 999px !important;
 }
 
-body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .technical-composer-clip-btn span:last-child {
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .technical-composer-clip-btn > span:not(.material-symbols-rounded):not([data-badge-plano]) {
     display: none;
 }
 
@@ -824,6 +860,47 @@ body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-d
 
 body.pagina-chat-dashboard-v2 .technical-composer-actions {
     align-self: end;
+}
+
+body.pagina-chat-dashboard-v2 .technical-composer-icon-btn {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(31, 94, 142, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--vf-text-muted);
+    box-shadow: none;
+    transition:
+        transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 160ms ease-out,
+        color 160ms ease-out,
+        background-color 160ms ease-out;
+}
+
+body.pagina-chat-dashboard-v2 .technical-composer-icon-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: rgba(31, 94, 142, 0.3);
+    color: var(--vf-accent);
+    background: #fff;
+}
+
+body.pagina-chat-dashboard-v2 .technical-composer-icon-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+}
+
+body.pagina-chat-dashboard-v2 .technical-composer-icon-btn.gravando {
+    border-color: rgba(190, 18, 60, 0.36);
+    background: rgba(255, 241, 242, 0.96);
+    color: #be123c;
+}
+
+body.pagina-chat-dashboard-v2 .technical-composer-icon-btn .material-symbols-rounded {
+    font-size: 19px;
 }
 
 body.pagina-chat-dashboard-v2 .technical-send-btn {

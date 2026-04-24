@@ -348,7 +348,11 @@ async def iniciar_relatorio_resposta(
     banco.refresh(laudo)
     # O laudo precisa estar committed antes do próximo request do inspetor
     # (ex.: widget/canal da mesa) para evitar 404 por registro ainda não visível.
-    banco.commit()
+    commit_ou_rollback_operacional(
+        banco,
+        logger_operacao=logger,
+        mensagem_erro="Falha ao criar laudo do inspetor.",
+    )
     banco.refresh(laudo)
 
     definir_contexto_inicial_laudo_sessao(

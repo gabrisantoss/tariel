@@ -247,6 +247,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     workspace_overview_js = (raiz / "static" / "js" / "inspetor" / "workspace_overview.js").read_text(encoding="utf-8")
     workspace_status_payload_js = (raiz / "static" / "js" / "inspetor" / "workspace_status_payload.js").read_text(encoding="utf-8")
     workspace_mesa_status_js = (raiz / "static" / "js" / "inspetor" / "workspace_mesa_status.js").read_text(encoding="utf-8")
+    workspace_runtime_state_js = (raiz / "static" / "js" / "inspetor" / "workspace_runtime_state.js").read_text(encoding="utf-8")
     state_snapshots_js = (raiz / "static" / "js" / "inspetor" / "state_snapshots.js").read_text(encoding="utf-8")
     state_authority_js = (raiz / "static" / "js" / "inspetor" / "state_authority.js").read_text(encoding="utf-8")
     system_events_js = (raiz / "static" / "js" / "inspetor" / "system_events.js").read_text(encoding="utf-8")
@@ -276,9 +277,13 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert '{% include "inspetor/workspace/_inspection_mesa.html" %}' in workspace_html
     assert '{% include "inspetor/workspace/_workspace_context_rail.html" %}' in workspace_html
     assert 'id="btn-anexo"' in workspace_html
+    assert 'class="workspace-composer-compat-action"' in workspace_html
     assert 'id="input-anexo"' in workspace_html
     assert 'id="preview-anexo"' in workspace_html
     assert 'id="btn-toggle-humano"' in workspace_html
+    assert 'class="technical-composer-icon-btn"' in workspace_html
+    assert 'id="btn-assistant-landing-open-inspecao-modal"' in workspace_assistant_html
+    assert "workspace-assistant-primary-action" in workspace_assistant_html
     assert 'id="rodape-contexto-titulo"' in workspace_html
     assert 'id="rodape-contexto-status"' in workspace_html
     assert 'class="btn-secundario btn-home-cabecalho technical-record-back technical-record-back--subtle"' in workspace_header_html
@@ -354,6 +359,8 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "workspaceMesaEventCommentTitle" in workspace_mesa_status_js
     assert "workspaceMesaPendingList" in workspace_mesa_status_js
     assert "workspaceMesaAttachmentsList" in workspace_mesa_status_js
+    assert "criarBindingsEstadoInspector" in workspace_runtime_state_js
+    assert "InspectorWorkspaceRuntimeState.criarBindingsEstadoInspector?.({" in chat_index_js
     assert "workspace-channel-tab__badge" in workspace_states_css
     assert "workspace-mesa-events" in workspace_states_css
     assert "workspace-mesa-operational-grid" in workspace_states_css

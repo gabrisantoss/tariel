@@ -950,44 +950,47 @@ async def finalizar_relatorio_resposta(
         ),
     )
     contexto = aplicar_contexto_laudo_selecionado(request, banco, laudo, usuario)
+    payload = {
+        "success": True,
+        "message": (
+            "✅ Relatório aprovado no fluxo sem Mesa Avaliadora desta empresa."
+            if direct_without_mesa
+            else "✅ Relatório aprovado automaticamente com o report pack canônico do caso."
+            if final_validation_mode == "mobile_autonomous"
+            else "✅ Relatório enviado para engenharia! Já aparece na Mesa de Avaliação."
+        ),
+        "laudo_id": laudo.id,
+        "estado": contexto["estado"],
+        "permite_reabrir": contexto["permite_reabrir"],
+        "review_mode_final": final_validation_mode,
+        "review_mode_final_reason": final_validation_mode_reason or None,
+        "idempotent_replay": False,
+        "inspection_history": build_inspection_history_summary(
+            banco,
+            laudo=laudo,
+        ),
+        "human_override_summary": build_human_override_summary(laudo),
+        "public_verification": build_public_verification_payload(
+            laudo=laudo,
+            base_url=request_base_url(request),
+        ),
+        "pre_laudo_summary": build_pre_laudo_summary(
+            obter_pre_laudo_outline_report_pack(obter_report_pack_draft_laudo(laudo))
+        ),
+        **build_case_lifecycle_response_fields(contexto),
+        **obter_contexto_modo_entrada_laudo(laudo),
+        "laudo_card": serializar_card_laudo(banco, laudo),
+        "report_pack_draft": obter_report_pack_draft_laudo(laudo),
+    }
+    commit_ou_rollback_operacional(
+        banco,
+        logger_operacao=logger,
+        mensagem_erro="Falha ao persistir decisao final do laudo do inspetor.",
+    )
 
     logger.info("Relatório finalizado | usuario_id=%s | laudo_id=%s", usuario.id, laudo_id)
 
-    return (
-        {
-            "success": True,
-            "message": (
-                "✅ Relatório aprovado no fluxo sem Mesa Avaliadora desta empresa."
-                if direct_without_mesa
-                else "✅ Relatório aprovado automaticamente com o report pack canônico do caso."
-                if final_validation_mode == "mobile_autonomous"
-                else "✅ Relatório enviado para engenharia! Já aparece na Mesa de Avaliação."
-            ),
-            "laudo_id": laudo.id,
-            "estado": contexto["estado"],
-            "permite_reabrir": contexto["permite_reabrir"],
-            "review_mode_final": final_validation_mode,
-            "review_mode_final_reason": final_validation_mode_reason or None,
-            "idempotent_replay": False,
-            "inspection_history": build_inspection_history_summary(
-                banco,
-                laudo=laudo,
-            ),
-            "human_override_summary": build_human_override_summary(laudo),
-            "public_verification": build_public_verification_payload(
-                laudo=laudo,
-                base_url=request_base_url(request),
-            ),
-            "pre_laudo_summary": build_pre_laudo_summary(
-                obter_pre_laudo_outline_report_pack(obter_report_pack_draft_laudo(laudo))
-            ),
-            **build_case_lifecycle_response_fields(contexto),
-            **obter_contexto_modo_entrada_laudo(laudo),
-            "laudo_card": serializar_card_laudo(banco, laudo),
-            "report_pack_draft": obter_report_pack_draft_laudo(laudo),
-        },
-        200,
-    )
+    return (payload, 200)
 
 
 async def executar_comando_revisao_mobile_resposta(
@@ -1259,23 +1262,26 @@ async def reabrir_laudo_resposta(
     banco.flush()
 
     contexto = aplicar_contexto_laudo_selecionado(request, banco, laudo, usuario)
-
-    return (
-        {
-            "success": True,
-            "message": "Inspeção reaberta. Você já pode continuar o laudo.",
-            "laudo_id": laudo.id,
-            "estado": contexto["estado"],
-            "permite_reabrir": contexto["permite_reabrir"],
-            **build_case_lifecycle_response_fields(contexto),
-            "issued_document_policy_applied": policy_applied,
-            "had_previous_issued_document": previous_issued_document_name is not None,
-            "previous_issued_document_visible_in_case": bool(
-                previous_issued_document_name and policy_applied == "keep_visible"
-            ),
-            "internal_learning_candidate_registered": internal_learning_candidate_registered,
-            **obter_contexto_modo_entrada_laudo(laudo),
-            "laudo_card": serializar_card_laudo(banco, laudo),
-        },
-        200,
+    payload = {
+        "success": True,
+        "message": "Inspeção reaberta. Você já pode continuar o laudo.",
+        "laudo_id": laudo.id,
+        "estado": contexto["estado"],
+        "permite_reabrir": contexto["permite_reabrir"],
+        **build_case_lifecycle_response_fields(contexto),
+        "issued_document_policy_applied": policy_applied,
+        "had_previous_issued_document": previous_issued_document_name is not None,
+        "previous_issued_document_visible_in_case": bool(
+            previous_issued_document_name and policy_applied == "keep_visible"
+        ),
+        "internal_learning_candidate_registered": internal_learning_candidate_registered,
+        **obter_contexto_modo_entrada_laudo(laudo),
+        "laudo_card": serializar_card_laudo(banco, laudo),
+    }
+    commit_ou_rollback_operacional(
+        banco,
+        logger_operacao=logger,
+        mensagem_erro="Falha ao reabrir laudo do inspetor.",
     )
+
+    return (payload, 200)

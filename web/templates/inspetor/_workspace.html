@@ -103,48 +103,6 @@
                     </span>
                 </div>
 
-                <div class="rodape-entrada__acoes">
-                    <button
-                        type="button"
-                        id="btn-assistant-landing-open-inspecao-modal"
-                        class="technical-inline-action"
-                        data-open-inspecao-modal
-                        data-inspector-entry="assistant-landing-new-inspection"
-                        aria-haspopup="dialog"
-                        aria-controls="modal-nova-inspecao"
-                        aria-expanded="false"
-                    >
-                        <span class="material-symbols-rounded" aria-hidden="true">add</span>
-                        <span>Nova inspeção</span>
-                    </button>
-
-                    <button type="button" id="btn-anexo" class="technical-inline-action">
-                        <span class="material-symbols-rounded" aria-hidden="true">attach_file</span>
-                        <span>Anexar</span>
-                    </button>
-
-                    <button type="button" id="btn-foto-rapida" class="technical-inline-action" data-photo-trigger="true">
-                        <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                        <span>Foto</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        id="btn-toggle-humano"
-                        class="technical-inline-action"
-                        data-inspector-entry="composer-mesa"
-                        aria-label="Abrir canal da mesa avaliadora"
-                    >
-                        <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
-                        <span>Mesa</span>
-                    </button>
-
-                    <button type="button" id="btn-microfone" class="technical-inline-action">
-                        <span class="material-symbols-rounded" aria-hidden="true">mic</span>
-                        <span>Áudio</span>
-                    </button>
-                </div>
-
                 <div class="rodape-entrada__composer">
                     <div class="free-chat-report-start" data-free-chat-report-start-wrap>
                         <button
@@ -207,6 +165,29 @@
                             tabindex="-1"
                         >
 
+                        <button
+                            type="button"
+                            id="btn-anexo"
+                            class="workspace-composer-compat-action"
+                            hidden
+                            aria-hidden="true"
+                            tabindex="-1"
+                        >
+                            Anexar
+                        </button>
+
+                        <button
+                            type="button"
+                            id="btn-foto-rapida"
+                            class="workspace-composer-compat-action"
+                            data-photo-trigger="true"
+                            hidden
+                            aria-hidden="true"
+                            tabindex="-1"
+                        >
+                            Foto
+                        </button>
+
                         <div class="technical-composer-main">
                             <div class="container-textarea">
                                 <textarea
@@ -237,6 +218,28 @@
 
                         <div class="technical-composer-actions">
                             <span id="contador-chars" class="contador-chars" aria-live="polite" aria-atomic="true"></span>
+
+                            <button
+                                type="button"
+                                id="btn-toggle-humano"
+                                class="technical-composer-icon-btn"
+                                data-inspector-entry="composer-mesa"
+                                aria-label="Abrir canal da mesa avaliadora"
+                                hidden
+                                aria-hidden="true"
+                            >
+                                <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                id="btn-microfone"
+                                class="technical-composer-icon-btn"
+                                aria-label="Ativar ditado por voz"
+                                aria-pressed="false"
+                            >
+                                <span class="material-symbols-rounded" aria-hidden="true">mic</span>
+                            </button>
 
                             <button
                                 type="button"

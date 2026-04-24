@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import logging
+from pathlib import Path
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.shared.database import Base, Empresa, sessao_tem_mutacoes_pendentes
+from app.shared.database import (
+    Base,
+    Empresa,
+    commit_ou_rollback_operacional,
+    sessao_tem_mutacoes_pendentes,
+)
 
 
 def _session_factory() -> sessionmaker[Session]:
@@ -46,6 +54,28 @@ def test_sessao_flushada_ainda_exige_commit_final() -> None:
         assert sessao_tem_mutacoes_pendentes(banco) is False
 
 
+def test_commit_operacional_explicito_limpa_marcador_transacional() -> None:
+    SessionLocal = _session_factory()
+
+    with SessionLocal() as banco:
+        banco.add(
+            Empresa(
+                nome_fantasia="Empresa Commit Operacional",
+                cnpj="12345678000197",
+            )
+        )
+
+        assert sessao_tem_mutacoes_pendentes(banco) is True
+
+        commit_ou_rollback_operacional(
+            banco,
+            logger_operacao=logging.getLogger("tests.transaction_contract"),
+            mensagem_erro="Falha esperada no contrato transacional de teste.",
+        )
+
+        assert sessao_tem_mutacoes_pendentes(banco) is False
+
+
 def test_sessao_rollback_limpa_marcador_transacional() -> None:
     SessionLocal = _session_factory()
 
@@ -62,3 +92,20 @@ def test_sessao_rollback_limpa_marcador_transacional() -> None:
         banco.rollback()
 
         assert sessao_tem_mutacoes_pendentes(banco) is False
+
+
+def test_fluxos_principais_laudo_usam_commit_operacional_explicito() -> None:
+    raiz_app = Path(__file__).resolve().parents[1] / "app"
+    laudo_service = (raiz_app / "domains" / "chat" / "laudo_service.py").read_text(encoding="utf-8")
+    laudo_decision_services = (
+        raiz_app / "domains" / "chat" / "laudo_decision_services.py"
+    ).read_text(encoding="utf-8")
+
+    assert "banco.commit(" not in laudo_service
+    assert "banco.commit(" not in laudo_decision_services
+    assert 'mensagem_erro="Falha ao criar laudo do inspetor."' in laudo_service
+    assert (
+        'mensagem_erro="Falha ao persistir decisao final do laudo do inspetor."'
+        in laudo_decision_services
+    )
+    assert 'mensagem_erro="Falha ao reabrir laudo do inspetor."' in laudo_decision_services

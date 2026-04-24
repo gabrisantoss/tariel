@@ -438,11 +438,6 @@ body.pagina-chat-dashboard-v2 .rodape-entrada[data-conversation-variant="technic
     margin-bottom: 2px;
 }
 
-body.pagina-chat-dashboard-v2 .rodape-entrada[data-conversation-variant="technical"] #btn-toggle-humano,
-body.pagina-chat-dashboard-v2 .rodape-entrada[data-conversation-variant="technical"] #btn-microfone {
-    display: none !important;
-}
-
 body.pagina-chat-dashboard-v2 .rodape-entrada[data-conversation-variant="technical"] .technical-inline-action {
     min-height: 32px;
     height: 32px;

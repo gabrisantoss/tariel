@@ -350,6 +350,285 @@
         }) || {};
     }
 
+    function criarBindingsEstadoInspector(dependencies = {}) {
+        const resolveLocationRef = () =>
+            dependencies.obterLocationRuntime?.()
+            || dependencies.locationRef
+            || global.location;
+
+        function paginaSolicitaHomeLandingViaURLBinding() {
+            return !!paginaSolicitaHomeLandingViaURL({
+                locationRef: resolveLocationRef(),
+            });
+        }
+
+        function obterLaudoIdDaURLInspectorBinding() {
+            return obterLaudoIdDaURLInspector({
+                locationRef: resolveLocationRef(),
+                normalizarLaudoAtualId: dependencies.normalizarLaudoAtualId,
+            }) || null;
+        }
+
+        function obterThreadTabDaURLInspectorBinding() {
+            return obterThreadTabDaURLInspector({
+                locationRef: resolveLocationRef(),
+                normalizarThreadTab: dependencies.normalizarThreadTab,
+            });
+        }
+
+        function obterSnapshotCompatCoreInspectorBinding() {
+            return obterSnapshotCompatCoreInspector({
+                InspectorStateSnapshots: dependencies.InspectorStateSnapshots,
+                normalizarLaudoAtualId: dependencies.normalizarLaudoAtualId,
+                normalizarEstadoRelatorio: dependencies.normalizarEstadoRelatorio,
+            }) || {};
+        }
+
+        function obterSnapshotCompatApiInspectorBinding() {
+            return obterSnapshotCompatApiInspector({
+                InspectorStateSnapshots: dependencies.InspectorStateSnapshots,
+                normalizarLaudoAtualId: dependencies.normalizarLaudoAtualId,
+                normalizarEstadoRelatorio: dependencies.normalizarEstadoRelatorio,
+            }) || {};
+        }
+
+        function obterSnapshotDatasetInspectorBinding() {
+            return obterSnapshotDatasetInspector({
+                InspectorStateSnapshots: dependencies.InspectorStateSnapshots,
+                document: dependencies.documentRef || dependencies.document,
+                el: dependencies.el,
+                normalizarLaudoAtualId: dependencies.normalizarLaudoAtualId,
+                normalizarEstadoRelatorio: dependencies.normalizarEstadoRelatorio,
+                normalizarModoInspecaoUI: dependencies.normalizarModoInspecaoUI,
+                normalizarWorkspaceStage: dependencies.normalizarWorkspaceStage,
+                normalizarThreadTab: dependencies.normalizarThreadTab,
+                normalizarBooleanoEstado: dependencies.normalizarBooleanoEstado,
+                normalizarOverlayOwner: dependencies.normalizarOverlayOwner,
+            }) || {};
+        }
+
+        function obterSnapshotSSRInspectorBinding() {
+            return obterSnapshotSSRInspector({
+                InspectorStateSnapshots: dependencies.InspectorStateSnapshots,
+                el: dependencies.el,
+                normalizarLaudoAtualId: dependencies.normalizarLaudoAtualId,
+                normalizarEstadoRelatorio: dependencies.normalizarEstadoRelatorio,
+                normalizarModoInspecaoUI: dependencies.normalizarModoInspecaoUI,
+                normalizarWorkspaceStage: dependencies.normalizarWorkspaceStage,
+            }) || {};
+        }
+
+        function obterSnapshotStorageInspectorBinding() {
+            return obterSnapshotStorageInspector({
+                InspectorStateSnapshots: dependencies.InspectorStateSnapshots,
+                normalizarLaudoAtualId: dependencies.normalizarLaudoAtualId,
+                obterLaudoIdDaURLInspector: obterLaudoIdDaURLInspectorBinding,
+                obterThreadTabDaURLInspector: obterThreadTabDaURLInspectorBinding,
+                lerFlagForcaHomeStorage: dependencies.lerFlagForcaHomeStorage,
+                lerRetomadaHomePendenteStorage: dependencies.lerRetomadaHomePendenteStorage,
+                paginaSolicitaHomeLandingViaURL: paginaSolicitaHomeLandingViaURLBinding,
+            }) || {};
+        }
+
+        function obterSnapshotMemoriaInspectorBinding() {
+            return obterSnapshotMemoriaInspector({
+                InspectorStateSnapshots: dependencies.InspectorStateSnapshots,
+                estado: dependencies.estado,
+                normalizarLaudoAtualId: dependencies.normalizarLaudoAtualId,
+                normalizarEstadoRelatorio: dependencies.normalizarEstadoRelatorio,
+                normalizarModoInspecaoUI: dependencies.normalizarModoInspecaoUI,
+                normalizarWorkspaceStage: dependencies.normalizarWorkspaceStage,
+                normalizarThreadTab: dependencies.normalizarThreadTab,
+                normalizarBooleanoEstado: dependencies.normalizarBooleanoEstado,
+                normalizarOverlayOwner: dependencies.normalizarOverlayOwner,
+                retomadaHomePendenteEhValida: dependencies.retomadaHomePendenteEhValida,
+                normalizarRetomadaHomePendenteSeguro: dependencies.normalizarRetomadaHomePendenteSeguro,
+            }) || {};
+        }
+
+        function obterSnapshotBootstrapInspectorBinding() {
+            return obterSnapshotBootstrapInspector({
+                InspectorStateSnapshots: dependencies.InspectorStateSnapshots,
+                obterSnapshotSSRInspector: obterSnapshotSSRInspectorBinding,
+                obterSnapshotDatasetInspector: obterSnapshotDatasetInspectorBinding,
+                obterSnapshotStorageInspector: obterSnapshotStorageInspectorBinding,
+                normalizarLaudoAtualId: dependencies.normalizarLaudoAtualId,
+                normalizarEstadoRelatorio: dependencies.normalizarEstadoRelatorio,
+                normalizarModoInspecaoUI: dependencies.normalizarModoInspecaoUI,
+                normalizarWorkspaceStage: dependencies.normalizarWorkspaceStage,
+                normalizarThreadTab: dependencies.normalizarThreadTab,
+                retomadaHomePendenteEhValida: dependencies.retomadaHomePendenteEhValida,
+                normalizarRetomadaHomePendenteSeguro: dependencies.normalizarRetomadaHomePendenteSeguro,
+            }) || {};
+        }
+
+        function escolherCampoEstadoInspectorBinding(
+            candidatos = [],
+            { fallback = null, aceitarNulo = false } = {},
+        ) {
+            return escolherCampoEstadoInspector(
+                candidatos,
+                { fallback, aceitarNulo },
+                {
+                    InspectorStateSnapshots: dependencies.InspectorStateSnapshots,
+                },
+            ) || { value: fallback, source: "fallback" };
+        }
+
+        function registrarDivergenciaEstadoInspectorBinding(campo, mapaFontes = {}, valorEscolhido) {
+            return registrarDivergenciaEstadoInspector(
+                campo,
+                mapaFontes,
+                valorEscolhido,
+                {
+                    divergenciasEstadoInspector: dependencies.divergenciasEstadoInspector,
+                    EM_PRODUCAO: dependencies.EM_PRODUCAO,
+                    debugRuntime: dependencies.debugRuntime,
+                    logOnceRuntime: dependencies.logOnceRuntime,
+                },
+            ) || false;
+        }
+
+        function resolverInspectorBaseScreenPorSnapshotBinding(snapshot = {}) {
+            return dependencies.InspectorStateSnapshots?.resolverInspectorBaseScreenPorSnapshot?.(snapshot)
+                || "assistant_landing";
+        }
+
+        function resolverEstadoAutoritativoInspectorBinding(overrides = {}) {
+            return resolverEstadoAutoritativoInspector(
+                overrides,
+                {
+                    InspectorStateAuthority: dependencies.InspectorStateAuthority,
+                    obterSnapshotMemoriaInspector: obterSnapshotMemoriaInspectorBinding,
+                    obterSnapshotCompatCoreInspector: obterSnapshotCompatCoreInspectorBinding,
+                    obterSnapshotCompatApiInspector: obterSnapshotCompatApiInspectorBinding,
+                    obterSnapshotDatasetInspector: obterSnapshotDatasetInspectorBinding,
+                    obterSnapshotSSRInspector: obterSnapshotSSRInspectorBinding,
+                    obterSnapshotStorageInspector: obterSnapshotStorageInspectorBinding,
+                    obterSnapshotBootstrapInspector: obterSnapshotBootstrapInspectorBinding,
+                    escolherCampoEstadoInspector: escolherCampoEstadoInspectorBinding,
+                    normalizarLaudoAtualId: dependencies.normalizarLaudoAtualId,
+                    normalizarEstadoRelatorio: dependencies.normalizarEstadoRelatorio,
+                    normalizarModoInspecaoUI: dependencies.normalizarModoInspecaoUI,
+                    normalizarWorkspaceStage: dependencies.normalizarWorkspaceStage,
+                    normalizarThreadTab: dependencies.normalizarThreadTab,
+                    normalizarOverlayOwner: dependencies.normalizarOverlayOwner,
+                    normalizarBooleanoEstado: dependencies.normalizarBooleanoEstado,
+                    normalizarRetomadaHomePendenteSeguro: dependencies.normalizarRetomadaHomePendenteSeguro,
+                    retomadaHomePendenteEhValida: dependencies.retomadaHomePendenteEhValida,
+                    estadoRelatorioPossuiContexto: dependencies.estadoRelatorioPossuiContexto,
+                    resolverInspectorBaseScreenPorSnapshot: resolverInspectorBaseScreenPorSnapshotBinding,
+                    registrarDivergenciaEstadoInspector: registrarDivergenciaEstadoInspectorBinding,
+                    paginaSolicitaHomeLandingViaURL: paginaSolicitaHomeLandingViaURLBinding,
+                    modalNovaInspecaoEstaAberta: dependencies.modalNovaInspecaoEstaAberta,
+                },
+            ) || {};
+        }
+
+        function espelharEstadoInspectorCompatBinding(snapshot = {}) {
+            return espelharEstadoInspectorCompat(snapshot, {
+                InspectorStateRuntimeSync: dependencies.InspectorStateRuntimeSync,
+            });
+        }
+
+        function espelharEstadoInspectorNoDatasetBinding(snapshot = {}) {
+            return espelharEstadoInspectorNoDataset(snapshot, {
+                InspectorStateRuntimeSync: dependencies.InspectorStateRuntimeSync,
+                document: dependencies.documentRef || dependencies.document,
+                el: dependencies.el,
+                sincronizarConversationVariantNoDom: dependencies.sincronizarConversationVariantNoDom,
+            });
+        }
+
+        function espelharEstadoInspectorNoStorageBinding(snapshot = {}, opts = {}) {
+            return espelharEstadoInspectorNoStorage(snapshot, opts, {
+                InspectorStateRuntimeSync: dependencies.InspectorStateRuntimeSync,
+                estado: dependencies.estado,
+                persistirContextoVisualLaudosStorage: dependencies.persistirContextoVisualLaudosStorage,
+                CHAVE_FORCE_HOME_LANDING: dependencies.CHAVE_FORCE_HOME_LANDING,
+                CHAVE_RETOMADA_HOME_PENDENTE: dependencies.CHAVE_RETOMADA_HOME_PENDENTE,
+            });
+        }
+
+        function emitirEstadoInspectorSincronizadoBinding(snapshot = {}) {
+            return emitirEstadoInspectorSincronizado(snapshot, {
+                InspectorStateRuntimeSync: dependencies.InspectorStateRuntimeSync,
+                emitirEventoTariel: dependencies.emitirEventoTariel,
+            });
+        }
+
+        function aplicarSnapshotEstadoInspectorBinding(snapshot = {}, opts = {}) {
+            return aplicarSnapshotEstadoInspector(snapshot, opts, {
+                InspectorStateRuntimeSync: dependencies.InspectorStateRuntimeSync,
+                windowRef: dependencies.windowRef || global,
+                estado: dependencies.estado,
+                setInspectorStateGlobal: dependencies.setInspectorStateGlobal,
+                espelharEstadoInspectorNoDataset: espelharEstadoInspectorNoDatasetBinding,
+                espelharEstadoInspectorCompat: espelharEstadoInspectorCompatBinding,
+                espelharEstadoInspectorNoStorage: espelharEstadoInspectorNoStorageBinding,
+                sincronizarInspectorScreen: dependencies.sincronizarInspectorScreen,
+                emitirEstadoInspectorSincronizado: emitirEstadoInspectorSincronizadoBinding,
+                stateRef: dependencies.stateRef,
+            }) || snapshot;
+        }
+
+        function sincronizarEstadoInspectorBinding(overrides = {}, opts = {}) {
+            return sincronizarEstadoInspector(overrides, opts, {
+                resolverEstadoAutoritativoInspector: resolverEstadoAutoritativoInspectorBinding,
+                aplicarSnapshotEstadoInspector: aplicarSnapshotEstadoInspectorBinding,
+            }) || {};
+        }
+
+        function obterSnapshotEstadoInspectorAtualBinding() {
+            return obterSnapshotEstadoInspectorAtual({
+                InspectorStateRuntimeSync: dependencies.InspectorStateRuntimeSync,
+                estado: dependencies.estado,
+                resolverEstadoAutoritativoInspector: resolverEstadoAutoritativoInspectorBinding,
+            }) || {};
+        }
+
+        function definirRetomadaHomePendenteBinding(payload = null) {
+            const snapshot = sincronizarEstadoInspectorBinding({
+                retomadaHomePendente: payload
+                    ? dependencies.normalizarRetomadaHomePendenteSeguro?.(payload) || null
+                    : null,
+            });
+
+            return snapshot.retomadaHomePendente;
+        }
+
+        function obterRetomadaHomePendenteBinding() {
+            const snapshot = resolverEstadoAutoritativoInspectorBinding();
+            return snapshot.retomadaHomePendente;
+        }
+
+        atualizarGlobalInspectorState(
+            {
+                resolverEstadoAutoritativoInspector: resolverEstadoAutoritativoInspectorBinding,
+                sincronizarEstadoInspector: sincronizarEstadoInspectorBinding,
+                obterSnapshotEstadoInspectorAtual: obterSnapshotEstadoInspectorAtualBinding,
+                atualizarThreadWorkspace: dependencies.atualizarThreadWorkspace,
+            },
+            {
+                estado: dependencies.estado,
+            },
+        );
+
+        return {
+            definirRetomadaHomePendente: definirRetomadaHomePendenteBinding,
+            espelharEstadoInspectorNoDataset: espelharEstadoInspectorNoDatasetBinding,
+            espelharEstadoInspectorNoStorage: espelharEstadoInspectorNoStorageBinding,
+            obterLaudoIdDaURLInspector: obterLaudoIdDaURLInspectorBinding,
+            obterRetomadaHomePendente: obterRetomadaHomePendenteBinding,
+            obterSnapshotEstadoInspectorAtual: obterSnapshotEstadoInspectorAtualBinding,
+            obterThreadTabDaURLInspector: obterThreadTabDaURLInspectorBinding,
+            paginaSolicitaHomeLandingViaURL: paginaSolicitaHomeLandingViaURLBinding,
+            resolverEstadoAutoritativoInspector: resolverEstadoAutoritativoInspectorBinding,
+            resolverInspectorBaseScreenPorSnapshot: resolverInspectorBaseScreenPorSnapshotBinding,
+            sincronizarEstadoInspector: sincronizarEstadoInspectorBinding,
+        };
+    }
+
     function atualizarGlobalInspectorState(bindings = {}, dependencies = {}) {
         const target = global.TarielInspectorState = Object.assign(
             global.TarielInspectorState || {},
@@ -369,6 +648,7 @@
     global.TarielInspectorWorkspaceRuntimeState = {
         atualizarGlobalInspectorState,
         aplicarSnapshotEstadoInspector,
+        criarBindingsEstadoInspector,
         escolherCampoEstadoInspector,
         emitirEstadoInspectorSincronizado,
         espelharEstadoInspectorCompat,

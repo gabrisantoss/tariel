@@ -794,274 +794,71 @@
 
     estado.contextoVisualPorLaudo = {};
 
-    function paginaSolicitaHomeLandingViaURL() {
-        return !!InspectorWorkspaceRuntimeState.paginaSolicitaHomeLandingViaURL?.({
-            locationRef: obterLocationRuntime(),
-        });
-    }
-
-    function obterLaudoIdDaURLInspector() {
-        return InspectorWorkspaceRuntimeState.obterLaudoIdDaURLInspector?.({
-            locationRef: obterLocationRuntime(),
-            normalizarLaudoAtualId,
-        }) || null;
-    }
-
-    function obterThreadTabDaURLInspector() {
-        return InspectorWorkspaceRuntimeState.obterThreadTabDaURLInspector?.({
-            locationRef: obterLocationRuntime(),
-            normalizarThreadTab,
-        });
-    }
-
-    function obterSnapshotCompatCoreInspector() {
-        return InspectorWorkspaceRuntimeState.obterSnapshotCompatCoreInspector?.({
-            InspectorStateSnapshots,
-            normalizarLaudoAtualId,
-            normalizarEstadoRelatorio,
-        }) || {};
-    }
-
-    function obterSnapshotCompatApiInspector() {
-        return InspectorWorkspaceRuntimeState.obterSnapshotCompatApiInspector?.({
-            InspectorStateSnapshots,
-            normalizarLaudoAtualId,
-            normalizarEstadoRelatorio,
-        }) || {};
-    }
-
-    function obterSnapshotDatasetInspector() {
-        return InspectorWorkspaceRuntimeState.obterSnapshotDatasetInspector?.({
-            InspectorStateSnapshots,
-            document,
-            el,
-            normalizarLaudoAtualId,
-            normalizarEstadoRelatorio,
-            normalizarModoInspecaoUI,
-            normalizarWorkspaceStage,
-            normalizarThreadTab,
-            normalizarBooleanoEstado,
-            normalizarOverlayOwner,
-        }) || {};
-    }
-
-    function obterSnapshotSSRInspector() {
-        return InspectorWorkspaceRuntimeState.obterSnapshotSSRInspector?.({
-            InspectorStateSnapshots,
-            el,
-            normalizarLaudoAtualId,
-            normalizarEstadoRelatorio,
-            normalizarModoInspecaoUI,
-            normalizarWorkspaceStage,
-        }) || {};
-    }
-
-    function obterSnapshotStorageInspector() {
-        return InspectorWorkspaceRuntimeState.obterSnapshotStorageInspector?.({
-            InspectorStateSnapshots,
-            normalizarLaudoAtualId,
-            obterLaudoIdDaURLInspector,
-            obterThreadTabDaURLInspector,
-            lerFlagForcaHomeStorage,
-            lerRetomadaHomePendenteStorage,
-            paginaSolicitaHomeLandingViaURL,
-        }) || {};
-    }
-
-    function obterSnapshotMemoriaInspector() {
-        return InspectorWorkspaceRuntimeState.obterSnapshotMemoriaInspector?.({
-            InspectorStateSnapshots,
-            estado,
-            normalizarLaudoAtualId,
-            normalizarEstadoRelatorio,
-            normalizarModoInspecaoUI,
-            normalizarWorkspaceStage,
-            normalizarThreadTab,
-            normalizarBooleanoEstado,
-            normalizarOverlayOwner,
-            retomadaHomePendenteEhValida,
-            normalizarRetomadaHomePendenteSeguro,
-        }) || {};
-    }
-
-    function obterSnapshotBootstrapInspector() {
-        return InspectorWorkspaceRuntimeState.obterSnapshotBootstrapInspector?.({
-            InspectorStateSnapshots,
-            obterSnapshotSSRInspector,
-            obterSnapshotDatasetInspector,
-            obterSnapshotStorageInspector,
-            normalizarLaudoAtualId,
-            normalizarEstadoRelatorio,
-            normalizarModoInspecaoUI,
-            normalizarWorkspaceStage,
-            normalizarThreadTab,
-            retomadaHomePendenteEhValida,
-            normalizarRetomadaHomePendenteSeguro,
-        }) || {};
-    }
-
-    function escolherCampoEstadoInspector(candidatos = [], { fallback = null, aceitarNulo = false } = {}) {
-        return InspectorWorkspaceRuntimeState.escolherCampoEstadoInspector?.(
-            candidatos,
-            { fallback, aceitarNulo },
-            {
-                InspectorStateSnapshots,
+    let {
+        paginaSolicitaHomeLandingViaURL,
+        obterLaudoIdDaURLInspector,
+        obterThreadTabDaURLInspector,
+        resolverInspectorBaseScreenPorSnapshot,
+        resolverEstadoAutoritativoInspector,
+        espelharEstadoInspectorNoDataset,
+        espelharEstadoInspectorNoStorage,
+        sincronizarEstadoInspector,
+        obterSnapshotEstadoInspectorAtual,
+        definirRetomadaHomePendente,
+        obterRetomadaHomePendente,
+    } = InspectorWorkspaceRuntimeState.criarBindingsEstadoInspector?.({
+        InspectorStateAuthority,
+        InspectorStateRuntimeSync,
+        InspectorStateSnapshots,
+        CHAVE_FORCE_HOME_LANDING,
+        CHAVE_RETOMADA_HOME_PENDENTE,
+        EM_PRODUCAO,
+        atualizarThreadWorkspace,
+        debugRuntime,
+        divergenciasEstadoInspector,
+        documentRef: document,
+        el,
+        emitirEventoTariel,
+        estado,
+        estadoRelatorioPossuiContexto,
+        lerFlagForcaHomeStorage,
+        lerRetomadaHomePendenteStorage,
+        logOnceRuntime,
+        modalNovaInspecaoEstaAberta,
+        normalizarBooleanoEstado,
+        normalizarLaudoAtualId,
+        normalizarModoInspecaoUI,
+        normalizarOverlayOwner,
+        normalizarRetomadaHomePendenteSeguro,
+        normalizarEstadoRelatorio,
+        normalizarThreadTab,
+        normalizarWorkspaceStage,
+        obterLocationRuntime,
+        persistirContextoVisualLaudosStorage,
+        retomadaHomePendenteEhValida,
+        setInspectorStateGlobal: (stateSnapshot) => {
+            if (ChatIndexRuntime?.setInspectorStateGlobal?.(stateSnapshot)) {
+                return;
             }
-        ) || { value: fallback, source: "fallback" };
-    }
-
-    function registrarDivergenciaEstadoInspector(campo, mapaFontes = {}, valorEscolhido) {
-        return InspectorWorkspaceRuntimeState.registrarDivergenciaEstadoInspector?.(
-            campo,
-            mapaFontes,
-            valorEscolhido,
-            {
-                divergenciasEstadoInspector,
-                EM_PRODUCAO,
-                debugRuntime,
-                logOnceRuntime,
+            if (window.TarielInspectorState && typeof window.TarielInspectorState === "object") {
+                window.TarielInspectorState.state = stateSnapshot;
             }
-        ) || false;
-    }
-
-    function resolverInspectorBaseScreenPorSnapshot(snapshot = {}) {
-        return InspectorStateSnapshots.resolverInspectorBaseScreenPorSnapshot(snapshot);
-    }
-
-    function resolverEstadoAutoritativoInspector(overrides = {}) {
-        return InspectorWorkspaceRuntimeState.resolverEstadoAutoritativoInspector?.(
-            overrides,
-            {
-                InspectorStateAuthority,
-                obterSnapshotMemoriaInspector,
-                obterSnapshotCompatCoreInspector,
-                obterSnapshotCompatApiInspector,
-                obterSnapshotDatasetInspector,
-                obterSnapshotSSRInspector,
-                obterSnapshotStorageInspector,
-                obterSnapshotBootstrapInspector,
-                escolherCampoEstadoInspector,
-                normalizarLaudoAtualId,
-                normalizarEstadoRelatorio,
-                normalizarModoInspecaoUI,
-                normalizarWorkspaceStage,
-                normalizarThreadTab,
-                normalizarOverlayOwner,
-                normalizarBooleanoEstado,
-                normalizarRetomadaHomePendenteSeguro,
-                retomadaHomePendenteEhValida,
-                estadoRelatorioPossuiContexto,
-                resolverInspectorBaseScreenPorSnapshot,
-                registrarDivergenciaEstadoInspector,
-                paginaSolicitaHomeLandingViaURL,
-                modalNovaInspecaoEstaAberta,
-            }
-        ) || {};
-    }
-
-    function espelharEstadoInspectorCompat(snapshot = {}) {
-        return InspectorWorkspaceRuntimeState.espelharEstadoInspectorCompat?.(snapshot, {
-            InspectorStateRuntimeSync,
-        });
-    }
-
-    function espelharEstadoInspectorNoDataset(snapshot = {}) {
-        return InspectorWorkspaceRuntimeState.espelharEstadoInspectorNoDataset?.(snapshot, {
-            InspectorStateRuntimeSync,
-            document,
-            el,
-            sincronizarConversationVariantNoDom,
-        });
-    }
-
-    function espelharEstadoInspectorNoStorage(snapshot = {}, opts = {}) {
-        return InspectorWorkspaceRuntimeState.espelharEstadoInspectorNoStorage?.(snapshot, opts, {
-            InspectorStateRuntimeSync,
-            estado,
-            persistirContextoVisualLaudosStorage,
-            CHAVE_FORCE_HOME_LANDING,
-            CHAVE_RETOMADA_HOME_PENDENTE,
-        });
-    }
-
-    function emitirEstadoInspectorSincronizado(snapshot = {}) {
-        return InspectorWorkspaceRuntimeState.emitirEstadoInspectorSincronizado?.(snapshot, {
-            InspectorStateRuntimeSync,
-            emitirEventoTariel,
-        });
-    }
-
-    function aplicarSnapshotEstadoInspector(snapshot = {}, opts = {}) {
-        return InspectorWorkspaceRuntimeState.aplicarSnapshotEstadoInspector?.(snapshot, opts, {
-            InspectorStateRuntimeSync,
-            windowRef: window,
-            estado,
-            setInspectorStateGlobal: (stateSnapshot) => {
-                if (ChatIndexRuntime?.setInspectorStateGlobal?.(stateSnapshot)) {
-                    return;
-                }
-                if (window.TarielInspectorState && typeof window.TarielInspectorState === "object") {
-                    window.TarielInspectorState.state = stateSnapshot;
-                }
-            },
-            espelharEstadoInspectorNoDataset,
-            espelharEstadoInspectorCompat,
-            espelharEstadoInspectorNoStorage,
-            sincronizarInspectorScreen,
-            emitirEstadoInspectorSincronizado,
-            stateRef: {
-                get sincronizandoInspectorScreen() {
-                    return sincronizandoInspectorScreen;
-                },
-                get syncInspectorScreenRaf() {
-                    return syncInspectorScreenRaf;
-                },
-                setSyncInspectorScreenRaf: (valor) => {
-                    syncInspectorScreenRaf = valor;
-                },
-            },
-        }) || snapshot;
-    }
-
-    function sincronizarEstadoInspector(overrides = {}, opts = {}) {
-        return InspectorWorkspaceRuntimeState.sincronizarEstadoInspector?.(overrides, opts, {
-            resolverEstadoAutoritativoInspector,
-            aplicarSnapshotEstadoInspector,
-        }) || {};
-    }
-
-    function obterSnapshotEstadoInspectorAtual() {
-        return InspectorWorkspaceRuntimeState.obterSnapshotEstadoInspectorAtual?.({
-            InspectorStateRuntimeSync,
-            estado,
-            resolverEstadoAutoritativoInspector,
-        }) || {};
-    }
-
-    InspectorWorkspaceRuntimeState.atualizarGlobalInspectorState?.(
-        {
-            resolverEstadoAutoritativoInspector,
-            sincronizarEstadoInspector,
-            obterSnapshotEstadoInspectorAtual,
-            atualizarThreadWorkspace,
         },
-        {
-            estado,
-        }
-    );
-
-    function definirRetomadaHomePendente(payload = null) {
-        const snapshot = sincronizarEstadoInspector({
-            retomadaHomePendente: payload ? normalizarRetomadaHomePendenteSeguro(payload) : null,
-        });
-
-        return snapshot.retomadaHomePendente;
-    }
-
-    function obterRetomadaHomePendente() {
-        const snapshot = resolverEstadoAutoritativoInspector();
-        return snapshot.retomadaHomePendente;
-    }
+        sincronizarConversationVariantNoDom,
+        sincronizarInspectorScreen,
+        stateRef: {
+            get sincronizandoInspectorScreen() {
+                return sincronizandoInspectorScreen;
+            },
+            get syncInspectorScreenRaf() {
+                return syncInspectorScreenRaf;
+            },
+            setSyncInspectorScreenRaf: (valor) => {
+                syncInspectorScreenRaf = valor;
+            },
+        },
+        windowRef: window,
+    }) || {};
 
     function normalizarEstadoRelatorio(valor) {
         const estadoBruto = String(valor || "").trim().toLowerCase();

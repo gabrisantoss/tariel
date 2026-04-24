@@ -334,14 +334,18 @@
 
         const inputAnexo = document.getElementById("input-anexo");
         const btnAnexo = document.getElementById("btn-anexo");
+        const botoesAnexoComposer = Array.from(
+            document.querySelectorAll('[data-composer-attachment-trigger="file"]')
+        );
 
         if (inputAnexo) {
             inputAnexo.accept = "image/png,image/jpeg,image/jpg,image/webp";
             inputAnexo.dataset.apenasImagens = "true";
         }
 
-        if (btnAnexo && !btnAnexo.querySelector("[data-badge-plano]")) {
-            btnAnexo.title = "Apenas imagens permitidas (PDF requer plano superior)";
+        [btnAnexo, ...botoesAnexoComposer].filter(Boolean).forEach((botao) => {
+            if (botao.querySelector("[data-badge-plano]")) return;
+            botao.title = "Apenas imagens permitidas (PDF requer plano superior)";
 
             const badge = document.createElement("span");
             badge.dataset.badgePlano = "pdf-bloqueado";
@@ -349,8 +353,8 @@
             badge.textContent = "PDF";
             badge.title = "Indisponível no plano atual";
 
-            btnAnexo.appendChild(badge);
-        }
+            botao.appendChild(badge);
+        });
     }
 
     // =========================================================
