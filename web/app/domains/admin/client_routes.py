@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 
 from app.domains.admin.auditoria import (
     listar_auditoria_admin_empresa,
-    registrar_auditoria_admin_empresa_segura,
     serializar_registro_auditoria_admin,
 )
 from app.domains.admin.portal_support import (
@@ -53,9 +52,10 @@ from app.domains.admin.client_diagnostic_routes import registrar_rotas_diagnosti
 from app.domains.admin.client_employee_routes import registrar_rotas_funcionarios_cliente
 from app.domains.admin.client_support_routes import registrar_rotas_suporte_excepcional_cliente
 from app.domains.admin.client_tenant_catalog_routes import registrar_rotas_catalogo_tenant_cliente
+from app.domains.admin.client_tenant_sensitive_routes import (
+    registrar_rotas_operacoes_sensiveis_tenant,
+)
 from app.domains.admin.services import (
-    alternar_bloqueio,
-    alterar_plano,
     buscar_detalhe_cliente,
     buscar_todos_clientes,
     get_platform_default_new_tenant_plan,
@@ -970,134 +970,6 @@ async def atualizar_politica_operacional_admin_cliente(
     )
 
 
-@roteador_admin_clientes.post("/clientes/{empresa_id}/bloquear")
-async def toggle_bloqueio(
-    request: Request,
-    empresa_id: int,
-    csrf_token: str = Form(default=""),
-    motivo: str = Form(default=""),
-    confirmar_desbloqueio: str = Form(default=""),
-    banco: Session = Depends(obter_banco),
-    usuario: Optional[Usuario] = Depends(obter_usuario_html),
-):
-    if not _verificar_acesso_admin(usuario):
-        return _redirect_login()
-
-    if not _validar_csrf(request, csrf_token):
-        return _redirect_err(f"{URL_CLIENTES}/{empresa_id}", "Requisição inválida.")
-    step_up = _exigir_step_up_admin_ou_redirect(
-        request,
-        return_to=f"{URL_CLIENTES}/{empresa_id}",
-        mensagem="Reautenticação necessária para bloquear ou desbloquear empresa.",
-    )
-    if step_up is not None:
-        return step_up
-
-    def _operacao() -> RedirectResponse:
-        resultado = alternar_bloqueio(
-            banco,
-            empresa_id,
-            motivo=motivo,
-            confirmar_desbloqueio=confirmar_desbloqueio == "1",
-        )
-        bloqueado = bool(resultado["blocked"])
-        mensagem = "Acesso bloqueado com sucesso." if bloqueado else "Acesso restaurado com sucesso."
-        registrar_auditoria_admin_empresa_segura(
-            banco,
-            empresa_id=empresa_id,
-            ator_usuario_id=int(usuario.id),
-            acao="tenant_block_toggled",
-            resumo=f"Bloqueio da empresa #{empresa_id} {'ativado' if bloqueado else 'removido'}.",
-            detalhe="Acao administrativa executada pelo portal Admin-CEO.",
-            payload={
-                "blocked": bool(bloqueado),
-                "reason": str(resultado.get("reason") or ""),
-                "sessions_invalidated": int(resultado.get("sessions_invalidated") or 0),
-            },
-        )
-
-        logger.info(
-            "Bloqueio de empresa alterado | empresa_id=%s | bloqueado=%s | sessoes_encerradas=%s | admin_id=%s",
-            empresa_id,
-            bloqueado,
-            int(resultado.get("sessions_invalidated") or 0),
-            usuario.id,
-        )
-        return _redirect_ok(
-            f"{URL_CLIENTES}/{empresa_id}",
-            (
-                f"{mensagem} Sessões encerradas: {int(resultado.get('sessions_invalidated') or 0)}."
-                if bloqueado
-                else mensagem
-            ),
-        )
-
-    return _executar_acao_admin_redirect(
-        url_erro=f"{URL_CLIENTES}/{empresa_id}",
-        mensagem_log="Falha ao alternar bloqueio",
-        operacao=_operacao,
-        empresa_id=empresa_id,
-        admin_id=usuario.id if usuario else None,
-    )
-
-
-@roteador_admin_clientes.post("/clientes/{empresa_id}/trocar-plano")
-async def trocar_plano(
-    request: Request,
-    empresa_id: int,
-    csrf_token: str = Form(default=""),
-    plano: str = Form(...),
-    banco: Session = Depends(obter_banco),
-    usuario: Optional[Usuario] = Depends(obter_usuario_html),
-):
-    if not _verificar_acesso_admin(usuario):
-        return _redirect_login()
-
-    if not _validar_csrf(request, csrf_token):
-        return _redirect_err(f"{URL_CLIENTES}/{empresa_id}", "Requisição inválida.")
-    step_up = _exigir_step_up_admin_ou_redirect(
-        request,
-        return_to=f"{URL_CLIENTES}/{empresa_id}",
-        mensagem="Reautenticacao necessaria para alterar o plano da empresa.",
-    )
-    if step_up is not None:
-        return step_up
-
-    plano_normalizado = _normalizar_plano(plano)
-
-    def _operacao() -> RedirectResponse:
-        preview = alterar_plano(banco, empresa_id, plano_normalizado)
-        registrar_auditoria_admin_empresa_segura(
-            banco,
-            empresa_id=empresa_id,
-            ator_usuario_id=int(usuario.id),
-            acao="tenant_plan_changed",
-            resumo=f"Plano da empresa #{empresa_id} alterado para {plano_normalizado}.",
-            detalhe="Acao administrativa executada pelo portal Admin-CEO.",
-            payload=preview,
-        )
-
-        logger.info(
-            "Plano alterado | empresa_id=%s | plano=%s | admin_id=%s",
-            empresa_id,
-            plano_normalizado,
-            usuario.id,
-        )
-        return _redirect_ok(
-            f"{URL_CLIENTES}/{empresa_id}",
-            f"Plano atualizado para {plano_normalizado}.",
-        )
-
-    return _executar_acao_admin_redirect(
-        url_erro=f"{URL_CLIENTES}/{empresa_id}",
-        mensagem_log="Falha ao trocar plano",
-        operacao=_operacao,
-        empresa_id=empresa_id,
-        plano=plano_normalizado,
-        admin_id=usuario.id if usuario else None,
-    )
-
-
 registrar_rotas_funcionarios_cliente(
     roteador_admin_clientes,
     executar_acao_admin_redirect=_executar_acao_admin_redirect,
@@ -1128,6 +1000,11 @@ registrar_rotas_diagnostico_cliente(
     exigir_step_up_admin_ou_redirect=_exigir_step_up_admin_ou_redirect,
     empresa_cliente_existe_no_banco=_empresa_cliente_existe_no_banco,
     tenant_admin_visibility_policy_snapshot=_tenant_admin_visibility_policy_snapshot,
+)
+registrar_rotas_operacoes_sensiveis_tenant(
+    roteador_admin_clientes,
+    executar_acao_admin_redirect=_executar_acao_admin_redirect,
+    exigir_step_up_admin_ou_redirect=_exigir_step_up_admin_ou_redirect,
 )
 registrar_rotas_suporte_excepcional_cliente(
     roteador_admin_clientes,

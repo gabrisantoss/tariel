@@ -2971,3 +2971,40 @@ Impacto observado:
 - o export diagnóstico saiu do monólito sem mudar contrato público;
 - `client_routes.py` agora concentra principalmente onboarding/lista/detalhe, política operacional, bloqueio e troca de plano;
 - o próximo pacote backend coerente é extrair bloqueio/troca de plano para um módulo de operações sensíveis do tenant ou alternar para frontend e atacar `innerHTML` restante em `portal_admin_surface.js`.
+
+## R73. Operações sensíveis do tenant Admin CEO extraídas
+
+Resumo:
+
+- extraí os endpoints `/admin/clientes/{empresa_id}/bloquear` e `/admin/clientes/{empresa_id}/trocar-plano` para `web/app/domains/admin/client_tenant_sensitive_routes.py`;
+- preservei URLs públicas, validação CSRF, step-up, auditoria `tenant_block_toggled`/`tenant_plan_changed`, redirects e mensagens;
+- mantive `client_routes.py` como registro do roteador e fluxo de onboarding/lista/detalhe/política operacional;
+- reduzi `web/app/domains/admin/client_routes.py` de `1136` para `1013` linhas;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/client_routes.py`
+- `web/app/domains/admin/client_tenant_sensitive_routes.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_sensitive_routes.py web/tests/test_admin_client_routes.py` -> verde;
+- `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_tenant_sensitive_routes.py` -> verde;
+- `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py -q -k 'motivo_para_bloqueio or troca_plano'` -> `2 passed, 39 deselected`;
+- `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'admin or catalogo'` -> `4 passed, 39 deselected`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `333` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- as operações de maior risco operacional do Admin CEO saíram do monólito e ficaram isoladas em um módulo próprio com step-up obrigatório;
+- `client_routes.py` está perto de sair do hotspot principal, concentrando agora onboarding/lista/detalhe e política operacional;
+- o próximo pacote backend coerente é extrair política operacional por superfície para rotas próprias ou alternar para frontend e atacar `innerHTML` restante em `portal_admin_surface.js`.
