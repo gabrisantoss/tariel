@@ -3214,3 +3214,37 @@ Impacto observado:
 - a auditoria do Portal Admin Cliente deixou de interpolar resumo, filtro, busca, protocolo, alvo, contexto e detalhes em `innerHTML`;
 - `portal_admin_surface.js` agora tem `innerHTML` dinâmico relevante apenas no resumo/tabela de usuários, além do helper compatível `preencherHtmlNoElemento`;
 - o próximo pacote coerente é atacar `renderUsuarios` e decidir se `roleBadge`, `userStatusBadges` e editor de portais viram nós DOM ou continuam como compat HTML controlado.
+
+## R80. Tabela de usuários Admin Cliente em DOM seguro
+
+Resumo:
+
+- troquei `renderUsuarios` em `web/static/js/cliente/portal_admin_surface.js` de HTML interpolado para montagem DOM explícita;
+- o resumo de usuários, linhas da tabela, pills de papel/status/prioridade, chips de portal, editor de dados, checkboxes `allowed_portals` e botões `save-user`/`toggle-user`/`reset-user`/`delete-user` agora usam `textContent`, `dataset`, `value`, `checked` e `disabled`;
+- substituí os helpers `htmlPortalGrantChips`/`htmlPortalGrantEditor` por helpers DOM e atualizei o smoke para travar o contrato `act`/`dataset` em vez de HTML literal;
+- mantive Render real como pendência externa: sem aguardar deploy e sem aplicar alteração de disco/plano no provedor.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_admin_surface.js`
+- `web/tests/test_smoke.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_admin_surface.js` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py::test_templates_cliente_explicitam_abas_e_formularios_principais -q` -> `1 passed`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `335` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- `web/static/js/cliente/portal_admin_surface.js` ficou sem `innerHTML` dinâmico relevante; resta apenas o helper compatível `preencherHtmlNoElemento`, usado para contratos HTML estáticos/allowlisted;
+- a área de equipe deixou de interpolar nome, e-mail, telefone, CREA, permissões e ações administrativas em string HTML;
+- o próximo pacote coerente pode migrar `portal_admin_overview_surface.js`, `portal_shell.js` ou as superfícies verticais (`servicos`, `ativos`, `documentos`, `recorrencia`) para o mesmo padrão DOM seguro.

@@ -1762,9 +1762,9 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "bindCommercialActions" in portal_bindings_js
     assert "aplicarFiltrosUsuarios" in portal_admin_bundle_js
     assert "focarUsuarioNaTabela" in portal_admin_bundle_js
-    assert 'data-act="reset-user"' in portal_admin_bundle_js
-    assert 'data-act="toggle-user"' in portal_admin_bundle_js
-    assert 'data-user="${usuario.id}"' in portal_admin_bundle_js
+    assert 'act: "reset-user"' in portal_admin_bundle_js
+    assert 'act: "toggle-user"' in portal_admin_bundle_js
+    assert "dataset: { user: userId }" in portal_admin_bundle_js
     assert "user-row-highlight" in portal_components_css
     assert ".cliente-shell" in portal_foundation_css
     assert ".hero-card--primary" in portal_foundation_css

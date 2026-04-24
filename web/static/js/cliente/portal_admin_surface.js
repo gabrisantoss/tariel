@@ -27,11 +27,9 @@
         const parseDataIso = typeof helpers.parseDataIso === "function" ? helpers.parseDataIso : () => 0;
         const prioridadeEmpresa = typeof helpers.prioridadeEmpresa === "function" ? helpers.prioridadeEmpresa : () => ({ tone: "aprovado", badge: "", acao: "" });
         const prioridadeUsuario = typeof helpers.prioridadeUsuario === "function" ? helpers.prioridadeUsuario : () => ({ tone: "aprovado", badge: "", acao: "", score: 0 });
-        const roleBadge = typeof helpers.roleBadge === "function" ? helpers.roleBadge : () => "";
         const slugPapel = typeof helpers.slugPapel === "function" ? helpers.slugPapel : () => "inspetor";
         const texto = typeof helpers.texto === "function" ? helpers.texto : (valor) => (valor == null ? "" : String(valor));
         const tomCapacidadeEmpresa = typeof helpers.tomCapacidadeEmpresa === "function" ? helpers.tomCapacidadeEmpresa : () => "aprovado";
-        const userStatusBadges = typeof helpers.userStatusBadges === "function" ? helpers.userStatusBadges : () => "";
         const sincronizarUrlDaSecao = typeof helpers.sincronizarUrlDaSecao === "function" ? helpers.sincronizarUrlDaSecao : () => null;
 
         const filtrarUsuarios = typeof filters.filtrarUsuarios === "function" ? filters.filtrarUsuarios : () => [];
@@ -2047,14 +2045,27 @@
             return valor || "Portal";
         }
 
-        function htmlPortalGrantChips(usuario) {
+        function obterPortalGrantLabels(usuario) {
             const labels = Array.isArray(usuario?.allowed_portal_labels) && usuario.allowed_portal_labels.length
                 ? usuario.allowed_portal_labels
                 : (Array.isArray(usuario?.allowed_portals) ? usuario.allowed_portals.map(labelPortalUsuario) : []);
-            return labels.map((label) => `<span class="hero-chip">${escapeHtml(label)}</span>`).join("");
+            return labels;
         }
 
-        function htmlPortalGrantEditor(usuario, governance) {
+        function criarUserFieldAdminNode({ label, field, userId, value, type = "text", placeholder }) {
+            const wrapper = documentRef.createElement("label");
+            wrapper.appendChild(documentRef.createTextNode(texto(label)));
+            const input = documentRef.createElement("input");
+            input.dataset.field = texto(field);
+            input.dataset.user = texto(userId);
+            input.type = texto(type);
+            input.value = texto(value);
+            if (placeholder) input.placeholder = texto(placeholder);
+            wrapper.appendChild(input);
+            return wrapper;
+        }
+
+        function criarPortalGrantEditorAdminNode(usuario, governance) {
             const baseRole = slugPapel(usuario);
             const currentPortals = new Set(Array.isArray(usuario?.allowed_portals) ? usuario.allowed_portals : []);
             const canGrantCross = Boolean(governance.operationalUserCrossPortalEnabled);
@@ -2079,26 +2090,138 @@
                     disabled: !canGrantCliente,
                 },
             ];
-            return `
-                <div class="stack">
-                    <small>Superficies liberadas</small>
-                    <div class="user-grid">
-                        ${controls.map((item) => `
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    data-user="${usuario.id}"
-                                    data-field="allowed_portals"
-                                    data-portal="${escapeAttr(item.portal)}"
-                                    ${item.checked ? "checked" : ""}
-                                    ${item.disabled ? "disabled" : ""}
-                                >
-                                ${escapeHtml(item.label)}
-                            </label>
-                        `).join("")}
-                    </div>
-                </div>
-            `;
+            const stack = documentRef.createElement("div");
+            stack.className = "stack";
+            const label = documentRef.createElement("small");
+            label.textContent = "Superficies liberadas";
+            stack.appendChild(label);
+            const grid = documentRef.createElement("div");
+            grid.className = "user-grid";
+            controls.forEach((item) => {
+                const wrapper = documentRef.createElement("label");
+                const input = documentRef.createElement("input");
+                input.type = "checkbox";
+                input.dataset.user = texto(usuario.id);
+                input.dataset.field = "allowed_portals";
+                input.dataset.portal = texto(item.portal);
+                input.checked = Boolean(item.checked);
+                input.disabled = Boolean(item.disabled);
+                wrapper.appendChild(input);
+                wrapper.appendChild(documentRef.createTextNode(` ${texto(item.label)}`));
+                grid.appendChild(wrapper);
+            });
+            stack.appendChild(grid);
+            return stack;
+        }
+
+        function criarUsuarioRowAdminNode(usuario, governance) {
+            const papelSlug = slugPapel(usuario);
+            const papel = obterNomePapel(papelSlug);
+            const prioridade = prioridadeUsuario(usuario);
+            const userId = String(usuario.id || "");
+            const tr = documentRef.createElement("tr");
+            tr.dataset.userRow = userId;
+            if (Number(state.ui.usuarioEmDestaque || 0) === Number(usuario.id)) {
+                tr.className = "user-row-highlight";
+            }
+
+            const mainCell = documentRef.createElement("td");
+            const userMain = documentRef.createElement("div");
+            userMain.className = "user-main";
+            const primary = documentRef.createElement("div");
+            primary.className = "user-primary";
+            const name = documentRef.createElement("span");
+            name.className = "user-name";
+            name.textContent = texto(usuario.nome || "Usuario");
+            primary.appendChild(name);
+            primary.appendChild(criarPillAdminNode({ kind: "role", label: papel }));
+            primary.appendChild(criarPillAdminNode({
+                kind: "status",
+                status: usuario.ativo ? "ativo" : "bloqueado",
+                label: usuario.ativo ? "Ativo" : "Bloqueado",
+            }));
+            if (usuario.senha_temporaria_ativa) {
+                primary.appendChild(criarPillAdminNode({
+                    kind: "status",
+                    status: "temporaria",
+                    label: "Senha temporaria",
+                }));
+            }
+            primary.appendChild(criarPillAdminNode({
+                kind: "priority",
+                status: prioridade.tone,
+                label: prioridade.badge,
+            }));
+            userMain.appendChild(primary);
+
+            const email = documentRef.createElement("div");
+            email.className = "user-email";
+            email.textContent = texto(usuario.email);
+            userMain.appendChild(email);
+            const chips = [
+                criarHeroChipAdminNode(usuario.telefone ? usuario.telefone : "Sem telefone"),
+            ];
+            if (papelSlug === "revisor") {
+                chips.push(criarHeroChipAdminNode(usuario.crea ? `CREA ${usuario.crea}` : "Sem CREA"));
+            }
+            obterPortalGrantLabels(usuario).forEach((label) => {
+                chips.push(criarHeroChipAdminNode(label));
+            });
+            userMain.appendChild(criarToolbarMetaAdminNode(chips));
+
+            const details = documentRef.createElement("details");
+            details.className = "user-editor";
+            const summary = documentRef.createElement("summary");
+            summary.className = "user-editor-toggle";
+            summary.textContent = "Editar dados deste usuario";
+            details.appendChild(summary);
+            const grid = documentRef.createElement("div");
+            grid.className = "user-grid";
+            grid.appendChild(criarUserFieldAdminNode({ label: "Nome", field: "nome", userId, value: usuario.nome || "" }));
+            grid.appendChild(criarUserFieldAdminNode({ label: "E-mail", field: "email", userId, value: usuario.email || "", type: "email" }));
+            grid.appendChild(criarUserFieldAdminNode({ label: "Telefone", field: "telefone", userId, value: usuario.telefone || "", placeholder: "Telefone" }));
+            if (papelSlug === "revisor") {
+                grid.appendChild(criarUserFieldAdminNode({ label: "CREA", field: "crea", userId, value: usuario.crea || "", placeholder: "CREA" }));
+            }
+            details.appendChild(grid);
+            details.appendChild(criarPortalGrantEditorAdminNode(usuario, governance));
+            userMain.appendChild(details);
+            mainCell.appendChild(userMain);
+            tr.appendChild(mainCell);
+
+            const statusCell = documentRef.createElement("td");
+            const stack = documentRef.createElement("div");
+            stack.className = "stack";
+            stack.appendChild(criarContextBlockAdminNode("Papel operacional", papel));
+            stack.appendChild(criarContextBlockAdminNode("Ultimo login", usuario.ultimo_login_label || "Nunca"));
+            stack.appendChild(criarContextGuidanceAdminNode({
+                tone: prioridade.tone,
+                eyebrow: "Foco deste cadastro",
+                title: prioridade.badge,
+                detail: prioridade.acao,
+            }));
+            statusCell.appendChild(stack);
+            tr.appendChild(statusCell);
+
+            const actionsCell = documentRef.createElement("td");
+            const actions = documentRef.createElement("div");
+            actions.className = "user-actions";
+            [
+                { label: "Salvar cadastro", act: "save-user" },
+                { label: usuario.ativo ? "Bloquear acesso" : "Desbloquear acesso", act: "toggle-user" },
+                { label: "Gerar senha temporaria", act: "reset-user", ghost: true },
+                { label: "Excluir cadastro", act: "delete-user", ghost: true },
+            ].forEach((action) => {
+                actions.appendChild(criarAdminActionButtonNode({
+                    label: action.label,
+                    act: action.act,
+                    ghost: action.ghost,
+                    dataset: { user: userId },
+                }));
+            });
+            actionsCell.appendChild(actions);
+            tr.appendChild(actionsCell);
+            return tr;
         }
 
         function renderUsuarios() {
@@ -2113,91 +2236,29 @@
             const totalBloqueados = (state.bootstrap?.usuarios || []).filter((item) => !item.ativo).length;
             const totalSemLogin = (state.bootstrap?.usuarios || []).filter((item) => !parseDataIso(item.ultimo_login)).length;
             const rotuloFiltroRapido = rotuloSituacaoUsuarios(state.ui.usuariosSituacao) || "";
-            resumo.innerHTML = `
-                <span class="hero-chip">${formatarInteiro(usuarios.length)} visiveis agora</span>
-                <span class="hero-chip">${formatarInteiro(totalTemporarios)} com senha temporaria</span>
-                <span class="hero-chip">${formatarInteiro(totalBloqueados)} bloqueados</span>
-                <span class="hero-chip">${formatarInteiro(totalSemLogin)} sem login</span>
-                <span class="hero-chip">${formatarInteiro((state.bootstrap?.usuarios || []).filter((item) => item.ativo).length)} ativos</span>
-                ${governance.enabled ? `<span class="hero-chip">Pacote: ${escapeHtml(formatarInteiro(governance.operationalUsersInUse))}/${escapeHtml(formatarInteiro(governance.operationalUserLimit))} operador</span>` : ""}
-                ${rotuloFiltroRapido ? `<span class="hero-chip">Filtro rapido: ${escapeHtml(rotuloFiltroRapido)}</span>` : ""}
-            `;
+            limparElemento(resumo);
+            [
+                `${formatarInteiro(usuarios.length)} visiveis agora`,
+                `${formatarInteiro(totalTemporarios)} com senha temporaria`,
+                `${formatarInteiro(totalBloqueados)} bloqueados`,
+                `${formatarInteiro(totalSemLogin)} sem login`,
+                `${formatarInteiro((state.bootstrap?.usuarios || []).filter((item) => item.ativo).length)} ativos`,
+                governance.enabled ? `Pacote: ${formatarInteiro(governance.operationalUsersInUse)}/${formatarInteiro(governance.operationalUserLimit)} operador` : "",
+                rotuloFiltroRapido ? `Filtro rapido: ${rotuloFiltroRapido}` : "",
+            ].filter((label) => texto(label).trim()).forEach((label) => {
+                resumo.appendChild(criarHeroChipAdminNode(label));
+            });
+            limparElemento(tbody);
 
             if (!usuarios.length) {
-                tbody.innerHTML = "";
                 vazio.hidden = false;
                 return;
             }
 
             vazio.hidden = true;
-            tbody.innerHTML = usuarios.map((usuario) => {
-                const papel = obterNomePapel(slugPapel(usuario));
-                const ultimoLogin = escapeHtml(usuario.ultimo_login_label || "Nunca");
-                const prioridade = prioridadeUsuario(usuario);
-                const emDestaque = Number(state.ui.usuarioEmDestaque || 0) === Number(usuario.id);
-
-                return `
-                    <tr data-user-row="${usuario.id}"${emDestaque ? ' class="user-row-highlight"' : ""}>
-                        <td>
-                            <div class="user-main">
-                                <div class="user-primary">
-                                    <span class="user-name">${escapeHtml(usuario.nome || "Usuario")}</span>
-                                    ${roleBadge(papel)}
-                                    ${userStatusBadges(usuario)}
-                                    <span class="pill" data-kind="priority" data-status="${prioridade.tone}">${escapeHtml(prioridade.badge)}</span>
-                                </div>
-                                <div class="user-email">${escapeHtml(usuario.email)}</div>
-                                <div class="toolbar-meta">
-                                    <span class="hero-chip">${usuario.telefone ? escapeHtml(usuario.telefone) : "Sem telefone"}</span>
-                                    ${slugPapel(usuario) === "revisor"
-                                        ? `<span class="hero-chip">${usuario.crea ? `CREA ${escapeHtml(usuario.crea)}` : "Sem CREA"}</span>`
-                                        : ""}
-                                    ${htmlPortalGrantChips(usuario)}
-                                </div>
-                                <details class="user-editor">
-                                    <summary class="user-editor-toggle">Editar dados deste usuario</summary>
-                                    <div class="user-grid">
-                                        <label>Nome<input data-field="nome" data-user="${usuario.id}" value="${escapeAttr(usuario.nome || "")}"></label>
-                                        <label>E-mail<input data-field="email" data-user="${usuario.id}" type="email" value="${escapeAttr(usuario.email || "")}"></label>
-                                        <label>Telefone<input data-field="telefone" data-user="${usuario.id}" value="${escapeAttr(usuario.telefone || "")}" placeholder="Telefone"></label>
-                                        ${slugPapel(usuario) === "revisor"
-                                            ? `<label>CREA<input data-field="crea" data-user="${usuario.id}" value="${escapeAttr(usuario.crea || "")}" placeholder="CREA"></label>`
-                                            : ""}
-                                    </div>
-                                    ${htmlPortalGrantEditor(usuario, governance)}
-                                </details>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="stack">
-                                <div class="context-block">
-                                    <small>Papel operacional</small>
-                                    <strong>${escapeHtml(papel)}</strong>
-                                </div>
-                                <div class="context-block">
-                                    <small>Ultimo login</small>
-                                    <strong>${ultimoLogin}</strong>
-                                </div>
-                                <div class="context-guidance" data-tone="${prioridade.tone}">
-                                    <div class="context-guidance-copy">
-                                        <small>Foco deste cadastro</small>
-                                        <strong>${escapeHtml(prioridade.badge)}</strong>
-                                        <p>${escapeHtml(prioridade.acao)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="user-actions">
-                                <button class="btn" data-act="save-user" data-user="${usuario.id}" type="button">Salvar cadastro</button>
-                                <button class="btn" data-act="toggle-user" data-user="${usuario.id}" type="button">${usuario.ativo ? "Bloquear acesso" : "Desbloquear acesso"}</button>
-                                <button class="btn ghost" data-act="reset-user" data-user="${usuario.id}" type="button">Gerar senha temporaria</button>
-                                <button class="btn ghost" data-act="delete-user" data-user="${usuario.id}" type="button">Excluir cadastro</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join("");
+            usuarios.forEach((usuario) => {
+                tbody.appendChild(criarUsuarioRowAdminNode(usuario, governance));
+            });
         }
 
         function renderAdminStage(stage, { force = false } = {}) {
