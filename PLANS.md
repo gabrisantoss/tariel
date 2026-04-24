@@ -4247,6 +4247,7 @@ Atualizado em `2026-04-24`.
 - `Admin CEO`: extrair suporte excepcional do cliente para `web/app/domains/admin/client_support_routes.py`, mantendo governança por janela auditada e sem interferir nos funcionários do cliente.
 - `Portal Admin Cliente`: trocar cards executivos e seletor de plano para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
 - `Mesa Avaliadora`: extrair verificação pública e anexo pack para `web/app/domains/mesa/package_document_support.py`.
+- `Portal Admin Cliente`: trocar resumo geral, briefs de capacidade/equipe/suporte, alerta de capacidade e nota de criação de usuário para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
 
 ### Validacao deste slice
 
@@ -4265,6 +4266,15 @@ Atualizado em `2026-04-24`.
 - `node --check web/static/js/cliente/portal_chat_surface.js`
 - `node --check web/static/js/cliente/portal_mesa_surface.js`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or mesa'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais`
+- `git diff --check`
+- `make web-ci`
+- `make production-ops-check-strict`
+- `make uploads-restore-drill`
+- `make hygiene-check`
+- `make verify`
+- `node --check web/static/js/cliente/portal_admin_surface.js`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'admin or portal or cliente'`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais`
 - `git diff --check`
 - `make web-ci`

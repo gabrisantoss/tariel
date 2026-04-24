@@ -2683,3 +2683,37 @@ Impacto observado:
 - `client_routes.py` ainda é grande, mas perdeu mais uma responsabilidade de governança sensível;
 - `portal_admin_surface.js` ainda tem `innerHTML`, agora com um primeiro padrão DOM para cards/seletor que pode ser reaplicado nos resumos e auditoria;
 - `mesa/service.py` ficou mais próximo de orquestração final, mas ainda pode perder documento estruturado/catálogo/verificação de escopo em próximos slices.
+
+## R65. Briefs DOM do Portal Admin Cliente
+
+Resumo:
+
+- troquei o resumo geral administrativo do Portal Admin Cliente para cards DOM seguros, preservando classes e acentos visuais;
+- troquei os briefs de capacidade, equipe e suporte para `stage-brief-card` criado por nós DOM, preservando botões `preparar-upgrade` e `abrir-prioridade`;
+- troquei o alerta de capacidade e a nota de criação de usuário para helpers DOM, removendo mais dois blocos dinâmicos de `innerHTML`;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_admin_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_admin_surface.js` -> sem erro de sintaxe;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'admin or portal or cliente'` -> `32 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais` -> `1 passed, 42 deselected`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `326` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- os blocos executivos mais visíveis do Portal Admin Cliente já usam o mesmo padrão DOM seguro dos cards recentes;
+- `portal_admin_surface.js` ainda tem `innerHTML` em resumo detalhado, saúde, política/auditoria e tabela de usuários;
+- o próximo pacote coerente é trocar `renderSaudeEmpresa`/auditoria para DOM seguro ou alternar para novo slice backend em `admin/client_routes.py`.

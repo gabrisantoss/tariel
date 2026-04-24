@@ -148,6 +148,7 @@ Ele está na fase de:
 - `portal_chat_surface.js` e `portal_mesa_surface.js` não possuem mais `innerHTML` direto; documento pendente, capacidade, resumos e fallback de mensagens agora usam nós DOM/texto.
 - o Admin CEO passou a ter as rotas de suporte excepcional do cliente isoladas em `admin/client_support_routes.py`, preservando que o Admin CEO governa janela auditada de suporte e não a gestão direta dos funcionários do cliente.
 - o Portal Admin Cliente começou a trocar os cards executivos e o seletor de plano para DOM seguro em `portal_admin_surface.js`, reduzindo `innerHTML` na área administrativa.
+- o Portal Admin Cliente agora também monta resumo geral, briefs de capacidade/equipe/suporte, alerta de capacidade e nota de criação de usuário por DOM seguro, reduzindo mais blocos sensíveis de `innerHTML`.
 - a Mesa moveu verificação pública e anexo pack do pacote para `mesa/package_document_support.py`, reduzindo mais um bloco documental de `mesa/service.py`.
 
 ## O que ainda falta melhorar

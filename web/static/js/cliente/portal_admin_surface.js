@@ -402,6 +402,113 @@
             return card;
         }
 
+        function criarContextBlockAdminNode(label, value) {
+            const block = documentRef.createElement("div");
+            block.className = "context-block";
+            const labelNode = documentRef.createElement("small");
+            labelNode.textContent = texto(label);
+            block.appendChild(labelNode);
+            const valueNode = documentRef.createElement("strong");
+            valueNode.textContent = texto(value);
+            block.appendChild(valueNode);
+            return block;
+        }
+
+        function criarFormHintAdminNode({ tone, title, detail }) {
+            const hint = documentRef.createElement("div");
+            hint.className = "form-hint";
+            hint.dataset.tone = texto(tone).trim();
+            const titleNode = documentRef.createElement("strong");
+            titleNode.textContent = texto(title);
+            hint.appendChild(titleNode);
+            const detailNode = documentRef.createElement("span");
+            detailNode.textContent = texto(detail);
+            hint.appendChild(detailNode);
+            return hint;
+        }
+
+        function criarCapacityAlertAdminNode({ tone, label, messages = [], sideItems = [] }) {
+            const alert = documentRef.createElement("div");
+            alert.className = "context-guidance capacity-alert";
+            alert.dataset.tone = texto(tone).trim();
+
+            const copy = documentRef.createElement("div");
+            copy.className = "context-guidance-copy";
+            const eyebrowNode = documentRef.createElement("small");
+            eyebrowNode.textContent = "Capacidade e proximo passo comercial";
+            copy.appendChild(eyebrowNode);
+            const titleNode = documentRef.createElement("strong");
+            titleNode.textContent = texto(label);
+            copy.appendChild(titleNode);
+            messages.forEach((message) => {
+                const paragraph = documentRef.createElement("p");
+                paragraph.textContent = texto(message);
+                copy.appendChild(paragraph);
+            });
+            alert.appendChild(copy);
+
+            const side = documentRef.createElement("div");
+            side.className = "capacity-alert-side";
+            sideItems.forEach((item) => {
+                const chip = documentRef.createElement("span");
+                chip.className = item.className || "hero-chip";
+                if (item.kind) chip.dataset.kind = texto(item.kind);
+                if (item.status) chip.dataset.status = texto(item.status);
+                chip.textContent = texto(item.label);
+                side.appendChild(chip);
+            });
+            alert.appendChild(side);
+            return alert;
+        }
+
+        function criarAdminActionButtonNode({ label, primary = false, ghost = false, act, kind, canal, target, origem }) {
+            const button = documentRef.createElement("button");
+            button.className = primary ? "btn primary" : ghost ? "btn ghost" : "btn";
+            button.type = "button";
+            if (act) button.dataset.act = texto(act);
+            if (kind) button.dataset.kind = texto(kind);
+            if (canal) button.dataset.canal = texto(canal);
+            if (target) button.dataset.target = texto(target);
+            if (origem) button.dataset.origem = texto(origem);
+            button.textContent = texto(label);
+            return button;
+        }
+
+        function criarStageBriefCardAdminNode({ tone, eyebrow, title, detail, metrics = [], actions = [] }) {
+            const article = documentRef.createElement("article");
+            article.className = "stage-brief-card";
+            article.dataset.tone = texto(tone).trim();
+
+            const copy = documentRef.createElement("div");
+            copy.className = "stage-brief-card__copy";
+            const eyebrowNode = documentRef.createElement("span");
+            eyebrowNode.className = "stage-brief-card__eyebrow";
+            eyebrowNode.textContent = texto(eyebrow);
+            copy.appendChild(eyebrowNode);
+            const titleNode = documentRef.createElement("strong");
+            titleNode.textContent = texto(title);
+            copy.appendChild(titleNode);
+            const detailNode = documentRef.createElement("p");
+            detailNode.textContent = texto(detail);
+            copy.appendChild(detailNode);
+            article.appendChild(copy);
+
+            const metricsNode = documentRef.createElement("div");
+            metricsNode.className = "stage-brief-card__metrics";
+            metrics.forEach((metric) => {
+                metricsNode.appendChild(criarContextBlockAdminNode(metric.label, metric.value));
+            });
+            article.appendChild(metricsNode);
+
+            const actionsNode = documentRef.createElement("div");
+            actionsNode.className = "stage-brief-card__actions";
+            actions.forEach((action) => {
+                actionsNode.appendChild(criarAdminActionButtonNode(action));
+            });
+            article.appendChild(actionsNode);
+            return article;
+        }
+
         function renderAdminSelectOptions(select, options, selectedValue) {
             if (!select) return;
             limparElemento(select);
@@ -758,20 +865,27 @@
                 const recomendacaoUpgrade = planoSugerido
                     ? `Migrar para ${planoSugerido} tende a aliviar primeiro ${empresa.capacidade_gargalo === "usuarios" ? "a equipe" : "a fila mensal de laudos"}.`
                     : "O plano atual ja e o topo da escada comercial configurada.";
-                alertaCapacidade.innerHTML = `
-                    <div class="context-guidance capacity-alert" data-tone="${capacidadeTone}">
-                        <div class="context-guidance-copy">
-                            <small>Capacidade e proximo passo comercial</small>
-                            <strong>${escapeHtml(riscoLabel)}</strong>
-                            <p>${escapeHtml(riscoMensagem)}</p>
-                            <p>${escapeHtml(planoSugerido ? `${empresa.plano_sugerido_motivo || recomendacaoUpgrade}` : recomendacaoUpgrade)}</p>
-                        </div>
-                        <div class="capacity-alert-side">
-                            <span class="pill" data-kind="priority" data-status="${capacidadeTone}">${escapeHtml(riscoLabel)}</span>
-                            <span class="hero-chip">${planoSugerido ? `Plano sugerido: ${escapeHtml(planoSugerido)}` : "Sem solicitacao imediata"}</span>
-                        </div>
-                    </div>
-                `;
+                limparElemento(alertaCapacidade);
+                alertaCapacidade.appendChild(criarCapacityAlertAdminNode({
+                    tone: capacidadeTone,
+                    label: riscoLabel,
+                    messages: [
+                        riscoMensagem,
+                        planoSugerido ? `${empresa.plano_sugerido_motivo || recomendacaoUpgrade}` : recomendacaoUpgrade,
+                    ],
+                    sideItems: [
+                        {
+                            className: "pill",
+                            kind: "priority",
+                            status: capacidadeTone,
+                            label: riscoLabel,
+                        },
+                        {
+                            className: "hero-chip",
+                            label: planoSugerido ? `Plano sugerido: ${planoSugerido}` : "Sem solicitacao imediata",
+                        },
+                    ],
+                }));
             }
 
             if (notaCapacidadeUsuario) {
@@ -792,12 +906,12 @@
                         : governance.enabled
                             ? `Este pacote permite ${formatarInteiro(governance.operationalUserLimit)} conta operacional e continuidade em ${governance.surfacesSummary}. ${governance.identityNote}`
                             : `${resumoUsuarios}. ${planoSugerido && (empresa.capacidade_status === "atencao" || empresa.capacidade_status === "monitorar") ? `Se a fila crescer, o melhor encaixe passa a ser ${planoSugerido}.` : "Ainda existe folga para ampliar a equipe com seguranca."}`;
-                notaCapacidadeUsuario.innerHTML = `
-                    <div class="form-hint" data-tone="${bloqueioCriacao ? "ajustes" : governance.enabled ? "aguardando" : capacidadeTone}">
-                        <strong>${escapeHtml(notaTitulo)}</strong>
-                        <span>${escapeHtml(notaDetalhe)}</span>
-                    </div>
-                `;
+                limparElemento(notaCapacidadeUsuario);
+                notaCapacidadeUsuario.appendChild(criarFormHintAdminNode({
+                    tone: bloqueioCriacao ? "ajustes" : governance.enabled ? "aguardando" : capacidadeTone,
+                    title: notaTitulo,
+                    detail: notaDetalhe,
+                }));
                 if (botaoCriarUsuario) {
                     botaoCriarUsuario.disabled = bloqueioCriacao;
                 }
@@ -829,33 +943,41 @@
             const revisoesAtivas = Number(tenantAdmin?.review_counts?.pending_review || 0)
                 + Number(tenantAdmin?.review_counts?.in_review || 0);
 
-            container.innerHTML = `
-                <article class="metric-card" data-accent="attention">
-                    <small>Acesso pedindo revisao</small>
-                    <strong>${formatarInteiro(bloqueados)}</strong>
-                    <span class="metric-meta">Usuarios bloqueados que podem travar operacao, escalonamento ou atendimento.</span>
-                </article>
-                <article class="metric-card" data-accent="waiting">
-                    <small>Primeiros acessos</small>
-                    <strong>${formatarInteiro(temporarios)}</strong>
-                    <span class="metric-meta">${formatarInteiro(semLogin)} contas ainda nao registraram login no portal.</span>
-                </article>
-                <article class="metric-card" data-accent="${empresa.usuarios_restantes === 0 && empresa.usuarios_max != null ? "attention" : "live"}">
-                    <small>Margem de equipe</small>
-                    <strong>${empresa.usuarios_restantes == null ? "Livre" : formatarInteiro(empresa.usuarios_restantes)}</strong>
-                    <span class="metric-meta">${escapeHtml(resumoUsuarios)} dentro do plano ${escapeHtml(empresa.plano_ativo)}.</span>
-                </article>
-                <article class="metric-card" data-accent="${capacidadeTone}">
-                    <small>Janela de laudos</small>
-                    <strong>${empresa.laudos_restantes == null ? "Livre" : formatarInteiro(empresa.laudos_restantes)}</strong>
-                    <span class="metric-meta">${escapeHtml(resumoLaudos)}. ${formatarInteiro(totalCasos)} casos monitorados, ${formatarInteiro(casosAbertos)} ainda abertos.</span>
-                </article>
-                <article class="metric-card" data-accent="${prioridade.tone}">
-                    <small>Foco da administracao</small>
-                    <strong>${escapeHtml(prioridade.badge)}</strong>
-                    <span class="metric-meta">${escapeHtml(prioridade.acao)} ${formatarInteiro(revisoesAtivas)} casos seguem em fila de revisao.${planoSugerido ? ` Proximo plano sugerido: ${escapeHtml(planoSugerido)}.` : ""}</span>
-                </article>
-            `;
+            limparElemento(container);
+            [
+                {
+                    accent: "attention",
+                    label: "Acesso pedindo revisao",
+                    value: formatarInteiro(bloqueados),
+                    meta: "Usuarios bloqueados que podem travar operacao, escalonamento ou atendimento.",
+                },
+                {
+                    accent: "waiting",
+                    label: "Primeiros acessos",
+                    value: formatarInteiro(temporarios),
+                    meta: `${formatarInteiro(semLogin)} contas ainda nao registraram login no portal.`,
+                },
+                {
+                    accent: empresa.usuarios_restantes === 0 && empresa.usuarios_max != null ? "attention" : "live",
+                    label: "Margem de equipe",
+                    value: empresa.usuarios_restantes == null ? "Livre" : formatarInteiro(empresa.usuarios_restantes),
+                    meta: `${resumoUsuarios} dentro do plano ${empresa.plano_ativo}.`,
+                },
+                {
+                    accent: capacidadeTone,
+                    label: "Janela de laudos",
+                    value: empresa.laudos_restantes == null ? "Livre" : formatarInteiro(empresa.laudos_restantes),
+                    meta: `${resumoLaudos}. ${formatarInteiro(totalCasos)} casos monitorados, ${formatarInteiro(casosAbertos)} ainda abertos.`,
+                },
+                {
+                    accent: prioridade.tone,
+                    label: "Foco da administracao",
+                    value: prioridade.badge,
+                    meta: `${prioridade.acao} ${formatarInteiro(revisoesAtivas)} casos seguem em fila de revisao.${planoSugerido ? ` Proximo plano sugerido: ${planoSugerido}.` : ""}`,
+                },
+            ].forEach((metric) => {
+                container.appendChild(criarMetricCardAdminNode(metric));
+            });
         }
 
         function renderOverviewBrief() {
@@ -885,25 +1007,44 @@
             const planoSugerido = texto(empresa.plano_sugerido).trim();
             const capacidadeTone = tomCapacidadeEmpresa(empresa);
 
-            container.innerHTML = `
-                <article class="stage-brief-card" data-tone="${escapeAttr(capacidadeTone)}">
-                    <div class="stage-brief-card__copy">
-                        <span class="stage-brief-card__eyebrow">Leitura comercial</span>
-                        <strong>${escapeHtml(texto(empresa.capacidade_badge).trim() || "Capacidade monitorada")}</strong>
-                        <p>${escapeHtml(texto(empresa.capacidade_acao).trim() || "Use o resumo abaixo para entender impacto, folga e proximo passo comercial sem reabrir a tela em blocos concorrentes.")}</p>
-                    </div>
-                    <div class="stage-brief-card__metrics">
-                        ${htmlContextBlock("Laudos restantes", empresa.laudos_restantes == null ? "Livre" : formatarInteiro(empresa.laudos_restantes))}
-                        ${htmlContextBlock("Usuarios restantes", empresa.usuarios_restantes == null ? "Livre" : formatarInteiro(empresa.usuarios_restantes))}
-                        ${htmlContextBlock("Plano sugerido", planoSugerido || "Sem upgrade")}
-                    </div>
-                    <div class="stage-brief-card__actions">
-                        ${planoSugerido
-                            ? `<button class="btn primary" type="button" data-act="preparar-upgrade" data-origem="admin">Registrar interesse em ${escapeHtml(planoSugerido)}</button>`
-                            : `<button class="btn" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="admin-planos-historico" data-origem="admin">Ver historico comercial</button>`}
-                    </div>
-                </article>
-            `;
+            limparElemento(container);
+            container.appendChild(criarStageBriefCardAdminNode({
+                tone: capacidadeTone,
+                eyebrow: "Leitura comercial",
+                title: texto(empresa.capacidade_badge).trim() || "Capacidade monitorada",
+                detail: texto(empresa.capacidade_acao).trim() || "Use o resumo abaixo para entender impacto, folga e proximo passo comercial sem reabrir a tela em blocos concorrentes.",
+                metrics: [
+                    {
+                        label: "Laudos restantes",
+                        value: empresa.laudos_restantes == null ? "Livre" : formatarInteiro(empresa.laudos_restantes),
+                    },
+                    {
+                        label: "Usuarios restantes",
+                        value: empresa.usuarios_restantes == null ? "Livre" : formatarInteiro(empresa.usuarios_restantes),
+                    },
+                    {
+                        label: "Plano sugerido",
+                        value: planoSugerido || "Sem upgrade",
+                    },
+                ],
+                actions: [
+                    planoSugerido
+                        ? {
+                            label: `Registrar interesse em ${planoSugerido}`,
+                            primary: true,
+                            act: "preparar-upgrade",
+                            origem: "admin",
+                        }
+                        : {
+                            label: "Ver historico comercial",
+                            act: "abrir-prioridade",
+                            kind: "admin-section",
+                            canal: "admin",
+                            target: "admin-planos-historico",
+                            origem: "admin",
+                        },
+                ],
+            }));
         }
 
         function renderTeamBrief() {
@@ -926,42 +1067,65 @@
                 ? `${formatarInteiro(governance.operationalUsersInUse)} de ${formatarInteiro(governance.operationalUserLimit)} conta operacional ocupada. Continuidade prevista em ${governance.surfacesSummary}.`
                 : "A equipe segue distribuida com a ativacao concluida para os perfis ativos.";
 
-            container.innerHTML = `
-                <article class="stage-brief-card" data-tone="${escapeAttr(tone)}">
-                    <div class="stage-brief-card__copy">
-                        <span class="stage-brief-card__eyebrow">Operacao da equipe</span>
-                        <strong>${governance.enabled
-                            ? "Pacote contratual com operador unico"
-                            : bloqueados > 0
-                                ? "Existem acessos travando a rotina"
-                                : semLogin > 0
-                                    ? "A ativacao ainda pede conclusao"
-                                    : "Equipe principal estabilizada"}</strong>
-                        <p>${escapeHtml(
-                            governance.enabled
-                                ? `${resumoOperacional} ${governance.identityNote}`
-                                : bloqueados > 0
-                                ? `${formatarInteiro(bloqueados)} cadastros bloqueados podem segurar atendimento ou revisao.`
-                                : semLogin > 0
-                                    ? `${formatarInteiro(semLogin)} usuarios ainda nao acessaram o portal depois da criacao.`
-                                    : "A equipe segue distribuida com a ativacao concluida para os perfis ativos."
-                        )}</p>
-                    </div>
-                    <div class="stage-brief-card__metrics">
-                        ${htmlContextBlock("Total operacional", formatarInteiro(total))}
-                        ${htmlContextBlock("Primeiros acessos", formatarInteiro(temporarios))}
-                        ${htmlContextBlock("Bloqueados", formatarInteiro(bloqueados))}
-                        ${htmlContextBlock(
-                            governance.enabled ? "Superficies liberadas" : "Modelo atual",
-                            governance.enabled ? governance.surfacesSummary : "Perfis distribuidos"
-                        )}
-                    </div>
-                    <div class="stage-brief-card__actions">
-                        <button class="btn" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="admin-onboarding-lista" data-origem="admin">Abrir ativacao</button>
-                        <button class="btn ghost" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="lista-usuarios" data-origem="admin">Revisar equipe completa</button>
-                    </div>
-                </article>
-            `;
+            const tituloEquipe = governance.enabled
+                ? "Pacote contratual com operador unico"
+                : bloqueados > 0
+                    ? "Existem acessos travando a rotina"
+                    : semLogin > 0
+                        ? "A ativacao ainda pede conclusao"
+                        : "Equipe principal estabilizada";
+            const detalheEquipe = governance.enabled
+                ? `${resumoOperacional} ${governance.identityNote}`
+                : bloqueados > 0
+                    ? `${formatarInteiro(bloqueados)} cadastros bloqueados podem segurar atendimento ou revisao.`
+                    : semLogin > 0
+                        ? `${formatarInteiro(semLogin)} usuarios ainda nao acessaram o portal depois da criacao.`
+                        : "A equipe segue distribuida com a ativacao concluida para os perfis ativos.";
+
+            limparElemento(container);
+            container.appendChild(criarStageBriefCardAdminNode({
+                tone,
+                eyebrow: "Operacao da equipe",
+                title: tituloEquipe,
+                detail: detalheEquipe,
+                metrics: [
+                    {
+                        label: "Total operacional",
+                        value: formatarInteiro(total),
+                    },
+                    {
+                        label: "Primeiros acessos",
+                        value: formatarInteiro(temporarios),
+                    },
+                    {
+                        label: "Bloqueados",
+                        value: formatarInteiro(bloqueados),
+                    },
+                    {
+                        label: governance.enabled ? "Superficies liberadas" : "Modelo atual",
+                        value: governance.enabled ? governance.surfacesSummary : "Perfis distribuidos",
+                    },
+                ],
+                actions: [
+                    {
+                        label: "Abrir ativacao",
+                        act: "abrir-prioridade",
+                        kind: "admin-section",
+                        canal: "admin",
+                        target: "admin-onboarding-lista",
+                        origem: "admin",
+                    },
+                    {
+                        label: "Revisar equipe completa",
+                        ghost: true,
+                        act: "abrir-prioridade",
+                        kind: "admin-section",
+                        canal: "admin",
+                        target: "lista-usuarios",
+                        origem: "admin",
+                    },
+                ],
+            }));
         }
 
         function renderSupportBrief() {
@@ -973,34 +1137,49 @@
             const suporteRecente = auditoria.find((item) => texto(item?.categoria).trim().toLowerCase() === "support");
             const tone = texto(visibilityPolicy.exceptional_support_access).trim() === "disabled" ? "ajustes" : "aberto";
 
-            container.innerHTML = `
-                <article class="stage-brief-card" data-tone="${escapeAttr(tone)}">
-                    <div class="stage-brief-card__copy">
-                        <span class="stage-brief-card__eyebrow">Suporte governado</span>
-                        <strong>${escapeHtml(
-                            texto(visibilityPolicy.exceptional_support_access).trim() === "disabled"
-                                ? "Suporte excepcional desabilitado"
-                                : "Suporte excepcional sob aprovacao e registro"
-                        )}</strong>
-                        <p>${escapeHtml(
-                            suporteRecente?.resumo
-                                || "O portal mostra politica de acesso, diagnostico exportavel e o historico recente sem abrir evidencia tecnica bruta por padrao."
-                        )}</p>
-                    </div>
-                    <div class="stage-brief-card__metrics">
-                        ${htmlContextBlock("Itens no historico", formatarInteiro(obterAuditoriaAdmin().length))}
-                        ${htmlContextBlock("Suporte recente", suporteRecente?.payload?.protocolo || "Sem protocolo")}
-                        ${htmlContextBlock(
-                            "Escopo maximo",
-                            texto(visibilityPolicy.exceptional_support_scope_level).replaceAll("_", " ") || "administrative"
-                        )}
-                    </div>
-                    <div class="stage-brief-card__actions">
-                        <button class="btn" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="admin-auditoria-lista" data-origem="admin">Abrir historico</button>
-                        <button class="btn ghost" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="form-suporte-cliente" data-origem="admin">Registrar suporte</button>
-                    </div>
-                </article>
-            `;
+            limparElemento(container);
+            container.appendChild(criarStageBriefCardAdminNode({
+                tone,
+                eyebrow: "Suporte governado",
+                title: texto(visibilityPolicy.exceptional_support_access).trim() === "disabled"
+                    ? "Suporte excepcional desabilitado"
+                    : "Suporte excepcional sob aprovacao e registro",
+                detail: suporteRecente?.resumo
+                    || "O portal mostra politica de acesso, diagnostico exportavel e o historico recente sem abrir evidencia tecnica bruta por padrao.",
+                metrics: [
+                    {
+                        label: "Itens no historico",
+                        value: formatarInteiro(obterAuditoriaAdmin().length),
+                    },
+                    {
+                        label: "Suporte recente",
+                        value: suporteRecente?.payload?.protocolo || "Sem protocolo",
+                    },
+                    {
+                        label: "Escopo maximo",
+                        value: texto(visibilityPolicy.exceptional_support_scope_level).replaceAll("_", " ") || "administrative",
+                    },
+                ],
+                actions: [
+                    {
+                        label: "Abrir historico",
+                        act: "abrir-prioridade",
+                        kind: "admin-section",
+                        canal: "admin",
+                        target: "admin-auditoria-lista",
+                        origem: "admin",
+                    },
+                    {
+                        label: "Registrar suporte",
+                        ghost: true,
+                        act: "abrir-prioridade",
+                        kind: "admin-section",
+                        canal: "admin",
+                        target: "form-suporte-cliente",
+                        origem: "admin",
+                    },
+                ],
+            }));
         }
 
         function renderSaudeEmpresa() {
