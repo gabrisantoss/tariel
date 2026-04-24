@@ -5,21 +5,18 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app.domains.mesa.contracts import (
     AnexoPackItemPacoteMesa,
     AnexoPackPacoteMesa,
     DocumentoEstruturadoPacoteMesa,
     EventoMesa,
-    MensagemPacoteMesa,
     NotificacaoMesa,
     PacoteMesaLaudo,
-    RevisaoPacoteMesa,
     SecaoDocumentoEstruturadoPacoteMesa,
     VerificacaoPublicaPacoteMesa,
 )
-from app.domains.mesa.attachments import serializar_anexos_mesa, texto_mensagem_mesa_visivel
 from app.domains.mesa.package_block_review import (
     build_revisao_por_bloco_pacote as _build_revisao_por_bloco_pacote,
 )
@@ -33,17 +30,21 @@ from app.domains.mesa.package_message_summary import build_mesa_message_package_
 from app.domains.mesa.package_official_issue import (
     build_emissao_oficial_pacote as _build_emissao_oficial_pacote,
 )
-from app.domains.mesa.semantics import build_mesa_message_semantics
+from app.domains.mesa.package_read_models import (
+    build_revisoes_pacote as _build_revisoes_pacote,
+    listar_mensagens_mesa_pacote as _listar_mensagens_mesa_pacote,
+    listar_revisoes_mesa_pacote as _listar_revisoes_mesa_pacote,
+    serializar_mensagem_pacote as _serializar_mensagem_pacote,
+)
 from app.domains.chat.laudo_state_helpers import resolver_snapshot_leitura_caso_tecnico
 from app.domains.chat.normalization import TIPOS_TEMPLATE_VALIDOS
-from app.shared.database import Laudo, LaudoRevisao, MensagemLaudo
+from app.shared.database import Laudo
 from app.shared.inspection_history import build_human_override_summary
 from app.shared.official_issue_package import build_official_issue_package
 from app.shared.public_verification import build_public_verification_payload
 from app.shared.tenant_report_catalog import build_tenant_template_option_snapshot
 from app.v2.acl.technical_case_core import build_case_status_visual_label
 from app.v2.policy.governance import load_case_policy_governance_context
-from nucleo.inspetor.referencias_mensagem import extrair_referencia_do_texto
 
 SECTION_TITLES = {
     "identificacao": "Identificacao",
@@ -568,43 +569,6 @@ def _montar_documento_estruturado_pacote(laudo: Laudo) -> DocumentoEstruturadoPa
     )
 
 
-def _nome_resolvedor_pacote(msg: MensagemLaudo) -> str:
-    if not getattr(msg, "resolvida_por_id", None):
-        return ""
-
-    resolvedor = getattr(msg, "resolvida_por", None)
-    if resolvedor is not None:
-        return getattr(resolvedor, "nome", None) or getattr(resolvedor, "nome_completo", None) or f"Usuario #{msg.resolvida_por_id}"
-
-    return f"Usuario #{msg.resolvida_por_id}"
-
-
-def _serializar_mensagem_pacote(msg: MensagemLaudo) -> MensagemPacoteMesa:
-    referencia_mensagem_id, texto_limpo = extrair_referencia_do_texto(msg.conteudo)
-    anexos_payload = serializar_anexos_mesa(getattr(msg, "anexos_mesa", None))
-    semantics = build_mesa_message_semantics(
-        legacy_message_type=msg.tipo,
-        resolved_at=msg.resolvida_em,
-        is_whisper=bool(getattr(msg, "is_whisper", False)),
-    )
-    return MensagemPacoteMesa(
-        id=int(msg.id),
-        tipo=str(msg.tipo or ""),
-        item_kind=semantics.item_kind,
-        message_kind=semantics.message_kind,
-        pendency_state=semantics.pendency_state,
-        texto=texto_mensagem_mesa_visivel(texto_limpo, anexos=getattr(msg, "anexos_mesa", None)),
-        criado_em=_normalizar_data_utc(msg.criado_em) or agora_utc(),
-        remetente_id=int(msg.remetente_id) if msg.remetente_id else None,
-        lida=bool(msg.lida),
-        referencia_mensagem_id=referencia_mensagem_id,
-        resolvida_em=_normalizar_data_utc(msg.resolvida_em),
-        resolvida_por_id=int(msg.resolvida_por_id) if msg.resolvida_por_id else None,
-        resolvida_por_nome=_nome_resolvedor_pacote(msg) or None,
-        anexos=anexos_payload,
-    )
-
-
 def _tempo_em_campo_minutos(inicio: datetime | None) -> int:
     inicio_utc = _normalizar_data_utc(inicio)
     if inicio_utc is None:
@@ -710,13 +674,7 @@ def montar_pacote_mesa_laudo(
     limite_pendencias_seguro = max(10, min(int(limite_pendencias), 400))
     limite_revisoes_seguro = max(1, min(int(limite_revisoes), 80))
 
-    mensagens = (
-        banco.query(MensagemLaudo)
-        .options(selectinload(MensagemLaudo.anexos_mesa))
-        .filter(MensagemLaudo.laudo_id == laudo.id)
-        .order_by(MensagemLaudo.id.asc())
-        .all()
-    )
+    mensagens = _listar_mensagens_mesa_pacote(banco, laudo=laudo)
 
     mensagens_summary = build_mesa_message_package_summary(
         mensagens,
@@ -725,20 +683,12 @@ def montar_pacote_mesa_laudo(
         limite_whispers=limite_whispers_seguro,
     )
 
-    revisoes = (
-        banco.query(LaudoRevisao).filter(LaudoRevisao.laudo_id == laudo.id).order_by(LaudoRevisao.numero_versao.desc()).limit(limite_revisoes_seguro).all()
+    revisoes = _listar_revisoes_mesa_pacote(
+        banco,
+        laudo=laudo,
+        limite_revisoes=limite_revisoes_seguro,
     )
-
-    revisoes_payload = [
-        RevisaoPacoteMesa(
-            numero_versao=int(revisao.numero_versao),
-            origem=str(revisao.origem or "ia"),
-            resumo=(revisao.resumo or None),
-            confianca_geral=(revisao.confianca_geral or None),
-            criado_em=_normalizar_data_utc(revisao.criado_em) or agora_utc(),
-        )
-        for revisao in revisoes
-    ]
+    revisoes_payload = _build_revisoes_pacote(revisoes)
     documento_estruturado = _montar_documento_estruturado_pacote(laudo)
     coverage_map = _build_coverage_map_pacote(banco, laudo=laudo)
     historico_refazer_inspetor = _build_historico_refazer_inspetor_pacote(

@@ -2453,3 +2453,40 @@ Impacto observado:
 - `mesa/service.py` caiu para cerca de `849` linhas; o próximo slice natural é separar `montar_pacote_mesa_laudo`/orquestração final ou mover mais blocos documentais;
 - as listas principais de Chat/Mesa agora usam texto via `textContent` e atributos via `dataset`; os próximos `innerHTML` restantes estão em triagem, contexto e movimentos;
 - o próximo pacote coerente é atacar `portal_chat_surface.js`/`portal_mesa_surface.js` em triagem/contexto ou continuar o Admin CEO em `admin/client_routes.py`.
+
+## R59. Read models do pacote da Mesa
+
+Resumo:
+
+- extraí a leitura de mensagens, leitura de revisões e serialização de mensagens do pacote da Mesa para `web/app/domains/mesa/package_read_models.py`;
+- mantive `montar_pacote_mesa_laudo` como contrato público em `mesa/service.py`, mas removi dele a consulta direta de `MensagemLaudo`/`LaudoRevisao`;
+- preservei a serialização de anexos, semântica de mensagens, referência de mensagem e resolvedor no novo módulo de read models;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/app/domains/mesa/service.py`
+- `web/app/domains/mesa/package_read_models.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/app/domains/mesa/service.py web/app/domains/mesa/package_read_models.py` -> verde;
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/mesa/service.py app/domains/mesa/package_read_models.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_operational_memory.py tests/test_v2_reviewdesk_read_side.py -q -k 'pacote or mesa or operational or emissao'` -> `12 passed, 3 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_v2_reviewdesk_projection.py tests/test_revisor_mesa_api_side_effects.py -q -k 'pacote or package or coverage or revisao'` -> `4 passed, 8 deselected`;
+- `git diff --check` -> sem erros; apenas aviso de normalização CRLF em `web/app/domains/mesa/service.py`;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `324` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make mesa-smoke` -> `95 passed`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- `mesa/service.py` caiu para cerca de `799` linhas; a próxima extração natural é mover documento estruturado/catálogo para módulo próprio ou separar a orquestração final de `montar_pacote_mesa_laudo`;
+- o read-side do pacote fica testável sem misturar consulta SQL, serialização de mensagem e montagem global do pacote;
+- o próximo pacote coerente pode alternar para frontend e remover `innerHTML` de triagem/contexto no Portal Cliente.

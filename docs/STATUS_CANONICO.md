@@ -141,6 +141,7 @@ Ele está na fase de:
 - `case_action_mode=read_only` agora tem teste explícito como compatibilidade visual legada, sem bloquear ações quando o contrato de superfície libera operação.
 - a revisão por bloco do pacote da Mesa saiu de `mesa/service.py` para `mesa/package_block_review.py`, isolando inferência de seção, pendências abertas e devoluções ao inspetor.
 - as filas principais de Chat e Mesa no Portal Cliente passaram a montar cards por DOM seguro, reduzindo `innerHTML` em listas operacionais.
+- a leitura interna de mensagens, revisões e serialização de mensagens do pacote da Mesa saiu de `mesa/service.py` para `mesa/package_read_models.py`, reduzindo o acoplamento da orquestração final.
 
 ## O que ainda falta melhorar
 
