@@ -67,3 +67,10 @@ Depois desta fase, o gap principal de producao deixou de ser ambiguidade de poli
 - executar restore drill contra o storage externo definitivo quando ele for definido;
 - acompanhar o primeiro report real do cleanup no ambiente publicado.
 - consultar os primeiros logs reais de `observability_kind=critical_route` depois do deploy para calibrar o limite de lentidão.
+
+Observação do deploy publicado em 2026-04-24:
+
+- o commit `2a78d8a` ficou `live` no Render em `https://tariel-web-free.onrender.com`;
+- `/health` respondeu `status=ok`, banco/realtime prontos;
+- `/ready` ainda respondeu `production_ops_ready=false`, `uploads_storage_mode=local_fs`, `uploads_cleanup_enabled=false` e scheduler desligado;
+- portanto, o serviço `tariel-web-free` deve ser tratado como ambiente publicado/free, não como produção real fechada, até o plano/env do Render aplicar storage persistente, cleanup automático e restore drill operacional fora do workspace local.

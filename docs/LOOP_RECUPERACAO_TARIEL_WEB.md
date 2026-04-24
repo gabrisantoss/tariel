@@ -2173,10 +2173,11 @@ Resultados:
 - restore drill passou com `3` arquivos verificados;
 - auditoria de binários segue com `147` arquivos rastreados, `138.2 MiB` e `0` oversized;
 - higiene do workspace segue `ok`.
+- Render ficou `live` no commit `2a78d8a`, mas o smoke externo de `/ready` apontou `production_ops_ready=false`, `uploads_storage_mode=local_fs` e cleanup desligado no serviço `tariel-web-free`.
 
 Impacto observado:
 
 - o próximo deploy passa a entregar sinal operacional útil sobre lentidão/falha nos fluxos que mais importam, sem expor conteúdo do caso;
 - a Mesa perdeu mais um bloco de regra interna do arquivo monolítico;
 - o Chat do portal cliente avançou na migração para contratos explícitos de HTML seguro;
-- o próximo passo coerente é transformar esses logs em consulta/alerta real e continuar drenando `chat_index_page.js` ou o pacote documental da Mesa.
+- o próximo passo coerente é decidir o upgrade/configuração real do Render para storage persistente antes de chamar o ambiente publicado de produção fechada, e em paralelo transformar os logs críticos em consulta/alerta real.

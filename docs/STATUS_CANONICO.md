@@ -178,6 +178,7 @@ Ele está na fase de:
 - mover os binários restantes entre 2 MiB e 10 MiB para LFS/storage conforme valor operacional e frequência de alteração;
 - executar restore drill real no provedor de storage externo quando o bucket/LFS definitivo dos assets pesados estiver definido.
 - transformar os novos logs de rota crítica em painel/alerta operacional real, com consulta no provedor de logs ou APM escolhido.
+- alinhar o serviço publicado `tariel-web-free` ao contrato production-ready; em 2026-04-24, `/ready` respondeu `production_ops_ready=false`, `uploads_storage_mode=local_fs` e cleanup desligado, indicando que o Render free atual ainda não aplica disco persistente/envs de produção real.
 
 ## Próximo corte oficial
 
