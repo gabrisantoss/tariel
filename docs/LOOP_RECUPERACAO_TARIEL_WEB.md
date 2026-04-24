@@ -3248,3 +3248,37 @@ Impacto observado:
 - `web/static/js/cliente/portal_admin_surface.js` ficou sem `innerHTML` dinâmico relevante; resta apenas o helper compatível `preencherHtmlNoElemento`, usado para contratos HTML estáticos/allowlisted;
 - a área de equipe deixou de interpolar nome, e-mail, telefone, CREA, permissões e ações administrativas em string HTML;
 - o próximo pacote coerente pode migrar `portal_admin_overview_surface.js`, `portal_shell.js` ou as superfícies verticais (`servicos`, `ativos`, `documentos`, `recorrencia`) para o mesmo padrão DOM seguro.
+
+## R81. Overview Admin Cliente em DOM seguro
+
+Resumo:
+
+- troquei `web/static/js/cliente/portal_admin_overview_surface.js` de HTML interpolado para montagem DOM explícita;
+- os blocos `Resumo executivo`, `Onboarding guiado`, `Pacote ativo`, `Pulso executivo` e `Central de pendências` agora usam helpers DOM locais para metric cards, stage brief, activity items, pills, chips, botões e estados vazios;
+- preservei `data-act="abrir-prioridade"`, `data-kind`, `data-canal`, `data-target` e `data-origem` dos atalhos executivos;
+- mantive Render real como pendência externa: sem aguardar deploy e sem aplicar alteração de disco/plano no provedor.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_admin_overview_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_admin_overview_surface.js` -> verde;
+- `rg -n "innerHTML|escapeAttr|escapeHtml" web/static/js/cliente/portal_admin_overview_surface.js` -> sem ocorrências;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py::test_templates_cliente_explicitam_abas_e_formularios_principais -q` -> `1 passed`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `335` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- a visão executiva do Portal Admin Cliente deixou de interpolar dados de onboarding, pacote, observabilidade e pendências em `innerHTML`;
+- `portal_admin_surface.js` e `portal_admin_overview_surface.js` agora estão no padrão DOM seguro para renderização dinâmica;
+- o próximo pacote coerente pode atacar `portal_shell.js` ou as superfícies verticais (`servicos`, `ativos`, `documentos`, `recorrencia`), que ainda possuem HTML string dinâmico.

@@ -5,14 +5,14 @@
 
     window.TarielClientePortalAdminOverviewSurface = function createTarielClientePortalAdminOverviewSurface(config = {}) {
         const state = config.state || {};
+        const documentRef = config.documentRef || document;
         const $ = typeof config.getById === "function"
             ? config.getById
-            : (id) => document.getElementById(id);
+            : (id) => documentRef.getElementById(id);
         const helpers = config.helpers || {};
 
-        const escapeAttr = typeof helpers.escapeAttr === "function" ? helpers.escapeAttr : (valor) => String(valor ?? "");
-        const escapeHtml = typeof helpers.escapeHtml === "function" ? helpers.escapeHtml : (valor) => String(valor ?? "");
         const formatarInteiro = typeof helpers.formatarInteiro === "function" ? helpers.formatarInteiro : (valor) => String(Number(valor || 0));
+        const texto = typeof helpers.texto === "function" ? helpers.texto : (valor) => (valor == null ? "" : String(valor));
 
         const obterTenantAdminPayload = typeof config.obterTenantAdminPayload === "function"
             ? config.obterTenantAdminPayload
@@ -20,6 +20,165 @@
         const prioridadeEmpresa = typeof config.prioridadeEmpresa === "function"
             ? config.prioridadeEmpresa
             : () => ({ tone: "aprovado", badge: "", acao: "" });
+
+        function limparElemento(target) {
+            if (!target) return false;
+            if (typeof target.replaceChildren === "function") {
+                target.replaceChildren();
+            } else {
+                target.textContent = "";
+            }
+            return true;
+        }
+
+        function criarMetricCardOverviewNode({ accent, label, value, meta }) {
+            const article = documentRef.createElement("article");
+            article.className = "metric-card";
+            article.dataset.accent = texto(accent);
+            const small = documentRef.createElement("small");
+            small.textContent = texto(label);
+            article.appendChild(small);
+            const strong = documentRef.createElement("strong");
+            strong.textContent = texto(value);
+            article.appendChild(strong);
+            const span = documentRef.createElement("span");
+            span.className = "metric-meta";
+            span.textContent = texto(meta);
+            article.appendChild(span);
+            return article;
+        }
+
+        function criarContextBlockOverviewNode(label, value) {
+            const block = documentRef.createElement("div");
+            block.className = "context-block";
+            const small = documentRef.createElement("small");
+            small.textContent = texto(label);
+            block.appendChild(small);
+            const strong = documentRef.createElement("strong");
+            strong.textContent = texto(value);
+            block.appendChild(strong);
+            return block;
+        }
+
+        function criarPillOverviewNode({ kind = "priority", status, label }) {
+            const pill = documentRef.createElement("span");
+            pill.className = "pill";
+            pill.dataset.kind = texto(kind);
+            if (status) pill.dataset.status = texto(status);
+            pill.textContent = texto(label);
+            return pill;
+        }
+
+        function criarHeroChipOverviewNode(label) {
+            const chip = documentRef.createElement("span");
+            chip.className = "hero-chip";
+            chip.textContent = texto(label);
+            return chip;
+        }
+
+        function criarToolbarOverviewNode(children = []) {
+            const toolbar = documentRef.createElement("div");
+            toolbar.className = "toolbar-meta";
+            children.forEach((child) => {
+                if (child) toolbar.appendChild(child);
+            });
+            return toolbar;
+        }
+
+        function criarActionButtonOverviewNode({ label, ghost = false, act, kind, canal, target, origem }) {
+            const button = documentRef.createElement("button");
+            button.className = ghost ? "btn ghost" : "btn";
+            button.type = "button";
+            if (act) button.dataset.act = texto(act);
+            if (kind) button.dataset.kind = texto(kind);
+            if (canal) button.dataset.canal = texto(canal);
+            if (target) button.dataset.target = texto(target);
+            if (origem) button.dataset.origem = texto(origem);
+            button.textContent = texto(label);
+            return button;
+        }
+
+        function criarEmptyStateOverviewNode(title, detail) {
+            const empty = documentRef.createElement("div");
+            empty.className = "empty-state";
+            const strong = documentRef.createElement("strong");
+            strong.textContent = texto(title);
+            empty.appendChild(strong);
+            const paragraph = documentRef.createElement("p");
+            paragraph.textContent = texto(detail);
+            empty.appendChild(paragraph);
+            return empty;
+        }
+
+        function criarActivityItemOverviewNode({ title, meta, tone, pillLabel, detail, chips = [], action }) {
+            const article = documentRef.createElement("article");
+            article.className = "activity-item";
+            const head = documentRef.createElement("div");
+            head.className = "activity-head";
+            const copy = documentRef.createElement("div");
+            copy.className = "activity-copy";
+            const strong = documentRef.createElement("strong");
+            strong.textContent = texto(title);
+            copy.appendChild(strong);
+            const metaNode = documentRef.createElement("span");
+            metaNode.className = "activity-meta";
+            metaNode.textContent = texto(meta);
+            copy.appendChild(metaNode);
+            head.appendChild(copy);
+            head.appendChild(criarPillOverviewNode({ status: tone, label: pillLabel }));
+            article.appendChild(head);
+            if (texto(detail).trim()) {
+                const paragraph = documentRef.createElement("p");
+                paragraph.className = "activity-detail";
+                paragraph.textContent = texto(detail);
+                article.appendChild(paragraph);
+            }
+            const toolbarChildren = chips
+                .filter((chip) => texto(chip).trim())
+                .map((chip) => criarHeroChipOverviewNode(chip));
+            if (action) {
+                toolbarChildren.push(criarActionButtonOverviewNode(action));
+            }
+            if (toolbarChildren.length) {
+                article.appendChild(criarToolbarOverviewNode(toolbarChildren));
+            }
+            return article;
+        }
+
+        function criarStageBriefOverviewNode({ tone, eyebrow, title, detail, metrics, actions }) {
+            const article = documentRef.createElement("article");
+            article.className = "stage-brief-card";
+            article.dataset.tone = texto(tone || "aprovado");
+
+            const copy = documentRef.createElement("div");
+            copy.className = "stage-brief-card__copy";
+            const eyebrowNode = documentRef.createElement("span");
+            eyebrowNode.className = "stage-brief-card__eyebrow";
+            eyebrowNode.textContent = texto(eyebrow);
+            copy.appendChild(eyebrowNode);
+            const strong = documentRef.createElement("strong");
+            strong.textContent = texto(title);
+            copy.appendChild(strong);
+            const paragraph = documentRef.createElement("p");
+            paragraph.textContent = texto(detail);
+            copy.appendChild(paragraph);
+            article.appendChild(copy);
+
+            const metricsNode = documentRef.createElement("div");
+            metricsNode.className = "stage-brief-card__metrics";
+            metrics.forEach((metric) => {
+                metricsNode.appendChild(criarContextBlockOverviewNode(metric.label, metric.value));
+            });
+            article.appendChild(metricsNode);
+
+            const actionsNode = documentRef.createElement("div");
+            actionsNode.className = "stage-brief-card__actions";
+            actions.forEach((action) => {
+                actionsNode.appendChild(criarActionButtonOverviewNode(action));
+            });
+            article.appendChild(actionsNode);
+            return article;
+        }
 
         function renderOverviewBrief() {
             const container = $("admin-executive-brief");
@@ -32,33 +191,37 @@
             const revisoesAtivas = Number(tenantAdmin?.review_counts?.pending_review || 0)
                 + Number(tenantAdmin?.review_counts?.in_review || 0);
 
-            container.innerHTML = `
-                <article class="stage-brief-card" data-tone="${escapeAttr(prioridade.tone || "aprovado")}">
-                    <div class="stage-brief-card__copy">
-                        <span class="stage-brief-card__eyebrow">Resumo executivo</span>
-                        <strong>${escapeHtml(prioridade.badge || "Empresa sob controle")}</strong>
-                        <p>${escapeHtml(prioridade.acao || "A operacao da empresa segue visivel em uma regua unica de capacidade, equipe e suporte.")}</p>
-                    </div>
-                    <div class="stage-brief-card__metrics">
-                        <div class="context-block">
-                            <small>Casos monitorados</small>
-                            <strong>${escapeHtml(formatarInteiro(totalCasos))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Casos abertos</small>
-                            <strong>${escapeHtml(formatarInteiro(casosAbertos))}</strong>
-                        </div>
-                        <div class="context-block">
-                            <small>Revisoes em curso</small>
-                            <strong>${escapeHtml(formatarInteiro(revisoesAtivas))}</strong>
-                        </div>
-                    </div>
-                    <div class="stage-brief-card__actions">
-                        <button class="btn" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="admin-saude-resumo" data-origem="admin">Ver pulso da operacao</button>
-                        <button class="btn ghost" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-canal="admin" data-target="admin-capacity-brief" data-origem="admin">Abrir capacidade</button>
-                    </div>
-                </article>
-            `;
+            limparElemento(container);
+            container.appendChild(criarStageBriefOverviewNode({
+                tone: prioridade.tone || "aprovado",
+                eyebrow: "Resumo executivo",
+                title: prioridade.badge || "Empresa sob controle",
+                detail: prioridade.acao || "A operacao da empresa segue visivel em uma regua unica de capacidade, equipe e suporte.",
+                metrics: [
+                    { label: "Casos monitorados", value: formatarInteiro(totalCasos) },
+                    { label: "Casos abertos", value: formatarInteiro(casosAbertos) },
+                    { label: "Revisoes em curso", value: formatarInteiro(revisoesAtivas) },
+                ],
+                actions: [
+                    {
+                        label: "Ver pulso da operacao",
+                        act: "abrir-prioridade",
+                        kind: "admin-section",
+                        canal: "admin",
+                        target: "admin-saude-resumo",
+                        origem: "admin",
+                    },
+                    {
+                        label: "Abrir capacidade",
+                        ghost: true,
+                        act: "abrir-prioridade",
+                        kind: "admin-section",
+                        canal: "admin",
+                        target: "admin-capacity-brief",
+                        origem: "admin",
+                    },
+                ],
+            }));
         }
 
         function renderGuidedOnboardingOverview() {
@@ -70,57 +233,57 @@
             const nextStep = onboarding.next_step || null;
             if (!resumo || !lista) return;
 
-            resumo.innerHTML = `
-                <article class="metric-card" data-accent="live">
-                    <small>Etapas concluídas</small>
-                    <strong>${formatarInteiro(Number(progress.completed || 0))}/${formatarInteiro(Number(progress.total || steps.length || 0))}</strong>
-                    <span class="metric-meta">Onboarding operacional do tenant até a primeira rotina real.</span>
-                </article>
-                <article class="metric-card" data-accent="${nextStep ? "waiting" : "done"}">
-                    <small>Próximo passo</small>
-                    <strong>${escapeHtml(nextStep?.title || "Tenant pronto para operar")}</strong>
-                    <span class="metric-meta">${escapeHtml(nextStep?.detail || "Equipe, casos e leitura executiva já estão minimamente estruturados.")}</span>
-                </article>
-                <article class="metric-card" data-accent="aberto">
-                    <small>Equipe e casos</small>
-                    <strong>${formatarInteiro((state.bootstrap?.usuarios || []).length)}</strong>
-                    <span class="metric-meta">${formatarInteiro((state.bootstrap?.chat?.laudos || []).length)} casos carregados neste bootstrap.</span>
-                </article>
-            `;
+            limparElemento(resumo);
+            [
+                {
+                    accent: "live",
+                    label: "Etapas concluídas",
+                    value: `${formatarInteiro(Number(progress.completed || 0))}/${formatarInteiro(Number(progress.total || steps.length || 0))}`,
+                    meta: "Onboarding operacional do tenant até a primeira rotina real.",
+                },
+                {
+                    accent: nextStep ? "waiting" : "done",
+                    label: "Próximo passo",
+                    value: nextStep?.title || "Tenant pronto para operar",
+                    meta: nextStep?.detail || "Equipe, casos e leitura executiva já estão minimamente estruturados.",
+                },
+                {
+                    accent: "aberto",
+                    label: "Equipe e casos",
+                    value: formatarInteiro((state.bootstrap?.usuarios || []).length),
+                    meta: `${formatarInteiro((state.bootstrap?.chat?.laudos || []).length)} casos carregados neste bootstrap.`,
+                },
+            ].forEach((metric) => {
+                resumo.appendChild(criarMetricCardOverviewNode(metric));
+            });
 
+            limparElemento(lista);
             if (!steps.length) {
-                lista.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Nenhuma etapa disponível</strong>
-                        <p>Quando o bootstrap operacional estiver completo, o onboarding guiado aparece aqui.</p>
-                    </div>
-                `;
+                lista.appendChild(criarEmptyStateOverviewNode(
+                    "Nenhuma etapa disponível",
+                    "Quando o bootstrap operacional estiver completo, o onboarding guiado aparece aqui."
+                ));
                 return;
             }
 
-            lista.innerHTML = steps.map((item) => `
-                <article class="activity-item">
-                    <div class="activity-head">
-                        <div class="activity-copy">
-                            <strong>${escapeHtml(item.title || "Etapa operacional")}</strong>
-                            <span class="activity-meta">${escapeHtml(item.done ? "Concluída" : "Pendente")} • ${escapeHtml(item.key || "etapa")}</span>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="${escapeAttr(item.done ? "aprovado" : "aguardando")}">${escapeHtml(item.done ? "Concluído" : "Pendente")}</span>
-                    </div>
-                    <p class="activity-detail">${escapeHtml(item.detail || "Sem detalhe registrado.")}</p>
-                    <div class="toolbar-meta">
-                        <button
-                            class="btn${item.done ? " ghost" : ""}"
-                            type="button"
-                            data-act="abrir-prioridade"
-                            data-kind="${escapeAttr(item.action_kind || "admin-section")}"
-                            data-canal="admin"
-                            data-target="${escapeAttr(item.action_target || "panel-admin")}"
-                            data-origem="admin"
-                        >${escapeHtml(item.action_label || "Abrir etapa")}</button>
-                    </div>
-                </article>
-            `).join("");
+            steps.forEach((item) => {
+                lista.appendChild(criarActivityItemOverviewNode({
+                    title: item.title || "Etapa operacional",
+                    meta: `${item.done ? "Concluída" : "Pendente"} • ${item.key || "etapa"}`,
+                    tone: item.done ? "aprovado" : "aguardando",
+                    pillLabel: item.done ? "Concluído" : "Pendente",
+                    detail: item.detail || "Sem detalhe registrado.",
+                    action: {
+                        label: item.action_label || "Abrir etapa",
+                        ghost: Boolean(item.done),
+                        act: "abrir-prioridade",
+                        kind: item.action_kind || "admin-section",
+                        canal: "admin",
+                        target: item.action_target || "panel-admin",
+                        origem: "admin",
+                    },
+                }));
+            });
         }
 
         function renderCommercialPackageOverview() {
@@ -132,52 +295,49 @@
             const surfaces = Array.isArray(pacote.available_surfaces) ? pacote.available_surfaces : [];
             const pending = Array.isArray(pacote.pending_configuration) ? pacote.pending_configuration : [];
 
-            resumo.innerHTML = `
-                <article class="metric-card" data-accent="live">
-                    <small>Pacote ativo</small>
-                    <strong>${escapeHtml(pacote.package_label || "Pacote contratado")}</strong>
-                    <span class="metric-meta">${escapeHtml(pacote.package_description || "Modelo comercial ativo para este tenant.")}</span>
-                </article>
-                <article class="metric-card" data-accent="${pacote.mesa_contracted ? "done" : "waiting"}">
-                    <small>Mesa contratada</small>
-                    <strong>${escapeHtml(pacote.mesa_contracted ? "Sim" : "Não")}</strong>
-                    <span class="metric-meta">${escapeHtml(pacote.official_issue_included ? "Emissão oficial incluída no pacote." : "Emissão oficial ainda não incluída.")}</span>
-                </article>
-                <article class="metric-card" data-accent="aberto">
-                    <small>Operadores</small>
-                    <strong>${escapeHtml(formatarInteiro(Number(pacote.operators_in_use || 0)))}</strong>
-                    <span class="metric-meta">${pacote.operators_limit == null ? "Sem limite contratual rígido." : `${escapeHtml(formatarInteiro(Number(pacote.operators_in_use || 0)))} de ${escapeHtml(formatarInteiro(Number(pacote.operators_limit || 0)))} operadores no plano.`}</span>
-                </article>
-            `;
+            limparElemento(resumo);
+            [
+                {
+                    accent: "live",
+                    label: "Pacote ativo",
+                    value: pacote.package_label || "Pacote contratado",
+                    meta: pacote.package_description || "Modelo comercial ativo para este tenant.",
+                },
+                {
+                    accent: pacote.mesa_contracted ? "done" : "waiting",
+                    label: "Mesa contratada",
+                    value: pacote.mesa_contracted ? "Sim" : "Não",
+                    meta: pacote.official_issue_included ? "Emissão oficial incluída no pacote." : "Emissão oficial ainda não incluída.",
+                },
+                {
+                    accent: "aberto",
+                    label: "Operadores",
+                    value: formatarInteiro(Number(pacote.operators_in_use || 0)),
+                    meta: pacote.operators_limit == null
+                        ? "Sem limite contratual rígido."
+                        : `${formatarInteiro(Number(pacote.operators_in_use || 0))} de ${formatarInteiro(Number(pacote.operators_limit || 0))} operadores no plano.`,
+                },
+            ].forEach((metric) => {
+                resumo.appendChild(criarMetricCardOverviewNode(metric));
+            });
 
-            lista.innerHTML = `
-                <article class="activity-item">
-                    <div class="activity-head">
-                        <div class="activity-copy">
-                            <strong>${escapeHtml(pacote.operating_model_label || "Modelo operacional")}</strong>
-                            <span class="activity-meta">Modelo de operação e portais liberados</span>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="aprovado">${escapeHtml(`${surfaces.length} portais`)}</span>
-                    </div>
-                    <p class="activity-detail">${escapeHtml((pacote.active_summary || []).join(" • ") || "Resumo comercial do tenant.")}</p>
-                    <div class="toolbar-meta">
-                        ${surfaces.map((item) => `<span class="hero-chip">${escapeHtml(item.label || item.key || "Portal")}</span>`).join("")}
-                    </div>
-                </article>
-                <article class="activity-item">
-                    <div class="activity-head">
-                        <div class="activity-copy">
-                            <strong>O que ainda pede configuração</strong>
-                            <span class="activity-meta">Checklist comercial e operacional do tenant</span>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="${pending.length ? "aguardando" : "aprovado"}">${escapeHtml(pending.length ? "Pendente" : "Ativo")}</span>
-                    </div>
-                    <p class="activity-detail">${escapeHtml(pending.length ? pending.join(" • ") : "Pacote, portais e emissão já estão refletidos na operação atual.")}</p>
-                    <div class="toolbar-meta">
-                        ${(pacote.assignable_portal_labels || []).map((item) => `<span class="hero-chip">${escapeHtml(item)}</span>`).join("")}
-                    </div>
-                </article>
-            `;
+            limparElemento(lista);
+            lista.appendChild(criarActivityItemOverviewNode({
+                title: pacote.operating_model_label || "Modelo operacional",
+                meta: "Modelo de operação e portais liberados",
+                tone: "aprovado",
+                pillLabel: `${surfaces.length} portais`,
+                detail: (pacote.active_summary || []).join(" • ") || "Resumo comercial do tenant.",
+                chips: surfaces.map((item) => item.label || item.key || "Portal"),
+            }));
+            lista.appendChild(criarActivityItemOverviewNode({
+                title: "O que ainda pede configuração",
+                meta: "Checklist comercial e operacional do tenant",
+                tone: pending.length ? "aguardando" : "aprovado",
+                pillLabel: pending.length ? "Pendente" : "Ativo",
+                detail: pending.length ? pending.join(" • ") : "Pacote, portais e emissão já estão refletidos na operação atual.",
+                chips: pacote.assignable_portal_labels || [],
+            }));
         }
 
         function renderOperationalObservabilityOverview() {
@@ -188,50 +348,53 @@
             const steps = Array.isArray(observability.operational_timeline) ? observability.operational_timeline : [];
             if (!resumo || !timeline) return;
 
-            resumo.innerHTML = `
-                <article class="metric-card" data-accent="aberto">
-                    <small>Abertos</small>
-                    <strong>${formatarInteiro(Number(metrics.open_cases || 0))}</strong>
-                    <span class="metric-meta">Casos técnicos ainda correndo no tenant.</span>
-                </article>
-                <article class="metric-card" data-accent="waiting">
-                    <small>Aguardando mesa</small>
-                    <strong>${formatarInteiro(Number(metrics.awaiting_mesa || 0))}</strong>
-                    <span class="metric-meta">${formatarInteiro(Number(metrics.sent_back || 0))} devolvidos para ajuste.</span>
-                </article>
-                <article class="metric-card" data-accent="done">
-                    <small>Emitidos</small>
-                    <strong>${formatarInteiro(Number(metrics.issued || 0))}</strong>
-                    <span class="metric-meta">${formatarInteiro(Number(metrics.approved || 0))} aprovados e ${formatarInteiro(Number(metrics.due_next_30 || 0))} vencendo nos próximos 30 dias.</span>
-                </article>
-                <article class="metric-card" data-accent="attention">
-                    <small>Motivo do bloqueio</small>
-                    <strong>${escapeHtml(observability.blocking_reason || "Sem bloqueio dominante")}</strong>
-                    <span class="metric-meta">Use esse sinal para explicar rápido o gargalo atual do tenant.</span>
-                </article>
-            `;
+            limparElemento(resumo);
+            [
+                {
+                    accent: "aberto",
+                    label: "Abertos",
+                    value: formatarInteiro(Number(metrics.open_cases || 0)),
+                    meta: "Casos técnicos ainda correndo no tenant.",
+                },
+                {
+                    accent: "waiting",
+                    label: "Aguardando mesa",
+                    value: formatarInteiro(Number(metrics.awaiting_mesa || 0)),
+                    meta: `${formatarInteiro(Number(metrics.sent_back || 0))} devolvidos para ajuste.`,
+                },
+                {
+                    accent: "done",
+                    label: "Emitidos",
+                    value: formatarInteiro(Number(metrics.issued || 0)),
+                    meta: `${formatarInteiro(Number(metrics.approved || 0))} aprovados e ${formatarInteiro(Number(metrics.due_next_30 || 0))} vencendo nos próximos 30 dias.`,
+                },
+                {
+                    accent: "attention",
+                    label: "Motivo do bloqueio",
+                    value: observability.blocking_reason || "Sem bloqueio dominante",
+                    meta: "Use esse sinal para explicar rápido o gargalo atual do tenant.",
+                },
+            ].forEach((metric) => {
+                resumo.appendChild(criarMetricCardOverviewNode(metric));
+            });
 
+            limparElemento(timeline);
             if (!steps.length) {
-                timeline.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Sem linha do tempo consolidada</strong>
-                        <p>Os eventos canônicos do tenant aparecem aqui conforme os casos forem avançando.</p>
-                    </div>
-                `;
+                timeline.appendChild(criarEmptyStateOverviewNode(
+                    "Sem linha do tempo consolidada",
+                    "Os eventos canônicos do tenant aparecem aqui conforme os casos forem avançando."
+                ));
                 return;
             }
 
-            timeline.innerHTML = steps.map((item) => `
-                <article class="activity-item">
-                    <div class="activity-head">
-                        <div class="activity-copy">
-                            <strong>${escapeHtml(item.label || "Evento")}</strong>
-                            <span class="activity-meta">Timeline operacional canônica</span>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="${Number(item.count || 0) > 0 ? "aprovado" : "aguardando"}">${escapeHtml(formatarInteiro(Number(item.count || 0)))}</span>
-                    </div>
-                </article>
-            `).join("");
+            steps.forEach((item) => {
+                timeline.appendChild(criarActivityItemOverviewNode({
+                    title: item.label || "Evento",
+                    meta: "Timeline operacional canônica",
+                    tone: Number(item.count || 0) > 0 ? "aprovado" : "aguardando",
+                    pillLabel: formatarInteiro(Number(item.count || 0)),
+                }));
+            });
         }
 
         function renderPendingCenterOverview() {
@@ -239,27 +402,23 @@
             const observability = state.bootstrap?.operational_observability || {};
             const items = Array.isArray(observability.pending_center) ? observability.pending_center : [];
             if (!lista) return;
+            limparElemento(lista);
             if (!items.length) {
-                lista.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Nenhuma pendência central aberta</strong>
-                        <p>Mesa, emissão e vencimentos aparecem aqui quando houver algo dominante no tenant.</p>
-                    </div>
-                `;
+                lista.appendChild(criarEmptyStateOverviewNode(
+                    "Nenhuma pendência central aberta",
+                    "Mesa, emissão e vencimentos aparecem aqui quando houver algo dominante no tenant."
+                ));
                 return;
             }
-            lista.innerHTML = items.map((item) => `
-                <article class="activity-item">
-                    <div class="activity-head">
-                        <div class="activity-copy">
-                            <strong>${escapeHtml(item.title || "Pendência")}</strong>
-                            <span class="activity-meta">${escapeHtml(item.kind || "operacao")}</span>
-                        </div>
-                        <span class="pill" data-kind="priority" data-status="aguardando">${escapeHtml(formatarInteiro(Number(item.count || 0)))}</span>
-                    </div>
-                    <p class="activity-detail">${escapeHtml(item.detail || "Sem detalhe registrado.")}</p>
-                </article>
-            `).join("");
+            items.forEach((item) => {
+                lista.appendChild(criarActivityItemOverviewNode({
+                    title: item.title || "Pendência",
+                    meta: item.kind || "operacao",
+                    tone: "aguardando",
+                    pillLabel: formatarInteiro(Number(item.count || 0)),
+                    detail: item.detail || "Sem detalhe registrado.",
+                }));
+            });
         }
 
         return {

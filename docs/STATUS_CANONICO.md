@@ -163,6 +163,7 @@ Ele está na fase de:
 - o Portal Admin Cliente agora monta histórico e preview de planos por DOM seguro, preservando o contrato do botão de interesse comercial sem interpolar dados de plano em HTML.
 - o Portal Admin Cliente agora monta auditoria operacional por DOM seguro, preservando filtros e timeline sem interpolar detalhes, protocolo ou alvo em HTML.
 - `portal_admin_surface.js` agora ficou sem `innerHTML` dinâmico relevante; a tabela de usuários, permissões por portal e ações administrativas do Admin Cliente também usam DOM seguro.
+- `portal_admin_overview_surface.js` também ficou sem `innerHTML`, cobrindo resumo executivo, onboarding, pacote comercial, observabilidade e pendências por DOM seguro.
 
 ## O que ainda falta melhorar
 
