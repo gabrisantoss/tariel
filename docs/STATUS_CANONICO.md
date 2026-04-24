@@ -142,6 +142,7 @@ Ele está na fase de:
 - a revisão por bloco do pacote da Mesa saiu de `mesa/service.py` para `mesa/package_block_review.py`, isolando inferência de seção, pendências abertas e devoluções ao inspetor.
 - as filas principais de Chat e Mesa no Portal Cliente passaram a montar cards por DOM seguro, reduzindo `innerHTML` em listas operacionais.
 - a leitura interna de mensagens, revisões e serialização de mensagens do pacote da Mesa saiu de `mesa/service.py` para `mesa/package_read_models.py`, reduzindo o acoplamento da orquestração final.
+- a triagem principal de Chat/Mesa no Portal Cliente passou a montar filtros, destaque e empty state por DOM seguro, reduzindo mais dois blocos operacionais de `innerHTML`.
 
 ## O que ainda falta melhorar
 

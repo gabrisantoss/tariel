@@ -2490,3 +2490,38 @@ Impacto observado:
 - `mesa/service.py` caiu para cerca de `799` linhas; a próxima extração natural é mover documento estruturado/catálogo para módulo próprio ou separar a orquestração final de `montar_pacote_mesa_laudo`;
 - o read-side do pacote fica testável sem misturar consulta SQL, serialização de mensagem e montagem global do pacote;
 - o próximo pacote coerente pode alternar para frontend e remover `innerHTML` de triagem/contexto no Portal Cliente.
+
+## R60. Triagem DOM do Portal Cliente
+
+Resumo:
+
+- troquei a triagem principal do Chat no Portal Cliente para montagem DOM segura, preservando `data-act="filtrar-chat-status"`, `limpar-chat-filtro` e `abrir-prioridade`;
+- troquei a triagem principal da Mesa no Portal Cliente para montagem DOM segura, preservando `data-act="filtrar-mesa-status"`, `limpar-mesa-filtro` e `abrir-prioridade`;
+- mantive os textos e classes operacionais (`toolbar-meta`, `activity-item`, `empty-state`, `pill`, `hero-chip`) para não alterar o contrato visual;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_chat_surface.js`
+- `web/static/js/cliente/portal_mesa_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_shared_helpers.js && node --check web/static/js/cliente/portal.js && node --check web/static/js/cliente/portal_chat_surface.js && node --check web/static/js/cliente/portal_mesa_surface.js` -> sem erro de sintaxe;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or mesa'` -> `11 passed, 21 deselected`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais` -> `1 passed, 42 deselected`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `324` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- os blocos `innerHTML` da triagem de Chat/Mesa saíram das superfícies principais do Portal Cliente;
+- os próximos `innerHTML` relevantes no Portal Cliente ficam em movimentos, contexto, capacidade/resumo e alguns fallbacks de mensagem;
+- o próximo pacote coerente é atacar `renderChatMovimentos`/`renderMesaMovimentos` ou os contextos `renderChatContext`/`renderMesaContext`.

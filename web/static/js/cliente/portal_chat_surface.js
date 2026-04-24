@@ -537,6 +537,99 @@
             atualizarResumoSecaoChat();
         }
 
+        function criarChatEmptyStateNode(titleText, detailText) {
+            const empty = documentRef.createElement("div");
+            empty.className = "empty-state";
+            const title = documentRef.createElement("strong");
+            title.textContent = texto(titleText);
+            empty.appendChild(title);
+            const detail = documentRef.createElement("p");
+            detail.textContent = texto(detailText);
+            empty.appendChild(detail);
+            return empty;
+        }
+
+        function criarChatToolbarButton(label, situacao, { ghost = false } = {}) {
+            const button = documentRef.createElement("button");
+            button.className = ghost ? "btn ghost" : "btn";
+            button.type = "button";
+            button.dataset.act = situacao ? "filtrar-chat-status" : "limpar-chat-filtro";
+            if (situacao) {
+                button.dataset.situacao = situacao;
+            }
+            button.textContent = label;
+            return button;
+        }
+
+        function criarChatTriagemToolbar(filtroAtivo) {
+            const toolbar = documentRef.createElement("div");
+            toolbar.className = "toolbar-meta";
+            [
+                ["Ver ajustes", "ajustes"],
+                ["Ver abertos", "abertos"],
+                ["Ver aguardando mesa", "aguardando"],
+                ["Ver parados", "parados"],
+            ].forEach(([label, situacao]) => {
+                toolbar.appendChild(criarChatToolbarButton(label, situacao));
+            });
+            toolbar.appendChild(criarChatToolbarButton("Limpar filtro rapido", "", { ghost: true }));
+            if (filtroAtivo) {
+                const chip = documentRef.createElement("span");
+                chip.className = "hero-chip";
+                chip.textContent = `Filtro rapido: ${filtroAtivo}`;
+                toolbar.appendChild(chip);
+            }
+            return toolbar;
+        }
+
+        function criarChatPrioridadeActivity(laudo) {
+            const prioridade = prioridadeChat(laudo);
+            const article = documentRef.createElement("article");
+            article.className = "activity-item";
+
+            const head = documentRef.createElement("div");
+            head.className = "activity-head";
+            const copy = documentRef.createElement("div");
+            copy.className = "activity-copy";
+            const title = documentRef.createElement("strong");
+            title.textContent = texto(laudo.titulo || "Laudo do chat");
+            const meta = documentRef.createElement("span");
+            meta.className = "activity-meta";
+            meta.textContent = `${texto(laudo.tipo_template_label || "Inspeção")} • ${texto(laudo.data_br || "Sem data")}`;
+            copy.appendChild(title);
+            copy.appendChild(meta);
+            head.appendChild(copy);
+
+            const pill = documentRef.createElement("span");
+            pill.className = "pill";
+            pill.dataset.kind = "priority";
+            pill.dataset.status = texto(prioridade.tone).trim();
+            pill.textContent = texto(prioridade.badge);
+            head.appendChild(pill);
+            article.appendChild(head);
+
+            const detail = documentRef.createElement("p");
+            detail.className = "activity-detail";
+            detail.textContent = `${texto(prioridade.acao)}${laudoChatParado(laudo) ? ` ${resumoEsperaHoras(horasDesdeAtualizacao(laudo.atualizado_em))}.` : ""}`;
+            article.appendChild(detail);
+
+            const toolbar = documentRef.createElement("div");
+            toolbar.className = "toolbar-meta";
+            const button = documentRef.createElement("button");
+            button.className = "btn";
+            button.type = "button";
+            button.dataset.act = "abrir-prioridade";
+            button.dataset.kind = "chat-laudo";
+            button.dataset.canal = "chat";
+            button.dataset.laudo = String(laudo.id || "");
+            button.dataset.target = "chat-contexto";
+            button.textContent = "Abrir laudo prioritario";
+            toolbar.appendChild(button);
+            article.appendChild(toolbar);
+
+            return article;
+        }
+
         function renderChatTriagem() {
             const container = $("chat-triagem");
             const laudos = state.bootstrap?.chat?.laudos || [];
@@ -549,36 +642,16 @@
             const filtroAtivo = rotuloSituacaoChat(state.ui.chatSituacao);
             const destaque = ajustes[0] || parados[0] || aguardando[0] || abertos[0] || null;
 
-            container.innerHTML = `
-                <div class="toolbar-meta">
-                    <button class="btn" type="button" data-act="filtrar-chat-status" data-situacao="ajustes">Ver ajustes</button>
-                    <button class="btn" type="button" data-act="filtrar-chat-status" data-situacao="abertos">Ver abertos</button>
-                    <button class="btn" type="button" data-act="filtrar-chat-status" data-situacao="aguardando">Ver aguardando mesa</button>
-                    <button class="btn" type="button" data-act="filtrar-chat-status" data-situacao="parados">Ver parados</button>
-                    <button class="btn ghost" type="button" data-act="limpar-chat-filtro">Limpar filtro rapido</button>
-                    ${filtroAtivo ? `<span class="hero-chip">Filtro rapido: ${escapeHtml(filtroAtivo)}</span>` : ""}
-                </div>
-                ${destaque ? `
-                    <article class="activity-item">
-                        <div class="activity-head">
-                            <div class="activity-copy">
-                                <strong>${escapeHtml(destaque.titulo || "Laudo do chat")}</strong>
-                                <span class="activity-meta">${escapeHtml(destaque.tipo_template_label || "Inspeção")} • ${escapeHtml(destaque.data_br || "Sem data")}</span>
-                            </div>
-                            <span class="pill" data-kind="priority" data-status="${escapeAttr(prioridadeChat(destaque).tone)}">${escapeHtml(prioridadeChat(destaque).badge)}</span>
-                        </div>
-                        <p class="activity-detail">${escapeHtml(prioridadeChat(destaque).acao)}${laudoChatParado(destaque) ? ` ${resumoEsperaHoras(horasDesdeAtualizacao(destaque.atualizado_em))}.` : ""}</p>
-                        <div class="toolbar-meta">
-                            <button class="btn" type="button" data-act="abrir-prioridade" data-kind="chat-laudo" data-canal="chat" data-laudo="${escapeAttr(String(destaque.id || ""))}" data-target="chat-contexto">Abrir laudo prioritario</button>
-                        </div>
-                    </article>
-                ` : `
-                    <div class="empty-state">
-                        <strong>Fila do chat controlada</strong>
-                        <p>Nenhum laudo pede atenção imediata agora. Use os filtros rápidos se quiser revisar a fila por status.</p>
-                    </div>
-                `}
-            `;
+            clearElement(container);
+            container.appendChild(criarChatTriagemToolbar(filtroAtivo));
+            container.appendChild(
+                destaque
+                    ? criarChatPrioridadeActivity(destaque)
+                    : criarChatEmptyStateNode(
+                        "Fila do chat controlada",
+                        "Nenhum laudo pede atenção imediata agora. Use os filtros rápidos se quiser revisar a fila por status."
+                    )
+            );
             atualizarResumoSecaoChat();
         }
 
