@@ -145,6 +145,7 @@ Ele está na fase de:
 - a triagem principal de Chat/Mesa no Portal Cliente passou a montar filtros, destaque e empty state por DOM seguro, reduzindo mais dois blocos operacionais de `innerHTML`.
 - os blocos de movimentos recentes de Chat/Mesa no Portal Cliente passaram a ser montados por DOM seguro, preservando botões `abrir-prioridade` e chips operacionais.
 - os contextos selecionados de Chat/Mesa no Portal Cliente passaram a montar cards, sinais canônicos, guidance e avisos de override por DOM seguro, removendo `innerHTML` dos painéis de contexto.
+- `portal_chat_surface.js` e `portal_mesa_surface.js` não possuem mais `innerHTML` direto; documento pendente, capacidade, resumos e fallback de mensagens agora usam nós DOM/texto.
 
 ## O que ainda falta melhorar
 

@@ -472,6 +472,40 @@
         return block;
       }
 
+      function criarMesaMetricCardNode({ accent, label, value, meta }) {
+        const card = documentRef.createElement("article");
+        card.className = "metric-card";
+        if (accent) {
+          card.dataset.accent = texto(accent).trim();
+        }
+        const labelNode = documentRef.createElement("small");
+        labelNode.textContent = texto(label);
+        card.appendChild(labelNode);
+        const valueNode = documentRef.createElement("strong");
+        valueNode.textContent = texto(value);
+        card.appendChild(valueNode);
+        const metaNode = documentRef.createElement("span");
+        metaNode.className = "metric-meta";
+        metaNode.textContent = texto(meta);
+        card.appendChild(metaNode);
+        return card;
+      }
+
+      function appendMesaTextWithBreaks(target, value) {
+        if (appendTextWithBreaks) {
+          appendTextWithBreaks(target, value);
+          return;
+        }
+        texto(value || "")
+          .split("\n")
+          .forEach((linha, index) => {
+            if (index > 0) {
+              target.appendChild(documentRef.createElement("br"));
+            }
+            target.appendChild(documentRef.createTextNode(linha));
+          });
+      }
+
       function criarMesaContextGuidanceNode({
         tone,
         eyebrow,
@@ -1211,28 +1245,45 @@
           (item) => resumirMomentoCanonicoMesa(item).key === "field_owner",
         ).length;
 
-        container.innerHTML = `
-                <article class="metric-card" data-accent="attention">
-                    <small>Acao agora</small>
-                    <strong>${formatarInteiro(comAcaoAgora)}</strong>
-                    <span class="metric-meta">Laudos com chamado novo ou pendencia aberta pedindo resposta imediata.</span>
-                </article>
-                <article class="metric-card" data-accent="waiting">
-                    <small>Pendencias abertas</small>
-                    <strong>${formatarInteiro(totalPendencias)}</strong>
-                    <span class="metric-meta">${formatarInteiro(totalWhispers)} chamados ainda aguardam leitura da mesa.</span>
-                </article>
-                <article class="metric-card" data-accent="live">
-                    <small>Decisao disponivel</small>
-                    <strong>${formatarInteiro(prontosParaRevisar)}</strong>
-                    <span class="metric-meta">${formatarInteiro(emCampo)} caso(s) ainda estao com o campo como owner ativo.</span>
-                </article>
-                <article class="metric-card" data-accent="${momentoSelecionado ? momentoSelecionado.tone : prioridade ? prioridade.tone : "done"}">
-                    <small>Foco do laudo selecionado</small>
-                    <strong>${escapeHtml(momentoSelecionado ? momentoSelecionado.label : prioridade ? prioridade.badge : "Sem selecao")}</strong>
-                    <span class="metric-meta">${escapeHtml(momentoSelecionado ? momentoSelecionado.detail : "Escolha um laudo da fila para ver a acao recomendada.")}</span>
-                </article>
-            `;
+        clearElement(container);
+        [
+          {
+            accent: "attention",
+            label: "Acao agora",
+            value: formatarInteiro(comAcaoAgora),
+            meta: "Laudos com chamado novo ou pendencia aberta pedindo resposta imediata.",
+          },
+          {
+            accent: "waiting",
+            label: "Pendencias abertas",
+            value: formatarInteiro(totalPendencias),
+            meta: `${formatarInteiro(totalWhispers)} chamados ainda aguardam leitura da mesa.`,
+          },
+          {
+            accent: "live",
+            label: "Decisao disponivel",
+            value: formatarInteiro(prontosParaRevisar),
+            meta: `${formatarInteiro(emCampo)} caso(s) ainda estao com o campo como owner ativo.`,
+          },
+          {
+            accent: momentoSelecionado
+              ? momentoSelecionado.tone
+              : prioridade
+                ? prioridade.tone
+                : "done",
+            label: "Foco do laudo selecionado",
+            value: momentoSelecionado
+              ? momentoSelecionado.label
+              : prioridade
+                ? prioridade.badge
+                : "Sem selecao",
+            meta: momentoSelecionado
+              ? momentoSelecionado.detail
+              : "Escolha um laudo da fila para ver a acao recomendada.",
+          },
+        ].forEach((metric) => {
+          container.appendChild(criarMesaMetricCardNode(metric));
+        });
         atualizarResumoSecaoMesa();
       }
 
@@ -1247,23 +1298,26 @@
           return;
         }
 
-        container.innerHTML = `
-                <article class="metric-card">
-                    <small>Pendencias abertas</small>
-                    <strong>${formatarInteiro(pacote.resumo_pendencias?.abertas || 0)}</strong>
-                    <span class="metric-meta">${formatarInteiro(pacote.resumo_pendencias?.resolvidas || 0)} resolvidas recentes</span>
-                </article>
-                <article class="metric-card">
-                    <small>Chamados recentes</small>
-                    <strong>${formatarInteiro((pacote.whispers_recentes || []).length)}</strong>
-                    <span class="metric-meta">${formatarInteiro(pacote.resumo_mensagens?.inspetor || 0)} mensagens do inspetor</span>
-                </article>
-                <article class="metric-card">
-                    <small>Interacoes da mesa</small>
-                    <strong>${formatarInteiro(pacote.resumo_mensagens?.mesa || 0)}</strong>
-                    <span class="metric-meta">${formatarInteiro(pacote.resumo_evidencias?.documentos || 0)} documentos e ${formatarInteiro(pacote.resumo_evidencias?.fotos || 0)} fotos</span>
-                </article>
-            `;
+        clearElement(container);
+        [
+          {
+            label: "Pendencias abertas",
+            value: formatarInteiro(pacote.resumo_pendencias?.abertas || 0),
+            meta: `${formatarInteiro(pacote.resumo_pendencias?.resolvidas || 0)} resolvidas recentes`,
+          },
+          {
+            label: "Chamados recentes",
+            value: formatarInteiro((pacote.whispers_recentes || []).length),
+            meta: `${formatarInteiro(pacote.resumo_mensagens?.inspetor || 0)} mensagens do inspetor`,
+          },
+          {
+            label: "Interacoes da mesa",
+            value: formatarInteiro(pacote.resumo_mensagens?.mesa || 0),
+            meta: `${formatarInteiro(pacote.resumo_evidencias?.documentos || 0)} documentos e ${formatarInteiro(pacote.resumo_evidencias?.fotos || 0)} fotos`,
+          },
+        ].forEach((metric) => {
+          container.appendChild(criarMesaMetricCardNode(metric));
+        });
         atualizarResumoSecaoMesa();
       }
 
@@ -1333,11 +1387,7 @@
 
           const body = documentRef.createElement("div");
           body.className = "msg-body";
-          if (appendTextWithBreaks) {
-            appendTextWithBreaks(body, mensagem.texto || "(sem conteudo)");
-          } else {
-            body.innerHTML = textoComQuebras(mensagem.texto || "(sem conteudo)");
-          }
+          appendMesaTextWithBreaks(body, mensagem.texto || "(sem conteudo)");
           article.appendChild(body);
 
           if (mensagem.resolvida_em_label) {

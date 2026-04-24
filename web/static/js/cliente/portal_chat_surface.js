@@ -356,6 +356,51 @@
             return Boolean(texto(state.chat.documentoTexto).trim());
         }
 
+        function appendChatTextWithBreaks(target, value) {
+            if (appendTextWithBreaks) {
+                appendTextWithBreaks(target, value);
+                return;
+            }
+            texto(value || "").split("\n").forEach((linha, index) => {
+                if (index > 0) {
+                    target.appendChild(documentRef.createElement("br"));
+                }
+                target.appendChild(documentRef.createTextNode(linha));
+            });
+        }
+
+        function criarChatFormHintNode({ tone, title, detail }) {
+            const hint = documentRef.createElement("div");
+            hint.className = "form-hint";
+            hint.dataset.tone = texto(tone).trim();
+            const titleNode = documentRef.createElement("strong");
+            titleNode.textContent = texto(title);
+            hint.appendChild(titleNode);
+            const detailNode = documentRef.createElement("span");
+            detailNode.textContent = texto(detail);
+            hint.appendChild(detailNode);
+            return hint;
+        }
+
+        function criarChatMetricCardNode({ accent, label, value, meta }) {
+            const card = documentRef.createElement("article");
+            card.className = "metric-card";
+            if (accent) {
+                card.dataset.accent = texto(accent).trim();
+            }
+            const labelNode = documentRef.createElement("small");
+            labelNode.textContent = texto(label);
+            card.appendChild(labelNode);
+            const valueNode = documentRef.createElement("strong");
+            valueNode.textContent = texto(value);
+            card.appendChild(valueNode);
+            const metaNode = documentRef.createElement("span");
+            metaNode.className = "metric-meta";
+            metaNode.textContent = texto(meta);
+            card.appendChild(metaNode);
+            return card;
+        }
+
         function limparDocumentoChatPendente() {
             state.chat.documentoTexto = "";
             state.chat.documentoNome = "";
@@ -383,24 +428,34 @@
             const truncado = Boolean(state.chat.documentoTruncado);
 
             container.hidden = false;
-            container.innerHTML = `
-                <div class="attachment-list">
-                    <div class="attachment-item">
-                        <div class="attachment-copy">
-                            <span class="attachment-name">${escapeHtml(nome)}</span>
-                            <span class="attachment-meta">
-                                Documento pronto para envio • ${escapeHtml(formatarInteiro(chars))} caracteres${truncado ? " • resumo truncado" : ""}
-                            </span>
-                        </div>
-                        <button id="btn-chat-upload-limpar" class="btn ghost" type="button">Remover</button>
-                    </div>
-                </div>
-            `;
-
-            $("btn-chat-upload-limpar")?.addEventListener("click", () => {
+            clearElement(container);
+            const lista = documentRef.createElement("div");
+            lista.className = "attachment-list";
+            const item = documentRef.createElement("div");
+            item.className = "attachment-item";
+            const copy = documentRef.createElement("div");
+            copy.className = "attachment-copy";
+            const name = documentRef.createElement("span");
+            name.className = "attachment-name";
+            name.textContent = nome;
+            copy.appendChild(name);
+            const meta = documentRef.createElement("span");
+            meta.className = "attachment-meta";
+            meta.textContent = `Documento pronto para envio • ${formatarInteiro(chars)} caracteres${truncado ? " • resumo truncado" : ""}`;
+            copy.appendChild(meta);
+            item.appendChild(copy);
+            const remover = documentRef.createElement("button");
+            remover.id = "btn-chat-upload-limpar";
+            remover.className = "btn ghost";
+            remover.type = "button";
+            remover.textContent = "Remover";
+            remover.addEventListener("click", () => {
                 limparDocumentoChatPendente();
                 feedback("Documento removido do rascunho do chat.");
             });
+            item.appendChild(remover);
+            lista.appendChild(item);
+            container.appendChild(lista);
         }
 
         async function importarDocumentoChat(arquivo) {
@@ -503,29 +558,47 @@
             const emAtencao = empresa.laudos_mes_limite != null && Number(empresa.laudos_restantes || 0) > 0 && Number(empresa.laudos_restantes || 0) <= 5;
             const planoSugerido = texto(empresa.plano_sugerido).trim();
             const tone = atingiuTeto ? "ajustes" : emAtencao ? "aguardando" : tomCapacidadeEmpresa(empresa);
+            const tituloCapacidade = atingiuTeto
+                ? "Novos laudos bloqueados pelo plano"
+                : emAtencao
+                    ? "Janela mensal quase no limite"
+                    : "Abertura de laudo dentro da capacidade";
+            const detalheCapacidade = atingiuTeto
+                ? `${formatarCapacidadeRestante(empresa.laudos_restantes, empresa.laudos_excedente, "laudo", "laudos")}. ${planoSugerido ? `Registre interesse em ${planoSugerido} para liberar novas aberturas.` : "Revise o contrato antes de abrir novos laudos."}`
+                : emAtencao
+                    ? `${formatarCapacidadeRestante(empresa.laudos_restantes, empresa.laudos_excedente, "laudo", "laudos")}. ${planoSugerido ? `Vale registrar ${planoSugerido} antes do proximo pico.` : "Monitore a fila antes do proximo pico."}`
+                    : governadoSemTemplates
+                        ? "A empresa continua sob liberacao do Admin-CEO, mas nao possui modelos liberados no momento."
+                        : governado
+                            ? "A empresa esta usando os modelos liberados pelo Admin-CEO."
+                            : "O plano atual ainda sustenta novas aberturas de laudo com folga operacional.";
 
-            nota.innerHTML = `
-                ${readOnly
-                    ? '<div class="form-hint" data-tone="aguardando"><strong>Superfície indisponível</strong><span>O Chat precisa estar contratado para operar novos laudos pelo portal cliente.</span></div>'
-                    : ""}
-                <div class="form-hint" data-tone="${tone}">
-                    <strong>${atingiuTeto ? "Novos laudos bloqueados pelo plano" : emAtencao ? "Janela mensal quase no limite" : "Abertura de laudo dentro da capacidade"}</strong>
-                    <span>${escapeHtml(
-                        atingiuTeto
-                            ? `${formatarCapacidadeRestante(empresa.laudos_restantes, empresa.laudos_excedente, "laudo", "laudos")}. ${planoSugerido ? `Registre interesse em ${planoSugerido} para liberar novas aberturas.` : "Revise o contrato antes de abrir novos laudos."}`
-                            : emAtencao
-                            ? `${formatarCapacidadeRestante(empresa.laudos_restantes, empresa.laudos_excedente, "laudo", "laudos")}. ${planoSugerido ? `Vale registrar ${planoSugerido} antes do proximo pico.` : "Monitore a fila antes do proximo pico."}`
-                                : governadoSemTemplates
-                                    ? "A empresa continua sob liberacao do Admin-CEO, mas nao possui modelos liberados no momento."
-                                    : governado
-                                    ? "A empresa esta usando os modelos liberados pelo Admin-CEO."
-                                    : "O plano atual ainda sustenta novas aberturas de laudo com folga operacional."
-                    )}</span>
-                    ${planoSugerido && (atingiuTeto || emAtencao)
-                        ? `<div class="toolbar-meta"><button class="btn" type="button" data-act="preparar-upgrade" data-origem="chat">Registrar interesse em ${escapeHtml(planoSugerido)}</button></div>`
-                        : ""}
-                </div>
-            `;
+            clearElement(nota);
+            if (readOnly) {
+                nota.appendChild(criarChatFormHintNode({
+                    tone: "aguardando",
+                    title: "Superfície indisponível",
+                    detail: "O Chat precisa estar contratado para operar novos laudos pelo portal cliente.",
+                }));
+            }
+            const hint = criarChatFormHintNode({
+                tone,
+                title: tituloCapacidade,
+                detail: detalheCapacidade,
+            });
+            if (planoSugerido && (atingiuTeto || emAtencao)) {
+                const toolbar = documentRef.createElement("div");
+                toolbar.className = "toolbar-meta";
+                const upgrade = documentRef.createElement("button");
+                upgrade.className = "btn";
+                upgrade.type = "button";
+                upgrade.dataset.act = "preparar-upgrade";
+                upgrade.dataset.origem = "chat";
+                upgrade.textContent = `Registrar interesse em ${planoSugerido}`;
+                toolbar.appendChild(upgrade);
+                hint.appendChild(toolbar);
+            }
+            nota.appendChild(hint);
 
             if (botao) {
                 botao.disabled = readOnly || atingiuTeto || governadoSemTemplates;
@@ -549,28 +622,35 @@
             const ajustes = laudos.filter((item) => variantStatusLaudo(item.status_card) === "ajustes").length;
             const concluidos = laudos.filter((item) => variantStatusLaudo(item.status_card) === "aprovado").length;
 
-            container.innerHTML = `
-                <article class="metric-card" data-accent="attention">
-                    <small>Acao agora</small>
-                    <strong>${formatarInteiro(ajustes)}</strong>
-                    <span class="metric-meta">Laudos devolvidos para ajuste e que pedem resposta do time.</span>
-                </article>
-                <article class="metric-card" data-accent="live">
-                    <small>Em operacao</small>
-                    <strong>${formatarInteiro(abertos)}</strong>
-                    <span class="metric-meta">Conversas abertas e prontas para continuar no chat.</span>
-                </article>
-                <article class="metric-card" data-accent="waiting">
-                    <small>Aguardando mesa</small>
-                    <strong>${formatarInteiro(aguardando)}</strong>
-                    <span class="metric-meta">Laudos que ja sairam do campo e estao esperando retorno da mesa.</span>
-                </article>
-                <article class="metric-card" data-accent="${prioridade ? prioridade.tone : "done"}">
-                    <small>Foco do laudo selecionado</small>
-                    <strong>${escapeHtml(prioridade ? prioridade.badge : "Sem selecao")}</strong>
-                    <span class="metric-meta">${escapeHtml(prioridade ? prioridade.acao : `${formatarInteiro(concluidos)} concluidos sem urgencia na fila.`)}</span>
-                </article>
-            `;
+            clearElement(container);
+            [
+                {
+                    accent: "attention",
+                    label: "Acao agora",
+                    value: formatarInteiro(ajustes),
+                    meta: "Laudos devolvidos para ajuste e que pedem resposta do time.",
+                },
+                {
+                    accent: "live",
+                    label: "Em operacao",
+                    value: formatarInteiro(abertos),
+                    meta: "Conversas abertas e prontas para continuar no chat.",
+                },
+                {
+                    accent: "waiting",
+                    label: "Aguardando mesa",
+                    value: formatarInteiro(aguardando),
+                    meta: "Laudos que ja sairam do campo e estao esperando retorno da mesa.",
+                },
+                {
+                    accent: prioridade ? prioridade.tone : "done",
+                    label: "Foco do laudo selecionado",
+                    value: prioridade ? prioridade.badge : "Sem selecao",
+                    meta: prioridade ? prioridade.acao : `${formatarInteiro(concluidos)} concluidos sem urgencia na fila.`,
+                },
+            ].forEach((metric) => {
+                container.appendChild(criarChatMetricCardNode(metric));
+            });
             atualizarResumoSecaoChat();
         }
 
@@ -1026,11 +1106,7 @@
 
                 const body = documentRef.createElement("div");
                 body.className = "msg-body";
-                if (appendTextWithBreaks) {
-                    appendTextWithBreaks(body, mensagem.texto || "(sem conteudo)");
-                } else {
-                    body.innerHTML = textoComQuebras(mensagem.texto || "(sem conteudo)");
-                }
+                appendChatTextWithBreaks(body, mensagem.texto || "(sem conteudo)");
                 article.appendChild(body);
 
                 if (appendAnexos) {
