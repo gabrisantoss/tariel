@@ -132,7 +132,7 @@ Ele está na fase de:
 - `mesa/service.py` começou a perder responsabilidades internas para módulos dedicados, com a sumarização de mensagens/evidências/pendências da Mesa isolada em `mesa/package_message_summary.py`.
 - o portal cliente avançou na troca de HTML hardcoded por contratos estáticos allowlisted para estados read-only do Chat.
 - `admin/client_routes.py` começou a perder rotas de funcionários do cliente para `admin/client_employee_routes.py`, preservando que o Admin CEO governa contrato/superfícies e o Admin Cliente governa inspetores e avaliadores.
-- `admin/client_routes.py` também começou a perder rotas do catálogo de laudos para módulos dedicados, com importação canônica e lifecycle/status comercial extraídos.
+- `admin/client_routes.py` também começou a perder rotas do catálogo de laudos para módulos dedicados, com formulários de família/modos/ofertas/calibração/liberação, importação canônica e lifecycle/status comercial extraídos.
 - o pacote da Mesa ganhou `mesa/package_history.py`, isolando histórico de refazer, memória operacional de família e histórico de inspeção fora de `mesa/service.py`.
 - o portal cliente ganhou helpers compartilhados para empty state, chips e opções agrupadas, reduzindo `innerHTML` direto em listas de Chat/Mesa.
 - o Chat Inspetor ganhou uma ponte explícita de runtime em `chat_index_page_runtime.js`, reduzindo acoplamento direto de `chat_index_page.js` com globais de eventos, toast, boot e runtime.

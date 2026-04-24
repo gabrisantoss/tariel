@@ -4246,6 +4246,7 @@ Atualizado em `2026-04-24`.
 - `Portal Cliente`: zerar `innerHTML` direto em `portal_chat_surface.js` e `portal_mesa_surface.js`, cobrindo documento pendente, capacidade, resumos e fallback de mensagens.
 - `Admin CEO`: extrair suporte excepcional do cliente para `web/app/domains/admin/client_support_routes.py`, mantendo governança por janela auditada e sem interferir nos funcionários do cliente.
 - `Admin CEO`: extrair importação canônica e lifecycle/status do catálogo de laudos para `web/app/domains/admin/client_catalog_import_routes.py` e `web/app/domains/admin/client_catalog_lifecycle_routes.py`.
+- `Admin CEO`: extrair formulários de família, governança review, ofertas, modos, calibração e liberação tenant do catálogo para `web/app/domains/admin/client_catalog_form_routes.py`.
 - `Portal Admin Cliente`: trocar cards executivos e seletor de plano para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
 - `Mesa Avaliadora`: extrair verificação pública e anexo pack para `web/app/domains/mesa/package_document_support.py`.
 - `Portal Admin Cliente`: trocar resumo geral, briefs de capacidade/equipe/suporte, alerta de capacidade e nota de criação de usuário para DOM seguro em `web/static/js/cliente/portal_admin_surface.js`.
@@ -4312,6 +4313,16 @@ Atualizado em `2026-04-24`.
 - `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_catalog_lifecycle_routes.py web/app/domains/admin/client_catalog_import_routes.py web/tests/test_admin_client_routes.py`
 - `cd web && PYTHONPATH=. python -m py_compile app/domains/admin/client_routes.py app/domains/admin/client_catalog_lifecycle_routes.py app/domains/admin/client_catalog_import_routes.py`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py -q -k 'catalogo and (importa or lifecycle or ofertas or renderiza or familia)'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k 'catalogo or bootstrap_catalogo'`
+- `git diff --check`
+- `make web-ci`
+- `make production-ops-check-strict`
+- `make uploads-restore-drill`
+- `make hygiene-check`
+- `make verify`
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_catalog_form_routes.py web/app/domains/admin/client_catalog_import_routes.py web/app/domains/admin/client_catalog_lifecycle_routes.py web/tests/test_admin_client_routes.py`
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/admin/client_routes.py app/domains/admin/client_catalog_form_routes.py app/domains/admin/client_catalog_import_routes.py app/domains/admin/client_catalog_lifecycle_routes.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_admin_client_routes.py -q -k 'catalogo and (familia or ofertas or calibracao or liberacao or importa or lifecycle or renderiza)'`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k 'catalogo or bootstrap_catalogo'`
 - `git diff --check`
 - `make web-ci`
