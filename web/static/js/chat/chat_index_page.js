@@ -68,6 +68,30 @@
     const PERF = sharedGlobals.perf;
     const CaseLifecycle = sharedGlobals.caseLifecycle;
 
+    function obterStatusPayloadRuntime() {
+        return ChatIndexRuntime?.resolveStatusPayload?.()
+            || window.TarielInspectorWorkspaceStatusPayload
+            || {};
+    }
+
+    function obterTarielApiRuntime() {
+        return ChatIndexRuntime?.resolveApi?.() || window.TarielAPI || null;
+    }
+
+    function obterInspectorSharedRuntime() {
+        return ChatIndexRuntime?.resolveInspectorShared?.()
+            || window.TarielInspetorRuntime?.shared
+            || {};
+    }
+
+    function obterLocationRuntime() {
+        return ChatIndexRuntime?.resolveLocation?.() || window.location;
+    }
+
+    function obterViewportWidthRuntime() {
+        return ChatIndexRuntime?.getViewportWidth?.() || Number(window.innerWidth || 0);
+    }
+
     if (!CaseLifecycle) {
         return;
     }
@@ -121,10 +145,10 @@
     };
 
     const EM_PRODUCAO =
-        ChatIndexRuntime?.isProductionLocation?.(window.location)
+        ChatIndexRuntime?.isProductionLocation?.(obterLocationRuntime())
         ?? (
-            window.location.hostname !== "localhost" &&
-            window.location.hostname !== "127.0.0.1"
+            obterLocationRuntime().hostname !== "localhost" &&
+            obterLocationRuntime().hostname !== "127.0.0.1"
         );
     const LIMITE_RECONEXAO_SSE_OFFLINE = 3;
     const MAX_BYTES_ANEXO_MESA = 12 * 1024 * 1024;
@@ -545,15 +569,15 @@
     }
 
     function normalizarPublicVerificationSeguro(payload = null) {
-        return window.TarielInspectorWorkspaceStatusPayload?.normalizarPublicVerificationSeguro?.(payload) || null;
+        return obterStatusPayloadRuntime().normalizarPublicVerificationSeguro?.(payload) || null;
     }
 
     function normalizarEmissaoOficialSeguro(payload = null) {
-        return window.TarielInspectorWorkspaceStatusPayload?.normalizarEmissaoOficialSeguro?.(payload) || null;
+        return obterStatusPayloadRuntime().normalizarEmissaoOficialSeguro?.(payload) || null;
     }
 
     function clonarPayloadStatusRelatorioWorkspace(payload = null) {
-        return window.TarielInspectorWorkspaceStatusPayload?.clonarPayloadStatusRelatorioWorkspace?.(payload) || null;
+        return obterStatusPayloadRuntime().clonarPayloadStatusRelatorioWorkspace?.(payload) || null;
     }
 
     function registrarUltimoPayloadStatusRelatorioWorkspace(payload = null) {
@@ -562,9 +586,9 @@
     }
 
     function obterPayloadStatusRelatorioWorkspaceAtual() {
-        return window.TarielInspectorWorkspaceStatusPayload?.obterPayloadStatusRelatorioWorkspaceAtual?.({
+        return obterStatusPayloadRuntime().obterPayloadStatusRelatorioWorkspaceAtual?.({
             estado,
-            apiRef: window.TarielAPI || null,
+            apiRef: obterTarielApiRuntime(),
             clonarPayload: clonarPayloadStatusRelatorioWorkspace,
             normalizarCaseLifecycleStatusSeguro,
             normalizarActiveOwnerRoleSeguro,
@@ -632,7 +656,7 @@
     }
 
     function modoEntradaEvidenceFirstAtivo() {
-        return !!window.TarielInspetorRuntime?.shared?.modoEntradaEvidenceFirstAtivo?.();
+        return !!obterInspectorSharedRuntime().modoEntradaEvidenceFirstAtivo?.();
     }
 
     function resolverThreadTabInicialPorModoEntrada(payload = {}, fallback = "conversa") {
@@ -641,7 +665,7 @@
     }
 
     function normalizarRetomadaHomePendenteSeguro(payload = null) {
-        const helper = window.TarielInspetorRuntime?.shared?.normalizarRetomadaHomePendenteSeguro;
+        const helper = obterInspectorSharedRuntime().normalizarRetomadaHomePendenteSeguro;
         if (typeof helper === "function") {
             return helper(payload) || null;
         }
@@ -659,7 +683,7 @@
     }
 
     function retomadaHomePendenteEhValida(payload = null) {
-        const helper = window.TarielInspetorRuntime?.shared?.retomadaHomePendenteEhValida;
+        const helper = obterInspectorSharedRuntime().retomadaHomePendenteEhValida;
         if (typeof helper === "function") {
             return !!helper(payload);
         }
@@ -667,7 +691,7 @@
     }
 
     function sanitizarMapaContextoVisualLaudos(payload = null) {
-        const helper = window.TarielInspetorRuntime?.shared?.sanitizarMapaContextoVisualLaudos;
+        const helper = obterInspectorSharedRuntime().sanitizarMapaContextoVisualLaudos;
         if (typeof helper === "function") {
             return helper(payload) || {};
         }
@@ -688,7 +712,7 @@
     }
 
     function persistirContextoVisualLaudosStorage(payload = null) {
-        const helper = window.TarielInspetorRuntime?.shared?.persistirContextoVisualLaudosStorage;
+        const helper = obterInspectorSharedRuntime().persistirContextoVisualLaudosStorage;
         if (typeof helper === "function") {
             return helper(payload) || {};
         }
@@ -708,7 +732,7 @@
     }
 
     function lerContextoVisualLaudosStorage() {
-        const helper = window.TarielInspetorRuntime?.shared?.lerContextoVisualLaudosStorage;
+        const helper = obterInspectorSharedRuntime().lerContextoVisualLaudosStorage;
         if (typeof helper === "function") {
             return helper() || {};
         }
@@ -743,7 +767,7 @@
     }
 
     function lerRetomadaHomePendenteStorage() {
-        const helper = window.TarielInspetorRuntime?.shared?.lerRetomadaHomePendenteStorage;
+        const helper = obterInspectorSharedRuntime().lerRetomadaHomePendenteStorage;
         if (typeof helper === "function") {
             return helper() || null;
         }
@@ -757,7 +781,7 @@
     }
 
     function lerFlagForcaHomeStorage() {
-        const helper = window.TarielInspetorRuntime?.shared?.lerFlagForcaHomeStorage;
+        const helper = obterInspectorSharedRuntime().lerFlagForcaHomeStorage;
         if (typeof helper === "function") {
             return !!helper();
         }
@@ -772,20 +796,20 @@
 
     function paginaSolicitaHomeLandingViaURL() {
         return !!InspectorWorkspaceRuntimeState.paginaSolicitaHomeLandingViaURL?.({
-            locationRef: window.location,
+            locationRef: obterLocationRuntime(),
         });
     }
 
     function obterLaudoIdDaURLInspector() {
         return InspectorWorkspaceRuntimeState.obterLaudoIdDaURLInspector?.({
-            locationRef: window.location,
+            locationRef: obterLocationRuntime(),
             normalizarLaudoAtualId,
         }) || null;
     }
 
     function obterThreadTabDaURLInspector() {
         return InspectorWorkspaceRuntimeState.obterThreadTabDaURLInspector?.({
-            locationRef: window.location,
+            locationRef: obterLocationRuntime(),
             normalizarThreadTab,
         });
     }
@@ -973,6 +997,9 @@
             windowRef: window,
             estado,
             setInspectorStateGlobal: (stateSnapshot) => {
+                if (ChatIndexRuntime?.setInspectorStateGlobal?.(stateSnapshot)) {
+                    return;
+                }
                 if (window.TarielInspectorState && typeof window.TarielInspectorState === "object") {
                     window.TarielInspectorState.state = stateSnapshot;
                 }
@@ -1441,7 +1468,7 @@
             return estado.historyCanonicalItems.map((item) => ({ ...item }));
         }
 
-        const viaApi = window.TarielAPI?.obterHistoricoLaudoAtual?.();
+        const viaApi = obterTarielApiRuntime()?.obterHistoricoLaudoAtual?.();
         return Array.isArray(viaApi) ? viaApi.map((item) => ({ ...item })) : [];
     }
 
@@ -1611,7 +1638,7 @@
             normalizarFiltroTipoHistorico,
             normalizarThreadTab,
             obterDetalheLinhaWorkspace,
-            obterHistoricoLaudoAtual: () => window.TarielAPI?.obterHistoricoLaudoAtual?.(),
+            obterHistoricoLaudoAtual: () => obterTarielApiRuntime()?.obterHistoricoLaudoAtual?.(),
             obterLaudoAtivoIdSeguro,
             obterPapelLinhaWorkspace,
             obterResumoOperacionalMesa,
@@ -2240,7 +2267,7 @@
     }
 
     function obterLaudoAtivo() {
-        return Number(window.TarielAPI?.obterLaudoAtualId?.() || 0) || null;
+        return Number(obterTarielApiRuntime()?.obterLaudoAtualId?.() || 0) || null;
     }
 
     function avisarMesaExigeInspecao() {
@@ -2420,7 +2447,7 @@
     }
 
     function layoutInspectorCompacto() {
-        return window.innerWidth <= BREAKPOINT_LAYOUT_INSPETOR_COMPACTO;
+        return obterViewportWidthRuntime() <= BREAKPOINT_LAYOUT_INSPETOR_COMPACTO;
     }
 
     function resolverMatrizVisibilidadeInspector(screen = resolveInspectorScreen(), snapshot = obterSnapshotEstadoInspectorAtual()) {
@@ -3045,7 +3072,11 @@
     }
 
     const ctx = criarRuntimeInspetor();
-    window.TarielInspetorRuntime = ctx;
+    if (typeof ChatIndexRuntime?.publishInspectorRuntime === "function") {
+        ChatIndexRuntime.publishInspectorRuntime(ctx);
+    } else {
+        window.TarielInspetorRuntime = ctx;
+    }
     registrarModulosInspetor(ctx);
     const runtimeAtualizarEstadoModoEntrada = ctx.actions.atualizarEstadoModoEntrada;
 

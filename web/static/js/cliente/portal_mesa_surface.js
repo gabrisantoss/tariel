@@ -50,6 +50,14 @@
         typeof helpers.prioridadeMesa === "function"
           ? helpers.prioridadeMesa
           : () => ({ tone: "aprovado", badge: "", acao: "" });
+      const appendAnexos =
+        typeof helpers.appendAnexos === "function"
+          ? helpers.appendAnexos
+          : null;
+      const appendTextWithBreaks =
+        typeof helpers.appendTextWithBreaks === "function"
+          ? helpers.appendTextWithBreaks
+          : null;
       const renderAnexos =
         typeof helpers.renderAnexos === "function"
           ? helpers.renderAnexos
@@ -1001,53 +1009,91 @@
         if (!container) return;
 
         if (!mensagens.length) {
-          container.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Nada carregado ainda</strong>
-                        <p>As respostas da mesa, chamados e anexos deste laudo aparecem aqui.</p>
-                    </div>
-                `;
+          renderEmptyState(container, {
+            title: "Nada carregado ainda",
+            detail:
+              "As respostas da mesa, chamados e anexos deste laudo aparecem aqui.",
+          });
           atualizarResumoSecaoMesa();
           return;
         }
 
-        container.innerHTML = mensagens
-          .map((mensagem) => {
-            const pendencia = texto(mensagem.tipo) === "humano_eng";
-            const statusPendencia = pendencia
-              ? `<span class="pill" data-kind="status" data-status="${mensagem.lida ? "ativo" : "temporaria"}">${mensagem.lida ? "Resolvida" : "Aberta"}</span>`
-              : "";
-            const resolucao = mensagem.resolvida_em_label
-              ? `<div class="msg-time">Resolvida em ${escapeHtml(mensagem.resolvida_em_label)}${mensagem.resolvida_por_nome ? ` por ${escapeHtml(mensagem.resolvida_por_nome)}` : ""}</div>`
-              : "";
+        clearElement(container);
+        mensagens.forEach((mensagem) => {
+          const pendencia = texto(mensagem.tipo) === "humano_eng";
+          const article = documentRef.createElement("article");
+          article.className = `msg ${classeMensagemMesa(mensagem)}`;
 
-            return `
-                    <article class="msg ${classeMensagemMesa(mensagem)}">
-                        <div class="msg-head">
-                            <div class="msg-meta">
-                                <span class="msg-title">${escapeHtml(tituloMensagemMesa(mensagem))}</span>
-                                <span class="msg-time">${escapeHtml(mensagem.data || "Agora")}</span>
-                                ${statusPendencia}
-                            </div>
-                        </div>
-                        <div class="msg-body">${textoComQuebras(mensagem.texto || "(sem conteudo)")}</div>
-                        ${resolucao}
-                        ${renderAnexos(mensagem.anexos)}
-                        ${
-                          pendencia
-                            ? `
-                            <div class="msg-actions">
-                                <button class="btn" data-act="toggle-pendencia" data-id="${mensagem.id}" data-lida="${mensagem.lida ? "1" : "0"}" type="button">
-                                    ${mensagem.lida ? "Reabrir pendencia" : "Marcar resolvida"}
-                                </button>
-                            </div>
-                        `
-                            : ""
-                        }
-                    </article>
-                `;
-          })
-          .join("");
+          const head = documentRef.createElement("div");
+          head.className = "msg-head";
+          const meta = documentRef.createElement("div");
+          meta.className = "msg-meta";
+
+          const title = documentRef.createElement("span");
+          title.className = "msg-title";
+          title.textContent = tituloMensagemMesa(mensagem);
+          meta.appendChild(title);
+
+          const time = documentRef.createElement("span");
+          time.className = "msg-time";
+          time.textContent = texto(mensagem.data || "Agora");
+          meta.appendChild(time);
+
+          if (pendencia) {
+            const status = documentRef.createElement("span");
+            status.className = "pill";
+            status.dataset.kind = "status";
+            status.dataset.status = mensagem.lida ? "ativo" : "temporaria";
+            status.textContent = mensagem.lida ? "Resolvida" : "Aberta";
+            meta.appendChild(status);
+          }
+
+          head.appendChild(meta);
+          article.appendChild(head);
+
+          const body = documentRef.createElement("div");
+          body.className = "msg-body";
+          if (appendTextWithBreaks) {
+            appendTextWithBreaks(body, mensagem.texto || "(sem conteudo)");
+          } else {
+            body.innerHTML = textoComQuebras(mensagem.texto || "(sem conteudo)");
+          }
+          article.appendChild(body);
+
+          if (mensagem.resolvida_em_label) {
+            const resolucao = documentRef.createElement("div");
+            resolucao.className = "msg-time";
+            const resolvedBy = mensagem.resolvida_por_nome
+              ? ` por ${texto(mensagem.resolvida_por_nome)}`
+              : "";
+            resolucao.textContent = `Resolvida em ${texto(mensagem.resolvida_em_label)}${resolvedBy}`;
+            article.appendChild(resolucao);
+          }
+
+          if (appendAnexos) {
+            appendAnexos(article, mensagem.anexos);
+          } else {
+            article.insertAdjacentHTML("beforeend", renderAnexos(mensagem.anexos));
+          }
+
+          if (pendencia) {
+            const actions = documentRef.createElement("div");
+            actions.className = "msg-actions";
+            const button = documentRef.createElement("button");
+            button.className = "btn";
+            button.type = "button";
+            button.dataset.act = "toggle-pendencia";
+            button.dataset.id = texto(mensagem.id);
+            button.dataset.lida = mensagem.lida ? "1" : "0";
+            button.textContent = mensagem.lida
+              ? "Reabrir pendencia"
+              : "Marcar resolvida";
+            actions.appendChild(button);
+            article.appendChild(actions);
+          }
+
+          container.appendChild(article);
+        });
         atualizarResumoSecaoMesa();
       }
 

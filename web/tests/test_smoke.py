@@ -486,7 +486,9 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "function resolverCampoPrimarioStatusWorkspace(" in workspace_status_payload_js
     assert "normalizarPublicVerificationSeguro" in workspace_status_payload_js
     assert "TarielInspectorWorkspaceStatusPayload" in workspace_status_payload_js
-    assert "TarielInspectorWorkspaceStatusPayload?.obterPayloadStatusRelatorioWorkspaceAtual" in chat_index_js
+    chat_index_runtime_js = (raiz / "static" / "js" / "chat" / "chat_index_page_runtime.js").read_text(encoding="utf-8")
+    assert "obterStatusPayloadRuntime().obterPayloadStatusRelatorioWorkspaceAtual" in chat_index_js
+    assert "resolveStatusPayload" in chat_index_runtime_js
     assert "case_operational_phase" in workspace_status_payload_js
     assert "Pronto para emissão oficial" in governance_js
     assert "Completar prontidão antes de emitir" in governance_js

@@ -4233,6 +4233,10 @@ Atualizado em `2026-04-24`.
 - `Chat Inspetor`: criar `web/static/js/chat/chat_index_page_runtime.js` como ponte explicita de runtime/eventos/toast para reduzir `window.*` no arquivo principal.
 - `Contrato legado`: cobrir por teste que `tenant_capability_*` enviado por payload antigo no formulario de superficies e ignorado, mantendo permissao derivada do pacote contratado.
 - `Render real`: manter como bloqueio externo; o servico `srv-d795sq2a214c73alec20` precisa de disco/envs production-ready, mas nenhum upgrade/plano pago foi aplicado sem autorizacao.
+- `Mesa Avaliadora`: extrair emissao oficial do pacote para `web/app/domains/mesa/package_official_issue.py`.
+- `Portal Cliente`: trocar renderizacao de mensagens Chat/Mesa para DOM seguro com helpers de texto/anexos.
+- `Chat Inspetor`: ampliar `chat_index_page_runtime.js` para cobrir API, payload de status, location, viewport e publicacao do runtime.
+- `Contrato legado`: cobrir por teste que `case_action_mode=read_only` e flags finas falsas sao apenas compatibilidade visual quando a superficie esta contratada.
 
 ### Validacao deste slice
 
@@ -4243,6 +4247,15 @@ Atualizado em `2026-04-24`.
 - `make web-ci`
 - `make mobile-ci`
 - `make mesa-smoke`
+- `make production-ops-check-strict`
+- `make uploads-restore-drill`
+- `make hygiene-check`
+- `PYTHONPATH=. python -m ruff check web/app/domains/mesa/service.py web/app/domains/mesa/package_official_issue.py web/tests/test_tenant_entitlements_critical.py`
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/mesa/service.py app/domains/mesa/package_official_issue.py`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k 'case_action_mode_legado or superficies_contratuais or flags_finas'`
+- `make web-ci`
+- `make mesa-smoke`
+- `make mobile-ci`
 - `make production-ops-check-strict`
 - `make uploads-restore-drill`
 - `make hygiene-check`

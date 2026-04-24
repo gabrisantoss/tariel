@@ -71,6 +71,24 @@ def test_admin_ceo_persiste_superficies_contratuais_sem_bloquear_operacao_intern
     assert resumo["tenant_capability_flag_semantics"] == "derived_from_contract_surface"
 
 
+def test_case_action_mode_legado_nao_bloqueia_acoes_da_superficie_contratada() -> None:
+    resumo = summarize_tenant_admin_policy(
+        {
+            "case_visibility_mode": "case_list",
+            "case_action_mode": "read_only",
+            "commercial_service_package": "inspector_chat_mesa",
+            "tenant_capability_inspector_case_finalize_enabled": False,
+            "tenant_capability_reviewer_decision_enabled": False,
+        }
+    )
+
+    assert resumo["case_action_mode_deprecated"] is True
+    assert resumo["case_action_mode_semantics"] == "legacy_display_only"
+    assert resumo["case_actions_enabled"] is True
+    assert resumo["tenant_capability_entitlements"]["inspector_case_finalize"] is True
+    assert resumo["tenant_capability_entitlements"]["reviewer_decision"] is True
+
+
 def test_superficies_expoem_tenant_access_policy_governado(
     ambiente_critico,
 ) -> None:

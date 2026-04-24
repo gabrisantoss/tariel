@@ -31,6 +31,39 @@
         return global.TarielInspectorWorkspacePageElements?.buildInspectorPageElements?.(documentRef) || {};
     }
 
+    function resolveStatusPayload() {
+        return global.TarielInspectorWorkspaceStatusPayload || {};
+    }
+
+    function resolveApi() {
+        return global.TarielAPI || null;
+    }
+
+    function resolveInspectorShared() {
+        return global.TarielInspetorRuntime?.shared || {};
+    }
+
+    function resolveLocation() {
+        return global.location;
+    }
+
+    function getViewportWidth() {
+        return Number(global.innerWidth || 0);
+    }
+
+    function setInspectorStateGlobal(stateSnapshot) {
+        if (global.TarielInspectorState && typeof global.TarielInspectorState === "object") {
+            global.TarielInspectorState.state = stateSnapshot;
+            return true;
+        }
+        return false;
+    }
+
+    function publishInspectorRuntime(ctx) {
+        global.TarielInspetorRuntime = ctx;
+        return ctx;
+    }
+
     function showToast(message, type = "info", duration = 3000) {
         if (typeof global.mostrarToast === "function") {
             global.mostrarToast(message, type, duration);
@@ -84,13 +117,20 @@
     global.TarielChatIndexPageRuntime = {
         debug,
         emitInspectorEvent,
+        getViewportWidth,
         guardOnce,
         isProductionLocation,
         logOnce,
         onInspectorEvent,
+        publishInspectorRuntime,
+        resolveApi,
+        resolveInspectorShared,
+        resolveLocation,
         resolveModules,
         resolvePageElements,
         resolveSharedGlobals,
+        resolveStatusPayload,
+        setInspectorStateGlobal,
         showToast,
     };
 })(window);

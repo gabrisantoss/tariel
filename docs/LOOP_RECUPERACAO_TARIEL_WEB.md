@@ -2365,3 +2365,48 @@ Impacto observado:
 - o Admin Cliente segue como autoridade sobre inspetores e avaliadores do próprio cliente dentro do contrato liberado;
 - `mesa/service.py` e `chat_index_page.js` perderam mais responsabilidades sem alterar endpoint, contrato público ou fluxo do usuário;
 - o próximo corte coerente é continuar extraindo emissão oficial da Mesa e cards/mensagens do portal cliente, depois atacar sidebar/histórico do inspetor com helper dedicado.
+
+## R57. Emissao oficial da Mesa e mensagens seguras do Portal Cliente
+
+Resumo:
+
+- extraí a emissão oficial do pacote da Mesa para `web/app/domains/mesa/package_official_issue.py`, mantendo `mesa/service.py` como orquestrador;
+- troquei a renderização de mensagens de Chat/Mesa no Portal Cliente para montagem DOM segura, incluindo texto com quebras, anexos e ações de pendência;
+- avancei a ponte `chat_index_page_runtime.js` com acesso explícito a API, payload de status, location, viewport e publicação do runtime;
+- adicionei teste direto garantindo que `case_action_mode=read_only` é compatibilidade visual legada e não bloqueia ações da superfície contratada;
+- mantive Render real como pendência externa: sem alteração paga/disco via CLI e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/app/domains/mesa/service.py`
+- `web/app/domains/mesa/package_official_issue.py`
+- `web/static/js/cliente/portal_shared_helpers.js`
+- `web/static/js/cliente/portal.js`
+- `web/static/js/cliente/portal_chat_surface.js`
+- `web/static/js/cliente/portal_mesa_surface.js`
+- `web/static/js/chat/chat_index_page_runtime.js`
+- `web/static/js/chat/chat_index_page.js`
+- `web/tests/test_tenant_entitlements_critical.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/app/domains/mesa/service.py web/app/domains/mesa/package_official_issue.py web/tests/test_tenant_entitlements_critical.py` -> verde;
+- `cd web && PYTHONPATH=. python -m py_compile app/domains/mesa/service.py app/domains/mesa/package_official_issue.py` -> verde;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k 'case_action_mode_legado or superficies_contratuais or flags_finas'` -> `4 passed, 16 deselected`;
+- `node --check web/static/js/cliente/portal_shared_helpers.js && node --check web/static/js/cliente/portal.js && node --check web/static/js/cliente/portal_chat_surface.js && node --check web/static/js/cliente/portal_mesa_surface.js && node --check web/static/js/chat/chat_index_page_runtime.js && node --check web/static/js/chat/chat_index_page.js` -> sem erro de sintaxe.
+- `git diff --check` -> sem erros; apenas aviso de normalização CRLF em `web/app/domains/mesa/service.py` e `web/static/js/chat/chat_index_page.js`;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `322` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make mesa-smoke` -> `95 passed`;
+- `make mobile-ci` -> typecheck, lint, prettier e `113` suites/`420` testes verdes;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`.
+
+Impacto observado:
+
+- `mesa/service.py` caiu para cerca de `1171` linhas e a próxima extração principal pode mirar `revisao_por_bloco` ou `montar_pacote_mesa_laudo`;
+- o Portal Cliente removeu `innerHTML` do miolo de mensagens de Chat/Mesa, ficando com HTML direto principalmente em cards/contextos maiores;
+- o Chat Inspetor ainda tem fallbacks `window.*`, mas a ponte já cobre mais acessos e permite remover compatibilidade com menos risco em ciclos futuros.

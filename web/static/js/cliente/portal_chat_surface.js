@@ -25,6 +25,8 @@
         const parseDataIso = typeof helpers.parseDataIso === "function" ? helpers.parseDataIso : () => 0;
         const prioridadeChat = typeof helpers.prioridadeChat === "function" ? helpers.prioridadeChat : () => ({ tone: "aprovado", badge: "", acao: "" });
         const renderAnexos = typeof helpers.renderAnexos === "function" ? helpers.renderAnexos : () => "";
+        const appendAnexos = typeof helpers.appendAnexos === "function" ? helpers.appendAnexos : null;
+        const appendTextWithBreaks = typeof helpers.appendTextWithBreaks === "function" ? helpers.appendTextWithBreaks : null;
         const clearElement = typeof helpers.clearElement === "function" ? helpers.clearElement : (node) => {
             if (!node) return false;
             node.textContent = "";
@@ -764,34 +766,58 @@
             if (!container) return;
 
             if (!mensagens.length) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Nenhuma mensagem carregada</strong>
-                        <p>Assim que voce conversar com o assistente ou com a mesa, o historico aparece aqui.</p>
-                    </div>
-                `;
+                renderEmptyState(container, {
+                    title: "Nenhuma mensagem carregada",
+                    detail: "Assim que voce conversar com o assistente ou com a mesa, o historico aparece aqui.",
+                });
                 atualizarResumoSecaoChat();
                 return;
             }
 
-            container.innerHTML = mensagens.map((mensagem) => {
+            clearElement(container);
+            mensagens.forEach((mensagem) => {
                 const papel = texto(mensagem.papel).toLowerCase();
                 const classe = papel === "usuario" ? "msg--usuario" : papel === "assistente" ? "msg--assistente" : "msg--whisper";
                 const titulo = papel === "usuario" ? "Usuario" : papel === "assistente" ? "Assistente" : "Mesa";
 
-                return `
-                    <article class="msg ${classe}">
-                        <div class="msg-head">
-                            <div class="msg-meta">
-                                <span class="msg-title">${escapeHtml(titulo)}</span>
-                                <span class="msg-time">${escapeHtml(mensagem.tipo || "mensagem")}</span>
-                            </div>
-                        </div>
-                        <div class="msg-body">${textoComQuebras(mensagem.texto || "(sem conteudo)")}</div>
-                        ${renderAnexos(mensagem.anexos)}
-                    </article>
-                `;
-            }).join("");
+                const article = documentRef.createElement("article");
+                article.className = `msg ${classe}`;
+
+                const head = documentRef.createElement("div");
+                head.className = "msg-head";
+                const meta = documentRef.createElement("div");
+                meta.className = "msg-meta";
+
+                const title = documentRef.createElement("span");
+                title.className = "msg-title";
+                title.textContent = titulo;
+                meta.appendChild(title);
+
+                const time = documentRef.createElement("span");
+                time.className = "msg-time";
+                time.textContent = texto(mensagem.tipo || "mensagem");
+                meta.appendChild(time);
+
+                head.appendChild(meta);
+                article.appendChild(head);
+
+                const body = documentRef.createElement("div");
+                body.className = "msg-body";
+                if (appendTextWithBreaks) {
+                    appendTextWithBreaks(body, mensagem.texto || "(sem conteudo)");
+                } else {
+                    body.innerHTML = textoComQuebras(mensagem.texto || "(sem conteudo)");
+                }
+                article.appendChild(body);
+
+                if (appendAnexos) {
+                    appendAnexos(article, mensagem.anexos);
+                } else {
+                    article.insertAdjacentHTML("beforeend", renderAnexos(mensagem.anexos));
+                }
+
+                container.appendChild(article);
+            });
             atualizarResumoSecaoChat();
         }
 

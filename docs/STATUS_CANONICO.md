@@ -136,6 +136,9 @@ Ele está na fase de:
 - o portal cliente ganhou helpers compartilhados para empty state, chips e opções agrupadas, reduzindo `innerHTML` direto em listas de Chat/Mesa.
 - o Chat Inspetor ganhou uma ponte explícita de runtime em `chat_index_page_runtime.js`, reduzindo acoplamento direto de `chat_index_page.js` com globais de eventos, toast, boot e runtime.
 - o formulário de política por superfície do Admin CEO agora tem teste garantindo que `tenant_capability_*` legado enviado por payload antigo é ignorado e que permissões seguem derivadas do pacote/superfície contratada.
+- a emissão oficial da Mesa saiu de `mesa/service.py` para `mesa/package_official_issue.py`, deixando o serviço principal mais próximo de orquestração.
+- as mensagens de Chat/Mesa no Portal Cliente passaram a ser montadas por DOM seguro para texto, anexos e ações, reduzindo mais um bloco sensível de `innerHTML`.
+- `case_action_mode=read_only` agora tem teste explícito como compatibilidade visual legada, sem bloquear ações quando o contrato de superfície libera operação.
 
 ## O que ainda falta melhorar
 
@@ -189,7 +192,7 @@ Ele está na fase de:
 
 1. decidir e aplicar a configuração real do Render para disco persistente/envs production-ready quando houver autorização operacional para plano/disco;
 2. manter `make verify`, `make hygiene-check`, `make security-audit`, `make production-ops-check-strict`, `make uploads-restore-drill` e `make binary-assets-audit-strict` como pacote mínimo de promoção local;
-3. continuar a extração dos hotspots `mesa/service.py`, `admin/client_routes.py`, `chat_index_page.js` e superfícies do portal cliente, usando os novos logs críticos para priorizar gargalos reais;
+3. continuar a extração dos hotspots `admin/client_routes.py`, `chat_index_page.js` e superfícies do portal cliente, usando os novos logs críticos para priorizar gargalos reais;
 4. consolidar o pacote `docs/product-canonical-vision/`;
 5. refletir a matriz comercial por eixos nas superfícies administrativas e nos entitlements;
 6. reduzir desglobalização e compat layers do inspetor web;

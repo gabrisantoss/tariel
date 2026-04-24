@@ -213,6 +213,72 @@
         return { changed: true, value: valor };
       }
 
+      function appendTextWithBreaks(target, value) {
+        const container =
+          typeof target === "string" ? $(target) : target || null;
+        if (!container) return false;
+
+        const linhas = texto(value || "").split("\n");
+        linhas.forEach((linha, index) => {
+          if (index > 0) {
+            container.appendChild(documentRef.createElement("br"));
+          }
+          container.appendChild(documentRef.createTextNode(linha));
+        });
+        return true;
+      }
+
+      function appendAnexos(target, anexos) {
+        const container =
+          typeof target === "string" ? $(target) : target || null;
+        if (!container) return false;
+
+        const itens = Array.isArray(anexos) ? anexos : [];
+        if (!itens.length) return true;
+
+        const lista = documentRef.createElement("div");
+        lista.className = "attachment-list";
+        itens.forEach((anexo) => {
+          const item = documentRef.createElement("div");
+          item.className = "attachment-item";
+
+          const copy = documentRef.createElement("div");
+          copy.className = "attachment-copy";
+
+          const name = documentRef.createElement("span");
+          name.className = "attachment-name";
+          name.textContent = texto(anexo?.nome || "Anexo");
+          copy.appendChild(name);
+
+          const meta = documentRef.createElement("span");
+          meta.className = "attachment-meta";
+          meta.textContent = `${texto(anexo?.categoria || "arquivo")} • ${formatarBytes(anexo?.tamanho_bytes || 0)}`;
+          copy.appendChild(meta);
+
+          item.appendChild(copy);
+          const url = texto(anexo?.url || "").trim();
+          if (url) {
+            const link = documentRef.createElement("a");
+            link.className = "attachment-link";
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Abrir";
+            item.appendChild(link);
+          } else {
+            const available = documentRef.createElement("span");
+            available.className = "attachment-link";
+            available.setAttribute("aria-hidden", "true");
+            available.textContent = "Disponivel";
+            item.appendChild(available);
+          }
+          lista.appendChild(item);
+        });
+
+        container.appendChild(lista);
+        return true;
+      }
+
       function renderAnexos(anexos) {
         const itens = Array.isArray(anexos) ? anexos : [];
         if (!itens.length) return "";
@@ -276,6 +342,8 @@
       }
 
       return {
+        appendAnexos,
+        appendTextWithBreaks,
         clearElement,
         renderEmptyState,
         renderAnexos,

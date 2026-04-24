@@ -848,6 +848,8 @@
   );
 
   const {
+    appendAnexos,
+    appendTextWithBreaks,
     clearElement,
     renderAnexos,
     renderAvisosOperacionais,
@@ -1032,6 +1034,8 @@
       perfSnapshot,
       persistirSelecao,
       prioridadeChat,
+      appendAnexos,
+      appendTextWithBreaks,
       clearElement,
       renderAnexos,
       renderEmptyState,
@@ -1097,6 +1101,8 @@
       perfSnapshot,
       persistirSelecao,
       prioridadeMesa,
+      appendAnexos,
+      appendTextWithBreaks,
       clearElement,
       renderAnexos,
       renderEmptyState,
