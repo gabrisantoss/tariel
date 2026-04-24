@@ -2860,3 +2860,40 @@ Impacto observado:
 - `client_routes.py` saiu do patamar de monólito extremo e agora concentra menos regra de catálogo;
 - o próximo pacote backend coerente pode extrair home/detalhe/preview do catálogo ou seguir nas ações diretas de cliente;
 - se alternar para frontend, o próximo ponto é `portal_admin_surface.js`/`portal_admin_overview_surface.js` por `innerHTML` restante.
+
+## R70. Visualização e preview do catálogo Admin CEO extraídos
+
+Resumo:
+
+- extraí a home, o detalhe por família e o preview PDF do catálogo para `web/app/domains/admin/client_catalog_view_routes.py`;
+- preservei as mesmas URLs públicas, acesso Admin CEO, fallback auditado via `_executar_leitura_admin` e renderização dos mesmos templates;
+- mantive no `client_routes.py` as ações diretas de cliente e o registro dos módulos especializados;
+- reduzi `web/app/domains/admin/client_routes.py` de `1697` para `1395` linhas;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/app/domains/admin/client_routes.py`
+- `web/app/domains/admin/client_catalog_view_routes.py`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `PYTHONPATH=. python -m ruff check web/app/domains/admin/client_routes.py web/app/domains/admin/client_catalog_view_routes.py web/app/domains/admin/client_catalog_form_routes.py web/app/domains/admin/client_catalog_import_routes.py web/app/domains/admin/client_catalog_lifecycle_routes.py web/tests/test_admin_client_routes.py` -> verde;
+- `python -m py_compile web/app/domains/admin/client_routes.py web/app/domains/admin/client_catalog_view_routes.py web/app/domains/admin/client_catalog_form_routes.py web/app/domains/admin/client_catalog_import_routes.py web/app/domains/admin/client_catalog_lifecycle_routes.py` -> verde;
+- `PYTHONPATH=. python -m pytest web/tests/test_admin_client_routes.py -q -k 'catalogo and (preview or renderiza or familia or ofertas or calibracao or liberacao or importa or lifecycle)'` -> `7 passed, 34 deselected`;
+- `PYTHONPATH=. python -m pytest web/tests/test_smoke.py -q -k 'catalogo or bootstrap_catalogo'` -> `2 passed, 41 deselected`;
+- `git diff --check` -> sem erros;
+- `make web-ci` -> `ruff` verde, `mypy` verde em `330` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- `client_routes.py` agora está abaixo de `1400` linhas e perdeu o bloco de preview PDF/runtime do catálogo;
+- o catálogo Admin CEO ficou dividido em visualização/preview, formulários, importação e lifecycle/status;
+- o próximo pacote backend coerente é extrair ações diretas de cliente restantes, como diagnóstico/export, signatário/portfolio ou política comercial; se alternar para frontend, o próximo ponto é `portal_admin_surface.js` por `innerHTML` restante.
