@@ -655,6 +655,61 @@
             atualizarResumoSecaoChat();
         }
 
+        function criarChatMovimentoItem(laudo) {
+            const prioridade = prioridadeChat(laudo);
+            const article = documentRef.createElement("article");
+            article.className = "activity-item";
+
+            const head = documentRef.createElement("div");
+            head.className = "activity-head";
+            const copy = documentRef.createElement("div");
+            copy.className = "activity-copy";
+            const title = documentRef.createElement("strong");
+            title.textContent = texto(laudo.titulo || "Laudo do chat");
+            const meta = documentRef.createElement("span");
+            meta.className = "activity-meta";
+            meta.textContent = `${texto(laudo.data_br || "Sem data")} • ${texto(laudo.tipo_template_label || "Inspecao")}`;
+            copy.appendChild(title);
+            copy.appendChild(meta);
+            head.appendChild(copy);
+
+            const pill = documentRef.createElement("span");
+            pill.className = "pill";
+            pill.dataset.kind = "priority";
+            pill.dataset.status = texto(prioridade.tone).trim();
+            pill.textContent = texto(prioridade.badge);
+            head.appendChild(pill);
+            article.appendChild(head);
+
+            const detail = documentRef.createElement("p");
+            detail.className = "activity-detail";
+            detail.textContent = texto(laudo.preview || "Sem resumo recente no chat.");
+            article.appendChild(detail);
+
+            const toolbar = documentRef.createElement("div");
+            toolbar.className = "toolbar-meta";
+            if (laudoChatParado(laudo)) {
+                const esperaChip = documentRef.createElement("span");
+                esperaChip.className = "hero-chip";
+                esperaChip.textContent = resumoEsperaHoras(horasDesdeAtualizacao(laudo.atualizado_em));
+                toolbar.appendChild(esperaChip);
+            }
+
+            const button = documentRef.createElement("button");
+            button.className = "btn";
+            button.type = "button";
+            button.dataset.act = "abrir-prioridade";
+            button.dataset.kind = "chat-laudo";
+            button.dataset.canal = "chat";
+            button.dataset.laudo = String(laudo.id || "");
+            button.dataset.target = "chat-contexto";
+            button.textContent = "Abrir laudo";
+            toolbar.appendChild(button);
+            article.appendChild(toolbar);
+
+            return article;
+        }
+
         function renderChatMovimentos() {
             const container = $("chat-movimentos");
             const laudos = ordenarPorPrioridade(state.bootstrap?.chat?.laudos || [], (item) => ({
@@ -663,44 +718,44 @@
             if (!container) return;
 
             if (!laudos.length) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Sem movimentos recentes no chat</strong>
-                        <p>Os laudos mais novos da empresa vao aparecer aqui assim que o chat começar a rodar.</p>
-                    </div>
-                `;
+                clearElement(container);
+                container.appendChild(criarChatEmptyStateNode(
+                    "Sem movimentos recentes no chat",
+                    "Os laudos mais novos da empresa vao aparecer aqui assim que o chat começar a rodar."
+                ));
                 return;
             }
 
-            container.innerHTML = `
-                <article class="activity-item">
-                    <div class="activity-head">
-                        <div class="activity-copy">
-                            <strong>Movimentos recentes do chat</strong>
-                            <span class="activity-meta">Os ultimos laudos tocados pela empresa no canal operacional.</span>
-                        </div>
-                        <span class="hero-chip">${formatarInteiro(laudos.length)} recentes</span>
-                    </div>
-                    <div class="activity-list">
-                        ${laudos.map((laudo) => `
-                            <article class="activity-item">
-                                <div class="activity-head">
-                                    <div class="activity-copy">
-                                        <strong>${escapeHtml(laudo.titulo || "Laudo do chat")}</strong>
-                                        <span class="activity-meta">${escapeHtml(laudo.data_br || "Sem data")} • ${escapeHtml(laudo.tipo_template_label || "Inspecao")}</span>
-                                    </div>
-                                    <span class="pill" data-kind="priority" data-status="${escapeAttr(prioridadeChat(laudo).tone)}">${escapeHtml(prioridadeChat(laudo).badge)}</span>
-                                </div>
-                                <p class="activity-detail">${escapeHtml(laudo.preview || "Sem resumo recente no chat.")}</p>
-                                <div class="toolbar-meta">
-                                    ${laudoChatParado(laudo) ? `<span class="hero-chip">${escapeHtml(resumoEsperaHoras(horasDesdeAtualizacao(laudo.atualizado_em)))}</span>` : ""}
-                                    <button class="btn" type="button" data-act="abrir-prioridade" data-kind="chat-laudo" data-canal="chat" data-laudo="${escapeAttr(String(laudo.id || ""))}" data-target="chat-contexto">Abrir laudo</button>
-                                </div>
-                            </article>
-                        `).join("")}
-                    </div>
-                </article>
-            `;
+            clearElement(container);
+            const article = documentRef.createElement("article");
+            article.className = "activity-item";
+
+            const head = documentRef.createElement("div");
+            head.className = "activity-head";
+            const copy = documentRef.createElement("div");
+            copy.className = "activity-copy";
+            const title = documentRef.createElement("strong");
+            title.textContent = "Movimentos recentes do chat";
+            const meta = documentRef.createElement("span");
+            meta.className = "activity-meta";
+            meta.textContent = "Os ultimos laudos tocados pela empresa no canal operacional.";
+            copy.appendChild(title);
+            copy.appendChild(meta);
+            head.appendChild(copy);
+
+            const count = documentRef.createElement("span");
+            count.className = "hero-chip";
+            count.textContent = `${formatarInteiro(laudos.length)} recentes`;
+            head.appendChild(count);
+            article.appendChild(head);
+
+            const list = documentRef.createElement("div");
+            list.className = "activity-list";
+            laudos.forEach((laudo) => {
+                list.appendChild(criarChatMovimentoItem(laudo));
+            });
+            article.appendChild(list);
+            container.appendChild(article);
         }
 
         function criarChatLaudoItem(laudo) {

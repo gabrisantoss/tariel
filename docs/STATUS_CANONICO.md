@@ -143,6 +143,7 @@ Ele está na fase de:
 - as filas principais de Chat e Mesa no Portal Cliente passaram a montar cards por DOM seguro, reduzindo `innerHTML` em listas operacionais.
 - a leitura interna de mensagens, revisões e serialização de mensagens do pacote da Mesa saiu de `mesa/service.py` para `mesa/package_read_models.py`, reduzindo o acoplamento da orquestração final.
 - a triagem principal de Chat/Mesa no Portal Cliente passou a montar filtros, destaque e empty state por DOM seguro, reduzindo mais dois blocos operacionais de `innerHTML`.
+- os blocos de movimentos recentes de Chat/Mesa no Portal Cliente passaram a ser montados por DOM seguro, preservando botões `abrir-prioridade` e chips operacionais.
 
 ## O que ainda falta melhorar
 

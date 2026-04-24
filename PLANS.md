@@ -4241,6 +4241,7 @@ Atualizado em `2026-04-24`.
 - `Portal Cliente`: trocar os cards das filas principais de Chat/Mesa para montagem DOM segura, removendo `innerHTML` das listas operacionais.
 - `Mesa Avaliadora`: extrair leitura de mensagens/revisoes e serializacao de mensagens do pacote para `web/app/domains/mesa/package_read_models.py`.
 - `Portal Cliente`: trocar triagem principal de Chat/Mesa para DOM seguro, preservando `data-act` dos filtros e abertura de prioridade.
+- `Portal Cliente`: trocar movimentos recentes de Chat/Mesa para DOM seguro, preservando botões de abrir prioridade e chips de contagem.
 
 ### Validacao deste slice
 
@@ -4257,6 +4258,9 @@ Atualizado em `2026-04-24`.
 - `PYTHONPATH=. python -m ruff check web/app/domains/mesa/service.py web/app/domains/mesa/package_block_review.py`
 - `cd web && PYTHONPATH=. python -m py_compile app/domains/mesa/service.py app/domains/mesa/package_block_review.py`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_v2_reviewdesk_projection.py tests/test_revisor_mesa_api_side_effects.py -q -k 'pacote or package or coverage or revisao'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or mesa'`
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais`
+- `node --check web/static/js/cliente/portal_shared_helpers.js && node --check web/static/js/cliente/portal.js && node --check web/static/js/cliente/portal_chat_surface.js && node --check web/static/js/cliente/portal_mesa_surface.js`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'chat or mesa'`
 - `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais`
 - `node --check web/static/js/cliente/portal_shared_helpers.js && node --check web/static/js/cliente/portal.js && node --check web/static/js/cliente/portal_chat_surface.js && node --check web/static/js/cliente/portal_mesa_surface.js`

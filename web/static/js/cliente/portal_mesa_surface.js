@@ -868,6 +868,73 @@
         atualizarResumoSecaoMesa();
       }
 
+      function criarMesaMovimentoItem(laudo) {
+        const prioridade = prioridadeMesa(laudo);
+        const article = documentRef.createElement("article");
+        article.className = "activity-item";
+
+        const head = documentRef.createElement("div");
+        head.className = "activity-head";
+        const copy = documentRef.createElement("div");
+        copy.className = "activity-copy";
+        const title = documentRef.createElement("strong");
+        title.textContent = texto(laudo.titulo || "Laudo da mesa");
+        const meta = documentRef.createElement("span");
+        meta.className = "activity-meta";
+        meta.textContent = `${texto(laudo.data_br || "Sem data")} • ${texto(laudo.status_visual_label || laudo.status_revisao || laudo.status_card_label || "Em revisao")}`;
+        copy.appendChild(title);
+        copy.appendChild(meta);
+        head.appendChild(copy);
+
+        const pill = documentRef.createElement("span");
+        pill.className = "pill";
+        pill.dataset.kind = "priority";
+        pill.dataset.status = texto(prioridade.tone).trim();
+        pill.textContent = texto(prioridade.badge);
+        head.appendChild(pill);
+        article.appendChild(head);
+
+        const detail = documentRef.createElement("p");
+        detail.className = "activity-detail";
+        detail.textContent = texto(laudo.preview || "Sem resumo recente na mesa.");
+        article.appendChild(detail);
+
+        const toolbar = documentRef.createElement("div");
+        toolbar.className = "toolbar-meta";
+        const pendenciasChip = documentRef.createElement("span");
+        pendenciasChip.className = "hero-chip";
+        pendenciasChip.textContent = `${formatarInteiro(laudo.pendencias_abertas || 0)} pendencias`;
+        toolbar.appendChild(pendenciasChip);
+
+        const whispersChip = documentRef.createElement("span");
+        whispersChip.className = "hero-chip";
+        whispersChip.textContent = `${formatarInteiro(laudo.whispers_nao_lidos || 0)} chamados`;
+        toolbar.appendChild(whispersChip);
+
+        if (laudoMesaParado(laudo)) {
+          const esperaChip = documentRef.createElement("span");
+          esperaChip.className = "hero-chip";
+          esperaChip.textContent = resumoEsperaHoras(
+            horasDesdeAtualizacao(laudo.atualizado_em),
+          );
+          toolbar.appendChild(esperaChip);
+        }
+
+        const button = documentRef.createElement("button");
+        button.className = "btn";
+        button.type = "button";
+        button.dataset.act = "abrir-prioridade";
+        button.dataset.kind = "mesa-laudo";
+        button.dataset.canal = "mesa";
+        button.dataset.laudo = String(laudo.id || "");
+        button.dataset.target = "mesa-contexto";
+        button.textContent = "Abrir laudo";
+        toolbar.appendChild(button);
+        article.appendChild(toolbar);
+
+        return article;
+      }
+
       function renderMesaMovimentos() {
         const container = $("mesa-movimentos");
         const laudos = ordenarPorPrioridade(
@@ -879,50 +946,46 @@
         if (!container) return;
 
         if (!laudos.length) {
-          container.innerHTML = `
-                    <div class="empty-state">
-                        <strong>Sem movimentos recentes na mesa</strong>
-                        <p>Assim que a empresa receber chamados, pendencias ou aprovacoes, o resumo aparece aqui.</p>
-                    </div>
-                `;
+          clearElement(container);
+          container.appendChild(
+            criarMesaEmptyStateNode(
+              "Sem movimentos recentes na mesa",
+              "Assim que a empresa receber chamados, pendencias ou aprovacoes, o resumo aparece aqui.",
+            ),
+          );
           return;
         }
 
-        container.innerHTML = `
-                <article class="activity-item">
-                    <div class="activity-head">
-                        <div class="activity-copy">
-                            <strong>Movimentos recentes da mesa</strong>
-                            <span class="activity-meta">Os laudos mais novos tocados na fila da Mesa Avaliadora.</span>
-                        </div>
-                        <span class="hero-chip">${formatarInteiro(laudos.length)} recentes</span>
-                    </div>
-                    <div class="activity-list">
-                        ${laudos
-                          .map(
-                            (laudo) => `
-                            <article class="activity-item">
-                                <div class="activity-head">
-                                    <div class="activity-copy">
-                                        <strong>${escapeHtml(laudo.titulo || "Laudo da mesa")}</strong>
-                                        <span class="activity-meta">${escapeHtml(laudo.data_br || "Sem data")} • ${escapeHtml(laudo.status_visual_label || laudo.status_revisao || laudo.status_card_label || "Em revisao")}</span>
-                                    </div>
-                                    <span class="pill" data-kind="priority" data-status="${escapeAttr(prioridadeMesa(laudo).tone)}">${escapeHtml(prioridadeMesa(laudo).badge)}</span>
-                                </div>
-                                <p class="activity-detail">${escapeHtml(laudo.preview || "Sem resumo recente na mesa.")}</p>
-                                <div class="toolbar-meta">
-                                    <span class="hero-chip">${formatarInteiro(laudo.pendencias_abertas || 0)} pendencias</span>
-                                    <span class="hero-chip">${formatarInteiro(laudo.whispers_nao_lidos || 0)} chamados</span>
-                                    ${laudoMesaParado(laudo) ? `<span class="hero-chip">${escapeHtml(resumoEsperaHoras(horasDesdeAtualizacao(laudo.atualizado_em)))}</span>` : ""}
-                                    <button class="btn" type="button" data-act="abrir-prioridade" data-kind="mesa-laudo" data-canal="mesa" data-laudo="${escapeAttr(String(laudo.id || ""))}" data-target="mesa-contexto">Abrir laudo</button>
-                                </div>
-                            </article>
-                        `,
-                          )
-                          .join("")}
-                    </div>
-                </article>
-            `;
+        clearElement(container);
+        const article = documentRef.createElement("article");
+        article.className = "activity-item";
+
+        const head = documentRef.createElement("div");
+        head.className = "activity-head";
+        const copy = documentRef.createElement("div");
+        copy.className = "activity-copy";
+        const title = documentRef.createElement("strong");
+        title.textContent = "Movimentos recentes da mesa";
+        const meta = documentRef.createElement("span");
+        meta.className = "activity-meta";
+        meta.textContent = "Os laudos mais novos tocados na fila da Mesa Avaliadora.";
+        copy.appendChild(title);
+        copy.appendChild(meta);
+        head.appendChild(copy);
+
+        const count = documentRef.createElement("span");
+        count.className = "hero-chip";
+        count.textContent = `${formatarInteiro(laudos.length)} recentes`;
+        head.appendChild(count);
+        article.appendChild(head);
+
+        const list = documentRef.createElement("div");
+        list.className = "activity-list";
+        laudos.forEach((laudo) => {
+          list.appendChild(criarMesaMovimentoItem(laudo));
+        });
+        article.appendChild(list);
+        container.appendChild(article);
         atualizarResumoSecaoMesa();
       }
 
