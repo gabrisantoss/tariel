@@ -2751,3 +2751,37 @@ Impacto observado:
 - a área de saúde operacional já não usa `innerHTML` para séries mensais/diárias;
 - `portal_admin_surface.js` ainda tem `innerHTML` em resumo detalhado, suporte diagnóstico, onboarding, auditoria, histórico de planos e tabela de usuários;
 - o próximo pacote coerente é atacar suporte diagnóstico/auditoria com helpers DOM reutilizando `criarPillAdminNode` e cards existentes.
+
+## R67. Suporte diagnóstico DOM do Portal Admin Cliente
+
+Resumo:
+
+- troquei o resumo `admin-diagnostico-resumo` para chips DOM seguros;
+- troquei os cards de política de suporte para `support-policy-card` criado por nós DOM;
+- troquei o protocolo de suporte para nós DOM, preservando `support-protocol__copy`, `support-protocol__status`, pills e hero chips;
+- mantive Render real como pendência externa: sem aplicar disco/plano pago e sem aguardar deploy.
+
+Arquivos do ciclo:
+
+- `web/static/js/cliente/portal_admin_surface.js`
+- `docs/STATUS_CANONICO.md`
+- `PLANS.md`
+- `docs/LOOP_RECUPERACAO_TARIEL_WEB.md`
+
+Validação local executada até aqui:
+
+- `node --check web/static/js/cliente/portal_admin_surface.js` -> sem erro de sintaxe;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py -q -k 'admin or portal or cliente'` -> `32 passed`;
+- `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_cliente_explicitam_abas_e_formularios_principais` -> `1 passed, 42 deselected`;
+- `git diff --check` -> sem erros.
+- `make web-ci` -> `ruff` verde, `mypy` verde em `326` source files, `250 passed` na bateria crítica e `6 passed` em `test_tenant_access.py`;
+- `make production-ops-check-strict` -> `production_ready=true`, sem blockers, com warning esperado de primeiro cleanup ainda não observado;
+- `make uploads-restore-drill` -> `status=passed`, `3` arquivos verificados;
+- `make hygiene-check` -> `status=ok`;
+- `make verify` -> `web-ci`, `mobile-ci` e `mesa-smoke` verdes.
+
+Impacto observado:
+
+- a área de suporte diagnóstico já não usa `innerHTML` para política, resumo ou protocolo;
+- `portal_admin_surface.js` ainda tem `innerHTML` em resumo detalhado, onboarding, auditoria, histórico de planos e tabela de usuários;
+- o próximo pacote coerente é atacar auditoria/onboarding com helpers DOM ou alternar para backend em `admin/client_routes.py`.

@@ -150,6 +150,7 @@ Ele está na fase de:
 - o Portal Admin Cliente começou a trocar os cards executivos e o seletor de plano para DOM seguro em `portal_admin_surface.js`, reduzindo `innerHTML` na área administrativa.
 - o Portal Admin Cliente agora também monta resumo geral, briefs de capacidade/equipe/suporte, alerta de capacidade e nota de criação de usuário por DOM seguro, reduzindo mais blocos sensíveis de `innerHTML`.
 - o Portal Admin Cliente agora monta saúde operacional e barras de histórico por DOM seguro, sem depender de HTML string para séries mensais/diárias.
+- o Portal Admin Cliente agora monta suporte diagnóstico, política de suporte e protocolo por DOM seguro, preservando escopo técnico mínimo e trilha auditável.
 - a Mesa moveu verificação pública e anexo pack do pacote para `mesa/package_document_support.py`, reduzindo mais um bloco documental de `mesa/service.py`.
 
 ## O que ainda falta melhorar

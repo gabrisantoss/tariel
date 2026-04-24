@@ -469,6 +469,46 @@
             return pill;
         }
 
+        function criarSupportPolicyCardAdminNode({ label, value, detail }) {
+            const article = documentRef.createElement("article");
+            article.className = "support-policy-card";
+            const labelNode = documentRef.createElement("small");
+            labelNode.textContent = texto(label);
+            article.appendChild(labelNode);
+            const valueNode = documentRef.createElement("strong");
+            valueNode.textContent = texto(value);
+            article.appendChild(valueNode);
+            const detailNode = documentRef.createElement("span");
+            detailNode.textContent = texto(detail);
+            article.appendChild(detailNode);
+            return article;
+        }
+
+        function criarSupportProtocolCopyAdminNode({ protocol, detail }) {
+            const copy = documentRef.createElement("div");
+            copy.className = "support-protocol__copy";
+            const eyebrow = documentRef.createElement("span");
+            eyebrow.className = "support-protocol__eyebrow";
+            eyebrow.textContent = "Protocolo e janela de suporte";
+            copy.appendChild(eyebrow);
+            const title = documentRef.createElement("strong");
+            title.textContent = texto(protocol);
+            copy.appendChild(title);
+            const paragraph = documentRef.createElement("p");
+            paragraph.textContent = texto(detail);
+            copy.appendChild(paragraph);
+            return copy;
+        }
+
+        function criarSupportProtocolStatusAdminNode(items) {
+            const status = documentRef.createElement("div");
+            status.className = "support-protocol__status";
+            (Array.isArray(items) ? items : []).forEach((item) => {
+                status.appendChild(criarPillAdminNode(item));
+            });
+            return status;
+        }
+
         function criarContextGuidanceAdminNode({ tone, eyebrow, title, detail, sideNode }) {
             const guidance = documentRef.createElement("div");
             guidance.className = "context-guidance";
@@ -1359,100 +1399,95 @@
                 tenant_operational_timeline: "historico operacional da empresa",
             };
 
-            container.innerHTML = `
-                <span>Ambiente: ${escapeHtml(ambiente)}</span>
-                <span>Diagnostico: ${escapeHtml(diagnosticoUrl)}</span>
-                <span>Auditoria visivel: ${escapeHtml(formatarInteiro(totalAuditoria))} itens</span>
-                <span>Suporte: ${escapeHtml(whatsapp || "nao configurado")}</span>
-                <span>Visibilidade tecnica: ${escapeHtml(
-                    technicalAccessLabels[visibilityPolicy?.technical_access_mode] || "nao definida"
-                )}</span>
-                <span>Evidencia bruta: ${escapeHtml(
-                    visibilityPolicy?.raw_evidence_access === "not_granted_by_projection"
-                        ? "fora da projecao gerencial"
-                        : "nao definida"
-                )}</span>
-                <span>Escopo de auditoria: ${escapeHtml(
-                    auditScopeLabels[visibilityPolicy?.audit_scope] || "nao definido"
-                )}</span>
-                <span>Politica de suporte: ${escapeHtml(
-                    supportModeLabels[visibilityPolicy?.exceptional_support_access] || "nao definida"
-                )}</span>
-                <span>Modelo operacional: ${escapeHtml(governance.operatingModelLabel)}</span>
-                <span>Continuidade prevista: ${escapeHtml(governance.surfacesSummary)}</span>
-                <span>Momento canonico: ${escapeHtml(momentoCanonico.label)}</span>
-                <span>${escapeHtml(momentoCanonico.ownerLabel)}</span>
-                <span>Casos observados: ${escapeHtml(formatarInteiro(momentoCanonico.observedCount))}</span>
-                <span>Escopo maximo de suporte: ${escapeHtml(
-                    supportScopeLabels[visibilityPolicy?.exceptional_support_scope_level] || "nao definido"
-                )}</span>
-                <span>Eventos de equipe/comercial: ${escapeHtml(
-                    formatarInteiro(
-                        Number(categorias.access || 0) + Number(categorias.commercial || 0) + Number(categorias.team || 0)
-                    )
-                )}</span>
-                <span>Eventos de suporte/chat/mesa: ${escapeHtml(
-                    formatarInteiro(
-                        Number(categorias.support || 0) + Number(categorias.chat || 0) + Number(categorias.mesa || 0)
-                    )
-                )}</span>
-            `;
+            const totalEquipeComercial = Number(categorias.access || 0) + Number(categorias.commercial || 0) + Number(categorias.team || 0);
+            const totalSuporteOperacao = Number(categorias.support || 0) + Number(categorias.chat || 0) + Number(categorias.mesa || 0);
+
+            limparElemento(container);
+            [
+                `Ambiente: ${ambiente}`,
+                `Diagnostico: ${diagnosticoUrl}`,
+                `Auditoria visivel: ${formatarInteiro(totalAuditoria)} itens`,
+                `Suporte: ${whatsapp || "nao configurado"}`,
+                `Visibilidade tecnica: ${technicalAccessLabels[visibilityPolicy?.technical_access_mode] || "nao definida"}`,
+                `Evidencia bruta: ${visibilityPolicy?.raw_evidence_access === "not_granted_by_projection" ? "fora da projecao gerencial" : "nao definida"}`,
+                `Escopo de auditoria: ${auditScopeLabels[visibilityPolicy?.audit_scope] || "nao definido"}`,
+                `Politica de suporte: ${supportModeLabels[visibilityPolicy?.exceptional_support_access] || "nao definida"}`,
+                `Modelo operacional: ${governance.operatingModelLabel}`,
+                `Continuidade prevista: ${governance.surfacesSummary}`,
+                `Momento canonico: ${momentoCanonico.label}`,
+                momentoCanonico.ownerLabel,
+                `Casos observados: ${formatarInteiro(momentoCanonico.observedCount)}`,
+                `Escopo maximo de suporte: ${supportScopeLabels[visibilityPolicy?.exceptional_support_scope_level] || "nao definido"}`,
+                `Eventos de equipe/comercial: ${formatarInteiro(totalEquipeComercial)}`,
+                `Eventos de suporte/chat/mesa: ${formatarInteiro(totalSuporteOperacao)}`,
+            ].forEach((item) => {
+                const span = documentRef.createElement("span");
+                span.textContent = texto(item);
+                container.appendChild(span);
+            });
 
             if (policyContainer) {
-                policyContainer.innerHTML = `
-                    <article class="support-policy-card">
-                        <small>Momento canonico do tenant</small>
-                        <strong>${escapeHtml(momentoCanonico.label)}</strong>
-                        <span>${escapeHtml(momentoCanonico.detail)}</span>
-                    </article>
-                    <article class="support-policy-card">
-                        <small>Visibilidade tecnica</small>
-                        <strong>${escapeHtml(technicalAccessLabels[visibilityPolicy?.technical_access_mode] || "nao definida")}</strong>
-                        <span>Evidencia bruta ${visibilityPolicy?.raw_evidence_access === "not_granted_by_projection" ? "fica fora da projecao gerencial" : "nao definida"}.</span>
-                    </article>
-                    <article class="support-policy-card">
-                        <small>Suporte excepcional</small>
-                        <strong>${escapeHtml(supportModeLabels[visibilityPolicy?.exceptional_support_access] || "nao definida")}</strong>
-                        <span>Escopo maximo ${escapeHtml(supportScopeLabels[visibilityPolicy?.exceptional_support_scope_level] || "nao definido")}.</span>
-                    </article>
-                    <article class="support-policy-card">
-                        <small>Escopo de auditoria</small>
-                        <strong>${escapeHtml(auditScopeLabels[visibilityPolicy?.audit_scope] || "nao definido")}</strong>
-                        <span>${escapeHtml(formatarInteiro(totalAuditoria))} itens recentes disponiveis para leitura da empresa.</span>
-                    </article>
-                    <article class="support-policy-card">
-                        <small>Pacote operacional</small>
-                        <strong>${escapeHtml(governance.operatingModelLabel)}</strong>
-                        <span>${escapeHtml(
-                            governance.enabled
-                                ? `${formatarInteiro(governance.operationalUsersInUse)} de ${formatarInteiro(governance.operationalUserLimit)} conta operacional ocupada. Continuidade em ${governance.surfacesSummary}.`
-                                : "Sem limite contratual de operador unico nesta empresa."
-                        )}</span>
-                    </article>
-                `;
+                limparElemento(policyContainer);
+                [
+                    {
+                        label: "Momento canonico do tenant",
+                        value: momentoCanonico.label,
+                        detail: momentoCanonico.detail,
+                    },
+                    {
+                        label: "Visibilidade tecnica",
+                        value: technicalAccessLabels[visibilityPolicy?.technical_access_mode] || "nao definida",
+                        detail: `Evidencia bruta ${visibilityPolicy?.raw_evidence_access === "not_granted_by_projection" ? "fica fora da projecao gerencial" : "nao definida"}.`,
+                    },
+                    {
+                        label: "Suporte excepcional",
+                        value: supportModeLabels[visibilityPolicy?.exceptional_support_access] || "nao definida",
+                        detail: `Escopo maximo ${supportScopeLabels[visibilityPolicy?.exceptional_support_scope_level] || "nao definido"}.`,
+                    },
+                    {
+                        label: "Escopo de auditoria",
+                        value: auditScopeLabels[visibilityPolicy?.audit_scope] || "nao definido",
+                        detail: `${formatarInteiro(totalAuditoria)} itens recentes disponiveis para leitura da empresa.`,
+                    },
+                    {
+                        label: "Pacote operacional",
+                        value: governance.operatingModelLabel,
+                        detail: governance.enabled
+                            ? `${formatarInteiro(governance.operationalUsersInUse)} de ${formatarInteiro(governance.operationalUserLimit)} conta operacional ocupada. Continuidade em ${governance.surfacesSummary}.`
+                            : "Sem limite contratual de operador unico nesta empresa.",
+                    },
+                ].forEach((item) => {
+                    policyContainer.appendChild(criarSupportPolicyCardAdminNode(item));
+                });
             }
 
             if (protocolContainer) {
-                protocolContainer.innerHTML = `
-                    <div class="support-protocol__copy">
-                        <span class="support-protocol__eyebrow">Protocolo e janela de suporte</span>
-                        <strong>${escapeHtml(suporteRecente?.payload?.protocolo || "Nenhum protocolo recente")}</strong>
-                        <p>${escapeHtml(
-                            suporteRecente?.detalhe
-                                || "Quando houver novo relato, o numero de protocolo e o historico do caso ficam visiveis aqui sem expor evidencia tecnica bruta."
-                        )}</p>
-                    </div>
-                    <div class="support-protocol__status">
-                        <span class="pill" data-kind="priority" data-status="${escapeAttr(momentoCanonico.tone)}">${escapeHtml(momentoCanonico.label)}</span>
-                        <span class="pill" data-kind="priority" data-status="${visibilityPolicy?.exceptional_support_access === "disabled" ? "ajustes" : "aberto"}">${escapeHtml(
-                            visibilityPolicy?.exceptional_support_step_up_required ? "step-up exigido" : "step-up opcional"
-                        )}</span>
-                        <span class="hero-chip">${escapeHtml(
-                            visibilityPolicy?.exceptional_support_approval_required ? "aprovacao obrigatoria" : "aprovacao contextual"
-                        )}</span>
-                        <span class="hero-chip">janela maxima ${escapeHtml(formatarInteiro(visibilityPolicy?.exceptional_support_max_duration_minutes || 0))} min</span>
-                    </div>
-                `;
+                limparElemento(protocolContainer);
+                protocolContainer.appendChild(criarSupportProtocolCopyAdminNode({
+                    protocol: suporteRecente?.payload?.protocolo || "Nenhum protocolo recente",
+                    detail: suporteRecente?.detalhe
+                        || "Quando houver novo relato, o numero de protocolo e o historico do caso ficam visiveis aqui sem expor evidencia tecnica bruta.",
+                }));
+                protocolContainer.appendChild(criarSupportProtocolStatusAdminNode([
+                    {
+                        kind: "priority",
+                        status: momentoCanonico.tone,
+                        label: momentoCanonico.label,
+                    },
+                    {
+                        kind: "priority",
+                        status: visibilityPolicy?.exceptional_support_access === "disabled" ? "ajustes" : "aberto",
+                        label: visibilityPolicy?.exceptional_support_step_up_required ? "step-up exigido" : "step-up opcional",
+                    },
+                    {
+                        className: "hero-chip",
+                        label: visibilityPolicy?.exceptional_support_approval_required ? "aprovacao obrigatoria" : "aprovacao contextual",
+                    },
+                    {
+                        className: "hero-chip",
+                        label: `janela maxima ${formatarInteiro(visibilityPolicy?.exceptional_support_max_duration_minutes || 0)} min`,
+                    },
+                ]));
             }
 
             const botaoWhatsapp = $("btn-whatsapp-suporte");
