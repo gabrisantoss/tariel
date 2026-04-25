@@ -74,7 +74,7 @@ ResultadoJson: TypeAlias = tuple[PayloadJson, int]
 RESPOSTA_LAUDO_NAO_ENCONTRADO = {404: {"description": "Laudo não encontrado."}}
 RESPOSTA_GATE_QUALIDADE_REPROVADO = {
     422: {
-        "description": "Gate de qualidade reprovado.",
+        "description": "Finalização interrompida por pendências.",
         "content": {"application/json": {"schema": {"type": "object"}}},
     }
 }

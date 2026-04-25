@@ -118,6 +118,7 @@
             workspaceTemplateCompatibility: documentRef.getElementById("workspace-template-compatibility"),
             workspaceTemplateCompatibilityTitle: documentRef.getElementById("workspace-template-compatibility-title"),
             workspaceTemplateCompatibilityDetail: documentRef.getElementById("workspace-template-compatibility-detail"),
+            workspaceTemplateCompatibilityList: documentRef.getElementById("workspace-template-compatibility-list"),
             btnSidebarOpenInspecaoModal: documentRef.getElementById("btn-sidebar-open-inspecao-modal"),
             btnWorkspaceOpenInspecaoModal: documentRef.getElementById("btn-workspace-open-inspecao-modal"),
             painelPendenciasMesa: documentRef.getElementById("painel-pendencias-mesa"),

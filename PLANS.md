@@ -4240,6 +4240,17 @@ Atualizado em `2026-04-24`.
 - `make production-ops-check-strict`
 - `make uploads-restore-drill`
 - `make hygiene-check`
+
+## Checkpoint 2026-04-25 - Chat como centro do produto
+
+- Objetivo: manter a experiencia do inspetor concentrada no chat, com templates, checklist NR35, aprendizado visual e edicao de laudo rodando como contexto interno.
+- Decisao: `Chat guiado` fica abaixo do composer e aplica preprompt no mesmo chat; o checklist deixa de ser botao primario e passa a aparecer como gate/contexto de finalizacao.
+- Decisao: pedidos naturais de correcao no chat viram correcoes estruturadas internas aplicadas ao rascunho, com `hidden_from_user`, sem expor editor/fila ao inspetor.
+- Decisao: tentativa de finalizacao incompleta nao deve parecer erro; a UI volta ao chat, lista pendencias, permite inserir pedido de coleta no composer e mostra `Finalizar mesmo assim` com motivo humano quando permitido.
+- Validado ate aqui: `python -m py_compile app/domains/chat/corrections.py app/domains/chat/chat_stream_support.py`; `node --check static/js/inspetor/ui_bindings.js`; `PYTHONPATH=. python -m pytest tests/test_smoke.py -q`; `PYTHONPATH=. python -m pytest tests/test_regras_rotas_criticas.py -q -k "chat_corrige_laudo_por_comando_natural_sem_expor_editor or chat_com_correcao_nr35_reavalia_foto_sem_aprender_globalmente or chat_com_imagem_cria_rascunho_visual_para_mesa_mesmo_sem_correcao_explicita"`; `PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k "correcoes_estruturadas_do_inspetor_persistem_no_laudo or correcao_estruturada_aplicada_atualiza_documento_do_laudo or correcao_estruturada_aplicada_registra_checklist_e_evidencias"`; `git diff --check` com apenas avisos CRLF ja conhecidos.
+- Validacao ampliada deste slice: `python -m py_compile app/domains/chat/gate_helpers.py app/domains/chat/laudo_decision_services.py app/domains/chat/laudo_service.py app/domains/chat/commands_helpers.py`; `node --check static/js/inspetor/modals.js static/js/shared/chat-network.js static/js/shared/chat-network-utils.js static/js/chat/chat_painel_relatorio.js`.
+- Checkpoint final antes do commit: `make web-ci` passou com ruff, mypy, `257 passed` e `6 passed` em tenant access; `make hygiene-check` passou com status `ok`.
+- Proximo corte recomendado: testar visualmente a finalizacao incompleta no navegador e depois vincular fotos/anexos aos blocos corretos do laudo.
 - `git diff --check`
 
 ### Atualizacao deste slice

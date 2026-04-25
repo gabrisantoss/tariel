@@ -860,6 +860,28 @@
                 throw new Error("FINALIZACAO_SEM_RESPOSTA");
             }
 
+            if (resposta?.blockedByQualityGate) {
+                aplicarModoLaudoSelecionado({
+                    laudoId,
+                    estado: snapshotAntesFinalizacao?.estado ?? "relatorio_ativo",
+                    permiteReabrir: !!(
+                        snapshotAntesFinalizacao?.permite_reabrir ??
+                        snapshotAntesFinalizacao?.laudo_card?.permite_reabrir
+                    ),
+                    caseLifecycleStatus: obterCaseLifecycleStatusSnapshot(snapshotAntesFinalizacao),
+                    activeOwnerRole:
+                        snapshotAntesFinalizacao?.active_owner_role ??
+                        snapshotAntesFinalizacao?.laudo_card?.active_owner_role ??
+                        "",
+                    allowedSurfaceActions: obterAllowedSurfaceActionsSnapshot(snapshotAntesFinalizacao),
+                    allowedLifecycleTransitions: obterAllowedLifecycleTransitionsSnapshot(
+                        snapshotAntesFinalizacao
+                    ),
+                });
+                desbloquearUIFinalizacao();
+                return null;
+            }
+
             sincronizarEstadoRelatorioNaUI(resposta);
 
             TP.emitir?.("tariel:finalizacao-ui-concluida", {

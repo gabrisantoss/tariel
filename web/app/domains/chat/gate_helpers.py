@@ -188,32 +188,69 @@ ROTEIRO_COLETA_TEMPLATE: dict[str, dict[str, Any]] = {
         ],
     },
     "nr35_linha_vida": {
-        "descricao": "Feche a vistoria com identificação do ativo, avaliação dos componentes da linha de vida, fotos legendadas e conclusão formal.",
+        "descricao": (
+            "Feche a vistoria com identificação documental, objeto rastreável, "
+            "checklist C/NC/NA dos componentes, fotos mínimas e conclusão formal."
+        ),
         "itens_especificos": [
             {
                 "id": "nr35_linha_vida_identificacao",
                 "categoria": "coleta",
-                "titulo": "Identificar ativo, unidade e referência do laudo",
+                "titulo": "Preencher identificação documental mínima",
                 "descricao": (
-                    "Registre unidade, local, código/tag da linha de vida, "
-                    "número do laudo de inspeção e qualquer referência do "
-                    "fabricante já disponível."
+                    "Registre unidade, local, número do laudo de inspeção, ART, "
+                    "contratante, contratada, engenheiro responsável, inspetor líder "
+                    "e data da vistoria."
+                ),
+            },
+            {
+                "id": "nr35_linha_vida_objeto_escopo",
+                "categoria": "coleta",
+                "titulo": "Definir objeto, tipo de linha e escopo",
+                "descricao": (
+                    "Informe TAG ou referência da linha de vida, tipo Vertical, "
+                    "Horizontal ou Ponto de Ancoragem, escopo da inspeção e "
+                    "limitações de acesso quando existirem."
                 ),
             },
             {
                 "id": "nr35_linha_vida_componentes",
                 "categoria": "norma",
-                "titulo": "Avaliar os seis componentes críticos",
-                "descricao": "Deixe explícito o status C, NC ou NA para fixação dos pontos, cabo de aço, esticador, sapatilha, olhal e grampos.",
+                "titulo": "Avaliar componentes com C, NC ou NA",
+                "descricao": (
+                    "Preencha fixação dos pontos, cabo de aço, esticador, "
+                    "sapatilha, olhal e grampos. NA não conta como conformidade "
+                    "sem justificativa de limitação."
+                ),
             },
             {
-                "id": "nr35_linha_vida_fotos_conclusao",
+                "id": "nr35_linha_vida_fotos_minimas",
                 "categoria": "coleta",
-                "titulo": "Amarrar registros fotográficos à conclusão",
+                "titulo": "Anexar fotos mínimas da linha de vida",
                 "descricao": (
-                    "Anexe fotos panorâmicas e de detalhe com legenda curta, "
-                    "depois conclua em aprovado, reprovado ou pendente com "
-                    "observação objetiva."
+                    "Inclua vista geral, ponto superior, ponto inferior, identificação "
+                    "do ativo ou área, detalhe do achado principal e foto de contexto "
+                    "quando o acesso impedir verificação completa."
+                ),
+            },
+            {
+                "id": "nr35_linha_vida_slots_report_pack",
+                "categoria": "report_pack",
+                "titulo": "Fechar slots obrigatórios do report pack",
+                "descricao": (
+                    "Vincule referência principal, evidência de execução, evidência "
+                    "principal e conclusão do serviço. Placeholder ou anexo vazio "
+                    "não deve contar como evidência suficiente."
+                ),
+            },
+            {
+                "id": "nr35_linha_vida_conclusao_tecnica",
+                "categoria": "norma",
+                "titulo": "Concluir com status e motivo técnico",
+                "descricao": (
+                    "Declare Aprovado, Reprovado ou Pendente, explique o motivo, "
+                    "registre recomendações quando houver NC e informe próxima "
+                    "inspeção quando aplicável."
                 ),
             },
         ],
@@ -688,7 +725,7 @@ def _build_human_override_policy(
         ]
         payload_item = {
             "id": str(item.get("id") or "").strip(),
-            "titulo": str(item.get("titulo") or "Pendência do gate").strip(),
+            "titulo": str(item.get("titulo") or "Pendência de finalização").strip(),
             "categoria": str(item.get("categoria") or "").strip(),
             "candidate_cases": candidates,
             "candidate_case_labels": [_override_case_label(case_key) for case_key in candidates],
@@ -703,12 +740,12 @@ def _build_human_override_policy(
 
     available = bool(override_enabled and overrideable_items and not hard_blockers)
     message = (
-        "A divergência pode seguir como exceção governada com justificativa interna obrigatória."
+        "Este caso pode ser finalizado incompleto se o humano registrar o motivo."
         if available
         else (
-            "Este bloqueio ainda depende de correção da coleta antes do envio."
+            "Este caso ainda precisa voltar ao chat para completar a coleta."
             if faltantes
-            else "Nenhuma exceção governada está pendente neste gate."
+            else "Nenhuma pendência de finalização foi encontrada."
         )
     )
 
@@ -727,8 +764,8 @@ def _build_human_override_policy(
         "hard_blockers": hard_blockers,
         "family_key": _family_key_gate_qualidade(laudo, tipo_template),
         "responsibility_notice": (
-            "A justificativa fica apenas na trilha interna do caso. "
-            "A responsabilidade final continua sendo da validação e assinatura humana."
+            "A Tariel monta o laudo, mas a validação, correção técnica, ART e assinatura "
+            "continuam sendo responsabilidade humana."
         ),
         "message": message,
     }
@@ -746,7 +783,7 @@ def _gate_next_steps_from_missing_items(
             continue
         item_id = str(item.get("id") or "").strip().lower()
         categoria = str(item.get("categoria") or "").strip().lower()
-        titulo = str(item.get("titulo") or "pendência do gate").strip()
+        titulo = str(item.get("titulo") or "pendência de finalização").strip()
         observacao = str(item.get("observacao") or "").strip()
 
         if item_id == "campo_escopo_inicial":
@@ -760,9 +797,9 @@ def _gate_next_steps_from_missing_items(
         elif item_id == "fotos_essenciais":
             steps.append("Anexe as fotos essenciais dos pontos críticos antes de fechar o laudo.")
         elif item_id == "formulario_estruturado":
-            steps.append("Materialize o formulário estruturado do template antes da finalização.")
+            steps.append("Peça ao chat para organizar os dados estruturados do modelo antes da finalização.")
         elif item_id == "report_pack_incremental":
-            steps.append("Revise o draft incremental do report pack e resolva as pendências estruturadas do caso.")
+            steps.append("Revise as pendências estruturadas do caso pelo chat antes de finalizar.")
         elif categoria in {"foto", "image_slot"}:
             steps.append(f"Feche a pendência fotográfica '{titulo}' com registro visual ou justificativa técnica rastreável.")
         elif categoria in {"report_pack", "norma", "normative_item"}:
@@ -780,7 +817,7 @@ def _gate_next_steps_from_missing_items(
 
     if isinstance(human_override_policy, dict) and bool(human_override_policy.get("available")):
         steps.append(
-            "Se a coleta já estiver tecnicamente suficiente, aplique a exceção governada com justificativa interna auditável."
+            "Se a coleta já estiver tecnicamente suficiente, finalize mesmo assim registrando o motivo humano."
         )
 
     deduped: list[str] = []
@@ -813,7 +850,7 @@ def _build_gate_action_plan(
     primary_blocker = (
         {
             "id": str(primary_blocker_raw.get("id") or "").strip() or None,
-            "title": str(primary_blocker_raw.get("titulo") or "Pendência do gate").strip(),
+            "title": str(primary_blocker_raw.get("titulo") or "Pendência de finalização").strip(),
             "category": str(primary_blocker_raw.get("categoria") or "").strip() or None,
             "observation": str(primary_blocker_raw.get("observacao") or "").strip() or None,
         }
@@ -821,9 +858,9 @@ def _build_gate_action_plan(
         else None
     )
     summary = (
-        "Gate de qualidade liberado."
+        "Coleta pronta para finalizar."
         if total_missing <= 0
-        else f"Finalização bloqueada por {total_missing} pendência(s) obrigatória(s)."
+        else f"O chat encontrou {total_missing} pendência(s) antes de finalizar."
     )
     return {
         "summary": summary,
@@ -836,9 +873,9 @@ def _build_gate_action_plan(
         "next_steps": next_steps,
         "override_available": bool((human_override_policy or {}).get("available")),
         "cta_label": (
-            "Aplicar exceção governada"
+            "Finalizar mesmo assim"
             if bool((human_override_policy or {}).get("available"))
-            else "Completar coleta obrigatória"
+            else "Voltar ao chat"
         ),
     }
 
@@ -1155,9 +1192,11 @@ def avaliar_gate_qualidade_laudo(banco: Session, laudo: Laudo) -> dict[str, Any]
     }
 
     mensagem = (
-        "Gate de qualidade aprovado. O laudo pode ser enviado para a mesa avaliadora."
+        "Coleta pronta para finalizar. O laudo pode ser enviado para a mesa avaliadora."
         if aprovado
-        else (f"Finalize bloqueado: faltam {len(faltantes)} item(ns) obrigatório(s) no checklist de qualidade.")
+        else (
+            f"O chat encontrou {len(faltantes)} ponto(s) pendente(s) antes de finalizar."
+        )
     )
 
     resultado = {

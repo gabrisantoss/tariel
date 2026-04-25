@@ -247,7 +247,7 @@ def test_portal_inspetor_abre_chat_principal_por_padrao_apos_login(
         resposta.text,
     )
     assert re.search(
-        r'id="workspace-assistant-landing"[\s\S]*?aria-label="Novo chat com o assistente"',
+        r'id="workspace-assistant-landing"[\s\S]*?aria-label="Chat livre com o assistente"',
         resposta.text,
     )
 

@@ -1,6 +1,6 @@
 # Status Canônico
 
-Data de referência: 2026-04-24
+Data de referência: 2026-04-25
 Branch operacional: `main`
 Repositório remoto: `gabrisantoss/tariel`
 
@@ -52,11 +52,15 @@ Ele está na fase de:
 - o caso pode começar livre e nem sempre precisa virar laudo;
 - o caso pode operar em `análise livre`, `laudo guiado` e `laudo com mesa`;
 - o ownership do caso é híbrido por estado;
+- no Inspetor Web, o centro do produto deve ser o chat; templates, checklist, aprendizado visual, edição de laudo e finalização rodam como contexto interno ao redor da conversa;
+- `Chat guiado` deve parecer uma forma de orientar o composer, não um módulo separado ou checklist exposto;
 - em fluxo guiado, a correção deve acontecer por checkpoint e campos, sem um segundo chat redundante;
 - quando a `Mesa` estiver ausente por política do tenant, o inspetor web deve usar uma aba dedicada de `Correções`, separada do `Chat`, com edição estruturada por bloco e assistente textual apenas como apoio;
 - a aprovação final humana continua obrigatória.
 - a IA pode preencher pré-laudo e sugerir correções, mas sua atuação principal fica na trilha interna do caso;
+- a Tariel monta análise e rascunho; validação, correção técnica, ART e assinatura continuam humanas;
 - se um humano insistir em manter algo fora do padrão da NR ou do template, o sistema deve alertar a divergência, mostrar a orientação correta e pedir confirmação explícita;
+- quando a política permitir, o humano pode finalizar incompleto registrando motivo, sem a IA assumir responsabilidade de validação;
 - a responsabilidade técnica final continua com o humano signatário, incluindo assinatura profissional aplicável como `CREA`;
 - depois da aprovação humana, o sistema gera o PDF final, marca o caso como `emitido` e encerra o ciclo corrente;
 - um caso `emitido` pode ser reaberto para nova edição e nova finalização quando o laudo precisar ser refeito.
@@ -170,6 +174,11 @@ Ele está na fase de:
 - os envios de mensagem/anexo do inspetor para a Mesa, pendências da Mesa e correções estruturadas do inspetor agora também têm commits operacionais explícitos nos caminhos de escrita principais, preservando replay idempotente onde necessário.
 - o gate de qualidade começou a usar um contrato tipado de evidência em `chat/evidence_contract.py`, preservando a compatibilidade atual de placeholders enquanto separa tipo e origem da evidência para a próxima rodada.
 - o contrato de evidência do gate agora também reconhece anexos reais da Mesa/Inspetor por `categoria` e `mime_type`, e mensagens envelope como `[ANEXO_MESA_SEM_TEXTO]` deixam de contar como texto.
+- o Inspetor Web ganhou entrada orientada a serviços WF com `Chat guiado` abaixo do composer, mantendo `RTI`, `PIE`, `SPDA`, `LOTO`, `NR12`, `NR13`, `NR20`, `NR33` e `NR35` ao redor do chat.
+- o fluxo NR35 Linha de Vida agora tem checklist mínimo documentado, roteiro de gate e regra de foto/ângulo/qualidade baixa tratada internamente pelo chat.
+- correções naturais no chat, como mudar conclusão, status ou observação do laudo, viram correções estruturadas internas aplicadas ao rascunho com `hidden_from_user`, sem expor editor/fila ao inspetor.
+- aprendizado visual supervisionado fica isolado por `empresa_id` do admin-cliente, não vira regra global e preserva marcadores anti-poisoning quando o humano insiste em premissa visual incompatível.
+- a finalização com pendências deixou de parecer erro genérico: a UI volta ao chat, lista o que falta, permite levar pendências para o composer e oferece `Finalizar mesmo assim` com motivo humano quando permitido.
 
 ## O que ainda falta melhorar
 

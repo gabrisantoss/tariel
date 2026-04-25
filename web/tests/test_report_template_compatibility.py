@@ -26,6 +26,9 @@ def test_laudo_livre_sem_fotos_nao_migra_para_nr35() -> None:
         for item in payload["missing_evidence"]
         if item["severity"] == "required"
     } == {"nr35_photo_pair_missing"}
+    checklist_ids = {item["id"] for item in payload["required_checklist"]}
+    assert "nr35_fotos_minimas" in checklist_ids
+    assert "nr35_componentes_c_nc_na" in checklist_ids
 
 
 def test_laudo_livre_com_contexto_e_duas_fotos_pode_migrar_para_nr35() -> None:

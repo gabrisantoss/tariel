@@ -495,10 +495,13 @@
         const fotos = valorNumericoSeguro(resumo?.fotos);
         const evidencias = valorNumericoSeguro(resumo?.evidencias);
         const respostasIA = valorNumericoSeguro(resumo?.mensagens_ia);
-        const mensagem = String(payload?.mensagem || "").trim();
+        const faltantes = Array.isArray(payload?.faltantes) ? payload.faltantes.length : 0;
 
         const linhaResumo = `Coleta atual: ${textosCampo} texto(s), ${fotos} foto(s), ${evidencias} evidencia(s), ${respostasIA} resposta(s) do assistente.`;
-        return mensagem ? `${mensagem} ${linhaResumo}` : linhaResumo;
+        if (faltantes > 0) {
+            return `O chat encontrou ${faltantes} ponto(s) pendente(s). Complete pelo chat ou finalize por responsabilidade humana. ${linhaResumo}`;
+        }
+        return `Coleta pronta para finalizar. ${linhaResumo}`;
     }
 
     function renderizarListaGateQualidade(container, itens = [], textoVazio = "Nenhum item.") {
@@ -618,14 +621,14 @@
             policy.hardBlockers.forEach((item) => {
                 items.push({
                     titulo: String(item?.titulo || "Bloqueio").trim() || "Bloqueio",
-                    descricao: "Este ponto ainda exige correção da coleta.",
+                    descricao: "Este ponto ainda precisa voltar ao chat.",
                     tipo: "blocked",
                 });
             });
         }
 
         if (!items.length) {
-            container.innerHTML = '<li class="item-gate-qualidade item-gate-vazio">Nenhuma exceção governada disponível neste momento.</li>';
+            container.innerHTML = '<li class="item-gate-qualidade item-gate-vazio">Nenhuma continuação humana disponível neste momento.</li>';
             return;
         }
 
@@ -633,7 +636,7 @@
             .map((item) => `
                 <li class="item-gate-qualidade ${item.tipo === "blocked" ? "item-gate-faltante" : "item-gate-ok"}">
                     <div class="item-gate-cabecalho">
-                        <span class="material-symbols-rounded" aria-hidden="true">${item.tipo === "blocked" ? "block" : "shield_person"}</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">${item.tipo === "blocked" ? "block" : "verified_user"}</span>
                         <strong>${escaparHtml(item.titulo)}</strong>
                     </div>
                     ${item.descricao ? `<p class="item-gate-obs">${escaparHtml(item.descricao)}</p>` : ""}
@@ -647,8 +650,8 @@
         const ocupado = estado.gateQualidadeOverrideBusy === true;
         el.btnGateOverrideContinuar.disabled = ocupado;
         el.btnGateOverrideContinuar.textContent = ocupado
-            ? "Registrando justificativa..."
-            : "Registrar justificativa e continuar";
+            ? "Finalizando..."
+            : "Finalizar mesmo assim";
     }
 
     async function continuarComOverrideHumanoGateQualidade() {
@@ -658,7 +661,7 @@
         );
         if (!policy.available) {
             mostrarToast(
-                policy.validationError || "Este bloqueio ainda não pode seguir como exceção governada.",
+                policy.validationError || "Este caso ainda precisa voltar ao chat antes de finalizar.",
                 "aviso",
                 3200
             );
@@ -668,7 +671,7 @@
         const justificativa = String(el.textareaGateOverrideJustificativa?.value || "").trim();
         if (justificativa.length < 12) {
             mostrarToast(
-                "Informe uma justificativa interna com pelo menos 12 caracteres.",
+                "Explique em uma frase por que vai finalizar incompleto.",
                 "aviso",
                 3200
             );
@@ -766,8 +769,11 @@
         if (el.textoGateOverrideHumano) {
             el.textoGateOverrideHumano.textContent =
                 overridePolicy.validationError ||
-                overridePolicy.message ||
-                "";
+                (
+                    overridePolicy.available
+                        ? "Se você quer seguir incompleto, registre o motivo. A Tariel monta o laudo; validação, correção e assinatura continuam humanas."
+                        : (overridePolicy.message || "")
+                );
         }
         renderizarListaGateOverrideHumano(
             el.listaGateOverrideCasos,
@@ -845,9 +851,33 @@
     }
 
     function inserirComandoPendenciasNoChat() {
-        const aplicado = inserirTextoNoComposer("/pendencias");
+        const payloadAtual = estado.gateQualidadePayloadAtual || {};
+        const faltantes = Array.isArray(payloadAtual?.faltantes) ? payloadAtual.faltantes : [];
+        const actionPlan = payloadAtual?.action_plan && typeof payloadAtual.action_plan === "object"
+            ? payloadAtual.action_plan
+            : {};
+        const titulos = faltantes
+            .map((item) => String(item?.titulo || item?.id || "").trim())
+            .filter(Boolean)
+            .slice(0, 4);
+        const proximosPassos = Array.isArray(actionPlan?.next_steps)
+            ? actionPlan.next_steps
+                .map((item) => String(item || "").trim())
+                .filter(Boolean)
+                .slice(0, 3)
+            : [];
+        const linhas = [
+            "Tariel, me ajude a completar as pendências antes de finalizar este laudo.",
+        ];
+        if (titulos.length) {
+            linhas.push(`Pendências: ${titulos.join("; ")}.`);
+        }
+        if (proximosPassos.length) {
+            linhas.push(`Sugira a próxima coleta: ${proximosPassos.join(" ")}`);
+        }
+        const aplicado = inserirTextoNoComposer(linhas.join("\n"));
         if (aplicado) {
-            mostrarToast("Comando /pendencias inserido no chat.", "info", 1800);
+            mostrarToast("Pendências levadas para o chat.", "info", 1800);
             fecharModalGateQualidade();
         }
     }

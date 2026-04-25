@@ -716,7 +716,7 @@ async def _preparar_laudo_para_decisao_final(
         if not bool(override_policy.get("available")):
             override_policy["requested"] = True
             override_policy["validation_error"] = (
-                "Este bloqueio ainda exige correção da coleta; a exceção governada não pode ser aplicada agora."
+                "Este caso ainda precisa voltar ao chat; não dá para finalizar incompleto agora."
             )
             gate_result["human_override_policy"] = override_policy
             gate_result["mensagem"] = str(override_policy["validation_error"])
@@ -729,7 +729,7 @@ async def _preparar_laudo_para_decisao_final(
         if len(reason) < _QUALITY_GATE_OVERRIDE_REASON_MIN_LENGTH:
             override_policy["requested"] = True
             override_policy["validation_error"] = (
-                "Informe uma justificativa interna com pelo menos 12 caracteres para seguir com a exceção governada."
+                "Explique em uma frase por que o humano decidiu finalizar incompleto."
             )
             gate_result["human_override_policy"] = override_policy
             gate_result["mensagem"] = str(override_policy["validation_error"])

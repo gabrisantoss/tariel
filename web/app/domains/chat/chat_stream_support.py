@@ -21,6 +21,10 @@ from app.domains.chat.commands_helpers import (
     registrar_comando_rapido_historico,
 )
 from app.domains.chat.core_helpers import agora_utc, obter_preview_primeira_mensagem
+from app.domains.chat.corrections import (
+    construir_contexto_correcao_estruturada_chat_para_ia,
+    registrar_correcao_estruturada_chat,
+)
 from app.domains.chat.laudo_access_helpers import obter_laudo_do_inspetor
 from app.domains.chat.laudo_state_helpers import (
     laudo_permite_edicao_inspetor,
@@ -32,7 +36,9 @@ from app.domains.chat.laudo_state_helpers import (
 )
 from app.domains.chat.learning_helpers import (
     anexar_contexto_aprendizado_na_mensagem,
+    construir_contexto_analise_visual_chat_para_ia,
     construir_contexto_aprendizado_para_ia,
+    construir_contexto_correcao_visual_pendente_para_ia,
     registrar_aprendizado_visual_automatico_chat,
 )
 from app.domains.chat.limits_helpers import (
@@ -203,6 +209,11 @@ def prepare_free_assistant_chat_route(
         mensagem_limpa or nome_documento or "[imagem]",
         preferencias_ia_mobile=preferencias_ia_mobile,
     )
+    contexto_visual_chat = construir_contexto_analise_visual_chat_para_ia(
+        tem_imagem=bool(dados_imagem_validos)
+    )
+    if contexto_visual_chat:
+        mensagem_base_para_ia = f"{contexto_visual_chat}\n\n{mensagem_base_para_ia}"
 
     return FreeAssistantChatContext(
         mensagem_para_ia=mensagem_base_para_ia,
@@ -525,8 +536,10 @@ def persist_chat_user_message(
             tem_imagem=bool(prepared.dados_imagem_validos),
         )
 
+    contexto_correcao_visual_pendente = ""
+    contexto_correcao_laudo_chat = ""
     if report_context_included and tipo_msg_usuario == TipoMensagem.USER.value and not eh_comando_finalizar:
-        registrar_aprendizado_visual_automatico_chat(
+        aprendizado_visual_pendente = registrar_aprendizado_visual_automatico_chat(
             banco,
             empresa_id=usuario.empresa_id,
             laudo_id=prepared.laudo.id,
@@ -536,6 +549,18 @@ def persist_chat_user_message(
             mensagem_chat=prepared.mensagem_limpa,
             dados_imagem=prepared.dados_imagem_validos,
             referencia_mensagem_id=int(dados.referencia_mensagem_id or 0) or None,
+        )
+        contexto_correcao_visual_pendente = construir_contexto_correcao_visual_pendente_para_ia(
+            aprendizado_visual_pendente
+        )
+        correcao_laudo_chat = registrar_correcao_estruturada_chat(
+            laudo=prepared.laudo,
+            usuario=usuario,
+            mensagem_id=int(mensagem_usuario.id),
+            texto_chat=prepared.mensagem_limpa,
+        )
+        contexto_correcao_laudo_chat = construir_contexto_correcao_estruturada_chat_para_ia(
+            correcao_laudo_chat
         )
 
     guided_evidence_ref = None
@@ -642,6 +667,28 @@ def persist_chat_user_message(
             )
         else:
             mensagem_base_para_ia = pre_laudo_prompt_context
+    if report_context_included and contexto_correcao_visual_pendente:
+        if mensagem_base_para_ia:
+            mensagem_base_para_ia = (
+                f"{contexto_correcao_visual_pendente}\n\n{mensagem_base_para_ia}"
+            )
+        else:
+            mensagem_base_para_ia = contexto_correcao_visual_pendente
+    if report_context_included and contexto_correcao_laudo_chat:
+        if mensagem_base_para_ia:
+            mensagem_base_para_ia = (
+                f"{contexto_correcao_laudo_chat}\n\n{mensagem_base_para_ia}"
+            )
+        else:
+            mensagem_base_para_ia = contexto_correcao_laudo_chat
+    contexto_visual_chat = construir_contexto_analise_visual_chat_para_ia(
+        tem_imagem=bool(prepared.dados_imagem_validos)
+    )
+    if contexto_visual_chat:
+        if mensagem_base_para_ia:
+            mensagem_base_para_ia = f"{contexto_visual_chat}\n\n{mensagem_base_para_ia}"
+        else:
+            mensagem_base_para_ia = contexto_visual_chat
 
     mensagem_para_ia = anexar_contexto_aprendizado_na_mensagem(
         mensagem_base_para_ia,

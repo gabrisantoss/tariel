@@ -196,6 +196,108 @@ body.pagina-chat-dashboard-v2 .workspace-assistant-primary-action .material-symb
     font-size: 18px;
 }
 
+body.pagina-chat-dashboard-v2 .workspace-operational-strip {
+    display: grid;
+    gap: 12px;
+    width: min(100%, 760px);
+    padding: 14px;
+    border: 1px solid rgba(31, 94, 142, 0.14);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 14px 30px rgba(31, 94, 142, 0.08);
+    text-align: left;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-strip__header {
+    display: grid;
+    gap: 3px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-strip__header > span {
+    color: var(--vf-text-soft);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-strip__header strong {
+    color: var(--vf-text);
+    font-size: 15px;
+    line-height: 1.2;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-strip__header small {
+    color: var(--vf-text-muted);
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-strip__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-pill {
+    min-width: 0;
+    min-height: 66px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+        "icon value"
+        "icon label";
+    align-items: center;
+    column-gap: 8px;
+    padding: 10px;
+    border: 1px solid rgba(186, 201, 217, 0.72);
+    border-radius: 14px;
+    background: rgba(248, 251, 253, 0.84);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-pill .material-symbols-rounded {
+    grid-area: icon;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(31, 94, 142, 0.09);
+    color: var(--vf-accent);
+    font-size: 17px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-pill strong {
+    grid-area: value;
+    color: var(--vf-text);
+    font-size: 20px;
+    line-height: 1;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-pill > span:not(.material-symbols-rounded) {
+    grid-area: label;
+    color: var(--vf-text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-pill--warning .material-symbols-rounded {
+    background: rgba(217, 119, 6, 0.12);
+    color: #b45309;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-pill--mesa .material-symbols-rounded {
+    background: rgba(94, 70, 175, 0.12);
+    color: #5e46af;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-operational-pill--success .material-symbols-rounded {
+    background: rgba(14, 116, 80, 0.12);
+    color: #0f766e;
+}
+
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .rodape-entrada {
     position: static;
     display: flex;
@@ -1717,6 +1819,19 @@ body.pagina-chat-dashboard-v2 .btn-fechar-mesa-widget {
 
     body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] #campo-mensagem {
         font-size: 16px;
+    }
+
+    body.pagina-chat-dashboard-v2 .workspace-operational-strip {
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    body.pagina-chat-dashboard-v2 .workspace-operational-strip__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body.pagina-chat-dashboard-v2 .workspace-operational-pill {
+        min-height: 58px;
     }
 
     body.pagina-chat-dashboard-v2 .modal-container-nova-inspecao {

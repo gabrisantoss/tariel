@@ -4053,7 +4053,7 @@ def test_e2e_admin_ceo_onboard_empresa_e_admin_cliente_valida_contrato_como_comp
                     "quality_gate_override": "true",
                     "quality_gate_override_reason": (
                         "Cliente WF validou a rastreabilidade técnica do caso e assumiu a "
-                        "justificativa interna obrigatória para envio à mesa."
+                        "responsabilidade humana pela finalização incompleta."
                     ),
                 },
             )

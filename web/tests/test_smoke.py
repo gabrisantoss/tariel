@@ -241,6 +241,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     gate_modal_html = (raiz / "templates" / "inspetor" / "modals" / "_gate_qualidade.html").read_text(encoding="utf-8")
     nova_inspecao_html = (raiz / "templates" / "inspetor" / "modals" / "_nova_inspecao.html").read_text(encoding="utf-8")
     chat_index_js = (raiz / "static" / "js" / "chat" / "chat_index_page.js").read_text(encoding="utf-8")
+    modals_js = (raiz / "static" / "js" / "inspetor" / "modals.js").read_text(encoding="utf-8")
     ui_bindings_js = (raiz / "static" / "js" / "inspetor" / "ui_bindings.js").read_text(encoding="utf-8")
     workspace_page_elements_js = (raiz / "static" / "js" / "inspetor" / "workspace_page_elements.js").read_text(encoding="utf-8")
     workspace_corrections_js = (raiz / "static" / "js" / "inspetor" / "workspace_corrections.js").read_text(encoding="utf-8")
@@ -280,10 +281,15 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'class="workspace-composer-compat-action"' in workspace_html
     assert 'id="input-anexo"' in workspace_html
     assert 'id="preview-anexo"' in workspace_html
+    assert 'id="workspace-template-compatibility-list"' in workspace_html
     assert 'id="btn-toggle-humano"' in workspace_html
     assert 'class="technical-composer-icon-btn"' in workspace_html
     assert 'id="btn-assistant-landing-open-inspecao-modal"' in workspace_assistant_html
     assert "workspace-assistant-primary-action" in workspace_assistant_html
+    assert "workspace-operational-strip" in workspace_assistant_html
+    assert "workspace-guided-chat-strip" in workspace_html
+    assert 'data-chat-guided="true"' in workspace_html
+    assert "workspace-service-launcher" not in workspace_assistant_html
     assert 'id="rodape-contexto-titulo"' in workspace_html
     assert 'id="rodape-contexto-status"' in workspace_html
     assert 'class="btn-secundario btn-home-cabecalho technical-record-back technical-record-back--subtle"' in workspace_header_html
@@ -465,6 +471,10 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="bloco-gate-roteiro-template"' in gate_modal_html
     assert 'id="texto-gate-roteiro-template"' in gate_modal_html
     assert 'id="lista-gate-roteiro-template"' in gate_modal_html
+    assert "Finalizar com pendências?" in gate_modal_html
+    assert "Finalizar mesmo assim" in gate_modal_html
+    assert "Levar pendências para o chat" in gate_modal_html
+    assert "Tariel, me ajude a completar as pendências antes de finalizar este laudo." in modals_js
     assert 'id="btn-editar-nome-inspecao"' in nova_inspecao_html
     assert 'id="preview-nome-inspecao"' in nova_inspecao_html
     assert 'id="input-nome-inspecao"' in nova_inspecao_html

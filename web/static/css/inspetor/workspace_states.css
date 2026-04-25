@@ -96,6 +96,74 @@ body.pagina-chat-dashboard-v2 .composer-suggestions {
     margin: var(--vf-space-2) auto var(--vf-space-4);
 }
 
+body.pagina-chat-dashboard-v2 .workspace-guided-chat-strip {
+    width: min(100%, var(--chat-max-w, 1080px));
+    display: grid;
+    gap: 8px;
+    margin: 8px auto 0;
+    padding: 0 2px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-guided-chat-strip__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: var(--vf-text-soft);
+    font-size: 11px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-guided-chat-strip__header span {
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-guided-chat-strip__header strong {
+    color: var(--vf-text);
+    font-size: 12px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-guided-chat-strip__header small {
+    color: var(--vf-text-muted);
+    font-size: 11px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-guided-chat-strip__grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-guided-chat-chip {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 9px;
+    border: 1px solid rgba(31, 94, 142, 0.13);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--vf-text-muted);
+    font-size: 11.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-guided-chat-chip:hover {
+    border-color: rgba(31, 94, 142, 0.34);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--vf-accent);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-guided-chat-chip .material-symbols-rounded {
+    font-size: 15px;
+}
+
 body.pagina-chat-dashboard-v2 .rodape-entrada__contexto {
     display: flex;
     align-items: flex-start;
@@ -301,6 +369,33 @@ body.pagina-chat-dashboard-v2 .workspace-template-compatibility p {
     margin: 3px 0 0;
     font-size: 12px;
     line-height: 1.45;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-template-compatibility__list {
+    display: grid;
+    gap: 6px;
+    margin: 9px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-template-compatibility__list li {
+    display: grid;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid rgba(31, 94, 142, 0.12);
+    border-radius: 12px;
+    background: rgba(241, 246, 250, 0.72);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-template-compatibility__list li strong {
+    font-size: 12px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-template-compatibility__list li span {
+    color: var(--vf-text-muted);
+    font-size: 11.5px;
+    line-height: 1.35;
 }
 
 body.pagina-chat-dashboard-v2 .btn-ir-fim-chat {

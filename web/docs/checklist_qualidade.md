@@ -82,7 +82,7 @@ Os itens atuais gerados pelo gate sao:
 
 ## Roteiro estruturado do template
 
-O payload do gate agora tambem devolve `roteiro_template`, com:
+O payload de finalizacao agora tambem devolve `roteiro_template`, com:
 
 - `titulo`
 - `descricao`
@@ -96,7 +96,7 @@ Cada item do roteiro traz:
 - `descricao`
 - `obrigatorio`
 
-Esse roteiro nao substitui o bloqueio do gate; ele organiza a coleta minima esperada por tipo de inspecao e aparece no modal do inspetor.
+Esse roteiro nao substitui o bloqueio tecnico; ele organiza a coleta minima esperada por tipo de inspecao e aparece como pendencia objetiva antes de finalizar.
 
 ## HTTP e comportamento
 
@@ -110,10 +110,17 @@ Esse roteiro nao substitui o bloqueio do gate; ele organiza a coleta minima espe
 
 - `POST /app/api/laudo/{laudo_id}/finalizar`
 - Se reprovado, retorna `422` com `detail` contendo o payload completo do gate
+- Se houver `human_override_policy.available = true`, o front pode reenviar com `quality_gate_override=true` e `quality_gate_override_reason`
 - Se aprovado:
   - `status_revisao = AGUARDANDO`
   - `encerrado_pelo_inspetor_em = agora`
   - `reabertura_pendente_em = None`
+
+Quando o usuario finaliza incompleto por responsabilidade humana:
+
+- o backend salva a justificativa em `quality_gates.human_override`
+- a Tariel nao valida tecnicamente o laudo; validacao, ART e assinatura continuam humanas
+- a UI nao deve chamar isso de erro, e sim permitir voltar ao chat ou finalizar mesmo assim quando permitido
 
 ### Reabrir laudo
 
@@ -152,10 +159,14 @@ Elementos principais:
 - `#modal-gate-qualidade`
 - `#lista-gate-faltantes`
 - `#lista-gate-checklist`
+- `#btn-gate-preencher-no-chat`
+- `#btn-gate-override-continuar`
 
 Evento usado no front:
 
 - `tariel:gate-qualidade-falhou`
+
+Mesmo mantendo o nome tecnico do evento, a experiencia visivel deve falar em pendencias de finalizacao, nao em `gate` ou excecao interna.
 
 ## Testes bons para consultar
 

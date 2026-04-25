@@ -552,6 +552,11 @@
     }
 
     function bindEventos() {
+        document.addEventListener("tariel:perfil:abrir", (event) => {
+            event.preventDefault();
+            abrirComDadosAtualizados();
+        });
+
         el.btnAbrirPerfil?.addEventListener("click", (event) => {
             event.preventDefault();
             alternarMenuConta();

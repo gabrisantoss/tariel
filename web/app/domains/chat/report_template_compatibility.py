@@ -12,6 +12,35 @@ from app.domains.chat.normalization import (
 from app.shared.database import Laudo
 
 
+NR35_LINHA_VIDA_REQUIRED_CHECKLIST: tuple[dict[str, str], ...] = (
+    {
+        "id": "nr35_identificacao_documental",
+        "title": "Identificação documental",
+        "detail": "Unidade, local, laudo, ART, contratante, contratada, responsável, inspetor e data.",
+    },
+    {
+        "id": "nr35_objeto_escopo",
+        "title": "Objeto e escopo",
+        "detail": "TAG ou referência, tipo da linha, escopo e limitações de acesso.",
+    },
+    {
+        "id": "nr35_componentes_c_nc_na",
+        "title": "Componentes C/NC/NA",
+        "detail": "Fixação, cabo de aço, esticador, sapatilha, olhal e grampos.",
+    },
+    {
+        "id": "nr35_fotos_minimas",
+        "title": "Fotos mínimas",
+        "detail": "Vista geral, ponto superior, ponto inferior, identificação e achado principal.",
+    },
+    {
+        "id": "nr35_conclusao_tecnica",
+        "title": "Conclusão técnica",
+        "detail": "Aprovado, Reprovado ou Pendente com motivo, recomendações e próxima inspeção.",
+    },
+)
+
+
 def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
@@ -98,6 +127,7 @@ def analisar_compatibilidade_template_laudo(
         )
 
     if target == "nr35_linha_vida":
+        required_checklist = [dict(item) for item in NR35_LINHA_VIDA_REQUIRED_CHECKLIST]
         if photo_count >= 2:
             score += 25
         elif photo_count == 1:
@@ -131,6 +161,7 @@ def analisar_compatibilidade_template_laudo(
                 )
             )
     else:
+        required_checklist = []
         if photo_count > 0:
             score += 10
 
@@ -151,6 +182,7 @@ def analisar_compatibilidade_template_laudo(
             "photo_items": photo_count,
             "has_report_pack_draft": bool(draft),
         },
+        "required_checklist": required_checklist,
         "missing_evidence": missing,
         "next_step": (
             "Compatível para continuar como laudo guiado desta família."
@@ -160,4 +192,4 @@ def analisar_compatibilidade_template_laudo(
     }
 
 
-__all__ = ["analisar_compatibilidade_template_laudo"]
+__all__ = ["NR35_LINHA_VIDA_REQUIRED_CHECKLIST", "analisar_compatibilidade_template_laudo"]

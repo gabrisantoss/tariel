@@ -197,7 +197,7 @@
                 aprovado: false,
                 mensagem: String(
                     detalhe.mensagem ||
-                        "Finalize bloqueado: faltam itens obrigatorios no checklist de qualidade."
+                        "O chat encontrou pendências antes de finalizar."
                 ),
                 tipo_template: String(detalhe.tipo_template || detalhe.tipoTemplate || "padrao"),
                 template_nome: String(detalhe.template_nome || detalhe.templateNome || ""),

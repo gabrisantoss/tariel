@@ -3090,7 +3090,7 @@ def test_home_nao_exibe_rascunho_sem_interacao_na_sidebar(ambiente_critico) -> N
 
     assert home.status_code == 200
     assert f'data-laudo-id="{laudo_id}"' not in home.text
-    assert "Nenhum laudo ainda" in home.text
+    assert "Escolher serviço WF" in home.text
 
 
 def test_home_exibe_rascunho_com_contexto_inicial_na_sidebar(ambiente_critico) -> None:
@@ -4137,6 +4137,45 @@ def test_inspetor_gate_qualidade_cbmgo_expoe_roteiro_com_formulario(ambiente_cri
     assert "cbmgo_formulario_estruturado" in roteiro_ids
 
 
+def test_inspetor_gate_nr35_linha_vida_expoe_checklist_minimo_real(ambiente_critico) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+            tipo_template="nr35_linha_vida",
+        )
+
+    resposta = client.get(
+        f"/app/api/laudo/{laudo_id}/gate-qualidade",
+        headers={"X-CSRF-Token": csrf},
+    )
+
+    assert resposta.status_code == 422
+    corpo = resposta.json()
+    assert corpo["tipo_template"] == "nr35_linha_vida"
+    roteiro_ids = {item["id"] for item in corpo["roteiro_template"]["itens"]}
+    assert "nr35_linha_vida_identificacao" in roteiro_ids
+    assert "nr35_linha_vida_objeto_escopo" in roteiro_ids
+    assert "nr35_linha_vida_componentes" in roteiro_ids
+    assert "nr35_linha_vida_fotos_minimas" in roteiro_ids
+    assert "nr35_linha_vida_slots_report_pack" in roteiro_ids
+    assert "nr35_linha_vida_conclusao_tecnica" in roteiro_ids
+    roteiro_texto = " ".join(
+        str(item.get("titulo") or "") + " " + str(item.get("descricao") or "")
+        for item in corpo["roteiro_template"]["itens"]
+    )
+    assert "fixação dos pontos" in roteiro_texto
+    assert "ponto superior" in roteiro_texto
+    assert "Aprovado, Reprovado ou Pendente" in roteiro_texto
+
+
 def test_inspetor_finalizacao_bloqueada_por_gate_qualidade(ambiente_critico) -> None:
     client = ambiente_critico["client"]
     SessionLocal = ambiente_critico["SessionLocal"]
@@ -4249,6 +4288,9 @@ def test_inspetor_finalizacao_permite_override_humano_governado_no_gate(
     assert resposta_bloqueio.status_code == 422
     detalhe_bloqueio = resposta_bloqueio.json()["detail"]
     assert detalhe_bloqueio["human_override_policy"]["available"] is True
+    assert "finalizado incompleto" in detalhe_bloqueio["human_override_policy"]["message"]
+    assert "validação, correção técnica, ART e assinatura" in detalhe_bloqueio["human_override_policy"]["responsibility_notice"]
+    assert detalhe_bloqueio["action_plan"]["cta_label"] == "Finalizar mesmo assim"
     assert (
         "evidencia_complementar_substituida_por_registro_textual_com_rastreabilidade"
         in detalhe_bloqueio["human_override_policy"]["matched_override_cases"]
@@ -7091,7 +7133,7 @@ def test_api_chat_comando_finalizar_retorna_payload_gate_quando_reprovado(ambien
     assert detalhe["aprovado"] is False
     assert isinstance(detalhe["faltantes"], list)
     assert len(detalhe["faltantes"]) >= 1
-    assert detalhe["action_plan"]["summary"].startswith("Finalização bloqueada")
+    assert detalhe["action_plan"]["summary"].startswith("O chat encontrou")
     assert isinstance(detalhe["action_plan"]["next_steps"], list)
     assert len(detalhe["action_plan"]["next_steps"]) >= 1
 
@@ -8382,8 +8424,11 @@ def test_chat_com_imagem_cria_rascunho_visual_para_mesa_mesmo_sem_correcao_expli
             status_revisao=StatusRevisao.RASCUNHO.value,
         )
 
+    captura: dict[str, str] = {}
+
     class ClienteIAStub:
-        def gerar_resposta_stream(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        def gerar_resposta_stream(self, mensagem: str, *args, **kwargs):  # noqa: ANN002, ANN003
+            captura["mensagem"] = mensagem
             yield "Análise inicial da IA."
 
     cliente_original = rotas_inspetor.cliente_ia
@@ -8403,6 +8448,12 @@ def test_chat_com_imagem_cria_rascunho_visual_para_mesa_mesmo_sem_correcao_expli
         rotas_inspetor.cliente_ia = cliente_original
 
     assert resposta_chat.status_code == 200
+    assert "[politica_interna_analise_visual]" in captura["mensagem"]
+    assert "foto com baixa qualidade" in captura["mensagem"]
+    assert "evidencia visual insuficiente" in captura["mensagem"]
+    assert "outro angulo" in captura["mensagem"]
+    assert "alta confianca visual" in captura["mensagem"]
+    assert "Nao prometa certeza matematica de 100%" in captura["mensagem"]
 
     with TestClient(main.app) as client_revisor:
         csrf_revisor = _login_revisor(client_revisor, "revisor@empresa-a.test")
@@ -8483,6 +8534,312 @@ def test_chat_com_correcao_textual_atualiza_rascunho_visual_automatico(ambiente_
         assert str(getattr(itens[0].veredito_inspetor, "value", itens[0].veredito_inspetor)) == "conforme"
 
 
+def test_chat_corrige_laudo_por_comando_natural_sem_expor_editor(ambiente_critico) -> None:
+    client_inspetor = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf_inspetor = _login_app_inspetor(client_inspetor, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.dados_formulario = {
+            "conclusao": {"conclusao_tecnica": "Conclusão inicial."},
+        }
+        banco.commit()
+
+    captura: dict[str, str] = {}
+
+    class ClienteIAStub:
+        def gerar_resposta_stream(self, mensagem: str, *args, **kwargs):  # noqa: ANN002, ANN003
+            captura["mensagem"] = mensagem
+            yield "Ajuste considerado no rascunho."
+
+    cliente_original = rotas_inspetor.cliente_ia
+    rotas_inspetor.cliente_ia = ClienteIAStub()
+    try:
+        resposta_chat = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": (
+                    "Corrija o status do laudo para pendente por falta de acesso "
+                    "ao ponto inferior."
+                ),
+                "historico": [],
+                "laudo_id": laudo_id,
+            },
+        )
+    finally:
+        rotas_inspetor.cliente_ia = cliente_original
+
+    assert resposta_chat.status_code == 200
+    assert "[correcao_laudo_pelo_chat]" in captura["mensagem"]
+    assert "Instrucao interna invisivel ao usuario" in captura["mensagem"]
+    assert "Nao mencione editor, formulario, payload interno" in captura["mensagem"]
+    assert "Corrija o status do laudo para pendente" in captura["mensagem"]
+
+    resposta_correcoes = client_inspetor.get(f"/app/api/laudo/{laudo_id}/correcoes-estruturadas")
+    assert resposta_correcoes.status_code == 200
+    assert resposta_correcoes.json()["items"] == []
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        assert isinstance(laudo.dados_formulario, dict)
+        conclusao = laudo.dados_formulario["conclusao"]
+        assert "Conclusão inicial." in conclusao["conclusao_tecnica"]
+        assert "Corrija o status do laudo para pendente" in conclusao["conclusao_tecnica"]
+        assert "Corrija o status do laudo para pendente" in conclusao["justificativa"]
+
+        draft = laudo.report_pack_draft_json
+        assert isinstance(draft, dict)
+        correcoes = draft["structured_corrections"]
+        assert len(correcoes) == 1
+        item = correcoes[0]
+        assert item["block"] == "conclusao"
+        assert item["status"] == "aplicada"
+        assert item["source"] == "inspector_chat_hidden"
+        assert item["hidden_from_user"] is True
+        assert item["source_message_id"]
+        assert item["application_mode"] == "document_payload_append"
+
+
+def test_chat_com_correcao_nr35_reavalia_foto_sem_aprender_globalmente(ambiente_critico) -> None:
+    client_inspetor = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf_inspetor = _login_app_inspetor(client_inspetor, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+
+    capturas: list[str] = []
+
+    class ClienteIAStub:
+        def gerar_resposta_stream(self, mensagem: str, *args, **kwargs):  # noqa: ANN002, ANN003
+            capturas.append(mensagem)
+            yield "Reanálise de teste."
+
+    cliente_original = rotas_inspetor.cliente_ia
+    rotas_inspetor.cliente_ia = ClienteIAStub()
+    try:
+        resposta_imagem = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Analise esta foto.",
+                "historico": [],
+                "laudo_id": laudo_id,
+                "dados_imagem": _imagem_png_data_uri_teste(),
+            },
+        )
+        resposta_correcao = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Mas isso é NR35 linha de vida, reavalie com mais cuidado.",
+                "historico": [],
+                "laudo_id": laudo_id,
+            },
+        )
+        resposta_explicacao = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Porque na foto aparece ancoragem superior e cabo de aço da linha.",
+                "historico": [],
+                "laudo_id": laudo_id,
+            },
+        )
+        resposta_insistencia = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Tenho certeza, pode continuar por minha conta e risco.",
+                "historico": [],
+                "laudo_id": laudo_id,
+            },
+        )
+    finally:
+        rotas_inspetor.cliente_ia = cliente_original
+
+    assert resposta_imagem.status_code == 200
+    assert resposta_correcao.status_code == 200
+    assert resposta_explicacao.status_code == 200
+    assert resposta_insistencia.status_code == 200
+    assert "[correcao_visual_do_inspetor_em_rascunho]" not in capturas[0]
+    assert "[correcao_visual_do_inspetor_em_rascunho]" in capturas[1]
+    assert "[correcao_visual_do_inspetor_em_rascunho]" in capturas[2]
+    assert "[correcao_visual_do_inspetor_em_rascunho]" in capturas[3]
+    assert "reavaliar como NR-35 Inspecao de Linha de Vida" in capturas[1]
+    assert "somente ao tenant atual" in capturas[1]
+    assert "Instrucao interna invisivel ao usuario" in capturas[1]
+    assert "nao aceite a correcao como verdade automatica" in capturas[1]
+    assert "justificativa tecnica ou evidencia adicional" in capturas[1]
+    assert "nao discuta nem tente convencer novamente" in capturas[3]
+    assert "por conta e risco" in capturas[3]
+    assert "premissa declarada pelo usuario" in capturas[3]
+    assert "baixa confianca visual" in capturas[3]
+    assert "validacao humana" in capturas[3]
+    assert "responsabilidade tecnica do humano" in capturas[3]
+    assert "A experiencia do usuario deve continuar sendo apenas o chat" in capturas[3]
+    assert "aprendizados_visuais_validados" not in capturas[3]
+
+    with SessionLocal() as banco:
+        itens = (
+            banco.query(AprendizadoVisualIa)
+            .filter(
+                AprendizadoVisualIa.laudo_id == laudo_id,
+                AprendizadoVisualIa.empresa_id == ids["empresa_a"],
+            )
+            .order_by(AprendizadoVisualIa.id.asc())
+            .all()
+        )
+        assert len(itens) == 1
+        item = itens[0]
+        assert "Mas isso é NR35 linha de vida" in str(item.correcao_inspetor)
+        assert "Porque na foto aparece ancoragem superior" in str(item.correcao_inspetor)
+        assert "Tenho certeza" in str(item.correcao_inspetor)
+        assert str(getattr(item.veredito_inspetor, "value", item.veredito_inspetor)) == "ajuste"
+        pontos_chave = list(item.pontos_chave_json or [])
+        assert "template_alvo:nr35_linha_vida" in pontos_chave
+        assert "fluxo_correcao_visual:explicacao_usuario" in pontos_chave
+        assert "fluxo_correcao_visual:insistencia_usuario" in pontos_chave
+        assert "confianca_visual:baixa_por_premissa_usuario" in pontos_chave
+        assert "risco_poisoning:premissa_usuario_baixa_confianca" in pontos_chave
+        assert "aprendizado_bloqueado:insistencia_incompativel_sem_confirmacao_visual" in pontos_chave
+        assert "responsabilidade_humana:validacao_assinatura" in pontos_chave
+        assert "NR-35 Inspecao de Linha de Vida" in list(item.referencias_norma_json or [])
+        assert str(getattr(item.status, "value", item.status)) == "rascunho_inspetor"
+
+
+def test_chat_com_correcao_nr35_sem_foto_anterior_nao_cria_aprendizado(ambiente_critico) -> None:
+    client_inspetor = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf_inspetor = _login_app_inspetor(client_inspetor, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+
+    captura: dict[str, str] = {}
+
+    class ClienteIAStub:
+        def gerar_resposta_stream(self, mensagem: str, *args, **kwargs):  # noqa: ANN002, ANN003
+            captura["mensagem"] = mensagem
+            yield "Resposta sem aprendizado visual."
+
+    cliente_original = rotas_inspetor.cliente_ia
+    rotas_inspetor.cliente_ia = ClienteIAStub()
+    try:
+        resposta_correcao = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Mas isso é NR35 linha de vida.",
+                "historico": [],
+                "laudo_id": laudo_id,
+            },
+        )
+    finally:
+        rotas_inspetor.cliente_ia = cliente_original
+
+    assert resposta_correcao.status_code == 200
+    assert "[correcao_visual_do_inspetor_em_rascunho]" not in captura["mensagem"]
+
+    with SessionLocal() as banco:
+        total = (
+            banco.query(AprendizadoVisualIa)
+            .filter(
+                AprendizadoVisualIa.laudo_id == laudo_id,
+                AprendizadoVisualIa.empresa_id == ids["empresa_a"],
+            )
+            .count()
+        )
+        assert total == 0
+
+
+def test_chat_com_explicacao_generica_sem_correcao_visual_nao_ativa_fluxo(ambiente_critico) -> None:
+    client_inspetor = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf_inspetor = _login_app_inspetor(client_inspetor, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+
+    capturas: list[str] = []
+
+    class ClienteIAStub:
+        def gerar_resposta_stream(self, mensagem: str, *args, **kwargs):  # noqa: ANN002, ANN003
+            capturas.append(mensagem)
+            yield "Resposta de teste."
+
+    cliente_original = rotas_inspetor.cliente_ia
+    rotas_inspetor.cliente_ia = ClienteIAStub()
+    try:
+        resposta_imagem = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Analise esta foto.",
+                "historico": [],
+                "laudo_id": laudo_id,
+                "dados_imagem": _imagem_png_data_uri_teste(),
+            },
+        )
+        resposta_explicacao = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Porque a iluminação da área estava ruim.",
+                "historico": [],
+                "laudo_id": laudo_id,
+            },
+        )
+    finally:
+        rotas_inspetor.cliente_ia = cliente_original
+
+    assert resposta_imagem.status_code == 200
+    assert resposta_explicacao.status_code == 200
+    assert "[correcao_visual_do_inspetor_em_rascunho]" not in capturas[0]
+    assert "[correcao_visual_do_inspetor_em_rascunho]" not in capturas[1]
+
+    with SessionLocal() as banco:
+        item = (
+            banco.query(AprendizadoVisualIa)
+            .filter(
+                AprendizadoVisualIa.laudo_id == laudo_id,
+                AprendizadoVisualIa.empresa_id == ids["empresa_a"],
+            )
+            .one()
+        )
+        assert "Sem correção explícita do inspetor" in str(item.correcao_inspetor)
+        assert list(item.pontos_chave_json or []) == []
+
+
 def test_mesa_valida_aprendizado_visual_e_chat_consulta_sintese_final(ambiente_critico) -> None:
     client_inspetor = ambiente_critico["client"]
     SessionLocal = ambiente_critico["SessionLocal"]
@@ -8559,8 +8916,107 @@ def test_mesa_valida_aprendizado_visual_e_chat_consulta_sintese_final(ambiente_c
 
     assert resposta_chat.status_code == 200
     assert "aprendizados_visuais_validados" in captura["mensagem"]
+    assert "variações reais de ângulo" in captura["mensagem"]
     assert "ponto b identifica a ancoragem correta" in captura["mensagem"].lower()
     assert "ponto a é o ponto correto" not in captura["mensagem"].lower()
+
+
+def test_aprendizado_visual_com_insistencia_incompativel_nao_vira_referencia_futura(
+    ambiente_critico,
+) -> None:
+    client_inspetor = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf_inspetor = _login_app_inspetor(client_inspetor, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+
+    class ClienteIAStub:
+        def gerar_resposta_stream(self, *args, **kwargs):  # noqa: ANN002, ANN003
+            yield "Resposta de teste."
+
+    cliente_original = rotas_inspetor.cliente_ia
+    rotas_inspetor.cliente_ia = ClienteIAStub()
+    try:
+        resposta_imagem = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Analise esta foto.",
+                "historico": [],
+                "laudo_id": laudo_id,
+                "dados_imagem": _imagem_png_data_uri_teste(),
+            },
+        )
+        resposta_correcao = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Mas isso é NR35 linha de vida, reavalie com mais cuidado.",
+                "historico": [],
+                "laudo_id": laudo_id,
+            },
+        )
+        resposta_insistencia = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Tenho certeza, pode continuar por minha conta e risco.",
+                "historico": [],
+                "laudo_id": laudo_id,
+            },
+        )
+    finally:
+        rotas_inspetor.cliente_ia = cliente_original
+
+    assert resposta_imagem.status_code == 200
+    assert resposta_correcao.status_code == 200
+    assert resposta_insistencia.status_code == 200
+
+    with SessionLocal() as banco:
+        aprendizado = (
+            banco.query(AprendizadoVisualIa)
+            .filter(
+                AprendizadoVisualIa.laudo_id == laudo_id,
+                AprendizadoVisualIa.empresa_id == ids["empresa_a"],
+            )
+            .one()
+        )
+        aprendizado.status = "validado_mesa"
+        aprendizado.veredito_mesa = "conforme"
+        aprendizado.sintese_consolidada = "Caso adversarial nao deve virar referencia futura."
+        banco.commit()
+
+    captura: dict[str, str] = {}
+
+    class ClienteIAConsultaStub:
+        def gerar_resposta_stream(self, mensagem: str, *args, **kwargs):  # noqa: ANN002, ANN003
+            captura["mensagem"] = mensagem
+            yield "Resposta de consulta."
+
+    rotas_inspetor.cliente_ia = ClienteIAConsultaStub()
+    try:
+        resposta_consulta = client_inspetor.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf_inspetor},
+            json={
+                "mensagem": "Use aprendizados anteriores para avaliar esta linha de vida.",
+                "historico": [],
+                "laudo_id": laudo_id,
+            },
+        )
+    finally:
+        rotas_inspetor.cliente_ia = cliente_original
+
+    assert resposta_consulta.status_code == 200
+    assert "aprendizados_visuais_validados" not in captura["mensagem"]
+    assert "Caso adversarial nao deve virar referencia futura" not in captura["mensagem"]
 
 
 def test_chat_nao_vaza_aprendizado_visual_validado_de_outra_empresa(ambiente_critico) -> None:

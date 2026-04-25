@@ -116,34 +116,100 @@ CONFIGURACOES_CRITICAS_MOBILE_PADRAO: dict[str, dict[str, object]] = {
 
 MODELOS_TECNICOS_PORTAL: tuple[dict[str, str], ...] = (
     {
-        "titulo": "Caldeira Industrial",
-        "badge": "RECOMENDADO",
-        "descricao": "Inspeção completa de caldeiras e vasos de pressão conforme NR-13",
-        "duracao": "~2h de inspeção",
-        "icone": "bolt",
-        "status": "cyan",
-        "tipo": "nr13",
-        "preprompt": "Inicie inspeção NR-13 para caldeiras e vasos de pressão. Quero não conformidades, riscos e plano de ação.",
-    },
-    {
-        "titulo": "Ponte Rolante",
-        "badge": "",
-        "descricao": "Análise estrutural e funcional de equipamentos de elevação",
-        "duracao": "~1.5h de inspeção",
-        "icone": "query_stats",
-        "status": "purple",
-        "tipo": "nr12maquinas",
-        "preprompt": "Inicie análise estrutural e funcional de equipamentos de elevação com foco em criticidade e conformidade.",
-    },
-    {
-        "titulo": "Instalação Elétrica",
-        "badge": "",
-        "descricao": "Verificação de conformidade elétrica e proteções",
-        "duracao": "~1h de inspeção",
+        "titulo": "RTI",
+        "badge": "NR10",
+        "descricao": "Relatório técnico de instalações elétricas",
+        "duracao": "Elétrica",
         "icone": "electric_bolt",
         "status": "warning",
         "tipo": "rti",
-        "preprompt": "Inicie análise RTI da instalação elétrica. Vou enviar fotos e medições para laudo com recomendações.",
+        "preprompt": "Inicie RTI para instalação elétrica. Quero escopo, evidências, não conformidades, riscos e recomendações técnicas.",
+    },
+    {
+        "titulo": "PIE",
+        "badge": "NR10",
+        "descricao": "Prontuário das instalações elétricas",
+        "duracao": "Elétrica",
+        "icone": "power",
+        "status": "warning",
+        "tipo": "pie",
+        "preprompt": "Inicie PIE para instalações elétricas. Quero documentos base, lacunas do prontuário, responsáveis e plano de regularização.",
+    },
+    {
+        "titulo": "SPDA",
+        "badge": "NR10",
+        "descricao": "Sistema de proteção contra descargas atmosféricas",
+        "duracao": "Elétrica",
+        "icone": "electric_bolt",
+        "status": "warning",
+        "tipo": "spda",
+        "preprompt": "Inicie inspeção SPDA. Quero projeto/croqui, medições, evidências, não conformidades e recomendações.",
+    },
+    {
+        "titulo": "LOTO",
+        "badge": "NR10",
+        "descricao": "Bloqueio e sinalização de energias perigosas",
+        "duracao": "Segurança",
+        "icone": "lock",
+        "status": "warning",
+        "tipo": "loto",
+        "preprompt": "Inicie LOTO. Quero pontos de energia perigosa, bloqueios, sinalização, procedimento e plano de implantação.",
+    },
+    {
+        "titulo": "NR12 Máquinas",
+        "badge": "MÁQUINAS",
+        "descricao": "Dispositivos, zonas de risco e segurança elétrica",
+        "duracao": "Máquinas",
+        "icone": "query_stats",
+        "status": "purple",
+        "tipo": "nr12maquinas",
+        "preprompt": (
+            "Inicie NR12 para máquina ou equipamento. Quero zonas de risco, "
+            "dispositivos de segurança, segurança elétrica, não conformidades e adequações."
+        ),
+    },
+    {
+        "titulo": "NR13 Integridade",
+        "badge": "RECOMENDADO",
+        "descricao": "Caldeiras, vasos, tubulações e ensaios",
+        "duracao": "Integridade",
+        "icone": "bolt",
+        "status": "cyan",
+        "tipo": "nr13",
+        "preprompt": (
+            "Inicie NR13 para caldeira, vaso ou tubulação. Quero identificação, "
+            "evidências, medições, certificados, não conformidades e conclusão técnica."
+        ),
+    },
+    {
+        "titulo": "NR20 Inflamáveis",
+        "badge": "",
+        "descricao": "Instalações, prontuário, riscos e planos",
+        "duracao": "Inflamáveis",
+        "icone": "local_gas_station",
+        "status": "warning",
+        "tipo": "nr20_instalacoes",
+        "preprompt": "Inicie NR20 para instalações com inflamáveis. Quero escopo, documentos, análise de riscos, planos e controles.",
+    },
+    {
+        "titulo": "NR33 Espaço Confinado",
+        "badge": "",
+        "descricao": "Mapeamento, classificação e PET",
+        "duracao": "Espaço confinado",
+        "icone": "sensor_door",
+        "status": "purple",
+        "tipo": "nr33_espaco_confinado",
+        "preprompt": "Inicie NR33 para espaço confinado. Quero identificação do espaço, riscos, evidências, PET, resgate e recomendações.",
+    },
+    {
+        "titulo": "NR35 Linha de Vida",
+        "badge": "CAMPO",
+        "descricao": "Linha de vida e pontos de ancoragem",
+        "duracao": "Altura",
+        "icone": "construction",
+        "status": "purple",
+        "tipo": "nr35_linha_vida",
+        "preprompt": "Inicie NR35 para linha de vida. Quero sistema, pontos, componentes, fotos obrigatórias, não conformidades e conclusão.",
     },
 )
 
@@ -843,6 +909,78 @@ def _build_portal_governance_summary(
     }
 
 
+def _build_portal_operational_summary(
+    *,
+    em_andamento: int,
+    aguardando_mesa: int,
+    pendencias: int,
+    prontos_emissao: int,
+    total_visivel: int,
+) -> dict[str, object]:
+    total_visivel = max(0, int(total_visivel))
+    pendencias = max(0, int(pendencias))
+    aguardando_mesa = max(0, int(aguardando_mesa))
+    em_andamento = max(0, int(em_andamento))
+    prontos_emissao = max(0, int(prontos_emissao))
+
+    if pendencias:
+        primary_action_label = "Corrigir pendências"
+        primary_action_detail = "Priorize devoluções da mesa antes de abrir novos casos."
+    elif aguardando_mesa:
+        primary_action_label = "Acompanhar mesa"
+        primary_action_detail = "Existem casos aguardando decisão técnica."
+    elif em_andamento:
+        primary_action_label = "Continuar coleta"
+        primary_action_detail = "Complete evidências e envie para revisão."
+    elif prontos_emissao:
+        primary_action_label = "Preparar emissão"
+        primary_action_detail = "Casos aprovados precisam virar pacote oficial."
+    else:
+        primary_action_label = "Iniciar serviço WF"
+        primary_action_detail = "Escolha um serviço abaixo para abrir a primeira coleta guiada."
+
+    return {
+        "visible": total_visivel > 0,
+        "primary_action_label": primary_action_label,
+        "primary_action_detail": primary_action_detail,
+        "empty_message": "Sem casos ativos. Escolha um serviço WF para começar.",
+        "items": [
+            {
+                "key": "em_andamento",
+                "label": "Em andamento",
+                "value": str(em_andamento),
+                "icon": "pending_actions",
+                "tone": "info",
+                "detail": "coleta aberta",
+            },
+            {
+                "key": "aguardando_mesa",
+                "label": "Aguardando mesa",
+                "value": str(aguardando_mesa),
+                "icon": "hourglass_top",
+                "tone": "mesa",
+                "detail": "decisão técnica",
+            },
+            {
+                "key": "pendencias",
+                "label": "Pendências",
+                "value": str(pendencias),
+                "icon": "rule",
+                "tone": "warning",
+                "detail": "retorno para campo",
+            },
+            {
+                "key": "prontos_emissao",
+                "label": "Prontos emissão",
+                "value": str(prontos_emissao),
+                "icon": "verified",
+                "tone": "success",
+                "detail": "mesa aprovou",
+            },
+        ],
+    }
+
+
 def listar_laudos_recentes_portal_inspetor(
     banco: Session,
     *,
@@ -1120,7 +1258,8 @@ def montar_contexto_portal_inspetor(
     agora = datetime.now().astimezone()
     ativos = 0
     aguardando = 0
-    concluidos_mes = 0
+    pendencias = 0
+    prontos_emissao = 0
     usos_modelos_mes: Counter[str] = Counter()
 
     for laudo in laudos_visiveis:
@@ -1133,15 +1272,15 @@ def montar_contexto_portal_inspetor(
             if referencia_local.year == agora.year and referencia_local.month == agora.month:
                 usos_modelos_mes[tipo_template] += 1
 
-        if status_card in {"aberto", "ajustes"}:
+        if status_card == "aberto":
             ativos += 1
+        elif status_card == "ajustes":
+            pendencias += 1
         elif status_card == "aguardando":
             aguardando += 1
 
-        if status_card == "aprovado" and referencia_mes:
-            referencia_local = referencia_mes.astimezone()
-            if referencia_local.year == agora.year and referencia_local.month == agora.month:
-                concluidos_mes += 1
+        if status_card == "aprovado":
+            prontos_emissao += 1
 
     laudos_base = [
         laudo
@@ -1208,12 +1347,20 @@ def montar_contexto_portal_inspetor(
 
     return {
         "cards_status": [
-            {"valor": str(ativos), "label": "Inspeções Ativas", "icone": "description", "status": "cyan"},
+            {"valor": str(ativos), "label": "Em andamento", "icone": "pending_actions", "status": "cyan"},
             {"valor": str(aguardando), "label": "Aguardando Mesa", "icone": "hourglass_top", "status": "purple"},
-            {"valor": str(concluidos_mes), "label": "Concluídos no Mês", "icone": "trending_up", "status": "success"},
+            {"valor": str(pendencias), "label": "Pendências", "icone": "rule", "status": "warning"},
+            {"valor": str(prontos_emissao), "label": "Prontos Emissão", "icone": "verified", "status": "success"},
         ],
         "laudos_sidebar": laudos_portal_cards,
         "laudos_portal_cards": laudos_portal_cards,
+        "portal_operational_summary": _build_portal_operational_summary(
+            em_andamento=ativos,
+            aguardando_mesa=aguardando,
+            pendencias=pendencias,
+            prontos_emissao=prontos_emissao,
+            total_visivel=len(laudos_visiveis),
+        ),
         "portal_governance_summary": _build_portal_governance_summary(official_issue_summaries_portal),
         "modelos_portal": modelos_portal,
         "tipos_template_portal": tipos_template_portal,

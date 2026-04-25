@@ -499,10 +499,12 @@
         if (btnPerfil && btnPerfil.dataset.uiWired !== "true") {
             btnPerfil.dataset.uiWired = "true";
             btnPerfil.addEventListener("click", () => {
-                const alvo = document.getElementById("btn-abrir-perfil-chat");
-                if (typeof alvo?.click === "function") {
-                    alvo.click();
-                }
+                document.dispatchEvent(
+                    new CustomEvent("tariel:perfil:abrir", {
+                        bubbles: true,
+                        detail: { origem: "shell-quick-action" },
+                    })
+                );
             });
         }
     }

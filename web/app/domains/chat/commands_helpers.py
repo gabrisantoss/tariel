@@ -142,12 +142,12 @@ def montar_resposta_comando_resumo(
                 linhas.append(f"- Mudanças da última revisão: **+{resumo_diff['linhas_adicionadas']} / -{resumo_diff['linhas_removidas']}**")
 
     if gate.get("aprovado", False):
-        linhas.append("- Gate de qualidade: **aprovado**")
+        linhas.append("- Finalização: **pronta para envio**")
     else:
         faltantes = gate.get("faltantes", []) or []
-        linhas.append(f"- Gate de qualidade: **reprovado** ({len(faltantes)} item(ns) pendente(s))")
+        linhas.append(f"- Finalização: **pendente** ({len(faltantes)} item(ns) faltando)")
         if faltantes:
-            linhas.append("  Itens críticos:")
+            linhas.append("  O que falta:")
             for item in faltantes[:3]:
                 linhas.append(f"  - {item.get('titulo', 'Item pendente')}")
 
@@ -215,9 +215,9 @@ def montar_resposta_comando_previa(
             linhas.append(f"- {item}")
 
     if gate.get("aprovado", False):
-        linhas.append("**Gate de qualidade:** aprovado para envio.")
+        linhas.append("**Finalização:** pronta para envio.")
     else:
-        linhas.append(f"**Gate de qualidade:** bloqueado ({len(faltantes)} item(ns) pendente(s)).")
+        linhas.append(f"**Finalização:** faltam {len(faltantes)} item(ns).")
         if faltantes:
             linhas.append("")
             linhas.append("Itens que faltam:")

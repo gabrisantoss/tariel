@@ -11,6 +11,7 @@ from app.domains.chat.core_helpers import agora_utc
 from app.domains.chat.learning import DadosMarcacaoAprendizadoVisual
 from app.domains.chat.learning_helpers import (
     listar_aprendizados_laudo,
+    mesclar_marcadores_internos_aprendizado,
     normalizar_lista_textos,
     normalizar_marcacoes_aprendizado,
     obter_aprendizado_visual,
@@ -98,7 +99,10 @@ async def validar_aprendizado_visual_revisor(
     if dados.veredito_mesa:
         item.veredito_mesa = dados.veredito_mesa
     if dados.pontos_chave:
-        item.pontos_chave_json = normalizar_lista_textos(dados.pontos_chave)
+        item.pontos_chave_json = mesclar_marcadores_internos_aprendizado(
+            item.pontos_chave_json,
+            dados.pontos_chave,
+        )
     if dados.referencias_norma:
         item.referencias_norma_json = normalizar_lista_textos(dados.referencias_norma)
     if dados.marcacoes:

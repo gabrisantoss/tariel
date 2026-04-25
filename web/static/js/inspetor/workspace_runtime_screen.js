@@ -172,7 +172,7 @@
         if (threadTabAtual === "mesa") {
             return mesaAvaliadoraDisponivelParaUsuario() ? "inspection_mesa" : "inspection_corrections";
         }
-        if (threadTabAtual === "historico") return "inspection_conversation";
+        if (threadTabAtual === "historico") return "inspection_history";
         return "inspection_conversation";
     }
 

@@ -975,11 +975,13 @@
 
                 if (!response.ok) {
                     const detalheErro = await extrairErroHTTPDetalhado(response);
-                    tratarGateQualidadeErroHTTP(detalheErro, {
+                    const gateQualidadeEmitido = tratarGateQualidadeErroHTTP(detalheErro, {
                         origem: "finalizar-direto",
                         laudo_id: laudoId,
                     });
-                    throw criarErroHttp(detalheErro);
+                    const erro = criarErroHttp(detalheErro);
+                    erro.qualityGateHandled = gateQualidadeEmitido === true;
+                    throw erro;
                 }
 
                 const dados = await response.json();
@@ -1031,6 +1033,17 @@
 
                 return dados;
             } catch (erro) {
+                if (erro?.qualityGateHandled || erro?.gateQualidade) {
+                    log("info", "Finalização interrompida por pendências do chat.", erro);
+                    return {
+                        ok: false,
+                        success: false,
+                        blockedByQualityGate: true,
+                        gateQualidade: erro?.gateQualidade ?? null,
+                        estado: "relatorio_ativo",
+                        laudo_id: laudoId,
+                    };
+                }
                 mostrarToast(`Falha ao finalizar: ${erro.message}`, "erro");
                 log("error", "finalizarRelatorioDireto:", erro);
                 return null;
@@ -1879,7 +1892,7 @@
                     }
                 } else {
                     const mensagemErro = erro?.gateQualidade
-                        ? String(erro?.message || "Gate de qualidade reprovado.")
+                        ? String(erro?.message || "O chat encontrou pendências antes de finalizar.")
                         : "Erro ao processar o comando do sistema.";
                     mostrarToast(mensagemErro, "erro");
                 }

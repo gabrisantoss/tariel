@@ -1,6 +1,6 @@
 # Regras de Encerramento
 
-Resumo do bloqueio de finalizacao e reabertura de laudo.
+Resumo da finalizacao, pendencias de fechamento e reabertura de laudo.
 
 ## Backend principal
 
@@ -12,12 +12,13 @@ Resumo do bloqueio de finalizacao e reabertura de laudo.
 
 ## Fluxo atual
 
-1. Inspetor tenta finalizar o laudo.
-2. Backend valida o gate de qualidade.
-3. Se faltar item obrigatorio, o encerramento e bloqueado.
-4. Front mostra o modal/lista do gate.
-5. Se aprovado, o laudo segue para a mesa.
-6. Dependendo do retorno da mesa, o laudo pode exigir reabertura.
+1. Inspetor tenta finalizar o laudo pelo chat/workspace.
+2. Backend valida as pendencias obrigatorias de finalizacao.
+3. Se faltar item obrigatorio, a UI volta para coleta e mostra um painel objetivo com o que falta.
+4. O inspetor pode levar as pendencias para o composer e continuar no chat.
+5. Se a politica do template permitir, o inspetor pode finalizar incompleto registrando motivo humano.
+6. Se aprovado ou finalizado por responsabilidade humana, o laudo segue para a mesa.
+7. Dependendo do retorno da mesa, o laudo pode exigir reabertura.
 
 ## O que acontece na finalizacao aprovada
 
@@ -29,9 +30,18 @@ Resumo do bloqueio de finalizacao e reabertura de laudo.
 ## O que acontece na reprovacao
 
 - resposta HTTP `422`
-- o payload do gate volta inteiro em `detail`
+- o payload de pendencias volta inteiro em `detail`
 - o laudo continua em `RASCUNHO`
-- o front abre o modal com faltantes e checklist completo
+- o front abre o painel de pendencias e nao deve exibir erro generico de finalizacao
+- a acao `Levar pendencias para o chat` insere uma mensagem orientada no composer
+- a acao `Finalizar mesmo assim` so aparece quando `human_override_policy.available = true`
+
+## O que acontece na finalizacao incompleta por responsabilidade humana
+
+- o usuario precisa registrar motivo com pelo menos 12 caracteres
+- o backend salva o motivo em `quality_gates.human_override`
+- a responsabilidade final permanece humana; a Tariel apenas monta o laudo
+- o laudo segue para `AGUARDANDO`/mesa, sem a IA validar tecnicamente a decisao
 
 ## Sinais importantes no codigo
 
@@ -50,11 +60,15 @@ Elementos uteis:
 - `#modal-gate-qualidade`
 - `#lista-gate-faltantes`
 - `#lista-gate-checklist`
+- `#btn-gate-preencher-no-chat`
+- `#btn-gate-override-continuar`
 
 ## Regras praticas
 
 - Nao colocar regra de negocio pesada so no front.
 - O front pode orientar, mas quem bloqueia de verdade e o backend.
+- Falha de pendencia de finalizacao nao deve aparecer como erro generico depois que o painel foi aberto.
+- A linguagem para inspetor deve ser `pendencias`, `voltar ao chat` e `finalizar mesmo assim`, nao `gate`, `excecao governada` ou termos internos.
 - Se uma exigencia depende do tipo de laudo, a normalizacao do template importa.
 - Reabertura precisa refletir no estado da sessao e no card do laudo.
 - `permite_edicao` hoje so e verdadeiro em `RASCUNHO`.

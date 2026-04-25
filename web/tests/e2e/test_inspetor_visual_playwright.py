@@ -210,6 +210,8 @@ def test_e2e_inspetor_exporta_referencias_visuais(
         _salvar_screenshot(page, "00-inspetor-portal-home")
 
         page.locator("#btn-abrir-perfil-chat").click()
+        expect(page.locator("#menu-perfil-chat")).to_be_visible(timeout=10000)
+        page.locator('#menu-perfil-chat [data-profile-menu-action="profile"]').click()
         expect(page.locator("#modal-perfil-chat")).to_be_visible(timeout=10000)
         _pausar_observacao(
             page,

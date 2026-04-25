@@ -113,19 +113,11 @@
                             aria-label="Iniciar novo laudo a partir do chat livre"
                         >
                             <span class="material-symbols-rounded" aria-hidden="true">description</span>
-                            <span>Iniciar laudo</span>
+                            <span>Criar laudo pelo chat</span>
                         </button>
                     </div>
 
                     <div class="workspace-context-actions" aria-label="Ações rápidas do laudo no chat">
-                        <button
-                            type="button"
-                            id="btn-checar-nr35-chat-livre"
-                            class="workspace-context-actions__button"
-                        >
-                            <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
-                            <span>Ver compat. NR35</span>
-                        </button>
                         <button
                             type="button"
                             id="btn-ver-pendencias-chat"
@@ -153,6 +145,7 @@
                     >
                         <strong id="workspace-template-compatibility-title">Compatibilidade do laudo</strong>
                         <p id="workspace-template-compatibility-detail"></p>
+                        <ul id="workspace-template-compatibility-list" class="workspace-template-compatibility__list"></ul>
                     </div>
 
                     <div class="pilula-entrada">
@@ -200,7 +193,7 @@
                                     autocomplete="off"
                                     aria-label="Campo de mensagem"
                                     aria-multiline="true"
-                                    placeholder="Descreva a inspecao ou peca ajuda a Tariel"
+                                    placeholder="Descreva ativo, TAG, setor, evidências ou pendência técnica"
                                 ></textarea>
                             </div>
 
@@ -267,6 +260,32 @@
                     <div id="composer-suggestions" class="composer-suggestions" aria-label="Sugestões rápidas do assistente"></div>
 
                     <p class="dica-composer">Enter envia • Shift+Enter quebra linha • / abre comandos</p>
+
+                    {% if modelos_portal %}
+                    <section class="workspace-guided-chat-strip" aria-labelledby="workspace-guided-chat-title">
+                        <div class="workspace-guided-chat-strip__header">
+                            <span>Chat guiado</span>
+                            <strong id="workspace-guided-chat-title">Templates prontos ao redor do chat</strong>
+                            <small>Escolha uma NR e continue enviando fotos no mesmo composer.</small>
+                        </div>
+                        <div class="workspace-guided-chat-strip__grid">
+                            {% for modelo in modelos_portal[:9] %}
+                            <button
+                                type="button"
+                                class="workspace-guided-chat-chip btn-acao-rapida"
+                                data-chat-guided="true"
+                                data-tipo="{{ modelo.tipo | e }}"
+                                data-runtime-tipo="{{ modelo.runtime_tipo | default(modelo.tipo, true) | e }}"
+                                data-preprompt="{{ modelo.preprompt | e }}"
+                                aria-label="Iniciar chat guiado {{ modelo.titulo | e }}"
+                            >
+                                <span class="material-symbols-rounded" aria-hidden="true">{{ modelo.icone }}</span>
+                                <span>{{ modelo.titulo }}</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </section>
+                    {% endif %}
                 </div>
             </footer>
         </div>

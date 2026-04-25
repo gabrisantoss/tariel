@@ -267,7 +267,7 @@
             headline: "No que voce esta pensando hoje?",
             description:
                 "Use o assistente para iniciar uma conversa, estruturar contexto ou abrir uma inspeção quando fizer sentido.",
-            placeholder: "Pergunte alguma coisa",
+            placeholder: "Descreva ativo, TAG, setor, evidências ou pendência técnica",
             contextTitle: "Envie a primeira mensagem",
             contextStatus: "O assistente responde e ajuda a estruturar o proximo passo.",
         },

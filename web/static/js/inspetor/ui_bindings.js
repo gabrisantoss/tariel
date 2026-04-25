@@ -16,6 +16,7 @@
             obterHeadersComCSRF,
             extrairMensagemErroHTTP,
             avisarMesaExigeInspecao,
+            escaparHtml,
         } = ctx.shared;
 
         function normalizarTextoComandoModoLaudo(texto = "") {
@@ -83,9 +84,9 @@
             const label = el.btnIniciarLaudoChatLivre.querySelector("span:last-child");
             const icon = el.btnIniciarLaudoChatLivre.querySelector(".material-symbols-rounded");
             if (!laudoId) {
-                if (label) label.textContent = "Iniciar laudo";
+                if (label) label.textContent = "Criar laudo pelo chat";
                 if (icon) icon.textContent = "description";
-                el.btnIniciarLaudoChatLivre.setAttribute("aria-label", "Iniciar novo laudo a partir do chat livre");
+                el.btnIniciarLaudoChatLivre.setAttribute("aria-label", "Criar novo laudo a partir do chat livre");
                 return;
             }
             if (label) label.textContent = ativo ? "Sair do laudo" : "Voltar ao laudo";
@@ -94,6 +95,39 @@
                 "aria-label",
                 ativo ? "Pausar coleta do laudo" : "Retomar coleta do laudo"
             );
+        }
+
+        function renderizarChecklistCompatibilidadeTemplate(itens = []) {
+            if (!el.workspaceTemplateCompatibilityList) return;
+            const lista = Array.isArray(itens) ? itens.filter((item) => item && typeof item === "object") : [];
+            const escape = typeof escaparHtml === "function"
+                ? escaparHtml
+                : (valor = "") => String(valor || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            if (!lista.length) {
+                el.workspaceTemplateCompatibilityList.innerHTML = "";
+                el.workspaceTemplateCompatibilityList.hidden = true;
+                return;
+            }
+
+            el.workspaceTemplateCompatibilityList.hidden = false;
+            el.workspaceTemplateCompatibilityList.innerHTML = lista
+                .slice(0, 6)
+                .map((item) => {
+                    const titulo = String(item.title || item.titulo || "").trim();
+                    const detalhe = String(item.detail || item.descricao || "").trim();
+                    return `
+                        <li>
+                            <strong>${escape(titulo)}</strong>
+                            ${detalhe ? `<span>${escape(detalhe)}</span>` : ""}
+                        </li>
+                    `;
+                })
+                .join("");
         }
 
         window.TarielInspectorReportMode = {
@@ -361,6 +395,7 @@
                     el.workspaceTemplateCompatibilityDetail.textContent =
                         "Analisando evidências, fotos e status técnico já coletados neste laudo.";
                 }
+                renderizarChecklistCompatibilidadeTemplate([]);
 
                 try {
                     const resposta = await fetch(
@@ -394,6 +429,7 @@
                             ? "As evidências atuais permitem seguir para um laudo guiado NR35. Revise a prévia antes da emissão."
                             : (resumoFaltantes || payload?.next_step || "Complete as evidências obrigatórias antes de migrar.");
                     }
+                    renderizarChecklistCompatibilidadeTemplate(payload?.required_checklist || []);
                     mostrarToast(
                         payload?.compatible
                             ? "Laudo livre compatível com NR35."
@@ -409,6 +445,7 @@
                         el.workspaceTemplateCompatibilityDetail.textContent =
                             String(erro?.message || "").trim() || "Tente novamente em instantes.";
                     }
+                    renderizarChecklistCompatibilidadeTemplate([]);
                     mostrarToast(
                         String(erro?.message || "").trim() || "Não foi possível checar a compatibilidade.",
                         "erro",
@@ -924,8 +961,17 @@
                 botao.addEventListener("click", async () => {
                     const tipo = botao.dataset.tipo;
                     if (!tipo) return;
+                    const chatGuiado = String(botao.dataset.chatGuided || "").trim() === "true";
 
                     const estadoRelatorio = obterEstadoRelatorioAtualSeguro();
+
+                    if (chatGuiado) {
+                        const prePromptAplicado = aplicarPrePromptDaAcaoRapida(botao);
+                        if (prePromptAplicado) {
+                            mostrarToast("Chat guiado aplicado ao composer.", "sucesso", 1800);
+                        }
+                        return;
+                    }
 
                     if (estadoRelatorio !== "relatorio_ativo") {
                         abrirNovaInspecaoComScreenSync({

@@ -12,7 +12,7 @@
         <div class="modal-header modal-header-gate">
             <h2 id="gate-qualidade-titulo">
                 <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
-                Checklist obrigatório antes do envio
+                Finalizar com pendências?
             </h2>
 
             <button
@@ -27,7 +27,7 @@
 
         <div class="modal-body modal-body-gate">
             <p id="gate-qualidade-descricao">
-                A sessão não foi enviada para a mesa avaliadora porque ainda faltam evidências obrigatórias.
+                O chat encontrou pontos faltando antes de fechar o laudo.
             </p>
 
             <div class="gate-template-pill">
@@ -49,12 +49,12 @@
             </section>
 
             <section class="bloco-gate-qualidade" aria-labelledby="titulo-gate-faltantes">
-                <h3 id="titulo-gate-faltantes">Itens pendentes</h3>
+                <h3 id="titulo-gate-faltantes">O que falta para fechar melhor</h3>
                 <ul id="lista-gate-faltantes" class="lista-gate-qualidade"></ul>
             </section>
 
             <details class="bloco-gate-qualidade gate-checklist-completo">
-                <summary>Ver checklist completo</summary>
+                <summary>Ver roteiro técnico completo</summary>
                 <ul id="lista-gate-checklist" class="lista-gate-qualidade"></ul>
             </details>
 
@@ -64,15 +64,15 @@
                 aria-labelledby="titulo-gate-override-humano"
                 hidden
             >
-                <h3 id="titulo-gate-override-humano">Exceção governada com justificativa</h3>
+                <h3 id="titulo-gate-override-humano">Finalizar mesmo assim</h3>
                 <p id="texto-gate-override-humano" class="gate-roteiro-resumo"></p>
                 <ul id="lista-gate-override-casos" class="lista-gate-qualidade"></ul>
-                <label for="textarea-gate-override-justificativa">Justificativa interna obrigatória</label>
+                <label for="textarea-gate-override-justificativa">Motivo para seguir incompleto</label>
                 <textarea
                     id="textarea-gate-override-justificativa"
                     rows="4"
                     maxlength="2000"
-                    placeholder="Explique por que o humano decidiu seguir mesmo com o alerta automático."
+                    placeholder="Explique por que a finalização pode seguir agora. Ex.: evidência complementar será validada pela mesa."
                 ></textarea>
                 <p id="texto-gate-override-responsabilidade" class="gate-resumo"></p>
                 <button
@@ -80,16 +80,16 @@
                     id="btn-gate-override-continuar"
                     class="technical-record-btn technical-record-btn--primary"
                 >
-                    Registrar justificativa e continuar
+                    Finalizar mesmo assim
                 </button>
             </section>
 
             <div class="gate-acoes">
                 <button type="button" id="btn-entendi-gate-qualidade" class="technical-record-btn technical-record-btn--primary">
-                    Entendi, voltar para coleta
+                    Voltar ao chat
                 </button>
                 <button type="button" id="btn-gate-preencher-no-chat" class="technical-record-btn technical-record-btn--outline">
-                    Inserir /pendencias no chat
+                    Levar pendências para o chat
                 </button>
             </div>
         </div>

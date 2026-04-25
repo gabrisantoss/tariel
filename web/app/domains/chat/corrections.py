@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from copy import deepcopy
 from uuid import uuid4
 
@@ -42,6 +44,50 @@ CORRECTION_INTENT_LABELS = {
     "substituir": "Substituir evidência ou texto",
     "validar": "Validar antes de aplicar",
 }
+CHAT_CORRECTION_SOURCE = "inspector_chat_hidden"
+_CHAT_CORRECTION_TRIGGERS = (
+    "adicione",
+    "acrescente",
+    "altere",
+    "arrume",
+    "atualize",
+    "coloque",
+    "corrige",
+    "corrija",
+    "corrigir",
+    "mude",
+    "remova",
+    "retire",
+    "substitua",
+    "troque",
+)
+_CHAT_CORRECTION_CONTEXT_TERMS = (
+    "art",
+    "checklist",
+    "cliente",
+    "conclusao",
+    "conclusão",
+    "data",
+    "evidencia",
+    "evidência",
+    "foto",
+    "imagem",
+    "laudo",
+    "local",
+    "observacao",
+    "observação",
+    "pdf",
+    "relatorio",
+    "relatório",
+    "status",
+    "tag",
+)
+
+
+def _normalizar_texto_chat_correcao(texto: object) -> str:
+    valor = unicodedata.normalize("NFKD", str(texto or "").strip().lower())
+    sem_acento = "".join(char for char in valor if not unicodedata.combining(char))
+    return re.sub(r"\s+", " ", sem_acento).strip()
 
 
 def _draft_laudo(laudo: Laudo) -> dict:
@@ -82,7 +128,14 @@ def _serializar_correcao(item: dict) -> dict:
         "applied_at": item.get("applied_at"),
         "applied_by_id": item.get("applied_by_id"),
         "application_mode": item.get("application_mode"),
-        "applied_to": list(item.get("applied_to") or []) if isinstance(item.get("applied_to"), list) else [],
+        "applied_to": (
+            list(item.get("applied_to") or [])
+            if isinstance(item.get("applied_to"), list)
+            else []
+        ),
+        "source": item.get("source"),
+        "hidden_from_user": bool(item.get("hidden_from_user")),
+        "source_message_id": item.get("source_message_id"),
     }
 
 
@@ -97,6 +150,42 @@ def _salvar_correcoes_laudo(laudo: Laudo, correcoes: list[dict]) -> None:
 
 def _texto_limpo(valor: object, *, limite: int = 1600) -> str:
     return " ".join(str(valor or "").strip().split())[:limite]
+
+
+def inferir_correcao_estruturada_chat(texto: object) -> dict | None:
+    descricao = _texto_limpo(texto, limite=1600)
+    normalizado = _normalizar_texto_chat_correcao(descricao)
+    if not descricao or not normalizado:
+        return None
+
+    tem_gatilho = any(gatilho in normalizado for gatilho in _CHAT_CORRECTION_TRIGGERS)
+    tem_contexto = any(termo in normalizado for termo in _CHAT_CORRECTION_CONTEXT_TERMS)
+    if not tem_gatilho or not tem_contexto:
+        return None
+
+    if any(termo in normalizado for termo in ("foto", "imagem", "evidencia", "anexo")):
+        block = "evidencias"
+    elif "checklist" in normalizado or re.search(r"\b(c|nc|na)\b", normalizado):
+        block = "checklist"
+    elif any(termo in normalizado for termo in ("conclusao", "status", "aprovado", "reprovado", "pendente")):
+        block = "conclusao"
+    else:
+        block = "observacoes"
+
+    if any(termo in normalizado for termo in ("substitua", "troque", "mude")):
+        intent = "substituir"
+    elif any(termo in normalizado for termo in ("adicione", "acrescente", "coloque")):
+        intent = "adicionar"
+    elif "valid" in normalizado or "confira" in normalizado:
+        intent = "validar"
+    else:
+        intent = "corrigir"
+
+    return {
+        "block": block,
+        "intent": intent,
+        "description": descricao,
+    }
 
 
 def _append_texto_documental(valor_atual: object, novo_texto: str) -> str:
@@ -250,14 +339,83 @@ def _summary(correcoes: list[dict]) -> dict:
     }
 
 
-def _payload_correcoes(laudo: Laudo) -> dict:
-    correcoes = [_serializar_correcao(item) for item in _lista_correcoes_laudo(laudo)]
+def _payload_correcoes(laudo: Laudo, *, incluir_ocultas: bool = False) -> dict:
+    itens = _lista_correcoes_laudo(laudo)
+    if not incluir_ocultas:
+        itens = [item for item in itens if not bool(item.get("hidden_from_user"))]
+    correcoes = [_serializar_correcao(item) for item in itens]
     return {
         "ok": True,
         "laudo_id": int(laudo.id),
         "items": correcoes,
         "summary": _summary(correcoes),
     }
+
+
+def registrar_correcao_estruturada_chat(
+    *,
+    laudo: Laudo,
+    usuario: Usuario,
+    mensagem_id: int,
+    texto_chat: object,
+) -> dict | None:
+    dados = inferir_correcao_estruturada_chat(texto_chat)
+    if not dados:
+        return None
+
+    agora = agora_utc()
+    item = {
+        "id": uuid4().hex,
+        "block": dados["block"],
+        "intent": dados["intent"],
+        "description": dados["description"],
+        "status": "aplicada",
+        "source": CHAT_CORRECTION_SOURCE,
+        "hidden_from_user": True,
+        "created_at": agora.isoformat(),
+        "updated_at": agora.isoformat(),
+        "created_by_id": int(usuario.id),
+        "created_by_name": str(
+            getattr(usuario, "nome", None)
+            or getattr(usuario, "email", None)
+            or "Inspetor"
+        ),
+        "updated_by_id": int(usuario.id),
+        "source_message_id": int(mensagem_id),
+    }
+    _aplicar_correcao_no_documento(laudo=laudo, item=item, usuario=usuario)
+    correcoes = [*_lista_correcoes_laudo(laudo), item]
+    _salvar_correcoes_laudo(laudo, correcoes)
+    return _serializar_correcao(item)
+
+
+def construir_contexto_correcao_estruturada_chat_para_ia(item: dict | None) -> str:
+    if not isinstance(item, dict):
+        return ""
+    descricao = _texto_limpo(item.get("description"), limite=900)
+    if not descricao:
+        return ""
+    bloco = CORRECTION_BLOCK_LABELS.get(str(item.get("block") or "").strip(), "Laudo")
+    intencao = CORRECTION_INTENT_LABELS.get(str(item.get("intent") or "").strip(), "Corrigir")
+    return "\n".join(
+        [
+            "[correcao_laudo_pelo_chat]",
+            (
+                "Instrucao interna invisivel ao usuario: trate isto como edicao do "
+                "rascunho pelo chat. Nao mencione editor, formulario, payload interno "
+                "ou correcoes estruturadas."
+            ),
+            f"- Bloco alvo: {bloco}",
+            f"- Intencao: {intencao}",
+            f"- Pedido do usuario: {descricao}",
+            (
+                "Na resposta, confirme de forma objetiva que o ajuste foi considerado "
+                "no rascunho e, se faltar evidencia para sustentar a alteracao, peca "
+                "somente a evidencia necessaria."
+            ),
+            "[/correcao_laudo_pelo_chat]",
+        ]
+    )
 
 
 async def listar_correcoes_estruturadas_laudo(
@@ -288,7 +446,11 @@ async def criar_correcao_estruturada_laudo(
         "created_at": agora.isoformat(),
         "updated_at": agora.isoformat(),
         "created_by_id": int(usuario.id),
-        "created_by_name": str(getattr(usuario, "nome", None) or getattr(usuario, "email", None) or "Inspetor"),
+        "created_by_name": str(
+            getattr(usuario, "nome", None)
+            or getattr(usuario, "email", None)
+            or "Inspetor"
+        ),
         "updated_by_id": int(usuario.id),
     }
     correcoes = [*_lista_correcoes_laudo(laudo), item]
@@ -371,5 +533,8 @@ roteador_corrections.add_api_route(
 
 __all__ = [
     "STRUCTURED_CORRECTIONS_KEY",
+    "construir_contexto_correcao_estruturada_chat_para_ia",
+    "inferir_correcao_estruturada_chat",
+    "registrar_correcao_estruturada_chat",
     "roteador_corrections",
 ]
