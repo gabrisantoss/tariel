@@ -31,7 +31,7 @@ function rotuloModoRevisao(reviewMode: string | null | undefined): string {
     return "Mobile com revisão";
   }
   if (value === "mobile_autonomous") {
-    return "Mobile autônomo";
+    return "Revisão interna";
   }
   return value ? value.replace(/_/g, " ") : "Revisão governada";
 }
@@ -109,9 +109,9 @@ function resumirProximaAcaoRevisao(params: {
   if (canApprove) {
     return {
       label: "Próxima ação",
-      value: "Aprovar no mobile",
+      value: "Aprovar internamente",
       detail:
-        "O pacote já permite decisão local. Aprove no mobile quando a revisão estiver coerente com a evidência consolidada.",
+        "O pacote já permite decisão interna no app. Aprove quando a revisão estiver coerente com a evidência consolidada.",
     };
   }
 
@@ -347,7 +347,7 @@ export function buildThreadConversationReviewPackageSummary(
   if (tenantEntitlements) {
     if (Boolean(tenantEntitlements.mobile_autonomous_allowed)) {
       entitlementMessage =
-        "Tenant habilitado para autonomia mobile nesta familia.";
+        "Tenant habilitado para revisão interna governada nesta família.";
     } else if (Boolean(tenantEntitlements.mobile_review_allowed)) {
       entitlementMessage =
         "Tenant habilitado para revisão mobile governada, com escalonamento opcional.";

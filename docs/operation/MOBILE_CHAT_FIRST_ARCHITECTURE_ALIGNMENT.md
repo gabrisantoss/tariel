@@ -341,6 +341,29 @@ Impacto: mobile-only fica vendavel sem depender da web para etapas finais.
 
 Testes/gates: mobile unit tests, API tests de download/emissao, smoke mobile se tocar fluxo critico.
 
+Checkpoint PR D: o app mobile passa a entender `capability_aliases`,
+`user_capability_aliases`, `mobile_chat_first_governance` e
+`user_mobile_chat_first_governance` vindos do backend. O helper
+`mobileUserAccess` resolve aliases neutros (`case_self_review`,
+`case_send_to_separate_review`, `official_issue_create`,
+`official_issue_download`, `governed_signatory_select`) com fallback para as
+capabilities legadas, preservando pacotes existentes.
+
+O cockpit mobile expõe sinais derivados para `selfReviewAllowed`,
+`separateMesaRequired`, `officialIssueAllowed`,
+`officialIssueDownloadAllowed`, `reviewSurfaceLabel`, `pendingCaseLabel` e
+`officialIssueLabel`. Quando não há Mesa separada e o pacote permite revisão
+interna, a UI usa `Revisão interna`/`Aprovar internamente` em vez de
+`mobile_autonomous` ou `Aprovar no mobile`. Quando há Mesa separada, mantém
+`Mesa Avaliadora`. PDFs operacionais continuam sendo apenas anexos/relatórios
+da conversa; o app só mostra emissão oficial quando há `emissao_oficial`,
+`current_issue` ou verificação pública no pacote de revisão.
+
+Limite do PR D: não foi criada ação nova de emissão oficial no app nem
+assinatura local/ad hoc. O mobile agora lê disponibilidade, rótulos e estado de
+download oficial; emissão/download completos seguem como PR posterior caso o
+backend mobile precise de endpoint dedicado.
+
 ### PR E - UX do Admin Cliente mostrando pacote/capacidades
 
 Mostrar de forma clara o pacote ativo, o que pode agir, se ha Mesa, se ha emissao oficial, se ha signatario e quais familias exigem revisao.

@@ -55,9 +55,9 @@ export function rotuloCaseSurfaceAction(action: MobileSurfaceAction): string {
     case "chat_reopen":
       return "Reabrir no chat";
     case "mesa_approve":
-      return "Aprovar no mobile";
+      return "Aprovar internamente";
     case "mesa_return":
-      return "Devolver no mobile";
+      return "Devolver para ajuste";
     case "system_issue":
       return "Emitir documento";
   }

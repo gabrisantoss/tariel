@@ -12,6 +12,7 @@ import {
   filterOfflineQueueByMobileAccess,
   hasMobileUserCapability,
   hasMobileUserPortal,
+  resolveMobileChatFirstGovernance,
   resolveMobilePortalSwitchLinks,
   resolveMobileUserPortalLabels,
   resolveMobileUserPortals,
@@ -222,6 +223,90 @@ describe("mobileUserAccess", () => {
     expect(hasMobileUserCapability(user, "inspector_send_to_mesa")).toBe(true);
     expect(hasMobileUserCapability(user, "reviewer_issue")).toBe(false);
     expect(hasMobileUserPortal(user, "revisor")).toBe(false);
+  });
+
+  it("resolve aliases neutros de capabilities sem remover os nomes legados", () => {
+    const user = criarUsuario({
+      allowed_portals: ["inspetor"],
+      tenant_access_policy: {
+        governed_by_admin_ceo: true,
+        portal_entitlements: {
+          inspetor: true,
+          revisor: false,
+        },
+        capability_entitlements: {
+          mobile_case_approve: true,
+          reviewer_issue: false,
+        },
+        user_capability_entitlements: {
+          mobile_case_approve: true,
+          reviewer_issue: false,
+        },
+      },
+    });
+
+    expect(hasMobileUserCapability(user, "mobile_case_approve")).toBe(true);
+    expect(hasMobileUserCapability(user, "case_self_review")).toBe(true);
+    expect(hasMobileUserCapability(user, "official_issue_create")).toBe(false);
+    expect(hasMobileUserCapability(user, "official_issue_download")).toBe(
+      false,
+    );
+  });
+
+  it("prioriza aliases efetivos do usuário sobre fallback legado do tenant", () => {
+    const user = criarUsuario({
+      allowed_portals: ["inspetor"],
+      tenant_access_policy: {
+        governed_by_admin_ceo: true,
+        portal_entitlements: {
+          inspetor: true,
+        },
+        capability_entitlements: {
+          mobile_case_approve: true,
+        },
+        user_capability_aliases: {
+          case_self_review: false,
+        },
+      },
+    });
+
+    expect(hasMobileUserCapability(user, "case_self_review")).toBe(false);
+    expect(hasMobileUserCapability(user, "mobile_case_approve")).toBe(true);
+  });
+
+  it("expõe read model mobile/chat-first para revisão interna sem Mesa", () => {
+    const user = criarUsuario({
+      allowed_portals: ["inspetor"],
+      tenant_access_policy: {
+        governed_by_admin_ceo: true,
+        portal_entitlements: {
+          inspetor: true,
+          revisor: false,
+        },
+        user_capability_aliases: {
+          case_self_review: true,
+          official_issue_create: false,
+        },
+        user_mobile_chat_first_governance: {
+          review_governance_mode: "self_review_allowed",
+          approval_actor_scope: "inspector_self",
+          issue_governance_mode: "none",
+          separate_mesa_required: false,
+          self_review_allowed: true,
+          official_issue_allowed: false,
+          signatory_required: false,
+          available_case_actions: ["case_self_review"],
+        },
+      },
+    });
+
+    expect(resolveMobileChatFirstGovernance(user)).toMatchObject({
+      review_governance_mode: "self_review_allowed",
+      approval_actor_scope: "inspector_self",
+      separate_mesa_required: false,
+      self_review_allowed: true,
+      official_issue_allowed: false,
+    });
   });
 
   it("remove itens de mesa das superfícies offline quando o usuário não tem grant de revisor", () => {

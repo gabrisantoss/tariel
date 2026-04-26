@@ -345,7 +345,7 @@ export function ThreadConversationReviewActionsSection(props: {
         summary.allowedSurfaceActions.includes("mesa_approve")) ? (
         <ReviewPackageActionButton
           disabled={actionDisabled}
-          label="Aprovar no mobile"
+          label="Aprovar internamente"
           onPress={() => {
             void onExecutarComandoRevisaoMobile?.({
               command: "aprovar_no_mobile",

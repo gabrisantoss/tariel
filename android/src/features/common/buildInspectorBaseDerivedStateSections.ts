@@ -31,6 +31,7 @@ import {
   hasMobileUserCapability,
   hasMobileUserPortal,
   buildMobileWorkspaceSummary,
+  resolveMobileChatFirstGovernance,
 } from "./mobileUserAccess";
 import { buildOfflineQueueOperationalSummary } from "../offline/offlineQueueHelpers";
 import { summarizeOfflinePendingQueueV1 } from "../offline/offlineSyncObservability";
@@ -81,8 +82,24 @@ export function buildInspectorConversationDerivedState(
   const vendoFinalizacao = abaAtiva === "finalizar";
   const mensagensVisiveis = conversaAtiva?.mensagens || [];
   const usuarioSessao = session?.bootstrap.usuario;
+  const mobileChatFirstGovernance =
+    resolveMobileChatFirstGovernance(usuarioSessao);
+  const separateMesaRequired = Boolean(
+    mobileChatFirstGovernance.separate_mesa_required,
+  );
+  const selfReviewAllowed = Boolean(
+    mobileChatFirstGovernance.self_review_allowed,
+  );
+  const officialIssueAllowed = Boolean(
+    mobileChatFirstGovernance.official_issue_allowed,
+  );
+  const officialIssueDownloadAllowed = hasMobileUserCapability(
+    usuarioSessao,
+    "official_issue_download",
+  );
   const mesaAcessoPermitido =
     hasMobileUserPortal(usuarioSessao, "revisor") ||
+    hasMobileUserCapability(usuarioSessao, "case_send_to_separate_review") ||
     hasMobileUserCapability(usuarioSessao, "inspector_send_to_mesa");
   const mesaDisponivel = Boolean(conversaAtiva?.laudoId);
   const mesaTemMensagens = mesaAcessoPermitido && Boolean(mensagensMesa.length);
@@ -101,6 +118,16 @@ export function buildInspectorConversationDerivedState(
     ownerRole: activeOwnerRole,
     action: "chat_reopen",
   });
+  const reviewSurfaceLabel =
+    separateMesaRequired || activeOwnerRole === "mesa"
+      ? "Mesa Avaliadora"
+      : selfReviewAllowed
+        ? "Revisão interna"
+        : "Pendências do caso";
+  const pendingCaseLabel = "Pendências do caso";
+  const officialIssueLabel = officialIssueAllowed
+    ? "Emissão oficial"
+    : "Emissão oficial indisponível";
   const placeholderComposer =
     canChatReopen && !previewChatLiberado
       ? caseLifecycleStatus === "emitido"
@@ -111,7 +138,7 @@ export function buildInspectorConversationDerivedState(
           ? "Adicione um contexto curto para acompanhar a evidência."
           : buildGuidedInspectionPlaceholder(guidedInspectionDraft)
         : activeOwnerRole === "mesa" && conversaAtiva && !podeEditarConversa
-          ? "Caso sob revisão da mesa avaliadora."
+          ? "Caso sob revisão da Mesa Avaliadora."
           : conversaAtiva && !podeEditarConversa
             ? "Laudo em modo leitura."
             : anexoRascunho
@@ -121,7 +148,9 @@ export function buildInspectorConversationDerivedState(
                 : "Primeiro envio cria o caso: descreva o item, envie foto ou documento para a IA analisar...";
   const placeholderMesa = !mesaTemMensagens
     ? !mesaAcessoPermitido
-      ? "Seu acesso atual no app não inclui a mesa avaliadora."
+      ? selfReviewAllowed && !separateMesaRequired
+        ? "Use a revisão interna do caso; este pacote não possui Mesa separada."
+        : "Seu acesso atual no app não inclui a Mesa Avaliadora."
       : "Aguardando retorno da mesa."
     : canChatReopen
       ? caseLifecycleStatus === "emitido"
@@ -217,11 +246,20 @@ export function buildInspectorConversationDerivedState(
     mesaTemMensagens,
     mesaIndisponivelDescricao: mesaAcessoPermitido
       ? "Envie o primeiro registro no chat para criar o caso e liberar este espaço."
-      : "O pacote e as permissões atuais desta conta não incluem a mesa avaliadora no app.",
+      : selfReviewAllowed && !separateMesaRequired
+        ? "Este pacote usa revisão interna no app; Mesa Avaliadora só aparece quando contratada ou exigida."
+        : "O pacote e as permissões atuais desta conta não incluem a Mesa Avaliadora no app.",
     mesaIndisponivelTitulo: mesaAcessoPermitido
       ? "Mesa disponível após o primeiro laudo"
-      : "Mesa indisponível para esta conta",
+      : selfReviewAllowed && !separateMesaRequired
+        ? "Revisão interna habilitada"
+        : "Mesa indisponível para esta conta",
     mensagensVisiveis,
+    mobileChatFirstGovernance,
+    officialIssueAllowed,
+    officialIssueDownloadAllowed,
+    officialIssueLabel,
+    pendingCaseLabel,
     placeholderComposer,
     placeholderMesa,
     podeAbrirAnexosChat,
@@ -237,6 +275,9 @@ export function buildInspectorConversationDerivedState(
     tipoTemplateAtivoLabel,
     vendoFinalizacao,
     vendoMesa,
+    reviewSurfaceLabel,
+    selfReviewAllowed,
+    separateMesaRequired,
   };
 }
 

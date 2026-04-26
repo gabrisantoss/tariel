@@ -21,7 +21,7 @@ export function rotuloModoHandoffMesa(
     return "Revisão mobile";
   }
   if (value === "mobile_autonomous") {
-    return "Fluxo autônomo";
+    return "Revisão interna";
   }
   return value ? value.replace(/_/g, " ") : "Revisão governada";
 }
@@ -741,7 +741,7 @@ export function resumirContextoFinalizacao(params: {
             : reviewMode === "mobile_review_allowed"
               ? "A empresa pode validar no mobile ou escalar para a Mesa conforme a governança do caso."
               : reviewMode === "mobile_autonomous"
-                ? "O inspetor pode validar no mobile, mas a decisão final continua humana."
+                ? "O inspetor pode validar internamente no app, mas a decisão final continua humana e rastreável."
                 : "Nenhum laudo é declarado pronto sem uma decisão humana rastreável.",
         tone:
           reviewMode === "mesa_required"

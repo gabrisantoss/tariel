@@ -254,7 +254,7 @@ describe("ThreadConversationPane", () => {
       getByText("Próximas transições: Devolvido para correção · Aprovado"),
     ).toBeTruthy();
     expect(
-      getByText("Ações canônicas: Aprovar no mobile · Devolver no mobile"),
+      getByText("Ações canônicas: Aprovar internamente · Devolver para ajuste"),
     ).toBeTruthy();
     expect(getByText("1 red flag crítica")).toBeTruthy();
     expect(getByText("1 bloco para refazer")).toBeTruthy();
@@ -360,7 +360,7 @@ describe("ThreadConversationPane", () => {
 
     expect(
       getByText(
-        "Próxima ação: Aprovar no mobile. O pacote já permite decisão local. Aprove no mobile quando a revisão estiver coerente com a evidência consolidada.",
+        "Próxima ação: Aprovar internamente. O pacote já permite decisão interna no app. Aprove quando a revisão estiver coerente com a evidência consolidada.",
       ),
     ).toBeTruthy();
     expect(getByText("Sem bloqueios documentais")).toBeTruthy();
@@ -814,7 +814,7 @@ describe("ThreadConversationPane", () => {
   });
 
   it("expõe a superfície principal do chat e marca o último PDF da assistente", () => {
-    const { getByTestId, queryAllByTestId } = render(
+    const { getByTestId, queryAllByTestId, queryByText } = render(
       <ThreadConversationPane
         {...baseProps}
         vendoMesa={false}
@@ -862,5 +862,7 @@ describe("ThreadConversationPane", () => {
     expect(
       queryAllByTestId("chat-last-assistant-document-attachment"),
     ).toHaveLength(1);
+    expect(queryByText("documento emitido")).toBeNull();
+    expect(queryByText("Emissão oficial")).toBeNull();
   });
 });

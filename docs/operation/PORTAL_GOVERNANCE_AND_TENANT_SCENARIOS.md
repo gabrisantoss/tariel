@@ -114,6 +114,18 @@ Checkpoint PR C no Chat Inspetor:
 | Rail do Chat Inspetor | Ferramentas de template/editor/assinatura/PDF/pacote passam a usar aliases neutros como `structured_review_edit` e `official_issue_create`. | O Chat nao depende de chamar tudo de "Mesa" quando o tenant tem capacidade de revisao/emissao pelo cockpit tecnico. |
 | Compatibilidade JS | `window.TARIEL.hasUserCapability` consulta aliases de usuario/tenant e tambem deriva aliases de capabilities legadas. | Pacotes existentes continuam funcionando enquanto novas telas podem pedir capabilities neutras. |
 
+Checkpoint PR D no Mobile:
+
+| Superficie | Ajuste | Efeito |
+| --- | --- | --- |
+| Access policy mobile | O app lê `capability_aliases`, `user_capability_aliases`, `mobile_chat_first_governance` e `user_mobile_chat_first_governance`, com fallback para capabilities legadas. | Pacotes atuais continuam funcionando, mas o app pode perguntar por `case_self_review`, `official_issue_create` ou `official_issue_download`. |
+| Cockpit mobile | Estado derivado passa a expor `selfReviewAllowed`, `separateMesaRequired`, `officialIssueAllowed`, `officialIssueDownloadAllowed` e labels neutros. | Cliente sem Mesa vê `Revisão interna`; cliente com Mesa continua vendo `Mesa Avaliadora`. |
+| Revisão/documento no app | Labels de `mobile_autonomous`/`Aprovar no mobile` viram `Revisão interna`/`Aprovar internamente`; PDF operacional segue separado de emissão oficial. | Reduz ambiguidade comercial sem criar nova regra de emissão. |
+
+O PR D não cria emissão oficial nova pelo app e não adiciona assinatura local.
+Ele prepara o mobile para consumir a governança neutra; endpoints de emissão,
+assinatura e download dedicado continuam sujeitos a capability e a PR posterior.
+
 ## 6. Operating models
 
 | Modelo | Significado | Efeito atual |

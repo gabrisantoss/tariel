@@ -1,4 +1,6 @@
 import type {
+  MobileChatFirstCapabilityAlias,
+  MobileChatFirstGovernance,
   MobileCommercialOperatingModel,
   MobileCommercialServicePackage,
   MobilePortalSwitchLink,
@@ -39,6 +41,22 @@ const MOBILE_COMMERCIAL_SERVICE_PACKAGE_LABELS: Record<
   inspector_chat_mesa: "Chat Inspetor + Mesa Avaliadora",
   inspector_chat_mesa_reviewer_services:
     "Chat Inspetor + Mesa + serviços no Inspetor",
+};
+
+const MOBILE_CHAT_FIRST_CAPABILITY_ALIASES: Record<
+  MobileChatFirstCapabilityAlias,
+  string
+> = {
+  case_create: "inspector_case_create",
+  case_collect: "inspector_case_create",
+  case_finalize_request: "inspector_case_finalize",
+  case_send_to_separate_review: "inspector_send_to_mesa",
+  case_self_review: "mobile_case_approve",
+  case_review_decide: "reviewer_decision",
+  structured_review_edit: "reviewer_decision",
+  official_issue_create: "reviewer_issue",
+  official_issue_download: "reviewer_issue",
+  governed_signatory_select: "reviewer_issue",
 };
 
 const ACCESS_LEVEL_BASE_PORTALS: Record<number, MobileUserPortal> = {
@@ -101,6 +119,96 @@ function resolveTenantAccessPolicy(
     return null;
   }
   return policy;
+}
+
+function readCapabilityFlag(
+  values: Record<string, boolean> | undefined,
+  key: string,
+): boolean | null {
+  if (!values || !Object.prototype.hasOwnProperty.call(values, key)) {
+    return null;
+  }
+  return Boolean(values[key]);
+}
+
+function readCapabilityFromPolicy(
+  tenantPolicy: MobileTenantAccessPolicy | null,
+  capabilityKey: string,
+): boolean | null {
+  const directUserCapability = readCapabilityFlag(
+    tenantPolicy?.user_capability_entitlements,
+    capabilityKey,
+  );
+  if (directUserCapability !== null) {
+    return directUserCapability;
+  }
+  const directUserAlias = readCapabilityFlag(
+    tenantPolicy?.user_capability_aliases,
+    capabilityKey,
+  );
+  if (directUserAlias !== null) {
+    return directUserAlias;
+  }
+  const directTenantCapability = readCapabilityFlag(
+    tenantPolicy?.capability_entitlements,
+    capabilityKey,
+  );
+  if (directTenantCapability !== null) {
+    return directTenantCapability;
+  }
+  const directTenantAlias = readCapabilityFlag(
+    tenantPolicy?.capability_aliases,
+    capabilityKey,
+  );
+  if (directTenantAlias !== null) {
+    return directTenantAlias;
+  }
+
+  const legacyCapability =
+    MOBILE_CHAT_FIRST_CAPABILITY_ALIASES[
+      capabilityKey as MobileChatFirstCapabilityAlias
+    ];
+  if (!legacyCapability) {
+    return null;
+  }
+
+  const legacyUserCapability = readCapabilityFlag(
+    tenantPolicy?.user_capability_entitlements,
+    legacyCapability,
+  );
+  if (legacyUserCapability !== null) {
+    return legacyUserCapability;
+  }
+  return readCapabilityFlag(
+    tenantPolicy?.capability_entitlements,
+    legacyCapability,
+  );
+}
+
+function isGovernanceRecord(
+  value: unknown,
+): value is MobileChatFirstGovernance {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeAvailableCaseActions(
+  governance: MobileChatFirstGovernance | null,
+  aliases: Record<MobileChatFirstCapabilityAlias, boolean>,
+  separateMesaRequired: boolean,
+): string[] {
+  if (Array.isArray(governance?.available_case_actions)) {
+    return governance.available_case_actions
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+  }
+  return Object.entries(aliases)
+    .filter(([action, enabled]) => {
+      if (!enabled) {
+        return false;
+      }
+      return !(action === "case_self_review" && separateMesaRequired);
+    })
+    .map(([action]) => action);
 }
 
 function basePublicaPortalWeb(): string {
@@ -198,21 +306,91 @@ export function hasMobileUserCapability(
     return false;
   }
   const tenantPolicy = resolveTenantAccessPolicy(user);
-  const userCapabilities = tenantPolicy?.user_capability_entitlements;
-  if (
-    userCapabilities &&
-    Object.prototype.hasOwnProperty.call(userCapabilities, capabilityKey)
-  ) {
-    return Boolean(userCapabilities[capabilityKey]);
-  }
-  const tenantCapabilities = tenantPolicy?.capability_entitlements;
-  if (
-    tenantCapabilities &&
-    Object.prototype.hasOwnProperty.call(tenantCapabilities, capabilityKey)
-  ) {
-    return Boolean(tenantCapabilities[capabilityKey]);
-  }
-  return false;
+  return readCapabilityFromPolicy(tenantPolicy, capabilityKey) === true;
+}
+
+export function resolveMobileChatFirstGovernance(
+  user: MobileUser | null | undefined,
+): MobileChatFirstGovernance {
+  const tenantPolicy = resolveTenantAccessPolicy(user);
+  const explicitUserGovernance = isGovernanceRecord(
+    tenantPolicy?.user_mobile_chat_first_governance,
+  )
+    ? tenantPolicy.user_mobile_chat_first_governance
+    : null;
+  const explicitTenantGovernance = isGovernanceRecord(
+    tenantPolicy?.mobile_chat_first_governance,
+  )
+    ? tenantPolicy.mobile_chat_first_governance
+    : null;
+  const explicitGovernance = explicitUserGovernance || explicitTenantGovernance;
+  const aliases = Object.fromEntries(
+    Object.keys(MOBILE_CHAT_FIRST_CAPABILITY_ALIASES).map((alias) => [
+      alias,
+      hasMobileUserCapability(user, alias),
+    ]),
+  ) as Record<MobileChatFirstCapabilityAlias, boolean>;
+  const rawReviewMode = String(explicitGovernance?.review_governance_mode || "")
+    .trim()
+    .toLowerCase();
+  const separateMesaRequired =
+    typeof explicitGovernance?.separate_mesa_required === "boolean"
+      ? explicitGovernance.separate_mesa_required
+      : rawReviewMode === "separate_mesa_required" ||
+        aliases.case_send_to_separate_review;
+  const selfReviewAllowed =
+    typeof explicitGovernance?.self_review_allowed === "boolean"
+      ? explicitGovernance.self_review_allowed
+      : !separateMesaRequired && aliases.case_self_review;
+  const officialIssueAllowed =
+    typeof explicitGovernance?.official_issue_allowed === "boolean"
+      ? explicitGovernance.official_issue_allowed
+      : aliases.official_issue_create;
+  const signatoryRequired =
+    typeof explicitGovernance?.signatory_required === "boolean"
+      ? explicitGovernance.signatory_required
+      : officialIssueAllowed;
+  const reviewGovernanceMode =
+    explicitGovernance?.review_governance_mode ||
+    (separateMesaRequired
+      ? "separate_mesa_required"
+      : selfReviewAllowed
+        ? "self_review_allowed"
+        : "review_not_configured");
+  const issueGovernanceMode =
+    explicitGovernance?.issue_governance_mode ||
+    (!officialIssueAllowed
+      ? "none"
+      : signatoryRequired
+        ? "signatory_required"
+        : "official_issue_allowed");
+
+  return {
+    ...explicitGovernance,
+    review_governance_mode: reviewGovernanceMode,
+    approval_actor_scope:
+      explicitGovernance?.approval_actor_scope ||
+      (separateMesaRequired
+        ? "separate_mesa"
+        : selfReviewAllowed
+          ? "inspector_self"
+          : aliases.case_review_decide
+            ? "tenant_reviewer"
+            : "unassigned"),
+    issue_governance_mode: issueGovernanceMode,
+    separate_mesa_required: separateMesaRequired,
+    self_review_allowed: selfReviewAllowed,
+    official_issue_allowed: officialIssueAllowed,
+    signatory_required: signatoryRequired,
+    available_case_actions: normalizeAvailableCaseActions(
+      explicitGovernance,
+      aliases,
+      separateMesaRequired,
+    ),
+    capability_alias_source:
+      explicitGovernance?.capability_alias_source ||
+      MOBILE_CHAT_FIRST_CAPABILITY_ALIASES,
+  };
 }
 
 export function resolveMobileUserPortalLabels(

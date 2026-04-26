@@ -141,7 +141,7 @@ describe("exportDataFlow", () => {
         lifecycle: "Aguardando mesa",
         owner: "Mesa avaliadora",
         nextTransitions: "Mesa em revisão",
-        allowedActions: "Aprovar no mobile · Devolver no mobile",
+        allowedActions: "Aprovar internamente · Devolver para ajuste",
         reportPackReadiness: "Pre-laudo em montagem",
         reportPackCoverage: "0/5 blocos",
         reportPackValidationMode: "Mesa obrigatoria",
@@ -180,7 +180,7 @@ describe("exportDataFlow", () => {
       expect.objectContaining({
         extension: "txt",
         content: expect.stringContaining(
-          "Caso 88: Aguardando mesa · Mesa avaliadora · Aprovar no mobile · Devolver no mobile · Pre-laudo em montagem · 0/5 blocos · Mesa obrigatoria · Linha de vida cobertura A · Bloco 2 · Reemissão recomendada · PDF emitido divergente · Emitido v0003 · Atual v0004",
+          "Caso 88: Aguardando mesa · Mesa avaliadora · Aprovar internamente · Devolver para ajuste · Pre-laudo em montagem · 0/5 blocos · Mesa obrigatoria · Linha de vida cobertura A · Bloco 2 · Reemissão recomendada · PDF emitido divergente · Emitido v0003 · Atual v0004",
         ),
       }),
     );

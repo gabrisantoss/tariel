@@ -263,7 +263,7 @@ describe("HistoryDrawerPanel", () => {
     const { getByTestId } = render(<HistoryDrawerPanel {...props} />);
 
     expect(getByTestId("history-item-meta-80").props.children).toBe(
-      "Operacao · Mesa avaliadora · Aprovar no mobile",
+      "Operacao · Mesa avaliadora · Aprovar internamente",
     );
     expect(getByTestId("history-item-owner-80").props.children).toBe(
       "Owner · Mesa avaliadora",
