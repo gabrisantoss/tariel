@@ -1,6 +1,6 @@
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
-import type { MobileReviewPackage } from "../../types/mobile";
+import type { MobileAttachment, MobileReviewPackage } from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
 import {
   lerRegistro,
@@ -11,6 +11,7 @@ import {
 export function renderizarDocumentoEmitidoCard(
   reviewPackage: MobileReviewPackage | null | undefined,
   caseLifecycleStatus: string | undefined,
+  onAbrirAnexoOficial?: (attachment: MobileAttachment) => void,
   testID = "chat-issued-document-card",
 ) {
   const review = lerRegistro(reviewPackage);
@@ -18,6 +19,22 @@ export function renderizarDocumentoEmitidoCard(
   const currentIssue = lerRegistro(emissaoOficial?.current_issue);
   const verification = lerRegistro(review?.public_verification);
   const issueNumber = lerTexto(currentIssue?.issue_number);
+  const downloadUrl =
+    lerTexto(currentIssue?.download_url) ||
+    lerTexto(emissaoOficial?.download_url);
+  const downloadAttachment: MobileAttachment | null = downloadUrl
+    ? {
+        nome:
+          lerTexto(currentIssue?.package_filename) ||
+          `${issueNumber || "emissao_oficial"}.zip`,
+        label:
+          lerTexto(currentIssue?.download_label) || "Baixar pacote oficial",
+        mime_type:
+          lerTexto(currentIssue?.download_mime_type) || "application/zip",
+        categoria: "emissao_oficial",
+        url: downloadUrl,
+      }
+    : null;
   const issueState = lerTexto(currentIssue?.issue_state_label, "Emitido");
   const issuedAt = lerTexto(currentIssue?.issued_at);
   const verificationUrl = lerTexto(verification?.verification_url);
@@ -68,6 +85,30 @@ export function renderizarDocumentoEmitidoCard(
               : ""}
           </Text>
         </View>
+      ) : null}
+      {downloadAttachment ? (
+        <Pressable
+          accessibilityRole="button"
+          disabled={!onAbrirAnexoOficial}
+          onPress={() => onAbrirAnexoOficial?.(downloadAttachment)}
+          style={[
+            styles.threadReviewActionButton,
+            styles.threadReviewActionButtonAccent,
+            !onAbrirAnexoOficial
+              ? styles.threadReviewActionButtonDisabled
+              : null,
+          ]}
+          testID="chat-issued-document-download"
+        >
+          <Text
+            style={[
+              styles.threadReviewActionButtonText,
+              styles.threadReviewActionButtonTextAccent,
+            ]}
+          >
+            Baixar pacote oficial
+          </Text>
+        </Pressable>
       ) : null}
       {verificationUrl ? (
         <Text style={styles.threadReviewFootnote}>

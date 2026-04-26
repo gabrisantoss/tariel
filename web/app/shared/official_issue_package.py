@@ -1542,6 +1542,10 @@ def build_official_issue_summary(
 
     current_record = load_active_official_issue_record(banco, laudo=laudo)
     current_issue = serialize_official_issue_record(current_record)
+    if current_issue is not None and bool(current_issue.get("package_present_on_disk")):
+        current_issue["download_url"] = f"/app/api/laudo/{int(laudo.id)}/emissao-oficial/download"
+        current_issue["download_label"] = "Baixar pacote oficial"
+        current_issue["download_mime_type"] = "application/zip"
     already_issued = current_issue is not None
     snapshot_reissue_recommended = bool(
         current_record is not None

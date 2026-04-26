@@ -102,6 +102,7 @@ describe("ThreadConversationPane", () => {
   });
 
   it("renderiza o card de revisão operacional quando o pacote está disponível", () => {
+    const onAbrirAnexo = jest.fn();
     const { getAllByText, getByTestId, getByText } = render(
       <ThreadConversationPane
         {...baseProps}
@@ -125,6 +126,7 @@ describe("ThreadConversationPane", () => {
         ]}
         allowedSurfaceActions={["mesa_approve", "mesa_return"]}
         caseLifecycleStatus="em_revisao_mesa"
+        onAbrirAnexo={onAbrirAnexo}
         reviewPackage={{
           review_mode: "mesa_required",
           review_required: true,
@@ -226,6 +228,10 @@ describe("ThreadConversationPane", () => {
               issue_number: "TAR-20260410-000123",
               issue_state_label: "Emitido",
               issued_at: "2026-04-10T13:40:00+00:00",
+              package_filename: "TAR-20260410-000123.zip",
+              download_url: "/app/api/laudo/123/emissao-oficial/download",
+              download_label: "Baixar pacote oficial",
+              download_mime_type: "application/zip",
               primary_pdf_diverged: true,
               primary_pdf_storage_version: "v0003",
               current_primary_pdf_storage_version: "v0004",
@@ -279,6 +285,14 @@ describe("ThreadConversationPane", () => {
       ),
     ).toBeTruthy();
     expect(getByText("Aprovação governada")).toBeTruthy();
+    fireEvent.press(getByTestId("mesa-review-official-issue-download"));
+    expect(onAbrirAnexo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categoria: "emissao_oficial",
+        nome: "TAR-20260410-000123.zip",
+        url: "/app/api/laudo/123/emissao-oficial/download",
+      }),
+    );
     expect(getByText("Diff entre emissões")).toBeTruthy();
     expect(getAllByText("Identificação").length).toBeGreaterThan(0);
     expect(getByText("Identificação / Tag")).toBeTruthy();
@@ -706,12 +720,14 @@ describe("ThreadConversationPane", () => {
   });
 
   it("destaca o documento emitido na thread quando o caso já tem emissão oficial", () => {
+    const onAbrirAnexo = jest.fn();
     const { getByTestId, getByText } = render(
       <ThreadConversationPane
         {...baseProps}
         vendoMesa={false}
         conversaVazia={false}
         caseLifecycleStatus="emitido"
+        onAbrirAnexo={onAbrirAnexo}
         mensagensVisiveis={[
           {
             id: 1,
@@ -728,6 +744,10 @@ describe("ThreadConversationPane", () => {
               issue_number: "TAR-20260413-000321",
               issue_state_label: "Emitido",
               issued_at: "2026-04-13T18:45:00+00:00",
+              package_filename: "TAR-20260413-000321.zip",
+              download_url: "/app/api/laudo/321/emissao-oficial/download",
+              download_label: "Baixar pacote oficial",
+              download_mime_type: "application/zip",
               primary_pdf_diverged: true,
               primary_pdf_storage_version: "v0003",
               current_primary_pdf_storage_version: "v0004",
@@ -751,6 +771,16 @@ describe("ThreadConversationPane", () => {
     expect(
       getByText("Verificação pública: /app/public/laudo/verificar/hash321"),
     ).toBeTruthy();
+
+    fireEvent.press(getByTestId("chat-issued-document-download"));
+    expect(onAbrirAnexo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categoria: "emissao_oficial",
+        mime_type: "application/zip",
+        nome: "TAR-20260413-000321.zip",
+        url: "/app/api/laudo/321/emissao-oficial/download",
+      }),
+    );
   });
 
   it("não mostra cards formais quando o caso segue em análise livre", () => {

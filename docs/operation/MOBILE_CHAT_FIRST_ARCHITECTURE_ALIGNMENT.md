@@ -224,6 +224,8 @@ Checkpoint PR E: o Portal Cliente passa a usar o mesmo read model mobile/chat-fi
 
 A regra de arquitetura permanece a mesma: o Portal Cliente não cria capability nova, não relaxa validação e não transforma PDF operacional em emissão oficial. Ele apenas diferencia recurso disponível, recurso não incluído no pacote e recurso que depende da família/template, reduzindo a chance de o cliente interpretar governança contratual como erro do sistema.
 
+Checkpoint Mobile download oficial: quando o backend já possui `EmissaoOficialLaudo` ativa e pacote congelado disponível, o resumo de emissão publica uma `download_url` autenticada para o app. O Mobile mostra `Baixar pacote oficial` na thread e na superfície Mesa usando o downloader autenticado existente. Isso fecha o acesso mobile ao pacote oficial já emitido, mas não cria emissão oficial pelo app, não adiciona assinatura local e não implementa ainda auditoria de download.
+
 ## 11. Portal Cliente
 
 O Portal Cliente deve continuar sendo o lugar de administracao, visibilidade, auditoria e entrega. Ele pode ter operacao quando pacote permitir, mas nao deve virar cockpit tecnico padrao para todo tenant.

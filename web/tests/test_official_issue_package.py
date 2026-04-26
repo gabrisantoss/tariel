@@ -252,9 +252,11 @@ def test_build_official_issue_package_bloqueia_nr35_sem_quatro_fotos(ambiente_cr
     )
 
 
-def test_build_official_issue_package_expoe_emissao_ativa_e_reemissao_recomendada(ambiente_critico) -> None:
+def test_build_official_issue_package_expoe_emissao_ativa_e_reemissao_recomendada(ambiente_critico, tmp_path) -> None:
     SessionLocal = ambiente_critico["SessionLocal"]
     ids = ambiente_critico["ids"]
+    pacote_oficial = tmp_path / "TAR-20260410-0001.zip"
+    pacote_oficial.write_bytes(b"pacote oficial congelado")
 
     with SessionLocal() as banco:
         laudo = Laudo(
@@ -311,7 +313,7 @@ def test_build_official_issue_package_expoe_emissao_ativa_e_reemissao_recomendad
                 package_sha256="a" * 64,
                 package_fingerprint_sha256="b" * 64,
                 package_filename="TAR-20260410-0001.zip",
-                package_storage_path="/tmp/TAR-20260410-0001.zip",
+                package_storage_path=str(pacote_oficial),
                 package_size_bytes=256,
                 manifest_json={"bundle_kind": "tariel_official_issue_package"},
                 issue_context_json={
@@ -339,6 +341,11 @@ def test_build_official_issue_package_expoe_emissao_ativa_e_reemissao_recomendad
         assert emissao_oficial["reissue_recommended"] is False
         assert emissao_oficial["issue_status"] == "issued_officially"
         assert emissao_oficial["current_issue"]["issue_number"] == "TAR-20260410-0001"
+        assert (
+            emissao_oficial["current_issue"]["download_url"]
+            == f"/app/api/laudo/{int(laudo.id)}/emissao-oficial/download"
+        )
+        assert emissao_oficial["current_issue"]["download_mime_type"] == "application/zip"
         assert emissao_oficial["audit_trail"][0]["event_key"] == "official_issue_record"
 
         snapshot_v2 = ApprovedCaseSnapshot(

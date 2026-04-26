@@ -1,6 +1,7 @@
 import { Text, View } from "react-native";
 
 import type {
+  MobileAttachment,
   MobileMesaReviewCommandPayload,
   MobileReviewPackage,
 } from "../../types/mobile";
@@ -27,6 +28,7 @@ export function renderizarReviewPackageMesa(
     | ((payload: MobileMesaReviewCommandPayload) => Promise<void>)
     | undefined,
   reviewCommandBusy: boolean,
+  onAbrirAnexoOficial?: (attachment: MobileAttachment) => void,
 ) {
   const summary = buildThreadConversationReviewPackageSummary(
     reviewPackage,
@@ -203,7 +205,10 @@ export function renderizarReviewPackageMesa(
       ) : null}
 
       <ThreadConversationReviewVerificationSection summary={summary} />
-      <ThreadConversationReviewOfficialIssueSection summary={summary} />
+      <ThreadConversationReviewOfficialIssueSection
+        onAbrirAnexoOficial={onAbrirAnexoOficial}
+        summary={summary}
+      />
       <ThreadConversationReviewDiffSection summary={summary} />
       <ThreadConversationReviewRedFlagsSection summary={summary} />
       <ThreadConversationReviewDecisionFocusSection

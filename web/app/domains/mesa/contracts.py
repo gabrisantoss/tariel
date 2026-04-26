@@ -325,6 +325,9 @@ class EmissaoOficialAtualPacoteMesa(BaseModel):
     package_filename: str | None = Field(default=None, max_length=220)
     package_storage_ready: bool = False
     package_size_bytes: int | None = Field(default=None, ge=0)
+    download_url: str | None = Field(default=None, max_length=400)
+    download_label: str | None = Field(default=None, max_length=120)
+    download_mime_type: str | None = Field(default=None, max_length=120)
     verification_hash: str | None = Field(default=None, max_length=64)
     verification_url: str | None = Field(default=None, max_length=400)
     approval_snapshot_id: int | None = Field(default=None, ge=1)

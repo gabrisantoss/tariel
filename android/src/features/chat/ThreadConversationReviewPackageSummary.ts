@@ -1,4 +1,5 @@
 import type {
+  MobileAttachment,
   MobileLifecycleTransition,
   MobileReviewPackage,
   MobileSurfaceAction,
@@ -34,6 +35,32 @@ function rotuloModoRevisao(reviewMode: string | null | undefined): string {
     return "Revisão interna";
   }
   return value ? value.replace(/_/g, " ") : "Revisão governada";
+}
+
+function montarAnexoDownloadOficial(
+  emissaoOficial: Record<string, unknown> | null,
+  emissaoAtual: Record<string, unknown> | null,
+): MobileAttachment | null {
+  const downloadUrl =
+    lerTexto(emissaoAtual?.download_url) ||
+    lerTexto(emissaoOficial?.download_url);
+  if (!downloadUrl) {
+    return null;
+  }
+
+  const issueNumber = lerTexto(emissaoAtual?.issue_number, "emissao_oficial");
+  const packageFilename = lerTexto(emissaoAtual?.package_filename);
+  const label =
+    lerTexto(emissaoAtual?.download_label) ||
+    (issueNumber ? `Baixar pacote ${issueNumber}` : "Baixar pacote oficial");
+
+  return {
+    nome: packageFilename || `${issueNumber}.zip`,
+    label,
+    mime_type: lerTexto(emissaoAtual?.download_mime_type) || "application/zip",
+    categoria: "emissao_oficial",
+    url: downloadUrl,
+  };
 }
 
 export function rotuloStatusBloco(reviewStatus: string): string {
@@ -272,6 +299,10 @@ export function buildThreadConversationReviewPackageSummary(
   const anexoPack = lerRegistro(reviewPackage.anexo_pack);
   const emissaoOficial = lerRegistro(reviewPackage.emissao_oficial);
   const emissaoAtual = lerRegistro(emissaoOficial?.current_issue);
+  const officialIssueDownloadAttachment = montarAnexoDownloadOficial(
+    emissaoOficial,
+    emissaoAtual,
+  );
   const issueIntegrity = resumirIntegridadePdfOficial(
     emissaoOficial,
     emissaoAtual,
@@ -422,6 +453,7 @@ export function buildThreadConversationReviewPackageSummary(
       "Emitido",
     ),
     currentOfficialIssueIssuedAt: lerTexto(emissaoAtual?.issued_at),
+    officialIssueDownloadAttachment,
     officialIssueBlockers: lerArrayRegistros(emissaoOficial?.blockers).map(
       (item) => lerTexto(item.title || item.message, "Bloqueio de emissão"),
     ),

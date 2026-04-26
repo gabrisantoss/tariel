@@ -1,6 +1,9 @@
 import { Image, Pressable, Text, View } from "react-native";
 
-import type { MobileMesaReviewCommandPayload } from "../../types/mobile";
+import type {
+  MobileAttachment,
+  MobileMesaReviewCommandPayload,
+} from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
 import {
   obterTomStatusBloco,
@@ -109,8 +112,10 @@ export function ThreadConversationReviewVerificationSection(props: {
 
 export function ThreadConversationReviewOfficialIssueSection(props: {
   summary: ThreadConversationReviewPackageSummary;
+  onAbrirAnexoOficial?: (attachment: MobileAttachment) => void;
 }) {
-  const { summary } = props;
+  const { onAbrirAnexoOficial, summary } = props;
+  const officialDownloadAttachment = summary.officialIssueDownloadAttachment;
 
   if (!summary.officialIssueLabel && !summary.annexSummary) {
     return null;
@@ -157,6 +162,15 @@ export function ThreadConversationReviewOfficialIssueSection(props: {
               : ""}
           </Text>
         </View>
+      ) : null}
+      {officialDownloadAttachment ? (
+        <ReviewPackageActionButton
+          disabled={!onAbrirAnexoOficial}
+          label="Baixar pacote oficial"
+          onPress={() => onAbrirAnexoOficial?.(officialDownloadAttachment)}
+          testID="mesa-review-official-issue-download"
+          tone="accent"
+        />
       ) : null}
       {summary.officialIssueBlockers.slice(0, 3).map((item) => (
         <View key={item} style={styles.threadReviewWarningItem}>
