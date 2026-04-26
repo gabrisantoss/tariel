@@ -31,12 +31,24 @@ Comandos úteis na raiz:
 
 ```bash
 make help
+make verify
+make release-verify-local
+make release-verify
+make smoke-mobile
 make hygiene-check
 make web-ci
 make mesa-smoke
 make mobile-ci
 make ci
 ```
+
+Leitura rápida:
+
+- `make verify`: baseline local atual
+- `make release-verify-local`: gate forte local antes de promoção
+- `make release-verify`: gate completo de promoção, incluindo a lane real já modelada em `release-gate-real`
+- `make smoke-mobile`: lane real do Android; materializa `android/android` via preflight oficial se o projeto nativo ainda nao existir e usa SQLite temporario auditado para backend local
+- Android prebuild: requer Node `^20.19.0 || ^22.13.0 || >=24`; o preflight usa `nvm` para selecionar uma versao compativel quando disponivel
 
 Hooks opcionais:
 

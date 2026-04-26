@@ -80,21 +80,19 @@ env:
 
 - takeScreenshot: pilot-run-history
 
-- retry:
-    maxRetries: 3
-    commands:
-      - tapOn:
-          id: history-item-${TARGET_LAUDO_ID}
-          retryTapIfNoChange: true
-          waitToSettleTimeoutMs: 1800
-      - extendedWaitUntil:
-          visible:
-            id: history-selection-callback-fired-${TARGET_LAUDO_ID}
-          timeout: 4000
-      - extendedWaitUntil:
-          visible:
-            id: authenticated-shell-selection-ready-${TARGET_LAUDO_ID}
-          timeout: 7000
+- tapOn:
+    id: history-item-${TARGET_LAUDO_ID}
+    retryTapIfNoChange: true
+    waitToSettleTimeoutMs: 1800
+
+- extendedWaitUntil:
+    visible:
+      id: chat-thread-surface
+    timeout: 15000
+
+- extendedWaitUntil:
+    visible: Mobile pilot V2 target
+    timeout: 15000
 
 - takeScreenshot: pilot-run-conversation
 
@@ -145,52 +143,54 @@ env:
 
 - extendedWaitUntil:
     visible:
-      id: activity-center-terminal-state
+      id: activity-center-empty-state
     timeout: 20000
 
 - takeScreenshot: pilot-run-activity-center
 
+- tapOn:
+    id: activity-center-close-button
+
 - runFlow:
     when:
       visible:
-        id: activity-center-feed-v2-served
+        id: settings-drawer-back-button
     commands:
-      - extendedWaitUntil:
-          visible:
-            id: activity-center-feed-v2-target-${TARGET_LAUDO_ID}
-          timeout: 4000
       - tapOn:
-          id: activity-center-close-button
-      - runFlow:
-          when:
-            visible:
-              id: settings-drawer-back-button
-          commands:
-            - tapOn:
-                id: settings-drawer-back-button
-      - runFlow:
-          when:
-            visible:
-              id: settings-drawer-back-button
-          commands:
-            - tapOn:
-                id: settings-drawer-back-button
-      - runFlow:
-          when:
-            visible:
-              id: close-settings-drawer-button
-          commands:
-            - tapOn:
-                id: close-settings-drawer-button
-      - runFlow:
-          when:
-            visible:
-              id: mesa-tab-button
-          commands:
-            - tapOn:
-                id: mesa-tab-button
-            - extendedWaitUntil:
-                visible:
-                  id: mesa-thread-surface
-                timeout: 15000
-            - takeScreenshot: pilot-run-mesa-thread
+          id: settings-drawer-back-button
+
+- runFlow:
+    when:
+      visible:
+        id: settings-drawer-back-button
+    commands:
+      - tapOn:
+          id: settings-drawer-back-button
+
+- runFlow:
+    when:
+      visible:
+        id: close-settings-drawer-button
+    commands:
+      - tapOn:
+          id: close-settings-drawer-button
+
+- extendedWaitUntil:
+    visible:
+      id: chat-report-pack-card-open-mesa
+    timeout: 15000
+
+- tapOn:
+    id: chat-report-pack-card-open-mesa
+
+- extendedWaitUntil:
+    visible:
+      id: mesa-thread-surface
+    timeout: 15000
+
+- extendedWaitUntil:
+    visible:
+      id: mesa-thread-loaded
+    timeout: 20000
+
+- takeScreenshot: pilot-run-mesa-thread

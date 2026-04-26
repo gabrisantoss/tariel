@@ -103,6 +103,9 @@ interface UseActivityCenterControllerParams<
   onObserveMesaFeedReadMetadata?: (
     metadata: MobileV2ReadRenderMetadata | null,
   ) => void;
+  onObserveMesaThreadReadMetadata?: (
+    metadata: MobileV2ReadRenderMetadata | null,
+  ) => void;
   onObserveMesaFeedRequestedTargetIds?: (targetIds: number[]) => void;
   maxNotifications: number;
 }
@@ -346,6 +349,7 @@ export function useActivityCenterController<
       onSetStatusApi: current.onSetStatusApi,
       onSetErroConversaIfEmpty: current.onSetErroConversaIfEmpty,
       onObserveMesaFeedReadMetadata: current.onObserveMesaFeedReadMetadata,
+      onObserveMesaThreadReadMetadata: current.onObserveMesaThreadReadMetadata,
       onObserveMesaFeedRequestedTargetIds:
         current.onObserveMesaFeedRequestedTargetIds,
     });

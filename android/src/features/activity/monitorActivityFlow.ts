@@ -63,6 +63,9 @@ interface RunMonitorActivityFlowParams<TNotification> {
   onObserveMesaFeedReadMetadata?: (
     metadata: MobileV2ReadRenderMetadata | null,
   ) => void;
+  onObserveMesaThreadReadMetadata?: (
+    metadata: MobileV2ReadRenderMetadata | null,
+  ) => void;
   onObserveMesaFeedRequestedTargetIds?: (targetIds: number[]) => void;
 }
 
@@ -94,6 +97,7 @@ export async function runMonitorActivityFlow<TNotification>({
   onSetStatusApi,
   onSetErroConversaIfEmpty,
   onObserveMesaFeedReadMetadata,
+  onObserveMesaThreadReadMetadata,
   onObserveMesaFeedRequestedTargetIds,
 }: RunMonitorActivityFlowParams<TNotification>) {
   const result: ActivityMonitorFlowResult = {
@@ -252,6 +256,9 @@ export async function runMonitorActivityFlow<TNotification>({
         if (conversaLaudoId === laudoId) {
           onSetMensagensMesa(itensMesa);
           onSetLaudoMesaCarregado(laudoId);
+          onObserveMesaThreadReadMetadata?.(
+            extractMobileV2ReadRenderMetadata(payload),
+          );
           atualizarResumoLaudoAtual(payload);
         }
       }

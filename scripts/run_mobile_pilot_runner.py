@@ -36,19 +36,62 @@ WEB_ROOT = REPO_ROOT / "web"
 ARTIFACTS_ROOT = REPO_ROOT / "artifacts" / "mobile_pilot_run"
 DEVKIT_RUNTIME_ROOT = REPO_ROOT / ".tmp_online" / "devkit"
 MOBILE_PILOT_LANE_STATE_FILE = DEVKIT_RUNTIME_ROOT / "mobile_pilot_lane_status.json"
+MOBILE_NATIVE_PREFLIGHT_STATE_FILE = DEVKIT_RUNTIME_ROOT / "mobile_native_preflight_status.json"
 DEFAULT_PORTS = (8000, 8081, 19000, 19001)
 DEFAULT_MOBILE_PASSWORD = "Dev@123456"
 DEFAULT_TIMEOUT = 30
 LOCAL_MOBILE_API_BASE_URL = "http://127.0.0.1:8000"
+EMULATOR_MOBILE_API_BASE_URL = "http://10.0.2.2:8000"
 HEALTH_URL = "http://127.0.0.1:8000/health"
 PACKAGE_NAME = "com.tarielia.inspetor"
 FLOW_PATH = ANDROID_ROOT / "maestro" / "mobile-v2-pilot-run.yaml"
+MOBILE_PILOT_TARGET_TEXT = "Mobile pilot V2 target"
+MOBILE_PILOT_CHAT_SURFACE_TEST_ID = "chat-thread-surface"
+MOBILE_PILOT_MESA_ENTRY_TEST_ID = "chat-report-pack-card-open-mesa"
+MOBILE_PILOT_MESA_ENTRY_LABEL = "Abrir Mesa"
+MOBILE_PILOT_MESA_SURFACE_TEST_ID = "mesa-thread-surface"
+MOBILE_PILOT_MESA_LOADED_TEST_ID = "mesa-thread-loaded"
+ANDROID_NATIVE_PROJECT_ROOT = ANDROID_ROOT / "android"
+ANDROID_BUILD_GRADLE_PATH = ANDROID_NATIVE_PROJECT_ROOT / "app" / "build.gradle"
+ANDROID_MANIFEST_PATH = (
+    ANDROID_NATIVE_PROJECT_ROOT / "app" / "src" / "main" / "AndroidManifest.xml"
+)
+ANDROID_PREVIEW_APK_PATH = (
+    ANDROID_NATIVE_PROJECT_ROOT
+    / "app"
+    / "build"
+    / "outputs"
+    / "apk"
+    / "release"
+    / "app-release.apk"
+)
 DEVICE_TMP_DIR = "/data/local/tmp"
 MAESTRO_ENVIRONMENT_RETRY_LIMIT = 1
 ANDROID_BOOT_TIMEOUT_SECONDS = 420
 ANDROID_HEALTH_STABLE_PASSES = 3
+NODE_ENGINE_REQUIREMENT = "^20.19.0 || ^22.13.0 || >=24"
+MOBILE_LOCAL_DB_FILENAME = "mobile_local.sqlite3"
+MOBILE_REQUIRED_SEED_EMAILS = (
+    "admin@tariel.ia",
+    "inspetor@tariel.ia",
+    "revisor@tariel.ia",
+)
+MOBILE_LOCAL_BACKEND_ROLLOUT_FLAG_NAMES = (
+    "TARIEL_V2_ANDROID_PUBLIC_CONTRACT",
+    "TARIEL_V2_ANDROID_ROLLOUT",
+    "TARIEL_V2_ANDROID_ROLLOUT_OBSERVABILITY",
+    "TARIEL_V2_ANDROID_FEED_ENABLED",
+    "TARIEL_V2_ANDROID_THREAD_ENABLED",
+    "TARIEL_V2_ANDROID_PILOT_TENANT_KEY",
+    "TARIEL_V2_ANDROID_ROLLOUT_STATE_OVERRIDES",
+    "TARIEL_V2_ANDROID_ROLLOUT_SURFACE_STATE_OVERRIDES",
+)
+MOBILE_LOCAL_ANDROID_BUILD_FLAG_VALUES = {
+    "EXPO_PUBLIC_ANDROID_V2_READ_CONTRACTS_ENABLED": "1",
+    "EXPO_PUBLIC_MOBILE_AUTOMATION_DIAGNOSTICS": "1",
+}
 _BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
-_RUNNER_DB_SNAPSHOT_CACHE: dict[str, str | None] | None = None
+_RUNNER_DB_SNAPSHOT_CACHE: dict[str, Any] | None = None
 
 
 class RunnerError(RuntimeError):
@@ -96,6 +139,12 @@ class ExecutionState:
     notes: list[str] = dataclasses.field(default_factory=list)
     commands_used: list[str] = dataclasses.field(default_factory=list)
     build_used_existing_install: bool = False
+    apk_build_preflight: dict[str, Any] | None = None
+    mobile_network_preflight: dict[str, Any] | None = None
+    api_base_url_for_build: str = ""
+    auth_web_base_url_for_build: str = ""
+    api_base_url_runtime_if_available: str = ""
+    android_localhost_strategy_for_build: str = ""
     ui_marker_summary: dict[str, Any] | None = None
     maestro_target_tap_completed: bool = False
     maestro_selection_callback_confirmed: bool = False
@@ -104,11 +153,53 @@ class ExecutionState:
     maestro_shell_selection_wait_failed: bool = False
     maestro_activity_center_terminal_confirmed: bool = False
     maestro_activity_center_v2_confirmed: bool = False
+    maestro_mesa_entry_target_found: bool = False
+    maestro_mesa_entry_target_tapped: bool = False
+    maestro_thread_surface_confirmed: bool = False
     visual_mode: bool = False
     maestro_attempts: int = 0
     maestro_environment_retry_used: bool = False
     environment_failure_signals: list[str] = dataclasses.field(default_factory=list)
     host_phase_events: list[dict[str, Any]] = dataclasses.field(default_factory=list)
+    native_project_root: str = ""
+    native_project_root_from_workspace: str = ""
+    native_build_gradle_path: str = ""
+    native_manifest_path: str = ""
+    native_project_present_before_preflight: bool | None = None
+    native_project_present_after_preflight: bool | None = None
+    native_prebuild_executed: bool = False
+    native_prebuild_succeeded: bool | None = None
+    native_prebuild_command: str = ""
+    native_prebuild_status: str = ""
+    native_prebuild_detail: str = ""
+    native_prebuild_next_requirement: str = ""
+    native_preflight_state_file: str = ""
+    native_preflight_artifact_dir: str = ""
+    mobile_database_url: str = ""
+    mobile_database_url_redacted: str = ""
+    mobile_sqlite_path: str = ""
+    mobile_database_cwd_prepare: str = ""
+    mobile_database_cwd_api: str = ""
+    mobile_db_file_exists_before_prepare: bool | None = None
+    mobile_db_file_exists_after_prepare: bool | None = None
+    mobile_usuarios_table_exists_before_prepare: bool | None = None
+    mobile_usuarios_table_exists_after_prepare: bool | None = None
+    mobile_seed_users_present_before_prepare: bool | None = None
+    mobile_seed_users_present: bool | None = None
+    mobile_schema_prepare_executed: bool = False
+    mobile_seed_prepare_executed: bool = False
+    mobile_pilot_seed_prepare_executed: bool = False
+    mobile_db_prepare_command: str = ""
+    mobile_db_prepare_status: str = ""
+    mobile_db_prepare_detail: str = ""
+    mobile_tenant_id: int | None = None
+    mobile_tenant_key: str = ""
+    mobile_tenant_label: str = ""
+    mobile_seed_resolved_targets: dict[str, list[int]] = dataclasses.field(default_factory=dict)
+    backend_env_flags_applied: dict[str, str] = dataclasses.field(default_factory=dict)
+    operator_route_preflight_status: str = ""
+    summary_route_preflight_response: dict[str, Any] | None = None
+    operator_status_route_preflight_response: dict[str, Any] | None = None
 
 
 def now_utc() -> str:
@@ -147,6 +238,16 @@ def env_flag(name: str, default: bool) -> bool:
     if raw in {"0", "false", "no", "off"}:
         return False
     return default
+
+
+def positive_int(value: object) -> int | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed > 0 else None
 
 
 def record_phase_event(
@@ -233,6 +334,10 @@ def should_wipe_emulator_on_install_recovery() -> bool:
 
 def force_mobile_install() -> bool:
     return os.getenv("MOBILE_FORCE_INSTALL", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def allow_stale_apk() -> bool:
+    return env_flag("MOBILE_ALLOW_STALE_APK", False)
 
 
 def log_step(message: str) -> None:
@@ -401,12 +506,8 @@ def load_env_file(path: pathlib.Path) -> dict[str, str]:
 
 
 def parse_application_id() -> tuple[str, str]:
-    build_gradle = (ANDROID_ROOT / "android" / "app" / "build.gradle").read_text(
-        encoding="utf-8"
-    )
-    manifest = (
-        ANDROID_ROOT / "android" / "app" / "src" / "main" / "AndroidManifest.xml"
-    ).read_text(encoding="utf-8")
+    build_gradle = ANDROID_BUILD_GRADLE_PATH.read_text(encoding="utf-8")
+    manifest = ANDROID_MANIFEST_PATH.read_text(encoding="utf-8")
 
     app_match = re.search(r"applicationId\s+'([^']+)'", build_gradle)
     activity_match = re.search(r'<activity android:name="([^"]+MainActivity)"', manifest)
@@ -431,6 +532,118 @@ def load_android_package_info() -> dict[str, Any]:
     }
 
 
+def native_project_present() -> bool:
+    return ANDROID_BUILD_GRADLE_PATH.is_file() and ANDROID_MANIFEST_PATH.is_file()
+
+
+def default_native_prebuild_command() -> str:
+    return "cd android && npm run android:prebuild"
+
+
+def load_mobile_native_preflight_payload() -> dict[str, Any] | None:
+    if not MOBILE_NATIVE_PREFLIGHT_STATE_FILE.exists():
+        return None
+    try:
+        payload = json.loads(MOBILE_NATIVE_PREFLIGHT_STATE_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def populate_native_preflight_state(
+    state: ExecutionState,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    state.native_project_root = str(
+        payload.get("native_project_root_from_repo") or ANDROID_NATIVE_PROJECT_ROOT
+    )
+    state.native_project_root_from_workspace = str(
+        payload.get("native_project_root_from_workspace") or "android"
+    )
+    state.native_build_gradle_path = str(
+        payload.get("build_gradle_path_from_repo") or ANDROID_BUILD_GRADLE_PATH
+    )
+    state.native_manifest_path = str(
+        payload.get("manifest_path_from_repo") or ANDROID_MANIFEST_PATH
+    )
+    state.native_project_present_before_preflight = payload.get(
+        "native_project_present_before"
+    )
+    state.native_project_present_after_preflight = payload.get(
+        "native_project_present_after"
+    )
+    state.native_prebuild_executed = bool(payload.get("prebuild_executed", False))
+    state.native_prebuild_succeeded = payload.get("prebuild_succeeded")
+    state.native_prebuild_command = str(
+        payload.get("prebuild_command") or default_native_prebuild_command()
+    )
+    state.native_prebuild_status = str(payload.get("status") or "")
+    state.native_prebuild_detail = str(payload.get("detail") or "")
+    state.native_prebuild_next_requirement = str(
+        payload.get("next_requirement") or ""
+    ).strip()
+    state.native_preflight_state_file = str(MOBILE_NATIVE_PREFLIGHT_STATE_FILE)
+    state.native_preflight_artifact_dir = str(payload.get("artifact_dir") or "").strip()
+    return payload
+
+
+def ensure_native_android_project_ready(state: ExecutionState) -> None:
+    current_presence = native_project_present()
+    payload = load_mobile_native_preflight_payload() or {
+        "generated_at": now_utc(),
+        "native_project_root_from_repo": str(ANDROID_NATIVE_PROJECT_ROOT),
+        "native_project_root_from_workspace": "android",
+        "build_gradle_path_from_repo": str(ANDROID_BUILD_GRADLE_PATH),
+        "manifest_path_from_repo": str(ANDROID_MANIFEST_PATH),
+        "prebuild_command": default_native_prebuild_command(),
+        "native_project_present_before": current_presence,
+        "native_project_present_after": current_presence,
+        "prebuild_executed": False,
+        "prebuild_succeeded": None,
+        "status": "ok" if current_presence else "missing",
+        "detail": (
+            "native_project_available_without_recorded_preflight"
+            if current_presence
+            else "native_project_missing_without_recorded_preflight"
+        ),
+        "next_requirement": (
+            None if current_presence else default_native_prebuild_command()
+        ),
+        "artifact_dir": "",
+    }
+    if payload.get("native_project_present_after") != current_presence:
+        payload = {
+            **payload,
+            "native_project_present_after": current_presence,
+            "status": "ok" if current_presence else "missing",
+            "detail": (
+                "native_project_presence_changed_after_preflight"
+                if current_presence
+                else "native_project_missing_after_preflight"
+            ),
+            "next_requirement": (
+                None if current_presence else default_native_prebuild_command()
+            ),
+        }
+    populate_native_preflight_state(state, payload)
+    write_json(state.artifacts_dir / "mobile_native_preflight.json", payload)
+    if current_presence:
+        if state.native_prebuild_executed:
+            append_note(
+                state,
+                "Projeto nativo Android pronto para a lane real; status carregado do preflight oficial.",
+            )
+        return
+    next_requirement = (
+        state.native_prebuild_next_requirement or default_native_prebuild_command()
+    )
+    raise RunnerError(
+        "Projeto nativo Android ausente para a lane mobile real. "
+        f"Esperado: {state.native_build_gradle_path} e {state.native_manifest_path}. "
+        f"Execute o comando oficial: {next_requirement}"
+    )
+
+
 def resolve_web_python_binary() -> str:
     candidates = (
         WEB_ROOT / ".venv-linux" / "bin" / "python",
@@ -443,15 +656,342 @@ def resolve_web_python_binary() -> str:
     return "python3"
 
 
-def sqlite_rows(query: str, params: tuple[Any, ...] = ()) -> list[sqlite3.Row]:
-    db_path = WEB_ROOT / "tariel_admin (1).db"
+def build_mobile_database_url(state: ExecutionState) -> str:
+    db_path = (state.artifacts_dir / MOBILE_LOCAL_DB_FILENAME).resolve()
+    return f"sqlite:///{db_path.as_posix()}"
+
+
+def redact_database_url(database_url: str) -> str:
+    if not database_url:
+        return ""
+    parsed = urllib.parse.urlsplit(database_url)
+    if not parsed.password:
+        return database_url
+    netloc = parsed.netloc.replace(f":{parsed.password}@", ":***@")
+    return urllib.parse.urlunsplit(
+        (parsed.scheme, netloc, parsed.path, parsed.query, parsed.fragment)
+    )
+
+
+def sqlite_path_from_database_url(database_url: str) -> pathlib.Path | None:
+    raw_url = str(database_url or "").strip()
+    if not raw_url.startswith("sqlite:///"):
+        return None
+    path_text = raw_url.split("?", 1)[0].split("#", 1)[0][len("sqlite:///") :]
+    if path_text == ":memory:":
+        return None
+    path_text = urllib.parse.unquote(path_text)
+    path = pathlib.Path(path_text)
+    if not path.is_absolute():
+        path = WEB_ROOT / path
+    return path.resolve()
+
+
+def mobile_backend_env(state: ExecutionState) -> dict[str, str]:
+    env = os.environ.copy()
+    env.update(
+        {
+            "AMBIENTE": "dev",
+            "DATABASE_URL": state.mobile_database_url,
+            "DB_BOOTSTRAP_BLOCKING_STARTUP": "1",
+            "DB_BOOTSTRAP_RUN_MIGRATIONS": "1",
+            "SEED_DEV_BOOTSTRAP": "1",
+        }
+    )
+    env.update(state.backend_env_flags_applied)
+    return env
+
+
+def configure_mobile_backend_flags(state: ExecutionState) -> None:
+    snapshot = load_runner_db_snapshot(state)
+    tenant_id = positive_int(snapshot.get("mobile_tenant_id"))
+    tenant_key = str(tenant_id) if tenant_id is not None else ""
+    tenant_label = str(snapshot.get("mobile_tenant_label") or "").strip()
+    mobile_email = str(snapshot.get("mobile_email") or "").strip()
+    if not tenant_key:
+        raise RunnerError(
+            "Nao foi possivel resolver o tenant demo do smoke mobile no banco temporario. "
+            "O bootstrap dev precisa expor um inspetor ativo antes de subir a API local."
+        )
+
+    state.mobile_tenant_id = tenant_id
+    state.mobile_tenant_key = tenant_key
+    state.mobile_tenant_label = tenant_label
+    state.backend_env_flags_applied = {
+        "TARIEL_V2_ANDROID_PUBLIC_CONTRACT": "1",
+        "TARIEL_V2_ANDROID_ROLLOUT": "1",
+        "TARIEL_V2_ANDROID_ROLLOUT_OBSERVABILITY": "1",
+        "TARIEL_V2_ANDROID_FEED_ENABLED": "1",
+        "TARIEL_V2_ANDROID_THREAD_ENABLED": "1",
+        "TARIEL_V2_ANDROID_PILOT_TENANT_KEY": tenant_key,
+        "TARIEL_V2_ANDROID_ROLLOUT_STATE_OVERRIDES": f"{tenant_key}=pilot_enabled",
+        "TARIEL_V2_ANDROID_ROLLOUT_SURFACE_STATE_OVERRIDES": (
+            f"{tenant_key}:feed=promoted,{tenant_key}:thread=promoted"
+        ),
+    }
+    write_json(
+        state.artifacts_dir / "backend_env_flags_applied.json",
+        {
+            "tenant_id": tenant_id,
+            "tenant_key": tenant_key,
+            "tenant_label": tenant_label or None,
+            "resolved_mobile_email": mobile_email or None,
+            "backend_env_flags_applied": state.backend_env_flags_applied,
+            "rollout_public_contract_enabled": True,
+            "rollout_enabled": True,
+            "rollout_observability_enabled": True,
+            "rollout_state_overrides": state.backend_env_flags_applied[
+                "TARIEL_V2_ANDROID_ROLLOUT_STATE_OVERRIDES"
+            ],
+            "rollout_surface_state_overrides": state.backend_env_flags_applied[
+                "TARIEL_V2_ANDROID_ROLLOUT_SURFACE_STATE_OVERRIDES"
+            ],
+        },
+    )
+    append_note(
+        state,
+        "Backend local configurado com flags V2 do rollout mobile apenas no ambiente do runner "
+        f"para o tenant demo {tenant_key}{f' ({tenant_label})' if tenant_label else ''}.",
+    )
+
+
+def configured_sqlite_path(state: ExecutionState | None = None) -> pathlib.Path | None:
+    if state is not None and state.mobile_sqlite_path:
+        return pathlib.Path(state.mobile_sqlite_path)
+    return sqlite_path_from_database_url(os.getenv("DATABASE_URL", ""))
+
+
+def inspect_sqlite_database(path: pathlib.Path | None) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "sqlite_path": str(path) if path else "",
+        "db_file_exists": False,
+        "db_file_size_bytes": None,
+        "usuarios_table_exists": False,
+        "usuarios_count": None,
+        "seed_users_present": False,
+        "seed_users": {email: False for email in MOBILE_REQUIRED_SEED_EMAILS},
+        "error": "",
+    }
+    if path is None:
+        payload["error"] = "DATABASE_URL nao aponta para SQLite local."
+        return payload
+    payload["db_file_exists"] = path.exists()
+    if path.exists():
+        payload["db_file_size_bytes"] = path.stat().st_size
+    else:
+        return payload
+
+    try:
+        with sqlite3.connect(path) as connection:
+            connection.row_factory = sqlite3.Row
+            usuarios_table = connection.execute(
+                """
+                select 1
+                from sqlite_master
+                where type = 'table' and name = 'usuarios'
+                limit 1
+                """
+            ).fetchone()
+            payload["usuarios_table_exists"] = usuarios_table is not None
+            if usuarios_table is None:
+                return payload
+
+            payload["usuarios_count"] = connection.execute(
+                "select count(*) from usuarios"
+            ).fetchone()[0]
+            rows = connection.execute(
+                """
+                select lower(email) as email, ativo
+                from usuarios
+                where lower(email) in ({})
+                """.format(",".join("?" for _ in MOBILE_REQUIRED_SEED_EMAILS)),
+                tuple(MOBILE_REQUIRED_SEED_EMAILS),
+            ).fetchall()
+            seed_users = {email: False for email in MOBILE_REQUIRED_SEED_EMAILS}
+            for row in rows:
+                seed_users[str(row["email"]).strip().lower()] = bool(row["ativo"])
+            payload["seed_users"] = seed_users
+            payload["seed_users_present"] = all(seed_users.values())
+    except sqlite3.DatabaseError as exc:
+        payload["error"] = str(exc)
+    return payload
+
+
+def write_mobile_database_preflight(
+    state: ExecutionState,
+    *,
+    before: dict[str, Any] | None = None,
+    after: dict[str, Any] | None = None,
+) -> None:
+    path = state.artifacts_dir / "mobile_database_preflight.json"
+    existing: dict[str, Any] = {}
+    if path.exists() and (before is None or after is None):
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            existing = {}
+    payload = {
+        "database_url_redacted": state.mobile_database_url_redacted,
+        "sqlite_path": state.mobile_sqlite_path,
+        "cwd_prepare": state.mobile_database_cwd_prepare,
+        "cwd_api": state.mobile_database_cwd_api,
+        "db_file_exists": state.mobile_db_file_exists_after_prepare,
+        "usuarios_table_exists": state.mobile_usuarios_table_exists_after_prepare,
+        "seed_users_present": state.mobile_seed_users_present,
+        "schema_prepare_executed": state.mobile_schema_prepare_executed,
+        "seed_prepare_executed": state.mobile_seed_prepare_executed,
+        "pilot_seed_prepare_executed": state.mobile_pilot_seed_prepare_executed,
+        "prepare_command": state.mobile_db_prepare_command,
+        "prepare_status": state.mobile_db_prepare_status,
+        "prepare_detail": state.mobile_db_prepare_detail,
+        "before_prepare": (
+            before if before is not None else existing.get("before_prepare", {})
+        ),
+        "after_prepare": (
+            after if after is not None else existing.get("after_prepare", {})
+        ),
+    }
+    write_json(path, payload)
+
+
+def prepare_mobile_local_database(state: ExecutionState) -> None:
+    global _RUNNER_DB_SNAPSHOT_CACHE
+
+    state.mobile_database_url = build_mobile_database_url(state)
+    state.mobile_database_url_redacted = redact_database_url(state.mobile_database_url)
+    sqlite_path = sqlite_path_from_database_url(state.mobile_database_url)
+    state.mobile_sqlite_path = str(sqlite_path or "")
+    state.mobile_database_cwd_prepare = str(WEB_ROOT)
+    state.mobile_database_cwd_api = str(WEB_ROOT)
+    state.mobile_db_prepare_command = (
+        f"cd {WEB_ROOT} && DATABASE_URL={state.mobile_database_url_redacted} "
+        "SEED_DEV_BOOTSTRAP=1 DB_BOOTSTRAP_RUN_MIGRATIONS=1 "
+        f"{resolve_web_python_binary()} -c 'app.shared.database.inicializar_banco()'"
+    )
+
+    before = inspect_sqlite_database(sqlite_path)
+    state.mobile_db_file_exists_before_prepare = bool(before.get("db_file_exists"))
+    state.mobile_usuarios_table_exists_before_prepare = bool(
+        before.get("usuarios_table_exists")
+    )
+    state.mobile_seed_users_present_before_prepare = bool(
+        before.get("seed_users_present")
+    )
+
+    script = textwrap.dedent(
+        """
+        import app.shared.database as banco_dados
+
+        banco_dados.inicializar_banco()
+        """
+    ).strip()
+    command = [resolve_web_python_binary(), "-c", script]
+    log_step("Preparando banco local temporario do smoke mobile.")
+    try:
+        result = run_command(
+            command,
+            cwd=WEB_ROOT,
+            env=mobile_backend_env(state),
+            timeout=180,
+            check=False,
+            stream_output=state.visual_mode,
+        )
+    except subprocess.TimeoutExpired as exc:
+        state.mobile_db_prepare_status = "failed"
+        state.mobile_db_prepare_detail = "timeout ao executar bootstrap/migrations do banco mobile"
+        write_mobile_database_preflight(state, before=before)
+        raise RunnerError(
+            "Preflight de banco mobile expirou antes de iniciar a API local. "
+            f"Banco alvo: {state.mobile_database_url_redacted}; "
+            f"responsavel: {state.mobile_db_prepare_command}"
+        ) from exc
+
+    state.commands_used.append(state.mobile_db_prepare_command)
+    save_command_artifact(state.artifacts_dir / "mobile_database_prepare.txt", result)
+    if result.returncode != 0:
+        state.mobile_db_prepare_status = "failed"
+        state.mobile_db_prepare_detail = (
+            "bootstrap/migrations do banco mobile retornaram "
+            f"{result.returncode}; veja mobile_database_prepare.txt"
+        )
+        write_mobile_database_preflight(state, before=before)
+        raise RunnerError(
+            "Preflight de banco mobile falhou antes de iniciar a API local. "
+            f"Banco alvo: {state.mobile_database_url_redacted}; "
+            f"responsavel: {state.mobile_db_prepare_command}; "
+            "artefato: mobile_database_prepare.txt"
+        )
+
+    state.mobile_schema_prepare_executed = True
+    state.mobile_seed_prepare_executed = True
+    after = inspect_sqlite_database(sqlite_path)
+    state.mobile_db_file_exists_after_prepare = bool(after.get("db_file_exists"))
+    state.mobile_usuarios_table_exists_after_prepare = bool(
+        after.get("usuarios_table_exists")
+    )
+    state.mobile_seed_users_present = bool(after.get("seed_users_present"))
+    if not state.mobile_usuarios_table_exists_after_prepare:
+        state.mobile_db_prepare_status = "failed"
+        state.mobile_db_prepare_detail = (
+            "tabela usuarios ausente apos bootstrap/migrations do banco mobile"
+        )
+        write_mobile_database_preflight(state, before=before, after=after)
+        raise RunnerError(
+            "Banco local do smoke mobile foi criado sem a tabela usuarios. "
+            f"Banco usado: {state.mobile_database_url_redacted}; "
+            f"sqlite_path: {state.mobile_sqlite_path}; "
+            f"responsavel: {state.mobile_db_prepare_command}"
+        )
+    if not state.mobile_seed_users_present:
+        state.mobile_db_prepare_status = "failed"
+        state.mobile_db_prepare_detail = (
+            "seed dev nao deixou admin/inspetor/revisor ativos no banco mobile"
+        )
+        write_mobile_database_preflight(state, before=before, after=after)
+        raise RunnerError(
+            "Seed minimo de usuarios ausente no banco local do smoke mobile. "
+            f"Banco usado: {state.mobile_database_url_redacted}; "
+            f"sqlite_path: {state.mobile_sqlite_path}; "
+            "esperado: admin@tariel.ia, inspetor@tariel.ia e revisor@tariel.ia; "
+            f"responsavel: {state.mobile_db_prepare_command}"
+        )
+
+    os.environ["DATABASE_URL"] = state.mobile_database_url
+    _RUNNER_DB_SNAPSHOT_CACHE = None
+    state.mobile_db_prepare_status = "ok"
+    state.mobile_db_prepare_detail = "schema e seed dev preparados no SQLite temporario da lane"
+    write_mobile_database_preflight(state, before=before, after=after)
+    append_note(
+        state,
+        "Banco local temporario do smoke mobile preparado com migrations e seed dev.",
+    )
+
+
+def sqlite_rows(
+    query: str,
+    params: tuple[Any, ...] = (),
+    *,
+    state: ExecutionState | None = None,
+) -> list[sqlite3.Row]:
+    db_path = configured_sqlite_path(state)
+    if db_path is None:
+        return []
     with sqlite3.connect(db_path) as connection:
         connection.row_factory = sqlite3.Row
-        cursor = connection.execute(query, params)
-        return cursor.fetchall()
+        try:
+            cursor = connection.execute(query, params)
+            return cursor.fetchall()
+        except sqlite3.OperationalError as exc:
+            raise RunnerError(
+                "Banco SQLite da lane mobile sem schema esperado. "
+                f"sqlite_path: {db_path}; erro: {exc}. "
+                "Execute o preflight de banco do runner antes de resolver credenciais."
+            ) from exc
 
 
-def load_runner_db_snapshot() -> dict[str, str | None]:
+def load_runner_db_snapshot(
+    state: ExecutionState | None = None,
+) -> dict[str, Any]:
     global _RUNNER_DB_SNAPSHOT_CACHE
 
     if _RUNNER_DB_SNAPSHOT_CACHE is not None:
@@ -463,20 +1003,25 @@ def load_runner_db_snapshot() -> dict[str, str | None]:
         from sqlalchemy import case, select
 
         import app.shared.database as banco_dados
-        from app.shared.database import NivelAcesso, Usuario
+        from app.shared.database import Empresa, NivelAcesso, Usuario
 
         with banco_dados.SessaoLocal() as banco:
-            mobile_email = banco.execute(
-                select(Usuario.email)
-                .where(Usuario.empresa_id == 1)
+            mobile_row = banco.execute(
+                select(
+                    Usuario.email,
+                    Usuario.empresa_id,
+                    Empresa.nome_fantasia,
+                )
+                .join(Empresa, Empresa.id == Usuario.empresa_id, isouter=True)
                 .where(Usuario.nivel_acesso == int(NivelAcesso.INSPETOR))
                 .where(Usuario.ativo.is_(True))
                 .order_by(
                     case((Usuario.email == "inspetor@tariel.ia", 0), else_=1),
+                    case((Empresa.nome_fantasia == "Empresa Demo (DEV)", 0), else_=1),
                     Usuario.id.asc(),
                 )
                 .limit(1)
-            ).scalar()
+            ).first()
 
             admin_row = banco.execute(
                 select(Usuario.email, Usuario.mfa_secret_b32)
@@ -494,7 +1039,11 @@ def load_runner_db_snapshot() -> dict[str, str | None]:
             ).first()
 
         payload = {
-            "mobile_email": str(mobile_email or "").strip() or None,
+            "mobile_email": str(getattr(mobile_row, "email", "") or "").strip() or None,
+            "mobile_tenant_id": int(getattr(mobile_row, "empresa_id", 0) or 0) or None,
+            "mobile_tenant_label": (
+                str(getattr(mobile_row, "nome_fantasia", "") or "").strip() or None
+            ),
             "admin_email": str(getattr(admin_row, "email", "") or "").strip() or None,
             "admin_mfa_secret": str(getattr(admin_row, "mfa_secret_b32", "") or "").strip().upper() or None,
         }
@@ -505,6 +1054,7 @@ def load_runner_db_snapshot() -> dict[str, str | None]:
     result = run_command(
         [resolve_web_python_binary(), "-c", script],
         cwd=WEB_ROOT,
+        env=mobile_backend_env(state) if state is not None else None,
         timeout=20,
         check=False,
     )
@@ -520,6 +1070,8 @@ def load_runner_db_snapshot() -> dict[str, str | None]:
 
     snapshot = {
         "mobile_email": str(payload.get("mobile_email") or "").strip() or None,
+        "mobile_tenant_id": positive_int(payload.get("mobile_tenant_id")),
+        "mobile_tenant_label": str(payload.get("mobile_tenant_label") or "").strip() or None,
         "admin_email": str(payload.get("admin_email") or "").strip() or None,
         "admin_mfa_secret": str(payload.get("admin_mfa_secret") or "").strip().upper() or None,
     }
@@ -555,8 +1107,11 @@ def current_totp(secret: str, *, at_time: int | float | None = None) -> str:
     return str(binary % 1_000_000).zfill(6)
 
 
-def lookup_admin_totp_secret(email: str) -> str | None:
-    snapshot = load_runner_db_snapshot()
+def lookup_admin_totp_secret(
+    email: str,
+    state: ExecutionState | None = None,
+) -> str | None:
+    snapshot = load_runner_db_snapshot(state)
     snapshot_email = str(snapshot.get("admin_email") or "").strip().lower()
     if snapshot_email and snapshot_email == str(email or "").strip().lower():
         value = str(snapshot.get("admin_mfa_secret") or "").strip().upper()
@@ -571,6 +1126,7 @@ def lookup_admin_totp_secret(email: str) -> str | None:
         limit 1
         """,
         (email,),
+        state=state,
     )
     if not rows:
         return None
@@ -605,12 +1161,15 @@ def submit_admin_mfa(
     path: str,
     html_body: str,
     email: str,
+    state: ExecutionState | None = None,
 ) -> str:
     csrf_token = extract_csrf_token(html_body)
     # The setup page reflects the secret from the backend that is currently
-    # serving the local smoke. Prefer that over the legacy SQLite fallback,
-    # which may point at a different database than the one used by uvicorn.
-    secret = extract_totp_secret_from_html(html_body) or lookup_admin_totp_secret(email)
+    # serving the local smoke. Prefer that over the configured DB fallback.
+    secret = extract_totp_secret_from_html(html_body) or lookup_admin_totp_secret(
+        email,
+        state=state,
+    )
     if not secret:
         raise RunnerError("Segredo TOTP do Admin-CEO indisponível para concluir MFA.")
     payload = urllib.parse.urlencode(
@@ -631,7 +1190,10 @@ def submit_admin_mfa(
     return final_url
 
 
-def resolve_credentials(web_env: dict[str, str]) -> tuple[str, str, str]:
+def resolve_credentials(
+    web_env: dict[str, str],
+    state: ExecutionState,
+) -> tuple[str, str, str]:
     mobile_password = (
         web_env.get("SEED_INSPETOR_SENHA")
         or web_env.get("SEED_DEV_SENHA_PADRAO")
@@ -643,23 +1205,44 @@ def resolve_credentials(web_env: dict[str, str]) -> tuple[str, str, str]:
         or DEFAULT_MOBILE_PASSWORD
     )
 
-    snapshot = load_runner_db_snapshot()
+    snapshot = load_runner_db_snapshot(state)
+    tenant_id = positive_int(snapshot.get("mobile_tenant_id"))
 
-    mobile_candidates = sqlite_rows(
-        """
-        select email
-        from usuarios
-        where empresa_id = 1 and nivel_acesso = 1 and ativo = 1
-        order by case when email = 'inspetor@tariel.ia' then 0 else 1 end, id
-        """
-    )
+    if tenant_id is not None:
+        mobile_candidates = sqlite_rows(
+            """
+            select email
+            from usuarios
+            where empresa_id = ? and nivel_acesso = 1 and ativo = 1
+            order by case when email = 'inspetor@tariel.ia' then 0 else 1 end, id
+            """,
+            (tenant_id,),
+            state=state,
+        )
+    else:
+        mobile_candidates = sqlite_rows(
+            """
+            select email
+            from usuarios
+            where nivel_acesso = 1 and ativo = 1
+            order by case when email = 'inspetor@tariel.ia' then 0 else 1 end, id
+            """,
+            state=state,
+        )
     admin_candidates = sqlite_rows(
         """
         select email
         from usuarios
         where nivel_acesso = 99 and ativo = 1
-        order by case when email = 'admin-legado@tariel.ia' then 0 else 1 end, id
-        """
+        order by
+            case
+                when email = 'admin@tariel.ia' then 0
+                when email = 'admin-legado@tariel.ia' then 1
+                else 2
+            end,
+            id
+        """,
+        state=state,
     )
     mobile_email = str(snapshot.get("mobile_email") or "").strip()
     if not mobile_email:
@@ -674,7 +1257,7 @@ def resolve_credentials(web_env: dict[str, str]) -> tuple[str, str, str]:
         admin_email = (
             str(admin_candidates[0]["email"]).strip()
             if admin_candidates
-            else "admin-legado@tariel.ia"
+            else "admin@tariel.ia"
         )
     return mobile_email, mobile_password, admin_email
 
@@ -788,11 +1371,19 @@ def device_health_ready(health: dict[str, Any]) -> bool:
 
 def start_backend(state: ExecutionState) -> None:
     if healthcheck():
-        append_note(state, "Backend local já estava ativo em 127.0.0.1:8000.")
-        return
+        append_note(
+            state,
+            "Backend local ja estava ativo em 127.0.0.1:8000; a lane vai reiniciar "
+            "para garantir o DATABASE_URL temporario auditado.",
+        )
 
     script = REPO_ROOT / "scripts" / "start_local_mobile_api_background.sh"
-    result = run_command([str(script)], cwd=REPO_ROOT, timeout=90)
+    result = run_command(
+        [str(script)],
+        cwd=REPO_ROOT,
+        env=mobile_backend_env(state),
+        timeout=90,
+    )
     state.commands_used.append(command_display([str(script)]))
     save_command_artifact(state.artifacts_dir / "backend_start.txt", result)
 
@@ -964,6 +1555,262 @@ def ensure_adb_reverse(state: ExecutionState, ports: tuple[int, ...]) -> None:
         if result.stderr.strip():
             lines.append(result.stderr.strip())
     write_text(state.artifacts_dir / "adb_reverse.txt", "\n".join(lines).strip() + "\n")
+
+
+def adb_reverse_list(state: ExecutionState) -> list[str]:
+    command = ["adb", "-s", state.device_id, "reverse", "--list"]
+    result = run_command(command, check=False, timeout=15)
+    lines = [
+        line.strip()
+        for line in (result.stdout or "").splitlines()
+        if line.strip()
+    ]
+    if result.stderr.strip():
+        lines.extend(
+            line.strip()
+            for line in result.stderr.splitlines()
+            if line.strip()
+        )
+    return lines
+
+
+def adb_reverse_contains_port(reverse_lines: list[str], port: int) -> bool:
+    expected = f"tcp:{port} tcp:{port}"
+    return any(expected in line for line in reverse_lines)
+
+
+def local_http_url(value: str) -> bool:
+    parsed = urllib.parse.urlparse(str(value or "").strip())
+    host = (parsed.hostname or "").lower()
+    return parsed.scheme == "http" and host in {"127.0.0.1", "localhost", "10.0.2.2"}
+
+
+def mobile_android_localhost_strategy() -> str:
+    raw = (
+        os.getenv("MOBILE_ANDROID_LOCALHOST_STRATEGY", "reverse")
+        .strip()
+        .lower()
+    )
+    if raw in {"reverse", "emulator_alias"}:
+        return raw
+    return "reverse"
+
+
+def mobile_api_base_url_for_build(state: ExecutionState) -> str:
+    if (
+        state.device_id.startswith("emulator-")
+        and mobile_android_localhost_strategy() == "emulator_alias"
+    ):
+        return EMULATOR_MOBILE_API_BASE_URL
+    return LOCAL_MOBILE_API_BASE_URL
+
+
+def infer_mobile_runtime_api_base_url(build_url: str, state: ExecutionState) -> str:
+    value = str(build_url or LOCAL_MOBILE_API_BASE_URL).strip().rstrip("/")
+    if (
+        not state.device_id.startswith("emulator-")
+        or state.android_localhost_strategy_for_build == "reverse"
+    ):
+        return value
+    return re.sub(
+        r"://(127\.0\.0\.1|localhost)(?=[:/]|$)",
+        "://10.0.2.2",
+        value,
+        flags=re.IGNORECASE,
+    )
+
+
+def probe_host_backend_health() -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "ok": False,
+        "url": HEALTH_URL,
+        "status_code": None,
+        "error": None,
+    }
+    try:
+        with urllib.request.urlopen(HEALTH_URL, timeout=5) as response:
+            payload["status_code"] = response.status
+            payload["ok"] = response.status == 200
+    except Exception as exc:  # noqa: BLE001 - artefato operacional.
+        payload["error"] = str(exc)
+    return payload
+
+
+def probe_device_http_health(state: ExecutionState, host: str, port: int = 8000) -> dict[str, Any]:
+    request = (
+        "printf 'GET /health HTTP/1.1\\r\\n"
+        f"Host: {host}\\r\\n"
+        "Connection: close\\r\\n\\r\\n' "
+        f"| nc -w 5 -n {host} {port}"
+    )
+    command = ["adb", "-s", state.device_id, "shell", request]
+    payload: dict[str, Any] = {
+        "ok": False,
+        "host": host,
+        "port": port,
+        "command": command_display(command),
+        "returncode": None,
+        "tcp_connected": False,
+        "status_line": "",
+        "status_code": None,
+        "stdout_excerpt": "",
+        "stderr_excerpt": "",
+        "error": None,
+    }
+    try:
+        result = run_command(command, check=False, timeout=15)
+    except subprocess.TimeoutExpired:
+        payload["returncode"] = 124
+        payload["error"] = "timeout"
+        return payload
+
+    payload["returncode"] = result.returncode
+    payload["tcp_connected"] = result.returncode == 0
+    payload["stdout_excerpt"] = (result.stdout or "")[:600]
+    payload["stderr_excerpt"] = (result.stderr or "")[:600]
+    for line in (result.stdout or "").splitlines():
+        if line.startswith("HTTP/"):
+            payload["status_line"] = line.strip()
+            match = re.search(r"\s(\d{3})(?:\s|$)", line)
+            if match:
+                payload["status_code"] = int(match.group(1))
+            break
+    payload["ok"] = result.returncode == 0 and payload.get("status_code") == 200
+    return payload
+
+
+def release_cleartext_http_allowed() -> bool:
+    candidates = [
+        ANDROID_NATIVE_PROJECT_ROOT
+        / "app"
+        / "build"
+        / "intermediates"
+        / "merged_manifests"
+        / "release"
+        / "processReleaseManifest"
+        / "AndroidManifest.xml",
+        ANDROID_NATIVE_PROJECT_ROOT
+        / "app"
+        / "build"
+        / "intermediates"
+        / "packaged_manifests"
+        / "release"
+        / "processReleaseManifestForPackage"
+        / "AndroidManifest.xml",
+        ANDROID_MANIFEST_PATH,
+    ]
+    for path in candidates:
+        if not path.is_file():
+            continue
+        content = path.read_text(encoding="utf-8", errors="replace")
+        match = re.search(r'android:usesCleartextTraffic="([^"]+)"', content)
+        if match:
+            return match.group(1).strip().lower() == "true"
+    return False
+
+
+def write_mobile_network_preflight(
+    state: ExecutionState,
+    payload: dict[str, Any],
+) -> None:
+    state.mobile_network_preflight = payload
+    write_json(state.artifacts_dir / "mobile_network_preflight.json", payload)
+
+
+def ensure_mobile_network_preflight(state: ExecutionState) -> None:
+    api_base_url_for_build = (
+        state.api_base_url_for_build or mobile_api_base_url_for_build(state)
+    )
+    auth_web_base_url_for_build = (
+        state.auth_web_base_url_for_build or api_base_url_for_build
+    )
+    android_localhost_strategy = (
+        state.android_localhost_strategy_for_build
+        or mobile_android_localhost_strategy()
+    )
+    runtime_api_base_url = (
+        state.api_base_url_runtime_if_available
+        or infer_mobile_runtime_api_base_url(api_base_url_for_build, state)
+    )
+    host_health = probe_host_backend_health()
+    reverse_before = adb_reverse_list(state)
+    ensure_adb_reverse(state, DEFAULT_PORTS)
+    reverse_after = adb_reverse_list(state)
+    reverse_configured = adb_reverse_contains_port(reverse_after, 8000)
+    probe_127 = probe_device_http_health(state, "127.0.0.1")
+    probe_10 = probe_device_http_health(state, "10.0.2.2")
+    cleartext_allowed = release_cleartext_http_allowed()
+
+    parsed_runtime = urllib.parse.urlparse(runtime_api_base_url)
+    runtime_host = (parsed_runtime.hostname or "").lower()
+    runtime_is_local_http = local_http_url(runtime_api_base_url)
+    runtime_uses_reverse = runtime_host in {"127.0.0.1", "localhost"}
+    runtime_uses_emulator_alias = runtime_host == "10.0.2.2"
+    failure_classification: str | None = None
+    failure_detail = ""
+
+    if not host_health.get("ok"):
+        failure_classification = "backend local"
+        failure_detail = "backend local nao respondeu no host em /health"
+    elif runtime_is_local_http and not cleartext_allowed:
+        failure_classification = "cleartext_http_blocked"
+        failure_detail = "APK release preview nao permite HTTP cleartext para API local"
+    elif runtime_uses_reverse and not reverse_configured:
+        failure_classification = "rede/reverse proxy"
+        failure_detail = "adb reverse tcp:8000 nao aparece na lista do device selecionado"
+    elif runtime_uses_reverse and not probe_127.get("tcp_connected"):
+        failure_classification = "rede/reverse proxy"
+        failure_detail = "device nao abre conexao TCP via 127.0.0.1:8000"
+    elif runtime_uses_emulator_alias and not probe_10.get("ok"):
+        failure_classification = "rede/reverse proxy"
+        failure_detail = "emulador nao alcanca /health via 10.0.2.2:8000"
+
+    payload = {
+        "generated_at": now_utc(),
+        "api_base_url_for_build": api_base_url_for_build,
+        "auth_web_base_url_for_build": auth_web_base_url_for_build,
+        "android_localhost_strategy_for_build": android_localhost_strategy,
+        "api_base_url_runtime_if_available": runtime_api_base_url,
+        "backend_health_host_status": host_health,
+        "backend_health_host_url": HEALTH_URL,
+        "adb_reverse_list_before": reverse_before,
+        "adb_reverse_configured": reverse_configured,
+        "adb_reverse_list_after": reverse_after,
+        "device_serial": state.device_id,
+        "device_network_probe_127001_8000": probe_127,
+        "device_network_probe_10_0_2_2_8000": probe_10,
+        "cleartext_http_allowed": cleartext_allowed,
+        "runtime_uses_reverse": runtime_uses_reverse,
+        "runtime_uses_emulator_alias": runtime_uses_emulator_alias,
+        "failure_classification": failure_classification,
+        "failure_detail": failure_detail,
+    }
+    write_mobile_network_preflight(state, payload)
+
+    if failure_classification:
+        record_phase_event(
+            state,
+            phase="mobile_network_preflight",
+            status="failed",
+            detail=f"{failure_classification}: {failure_detail}",
+            extra=payload,
+        )
+        raise RunnerError(
+            "Preflight de rede mobile falhou antes do Maestro: "
+            f"{failure_classification}. {failure_detail}."
+        )
+
+    record_phase_event(
+        state,
+        phase="mobile_network_preflight",
+        status="ok",
+        detail=f"runtime_api_base_url={runtime_api_base_url}",
+        extra=payload,
+    )
+    append_note(
+        state,
+        f"Preflight de rede mobile confirmou backend host, cleartext preview e acesso do device via {runtime_api_base_url}.",
+    )
 
 
 def restart_emulator_instance(
@@ -1193,11 +2040,45 @@ def ensure_mobile_pilot_seed_data(
     result = run_command(
         command,
         cwd=WEB_ROOT,
+        env=mobile_backend_env(state),
         timeout=120,
         stream_output=state.visual_mode,
     )
+    state.mobile_pilot_seed_prepare_executed = True
+    write_mobile_database_preflight(state)
     state.commands_used.append(command_display(command))
     save_command_artifact(state.artifacts_dir / "mobile_pilot_seed.txt", result)
+    try:
+        payload = json.loads(str(result.stdout or "").strip())
+    except json.JSONDecodeError as exc:
+        raise RunnerError(
+            "Seed do piloto mobile nao retornou JSON valido. "
+            "Confira mobile_pilot_seed.txt para o stdout/stderr completo."
+        ) from exc
+
+    seed_tenant_id = positive_int(payload.get("tenant_id"))
+    seed_tenant_key = str(seed_tenant_id) if seed_tenant_id is not None else ""
+    if not seed_tenant_key:
+        raise RunnerError(
+            "Seed do piloto mobile nao informou tenant_id valido. "
+            "Confira mobile_pilot_seed.txt."
+        )
+    if state.mobile_tenant_key and seed_tenant_key != state.mobile_tenant_key:
+        raise RunnerError(
+            "Seed do piloto mobile resolveu tenant diferente do backend local configurado. "
+            f"backend_tenant={state.mobile_tenant_key}; seed_tenant={seed_tenant_key}. "
+            "Confira backend_env_flags_applied.json e mobile_pilot_seed.txt."
+        )
+    state.mobile_tenant_id = seed_tenant_id
+    state.mobile_tenant_key = seed_tenant_key
+    state.mobile_tenant_label = (
+        str(payload.get("tenant_label") or "").strip() or state.mobile_tenant_label
+    )
+    state.mobile_seed_resolved_targets = {
+        str(surface): [int(item) for item in items]
+        for surface, items in dict(payload.get("resolved_targets") or {}).items()
+    }
+    write_json(state.artifacts_dir / "mobile_pilot_seed_payload.json", payload)
 
 
 def capture_screenshot(state: ExecutionState, name: str) -> pathlib.Path:
@@ -1437,6 +2318,7 @@ def parse_login_probe(content_descs: list[str]) -> dict[str, str]:
 def summarize_ui_markers(ui_dump_path: pathlib.Path, target_laudo_id: int | None) -> dict[str, Any]:
     test_ids = extract_ui_test_ids(ui_dump_path)
     content_descs = extract_ui_content_descs(ui_dump_path)
+    ui_texts = extract_ui_texts(ui_dump_path)
     selection_probe = parse_selection_probe(content_descs)
     activity_center_probe = parse_activity_center_probe(content_descs)
     login_probe = parse_login_probe(content_descs)
@@ -1685,8 +2567,17 @@ def summarize_ui_markers(ui_dump_path: pathlib.Path, target_laudo_id: int | None
         "activity_center_target_v2": bool(
             target_id and f"activity-center-feed-v2-target-{target_id}" in test_ids
         ),
-        "thread_surface_visible": "mesa-thread-surface" in test_ids,
-        "thread_loaded_visible": "mesa-thread-loaded" in test_ids,
+        "chat_thread_surface_visible": MOBILE_PILOT_CHAT_SURFACE_TEST_ID in test_ids,
+        "target_seed_text_visible": any(
+            MOBILE_PILOT_TARGET_TEXT in item for item in ui_texts
+        ),
+        "mesa_entry_target_visible": MOBILE_PILOT_MESA_ENTRY_TEST_ID in test_ids,
+        "mesa_entry_label_visible": any(
+            MOBILE_PILOT_MESA_ENTRY_LABEL in item for item in ui_texts
+        )
+        or MOBILE_PILOT_MESA_ENTRY_LABEL in content_descs,
+        "thread_surface_visible": MOBILE_PILOT_MESA_SURFACE_TEST_ID in test_ids,
+        "thread_loaded_visible": MOBILE_PILOT_MESA_LOADED_TEST_ID in test_ids,
         "thread_empty_visible": "mesa-thread-empty-state" in test_ids,
         "login_probe": login_probe,
         "selection_probe": selection_probe,
@@ -1784,7 +2675,13 @@ def build_admin_opener() -> urllib.request.OpenerDirector:
     return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
 
 
-def admin_login(opener: urllib.request.OpenerDirector, email: str, password: str) -> None:
+def admin_login(
+    opener: urllib.request.OpenerDirector,
+    email: str,
+    password: str,
+    *,
+    state: ExecutionState | None = None,
+) -> None:
     with opener.open("http://127.0.0.1:8000/admin/login", timeout=20) as response:
         html_body = response.read().decode("utf-8")
     csrf_token = extract_csrf_token(html_body)
@@ -1812,6 +2709,7 @@ def admin_login(opener: urllib.request.OpenerDirector, email: str, password: str
             path="/admin/mfa/setup",
             html_body=final_body,
             email=email,
+            state=state,
         )
     elif final_url.endswith("/admin/mfa/challenge"):
         final_url = submit_admin_mfa(
@@ -1819,6 +2717,7 @@ def admin_login(opener: urllib.request.OpenerDirector, email: str, password: str
             path="/admin/mfa/challenge",
             html_body=final_body,
             email=email,
+            state=state,
         )
 
     if not final_url.endswith("/admin/painel"):
@@ -1839,6 +2738,255 @@ def admin_json(
         headers={"Accept": "application/json"},
     )
     return read_json_response(request, opener=opener)
+
+
+def request_json_with_metadata(
+    request: urllib.request.Request,
+    *,
+    opener: urllib.request.OpenerDirector | None = None,
+) -> dict[str, Any]:
+    try:
+        if opener is None:
+            response = urllib.request.urlopen(request, timeout=20)
+        else:
+            response = opener.open(request, timeout=20)
+        with response:
+            body = response.read().decode("utf-8", errors="replace")
+            status_code = int(getattr(response, "status", 200) or 200)
+            final_url = response.geturl()
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        status_code = int(exc.code)
+        final_url = exc.geturl()
+    except urllib.error.URLError as exc:
+        return {
+            "status_code": None,
+            "ok": False,
+            "error_kind": "connection_error",
+            "detail": str(getattr(exc, "reason", exc) or exc),
+            "url": request.full_url,
+            "json": None,
+            "raw_body": None,
+        }
+    except Exception as exc:  # pragma: no cover - defensive networking
+        return {
+            "status_code": None,
+            "ok": False,
+            "error_kind": "unexpected_error",
+            "detail": str(exc),
+            "url": request.full_url,
+            "json": None,
+            "raw_body": None,
+        }
+
+    try:
+        payload = json.loads(body) if body else None
+    except json.JSONDecodeError:
+        payload = None
+
+    return {
+        "status_code": status_code,
+        "ok": 200 <= status_code < 300,
+        "error_kind": None if 200 <= status_code < 300 else "http_error",
+        "detail": None,
+        "url": final_url,
+        "json": payload,
+        "raw_body": body if payload is None else None,
+    }
+
+
+def build_admin_json_request(
+    path: str,
+    *,
+    method: str = "GET",
+    query: str = "",
+) -> urllib.request.Request:
+    suffix = f"?{query}" if query else ""
+    return urllib.request.Request(
+        f"http://127.0.0.1:8000{path}{suffix}",
+        method=method,
+        headers={"Accept": "application/json"},
+    )
+
+
+def classify_operator_route_preflight(
+    response: dict[str, Any],
+) -> str:
+    status_code = response.get("status_code")
+    error_kind = str(response.get("error_kind") or "").strip()
+    if error_kind == "connection_error":
+        return "backend_local_unavailable"
+    if status_code == 200:
+        return "ok"
+    if status_code == 404:
+        return "api_route"
+    if status_code in {401, 403}:
+        return "authentication_authorization"
+    if status_code is None:
+        return "backend_local_unavailable"
+    return "unexpected_http_status"
+
+
+def ensure_admin_operator_routes_preflight(
+    opener: urllib.request.OpenerDirector,
+    state: ExecutionState,
+) -> dict[str, Any]:
+    summary_path = "/admin/api/mobile-v2-rollout/summary"
+    operator_status_path = "/admin/api/mobile-v2-rollout/operator-run/status"
+    summary_response = request_json_with_metadata(
+        build_admin_json_request(summary_path),
+        opener=opener,
+    )
+    operator_status_response = request_json_with_metadata(
+        build_admin_json_request(operator_status_path),
+        opener=opener,
+    )
+    summary_classification = classify_operator_route_preflight(summary_response)
+    operator_status_classification = classify_operator_route_preflight(
+        operator_status_response
+    )
+    overall_status = (
+        "ok"
+        if summary_classification == "ok" and operator_status_classification == "ok"
+        else summary_classification
+        if summary_classification != "ok"
+        else operator_status_classification
+    )
+    payload = {
+        "timestamp_utc": now_utc(),
+        "tenant_id": state.mobile_tenant_id,
+        "tenant_key": state.mobile_tenant_key or None,
+        "tenant_label": state.mobile_tenant_label or None,
+        "rollout_public_contract_enabled": (
+            state.backend_env_flags_applied.get("TARIEL_V2_ANDROID_PUBLIC_CONTRACT") == "1"
+        ),
+        "rollout_enabled": (
+            state.backend_env_flags_applied.get("TARIEL_V2_ANDROID_ROLLOUT") == "1"
+        ),
+        "rollout_observability_enabled": (
+            state.backend_env_flags_applied.get(
+                "TARIEL_V2_ANDROID_ROLLOUT_OBSERVABILITY"
+            )
+            == "1"
+        ),
+        "rollout_state_overrides": state.backend_env_flags_applied.get(
+            "TARIEL_V2_ANDROID_ROLLOUT_STATE_OVERRIDES"
+        ),
+        "rollout_surface_state_overrides": state.backend_env_flags_applied.get(
+            "TARIEL_V2_ANDROID_ROLLOUT_SURFACE_STATE_OVERRIDES"
+        ),
+        "backend_env_flags_applied": state.backend_env_flags_applied,
+        "operator_route_preflight_status": overall_status,
+        "summary_route": {
+            "path": summary_path,
+            **summary_response,
+        },
+        "operator_status_route": {
+            "path": operator_status_path,
+            **operator_status_response,
+        },
+    }
+    write_json(state.artifacts_dir / "operator_route_preflight.json", payload)
+
+    state.operator_route_preflight_status = overall_status
+    state.summary_route_preflight_response = summary_response
+    state.operator_status_route_preflight_response = operator_status_response
+
+    summary_json = summary_response.get("json")
+    if isinstance(summary_json, dict):
+        save_http_json(state.artifacts_dir / "backend_summary_preflight.json", summary_json)
+    operator_status_json = operator_status_response.get("json")
+    if isinstance(operator_status_json, dict):
+        save_http_json(
+            state.artifacts_dir / "operator_run_status_preflight.json",
+            operator_status_json,
+        )
+
+    if overall_status == "ok":
+        record_phase_event(
+            state,
+            phase="operator_route_preflight",
+            status="ok",
+            detail="admin_rollout_routes_available",
+            extra={
+                "summary_status": summary_response.get("status_code"),
+                "operator_status": operator_status_response.get("status_code"),
+            },
+        )
+        return payload
+
+    if overall_status == "api_route":
+        failed_route = (
+            summary_path
+            if summary_classification != "ok"
+            else operator_status_path
+        )
+        failed_status = (
+            summary_response.get("status_code")
+            if summary_classification != "ok"
+            else operator_status_response.get("status_code")
+        )
+        detail = (
+            "Rota admin/operator-run do rollout mobile indisponivel no backend local. "
+            f"classificacao=API route; route={failed_route}; http_status={failed_status}; "
+            "flags_aplicadas="
+            f"{json.dumps(state.backend_env_flags_applied, ensure_ascii=False, sort_keys=True)}"
+        )
+    elif overall_status == "authentication_authorization":
+        failed_route = (
+            summary_path
+            if summary_classification != "ok"
+            else operator_status_path
+        )
+        failed_status = (
+            summary_response.get("status_code")
+            if summary_classification != "ok"
+            else operator_status_response.get("status_code")
+        )
+        detail = (
+            "Preflight das rotas admin/operator-run bloqueado por autenticacao/autorizacao. "
+            f"route={failed_route}; http_status={failed_status}."
+        )
+    elif overall_status == "backend_local_unavailable":
+        failed_route = (
+            summary_path
+            if summary_classification != "ok"
+            else operator_status_path
+        )
+        failed_detail = (
+            summary_response.get("detail")
+            if summary_classification != "ok"
+            else operator_status_response.get("detail")
+        )
+        detail = (
+            "Preflight das rotas admin/operator-run falhou porque o backend local ficou indisponivel. "
+            f"route={failed_route}; detail={failed_detail}."
+        )
+    else:
+        failed_route = (
+            summary_path
+            if summary_classification != "ok"
+            else operator_status_path
+        )
+        failed_status = (
+            summary_response.get("status_code")
+            if summary_classification != "ok"
+            else operator_status_response.get("status_code")
+        )
+        detail = (
+            "Preflight das rotas admin/operator-run retornou status HTTP inesperado. "
+            f"route={failed_route}; http_status={failed_status}; "
+            f"classificacao={overall_status}."
+        )
+
+    record_phase_event(
+        state,
+        phase="operator_route_preflight",
+        status="failed",
+        detail=detail,
+        extra=payload,
+    )
+    raise RunnerError(detail)
 
 
 def save_http_json(path: pathlib.Path, payload: dict[str, Any]) -> None:
@@ -1879,34 +3027,341 @@ def install_failure_is_environmental(result: CommandResult) -> bool:
     return any(signal in output for signal in signals)
 
 
+def probe_text(command: list[str], *, cwd: pathlib.Path | None = None) -> str:
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=str(cwd) if cwd else None,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return ""
+    output = (completed.stdout or completed.stderr or "").strip()
+    return output.splitlines()[0].strip() if output else ""
+
+
+def parse_node_version(value: str | None) -> tuple[int, int, int] | None:
+    if not value:
+        return None
+    match = re.search(r"v?(\d+)\.(\d+)\.(\d+)", value)
+    if not match:
+        return None
+    return tuple(int(part) for part in match.groups())
+
+
+def format_node_version(version: tuple[int, int, int] | None) -> str:
+    if not version:
+        return ""
+    return "v%d.%d.%d" % version
+
+
+def is_supported_node_version(version: tuple[int, int, int] | None) -> bool:
+    if not version:
+        return False
+    major, minor, patch = version
+    if major == 20:
+        return (minor, patch) >= (19, 0)
+    if major == 22:
+        return (minor, patch) >= (13, 0)
+    return major >= 24
+
+
+def installed_nvm_node_versions() -> list[tuple[int, int, int]]:
+    versions_dir = pathlib.Path.home() / ".nvm" / "versions" / "node"
+    if not versions_dir.is_dir():
+        return []
+    versions: list[tuple[int, int, int]] = []
+    for child in versions_dir.iterdir():
+        version = parse_node_version(child.name)
+        if version and is_supported_node_version(version):
+            versions.append(version)
+    return sorted(versions, reverse=True)
+
+
+def probe_nvm_node_runtime(version_text: str) -> tuple[str, str, str]:
+    command = (
+        'source "$HOME/.nvm/nvm.sh" && '
+        f"nvm use {version_text} >/dev/null && "
+        'printf "%s\\n%s\\n%s\\n" "$(node -v)" "$(npm -v)" "$(node -p process.execPath)"'
+    )
+    try:
+        completed = subprocess.run(
+            ["bash", "-lc", command],
+            cwd=str(ANDROID_ROOT),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return "", "", ""
+    lines = [line.strip() for line in (completed.stdout or "").splitlines() if line.strip()]
+    node_version = lines[0] if len(lines) >= 1 else ""
+    npm_version = lines[1] if len(lines) >= 2 else ""
+    node_binary = lines[2] if len(lines) >= 3 else ""
+    return node_version, npm_version, node_binary
+
+
+def select_android_preview_runtime(script_name: str) -> dict[str, Any]:
+    current_node_version_text = probe_text(["node", "-v"], cwd=ANDROID_ROOT)
+    current_node_version = parse_node_version(current_node_version_text)
+    current_npm_version_text = probe_text(["npm", "-v"], cwd=ANDROID_ROOT)
+    current_node_binary = probe_text(["node", "-p", "process.execPath"], cwd=ANDROID_ROOT)
+
+    if is_supported_node_version(current_node_version):
+        return {
+            "command": ["npm", "run", script_name],
+            "display": f"cd android && npm run {script_name}",
+            "runtime": "current_node",
+            "node_version": current_node_version_text,
+            "npm_version": current_npm_version_text,
+            "node_binary": current_node_binary,
+            "unsupported_current_node_version": False,
+        }
+
+    compatible_versions = installed_nvm_node_versions()
+    if compatible_versions:
+        same_major = [
+            version
+            for version in compatible_versions
+            if current_node_version and version[0] == current_node_version[0]
+        ]
+        selected = same_major[0] if same_major else compatible_versions[0]
+        selected_text = format_node_version(selected)
+        node_version, npm_version, node_binary = probe_nvm_node_runtime(selected_text)
+        nvm_command = (
+            'source "$HOME/.nvm/nvm.sh" && '
+            f"nvm use {selected_text} >/dev/null && "
+            f"npm run {script_name}"
+        )
+        return {
+            "command": ["bash", "-lc", nvm_command],
+            "display": f"cd android && nvm use {selected_text} && npm run {script_name}",
+            "runtime": "nvm_compatible_node",
+            "node_version": node_version or selected_text,
+            "npm_version": npm_version,
+            "node_binary": node_binary,
+            "unsupported_current_node_version": True,
+            "current_node_version": current_node_version_text,
+            "selected_node_version": selected_text,
+        }
+
+    return {
+        "command": ["npm", "run", script_name],
+        "display": f"cd android && npm run {script_name}",
+        "runtime": "unsupported_current_node",
+        "node_version": current_node_version_text,
+        "npm_version": current_npm_version_text,
+        "node_binary": current_node_binary,
+        "unsupported_current_node_version": True,
+    }
+
+
+def sha256_file(path: pathlib.Path) -> str | None:
+    if not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def apk_snapshot(path: pathlib.Path = ANDROID_PREVIEW_APK_PATH) -> dict[str, Any]:
+    exists = path.is_file()
+    stat = path.stat() if exists else None
+    return {
+        "apk_path": str(path),
+        "apk_exists": exists,
+        "apk_mtime": (
+            dt.datetime.fromtimestamp(stat.st_mtime, dt.timezone.utc).isoformat()
+            if stat
+            else None
+        ),
+        "apk_mtime_ns": stat.st_mtime_ns if stat else None,
+        "apk_size_bytes": stat.st_size if stat else None,
+        "apk_sha256": sha256_file(path) if exists else None,
+    }
+
+
+def source_revision_or_diff_hash() -> str:
+    head = probe_text(["git", "rev-parse", "--short", "HEAD"], cwd=REPO_ROOT)
+    try:
+        completed = subprocess.run(
+            [
+                "git",
+                "diff",
+                "--",
+                "android",
+                "scripts/run_mobile_pilot_runner.py",
+                "scripts/run_mobile_native_preflight.py",
+            ],
+            cwd=str(REPO_ROOT),
+            check=False,
+            capture_output=True,
+            text=False,
+            timeout=30,
+        )
+        diff_hash = hashlib.sha256(completed.stdout or b"").hexdigest()
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        diff_hash = ""
+    if head and diff_hash:
+        return f"head={head};diff_sha256={diff_hash}"
+    return head or (f"diff_sha256={diff_hash}" if diff_hash else "")
+
+
+def classify_preview_failure(result: CommandResult | None, runtime: dict[str, Any]) -> str | None:
+    if runtime.get("runtime") == "unsupported_current_node":
+        return "unsupported_node_version"
+    if result is None or result.returncode == 0:
+        return None
+    output = "\n".join((result.stdout or "", result.stderr or "")).lower()
+    if "@expo/metro/metro-config" in output:
+        return "expo_metro_module_resolution"
+    if "@expo/image-utils" in output:
+        return "expo_image_utils_module_resolution"
+    if "execution failed for task ':app:createbundlereleasejsandassets'" in output:
+        return "android_release_bundle_failed"
+    if "failed to install" in output or "performing push install" in output:
+        return "apk_install_failed"
+    if install_failure_is_environmental(result):
+        return "adb_or_emulator_environment"
+    return "android_preview_failed"
+
+
+def apk_unchanged(before: dict[str, Any], after: dict[str, Any]) -> bool:
+    return bool(
+        before.get("apk_exists")
+        and after.get("apk_exists")
+        and before.get("apk_sha256") == after.get("apk_sha256")
+        and before.get("apk_mtime_ns") == after.get("apk_mtime_ns")
+    )
+
+
+def write_apk_build_preflight(
+    state: ExecutionState,
+    payload: dict[str, Any],
+) -> None:
+    state.apk_build_preflight = payload
+    write_json(state.artifacts_dir / "apk_build_preflight.json", payload)
+
+
 def install_or_reuse_app(state: ExecutionState, package_info: dict[str, Any]) -> None:
-    if state.visual_mode and not force_mobile_install() and detect_installed_package(state):
+    stale_apk_allowed = allow_stale_apk()
+    runtime = select_android_preview_runtime(str(package_info["preferred_install_script"]))
+    android_localhost_strategy = mobile_android_localhost_strategy()
+    state.android_localhost_strategy_for_build = android_localhost_strategy
+    api_base_url_for_build = mobile_api_base_url_for_build(state)
+    auth_web_base_url_for_build = api_base_url_for_build
+    runtime_api_base_url = infer_mobile_runtime_api_base_url(
+        api_base_url_for_build,
+        state,
+    )
+    build_env_flags = {
+        "EXPO_PUBLIC_API_BASE_URL": api_base_url_for_build,
+        "EXPO_PUBLIC_AUTH_WEB_BASE_URL": auth_web_base_url_for_build,
+        "EXPO_PUBLIC_ANDROID_LOCALHOST_STRATEGY": android_localhost_strategy,
+        **MOBILE_LOCAL_ANDROID_BUILD_FLAG_VALUES,
+    }
+    state.api_base_url_for_build = api_base_url_for_build
+    state.auth_web_base_url_for_build = auth_web_base_url_for_build
+    state.api_base_url_runtime_if_available = runtime_api_base_url
+    apk_before = apk_snapshot()
+    base_preflight = {
+        "generated_at": now_utc(),
+        "preview_build_executed": False,
+        "preview_build_succeeded": None,
+        "preferred_install_script": package_info["preferred_install_script"],
+        "api_base_url_for_build": api_base_url_for_build,
+        "auth_web_base_url_for_build": auth_web_base_url_for_build,
+        "android_localhost_strategy_for_build": android_localhost_strategy,
+        "android_v2_read_contracts_enabled_for_build": build_env_flags[
+            "EXPO_PUBLIC_ANDROID_V2_READ_CONTRACTS_ENABLED"
+        ],
+        "mobile_automation_diagnostics_for_build": build_env_flags[
+            "EXPO_PUBLIC_MOBILE_AUTOMATION_DIAGNOSTICS"
+        ],
+        "build_env_flags_applied": build_env_flags,
+        "api_base_url_runtime_if_available": runtime_api_base_url,
+        "preview_command": runtime.get("display"),
+        "node_engine_requirement": NODE_ENGINE_REQUIREMENT,
+        "node_runtime": runtime.get("runtime"),
+        "node_version_used_for_preview": runtime.get("node_version"),
+        "npm_version_used_for_preview": runtime.get("npm_version"),
+        "node_binary_used_for_preview": runtime.get("node_binary"),
+        "current_node_version": runtime.get("current_node_version")
+        or runtime.get("node_version"),
+        "source_revision_or_diff_hash": source_revision_or_diff_hash(),
+        "stale_apk_allowed": stale_apk_allowed,
+        "stale_apk_detected": False,
+        "failure_classification": None,
+        "apk_before": apk_before,
+        "apk_after": None,
+        **apk_before,
+    }
+    write_apk_build_preflight(state, base_preflight)
+
+    if runtime.get("runtime") == "unsupported_current_node":
+        payload = {
+            **base_preflight,
+            "preview_build_succeeded": False,
+            "failure_classification": "unsupported_node_version",
+        }
+        write_apk_build_preflight(state, payload)
+        raise RunnerError(
+            "Node ativo incompatível com o workspace Android e nenhum runtime nvm compatível foi encontrado. "
+            f"Requisito: {NODE_ENGINE_REQUIREMENT}."
+        )
+
+    if (
+        state.visual_mode
+        and stale_apk_allowed
+        and not force_mobile_install()
+        and detect_installed_package(state)
+    ):
         state.build_used_existing_install = True
+        payload = {
+            **base_preflight,
+            "preview_build_succeeded": False,
+            "stale_apk_detected": True,
+            "failure_classification": "stale_apk_allowed_for_visual_debug",
+        }
+        write_apk_build_preflight(state, payload)
         append_note(
             state,
-            "Package Android ja instalado no device; runner local visual reutilizou a instalacao existente.",
+            "Package Android ja instalado no device; runner local visual reutilizou a instalacao existente porque MOBILE_ALLOW_STALE_APK=1.",
         )
         return
 
     env = os.environ.copy()
     env["ANDROID_PREVIEW_CLEAN"] = "1"
-    env["EXPO_PUBLIC_API_BASE_URL"] = LOCAL_MOBILE_API_BASE_URL
-    env["EXPO_PUBLIC_AUTH_WEB_BASE_URL"] = LOCAL_MOBILE_API_BASE_URL
-    env["EXPO_PUBLIC_MOBILE_AUTOMATION_DIAGNOSTICS"] = "1"
+    env.update(build_env_flags)
+    env["TARIEL_ANDROID_PREVIEW_SKIP_LAUNCH"] = "1"
+    node_binary = str(runtime.get("node_binary") or "").strip()
+    if node_binary:
+        env["NODE_BINARY"] = node_binary
     append_note(
         state,
-        "Build Android executado com EXPO_PUBLIC_MOBILE_AUTOMATION_DIAGNOSTICS=1 para materializar o probe de selecao no shell autenticado.",
+        "Build Android executado com EXPO_PUBLIC_ANDROID_V2_READ_CONTRACTS_ENABLED=1 e EXPO_PUBLIC_MOBILE_AUTOMATION_DIAGNOSTICS=1 para materializar contrato V2 e probes do shell autenticado.",
     )
     append_note(
         state,
-        f"Build Android forçado para API local {LOCAL_MOBILE_API_BASE_URL} com limpeza fria do preview para evitar bundle stale.",
+        f"Build Android forçado para API local {api_base_url_for_build} com limpeza fria do preview para evitar bundle stale.",
     )
-    command = ["npm", "run", package_info["preferred_install_script"]]
+    append_note(
+        state,
+        "Launch automatico do preview Android desabilitado; o runner valida rede antes de entregar a abertura ao Maestro.",
+    )
+    command = [str(item) for item in runtime["command"]]
+    preview_command_display = str(runtime.get("display") or command_display(command))
     for attempt in (1, 2):
         install_log = state.artifacts_dir / (
             "android_install.log" if attempt == 1 else f"android_install_retry_{attempt}.log"
         )
-        state.commands_used.append(command_display(command))
+        state.commands_used.append(preview_command_display)
         log_step(
             f"Instalando/atualizando o app Android via {package_info['preferred_install_script']} (tentativa {attempt}/2)."
         )
@@ -1928,7 +3383,7 @@ def install_or_reuse_app(state: ExecutionState, package_info: dict[str, Any]) ->
             install_log,
             "\n".join(
                 [
-                    f"$ {command_display(command)}",
+                    f"$ {preview_command_display}",
                     "",
                     "[stdout]",
                     result.stdout.strip(),
@@ -1942,6 +3397,27 @@ def install_or_reuse_app(state: ExecutionState, package_info: dict[str, Any]) ->
             .strip()
             + "\n",
         )
+        apk_after = apk_snapshot()
+        stale_detected = bool(result.returncode != 0 and apk_unchanged(apk_before, apk_after))
+        installed_package_detected = detect_installed_package(state)
+        failure_classification = classify_preview_failure(result, runtime)
+        payload = {
+            **base_preflight,
+            "preview_build_executed": True,
+            "preview_build_succeeded": result.returncode == 0,
+            "preview_returncode": result.returncode,
+            "preview_attempt": attempt,
+            "stale_apk_detected": stale_detected or (
+                result.returncode != 0 and installed_package_detected
+            ),
+            "installed_package_detected_after_failure": (
+                installed_package_detected if result.returncode != 0 else None
+            ),
+            "failure_classification": failure_classification,
+            "apk_after": apk_after,
+            **apk_after,
+        }
+        write_apk_build_preflight(state, payload)
 
         if result.returncode == 0:
             record_phase_event(
@@ -1950,19 +3426,9 @@ def install_or_reuse_app(state: ExecutionState, package_info: dict[str, Any]) ->
                 status="ok",
                 detail=f"attempt={attempt}",
             )
-            return
-
-        if detect_installed_package(state):
-            state.build_used_existing_install = True
             append_note(
                 state,
-                "Build/instalação Android falhou, mas o package já estava instalado; o runner seguiu com a instalação existente.",
-            )
-            record_phase_event(
-                state,
-                phase="install",
-                status="warn",
-                detail=f"attempt={attempt} reused_existing_install",
+                f"APK preview atualizado e instalado a partir de {ANDROID_PREVIEW_APK_PATH}.",
             )
             return
 
@@ -1971,7 +3437,11 @@ def install_or_reuse_app(state: ExecutionState, package_info: dict[str, Any]) ->
             state,
             phase="install",
             status="fail",
-            detail=f"attempt={attempt} environmental={str(environmental_failure).lower()}",
+            detail=(
+                f"attempt={attempt} environmental={str(environmental_failure).lower()} "
+                f"classification={failure_classification}"
+            ),
+            extra={"apk_build_preflight": payload},
         )
         if (
             attempt == 1
@@ -1994,7 +3464,38 @@ def install_or_reuse_app(state: ExecutionState, package_info: dict[str, Any]) ->
             )
             continue
 
-        raise RunnerError("Não foi possível instalar o app Android no device.")
+        if installed_package_detected and stale_apk_allowed:
+            state.build_used_existing_install = True
+            payload = {
+                **payload,
+                "stale_apk_detected": True,
+                "stale_apk_allowed": True,
+                "failure_classification": failure_classification
+                or "stale_apk_allowed_after_preview_failure",
+            }
+            write_apk_build_preflight(state, payload)
+            append_note(
+                state,
+                "Build/instalação Android falhou, mas o package já estava instalado; o runner seguiu com a instalação existente porque MOBILE_ALLOW_STALE_APK=1.",
+            )
+            record_phase_event(
+                state,
+                phase="install",
+                status="warn",
+                detail=f"attempt={attempt} reused_existing_install",
+            )
+            return
+
+        append_note(
+            state,
+            "Build/instalação Android falhou; o gate real abortou antes do Maestro para não reutilizar APK stale.",
+        )
+        raise RunnerError(
+            "Não foi possível gerar/instalar o APK preview atualizado; "
+            "o gate real não reutiliza APK antigo por padrão. "
+            f"Classificação: {failure_classification or 'instalacao/build Android'}. "
+            "Use MOBILE_ALLOW_STALE_APK=1 apenas para debug local explícito."
+        )
 
 
 def force_stop_app(state: ExecutionState, *, label: str) -> None:
@@ -2205,6 +3706,10 @@ def run_maestro_flow(state: ExecutionState, mobile_password: str) -> CommandResu
         in output
         or f"Assert that id: authenticated-shell-selection-ready-{state.target_laudo_id} is visible... COMPLETED"
         in output
+        or f"Assert that id: {MOBILE_PILOT_CHAT_SURFACE_TEST_ID} is visible... COMPLETED"
+        in output
+        or f"Assert that \"{MOBILE_PILOT_TARGET_TEXT}\" is visible... COMPLETED"
+        in output
     )
     state.maestro_selection_callback_wait_failed = (
         "Assert that id: history-selection-callback-fired-${TARGET_LAUDO_ID} is visible... FAILED"
@@ -2221,6 +3726,8 @@ def run_maestro_flow(state: ExecutionState, mobile_password: str) -> CommandResu
     state.maestro_activity_center_terminal_confirmed = (
         "Assert that id: activity-center-terminal-state is visible... COMPLETED"
         in output
+        or "Assert that id: activity-center-empty-state is visible... COMPLETED"
+        in output
     )
     state.maestro_activity_center_v2_confirmed = (
         "Run flow when id: activity-center-feed-v2-served is visible... COMPLETED"
@@ -2232,6 +3739,19 @@ def run_maestro_flow(state: ExecutionState, mobile_password: str) -> CommandResu
             and f"Assert that id: activity-center-feed-v2-target-{state.target_laudo_id} is visible... COMPLETED"
             in output
         )
+    )
+    state.maestro_mesa_entry_target_found = (
+        f"Assert that id: {MOBILE_PILOT_MESA_ENTRY_TEST_ID} is visible... COMPLETED"
+        in output
+    )
+    state.maestro_mesa_entry_target_tapped = (
+        f"Tap on id: {MOBILE_PILOT_MESA_ENTRY_TEST_ID}... COMPLETED" in output
+    )
+    state.maestro_thread_surface_confirmed = (
+        f"Assert that id: {MOBILE_PILOT_MESA_SURFACE_TEST_ID} is visible... COMPLETED"
+        in output
+        or f"Assert that id: {MOBILE_PILOT_MESA_LOADED_TEST_ID} is visible... COMPLETED"
+        in output
     )
     save_command_artifact(state.artifacts_dir / "maestro_run.txt", result)
     state.flow_ran = True
@@ -2417,11 +3937,178 @@ def record_human_acks_from_ui(state: ExecutionState) -> None:
         )
 
 
-def summarize_surface_coverage(summary: dict[str, Any]) -> tuple[bool, bool]:
+def build_operator_action_diagnostics(
+    state: ExecutionState,
+    maestro_result: CommandResult,
+) -> dict[str, Any]:
+    target_id = state.target_laudo_id
+    ui_summary = state.ui_marker_summary or {}
+    backend_evidence = extract_backend_evidence(state.summary_after)
+    human_ack_events = backend_evidence.get("human_ack_recent_events") or []
+    request_traces = backend_evidence.get("request_traces_recent") or []
+    operator_progress = (state.operator_status_after or {}).get("operator_run_progress") or {}
+    feed_ack_events = [
+        item for item in human_ack_events if str(item.get("surface") or "") == "feed"
+    ]
+    thread_ack_events = [
+        item
+        for item in human_ack_events
+        if str(item.get("surface") or "") == "thread"
+    ]
+    feed_ack_observed = bool(feed_ack_events)
+    thread_ack_observed = bool(thread_ack_events)
+    thread_v2_traces = [
+        item
+        for item in request_traces
+        if str(item.get("endpoint") or "") == "thread"
+        and str(item.get("counted_kind") or "") == "v2_served"
+    ]
+    thread_validation_trace = next(
+        (
+            item
+            for item in thread_v2_traces
+            if bool(item.get("metadata_available"))
+            and str(item.get("usage_mode") or "") == "organic_validation"
+        ),
+        None,
+    )
+    thread_validation_session_id = (
+        str((thread_validation_trace or {}).get("validation_session_id") or "").strip()
+        or None
+    )
+    thread_operator_run_id = (
+        str((thread_validation_trace or {}).get("operator_run_id") or "").strip()
+        or None
+    )
+    if not feed_ack_observed:
+        feed_only_reason = "feed_ack_missing"
+    elif thread_ack_observed:
+        feed_only_reason = None
+    elif not state.maestro_mesa_entry_target_tapped:
+        feed_only_reason = "mesa_entry_not_tapped"
+    elif not (
+        state.maestro_thread_surface_confirmed
+        or ui_summary.get("thread_surface_visible")
+    ):
+        feed_only_reason = "mesa_thread_surface_not_visible"
+    else:
+        feed_only_reason = "thread_ack_missing_after_surface"
+
+    return {
+        "timestamp_utc": now_utc(),
+        "target_expected": {
+            "tenant_key": state.mobile_tenant_key,
+            "tenant_label": state.mobile_tenant_label,
+            "laudo_id": target_id,
+            "history_item_id": f"history-item-{target_id}" if target_id else None,
+            "chat_surface_id": MOBILE_PILOT_CHAT_SURFACE_TEST_ID,
+            "target_text": MOBILE_PILOT_TARGET_TEXT,
+            "feed_target_id": (
+                f"activity-center-feed-v2-target-{target_id}" if target_id else None
+            ),
+            "mesa_entry_target_id": MOBILE_PILOT_MESA_ENTRY_TEST_ID,
+            "mesa_entry_label": MOBILE_PILOT_MESA_ENTRY_LABEL,
+            "mesa_surface_id": MOBILE_PILOT_MESA_SURFACE_TEST_ID,
+            "mesa_loaded_id": MOBILE_PILOT_MESA_LOADED_TEST_ID,
+        },
+        "maestro_action": {
+            "flow_path": str(FLOW_PATH.relative_to(REPO_ROOT)),
+            "tap_selector": f"history-item-{target_id}" if target_id else None,
+            "tap_completed": state.maestro_target_tap_completed,
+            "selection_confirmation": {
+                "chat_surface_confirmed": state.maestro_shell_selection_confirmed,
+                "legacy_callback_marker_confirmed": state.maestro_selection_callback_confirmed,
+                "legacy_callback_marker_wait_failed": state.maestro_selection_callback_wait_failed,
+            },
+            "activity_center_terminal_confirmed": state.maestro_activity_center_terminal_confirmed,
+            "activity_center_v2_confirmed": state.maestro_activity_center_v2_confirmed,
+            "mesa_entry_target_found": state.maestro_mesa_entry_target_found,
+            "mesa_entry_target_tapped": state.maestro_mesa_entry_target_tapped,
+            "thread_surface_confirmed": state.maestro_thread_surface_confirmed,
+            "returncode": maestro_result.returncode,
+        },
+        "target_observed": {
+            "chat_thread_surface_visible": bool(ui_summary.get("chat_thread_surface_visible")),
+            "target_seed_text_visible": bool(ui_summary.get("target_seed_text_visible")),
+            "activity_center_delivery_mode": ui_summary.get("activity_center_delivery_mode"),
+            "activity_center_target_v2": bool(ui_summary.get("activity_center_target_v2")),
+            "mesa_entry_target_visible": bool(ui_summary.get("mesa_entry_target_visible")),
+            "mesa_entry_label_visible": bool(ui_summary.get("mesa_entry_label_visible")),
+            "mesa_thread_surface_visible": bool(ui_summary.get("thread_surface_visible")),
+            "mesa_thread_loaded_visible": bool(ui_summary.get("thread_loaded_visible")),
+        },
+        "human_ack": {
+            "runner_synthetic_ack_disabled": True,
+            "backend_received": bool(human_ack_events),
+            "backend_recent_event_count": len(human_ack_events),
+            "backend_recent_events": human_ack_events,
+            "feed_ack_observed": feed_ack_observed,
+            "feed_ack_target": (
+                positive_int(feed_ack_events[0].get("target_id"))
+                if feed_ack_events
+                else None
+            ),
+            "feed_ack_status": (
+                str(feed_ack_events[0].get("status") or "") if feed_ack_events else None
+            ),
+            "thread_v2_served": bool(thread_v2_traces),
+            "thread_validation_metadata_present": bool(thread_validation_trace),
+            "thread_ackable_state": bool(
+                (
+                    state.maestro_thread_surface_confirmed
+                    or ui_summary.get("thread_surface_visible")
+                )
+                and ui_summary.get("thread_loaded_visible")
+                and thread_validation_trace
+            ),
+            "thread_ack_handler_registered": True,
+            "thread_ack_dedupe_key": (
+                ":".join(
+                    [
+                        thread_validation_session_id,
+                        "thread",
+                        "rendered",
+                        str(target_id),
+                    ]
+                )
+                if thread_validation_session_id and target_id
+                else None
+            ),
+            "thread_ack_attempted": thread_ack_observed,
+            "thread_ack_request_observed": thread_ack_observed,
+            "thread_ack_status": (
+                str(thread_ack_events[0].get("status") or "")
+                if thread_ack_events
+                else None
+            ),
+            "thread_ack_target": (
+                positive_int(thread_ack_events[0].get("target_id"))
+                if thread_ack_events
+                else None
+            ),
+            "thread_validation_session_id": thread_validation_session_id,
+            "thread_operator_run_id": thread_operator_run_id,
+            "feed_only_reason": feed_only_reason,
+            "operator_human_confirmed_targets": operator_progress.get(
+                "human_confirmed_targets"
+            ),
+            "operator_missing_targets": operator_progress.get("missing_targets"),
+        },
+    }
+
+
+def summarize_surface_coverage(
+    summary: dict[str, Any],
+    *,
+    tenant_key: str | None = None,
+) -> tuple[bool, bool]:
     feed = False
     thread = False
+    target_tenant_key = str(
+        tenant_key or (summary.get("first_promoted_tenant") or {}).get("tenant_key") or ""
+    ).strip()
     for row in summary.get("tenant_surface_states") or []:
-        if str(row.get("tenant_key")) != "1":
+        if target_tenant_key and str(row.get("tenant_key")) != target_tenant_key:
             continue
         surface = str(row.get("surface") or "")
         completed = bool(row.get("operator_run_surface_completed"))
@@ -2506,7 +4193,10 @@ def wait_for_backend_evidence(
             "/admin/api/mobile-v2-rollout/operator-run/status",
         )
         last_summary = admin_json(opener, "/admin/api/mobile-v2-rollout/summary")
-        feed_covered, thread_covered = summarize_surface_coverage(last_summary)
+        feed_covered, thread_covered = summarize_surface_coverage(
+            last_summary,
+            tenant_key=state.mobile_tenant_key,
+        )
         if feed_covered and thread_covered:
             break
         time.sleep(poll_seconds)
@@ -2578,10 +4268,6 @@ def evaluate_result(state: ExecutionState) -> str:
     )
     if ui_summary.get("selection_lost"):
         return "selection_lost_after_update"
-    saw_v2_or_ack_evidence = bool(
-        int(((state.summary_after.get("totals") or {}).get("v2_served") or 0)) > 0
-        or backend_evidence["human_ack_recent_events"]
-    )
     if state.feed_covered and state.thread_covered:
         if operator_outcome == "completed_successfully":
             return "success_human_confirmed"
@@ -2646,9 +4332,21 @@ def evaluate_result(state: ExecutionState) -> str:
         ):
             return "central_unknown_terminal_state"
     if (
+        state.flow_ran
+        and operator_outcome == "completed_inconclusive"
+        and backend_evidence["human_ack_recent_events"]
+    ):
+        return "blocked_backend_accounting"
+    if state.flow_ran and operator_outcome == "completed_inconclusive":
+        return "thread_opened_but_no_human_ack"
+    if (
         state.maestro_shell_selection_confirmed
         or ui_summary.get("shell_selection_ready")
         or ui_summary.get("selected_target_id")
+        or (
+            ui_summary.get("chat_thread_surface_visible")
+            and ui_summary.get("target_seed_text_visible")
+        )
     ):
         return "selected_laudo_confirmed"
     if state.maestro_target_tap_completed and state.maestro_selection_callback_wait_failed:
@@ -2666,10 +4364,6 @@ def evaluate_result(state: ExecutionState) -> str:
         )
     ):
         return "callback_fired_but_shell_not_updated"
-    if state.flow_ran and operator_outcome == "completed_inconclusive" and saw_v2_or_ack_evidence:
-        return "blocked_backend_accounting"
-    if state.flow_ran and operator_outcome == "completed_inconclusive":
-        return "thread_opened_but_no_human_ack"
     if state.flow_ran:
         if state.target_laudo_id and not ui_summary.get("selected_target_id"):
             return "app_opened_but_target_not_reached"
@@ -2692,12 +4386,60 @@ def build_final_report(state: ExecutionState) -> str:
         [
             f"timestamp_utc: {now_utc()}",
             f"device_id: {state.device_id}",
-            f"tenant: 1 - Empresa Demo (DEV)",
+            f"tenant: {state.mobile_tenant_key or 'unknown'} - {state.mobile_tenant_label or 'unknown'}",
             f"package_name: {state.package_name}",
             f"main_activity: {state.main_activity}",
+            f"native_project_root: {state.native_project_root}",
+            f"native_project_root_from_workspace: {state.native_project_root_from_workspace}",
+            f"native_build_gradle_path: {state.native_build_gradle_path}",
+            f"native_manifest_path: {state.native_manifest_path}",
+            f"native_project_present_before_preflight: {state.native_project_present_before_preflight}",
+            f"native_project_present_after_preflight: {state.native_project_present_after_preflight}",
+            f"native_prebuild_executed: {state.native_prebuild_executed}",
+            f"native_prebuild_succeeded: {state.native_prebuild_succeeded}",
+            f"native_prebuild_status: {state.native_prebuild_status}",
+            f"native_prebuild_detail: {state.native_prebuild_detail}",
+            f"native_prebuild_command: {state.native_prebuild_command}",
+            f"native_prebuild_next_requirement: {state.native_prebuild_next_requirement}",
+            f"native_preflight_state_file: {state.native_preflight_state_file}",
+            f"native_preflight_artifact_dir: {state.native_preflight_artifact_dir}",
+            f"database_url_redacted: {state.mobile_database_url_redacted}",
+            f"sqlite_path: {state.mobile_sqlite_path}",
+            f"database_cwd_prepare: {state.mobile_database_cwd_prepare}",
+            f"database_cwd_api: {state.mobile_database_cwd_api}",
+            f"db_file_exists_before_prepare: {state.mobile_db_file_exists_before_prepare}",
+            f"db_file_exists_after_prepare: {state.mobile_db_file_exists_after_prepare}",
+            f"usuarios_table_exists_before_prepare: {state.mobile_usuarios_table_exists_before_prepare}",
+            f"usuarios_table_exists_after_prepare: {state.mobile_usuarios_table_exists_after_prepare}",
+            f"seed_users_present_before_prepare: {state.mobile_seed_users_present_before_prepare}",
+            f"seed_users_present: {state.mobile_seed_users_present}",
+            f"schema_prepare_executed: {state.mobile_schema_prepare_executed}",
+            f"seed_prepare_executed: {state.mobile_seed_prepare_executed}",
+            f"pilot_seed_prepare_executed: {state.mobile_pilot_seed_prepare_executed}",
+            f"database_prepare_status: {state.mobile_db_prepare_status}",
+            f"database_prepare_detail: {state.mobile_db_prepare_detail}",
+            f"database_prepare_command: {state.mobile_db_prepare_command}",
             f"mobile_email: {state.mobile_email}",
             f"admin_email: {state.admin_email}",
             f"target_laudo_id: {state.target_laudo_id}",
+            f"apk_preview_build_executed: {(state.apk_build_preflight or {}).get('preview_build_executed')}",
+            f"apk_preview_build_succeeded: {(state.apk_build_preflight or {}).get('preview_build_succeeded')}",
+            f"apk_path: {(state.apk_build_preflight or {}).get('apk_path')}",
+            f"apk_sha256: {(state.apk_build_preflight or {}).get('apk_sha256')}",
+            f"apk_stale_detected: {(state.apk_build_preflight or {}).get('stale_apk_detected')}",
+            f"apk_stale_allowed: {(state.apk_build_preflight or {}).get('stale_apk_allowed')}",
+            f"apk_failure_classification: {(state.apk_build_preflight or {}).get('failure_classification')}",
+            f"apk_node_version_used_for_preview: {(state.apk_build_preflight or {}).get('node_version_used_for_preview')}",
+            f"apk_android_v2_read_contracts_enabled_for_build: {(state.apk_build_preflight or {}).get('android_v2_read_contracts_enabled_for_build')}",
+            f"apk_mobile_automation_diagnostics_for_build: {(state.apk_build_preflight or {}).get('mobile_automation_diagnostics_for_build')}",
+            f"network_api_base_url_for_build: {(state.mobile_network_preflight or {}).get('api_base_url_for_build')}",
+            f"network_auth_web_base_url_for_build: {(state.mobile_network_preflight or {}).get('auth_web_base_url_for_build')}",
+            f"network_android_localhost_strategy: {(state.mobile_network_preflight or {}).get('android_localhost_strategy_for_build')}",
+            f"network_api_base_url_runtime: {(state.mobile_network_preflight or {}).get('api_base_url_runtime_if_available')}",
+            f"network_backend_health_host_ok: {((state.mobile_network_preflight or {}).get('backend_health_host_status') or {}).get('ok')}",
+            f"network_adb_reverse_configured: {(state.mobile_network_preflight or {}).get('adb_reverse_configured')}",
+            f"network_cleartext_http_allowed: {(state.mobile_network_preflight or {}).get('cleartext_http_allowed')}",
+            f"network_failure_classification: {(state.mobile_network_preflight or {}).get('failure_classification')}",
             f"maestro_attempts: {state.maestro_attempts}",
             f"maestro_environment_retry_used: {state.maestro_environment_retry_used}",
             f"environment_failure_signals: {state.environment_failure_signals}",
@@ -2716,6 +4458,12 @@ def build_final_report(state: ExecutionState) -> str:
             f"ui_selection_callback_fired: {(state.ui_marker_summary or {}).get('selection_callback_fired')}",
             f"ui_selection_callback_completed: {(state.ui_marker_summary or {}).get('selection_callback_completed')}",
             f"ui_shell_selection_ready: {(state.ui_marker_summary or {}).get('shell_selection_ready')}",
+            f"ui_chat_thread_surface_visible: {(state.ui_marker_summary or {}).get('chat_thread_surface_visible')}",
+            f"ui_target_seed_text_visible: {(state.ui_marker_summary or {}).get('target_seed_text_visible')}",
+            f"ui_mesa_entry_target_visible: {(state.ui_marker_summary or {}).get('mesa_entry_target_visible')}",
+            f"ui_mesa_entry_label_visible: {(state.ui_marker_summary or {}).get('mesa_entry_label_visible')}",
+            f"ui_thread_surface_visible: {(state.ui_marker_summary or {}).get('thread_surface_visible')}",
+            f"ui_thread_loaded_visible: {(state.ui_marker_summary or {}).get('thread_loaded_visible')}",
             f"ui_selection_lost: {(state.ui_marker_summary or {}).get('selection_lost')}",
             f"ui_runtime_flag_enabled: {(state.ui_marker_summary or {}).get('runtime_flag_enabled')}",
             f"ui_runtime_flag_raw_value: {(state.ui_marker_summary or {}).get('runtime_flag_raw_value')}",
@@ -2724,6 +4472,9 @@ def build_final_report(state: ExecutionState) -> str:
             f"maestro_shell_selection_confirmed: {state.maestro_shell_selection_confirmed}",
             f"maestro_activity_center_terminal_confirmed: {state.maestro_activity_center_terminal_confirmed}",
             f"maestro_activity_center_v2_confirmed: {state.maestro_activity_center_v2_confirmed}",
+            f"maestro_mesa_entry_target_found: {state.maestro_mesa_entry_target_found}",
+            f"maestro_mesa_entry_target_tapped: {state.maestro_mesa_entry_target_tapped}",
+            f"maestro_thread_surface_confirmed: {state.maestro_thread_surface_confirmed}",
             f"ui_activity_center_state: {(state.ui_marker_summary or {}).get('activity_center_state')}",
             f"ui_activity_center_terminal_state: {(state.ui_marker_summary or {}).get('activity_center_terminal_state')}",
             f"ui_activity_center_delivery_mode: {(state.ui_marker_summary or {}).get('activity_center_delivery_mode')}",
@@ -2747,6 +4498,12 @@ def build_final_report(state: ExecutionState) -> str:
             f"ui_activity_center_request_backend_request_id: {(state.ui_marker_summary or {}).get('activity_center_request_backend_request_id')}",
             f"backend_request_trace_matches_after: {len(backend_request_traces_after)}",
             f"backend_request_trace_counted_kinds_after: {[item.get('counted_kind') for item in backend_request_traces_after]}",
+            f"rollout_enabled: {state.backend_env_flags_applied.get('TARIEL_V2_ANDROID_ROLLOUT') == '1'}",
+            f"rollout_observability_enabled: {state.backend_env_flags_applied.get('TARIEL_V2_ANDROID_ROLLOUT_OBSERVABILITY') == '1'}",
+            f"rollout_state_overrides: {state.backend_env_flags_applied.get('TARIEL_V2_ANDROID_ROLLOUT_STATE_OVERRIDES')}",
+            f"rollout_surface_state_overrides: {state.backend_env_flags_applied.get('TARIEL_V2_ANDROID_ROLLOUT_SURFACE_STATE_OVERRIDES')}",
+            f"backend_env_flags_applied: {json.dumps(state.backend_env_flags_applied, ensure_ascii=False, sort_keys=True)}",
+            f"operator_route_preflight_status: {state.operator_route_preflight_status}",
             f"pilot_outcome_before: {summary_before_tenant.get('pilot_outcome')}",
             f"pilot_outcome_after: {summary_after_tenant.get('pilot_outcome')}",
             f"organic_validation_outcome_after: {summary_after_tenant.get('organic_validation_outcome')}",
@@ -2763,6 +4520,7 @@ def build_final_report(state: ExecutionState) -> str:
 
 
 def execute(state: ExecutionState) -> ExecutionState:
+    ensure_native_android_project_ready(state)
     package_info = load_android_package_info()
     state.package_name = str(package_info["package_name"])
     state.main_activity = str(package_info["main_activity"])
@@ -2789,6 +4547,8 @@ def execute(state: ExecutionState) -> ExecutionState:
         },
     )
 
+    prepare_mobile_local_database(state)
+    configure_mobile_backend_flags(state)
     ensure_local_emulator(state)
 
     log_step("Resolvendo device Android disponível.")
@@ -2807,7 +4567,7 @@ def execute(state: ExecutionState) -> ExecutionState:
     log_step("Garantindo backend local do mobile.")
     start_backend(state)
 
-    mobile_email, mobile_password, admin_email = resolve_credentials(web_env)
+    mobile_email, mobile_password, admin_email = resolve_credentials(web_env, state)
     state.mobile_email = mobile_email
     state.admin_email = admin_email
     append_note(state, f"Credencial mobile usada: {mobile_email}")
@@ -2821,6 +4581,11 @@ def execute(state: ExecutionState) -> ExecutionState:
         web_env.get("SEED_ADMIN_SENHA")
         or web_env.get("SEED_DEV_SENHA_PADRAO")
         or DEFAULT_MOBILE_PASSWORD,
+        state=state,
+    )
+    preflight_payload = ensure_admin_operator_routes_preflight(opener, state)
+    preflight_status = (
+        preflight_payload.get("operator_status_route", {}).get("json") or {}
     )
     mobile_login_payload = login_mobile(mobile_email, mobile_password)
     state.mobile_token = str(mobile_login_payload.get("access_token") or "")
@@ -2829,17 +4594,6 @@ def execute(state: ExecutionState) -> ExecutionState:
     write_json(state.artifacts_dir / "mobile_login.json", mobile_login_payload)
     force_stop_app(state, label="pre_operator_run")
 
-    # baseline pré-run para comparação adicional
-    save_http_json(
-        state.artifacts_dir / "backend_summary_preflight.json",
-        admin_json(opener, "/admin/api/mobile-v2-rollout/summary"),
-    )
-    save_http_json(
-        state.artifacts_dir / "operator_run_status_preflight.json",
-        admin_json(opener, "/admin/api/mobile-v2-rollout/operator-run/status"),
-    )
-
-    preflight_status = admin_json(opener, "/admin/api/mobile-v2-rollout/operator-run/status")
     if preflight_status.get("operator_run_active"):
         append_note(state, "Operator run anterior estava ativo; o runner abortou o estado anterior antes da nova rodada.")
         save_http_json(
@@ -2880,6 +4634,7 @@ def execute(state: ExecutionState) -> ExecutionState:
     start_logcat_capture(state)
     ensure_device_package_service_ready(state)
     install_or_reuse_app(state, package_info)
+    ensure_mobile_network_preflight(state)
     if state.visual_mode:
         keep_device_visible(state)
     ensure_device_package_service_ready(state)
@@ -2979,7 +4734,10 @@ def execute(state: ExecutionState) -> ExecutionState:
         extract_app_request_trace_summary(state.ui_marker_summary),
     )
     if maestro_result.returncode == 0:
-        record_human_acks_from_ui(state)
+        append_note(
+            state,
+            "Runner nao registrou human_ack sintetico; a cobertura humana deve vir do app Android real.",
+        )
 
     summary_post_ui_wait, operator_status_post_ui_wait = wait_for_backend_evidence(
         opener,
@@ -3048,7 +4806,10 @@ def execute(state: ExecutionState) -> ExecutionState:
     )
     save_http_json(state.artifacts_dir / "capabilities_after.json", state.capabilities_after)
 
-    state.feed_covered, state.thread_covered = summarize_surface_coverage(state.summary_after)
+    state.feed_covered, state.thread_covered = summarize_surface_coverage(
+        state.summary_after,
+        tenant_key=state.mobile_tenant_key,
+    )
     state.operator_run_outcome = str(
         (state.operator_status_after or {}).get("operator_run_outcome") or ""
     )
@@ -3057,6 +4818,10 @@ def execute(state: ExecutionState) -> ExecutionState:
     )
 
     state.outcome_label = evaluate_result(state)
+    save_http_json(
+        state.artifacts_dir / "operator_run_action_diagnostics.json",
+        build_operator_action_diagnostics(state, maestro_result),
+    )
     save_http_json(
         state.artifacts_dir / "request_trace_gap_summary.json",
         {

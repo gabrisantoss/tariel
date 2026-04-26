@@ -3,7 +3,7 @@ WEB_PYTHON := $(shell [ -x web/.venv-linux/bin/python ] && echo web/.venv-linux/
 WEB_PYTHON_IN_WEB := $(shell [ -x web/.venv-linux/bin/python ] && echo ./.venv-linux/bin/python || echo python)
 PRE_COMMIT := $(WEB_PYTHON) -m pre_commit
 
-.PHONY: help doctor bootstrap hooks-install web-lint web-typecheck web-test web-ci mesa-smoke mesa-acceptance document-acceptance document-pdf-qa document-pdf-qa-full observability-acceptance hygiene-check binary-assets-audit binary-assets-audit-strict hygiene-acceptance v2-acceptance post-plan-benchmarks contract-check smoke-web demo-local-reset full-regression-audit full-regression-audit-critical full-regression-audit-hosted full-regression-audit-human full-regression-audit-exhaustive full-regression-audit-exhaustive-hosted full-regression-audit-exhaustive-human mobile-install mobile-lint mobile-typecheck mobile-test mobile-format-check mobile-baseline mobile-preview mobile-wifi mobile-acceptance mobile-ci smoke-mobile python-security-audit mobile-security-audit security-audit verify production-ops-check production-ops-check-strict uploads-restore-drill uploads-cleanup-check uploads-cleanup-apply post-deploy-cleanup-observation release-gate-hosted release-gate-real release-gate final-product-stamp clean-generated baseline-snapshot ci
+.PHONY: help doctor bootstrap hooks-install web-lint web-typecheck web-test web-ci mesa-smoke mesa-acceptance document-acceptance document-pdf-qa document-pdf-qa-full observability-acceptance hygiene-check binary-assets-audit binary-assets-audit-strict hygiene-acceptance v2-acceptance post-plan-benchmarks contract-check document-contract-check smoke-web demo-local-reset full-regression-audit full-regression-audit-critical full-regression-audit-hosted full-regression-audit-human full-regression-audit-exhaustive full-regression-audit-exhaustive-hosted full-regression-audit-exhaustive-human mobile-install mobile-lint mobile-typecheck mobile-test mobile-format-check mobile-baseline mobile-preview mobile-wifi mobile-native-preflight mobile-acceptance mobile-ci smoke-mobile python-security-audit mobile-security-audit security-audit verify release-verify-local release-verify production-ops-check production-ops-check-strict uploads-restore-drill uploads-cleanup-check uploads-cleanup-apply post-deploy-cleanup-observation release-gate-hosted release-gate-real release-gate final-product-stamp clean-generated baseline-snapshot ci
 
 help: ## Lista comandos úteis do repositório
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -96,6 +96,10 @@ post-plan-benchmarks: ## Executa o runner versionado dos benchmarks pós-plano
 contract-check: ## Valida contratos sensíveis do backend e mobile público
 	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q tests/test_transaction_contract.py tests/test_tenant_access.py tests/test_v2_android_public_contract.py tests/test_v2_admin_contract_catalogs.py
 
+document-contract-check: ## Valida o PDF do chat livre; requer `pypdf` no Python do workspace web
+	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -c "import importlib.util, sys; modulo = importlib.util.find_spec('pypdf'); print('pypdf: ok' if modulo else 'pypdf: missing'); sys.exit(0 if modulo else 1)"
+	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q tests/test_free_chat_report_pdf.py
+
 smoke-web: ## Executa smoke crítico do inspetor e fluxos web
 	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q tests/test_smoke.py tests/test_regras_rotas_criticas.py
 
@@ -146,12 +150,15 @@ mobile-preview: ## Gera e instala a APK preview local do mobile
 mobile-wifi: ## Religa app Android real por Wi-Fi com API local + Metro em LAN
 	./scripts/dev/run_mobile_wifi.sh
 
-mobile-acceptance: ## Executa o runner oficial de smoke real controlado do mobile
+mobile-native-preflight: ## Materializa o projeto nativo Android se a lane real exigir prebuild
+	python3 scripts/run_mobile_native_preflight.py
+
+mobile-acceptance: mobile-native-preflight ## Executa o runner oficial de smoke real controlado do mobile
 	python3 scripts/run_mobile_pilot_runner.py
 
 mobile-ci: mobile-baseline ## Executa os checks principais do mobile
 
-smoke-mobile: mobile-acceptance ## Executa smoke real controlado do workspace mobile via emulator + Maestro
+smoke-mobile: mobile-native-preflight mobile-acceptance ## Executa smoke real controlado do workspace mobile via emulator + Maestro
 
 python-security-audit: ## Audita dependencias Python em venv descartavel local
 	python3 scripts/run_python_security_audit.py
@@ -162,6 +169,8 @@ mobile-security-audit: ## Audita dependencias mobile de runtime com severidade a
 security-audit: python-security-audit mobile-security-audit ## Executa auditoria de seguranca Python + mobile runtime
 
 verify: web-ci mobile-ci mesa-smoke ## Gate principal local do repositório
+
+release-verify-local: verify contract-check hygiene-check security-audit binary-assets-audit-strict production-ops-check-strict uploads-restore-drill document-contract-check ## Gate forte local antes da promoção
 
 production-ops-check: ## Imprime e valida o resumo operacional canônico de produção
 	python3 scripts/run_production_ops_check.py --json
@@ -197,6 +206,8 @@ post-deploy-cleanup-observation: ## Observa a primeira execucao automatica do cl
 release-gate-hosted: verify mesa-acceptance document-acceptance observability-acceptance ## Gate canônico executável em CI hospedada, sem depender de Android real
 
 release-gate-real: release-gate-hosted smoke-mobile production-ops-check-strict uploads-restore-drill uploads-cleanup-check ## Gate canônico de pronto real do produto, incluindo mobile real e operação de produção
+
+release-verify: release-verify-local release-gate-real ## Gate completo de promoção, combinando o gate forte local e a validação real pré-deploy
 
 release-gate: release-gate-real ## Alias oficial do gate canônico de release
 

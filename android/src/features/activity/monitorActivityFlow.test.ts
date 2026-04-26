@@ -144,6 +144,109 @@ describe("runMonitorActivityFlow", () => {
     });
   });
 
+  it("preserva metadata V2 da thread quando o monitor carrega o laudo ativo", async () => {
+    (carregarLaudosMobile as jest.Mock).mockResolvedValue({
+      itens: [
+        {
+          id: 21,
+          titulo: "Laudo 21",
+          status_card: "aguardando",
+          status_revisao: "aguardando",
+          status_card_label: "Aguardando",
+          permite_edicao: false,
+          permite_reabrir: false,
+        },
+      ],
+    });
+    (carregarFeedMesaMobile as jest.Mock).mockResolvedValue(
+      attachMobileV2ReadRenderMetadata(
+        {
+          cursor_atual: "2026-03-21T13:00:00Z",
+          laudo_ids: [21],
+          itens: [{ laudo_id: 21, resumo: { total_mensagens: 1 } }],
+        },
+        {
+          route: "feed",
+          deliveryMode: "v2",
+          capabilitiesVersion: "2026-03-26.09j",
+          rolloutBucket: 12,
+          usageMode: "organic_validation",
+          validationSessionId: "orgv_monitor_thread",
+          operatorRunId: "oprv_monitor_thread",
+        },
+      ),
+    );
+    (carregarMensagensMesaMobile as jest.Mock).mockResolvedValue(
+      attachMobileV2ReadRenderMetadata(
+        {
+          laudo_id: 21,
+          itens: [{ id: 400, tipo: "humano_eng", texto: "Mensagem da mesa" }],
+          cursor_proximo: null,
+          tem_mais: false,
+          estado: "aguardando",
+          permite_edicao: false,
+          permite_reabrir: false,
+          laudo_card: null,
+        },
+        {
+          route: "thread",
+          deliveryMode: "v2",
+          capabilitiesVersion: "2026-03-26.09j",
+          rolloutBucket: 12,
+          usageMode: "organic_validation",
+          validationSessionId: "orgv_monitor_thread",
+          operatorRunId: "oprv_monitor_thread",
+          suggestedTargetIds: [21],
+        },
+      ),
+    );
+
+    const onObserveMesaThreadReadMetadata = jest.fn();
+
+    await runMonitorActivityFlow({
+      accessToken: "token-123",
+      monitorandoAtividade: false,
+      conversaLaudoId: 21,
+      conversaLaudoTitulo: "Laudo 21",
+      sessionUserId: 1,
+      assinaturaStatusLaudo: (item) => `${item.id}:${item.status_card}`,
+      assinaturaMensagemMesa: (item) => `${item.id}:${item.resolvida_em || ""}`,
+      selecionarLaudosParaMonitoramentoMesa: () => [21],
+      criarNotificacaoStatusLaudo: (item) => ({ id: `status:${item.id}` }),
+      criarNotificacaoMesa: (kind, item) => ({ id: `${kind}:${item.id}` }),
+      atualizarResumoLaudoAtual: jest.fn(),
+      registrarNotificacoes: jest.fn(),
+      erroSugereModoOffline: jest.fn().mockReturnValue(false),
+      chaveCacheLaudo: (laudoId) => String(laudoId || ""),
+      statusSnapshotRef: { current: {} },
+      mesaSnapshotRef: { current: {} },
+      mesaFeedCursorRef: { current: "" },
+      onSetMonitorandoAtividade: jest.fn(),
+      onSetLaudosDisponiveis: jest.fn(),
+      onSetCacheLaudos: jest.fn(),
+      onSetErroLaudos: jest.fn(),
+      onSetMensagensMesa: jest.fn(),
+      onSetLaudoMesaCarregado: jest.fn(),
+      onSetCacheMesa: jest.fn(),
+      onSetStatusApi: jest.fn(),
+      onSetErroConversaIfEmpty: jest.fn(),
+      onObserveMesaFeedReadMetadata: jest.fn(),
+      onObserveMesaThreadReadMetadata,
+      onObserveMesaFeedRequestedTargetIds: jest.fn(),
+    });
+
+    expect(onObserveMesaThreadReadMetadata).toHaveBeenCalledWith({
+      route: "thread",
+      deliveryMode: "v2",
+      capabilitiesVersion: "2026-03-26.09j",
+      rolloutBucket: 12,
+      usageMode: "organic_validation",
+      validationSessionId: "orgv_monitor_thread",
+      operatorRunId: "oprv_monitor_thread",
+      suggestedTargetIds: [21],
+    });
+  });
+
   it("expõe skipReason canonico quando nenhum target elegivel e monitorado", async () => {
     (carregarLaudosMobile as jest.Mock).mockResolvedValue({
       itens: [

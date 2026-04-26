@@ -18,6 +18,8 @@ function readExpoPublicRuntimeEnv(key: string): string | undefined {
       return process.env.EXPO_PUBLIC_AUTH_GOOGLE_URL;
     case "EXPO_PUBLIC_AUTH_MICROSOFT_URL":
       return process.env.EXPO_PUBLIC_AUTH_MICROSOFT_URL;
+    case "EXPO_PUBLIC_ANDROID_LOCALHOST_STRATEGY":
+      return process.env.EXPO_PUBLIC_ANDROID_LOCALHOST_STRATEGY;
     default:
       return undefined;
   }
@@ -104,6 +106,15 @@ export function normalizarApiBaseUrl(rawValue: string): string {
     .replace(/\/+$/, "");
 
   if (Platform.OS !== "android" || !androidPareceEmulador()) {
+    return value;
+  }
+
+  const localhostStrategy = readRuntimeEnv(
+    "EXPO_PUBLIC_ANDROID_LOCALHOST_STRATEGY",
+  )
+    .trim()
+    .toLowerCase();
+  if (localhostStrategy === "reverse") {
     return value;
   }
 

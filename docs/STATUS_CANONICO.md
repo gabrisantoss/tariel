@@ -129,8 +129,10 @@ Ele está na fase de:
 - a baseline local foi restaurada e checkpointada em `964a348`, com `make verify` verde antes do corte atual.
 - `web-ci` agora inclui `mypy` progressivo via `make web-typecheck`, e o workspace web está sem erros de tipagem no recorte atual.
 - o pacote de segurança ganhou `make security-audit`, cobrindo `pip-audit` pinado para Python e `npm audit --omit=dev --audit-level=high` no mobile.
+- a hierarquia de verificação agora diferencia `make verify` como baseline local, `make release-verify-local` como gate forte local antes de promoção e `make release-verify` como gate completo de promoção reaproveitando `release-gate-real`.
 - `render.yaml` e `make production-ops-check-strict` já exigem disco persistente para uploads, backup obrigatório, restore drill obrigatório e sessão fail-closed em produção.
 - existe drill local executável de restore de uploads em `make uploads-restore-drill`, agora também dentro de `release-gate-real`.
+- `document-contract-check` agora prende a regressão do PDF gerado pelo chat livre no pacote forte local e falha cedo quando `pypdf` não estiver disponível no Python ativo do workspace web.
 - os 12 PDFs/ZIPs rastreados acima de 10 MiB saíram do Git futuro e ficaram documentados em `docs/binary_asset_manifests/oversized_assets_2026-04-24.json`.
 - o backend agora emite log production-safe para fluxos críticos lentos ou com erro 5xx, cobrindo cliente, chat do inspetor, Mesa/revisor e emissão documental sem vazar payload técnico.
 - `mesa/service.py` começou a perder responsabilidades internas para módulos dedicados, com a sumarização de mensagens/evidências/pendências da Mesa isolada em `mesa/package_message_summary.py`.
@@ -234,7 +236,7 @@ Ele está na fase de:
 ## Próximo corte oficial
 
 1. decidir e aplicar a configuração real do Render para disco persistente/envs production-ready quando houver autorização operacional para plano/disco;
-2. manter `make verify`, `make hygiene-check`, `make security-audit`, `make production-ops-check-strict`, `make uploads-restore-drill` e `make binary-assets-audit-strict` como pacote mínimo de promoção local;
+2. manter `make release-verify-local` como umbrella target mínimo de promoção local, preservando `make verify` como baseline rápida e `make release-verify` como gate completo com a lane real pré-deploy;
 3. continuar a extração dos hotspots `admin/client_routes.py`, `chat_index_page.js`, `mesa/service.py` e superfícies do portal cliente, usando os novos logs críticos para priorizar gargalos reais;
 4. consolidar o pacote `docs/product-canonical-vision/`;
 5. refletir a matriz comercial por eixos nas superfícies administrativas e nos entitlements;

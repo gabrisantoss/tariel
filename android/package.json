@@ -6,9 +6,9 @@
     "start": "expo start",
     "android": "expo run:android",
     "android:dev": "node ./scripts/fix-gradle-wrapper.cjs && node ./scripts/run-android-dev.cjs",
-    "android:prebuild": "expo prebuild --platform android --clean && node ./scripts/fix-gradle-wrapper.cjs",
+    "android:prebuild": "npx --no-install expo prebuild --platform android --clean && node ./scripts/fix-gradle-wrapper.cjs",
     "android:preview": "node ./scripts/fix-gradle-wrapper.cjs && node ./scripts/run-android-preview.cjs",
-    "android:preview:fresh": "expo prebuild --platform android --clean && node ./scripts/fix-gradle-wrapper.cjs && node ./scripts/run-android-preview.cjs --clean",
+    "android:preview:fresh": "npx --no-install expo prebuild --platform android --clean && node ./scripts/fix-gradle-wrapper.cjs && node ./scripts/run-android-preview.cjs --clean",
     "eas:build:android:preview": "npx eas build --platform android --profile preview",
     "eas:build:android:production": "npx eas build --platform android --profile production",
     "eas:build:ios:preview": "npx eas build --platform ios --profile preview",
@@ -90,6 +90,10 @@
     "typescript": "~5.9.2",
     "unicode-match-property-ecmascript": "2.0.0",
     "unicode-match-property-value-ecmascript": "2.2.1"
+  },
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24",
+    "npm": ">=10"
   },
   "private": true
 }

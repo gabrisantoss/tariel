@@ -167,6 +167,86 @@ describe("buildInspectorBaseDerivedStateSections", () => {
     );
   });
 
+  it("libera a superfície Mesa para inspetor com capability de envio à mesa", () => {
+    const state = buildInspectorConversationDerivedState({
+      anexoMesaRascunho: null,
+      anexoRascunho: null,
+      arquivosPermitidos: true,
+      abaAtiva: "mesa",
+      colorScheme: "light",
+      conversa: {
+        laudoId: 42,
+        mensagens: [],
+        permiteEdicao: true,
+        permiteReabrir: false,
+        estado: "aguardando",
+        statusCard: "aberto",
+        laudoCard: criarLaudoParcial({
+          tipo_template: "normal",
+          status_card: "aberto",
+        }),
+        modo: "detalhado",
+      },
+      corDestaque: "laranja",
+      densidadeInterface: "confortável",
+      formatarTipoTemplateLaudo: jest.fn().mockReturnValue("Normal"),
+      mensagem: "",
+      mensagemMesa: "",
+      mensagensMesa: [],
+      obterEscalaDensidade: jest.fn().mockReturnValue(1),
+      obterEscalaFonte: jest.fn().mockReturnValue(1),
+      podeEditarConversaNoComposer: jest.fn().mockReturnValue(true),
+      preparandoAnexo: false,
+      previewChatLiberadoParaConversa: jest.fn().mockReturnValue(false),
+      session: {
+        accessToken: "token-123",
+        bootstrap: {
+          ok: true,
+          app: {
+            api_base_url: "https://tariel.test",
+            nome: "Tariel Inspetor",
+            portal: "inspetor",
+            suporte_whatsapp: "",
+          },
+          usuario: {
+            id: 7,
+            nome_completo: "Inspetor Tariel",
+            email: "inspetor@tariel.test",
+            telefone: "",
+            foto_perfil_url: "",
+            empresa_nome: "Empresa A",
+            empresa_id: 33,
+            nivel_acesso: 1,
+            allowed_portals: ["inspetor"],
+            tenant_access_policy: {
+              governed_by_admin_ceo: true,
+              portal_entitlements: {
+                inspetor: true,
+                revisor: true,
+              },
+              user_capability_entitlements: {
+                inspector_send_to_mesa: true,
+              },
+            },
+          },
+        },
+      },
+      tamanhoFonte: "médio",
+      temaApp: "claro",
+      uploadArquivosAtivo: true,
+      carregandoConversa: false,
+      carregandoMesa: false,
+      enviandoMensagem: false,
+      enviandoMesa: false,
+    });
+
+    expect(state.mesaAcessoPermitido).toBe(true);
+    expect(state.mesaIndisponivelTitulo).toBe(
+      "Mesa disponível após o primeiro laudo",
+    );
+    expect(state.placeholderMesa).toBe("Aguardando retorno da mesa.");
+  });
+
   it("prioriza a ação canônica de reabrir no placeholder do chat", () => {
     const state = buildInspectorConversationDerivedState({
       anexoMesaRascunho: null,

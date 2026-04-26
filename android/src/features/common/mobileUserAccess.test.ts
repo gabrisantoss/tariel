@@ -10,6 +10,7 @@ import {
   filterHelpArticlesByMobileAccess,
   filterNotificationsByMobileAccess,
   filterOfflineQueueByMobileAccess,
+  hasMobileUserCapability,
   hasMobileUserPortal,
   resolveMobilePortalSwitchLinks,
   resolveMobileUserPortalLabels,
@@ -196,6 +197,30 @@ describe("mobileUserAccess", () => {
     });
 
     expect(hasMobileUserPortal(user, "inspetor")).toBe(true);
+    expect(hasMobileUserPortal(user, "revisor")).toBe(false);
+  });
+
+  it("expõe capabilities efetivas do usuário via tenant_access_policy", () => {
+    const user = criarUsuario({
+      allowed_portals: ["inspetor"],
+      tenant_access_policy: {
+        governed_by_admin_ceo: true,
+        portal_entitlements: {
+          inspetor: true,
+          revisor: true,
+        },
+        capability_entitlements: {
+          inspector_send_to_mesa: true,
+        },
+        user_capability_entitlements: {
+          inspector_send_to_mesa: true,
+          reviewer_issue: false,
+        },
+      },
+    });
+
+    expect(hasMobileUserCapability(user, "inspector_send_to_mesa")).toBe(true);
+    expect(hasMobileUserCapability(user, "reviewer_issue")).toBe(false);
     expect(hasMobileUserPortal(user, "revisor")).toBe(false);
   });
 
