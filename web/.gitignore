@@ -8,7 +8,9 @@ __pycache__/
 .coverage
 coverage.xml
 htmlcov/
-artifacts/
+artifacts/*
+!artifacts/.gitignore
+!artifacts/README.md
 playwright-report/
 test-results/
 static/uploads/

@@ -32,6 +32,7 @@ Observacao importante:
 - `make release-verify-local`: passou.
 - `make smoke-mobile`: passou.
 - `make release-verify`: passou.
+- reprodutibilidade em worktree limpo com `AMBIENTE=dev`: `make release-verify-local` e `make release-verify` passaram apos versionar `web/artifacts/.gitignore` e `web/artifacts/README.md`.
 - `release-gate-hosted`: passou dentro do `make release-verify`.
 - `mesa-acceptance`: passou.
 - `document-acceptance`: passou.
@@ -43,6 +44,7 @@ Artefatos finais relevantes:
 
 - `artifacts/mobile_pilot_run/20260425_213227`: primeira rodada verde isolada de `make smoke-mobile` apos corrigir o wiring de `human_ack` da thread.
 - `artifacts/mobile_pilot_run/20260425_214252`: rodada verde dentro de `make release-verify`, com `result=success_human_confirmed`.
+- `artifacts/mobile_pilot_run/20260425_232916`: rodada verde de `make release-verify` em worktree limpo com `native_prebuild_executed=True`, `feed_covered=True`, `thread_covered=True` e `human_ack_recent_events_after=2`.
 
 Evidencias finais da lane mobile:
 
@@ -62,6 +64,7 @@ Evidencias finais da lane mobile:
 Estado consolidado:
 
 - o gate real nao possui bloqueador aberto nesta copia local;
+- o gate completo e reprodutivel em checkout/worktree limpo desde que `AMBIENTE=dev` esteja definido e as dependencias de host listadas abaixo estejam instaladas;
 - a lane mobile real gera APK preview novo, instala no emulador, valida API local, executa Maestro e exige `human_ack` real para `feed` e `thread`;
 - o runner continua sem sintetizar `human_ack` pelo host;
 - a protecao por feature flag de producao foi preservada; as flags de rollout/admin/operator-run sao aplicadas apenas no ambiente local criado pelo runner;
@@ -85,11 +88,14 @@ Historico dos bloqueadores corrigidos durante a normalizacao:
 ### Dependencias do projeto
 
 - Python com as dependencias do workspace `web` instaladas.
+- Ambiente Python gerenciado ou venv; em Ubuntu/Debian, instalar `python3.12-venv`/`ensurepip` antes de usar `python3 -m venv`.
 - Node.js e `npm` com dependencias do workspace `android` instaladas.
 - Node compativel com o workspace Android: `^20.19.0 || ^22.13.0 || >=24`.
+- `nvm` disponivel ou Node compativel ja ativo no shell.
 - `pypdf` declarado em `web/requirements.txt`.
 - `playwright` e `pytest-playwright` declarados em `web/requirements.txt`.
 - `adb`, `emulator` e `maestro` disponiveis no host quando a lane mobile real for executada.
+- Android SDK funcional, AVD disponivel e Playwright/Chromium instalado para os E2E de `mesa-acceptance`.
 
 Observacao sobre `pypdf`:
 
@@ -174,6 +180,7 @@ Campos auditados pelo preflight:
 
 ### Obrigatorias por composicao atual
 
+- `AMBIENTE=dev` para execucao local em checkout limpo, ou valor equivalente definido em `.env`; sem essa variavel o bootstrap de settings falha cedo com mensagem explicita de ambiente obrigatorio.
 - para a lane mobile real fechar o caminho funcional completo no backend local, o runner agora injeta no proprio processo local que ele sobe:
   - `TARIEL_V2_ANDROID_PUBLIC_CONTRACT=1`
   - `TARIEL_V2_ANDROID_ROLLOUT=1`
