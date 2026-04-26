@@ -126,6 +126,14 @@ O PR D não cria emissão oficial nova pelo app e não adiciona assinatura local
 Ele prepara o mobile para consumir a governança neutra; endpoints de emissão,
 assinatura e download dedicado continuam sujeitos a capability e a PR posterior.
 
+Checkpoint PR E no Portal Cliente:
+
+| Superfície | Ajuste | Efeito |
+| --- | --- | --- |
+| Bootstrap Admin Cliente | `tenant_commercial_package` e `tenant_commercial_overview` passam a expor `operating_model`, aliases neutros e `mobile_chat_first_governance` junto do pacote comercial. | O Portal Cliente consegue explicar o contrato usando a mesma fonte de verdade do Chat/Mobile sem criar capability nova. |
+| Overview comercial | A seção vira `Seu pacote e recursos`, com resumo de `Mobile`, `Chat Inspetor`, `Revisão interna`, `Mesa Avaliadora`, `Emissão oficial`, `Documentos oficiais` e `Signatário governado`. | Bloqueio por pacote aparece como limite contratual; ausência de Mesa ou emissão oficial não é tratada como erro operacional. |
+| Entrega documental | O recurso `Emissão oficial` explica que PDF operacional não equivale a `EmissaoOficialLaudo`; `Documentos oficiais` continua apontando para a superfície de documentos tenant-scoped. | Reduz confusão comercial entre preview/PDF operacional e entrega oficial governada. |
+
 ## 6. Operating models
 
 | Modelo | Significado | Efeito atual |

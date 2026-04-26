@@ -95,6 +95,7 @@
             "admin-commercial-package": "overview",
             "admin-commercial-package-summary": "overview",
             "admin-commercial-package-lista": "overview",
+            "admin-package-resource-grid": "overview",
             "admin-observability-executive": "overview",
             "admin-observability-summary": "overview",
             "admin-observability-timeline": "overview",

@@ -2062,7 +2062,20 @@ def test_admin_cliente_bootstrap_expoe_pacote_contratado_e_observabilidade_execu
     assert pacote["package_label"] == "Chat Inspetor + Mesa + servicos no Inspetor"
     assert pacote["mesa_contracted"] is True
     assert pacote["official_issue_included"] is True
+    assert pacote["resource_summary"]["separate_mesa_available"] is True
+    assert pacote["resource_summary"]["official_issue_allowed"] is True
+    assert pacote["resource_summary"]["official_issue_download_allowed"] is True
+    assert pacote["resource_summary"]["documents_enabled"] is True
+    assert pacote["capability_aliases"]["official_issue_create"] is True
+    assert pacote["mobile_chat_first_governance"]["separate_mesa_required"] is True
+    recursos = {item["key"]: item for item in pacote["resources"]}
+    assert recursos["mesa"]["available"] is True
+    assert recursos["official_issue"]["available"] is True
+    assert recursos["documents"]["available"] is True
     assert any(item["key"] == "cliente" for item in pacote["available_surfaces"])
+    pacote_bootstrap = corpo["tenant_commercial_package"]
+    assert pacote_bootstrap["capability_aliases"]["official_issue_create"] is True
+    assert pacote_bootstrap["mobile_chat_first_governance"]["official_issue_allowed"] is True
     assert observability["executive_metrics"]["issued"] >= 1
     assert observability["executive_metrics"]["awaiting_mesa"] >= 0
     assert observability["blocking_reason"]
@@ -2076,6 +2089,59 @@ def test_admin_cliente_bootstrap_expoe_pacote_contratado_e_observabilidade_execu
         "emitido",
         "reaberto",
     ]
+
+
+def test_admin_cliente_bootstrap_explica_recursos_do_pacote_sem_mesa(ambiente_critico) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat",
+            "case_visibility_mode": "case_list",
+            "case_action_mode": "case_actions",
+            "operating_model": "standard",
+        }
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta = client.get("/cliente/api/bootstrap")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    pacote = corpo["tenant_commercial_overview"]
+    recursos = {item["key"]: item for item in pacote["resources"]}
+    resumo = pacote["resource_summary"]
+
+    assert pacote["commercial_service_package"] == "inspector_chat"
+    assert resumo["mobile_enabled"] is True
+    assert resumo["chat_enabled"] is True
+    assert resumo["self_review_allowed"] is True
+    assert resumo["separate_mesa_available"] is False
+    assert resumo["official_issue_allowed"] is False
+    assert resumo["official_issue_download_allowed"] is False
+    assert resumo["documents_enabled"] is True
+    assert recursos["mobile"]["available"] is True
+    assert recursos["chat"]["available"] is True
+    assert recursos["self_review"]["available"] is True
+    assert recursos["mesa"]["available"] is False
+    assert recursos["mesa"]["contractual_blocked"] is True
+    assert "não incluída neste pacote" in recursos["mesa"]["detail"].lower()
+    assert recursos["official_issue"]["available"] is False
+    assert "pdf operacional" in recursos["official_issue"]["detail"].lower()
+    assert recursos["documents"]["available"] is True
+    assert not any("Mesa contratada não liberada" in item for item in pacote["pending_configuration"])
+
+    serializado = json.dumps(pacote, ensure_ascii=False).lower()
+    for termo_sensivel in ("senha", "csrf", "token", "secret", "package_storage_path", "storage_path"):
+        assert termo_sensivel not in serializado
+
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
+    assert resposta_documentos.status_code == 200
+    assert resposta_documentos.json()["documentos"]["summary"]["total_documents"] >= 0
 
 
 def test_admin_cliente_exporta_diagnostico_e_registra_suporte(ambiente_critico) -> None:

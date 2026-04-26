@@ -140,8 +140,12 @@ def bootstrap_cliente(
                 "key": tenant_commercial_package["commercial_service_package_effective"],
                 "label": tenant_commercial_package["commercial_service_package_label"],
                 "description": tenant_commercial_package["commercial_service_package_description"],
+                "operating_model": tenant_commercial_package["operating_model"],
+                "operating_model_label": tenant_commercial_package["operating_model_label"],
                 "surface_availability": surface_availability,
                 "capability_entitlements": tenant_commercial_package["tenant_capability_entitlements"],
+                "capability_aliases": tenant_commercial_package["tenant_capability_aliases"],
+                "mobile_chat_first_governance": tenant_commercial_package["mobile_chat_first_governance"],
             },
             "tenant_commercial_overview": build_tenant_commercial_overview_cliente(
                 empresa_summary=empresa_summary,

@@ -289,11 +289,13 @@
         function renderCommercialPackageOverview() {
             const resumo = $("admin-commercial-package-summary");
             const lista = $("admin-commercial-package-lista");
+            const recursosNode = $("admin-package-resource-grid");
             const pacote = state.bootstrap?.tenant_commercial_overview || {};
             if (!resumo || !lista) return;
 
             const surfaces = Array.isArray(pacote.available_surfaces) ? pacote.available_surfaces : [];
             const pending = Array.isArray(pacote.pending_configuration) ? pacote.pending_configuration : [];
+            const recursos = Array.isArray(pacote.resources) ? pacote.resources : [];
 
             limparElemento(resumo);
             [
@@ -335,9 +337,43 @@
                 meta: "Checklist comercial e operacional do tenant",
                 tone: pending.length ? "aguardando" : "aprovado",
                 pillLabel: pending.length ? "Pendente" : "Ativo",
-                detail: pending.length ? pending.join(" • ") : "Pacote, portais e emissão já estão refletidos na operação atual.",
+                detail: pending.length ? pending.join(" • ") : "Bloqueios de pacote aparecem abaixo como limite contratual, não como erro operacional.",
                 chips: pacote.assignable_portal_labels || [],
             }));
+
+            if (!recursosNode) return;
+            limparElemento(recursosNode);
+            if (!recursos.length) {
+                recursosNode.appendChild(criarEmptyStateOverviewNode(
+                    "Recursos não mapeados",
+                    "Quando o bootstrap comercial publicar capabilities neutras, elas aparecem aqui."
+                ));
+                return;
+            }
+
+            recursos.forEach((item) => {
+                const action = item.action
+                    ? {
+                        label: item.action.label || "Abrir",
+                        ghost: false,
+                        act: "abrir-prioridade",
+                        kind: item.action.kind,
+                        canal: "admin",
+                        target: item.action.target,
+                        origem: "admin",
+                    }
+                    : null;
+                const chips = Array.isArray(item.chips) ? item.chips : [];
+                recursosNode.appendChild(criarActivityItemOverviewNode({
+                    title: item.label || item.key || "Recurso",
+                    meta: item.meta || (item.available ? "Incluído no pacote" : "Não incluído no pacote"),
+                    tone: item.tone || (item.available ? "aprovado" : "aguardando"),
+                    pillLabel: item.status_label || (item.available ? "Disponível" : "Não incluído"),
+                    detail: item.detail || "",
+                    chips: item.depends_on_family ? [...chips, "Depende da família/template"] : chips,
+                    action,
+                }));
+            });
         }
 
         function renderOperationalObservabilityOverview() {

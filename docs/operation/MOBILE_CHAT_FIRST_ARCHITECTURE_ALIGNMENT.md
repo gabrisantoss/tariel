@@ -218,6 +218,12 @@ O Mobile ja esta bem alinhado com a direcao: ele consome chat, quality gate, fin
 | Emissao oficial | App le sinais e integridade. | Adicionar acao/download oficial quando `official_issue_allowed` e `signatory_required` forem satisfeitos. |
 | Download | Anexos/Mesa existem; oficial completo ainda parcial. | Download tenant-scoped com auditoria futura. |
 
+## 10.1. Portal Cliente como explicador de pacote
+
+Checkpoint PR E: o Portal Cliente passa a usar o mesmo read model mobile/chat-first para explicar pacote, portais e capacidades contratadas ao Admin Cliente. A seção `Seu pacote e recursos` mostra `Mobile`, `Chat Inspetor`, `Revisão interna`, `Mesa Avaliadora`, `Emissão oficial`, `Documentos oficiais` e `Signatário governado`.
+
+A regra de arquitetura permanece a mesma: o Portal Cliente não cria capability nova, não relaxa validação e não transforma PDF operacional em emissão oficial. Ele apenas diferencia recurso disponível, recurso não incluído no pacote e recurso que depende da família/template, reduzindo a chance de o cliente interpretar governança contratual como erro do sistema.
+
 ## 11. Portal Cliente
 
 O Portal Cliente deve continuar sendo o lugar de administracao, visibilidade, auditoria e entrega. Ele pode ter operacao quando pacote permitir, mas nao deve virar cockpit tecnico padrao para todo tenant.
