@@ -87,7 +87,7 @@
     "jest-expo": "~55.0.16",
     "prettier": "^3.8.1",
     "react-test-renderer": "^19.2.0",
-    "typescript": "~5.9.2",
+    "typescript": "~6.0.3",
     "unicode-match-property-ecmascript": "2.0.0",
     "unicode-match-property-value-ecmascript": "2.2.1"
   },
