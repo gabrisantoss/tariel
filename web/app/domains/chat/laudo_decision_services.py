@@ -83,8 +83,10 @@ from app.shared.public_verification import build_public_verification_payload
 from app.shared.official_issue_package import resolve_official_issue_primary_pdf_artifact
 from app.shared.tenant_entitlement_guard import (
     ensure_tenant_capability_for_user,
+    tenant_access_policy_for_user,
     tenant_capability_enabled_for_user,
 )
+from app.shared.tenant_admin_policy import build_mobile_chat_first_governance_read_model
 
 _OPEN_RETURN_TO_INSPECTOR_STATUSES = (
     OperationalIrregularityStatus.OPEN.value,
@@ -93,6 +95,64 @@ _OPEN_RETURN_TO_INSPECTOR_STATUSES = (
 _OPEN_STRUCTURED_CORRECTION_STATUSES = {"pendente", "enviada_ia"}
 _MOBILE_APPROVAL_REVIEW_MODES = {"mobile_autonomous", "mobile_review_allowed"}
 _REOPEN_ISSUED_DOCUMENT_POLICIES = {"keep_visible", "hide_from_case"}
+
+
+def _build_chat_review_tools_payload(
+    *,
+    usuario: Usuario,
+    final_validation_mode: str,
+    primary_action: str,
+    primary_label: str,
+    next_step: str,
+) -> dict[str, Any]:
+    tenant_policy = tenant_access_policy_for_user(usuario)
+    user_capabilities = (
+        dict(tenant_policy.get("user_capability_entitlements") or {})
+        if isinstance(tenant_policy.get("user_capability_entitlements"), dict)
+        else {}
+    )
+    governance = build_mobile_chat_first_governance_read_model(
+        getattr(getattr(usuario, "empresa", None), "admin_cliente_policy_json", None),
+        review_mode=final_validation_mode,
+        capability_entitlements={
+            str(capability): bool(enabled)
+            for capability, enabled in user_capabilities.items()
+        },
+    )
+    if primary_action == "approve_without_mesa":
+        title = "Revisão interna governada"
+        tool_primary_label = "Confirmar revisão interna"
+        tool_next_step = (
+            "O caso será aprovado por decisão humana interna do tenant, com trilha "
+            "de responsabilidade preservada."
+        )
+        surface = "chat_self_review"
+    elif primary_action == "send_to_mesa":
+        title = "Revisão pela Mesa Avaliadora"
+        tool_primary_label = primary_label
+        tool_next_step = next_step
+        surface = "separate_mesa"
+    else:
+        title = (
+            "Pendências da revisão interna"
+            if bool(governance.get("self_review_allowed"))
+            else "Pendências antes da revisão"
+        )
+        tool_primary_label = primary_label
+        tool_next_step = next_step
+        surface = "chat_review_pending"
+
+    return {
+        "governance": governance,
+        "tools": {
+            "enabled": True,
+            "surface": surface,
+            "title": title,
+            "primary_label": tool_primary_label,
+            "next_step": tool_next_step,
+            "available_case_actions": list(governance.get("available_case_actions") or []),
+        },
+    }
 
 
 def _resolver_review_mode_final(
@@ -467,6 +527,22 @@ def obter_previa_finalizacao_laudo_resposta(
         primary_action = "send_to_mesa"
         primary_label = "Enviar para Mesa"
 
+    next_step = (
+        "Revise a aba Correcoes e marque cada item como aplicado ou descartado."
+        if primary_action == "resolve_pending"
+        else (
+            "O laudo sera aprovado internamente sem Mesa Avaliadora."
+            if primary_action == "approve_without_mesa"
+            else "O laudo sera enviado para a Mesa Avaliadora."
+        )
+    )
+    chat_review_tools = _build_chat_review_tools_payload(
+        usuario=usuario,
+        final_validation_mode=final_validation_mode,
+        primary_action=primary_action,
+        primary_label=primary_label,
+        next_step=next_step,
+    )
     payload = {
         "ok": True,
         "laudo_id": int(laudo.id),
@@ -474,6 +550,8 @@ def obter_previa_finalizacao_laudo_resposta(
         "blocking_items": bloqueios,
         "primary_action": primary_action,
         "primary_label": primary_label,
+        "chat_review_tools": chat_review_tools["tools"],
+        "mobile_chat_first_governance": chat_review_tools["governance"],
         "review_mode_final_preview": final_validation_mode,
         "review_mode_final_reason": final_validation_mode_reason or None,
         "direct_without_mesa": direct_without_mesa,
@@ -486,15 +564,7 @@ def obter_previa_finalizacao_laudo_resposta(
             "missing_evidence_count": len(list(quality_gates.get("missing_evidence") or [])),
             "final_validation_mode": str(quality_gates.get("final_validation_mode") or "").strip() or None,
         },
-        "next_step": (
-            "Revise a aba Correcoes e marque cada item como aplicado ou descartado."
-            if primary_action == "resolve_pending"
-            else (
-                "O laudo sera aprovado internamente sem Mesa Avaliadora."
-                if primary_action == "approve_without_mesa"
-                else "O laudo sera enviado para a Mesa Avaliadora."
-            )
-        ),
+        "next_step": next_step,
     }
     return payload, 200
 

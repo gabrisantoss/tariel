@@ -14,6 +14,15 @@ Atualizado em `2026-04-26`.
 
 ## Estado atual
 
+### `PKT-MOBILE-CHAT-FIRST-CAPABILITIES-01` - Normalizacao de capabilities mobile/chat-first
+
+- `status`: em andamento localmente em `2026-04-26`; PR B adiciona aliases/read model neutros para revisao, aprovacao, emissao e download sem remover capabilities antigas; PR C comeca a expor esse read model na previa de finalizacao do Chat Inspetor, sem alterar release gate, mobile smoke, Maestro, `human_ack`, Android, NR35 ou comportamento de emissao oficial
+- `checkpoint 2026-04-26`: `tenant_admin_policy.py` passa a expor `tenant_capability_aliases`, `capability_aliases`, `user_capability_aliases`, `mobile_chat_first_governance` e `user_mobile_chat_first_governance`, derivados de `inspector_case_create`, `inspector_case_finalize`, `inspector_send_to_mesa`, `mobile_case_approve`, `reviewer_decision` e `reviewer_issue`
+- `checkpoint 2026-04-26`: `mobile_autonomous` permanece valor legado aceito, mas o read model novo interpreta como `self_review_allowed` quando a capability de self-review existe; familias de alto risco podem forcar `separate_mesa_required` no read model sem trocar pacotes existentes
+- `checkpoint 2026-04-26`: a previa de finalizacao do Chat Inspetor passa a retornar `mobile_chat_first_governance` e `chat_review_tools`; a modal usa os rotulos neutros quando presentes, permitindo `Revisao interna governada`/`Pendencias da revisao interna` em tenant sem Mesa sem remover `primary_action` ou `primary_label` legados
+- `validacao executada`: `PYTHONPATH=web python -m py_compile web/app/shared/tenant_admin_policy.py web/app/shared/tenant_entitlement_guard.py web/app/domains/chat/laudo_decision_services.py web/tests/test_mobile_chat_first_capability_aliases.py`; `node --check web/static/js/chat/chat_painel_relatorio.js`; `cd web && PYTHONPATH=. python -m pytest tests/test_mobile_chat_first_capability_aliases.py tests/test_tenant_entitlements_critical.py::test_previa_finalizacao_sem_mesa_orienta_resolver_correcoes_abertas -q` (`6 passed`); `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py tests/test_cliente_route_contracts.py -q` (`23 passed`); recorte Portal Cliente/emissao (`12 passed, 29 deselected`); `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py tests/test_mobile_chat_first_capability_aliases.py -q` (`25 passed`); `git diff --check`; `AMBIENTE=dev make release-verify-local`
+- `observacao`: `tests/test_approval_idempotency.py` ainda retorna `422` em dois cenarios legados de aprovacao NR35 via Mesa; pendencia ja conhecida e mantida fora deste PR para nao alterar Mesa/NR35/reemissao
+
 ### `PKT-GOLDEN-PATH-NR35-08` - E2E Golden Path NR35 com Governança de Emissão Oficial
 
 - `status`: concluido localmente em `2026-04-26`; PR 8 adiciona teste de integracao ponta a ponta para provar que o sucesso vendavel NR35 e `EmissaoOficialLaudo` ativa com pacote congelado, hash, signatario governado, Mesa humana, snapshot aprovado, manifest e download controlado no Portal Cliente

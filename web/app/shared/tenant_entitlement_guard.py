@@ -18,6 +18,16 @@ _CAPABILITY_DENIAL_DETAILS: dict[str, str] = {
     "mobile_case_approve": "A aprovação final no mobile está desabilitada para esta empresa pelo Admin-CEO.",
     "reviewer_decision": "A revisão da Mesa Avaliadora está desabilitada para esta empresa pelo Admin-CEO.",
     "reviewer_issue": "A emissão oficial está desabilitada para esta empresa pelo Admin-CEO.",
+    "case_create": "A criação de casos está desabilitada para esta empresa pelo Admin-CEO.",
+    "case_collect": "A coleta técnica está desabilitada para esta empresa pelo Admin-CEO.",
+    "case_finalize_request": "A finalização de casos está desabilitada para esta empresa pelo Admin-CEO.",
+    "case_send_to_separate_review": "O envio para revisão separada está desabilitado para esta empresa pelo Admin-CEO.",
+    "case_self_review": "A aprovação interna do caso está desabilitada para esta empresa pelo Admin-CEO.",
+    "case_review_decide": "A decisão de revisão do caso está desabilitada para esta empresa pelo Admin-CEO.",
+    "structured_review_edit": "A revisão estruturada está desabilitada para esta empresa pelo Admin-CEO.",
+    "official_issue_create": "A emissão oficial está desabilitada para esta empresa pelo Admin-CEO.",
+    "official_issue_download": "O download de emissão oficial está desabilitado para esta empresa pelo Admin-CEO.",
+    "governed_signatory_select": "O uso de signatário governado está desabilitado para esta empresa pelo Admin-CEO.",
 }
 
 
@@ -27,9 +37,11 @@ def tenant_access_policy_for_user(usuario: Usuario | None) -> dict[str, Any]:
             "governed_by_admin_ceo": True,
             "portal_entitlements": {},
             "capability_entitlements": {},
+            "capability_aliases": {},
             "allowed_portals": [],
             "allowed_portal_labels": [],
             "user_capability_entitlements": {},
+            "user_capability_aliases": {},
         }
 
     policy = getattr(getattr(usuario, "empresa", None), "admin_cliente_policy_json", None)

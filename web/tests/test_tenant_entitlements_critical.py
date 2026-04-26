@@ -572,6 +572,10 @@ def test_previa_finalizacao_sem_mesa_orienta_resolver_correcoes_abertas(
     assert corpo["direct_without_mesa"] is True
     assert corpo["corrections"]["open"] == 1
     assert corpo["blocking_items"][0]["code"] == "structured_corrections_pending"
+    assert corpo["mobile_chat_first_governance"]["review_governance_mode"] == "self_review_allowed"
+    assert corpo["mobile_chat_first_governance"]["self_review_allowed"] is True
+    assert corpo["chat_review_tools"]["title"] == "Pendências da revisão interna"
+    assert "case_self_review" in corpo["chat_review_tools"]["available_case_actions"]
 
 
 def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(

@@ -12,6 +12,24 @@ TenantAdminCommercialServicePackage = Literal[
     "inspector_chat_mesa",
     "inspector_chat_mesa_reviewer_services",
 ]
+MobileChatFirstReviewGovernanceMode = Literal[
+    "separate_mesa_required",
+    "mesa_optional",
+    "self_review_allowed",
+    "self_review_unavailable",
+    "review_not_configured",
+]
+MobileChatFirstApprovalActorScope = Literal[
+    "separate_mesa",
+    "inspector_self",
+    "tenant_reviewer",
+    "unassigned",
+]
+MobileChatFirstIssueGovernanceMode = Literal[
+    "none",
+    "official_issue_allowed",
+    "signatory_required",
+]
 
 DEFAULT_TENANT_ADMIN_CASE_VISIBILITY_MODE: TenantAdminCaseVisibilityMode = "case_list"
 DEFAULT_TENANT_ADMIN_CASE_ACTION_MODE: TenantAdminCaseActionMode = "case_actions"
@@ -185,6 +203,34 @@ _TENANT_CAPABILITY_PORTAL_DEPENDENCIES: dict[str, tuple[str, ...]] = {
     "reviewer_decision": ("revisor",),
     "reviewer_issue": ("revisor",),
 }
+_MOBILE_CHAT_FIRST_CAPABILITY_ALIASES: dict[str, str] = {
+    "case_create": "inspector_case_create",
+    "case_collect": "inspector_case_create",
+    "case_finalize_request": "inspector_case_finalize",
+    "case_send_to_separate_review": "inspector_send_to_mesa",
+    "case_self_review": "mobile_case_approve",
+    "case_review_decide": "reviewer_decision",
+    "structured_review_edit": "reviewer_decision",
+    "official_issue_create": "reviewer_issue",
+    "official_issue_download": "reviewer_issue",
+    "governed_signatory_select": "reviewer_issue",
+}
+_SELF_REVIEW_MODE_ALIASES = {
+    "mobile_autonomous",
+    "mobile_review_allowed",
+    "self_review_allowed",
+    "inspector_governed_approval",
+}
+_SEPARATE_REVIEW_MODE_ALIASES = {
+    "mesa_required",
+    "separate_mesa_required",
+    "separate_review_required",
+}
+_MESA_OPTIONAL_MODE_ALIASES = {
+    "mesa_optional",
+    "separate_mesa_optional",
+    "review_optional",
+}
 _COMMERCIAL_CAPABILITY_AXES: tuple[str, ...] = (
     "mesa",
     "offline",
@@ -295,6 +341,137 @@ def _contract_surface_capability_entitlements(
         "mobile_case_approve": chat_surface_enabled,
         "reviewer_decision": mesa_surface_enabled,
         "reviewer_issue": mesa_surface_enabled,
+    }
+
+
+def _mobile_chat_first_capability_aliases_from_legacy(
+    capability_entitlements: dict[str, Any],
+) -> dict[str, bool]:
+    return {
+        alias: bool(capability_entitlements.get(legacy))
+        for alias, legacy in _MOBILE_CHAT_FIRST_CAPABILITY_ALIASES.items()
+    }
+
+
+def _normalize_review_mode_alias(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _resolve_mobile_chat_first_review_governance_mode(
+    *,
+    capability_aliases: dict[str, bool],
+    review_mode: Any = None,
+    high_risk_family_requires_separate_review: bool = False,
+) -> MobileChatFirstReviewGovernanceMode:
+    normalized = _normalize_review_mode_alias(review_mode)
+    if high_risk_family_requires_separate_review:
+        return "separate_mesa_required"
+    if normalized in _SEPARATE_REVIEW_MODE_ALIASES:
+        return "separate_mesa_required"
+    if normalized in _MESA_OPTIONAL_MODE_ALIASES:
+        return "mesa_optional"
+    if normalized in _SELF_REVIEW_MODE_ALIASES:
+        return (
+            "self_review_allowed"
+            if bool(capability_aliases.get("case_self_review"))
+            else "self_review_unavailable"
+        )
+    if bool(capability_aliases.get("case_send_to_separate_review")):
+        return "separate_mesa_required"
+    if bool(capability_aliases.get("case_self_review")):
+        return "self_review_allowed"
+    return "review_not_configured"
+
+
+def _approval_actor_scope_for_review_mode(
+    *,
+    review_governance_mode: str,
+    capability_aliases: dict[str, bool],
+) -> MobileChatFirstApprovalActorScope:
+    if review_governance_mode == "separate_mesa_required":
+        return "separate_mesa"
+    if review_governance_mode == "self_review_allowed":
+        return "inspector_self"
+    if bool(capability_aliases.get("case_review_decide")):
+        return "tenant_reviewer"
+    return "unassigned"
+
+
+def _available_case_actions_for_governance(
+    *,
+    capability_aliases: dict[str, bool],
+    separate_mesa_required: bool,
+) -> list[str]:
+    actions: list[str] = []
+    for action, enabled in capability_aliases.items():
+        if not bool(enabled):
+            continue
+        if action == "case_self_review" and separate_mesa_required:
+            continue
+        actions.append(action)
+    return actions
+
+
+def build_mobile_chat_first_governance_read_model(
+    payload: Any,
+    *,
+    review_mode: Any = None,
+    high_risk_family_requires_separate_review: bool = False,
+    signatory_required: bool | None = None,
+    capability_entitlements: dict[str, bool] | None = None,
+) -> dict[str, Any]:
+    """Return neutral governance aliases without changing legacy capabilities."""
+
+    legacy_capabilities = (
+        dict(capability_entitlements)
+        if capability_entitlements is not None
+        else tenant_admin_capability_entitlements(payload)
+    )
+    capability_aliases = _mobile_chat_first_capability_aliases_from_legacy(
+        legacy_capabilities
+    )
+    review_governance_mode = _resolve_mobile_chat_first_review_governance_mode(
+        capability_aliases=capability_aliases,
+        review_mode=review_mode,
+        high_risk_family_requires_separate_review=high_risk_family_requires_separate_review,
+    )
+    separate_mesa_required = review_governance_mode == "separate_mesa_required"
+    self_review_allowed = (
+        review_governance_mode == "self_review_allowed"
+        and bool(capability_aliases.get("case_self_review"))
+        and not separate_mesa_required
+    )
+    official_issue_allowed = bool(capability_aliases.get("official_issue_create"))
+    effective_signatory_required = (
+        bool(signatory_required)
+        if signatory_required is not None
+        else official_issue_allowed
+    )
+    issue_governance_mode: MobileChatFirstIssueGovernanceMode
+    if not official_issue_allowed:
+        issue_governance_mode = "none"
+    elif effective_signatory_required:
+        issue_governance_mode = "signatory_required"
+    else:
+        issue_governance_mode = "official_issue_allowed"
+
+    return {
+        "review_governance_mode": review_governance_mode,
+        "review_mode_legacy": _normalize_review_mode_alias(review_mode) or None,
+        "approval_actor_scope": _approval_actor_scope_for_review_mode(
+            review_governance_mode=review_governance_mode,
+            capability_aliases=capability_aliases,
+        ),
+        "issue_governance_mode": issue_governance_mode,
+        "separate_mesa_required": separate_mesa_required,
+        "self_review_allowed": self_review_allowed,
+        "official_issue_allowed": official_issue_allowed,
+        "signatory_required": bool(effective_signatory_required),
+        "available_case_actions": _available_case_actions_for_governance(
+            capability_aliases=capability_aliases,
+            separate_mesa_required=separate_mesa_required,
+        ),
+        "capability_alias_source": dict(_MOBILE_CHAT_FIRST_CAPABILITY_ALIASES),
     }
 
 
@@ -545,6 +722,13 @@ def summarize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
         portal_entitlements=portal_entitlements,
         commercial_service_package=commercial_service_package,
     )
+    capability_aliases = _mobile_chat_first_capability_aliases_from_legacy(
+        capability_entitlements
+    )
+    mobile_chat_first_governance = build_mobile_chat_first_governance_read_model(
+        sanitized,
+        capability_entitlements=capability_entitlements,
+    )
     return {
         **sanitized,
         "operating_model": operating_model,
@@ -584,6 +768,8 @@ def summarize_tenant_admin_policy(payload: Any) -> dict[str, Any]:
         ),
         "tenant_portal_entitlements": portal_entitlements,
         "tenant_capability_entitlements": capability_entitlements,
+        "tenant_capability_aliases": capability_aliases,
+        "mobile_chat_first_governance": mobile_chat_first_governance,
         "tenant_assignable_portal_set": tenant_assignable_portal_set,
         "admin_ceo_governance_scope": "client_contract_surface_limits",
         "admin_cliente_governance_scope": "client_employee_operations",
@@ -794,6 +980,19 @@ def tenant_admin_capability_entitlements(payload: Any) -> dict[str, bool]:
     }
 
 
+def tenant_admin_capability_aliases(payload: Any) -> dict[str, bool]:
+    summary = summarize_tenant_admin_policy(payload)
+    aliases = summary.get("tenant_capability_aliases")
+    if isinstance(aliases, dict):
+        return {
+            str(capability): bool(enabled)
+            for capability, enabled in aliases.items()
+        }
+    return _mobile_chat_first_capability_aliases_from_legacy(
+        tenant_admin_capability_entitlements(summary)
+    )
+
+
 def tenant_admin_portal_enabled(payload: Any, *, portal: str) -> bool:
     normalized = _normalize_user_portal(portal)
     if normalized is None:
@@ -803,7 +1002,10 @@ def tenant_admin_portal_enabled(payload: Any, *, portal: str) -> bool:
 
 def tenant_admin_capability_enabled(payload: Any, *, capability: str) -> bool:
     capability_key = str(capability or "").strip().lower()
-    return bool(tenant_admin_capability_entitlements(payload).get(capability_key, False))
+    legacy_capabilities = tenant_admin_capability_entitlements(payload)
+    if capability_key in legacy_capabilities:
+        return bool(legacy_capabilities.get(capability_key, False))
+    return bool(tenant_admin_capability_aliases(payload).get(capability_key, False))
 
 
 def tenant_admin_user_capability_entitlements(
@@ -860,6 +1062,21 @@ def tenant_admin_user_capability_entitlements(
     return entitlements
 
 
+def tenant_admin_user_capability_aliases(
+    payload: Any,
+    *,
+    access_level: Any,
+    stored_portals: Any = None,
+) -> dict[str, bool]:
+    return _mobile_chat_first_capability_aliases_from_legacy(
+        tenant_admin_user_capability_entitlements(
+            payload,
+            access_level=access_level,
+            stored_portals=stored_portals,
+        )
+    )
+
+
 def tenant_admin_user_capability_enabled(
     payload: Any,
     *,
@@ -868,8 +1085,15 @@ def tenant_admin_user_capability_enabled(
     stored_portals: Any = None,
 ) -> bool:
     capability_key = str(capability or "").strip().lower()
+    legacy_capabilities = tenant_admin_user_capability_entitlements(
+        payload,
+        access_level=access_level,
+        stored_portals=stored_portals,
+    )
+    if capability_key in legacy_capabilities:
+        return bool(legacy_capabilities.get(capability_key, False))
     return bool(
-        tenant_admin_user_capability_entitlements(
+        tenant_admin_user_capability_aliases(
             payload,
             access_level=access_level,
             stored_portals=stored_portals,
@@ -892,6 +1116,11 @@ def build_tenant_access_policy_payload(
         "commercial_service_package_description": summary.get("commercial_service_package_description") or "",
         "portal_entitlements": tenant_admin_portal_entitlements(summary),
         "capability_entitlements": tenant_admin_capability_entitlements(summary),
+        "capability_aliases": tenant_admin_capability_aliases(summary),
+        "mobile_chat_first_governance": build_mobile_chat_first_governance_read_model(
+            summary,
+            capability_entitlements=tenant_admin_capability_entitlements(summary),
+        ),
     }
     if access_level is not None:
         allowed_portals = tenant_admin_effective_user_portal_grants(
@@ -903,11 +1132,19 @@ def build_tenant_access_policy_payload(
         public_payload["allowed_portal_labels"] = [
             tenant_admin_user_portal_label(item) for item in allowed_portals
         ]
-        public_payload["user_capability_entitlements"] = (
-            tenant_admin_user_capability_entitlements(
+        user_capabilities = tenant_admin_user_capability_entitlements(
+            summary,
+            access_level=access_level,
+            stored_portals=stored_portals,
+        )
+        public_payload["user_capability_entitlements"] = user_capabilities
+        public_payload["user_capability_aliases"] = (
+            _mobile_chat_first_capability_aliases_from_legacy(user_capabilities)
+        )
+        public_payload["user_mobile_chat_first_governance"] = (
+            build_mobile_chat_first_governance_read_model(
                 summary,
-                access_level=access_level,
-                stored_portals=stored_portals,
+                capability_entitlements=user_capabilities,
             )
         )
     return public_payload
@@ -1008,11 +1245,16 @@ __all__ = [
     "DEFAULT_TENANT_ADMIN_CASE_ACTION_MODE",
     "DEFAULT_TENANT_ADMIN_CASE_VISIBILITY_MODE",
     "DEFAULT_TENANT_ADMIN_OPERATING_MODEL",
+    "MobileChatFirstApprovalActorScope",
+    "MobileChatFirstIssueGovernanceMode",
+    "MobileChatFirstReviewGovernanceMode",
     "TenantAdminCaseActionMode",
     "TenantAdminCaseVisibilityMode",
     "TenantAdminOperatingModel",
+    "build_mobile_chat_first_governance_read_model",
     "build_tenant_access_policy_payload",
     "tenant_admin_allowed_user_portal_set",
+    "tenant_admin_capability_aliases",
     "tenant_admin_capability_enabled",
     "tenant_admin_capability_entitlements",
     "tenant_admin_default_admin_cliente_portal_grants",
@@ -1023,6 +1265,7 @@ __all__ = [
     "tenant_admin_operational_user_limit",
     "tenant_admin_portal_enabled",
     "tenant_admin_portal_entitlements",
+    "tenant_admin_user_capability_aliases",
     "tenant_admin_user_capability_enabled",
     "tenant_admin_user_capability_entitlements",
     "tenant_admin_user_portal_label",

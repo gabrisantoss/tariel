@@ -292,9 +292,19 @@
     }
 
     function formatarModoFinalizacaoPreview(preview = {}) {
+        const tituloFerramentas = String(preview?.chat_review_tools?.title || "").trim();
+        if (tituloFerramentas) return tituloFerramentas;
         if (preview?.primary_action === "approve_without_mesa") return "Aprovação interna sem Mesa";
         if (preview?.primary_action === "send_to_mesa") return "Envio para Mesa Avaliadora";
         return "Resolver pendências antes de finalizar";
+    }
+
+    function obterRotuloPrimarioFinalizacaoPreview(preview = {}) {
+        return String(preview?.chat_review_tools?.primary_label || preview?.primary_label || "Finalizar").trim();
+    }
+
+    function obterProximoPassoFinalizacaoPreview(preview = {}) {
+        return String(preview?.chat_review_tools?.next_step || preview?.next_step || "Confira o estado do laudo antes de continuar.").trim();
     }
 
     function montarListaCorrecoesPreview(preview = {}) {
@@ -331,12 +341,12 @@
                     <header class="finalizacao-preview-modal__header">
                         <span class="finalizacao-preview-modal__eyebrow">Revisão antes de finalizar</span>
                         <h2>${escaparHTML(formatarModoFinalizacaoPreview(preview))}</h2>
-                        <p>${escaparHTML(preview?.next_step || "Confira o estado do laudo antes de continuar.")}</p>
+                        <p>${escaparHTML(obterProximoPassoFinalizacaoPreview(preview))}</p>
                     </header>
                     <section class="finalizacao-preview-modal__grid" aria-label="Resumo de finalização">
                         <article>
                             <strong>Destino</strong>
-                            <span>${escaparHTML(preview?.primary_label || "Finalizar")}</span>
+                            <span>${escaparHTML(obterRotuloPrimarioFinalizacaoPreview(preview))}</span>
                         </article>
                         <article>
                             <strong>Correções</strong>
@@ -359,7 +369,7 @@
                         <button type="button" class="technical-record-btn technical-record-btn--ghost" data-preview-action="cancel">Voltar</button>
                         ${podeFinalizar ? `
                             <button type="button" class="technical-record-btn technical-record-btn--primary" data-preview-action="confirm">
-                                ${escaparHTML(preview?.primary_label || "Finalizar")}
+                                ${escaparHTML(obterRotuloPrimarioFinalizacaoPreview(preview))}
                             </button>
                         ` : `
                             <button type="button" class="technical-record-btn technical-record-btn--primary" data-preview-action="resolve">
