@@ -15,7 +15,6 @@ import json
 import os
 import pathlib
 import re
-import shlex
 import shutil
 import signal
 import sqlite3
@@ -297,54 +296,12 @@ def write_mobile_pilot_lane_state(
     write_json(MOBILE_PILOT_LANE_STATE_FILE, payload)
 
 
-SENSITIVE_DISPLAY_KEYS = {
-    "authorization",
-    "auth",
-    "bearer",
-    "credential",
-    "credentials",
-    "csrf",
-    "key",
-    "password",
-    "secret",
-    "senha",
-    "token",
-}
-
-
-def _command_key_is_sensitive(raw_key: str) -> bool:
-    key = str(raw_key or "").strip().lower().replace("-", "_")
-    return key in SENSITIVE_DISPLAY_KEYS or key.endswith(
-        ("_password", "_secret", "_senha", "_token", "_key")
-    )
-
-
-def _redact_command_arg_for_display(arg: str, *, redact_whole_arg: bool = False) -> str:
-    if redact_whole_arg:
-        return "***"
-
-    value = str(arg)
-    if "=" in value:
-        raw_key, raw_value = value.split("=", 1)
-        if _command_key_is_sensitive(raw_key.lstrip("-")):
-            return f"{raw_key}=***"
-        if "://" in raw_value:
-            return f"{raw_key}={redact_database_url(raw_value)}"
-
-    if "://" in value:
-        return redact_database_url(value)
-    return value
-
-
 def command_display(command: list[str]) -> str:
-    display_parts: list[str] = []
-    redact_next = False
-    for raw_arg in command:
-        arg = str(raw_arg)
-        redacted_arg = _redact_command_arg_for_display(arg, redact_whole_arg=redact_next)
-        display_parts.append(shlex.quote(redacted_arg))
-        redact_next = arg.startswith("-") and _command_key_is_sensitive(arg.lstrip("-"))
-    return " ".join(display_parts)
+    if not command:
+        return "command [arguments redacted; argc=0]"
+    executable = pathlib.Path(str(command[0] or "command")).name
+    safe_executable = re.sub(r"[^A-Za-z0-9._+-]", "_", executable).strip("._-") or "command"
+    return f"{safe_executable} [arguments redacted; argc={max(len(command) - 1, 0)}]"
 
 
 def has_graphical_display() -> bool:
