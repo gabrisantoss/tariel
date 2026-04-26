@@ -40,6 +40,7 @@ interface UseInspectorRootActivityCenterControllerInput {
   setterState: Pick<
     ActivityCenterControllerParams,
     | "onObserveMesaFeedReadMetadata"
+    | "onObserveMesaThreadReadMetadata"
     | "onObserveMesaFeedRequestedTargetIds"
     | "onSetCacheLaudos"
     | "onSetCacheMesa"
@@ -104,6 +105,8 @@ export function useInspectorRootActivityCenterController({
     onSetStatusApi: setterState.onSetStatusApi,
     onSetErroConversaIfEmpty: setterState.onSetErroConversaIfEmpty,
     onObserveMesaFeedReadMetadata: setterState.onObserveMesaFeedReadMetadata,
+    onObserveMesaThreadReadMetadata:
+      setterState.onObserveMesaThreadReadMetadata,
     onObserveMesaFeedRequestedTargetIds:
       setterState.onObserveMesaFeedRequestedTargetIds,
     maxNotifications: limitsState.maxNotifications,

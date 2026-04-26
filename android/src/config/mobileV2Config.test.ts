@@ -29,6 +29,17 @@ describe("mobileV2Config", () => {
     });
   });
 
+  it("habilita o contrato V2 com o valor usado pelo build preview do smoke mobile", () => {
+    process.env.EXPO_PUBLIC_ANDROID_V2_READ_CONTRACTS_ENABLED = "1";
+
+    expect(androidV2ReadContractsEnabled()).toBe(true);
+    expect(getAndroidV2ReadContractsRuntimeSnapshot()).toMatchObject({
+      rawValue: "1",
+      normalizedValue: "1",
+      enabled: true,
+    });
+  });
+
   it("materializa rawValue nulo quando a flag não existe no runtime", () => {
     expect(androidV2ReadContractsEnabled()).toBe(false);
     expect(getAndroidV2ReadContractsRuntimeSnapshot()).toEqual({

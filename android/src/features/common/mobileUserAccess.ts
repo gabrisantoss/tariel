@@ -189,6 +189,32 @@ export function hasMobileUserPortal(
   return resolveMobileUserPortals(user).includes(portal);
 }
 
+export function hasMobileUserCapability(
+  user: MobileUser | null | undefined,
+  capability: string,
+): boolean {
+  const capabilityKey = String(capability || "").trim();
+  if (!capabilityKey) {
+    return false;
+  }
+  const tenantPolicy = resolveTenantAccessPolicy(user);
+  const userCapabilities = tenantPolicy?.user_capability_entitlements;
+  if (
+    userCapabilities &&
+    Object.prototype.hasOwnProperty.call(userCapabilities, capabilityKey)
+  ) {
+    return Boolean(userCapabilities[capabilityKey]);
+  }
+  const tenantCapabilities = tenantPolicy?.capability_entitlements;
+  if (
+    tenantCapabilities &&
+    Object.prototype.hasOwnProperty.call(tenantCapabilities, capabilityKey)
+  ) {
+    return Boolean(tenantCapabilities[capabilityKey]);
+  }
+  return false;
+}
+
 export function resolveMobileUserPortalLabels(
   user: MobileUser | null | undefined,
 ): string[] {

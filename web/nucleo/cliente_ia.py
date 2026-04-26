@@ -436,12 +436,31 @@ Diretrizes:
         historico: Optional[list] = None,
         dados_imagem: Optional[str] = None,
         texto_documento: Optional[str] = None,
+        template_key: Optional[str] = None,
+        catalog_family_key: Optional[str] = None,
+        report_pack_draft: Optional[dict[str, Any]] = None,
+        case_payload_context: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         loop = asyncio.get_running_loop()
 
         def _executar() -> dict[str, Any]:
             historico_validado = self._validar_historico(historico or [])
             contents = self._construir_contents_historico(historico_validado)
+            nr35_prompt_contract = None
+            try:
+                from app.domains.chat.nr35_linha_vida_prompt import (
+                    build_nr35_linha_vida_prompt_contract,
+                    normalize_nr35_linha_vida_ai_output,
+                )
+
+                nr35_prompt_contract = build_nr35_linha_vida_prompt_contract(
+                    template_key=template_key,
+                    catalog_family_key=catalog_family_key,
+                    report_pack_draft=report_pack_draft,
+                    case_payload_context=case_payload_context,
+                )
+            except Exception:
+                nr35_prompt_contract = None
 
             partes_extras: list[types.Part] = []
 
@@ -462,9 +481,13 @@ Diretrizes:
             partes_extras.append(
                 types.Part.from_text(
                     text=(
-                        "Baseado em todo o histórico e evidências acima, "
-                        "preencha o formulário/checklist de inspeção de forma técnica, "
-                        "rigorosa e coerente com as normas aplicáveis."
+                        nr35_prompt_contract.user_instruction
+                        if nr35_prompt_contract is not None
+                        else (
+                            "Baseado em todo o histórico e evidências acima, "
+                            "preencha o formulário/checklist de inspeção de forma técnica, "
+                            "rigorosa e coerente com as normas aplicáveis."
+                        )
                     )
                 )
             )
@@ -481,6 +504,9 @@ Diretrizes:
                         "has_image": bool(dados_imagem),
                         "has_document": bool(texto_documento),
                         "historico_itens": len(historico_validado),
+                        "template_key": template_key,
+                        "catalog_family_key": catalog_family_key,
+                        "nr35_prompt_contract": bool(nr35_prompt_contract),
                     },
                 ):
                     resposta = self.cliente.models.generate_content(
@@ -491,9 +517,13 @@ Diretrizes:
                             response_schema=schema_pydantic,
                             temperature=0.1,
                             system_instruction=(
-                                "Você é um assistente de engenharia. "
-                                "Analise as evidências do inspetor (fotos, histórico e documentos) "
-                                "e preencha as caixinhas de conformidade (C, NC, N/A) rigorosamente."
+                                nr35_prompt_contract.system_instruction
+                                if nr35_prompt_contract is not None
+                                else (
+                                    "Você é um assistente de engenharia. "
+                                    "Analise as evidências do inspetor (fotos, histórico e documentos) "
+                                    "e preencha as caixinhas de conformidade (C, NC, N/A) rigorosamente."
+                                )
                             ),
                         ),
                     )
@@ -503,7 +533,13 @@ Diretrizes:
                     logger.warning("IA retornou JSON estruturado vazio.")
                     return {}
 
-                return json.loads(texto)
+                payload = json.loads(texto)
+                if nr35_prompt_contract is not None:
+                    return normalize_nr35_linha_vida_ai_output(
+                        payload if isinstance(payload, dict) else {},
+                        report_pack_draft=report_pack_draft,
+                    )
+                return payload
 
             except json.JSONDecodeError as e:
                 logger.error("JSON inválido retornado pela IA: %s", e, exc_info=True)

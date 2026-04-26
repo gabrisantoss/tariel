@@ -24,6 +24,16 @@ function shouldRunCleanPreviewBuild() {
   );
 }
 
+function shouldSkipPreviewLaunch() {
+  return flagEnabled(process.env.TARIEL_ANDROID_PREVIEW_SKIP_LAUNCH);
+}
+
+function isLocalHttpUrl(value) {
+  return /^http:\/\/(127\.0\.0\.1|localhost|10\.0\.2\.2)(?=[:/]|$)/i.test(
+    String(value || "").trim(),
+  );
+}
+
 function binJavaExists(javaHome) {
   if (!javaHome) {
     return false;
@@ -77,8 +87,8 @@ function findAndroidSdk() {
 
 function findNodeBinary() {
   const candidates = [
-    process.execPath,
     process.env.NODE_BINARY,
+    process.execPath,
     path.join(
       process.env.ProgramFiles || "C:\\Program Files",
       "nodejs",
@@ -392,6 +402,54 @@ function ensureLocalProperties(androidSdkPath) {
   writeFileSync(localPropertiesPath, `sdk.dir=${sdkDir}\n`, "utf8");
 }
 
+function enableLocalPreviewCleartext(androidCwd, enabled) {
+  if (!enabled) {
+    return () => undefined;
+  }
+
+  const manifestPath = path.join(
+    androidCwd,
+    "app",
+    "src",
+    "main",
+    "AndroidManifest.xml",
+  );
+  if (!existsSync(manifestPath)) {
+    return () => undefined;
+  }
+
+  const original = readFileSync(manifestPath, "utf8");
+  const patched = original.includes("android:usesCleartextTraffic=")
+    ? original.replace(
+        /android:usesCleartextTraffic="[^"]*"/,
+        'android:usesCleartextTraffic="true"',
+      )
+    : original.replace(
+        /<application\b/,
+        '<application android:usesCleartextTraffic="true"',
+      );
+
+  if (patched !== original) {
+    writeFileSync(manifestPath, patched, "utf8");
+    console.log(
+      "[devkit] HTTP cleartext local habilitado temporariamente para o APK preview.",
+    );
+  }
+
+  let restored = false;
+  return () => {
+    if (restored) {
+      return;
+    }
+    restored = true;
+    try {
+      writeFileSync(manifestPath, original, "utf8");
+    } catch {
+      // O cleanup do manifest nao deve mascarar o resultado real do build.
+    }
+  };
+}
+
 function lerApiBaseUrlDoEnv() {
   const envPath = path.join(process.cwd(), ".env");
   if (!existsSync(envPath)) {
@@ -467,13 +525,21 @@ const apiBaseUrl =
   expoPublicEnv.EXPO_PUBLIC_API_BASE_URL ||
   lerApiBaseUrlDoEnv() ||
   "http://127.0.0.1:8000";
+const authWebBaseUrl =
+  process.env.EXPO_PUBLIC_AUTH_WEB_BASE_URL ||
+  expoPublicEnv.EXPO_PUBLIC_AUTH_WEB_BASE_URL ||
+  apiBaseUrl;
 const androidV2ReadContractsFlag =
   process.env.EXPO_PUBLIC_ANDROID_V2_READ_CONTRACTS_ENABLED ||
   expoPublicEnv.EXPO_PUBLIC_ANDROID_V2_READ_CONTRACTS_ENABLED ||
   "";
 const cleanPreviewBuild = shouldRunCleanPreviewBuild();
+const skipPreviewLaunch = shouldSkipPreviewLaunch();
+const localHttpPreview =
+  isLocalHttpUrl(apiBaseUrl) || isLocalHttpUrl(authWebBaseUrl);
 
 console.log(`Usando API mobile preview em ${apiBaseUrl}`);
+console.log(`Usando auth web mobile preview em ${authWebBaseUrl}`);
 console.log(
   `Usando Android V2 preview flag=${androidV2ReadContractsFlag || "<unset>"}`,
 );
@@ -481,6 +547,11 @@ console.log(
   cleanPreviewBuild
     ? "Usando Android preview com limpeza fria de build."
     : "Usando Android preview incremental (sem limpeza fria).",
+);
+console.log(
+  skipPreviewLaunch
+    ? "Launch automatico pos-instalacao desabilitado para preflight externo."
+    : "Launch automatico pos-instalacao habilitado.",
 );
 
 const env = {
@@ -491,6 +562,8 @@ const env = {
   ANDROID_SDK_ROOT: androidSdk,
   NODE_BINARY: nodeBinary,
   EXPO_PUBLIC_API_BASE_URL: apiBaseUrl,
+  EXPO_PUBLIC_AUTH_WEB_BASE_URL: authWebBaseUrl,
+  EXPO_PUBLIC_ANDROID_V2_READ_CONTRACTS_ENABLED: androidV2ReadContractsFlag,
   NODE_ENV: process.env.NODE_ENV || "production",
   RCT_NO_LAUNCH_PACKAGER: "1",
   PATH: [
@@ -511,6 +584,11 @@ if (process.platform === "win32") {
 
 const androidCwd = path.join(process.cwd(), "android");
 const adbPath = findAdbPath(androidSdk);
+const restorePreviewManifest = enableLocalPreviewCleartext(
+  androidCwd,
+  localHttpPreview,
+);
+process.on("exit", restorePreviewManifest);
 if (cleanPreviewBuild) {
   const gradleStopCommand =
     process.platform === "win32" ? "cmd.exe" : "./gradlew";
@@ -544,6 +622,7 @@ const child = spawn(command, args, {
 });
 
 child.on("exit", (code) => {
+  restorePreviewManifest();
   if ((code ?? 0) !== 0) {
     process.exit(code ?? 0);
     return;
@@ -571,6 +650,16 @@ child.on("exit", (code) => {
 
   console.log(`[devkit] Instalando APK preview em ${serial}`);
   installApkWithFallback(adbPath, serial, apkPath, env);
-  launchPreviewApp(adbPath, serial, env);
+  if (skipPreviewLaunch) {
+    console.log("[devkit] Launch do app preview pulado por configuracao.");
+  } else {
+    launchPreviewApp(adbPath, serial, env);
+  }
   process.exit(0);
+});
+
+child.on("error", (error) => {
+  restorePreviewManifest();
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
 });

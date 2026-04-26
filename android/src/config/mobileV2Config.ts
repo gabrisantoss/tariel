@@ -18,12 +18,7 @@ function normalizarFlagBoolean(rawValue: string | undefined): boolean {
 }
 
 function readAndroidV2ReadContractsRawValue(): string | undefined {
-  const directRuntimeValue =
-    process.env.EXPO_PUBLIC_ANDROID_V2_READ_CONTRACTS_ENABLED;
-  if (typeof directRuntimeValue === "string") {
-    return directRuntimeValue;
-  }
-  return process.env[ANDROID_V2_READ_CONTRACTS_FLAG];
+  return process.env.EXPO_PUBLIC_ANDROID_V2_READ_CONTRACTS_ENABLED;
 }
 
 export function getAndroidV2ReadContractsRuntimeSnapshot(): AndroidV2ReadContractsRuntimeSnapshot {

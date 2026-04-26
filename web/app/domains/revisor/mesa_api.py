@@ -14,6 +14,7 @@ from app.domains.chat.request_parsing_helpers import InteiroOpcionalNullish
 from app.domains.revisor.base import (
     DadosEmissaoOficialMesa,
     DadosPendenciaMesa,
+    DadosRevisaoEstruturadaNR35,
     DadosSolicitacaoCoverageReturn,
     DadosRespostaChat,
     DadosWhisper,
@@ -43,7 +44,7 @@ from app.domains.revisor.command_side_effects import (
     run_review_reply_side_effects,
     run_review_whisper_reply_side_effects,
 )
-from app.domains.revisor.common import _validar_csrf
+from app.domains.revisor.common import _obter_laudo_empresa, _validar_csrf
 from app.domains.revisor.document_boundary import (
     build_reviewdesk_complete_payload,
     build_reviewdesk_case_package_payload,
@@ -56,6 +57,10 @@ from app.domains.revisor.service import (
     gerar_exportacao_pacote_mesa_laudo_zip,
     marcar_whispers_lidos_revisor,
     validar_parametros_pacote_mesa,
+)
+from app.domains.chat.nr35_linha_vida_structured_review import (
+    apply_nr35_structured_review_edits_to_laudo,
+    build_nr35_structured_review_state_for_laudo,
 )
 from app.shared.database import Usuario, obter_banco
 from app.shared.backend_hotspot_metrics import observe_backend_hotspot
@@ -452,6 +457,55 @@ async def solicitar_refazer_item_coverage(
             "block_key": resultado.block_key,
         }
     )
+
+
+@roteador_revisor.get(
+    "/api/laudo/{laudo_id}/nr35/revisao-estruturada",
+    responses={
+        **RESPOSTA_LAUDO_NAO_ENCONTRADO_REVISOR,
+        400: {"description": "Revisão estruturada indisponível para este laudo."},
+    },
+)
+async def obter_revisao_estruturada_nr35(
+    laudo_id: int,
+    usuario: Usuario = Depends(exigir_revisor),
+    banco: Session = Depends(obter_banco),
+):
+    _ensure_reviewer_decision_capability(usuario)
+    laudo = _obter_laudo_empresa(banco, laudo_id, usuario.empresa_id)
+    state = build_nr35_structured_review_state_for_laudo(laudo)
+    return JSONResponse(content=jsonable_encoder({"success": True, "review": state}))
+
+
+@roteador_revisor.patch(
+    "/api/laudo/{laudo_id}/nr35/revisao-estruturada",
+    responses={
+        **RESPOSTA_LAUDO_NAO_ENCONTRADO_REVISOR,
+        400: {"description": "Edição estruturada inválida."},
+        403: {"description": "CSRF inválido."},
+    },
+)
+async def atualizar_revisao_estruturada_nr35(
+    laudo_id: int,
+    dados: DadosRevisaoEstruturadaNR35,
+    request: Request,
+    usuario: Usuario = Depends(exigir_revisor),
+    banco: Session = Depends(obter_banco),
+):
+    token = request.headers.get("X-CSRF-Token", "")
+    if not _validar_csrf(request, token):
+        raise HTTPException(status_code=403, detail="CSRF inválido.")
+    _ensure_reviewer_decision_capability(usuario)
+    laudo = _obter_laudo_empresa(banco, laudo_id, usuario.empresa_id)
+    state = apply_nr35_structured_review_edits_to_laudo(
+        banco,
+        laudo=laudo,
+        edits=[item.model_dump(mode="python") for item in dados.edits],
+        actor_user=usuario,
+        batch_justification=str(dados.justification or ""),
+    )
+    banco.commit()
+    return JSONResponse(content=jsonable_encoder({"success": True, "review": state}))
 
 
 @roteador_revisor.get(

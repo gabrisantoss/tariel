@@ -18,6 +18,8 @@ Observação:
 ## Comandos obrigatórios
 
 - Baseline local: `make verify`
+- Promoção local forte: `make release-verify-local`
+- Promoção completa: `make release-verify`
 - Higiene operacional: `make hygiene-check`
 - Web: `make web-ci`
 - Mobile: `make mobile-ci`
@@ -31,6 +33,7 @@ Observação:
 - Em tarefa com mais de `30 min` ou multissuperfície, atualizar `PLANS.md`.
 - Usar `git worktree` por frente estrutural, hotfix ou spike.
 - Validar higiene do workspace antes de promover fase de governança: `make hygiene-check`.
+- Antes de promover release local, usar `make release-verify-local`; quando a lane real estiver disponível, usar `make release-verify`.
 - Sempre fazer busca na web quando isso reduzir risco de desatualizacao, dependencia externa ou duvida factual sobre servicos, bibliotecas, specs, produtos ou comportamento atual.
 - Quando a tarefa exigir material externo atual para validar ou completar a execucao, downloads operacionais sao permitidos desde que tenham relacao direta com a frente ativa.
 

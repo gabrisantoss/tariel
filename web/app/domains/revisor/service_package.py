@@ -19,6 +19,11 @@ from app.domains.chat.laudo_state_helpers import (
 from app.domains.chat.learning_helpers import listar_aprendizados_laudo, serializar_aprendizado_visual
 from app.domains.chat.media_helpers import safe_remove_file
 from app.domains.mesa.service import montar_pacote_mesa_laudo
+from app.domains.chat.nr35_linha_vida_official_pdf import (
+    build_nr35_linha_vida_official_pdf_manifest,
+    extract_nr35_approved_payload,
+    extract_nr35_approved_report_pack,
+)
 from app.domains.revisor.base import (
     _agora_utc,
     _formatar_data_local,
@@ -478,6 +483,20 @@ def gerar_exportacao_pacote_mesa_laudo_zip(
             if isinstance(getattr(laudo, "pdf_template_snapshot_json", None), dict)
             else None
         )
+        primary_pdf_artifact = resolve_official_issue_primary_pdf_artifact(laudo)
+        nr35_official_pdf_manifest = build_nr35_linha_vida_official_pdf_manifest(
+            laudo=laudo,
+            latest_snapshot=latest_snapshot,
+            generated_at=generated_at.isoformat(),
+            primary_pdf_artifact=primary_pdf_artifact,
+        )
+        nr35_approved_payload = extract_nr35_approved_payload(latest_snapshot) if nr35_official_pdf_manifest else {}
+        nr35_approved_report_pack = extract_nr35_approved_report_pack(latest_snapshot) if nr35_official_pdf_manifest else {}
+        nr35_human_review_changelog = (
+            dict(nr35_official_pdf_manifest.get("human_review") or {})
+            if isinstance(nr35_official_pdf_manifest, dict)
+            else {}
+        )
 
         artifacts: list[dict[str, Any]] = []
         with zipfile.ZipFile(caminho_zip, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
@@ -654,6 +673,59 @@ def gerar_exportacao_pacote_mesa_laudo_zip(
                         mime_type="application/json",
                     )
                 )
+            if nr35_official_pdf_manifest is not None:
+                artifacts.append(
+                    _write_zip_bytes_artifact(
+                        zip_file,
+                        archive_path="governanca/nr35_official_pdf_manifest.json",
+                        payload=_json_bytes(nr35_official_pdf_manifest),
+                        label="Manifesto PDF auditavel NR35",
+                        category="json",
+                        source="nr35_official_pdf_manifest",
+                        required=True,
+                        mime_type="application/json",
+                        summary="Contrato final NR35 com snapshot aprovado, fotos, versoes, Mesa e validacao official_pdf.",
+                    )
+                )
+                artifacts.append(
+                    _write_zip_bytes_artifact(
+                        zip_file,
+                        archive_path="documento/nr35_dados_formulario_aprovado.json",
+                        payload=_json_bytes(nr35_approved_payload),
+                        label="JSON NR35 aprovado",
+                        category="json",
+                        source="nr35_approved_snapshot",
+                        required=True,
+                        mime_type="application/json",
+                        summary="Snapshot do JSON estruturado aprovado pela Mesa humana para emissao oficial.",
+                    )
+                )
+                artifacts.append(
+                    _write_zip_bytes_artifact(
+                        zip_file,
+                        archive_path="documento/nr35_report_pack_aprovado.json",
+                        payload=_json_bytes(nr35_approved_report_pack),
+                        label="Report pack NR35 aprovado",
+                        category="json",
+                        source="nr35_approved_snapshot",
+                        required=True,
+                        mime_type="application/json",
+                        summary="Snapshot das evidencias/fotos aprovadas pela Mesa humana.",
+                    )
+                )
+                artifacts.append(
+                    _write_zip_bytes_artifact(
+                        zip_file,
+                        archive_path="governanca/nr35_revisao_humana_changelog.json",
+                        payload=_json_bytes(nr35_human_review_changelog),
+                        label="Changelog humano NR35",
+                        category="json",
+                        source="nr35_human_review_changelog",
+                        required=False,
+                        mime_type="application/json",
+                        summary="Resumo auditavel das alteracoes humanas antes da aprovacao Mesa.",
+                    )
+                )
             artifacts.append(
                 _write_zip_file_artifact(
                     zip_file,
@@ -666,7 +738,6 @@ def gerar_exportacao_pacote_mesa_laudo_zip(
                     mime_type="application/pdf",
                 )
             )
-            primary_pdf_artifact = resolve_official_issue_primary_pdf_artifact(laudo)
             if primary_pdf_artifact is not None:
                 artifacts.append(
                     _write_zip_file_artifact(
@@ -738,6 +809,7 @@ def gerar_exportacao_pacote_mesa_laudo_zip(
                 "ready_for_issue": bool(emissao_oficial_payload.get("ready_for_issue")),
                 "document_sections": dict((emissao_oficial_payload.get("delivery_manifest") or {}).get("document_sections") or {}),
                 "catalog_binding_trace": catalog_binding_trace,
+                "nr35_official_pdf": nr35_official_pdf_manifest,
                 "artifact_count": len(artifacts) + 1,
                 "materialized_artifact_count": sum(1 for item in artifacts if bool(item.get("present"))),
                 "audit_trail_count": len(audit_trail),

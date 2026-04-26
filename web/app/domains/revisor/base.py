@@ -100,6 +100,23 @@ class DadosEmissaoOficialMesa(BaseModel):
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
 
+class DadosEdicaoRevisaoEstruturadaNR35(BaseModel):
+    path: str = Field(..., min_length=1, max_length=240)
+    value: Any = None
+    target: str = Field(default="payload", max_length=40)
+    justification: str | None = Field(default=None, max_length=800)
+    resolves_issue_codes: list[str] = Field(default_factory=list)
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+
+class DadosRevisaoEstruturadaNR35(BaseModel):
+    edits: list[DadosEdicaoRevisaoEstruturadaNR35] = Field(default_factory=list)
+    justification: str | None = Field(default=None, max_length=800)
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+
 class DadosLaudoEstruturado(BaseModel):
     nr_tipo: str
     dados_json: dict[str, Any]

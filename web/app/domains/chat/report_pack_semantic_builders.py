@@ -45,8 +45,9 @@ _NR10_PRONTUARIO_FAMILY = "nr10_prontuario_instalacoes_eletricas"
 _NR20_PRONTUARIO_FAMILY = "nr20_prontuario_instalacoes_inflamaveis"
 _NR35_IMAGE_SLOTS = (
     ("foto_visao_geral", "Vista geral da linha de vida"),
-    ("foto_ponto_superior", "Ponto superior"),
-    ("foto_ponto_inferior", "Ponto inferior"),
+    ("foto_ponto_superior", "Ponto superior ou extremidade principal"),
+    ("foto_ponto_inferior", "Ponto inferior ou extremidade secundaria"),
+    ("foto_detalhe_critico", "Detalhe critico tecnico"),
 )
 _NR35_ANCHOR_IMAGE_SLOTS = (
     ("foto_visao_geral", "Vista geral do ponto de ancoragem"),
@@ -1353,7 +1354,7 @@ def _build_nr35_report_pack_draft(
         and max_conflict_score < 70
         and entry_mode_effective == "evidence_first"
     )
-    final_validation_mode = "mobile_autonomous" if autonomy_ready else "mesa_required"
+    final_validation_mode = "mesa_required"
     structured_candidate = _build_nr35_structured_candidate(
         step_entries=step_entries,
         image_slots=image_slots,

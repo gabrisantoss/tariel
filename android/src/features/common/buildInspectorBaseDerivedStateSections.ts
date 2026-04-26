@@ -28,6 +28,7 @@ import {
   filterHelpArticlesByMobileAccess,
   filterNotificationsByMobileAccess,
   filterOfflineQueueByMobileAccess,
+  hasMobileUserCapability,
   hasMobileUserPortal,
   buildMobileWorkspaceSummary,
 } from "./mobileUserAccess";
@@ -79,10 +80,10 @@ export function buildInspectorConversationDerivedState(
   const vendoMesa = abaAtiva === "mesa";
   const vendoFinalizacao = abaAtiva === "finalizar";
   const mensagensVisiveis = conversaAtiva?.mensagens || [];
-  const mesaAcessoPermitido = hasMobileUserPortal(
-    session?.bootstrap.usuario,
-    "revisor",
-  );
+  const usuarioSessao = session?.bootstrap.usuario;
+  const mesaAcessoPermitido =
+    hasMobileUserPortal(usuarioSessao, "revisor") ||
+    hasMobileUserCapability(usuarioSessao, "inspector_send_to_mesa");
   const mesaDisponivel = Boolean(conversaAtiva?.laudoId);
   const mesaTemMensagens = mesaAcessoPermitido && Boolean(mensagensMesa.length);
   const previewChatLiberado = previewChatLiberadoParaConversa(conversaAtiva);

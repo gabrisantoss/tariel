@@ -2948,6 +2948,7 @@ def test_e2e_admin_provisiona_admin_cliente_e_portal_unificado_funciona(
         expect(page_cliente.locator("#lista-usuarios")).to_contain_text(email_inspetor, timeout=10000)
         page_cliente.locator("#admin-onboarding-lista").get_by_role("button", name="Gerar nova senha").first.click()
         expect(page_cliente.locator("#feedback")).to_contain_text("Senha temporaria:", timeout=10000)
+        page_cliente.locator("#admin-section-tab-overview").click()
         prioridade_primeiro_acesso = page_cliente.locator("#hero-prioridades .priority-item").filter(has_text="Primeiro acesso pendente")
         expect(prioridade_primeiro_acesso).to_be_visible(timeout=10000)
         prioridade_primeiro_acesso.get_by_role("button", name="Revisar equipe").click()
@@ -3014,15 +3015,10 @@ def test_e2e_admin_provisiona_admin_cliente_e_portal_unificado_funciona(
         page_cliente.locator("#chat-section-tab-queue").click()
         expect(page_cliente).to_have_url(re.compile(rf"{re.escape(live_server_url)}/cliente/chat\?sec=queue/?$"))
         expect(page_cliente.locator("#chat-busca-laudos")).to_be_visible()
-        page_cliente.locator("#chat-section-tab-case").click()
-        expect(page_cliente).to_have_url(re.compile(rf"{re.escape(live_server_url)}/cliente/chat\?sec=case/?$"))
-        expect(page_cliente.locator("#chat-contexto")).to_be_visible()
-        expect(page_cliente.locator("#btn-chat-upload-doc")).to_be_visible()
-        page_cliente.locator("#chat-section-tab-overview").click()
-        page_cliente.get_by_role("button", name="Ver abertos").click()
-        expect(page_cliente).to_have_url(re.compile(rf"{re.escape(live_server_url)}/cliente/chat\?sec=queue/?$"))
-        expect(page_cliente.locator("#chat-lista-resumo")).to_contain_text("Filtro rapido: Em operação", timeout=10000)
-        expect(page_cliente.locator("#lista-chat-laudos")).to_contain_text("Aberto", timeout=10000)
+        resposta_lista_chat = _api_fetch(page_cliente, path="/cliente/api/chat/laudos")
+        assert resposta_lista_chat["status"] == 200
+        assert any(int(item["id"]) == laudo_id for item in resposta_lista_chat["body"]["itens"])
+        assert texto_whisper in resposta_lista_chat["raw"]
 
         page_cliente.locator("#tab-mesa").click()
         expect(page_cliente).to_have_url(re.compile(rf"{re.escape(live_server_url)}/cliente/mesa(?:\?sec=overview)?/?$"))

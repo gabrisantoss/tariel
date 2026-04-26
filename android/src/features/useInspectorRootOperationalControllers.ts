@@ -253,6 +253,8 @@ export function useInspectorRootOperationalControllers({
     setterState: {
       onObserveMesaFeedReadMetadata:
         bootstrap.localState.setUltimoMetaLeituraFeedMesa,
+      onObserveMesaThreadReadMetadata:
+        bootstrap.localState.setUltimoMetaLeituraThreadMesa,
       onObserveMesaFeedRequestedTargetIds:
         bootstrap.localState.setUltimosAlvosConsultadosFeedMesa,
       onSetCacheLaudos: (proximosLaudos) => {

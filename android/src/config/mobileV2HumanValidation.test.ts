@@ -120,6 +120,58 @@ describe("mobileV2HumanValidation", () => {
     });
   });
 
+  it("deduplica por sessao, superficie e alvo para feed nao bloquear thread", async () => {
+    fetchMock.mockResolvedValue(
+      criarResposta(
+        JSON.stringify({
+          ok: true,
+          duplicate: false,
+        }),
+      ),
+    );
+    const metadataBase = {
+      deliveryMode: "v2" as const,
+      capabilitiesVersion: "2026-03-26.09j",
+      rolloutBucket: 12,
+      usageMode: "organic_validation" as const,
+      validationSessionId: "orgv_same_target",
+      operatorRunId: "oprv_same_target",
+    };
+
+    await expect(
+      acknowledgeMobileV2HumanValidationRender({
+        accessToken: "token-123",
+        surface: "feed",
+        readMetadata: {
+          ...metadataBase,
+          route: "feed",
+        },
+        targetIds: [21],
+      }),
+    ).resolves.toBe(true);
+    await expect(
+      acknowledgeMobileV2HumanValidationRender({
+        accessToken: "token-123",
+        surface: "thread",
+        readMetadata: {
+          ...metadataBase,
+          route: "thread",
+        },
+        targetIds: [21],
+      }),
+    ).resolves.toBe(true);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1].body))).toMatchObject({
+      surface: "feed",
+      target_id: 21,
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1].body))).toMatchObject({
+      surface: "thread",
+      target_id: 21,
+    });
+  });
+
   it("exige leitura V2 valida e alvos canonicos antes de enviar ack", () => {
     expect(
       shouldSendHumanAck({

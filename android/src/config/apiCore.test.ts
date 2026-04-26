@@ -146,4 +146,21 @@ describe("apiCore", () => {
       }
     }
   });
+
+  it("lê a estratégia explícita de localhost Android para builds de automação", () => {
+    const envAnterior = process.env.EXPO_PUBLIC_ANDROID_LOCALHOST_STRATEGY;
+    process.env.EXPO_PUBLIC_ANDROID_LOCALHOST_STRATEGY = "reverse";
+
+    try {
+      expect(readRuntimeEnv("EXPO_PUBLIC_ANDROID_LOCALHOST_STRATEGY")).toBe(
+        "reverse",
+      );
+    } finally {
+      if (typeof envAnterior === "string") {
+        process.env.EXPO_PUBLIC_ANDROID_LOCALHOST_STRATEGY = envAnterior;
+      } else {
+        delete process.env.EXPO_PUBLIC_ANDROID_LOCALHOST_STRATEGY;
+      }
+    }
+  });
 });

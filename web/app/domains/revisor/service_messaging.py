@@ -15,6 +15,10 @@ from app.domains.chat.laudo_state_helpers import (
     obter_detalhe_bloqueio_avaliacao_mesa,
     resolver_snapshot_leitura_caso_tecnico,
 )
+from app.domains.chat.nr35_linha_vida_structured_review import (
+    ensure_nr35_structured_review_ready_for_mesa_approval,
+    mark_nr35_structured_review_mesa_approved,
+)
 from app.domains.chat.template_governance import reaffirm_case_bound_template_governance
 from app.domains.mesa.attachments import (
     conteudo_mensagem_mesa_com_anexo,
@@ -137,6 +141,8 @@ def avaliar_laudo_revisor(
     motivo_normalizado = str(motivo or "").strip()
     if acao_normalizada not in {"aprovar", "rejeitar"}:
         raise HTTPException(status_code=400, detail="Ação inválida.")
+    if acao_normalizada == "aprovar" and not modo_schemathesis:
+        ensure_nr35_structured_review_ready_for_mesa_approval(laudo)
     target_case_lifecycle_status: Literal["devolvido_para_correcao", "aprovado"] = (
         "aprovado"
         if acao_normalizada == "aprovar"
@@ -234,6 +240,12 @@ def avaliar_laudo_revisor(
         occurred_at=_agora_utc(),
         clear_reopen_anchor=target_case_lifecycle_status != "aprovado",
     )
+    if acao_normalizada == "aprovar":
+        mark_nr35_structured_review_mesa_approved(
+            laudo,
+            actor_user_id=revisor_id,
+            actor_name=revisor_nome,
+        )
 
     mensagem_notificacao: MensagemLaudo | None = _registrar_mensagem_revisor(
         banco,
