@@ -219,7 +219,7 @@ Portanto, o Portal Cliente não deve ser reduzido a `read-only`. Também não de
 | Emissão oficial mais madura está concentrada em caminho governado. | Cenários sem Mesa podem precisar outro modelo de responsabilidade e assinatura. | P1 decisão de produto. |
 | Família pode exigir regra diferente do pacote. | Exemplo: NR35 exige Mesa no piloto, mesmo que tenant sem Mesa exista. | Já modelado, mas precisa comunicação clara. |
 | Admin Cliente com ações técnicas precisa fronteira clara. | Evita virar Admin CEO informal ou revisor sem governança. | P1 segurança/produto. |
-| Reemissão/superseded e auditoria de download ainda são follow-ups. | Histórico oficial pode ficar incompleto para produção real. | P0 para produção documental forte. |
+| Reemissão/superseded ainda é follow-up. Downloads oficiais já registram auditoria sanitizada. | Histórico de substituição de emissão ainda pode ficar incompleto para produção real. | P0 para produção documental forte. |
 
 ## 13. Recomendações
 
@@ -230,7 +230,7 @@ Portanto, o Portal Cliente não deve ser reduzido a `read-only`. Também não de
 5. Para empresa grande, fortalecer auditoria, signatários, histórico, reemissão e permissões por papel.
 6. Generalizar o padrão NR35 para outras famílias apenas depois de definir se a família exige Mesa, aceita mobile review ou permite autonomia governada.
 7. Melhorar a UX do Portal Cliente para explicar capacidades liberadas e bloqueadas por contrato, sem parecer erro.
-8. Antes de produção real, fechar PR9 de reemissão/superseded e auditoria de download oficial.
+8. Antes de produção real, fechar PR9 de reemissão/superseded e manter auditoria de download oficial coberta nos fluxos Portal Cliente, Chat/Mobile e Mesa.
 
 ## 14. Conclusão
 

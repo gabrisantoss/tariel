@@ -1684,6 +1684,25 @@ def test_admin_cliente_documentos_expoe_entrega_oficial_nr35_auditavel(
     assert resposta_pacote.content == package_bytes
     assert "TAR-NR35-CLIENTE.zip" in resposta_pacote.headers["content-disposition"]
 
+    with SessionLocal() as banco:
+        registros_download = banco.scalars(
+            select(RegistroAuditoriaEmpresa)
+            .where(
+                RegistroAuditoriaEmpresa.empresa_id == ids["empresa_a"],
+                RegistroAuditoriaEmpresa.acao == "emissao_oficial_download",
+                RegistroAuditoriaEmpresa.portal == "cliente",
+            )
+            .order_by(RegistroAuditoriaEmpresa.id.asc())
+        ).all()
+    assert len(registros_download) == 2
+    payloads = [registro.payload_json or {} for registro in registros_download]
+    assert {payload["artifact_kind"] for payload in payloads} == {"primary_pdf", "official_package"}
+    assert {payload["issue_number"] for payload in payloads} == {"TAR-20260426-0001-000001"}
+    assert {payload["laudo_id"] for payload in payloads} == {laudo_id}
+    assert any(payload.get("primary_pdf_sha256") == hashlib.sha256(pdf_bytes).hexdigest() for payload in payloads)
+    assert all("package_storage_path" not in payload for payload in payloads)
+    assert all("storage_path" not in payload for payload in payloads)
+
 
 def test_admin_cliente_documentos_nao_trata_rascunho_nr35_como_oficial(
     ambiente_critico,

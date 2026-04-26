@@ -10,6 +10,7 @@ from app.shared.database import (
     Empresa,
     Laudo,
     MensagemLaudo,
+    RegistroAuditoriaEmpresa,
     SignatarioGovernadoLaudo,
     StatusRevisao,
     TipoMensagem,
@@ -911,6 +912,26 @@ def test_inspetor_com_servicos_da_mesa_emite_oficialmente_no_fluxo_do_chat(
     resposta_download = client.get(corpo["download_url"])
     assert resposta_download.status_code == 200
     assert "application/zip" in resposta_download.headers.get("content-type", "").lower()
+
+    with SessionLocal() as banco:
+        registros_download = (
+            banco.query(RegistroAuditoriaEmpresa)
+            .filter(
+                RegistroAuditoriaEmpresa.empresa_id == ids["empresa_a"],
+                RegistroAuditoriaEmpresa.acao == "emissao_oficial_download",
+                RegistroAuditoriaEmpresa.portal == "inspetor",
+            )
+            .order_by(RegistroAuditoriaEmpresa.id.asc())
+            .all()
+        )
+    assert len(registros_download) == 1
+    payload = registros_download[0].payload_json or {}
+    assert payload["laudo_id"] == laudo_id
+    assert payload["artifact_kind"] == "official_package"
+    assert payload["issue_number"] == corpo["issue_number"]
+    assert payload["route_path"] == corpo["download_url"]
+    assert "package_storage_path" not in payload
+    assert "storage_path" not in payload
 
 
 def test_preparacao_emissao_exibe_contexto_documental_e_fotos_curadas(
