@@ -14,6 +14,13 @@ Atualizado em `2026-04-25`.
 
 ## Estado atual
 
+### `PKT-DEPLOY-READINESS-01` - Matriz de deploy readiness do release candidate
+
+- `status`: concluido localmente em `2026-04-26`; criada [docs/DEPLOY_READINESS.md](docs/DEPLOY_READINESS.md) como matriz tecnica para PR/release candidate e validacao de staging/producao, sem implementar features, sem mexer em mobile smoke/Maestro/human_ack/DB/seed/flags/build Android, sem refatorar runner e sem alterar significado de `make verify`
+- `checkpoint 2026-04-26`: estado Git confirmado apos `git fetch --all --prune`: branch `release-gate-mobile-smoke-hardening`, upstream `origin/release-gate-mobile-smoke-hardening`, behind/ahead `0/1`, workspace sem staged/unstaged/untracked nao ignorados antes da documentacao; commits contra `origin/main` separados em hardening do release gate/mobile smoke (`e2ac6df`), refatoracao pos-green do runner (`35ab490`) e reprodutibilidade de checkout limpo (`0b30f72`)
+- `checkpoint 2026-04-26`: auditadas pendencias condicionais de deploy: schemas V2 externos ausentes seguem como risco aceito documentado no RC, Redis real via `REDIS_URL` e requisito de infraestrutura para staging/producao, vulnerabilidades `moderate` transitivas do Expo seguem aceitas pela politica atual `audit-level=high`, Playwright/Chromium e requisito de host, e `AMBIENTE=dev` continua diferenca documentada entre gate local e producao real
+- `validacao executada`: `git diff --check`, `git status --short --branch`, `AMBIENTE=dev make release-verify-local` e `AMBIENTE=dev make release-verify`; todos passaram; artefato mobile final `artifacts/mobile_pilot_run/20260426_075416` com `result=success_human_confirmed`, `feed_covered=True`, `thread_covered=True`, `human_ack_recent_events_after=2`, `apk_preview_build_succeeded=True`, `apk_stale_detected=False`, `network_backend_health_host_ok=True`, `network_adb_reverse_configured=True` e `operator_route_preflight_status=ok`
+
 ### `PKT-RELEASE-READINESS-01` - Normalização da hierarquia de gates de release
 
 - `status`: concluído localmente em `2026-04-25`; a hierarquia de verificação agora separa baseline local, gate forte local antes de promoção e gate completo de promoção sem alterar o significado atual de `make verify`
