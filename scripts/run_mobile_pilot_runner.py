@@ -4519,7 +4519,9 @@ def build_final_report(state: ExecutionState) -> str:
     ).strip() + "\n"
 
 
-def execute(state: ExecutionState) -> ExecutionState:
+def initialize_runner_artifacts_and_environment(
+    state: ExecutionState,
+) -> tuple[dict[str, Any], dict[str, str]]:
     ensure_native_android_project_ready(state)
     package_info = load_android_package_info()
     state.package_name = str(package_info["package_name"])
@@ -4546,7 +4548,10 @@ def execute(state: ExecutionState) -> ExecutionState:
             "android_env": android_env,
         },
     )
+    return package_info, web_env
 
+
+def prepare_local_backend_stack(state: ExecutionState) -> None:
     prepare_mobile_local_database(state)
     configure_mobile_backend_flags(state)
     ensure_local_emulator(state)
@@ -4567,6 +4572,12 @@ def execute(state: ExecutionState) -> ExecutionState:
     log_step("Garantindo backend local do mobile.")
     start_backend(state)
 
+
+def start_operator_run_session(
+    state: ExecutionState,
+    *,
+    web_env: dict[str, str],
+) -> tuple[Any, str]:
     mobile_email, mobile_password, admin_email = resolve_credentials(web_env, state)
     state.mobile_email = mobile_email
     state.admin_email = admin_email
@@ -4603,11 +4614,18 @@ def execute(state: ExecutionState) -> ExecutionState:
         state.operator_run_started = False
         state.operator_run_finished = False
 
-    start_response = admin_json(opener, "/admin/api/mobile-v2-rollout/operator-run/start", method="POST")
+    start_response = admin_json(
+        opener,
+        "/admin/api/mobile-v2-rollout/operator-run/start",
+        method="POST",
+    )
     state.operator_run_started = True
     save_http_json(state.artifacts_dir / "operator_run_start.json", start_response)
 
-    state.operator_status_before = admin_json(opener, "/admin/api/mobile-v2-rollout/operator-run/status")
+    state.operator_status_before = admin_json(
+        opener,
+        "/admin/api/mobile-v2-rollout/operator-run/status",
+    )
     save_http_json(
         state.artifacts_dir / "operator_run_status_before.json",
         state.operator_status_before,
@@ -4617,16 +4635,22 @@ def execute(state: ExecutionState) -> ExecutionState:
     )
     if state.target_laudo_id:
         append_note(
-        state,
-        f"Target de thread resolvido para automação Maestro: laudo {state.target_laudo_id}.",
-    )
+            state,
+            f"Target de thread resolvido para automação Maestro: laudo {state.target_laudo_id}.",
+        )
     state.summary_before = admin_json(opener, "/admin/api/mobile-v2-rollout/summary")
     save_http_json(state.artifacts_dir / "backend_summary_before.json", state.summary_before)
     state.capabilities_before = read_json_response(
         build_mobile_request("/app/api/mobile/v2/capabilities", token=state.mobile_token)
     )
     save_http_json(state.artifacts_dir / "capabilities_before.json", state.capabilities_before)
+    return opener, mobile_password
 
+
+def prepare_preview_app_for_maestro(
+    state: ExecutionState,
+    package_info: dict[str, Any],
+) -> None:
     capture_screenshot(state, "device_before_install")
     capture_ui_dump(state, "ui_before_install")
 
@@ -4645,6 +4669,12 @@ def execute(state: ExecutionState) -> ExecutionState:
         "Launch manual do app foi pulado; o flow do Maestro faz launchApp e virou a fonte canonica da abertura.",
     )
 
+
+def run_maestro_flow_with_environment_recovery(
+    state: ExecutionState,
+    *,
+    mobile_password: str,
+) -> tuple[CommandResult, pathlib.Path]:
     maestro_result = run_maestro_flow(state, mobile_password)
     screenshot_path: pathlib.Path
     if maestro_result.returncode != 0:
@@ -4724,6 +4754,15 @@ def execute(state: ExecutionState) -> ExecutionState:
     else:
         screenshot_path = capture_screenshot(state, "device_after_maestro")
         ui_dump_path = capture_ui_dump(state, "ui_after_maestro")
+    return maestro_result, ui_dump_path
+
+
+def collect_ui_diagnostics_after_maestro(
+    state: ExecutionState,
+    *,
+    maestro_result: CommandResult,
+    ui_dump_path: pathlib.Path,
+) -> None:
     state.ui_marker_summary = summarize_ui_markers(ui_dump_path, state.target_laudo_id)
     save_http_json(
         state.artifacts_dir / "ui_marker_summary.json",
@@ -4739,6 +4778,12 @@ def execute(state: ExecutionState) -> ExecutionState:
             "Runner nao registrou human_ack sintetico; a cobertura humana deve vir do app Android real.",
         )
 
+
+def collect_backend_evidence_after_ui_wait(
+    state: ExecutionState,
+    *,
+    opener: Any,
+) -> None:
     summary_post_ui_wait, operator_status_post_ui_wait = wait_for_backend_evidence(
         opener,
         state,
@@ -4772,6 +4817,13 @@ def execute(state: ExecutionState) -> ExecutionState:
             operator_status_post_ui_wait,
         )
 
+
+def finish_operator_run_and_collect_after(
+    state: ExecutionState,
+    *,
+    opener: Any,
+    maestro_result: CommandResult,
+) -> None:
     if state.operator_run_started and not state.operator_run_finished:
         finish_payload = finish_operator_run(
             opener,
@@ -4780,7 +4832,10 @@ def execute(state: ExecutionState) -> ExecutionState:
         )
         save_http_json(state.artifacts_dir / "operator_run_finish.json", finish_payload)
 
-    state.operator_status_after = admin_json(opener, "/admin/api/mobile-v2-rollout/operator-run/status")
+    state.operator_status_after = admin_json(
+        opener,
+        "/admin/api/mobile-v2-rollout/operator-run/status",
+    )
     save_http_json(
         state.artifacts_dir / "operator_run_status_after.json",
         state.operator_status_after,
@@ -4806,6 +4861,12 @@ def execute(state: ExecutionState) -> ExecutionState:
     )
     save_http_json(state.artifacts_dir / "capabilities_after.json", state.capabilities_after)
 
+
+def write_final_operator_diagnostics(
+    state: ExecutionState,
+    *,
+    maestro_result: CommandResult,
+) -> None:
     state.feed_covered, state.thread_covered = summarize_surface_coverage(
         state.summary_after,
         tenant_key=state.mobile_tenant_key,
@@ -4838,6 +4899,29 @@ def execute(state: ExecutionState) -> ExecutionState:
         },
     )
     write_text(state.artifacts_dir / "final_report.md", build_final_report(state))
+
+
+def execute(state: ExecutionState) -> ExecutionState:
+    package_info, web_env = initialize_runner_artifacts_and_environment(state)
+    prepare_local_backend_stack(state)
+    opener, mobile_password = start_operator_run_session(state, web_env=web_env)
+    prepare_preview_app_for_maestro(state, package_info)
+    maestro_result, ui_dump_path = run_maestro_flow_with_environment_recovery(
+        state,
+        mobile_password=mobile_password,
+    )
+    collect_ui_diagnostics_after_maestro(
+        state,
+        maestro_result=maestro_result,
+        ui_dump_path=ui_dump_path,
+    )
+    collect_backend_evidence_after_ui_wait(state, opener=opener)
+    finish_operator_run_and_collect_after(
+        state,
+        opener=opener,
+        maestro_result=maestro_result,
+    )
+    write_final_operator_diagnostics(state, maestro_result=maestro_result)
     return state
 
 
