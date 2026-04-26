@@ -19,6 +19,13 @@ from app.domains.chat.laudo_state_helpers import (
     build_case_operational_fields_from_case_snapshot,
 )
 from app.domains.chat.laudo_state_helpers import resolver_snapshot_leitura_caso_tecnico
+from app.domains.chat.nr35_linha_vida_official_pdf import (
+    build_nr35_linha_vida_official_pdf_blockers,
+    build_nr35_linha_vida_official_pdf_manifest,
+)
+from app.domains.chat.nr35_linha_vida_validation import (
+    build_nr35_linha_vida_official_issue_blockers,
+)
 from app.shared.database import (
     AnexoMesa,
     ApprovedCaseSnapshot,
@@ -37,6 +44,9 @@ _OFFICIAL_ISSUE_FINGERPRINT_SOURCES = {
     "canonical_document",
     "laudo_runtime",
     "report_pack_runtime",
+    "nr35_approved_snapshot",
+    "nr35_official_pdf_manifest",
+    "nr35_human_review_changelog",
     "ai_draft",
     "mesa_attachment",
 }
@@ -600,6 +610,104 @@ def _issue_context_issued_by_snapshot(record: EmissaoOficialLaudo) -> dict[str, 
     return _issued_by_snapshot_payload(record.issued_by_user)
 
 
+def _dict_copy_or_empty(value: object) -> dict[str, Any]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _sanitize_nr35_official_pdf_manifest_for_client(payload: Any) -> dict[str, Any] | None:
+    if not isinstance(payload, dict):
+        return None
+
+    official_pdf_validation = _dict_copy_or_empty(payload.get("official_pdf_validation"))
+    approved_snapshot = _dict_copy_or_empty(payload.get("approved_snapshot"))
+    mesa_review = _dict_copy_or_empty(payload.get("mesa_review"))
+    human_review = _dict_copy_or_empty(payload.get("human_review"))
+    primary_pdf_artifact = _dict_copy_or_empty(payload.get("primary_pdf_artifact"))
+    photo_slots: list[dict[str, Any]] = []
+    for item in list(payload.get("photo_slots") or []):
+        if not isinstance(item, dict):
+            continue
+        photo_slots.append(
+            {
+                "slot": _clean_text(item.get("slot"), limit=120),
+                "label": _clean_text(item.get("label"), limit=160),
+                "campo_json": _clean_text(item.get("campo_json"), limit=180),
+                "achado_relacionado": _clean_text(item.get("achado_relacionado"), limit=180),
+                "secao_pdf": _clean_text(item.get("secao_pdf"), limit=120),
+                "referencia_persistida": bool(_clean_text(item.get("referencia_persistida"), limit=260)),
+                "legenda_tecnica": bool(_clean_text(item.get("legenda_tecnica"), limit=400)),
+            }
+        )
+
+    blocking_issues = [
+        issue
+        for issue in list(official_pdf_validation.get("issues") or [])
+        if isinstance(issue, dict) and bool(issue.get("blocking"))
+    ]
+    schema_version = payload.get("schema_version")
+    template_version = payload.get("template_version")
+    mesa_status = (_clean_text(mesa_review.get("status"), limit=80) or "").lower()
+    mesa_origin = (_clean_text(mesa_review.get("aprovacao_origem"), limit=80) or "").lower()
+    approved_payload_sha256 = _clean_text(approved_snapshot.get("approved_payload_sha256"), limit=64)
+    approved_report_pack_sha256 = _clean_text(approved_snapshot.get("approved_report_pack_sha256"), limit=64)
+    validation_ok = bool(official_pdf_validation.get("ok"))
+    manifest_ok = bool(
+        validation_ok
+        and len(photo_slots) >= 4
+        and schema_version is not None
+        and template_version is not None
+        and approved_payload_sha256
+        and approved_report_pack_sha256
+        and mesa_status == "aprovado"
+        and mesa_origin == "mesa_humana"
+    )
+
+    return {
+        "manifest_version": _clean_text(payload.get("manifest_version"), limit=120),
+        "generated_at": _clean_text(payload.get("generated_at"), limit=80),
+        "family_key": _clean_text(payload.get("family_key"), limit=120),
+        "template_code": _clean_text(payload.get("template_code"), limit=120),
+        "schema_version": schema_version,
+        "template_version": template_version,
+        "required_pdf_section_count": len(list(payload.get("required_pdf_sections") or [])),
+        "photo_slot_count": len(photo_slots),
+        "photo_slots": photo_slots,
+        "traceability_chain": [
+            text
+            for text in (_clean_text(item, limit=120) for item in list(payload.get("traceability_chain") or []))
+            if text
+        ],
+        "approved_snapshot": {
+            "snapshot_id": int(approved_snapshot.get("snapshot_id") or 0) or None,
+            "approval_version": int(approved_snapshot.get("approval_version") or 0) or None,
+            "approved_at": _clean_text(approved_snapshot.get("approved_at"), limit=80),
+            "approved_payload_sha256": approved_payload_sha256,
+            "approved_report_pack_sha256": approved_report_pack_sha256,
+        },
+        "mesa_review": {
+            "status": mesa_status,
+            "aprovacao_origem": mesa_origin,
+            "aprovado_por_nome": _clean_text(mesa_review.get("aprovado_por_nome"), limit=120),
+            "aprovado_em": _clean_text(mesa_review.get("aprovado_em"), limit=80),
+        },
+        "human_review": {
+            "contract_version": _clean_text(human_review.get("contract_version"), limit=80),
+            "status": _clean_text(human_review.get("status"), limit=80),
+            "change_count": int(human_review.get("change_count") or 0),
+            "last_reviewed_at": _clean_text(human_review.get("last_reviewed_at"), limit=80),
+            "mesa_approved_at": _clean_text(human_review.get("mesa_approved_at"), limit=80),
+        },
+        "official_pdf_validation_ok": validation_ok,
+        "blocking_issue_count": len(blocking_issues),
+        "primary_pdf_sha256": _clean_text(primary_pdf_artifact.get("sha256"), limit=64),
+        "primary_pdf_archive_path": _clean_text(primary_pdf_artifact.get("archive_path"), limit=260),
+        "primary_pdf_storage_ready": bool(primary_pdf_artifact.get("storage_ready")),
+        "final_status": _clean_text(payload.get("final_status"), limit=80),
+        "manifest_ok": manifest_ok,
+        "auditavel": bool(manifest_ok and approved_payload_sha256 and approved_report_pack_sha256),
+    }
+
+
 def build_official_issue_catalog_binding_trace(
     *,
     laudo: Laudo,
@@ -690,6 +798,7 @@ def serialize_official_issue_record(record: EmissaoOficialLaudo | None) -> dict[
     issued_by_snapshot = _issue_context_issued_by_snapshot(record) or {}
     payload = record.issue_context_json if isinstance(record.issue_context_json, dict) else {}
     reissue_reason_codes = _normalize_key_list(payload.get("reissue_reason_codes"))
+    package_storage_path = _clean_text(record.package_storage_path, limit=600)
     primary_pdf_comparison = (
         build_official_issue_primary_pdf_comparison(record.laudo, record=record)
         if getattr(record, "laudo", None) is not None
@@ -706,8 +815,9 @@ def serialize_official_issue_record(record: EmissaoOficialLaudo | None) -> dict[
         "package_sha256": _clean_text(record.package_sha256, limit=64),
         "package_fingerprint_sha256": _clean_text(record.package_fingerprint_sha256, limit=64),
         "package_filename": _clean_text(record.package_filename, limit=220),
-        "package_storage_path": _clean_text(record.package_storage_path, limit=600),
-        "package_storage_ready": bool(_clean_text(record.package_storage_path)),
+        "package_storage_path": package_storage_path,
+        "package_storage_ready": bool(package_storage_path),
+        "package_present_on_disk": bool(package_storage_path and os.path.isfile(package_storage_path)),
         "package_size_bytes": int(getattr(record, "package_size_bytes", 0) or 0) or None,
         "verification_hash": _clean_text(record.verification_hash, limit=64),
         "verification_url": _clean_text(record.public_verification_url, limit=400),
@@ -720,6 +830,7 @@ def serialize_official_issue_record(record: EmissaoOficialLaudo | None) -> dict[
         "primary_pdf_archive_path": _clean_text((primary_pdf_artifact or {}).get("archive_path"), limit=260),
         "primary_pdf_storage_path": _clean_text((primary_pdf_artifact or {}).get("storage_path"), limit=600),
         "primary_pdf_storage_ready": bool((primary_pdf_artifact or {}).get("storage_ready")),
+        "primary_pdf_present_on_disk": bool((primary_pdf_artifact or {}).get("present_on_disk")),
         "primary_pdf_storage_version": _clean_text((primary_pdf_artifact or {}).get("storage_version"), limit=32),
         "primary_pdf_storage_version_number": int((primary_pdf_artifact or {}).get("storage_version_number") or 0)
         or None,
@@ -746,6 +857,7 @@ def serialize_official_issue_record(record: EmissaoOficialLaudo | None) -> dict[
         "superseded_by_issue_number": _clean_text(payload.get("superseded_by_issue_number"), limit=80),
         "superseded_reason_codes": _normalize_key_list(payload.get("superseded_reason_codes")),
         "superseded_reason_summary": _clean_text(payload.get("superseded_reason_summary"), limit=280),
+        "nr35_official_pdf": _sanitize_nr35_official_pdf_manifest_for_client(payload.get("nr35_official_pdf")),
     }
 
 
@@ -868,6 +980,11 @@ def persist_official_issue_record(
         if isinstance((manifest_payload or {}).get("catalog_binding_trace"), dict)
         else build_official_issue_catalog_binding_trace(laudo=laudo, latest_snapshot=latest_snapshot)
     )
+    nr35_official_pdf_trace = (
+        dict((manifest_payload or {}).get("nr35_official_pdf") or {})
+        if isinstance((manifest_payload or {}).get("nr35_official_pdf"), dict)
+        else None
+    )
     normalized_primary_pdf_artifact = _normalize_primary_pdf_artifact_payload(
         primary_pdf_artifact,
         laudo=laudo,
@@ -895,6 +1012,9 @@ def persist_official_issue_record(
             )
             if issue_context_payload.get("primary_pdf_artifact") != normalized_primary_pdf_artifact:
                 issue_context_payload["primary_pdf_artifact"] = normalized_primary_pdf_artifact
+            if nr35_official_pdf_trace is not None:
+                issue_context_payload["nr35_official_pdf"] = nr35_official_pdf_trace
+            if issue_context_payload != getattr(active_record, "issue_context_json", None):
                 active_record.issue_context_json = issue_context_payload
                 banco.flush()
         return active_record, True
@@ -926,6 +1046,7 @@ def persist_official_issue_record(
             "issued_by_snapshot": _issued_by_snapshot_payload(issued_by_user),
             "catalog_binding_trace": catalog_binding_trace,
             "primary_pdf_artifact": normalized_primary_pdf_artifact,
+            "nr35_official_pdf": nr35_official_pdf_trace,
             "reissue_of_issue_id": int(getattr(active_record, "id", 0) or 0) or None,
             "reissue_of_issue_number": _clean_text(getattr(active_record, "issue_number", None), limit=80),
             "reissue_reason_codes": reissue_reason_codes,
@@ -1334,6 +1455,7 @@ def build_official_issue_summary(
     case_fields = _serialize_official_issue_case_snapshot(
         resolver_snapshot_leitura_caso_tecnico(banco, laudo)
     )
+    latest_snapshot = load_latest_approved_case_snapshot(banco, laudo=laudo)
     review_ready = _case_ready_for_official_issue(case_fields)
     blockers: list[dict[str, Any]] = []
 
@@ -1386,6 +1508,26 @@ def build_official_issue_summary(
                 "blocking": True,
             }
         )
+    report_pack_draft = getattr(laudo, "report_pack_draft_json", None)
+    report_pack_family = (
+        str(report_pack_draft.get("family") or "").strip()
+        if isinstance(report_pack_draft, dict)
+        else ""
+    )
+    blockers.extend(
+        build_nr35_linha_vida_official_issue_blockers(
+            payload=getattr(laudo, "dados_formulario", None),
+            report_pack_draft=report_pack_draft,
+            template_key=str(getattr(laudo, "tipo_template", "") or "").strip() or None,
+            catalog_family_key=report_pack_family or None,
+        )
+    )
+    blockers.extend(
+        build_nr35_linha_vida_official_pdf_blockers(
+            laudo=laudo,
+            latest_snapshot=latest_snapshot,
+        )
+    )
 
     ready_for_issue = not blockers
     issue_status = "ready_for_issue"
@@ -1398,7 +1540,6 @@ def build_official_issue_summary(
             issue_status = "governance_blocked"
             issue_status_label = "Bloqueado por governança"
 
-    latest_snapshot = load_latest_approved_case_snapshot(banco, laudo=laudo)
     current_record = load_active_official_issue_record(banco, laudo=laudo)
     current_issue = serialize_official_issue_record(current_record)
     already_issued = current_issue is not None
@@ -1518,6 +1659,19 @@ def build_official_issue_summary(
         active_issue_number=_clean_text((current_issue or {}).get("issue_number"), limit=80),
         reissue_of_issue_number=_clean_text((current_issue or {}).get("reissue_of_issue_number"), limit=80),
     )
+    nr35_official_pdf = build_nr35_linha_vida_official_pdf_manifest(
+        laudo=laudo,
+        latest_snapshot=latest_snapshot,
+        primary_pdf_artifact=resolve_official_issue_primary_pdf_artifact(laudo),
+    )
+    if nr35_official_pdf is not None:
+        delivery_manifest["nr35_official_pdf_manifest"] = {
+            "manifest_version": nr35_official_pdf.get("manifest_version"),
+            "approved_snapshot_id": (nr35_official_pdf.get("approved_snapshot") or {}).get("snapshot_id"),
+            "approved_payload_sha256": (nr35_official_pdf.get("approved_snapshot") or {}).get("approved_payload_sha256"),
+            "photo_slot_count": len(list(nr35_official_pdf.get("photo_slots") or [])),
+            "official_pdf_validation_ok": bool((nr35_official_pdf.get("official_pdf_validation") or {}).get("ok")),
+        }
 
     return {
         **case_fields,
@@ -1537,6 +1691,7 @@ def build_official_issue_summary(
         "blockers": blockers,
         "audit_trail": audit_trail,
         "delivery_manifest": delivery_manifest,
+        "nr35_official_pdf": nr35_official_pdf,
         "document_visual_state": document_visual_state,
         "document_visual_state_label": document_visual_state_label,
         "already_issued": already_issued,

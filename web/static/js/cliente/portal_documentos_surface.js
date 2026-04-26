@@ -271,6 +271,36 @@
                         </div>
                     `
                     : "";
+                const official = item.emissao_oficial || {};
+                const officialLinks = [];
+                if (official.download_pdf_url) {
+                    officialLinks.push(`<a class="document-card__link" href="${escapeAttr(official.download_pdf_url)}" target="_blank" rel="noreferrer">Baixar PDF oficial</a>`);
+                }
+                if (official.download_package_url) {
+                    officialLinks.push(`<a class="document-card__link" href="${escapeAttr(official.download_package_url)}" target="_blank" rel="noreferrer">Baixar pacote oficial</a>`);
+                }
+                const issueHistory = Array.isArray(item.historico_emissoes) ? item.historico_emissoes : [];
+                const issueHistoryHtml = issueHistory.length
+                    ? `
+                        <div class="document-card__timeline">
+                            ${issueHistory.slice(0, 3).map((issue) => `<span class="hero-chip">${escapeHtml(issue.issue_number || "Emissão")} · ${escapeHtml(issue.issue_state_label || "Registrada")}</span>`).join("")}
+                        </div>
+                    `
+                    : "";
+                const officialMeta = official.existe || item.nr35
+                    ? `
+                        <div class="document-card__package" data-kind="official-delivery">
+                            <span class="hero-chip">${escapeHtml(official.existe ? "Entrega oficial auditável" : "Em revisão / aguardando emissão")}</span>
+                            ${issueHistory.length ? `<span class="hero-chip">${escapeHtml(String(issueHistory.length))} emissão${issueHistory.length === 1 ? "" : "es"}</span>` : ""}
+                            ${official.schema_version ? `<span class="hero-chip">Schema ${escapeHtml(String(official.schema_version))}</span>` : ""}
+                            ${official.template_version ? `<span class="hero-chip">Template ${escapeHtml(String(official.template_version))}</span>` : ""}
+                            ${official.package_sha256 ? `<span class="hero-chip">Pacote ${escapeHtml(String(official.package_sha256).slice(0, 12))}</span>` : ""}
+                            ${official.primary_pdf_sha256 ? `<span class="hero-chip">PDF ${escapeHtml(String(official.primary_pdf_sha256).slice(0, 12))}</span>` : ""}
+                            ${officialLinks.join("")}
+                            ${issueHistoryHtml}
+                        </div>
+                    `
+                    : "";
                 return `
                     <article class="document-card" data-document-id="${escapeAttr(item.document_id || "")}">
                         <div class="document-card__head">
@@ -292,6 +322,7 @@
                         </div>
                         ${timelineHtml}
                         ${nr35Meta}
+                        ${officialMeta}
                         ${signalChips}
                         ${packageSectionHtml}
                         <div class="document-card__footer">

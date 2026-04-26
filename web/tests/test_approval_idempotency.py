@@ -8,6 +8,7 @@ from tests.regras_rotas_criticas_support import (
     _login_app_inspetor,
     _login_revisor,
 )
+from tests.test_semantic_report_pack_cbmgo_autonomy import _criar_laudo_cbmgo_guiado
 from tests.test_semantic_report_pack_nr35_autonomy import _criar_laudo_nr35_guiado
 
 
@@ -29,7 +30,7 @@ def test_finalizar_relatorio_mobile_autonomous_replay_e_idempotente(ambiente_cri
     client = ambiente_critico["client"]
     SessionLocal = ambiente_critico["SessionLocal"]
     csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
-    laudo_id = _criar_laudo_nr35_guiado(ambiente_critico, com_fotos=True)
+    laudo_id = _criar_laudo_cbmgo_guiado(ambiente_critico)
 
     primeira = client.post(
         f"/app/api/laudo/{laudo_id}/finalizar",
@@ -65,7 +66,7 @@ def test_mobile_review_command_aprovar_no_mobile_replay_e_idempotente(ambiente_c
     client = ambiente_critico["client"]
     SessionLocal = ambiente_critico["SessionLocal"]
     headers = _login_mobile_inspetor(client)
-    laudo_id = _criar_laudo_nr35_guiado(ambiente_critico, com_fotos=True)
+    laudo_id = _criar_laudo_cbmgo_guiado(ambiente_critico)
 
     primeira = client.post(
         f"/app/api/laudo/{laudo_id}/mobile-review-command",

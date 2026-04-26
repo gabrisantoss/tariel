@@ -15,6 +15,12 @@ from app.domains.chat.catalog_pdf_templates import (
     _set_path_if_blank,
     _value_by_path,
 )
+from app.domains.chat.nr35_linha_vida_pdf_contract import (
+    NR35_REQUIRED_PHOTO_SLOTS,
+    NR35_TRACEABILITY_CHAIN,
+    nr35_pdf_contract_payload,
+    nr35_photo_slot_contract_by_slot,
+)
 from app.shared.database import Laudo
 
 
@@ -64,11 +70,201 @@ def _normalize_nr35_component_condition(value: Any) -> str | None:
     return _pick_first_text(raw_value)
 
 
+def _normalize_nr35_photo_slot_record(slot_key: str, source: dict[str, Any] | None) -> dict[str, str]:
+    contracts = nr35_photo_slot_contract_by_slot()
+    contract = contracts.get(slot_key, {})
+    source = source if isinstance(source, dict) else {}
+    reference = _pick_first_text(
+        source.get("referencia_persistida"),
+        source.get("referencia_anexo"),
+        source.get("referencia"),
+        source.get("reference"),
+        source.get("resolved_evidence_id"),
+        source.get("resolved_message_id"),
+        source.get("message_id"),
+    )
+    return {
+        "slot": slot_key,
+        "titulo": _pick_first_text(source.get("titulo"), source.get("title"), source.get("label"), contract.get("label")) or "",
+        "referencia_persistida": reference or "",
+        "legenda_tecnica": _pick_first_text(
+            source.get("legenda_tecnica"),
+            source.get("legenda"),
+            source.get("caption"),
+            source.get("resolved_caption"),
+            source.get("descricao"),
+            source.get("description"),
+        )
+        or "",
+        "campo_json": _pick_first_text(source.get("campo_json"), source.get("json_field"), contract.get("json_field")) or "",
+        "achado_relacionado": _pick_first_text(
+            source.get("achado_relacionado"),
+            source.get("finding_key"),
+            contract.get("finding_key"),
+        )
+        or "",
+        "secao_pdf": _pick_first_text(source.get("secao_pdf"), source.get("pdf_section"), contract.get("pdf_section")) or "",
+    }
+
+
+def _extract_nr35_photo_slot_records_from_payload(source: dict[str, Any] | None) -> list[dict[str, str]]:
+    registros = _value_by_path(source or {}, "registros_fotograficos")
+    if not isinstance(registros, dict):
+        return []
+    raw_records = registros.get("slots_obrigatorios") or registros.get("required_slots")
+    if not isinstance(raw_records, list):
+        return []
+    records_by_slot: dict[str, dict[str, str]] = {}
+    for item in raw_records:
+        if not isinstance(item, dict):
+            continue
+        slot_key = str(item.get("slot") or item.get("slot_id") or "").strip()
+        if slot_key not in NR35_REQUIRED_PHOTO_SLOTS:
+            continue
+        records_by_slot[slot_key] = _normalize_nr35_photo_slot_record(slot_key, item)
+    return [records_by_slot[slot_key] for slot_key in NR35_REQUIRED_PHOTO_SLOTS if slot_key in records_by_slot]
+
+
+def _extract_nr35_photo_slot_records_from_report_pack(laudo: Laudo | None) -> list[dict[str, str]]:
+    report_pack = getattr(laudo, "report_pack_draft_json", None) if laudo is not None else None
+    if not isinstance(report_pack, dict):
+        return []
+    image_slots = report_pack.get("image_slots")
+    if not isinstance(image_slots, list):
+        return []
+    records_by_slot: dict[str, dict[str, str]] = {}
+    for item in image_slots:
+        if not isinstance(item, dict):
+            continue
+        slot_key = str(item.get("slot") or "").strip()
+        if slot_key not in NR35_REQUIRED_PHOTO_SLOTS:
+            continue
+        records_by_slot[slot_key] = _normalize_nr35_photo_slot_record(slot_key, item)
+    return [records_by_slot[slot_key] for slot_key in NR35_REQUIRED_PHOTO_SLOTS if slot_key in records_by_slot]
+
+
+def _photo_slot_records_to_summary(records: list[dict[str, str]]) -> str | None:
+    parts: list[str] = []
+    for record in records:
+        slot = _pick_first_text(record.get("slot"))
+        reference = _pick_first_text(record.get("referencia_persistida"))
+        field = _pick_first_text(record.get("campo_json"))
+        section = _pick_first_text(record.get("secao_pdf"))
+        if not slot:
+            continue
+        parts.append(
+            _build_labeled_summary(
+                ("slot", slot),
+                ("referencia", reference),
+                ("campo_json", field),
+                ("secao_pdf", section),
+            )
+            or slot
+        )
+    return "; ".join(parts) or None
+
+
+def _ensure_nr35_photo_contract(
+    *,
+    payload: dict[str, Any],
+    existing_payload: dict[str, Any] | None,
+    laudo: Laudo | None,
+) -> list[dict[str, str]]:
+    records_by_slot: dict[str, dict[str, str]] = {}
+    for record in _extract_nr35_photo_slot_records_from_payload(payload):
+        records_by_slot[record["slot"]] = record
+    for record in _extract_nr35_photo_slot_records_from_payload(existing_payload):
+        current = records_by_slot.get(record["slot"])
+        if not current or not _pick_first_text(current.get("referencia_persistida")):
+            records_by_slot[record["slot"]] = record
+    for record in _extract_nr35_photo_slot_records_from_report_pack(laudo):
+        current = records_by_slot.get(record["slot"])
+        if not current or not _pick_first_text(current.get("referencia_persistida")):
+            records_by_slot[record["slot"]] = record
+
+    records = [
+        _normalize_nr35_photo_slot_record(slot_key, records_by_slot.get(slot_key))
+        for slot_key in NR35_REQUIRED_PHOTO_SLOTS
+    ]
+    registros = payload.setdefault("registros_fotograficos", {})
+    if not isinstance(registros, dict):
+        registros = {}
+        payload["registros_fotograficos"] = registros
+    registros["slots_obrigatorios"] = records
+    registros["slots_obrigatorios_texto"] = _photo_slot_records_to_summary(records)
+
+    references_text = "; ".join(
+        f"{record['titulo']}: {record['referencia_persistida']}"
+        for record in records
+        if record.get("referencia_persistida")
+    )
+    if references_text:
+        _set_path_if_blank(payload, "registros_fotograficos.referencias_texto", references_text)
+    _set_path_if_blank(
+        payload,
+        "registros_fotograficos.descricao",
+        "Contrato fotografico NR35 com quatro slots obrigatorios vinculados a campos JSON, achados e secoes do PDF.",
+    )
+    return records
+
+
+def _ensure_nr35_pdf_contract(payload: dict[str, Any]) -> None:
+    template_version = payload.get("template_version")
+    if template_version in (None, ""):
+        revision = _pick_first_text(_value_by_path(payload, "document_control.revision"), _value_by_path(payload, "tokens.revisao_template"))
+        template_version = str(revision or "v1").removeprefix("v") or 1
+        try:
+            template_version = int(template_version)
+        except (TypeError, ValueError):
+            template_version = revision or "v1"
+        payload["template_version"] = template_version
+    schema_version = payload.get("schema_version") or 1
+    contract = nr35_pdf_contract_payload(
+        schema_version=schema_version,
+        template_version=template_version,
+    )
+    pdf_contract = payload.setdefault("pdf_contract", {})
+    if not isinstance(pdf_contract, dict):
+        pdf_contract = {}
+        payload["pdf_contract"] = pdf_contract
+    for key, value in contract.items():
+        if pdf_contract.get(key) in (None, "", [], {}):
+            pdf_contract[key] = value
+
+    projection = payload.setdefault("document_projection", {})
+    if isinstance(projection, dict):
+        projection["nr35_pdf_contract"] = dict(pdf_contract)
+        projection["required_photo_slots"] = list(pdf_contract.get("required_photo_slots") or [])
+
+    auditoria = payload.setdefault("auditoria", {})
+    if not isinstance(auditoria, dict):
+        auditoria = {}
+        payload["auditoria"] = auditoria
+    auditoria.setdefault("family_key", payload.get("family_key"))
+    auditoria.setdefault("template_code", payload.get("template_code"))
+    auditoria.setdefault("schema_version", schema_version)
+    auditoria.setdefault("template_version", template_version)
+    auditoria.setdefault("mesa_status", _value_by_path(payload, "mesa_review.status"))
+    auditoria.setdefault("rastreabilidade_texto", NR35_TRACEABILITY_CHAIN)
+    auditoria.setdefault("emissao_oficial_status", "bloqueada_ate_validacao_mesa_pdf")
+
+
 def _extract_nr35_photo_records(*sources: dict[str, Any] | None) -> list[dict[str, str]]:
     for source in sources:
         if not isinstance(source, dict):
             continue
         records = _value_by_path(source, "registros_fotograficos")
+        if isinstance(records, dict):
+            slot_records = _extract_nr35_photo_slot_records_from_payload(source)
+            if slot_records:
+                return [
+                    {
+                        "titulo": record.get("titulo", ""),
+                        "legenda": record.get("legenda_tecnica", ""),
+                        "referencia": record.get("referencia_persistida", ""),
+                    }
+                    for record in slot_records
+                ]
         if not isinstance(records, list):
             continue
         normalized_records: list[dict[str, str]] = []
@@ -278,6 +474,14 @@ def apply_nr35_projection(
 ) -> None:
     if family_key not in {"nr35_inspecao_linha_de_vida", "nr35_inspecao_ponto_ancoragem"}:
         return
+
+    if family_key == "nr35_inspecao_linha_de_vida":
+        _ensure_nr35_photo_contract(
+            payload=payload,
+            existing_payload=existing_payload,
+            laudo=laudo,
+        )
+        _ensure_nr35_pdf_contract(payload)
 
     photo_records = _extract_nr35_photo_records(existing_payload, payload)
     photo_reference_items: list[str] = []

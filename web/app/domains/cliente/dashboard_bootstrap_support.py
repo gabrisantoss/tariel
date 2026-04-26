@@ -21,8 +21,8 @@ from app.domains.chat.laudo_state_helpers import (
 )
 from app.domains.chat.normalization import TIPOS_TEMPLATE_VALIDOS
 from app.shared.public_verification import build_public_verification_payload
-from app.shared.official_issue_package import build_official_issue_summary
-from app.shared.database import Laudo, MensagemLaudo, NivelAcesso, TipoMensagem, Usuario
+from app.shared.official_issue_package import build_official_issue_summary, serialize_official_issue_record
+from app.shared.database import EmissaoOficialLaudo, Laudo, MensagemLaudo, NivelAcesso, TipoMensagem, Usuario
 from app.shared.inspection_history import build_human_override_summary
 from app.shared.tenant_entitlement_guard import tenant_access_policy_for_user
 from app.shared.tenant_admin_policy import (
@@ -54,6 +54,12 @@ _DOCUMENT_SIGNAL_DEFINITIONS = (
     ("pet", "PET", ("pet:", "permissao de entrada e trabalho", "permissão de entrada e trabalho")),
     ("certificado", "Certificado", ("certificado:", " certificado ")),
 )
+NR35_LINHA_VIDA_FAMILY_KEY = "nr35_inspecao_linha_de_vida"
+NR35_OFFICIAL_DOWNLOAD_BASE = "/cliente/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial"
+
+
+def _dict_copy_or_empty(value: object) -> dict[str, Any]:
+    return dict(value) if isinstance(value, dict) else {}
 
 
 def _usuario_nome(usuario: Usuario) -> str:
@@ -69,6 +75,131 @@ def _texto_curto(value: Any, *, fallback: str | None = None) -> str | None:
 
 def _isoformat_or_empty(value: Any) -> str:
     return value.isoformat() if hasattr(value, "isoformat") else ""
+
+
+def _is_nr35_linha_vida_document(laudo: Laudo) -> bool:
+    return (
+        str(getattr(laudo, "catalog_family_key", "") or "").strip() == NR35_LINHA_VIDA_FAMILY_KEY
+        or str(getattr(laudo, "tipo_template", "") or "").strip() == "nr35_linha_vida"
+    )
+
+
+def _build_cliente_official_delivery_payload(
+    *,
+    laudo: Laudo,
+    emissao_oficial: dict[str, Any],
+    current_issue: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    laudo_id = int(getattr(laudo, "id", 0) or 0)
+    nr35_manifest = _dict_copy_or_empty(current_issue.get("nr35_official_pdf"))
+    is_nr35 = _is_nr35_linha_vida_document(laudo)
+    current_issue_exists = bool(current_issue)
+    nr35_manifest_ok = bool(nr35_manifest.get("manifest_ok"))
+    package_ready = bool(
+        current_issue.get("package_sha256")
+        and current_issue.get("package_storage_ready")
+        and current_issue.get("package_present_on_disk")
+    )
+    pdf_ready = bool(
+        current_issue.get("primary_pdf_sha256")
+        and current_issue.get("primary_pdf_storage_ready")
+        and current_issue.get("primary_pdf_present_on_disk")
+    )
+    if is_nr35:
+        officially_deliverable = bool(current_issue_exists and nr35_manifest_ok and package_ready)
+    else:
+        officially_deliverable = bool(current_issue_exists and package_ready)
+
+    if officially_deliverable:
+        status = "emitido"
+    elif current_issue_exists:
+        status = "emitido_sem_manifest_nr35" if is_nr35 else "emitido_indisponivel"
+    elif bool(emissao_oficial.get("ready_for_issue")):
+        status = "aguardando_emissao"
+    else:
+        status = "em_revisao"
+
+    base_url = NR35_OFFICIAL_DOWNLOAD_BASE.format(laudo_id=laudo_id)
+    delivery = {
+        "existe": officially_deliverable,
+        "status": status,
+        "emitida_em": _isoformat_or_empty(current_issue.get("issued_at")) or None,
+        "issue_number": str(current_issue.get("issue_number") or "").strip() or None,
+        "issue_state": str(current_issue.get("issue_state") or "").strip() or None,
+        "mesa_status": str((nr35_manifest.get("mesa_review") or {}).get("status") or "").strip() or None,
+        "package_sha256": str(current_issue.get("package_sha256") or "").strip() or None,
+        "primary_pdf_sha256": str(
+            current_issue.get("primary_pdf_sha256")
+            or nr35_manifest.get("primary_pdf_sha256")
+            or ""
+        ).strip()
+        or None,
+        "template_version": nr35_manifest.get("template_version"),
+        "schema_version": nr35_manifest.get("schema_version"),
+        "manifest_ok": bool(nr35_manifest_ok),
+        "auditavel": bool(nr35_manifest.get("auditavel")),
+        "package_ready": package_ready,
+        "primary_pdf_ready": pdf_ready,
+        "download_pdf_url": f"{base_url}/pdf" if is_nr35 and officially_deliverable and pdf_ready else None,
+        "download_package_url": f"{base_url}/pacote" if is_nr35 and officially_deliverable else None,
+    }
+
+    if not is_nr35:
+        return delivery, None
+
+    nr35_payload = {
+        "feed": "documentos",
+        "slots_fotograficos": int(nr35_manifest.get("photo_slot_count") or 0),
+        "manifest_ok": bool(nr35_manifest_ok),
+        "auditavel": bool(nr35_manifest.get("auditavel") and officially_deliverable),
+        "template_version": nr35_manifest.get("template_version"),
+        "schema_version": nr35_manifest.get("schema_version"),
+        "status_mesa": str((nr35_manifest.get("mesa_review") or {}).get("status") or "").strip() or None,
+        "photo_slots": [
+            {
+                "slot": str(item.get("slot") or "").strip(),
+                "label": str(item.get("label") or "").strip(),
+                "campo_json": str(item.get("campo_json") or "").strip(),
+                "achado_relacionado": str(item.get("achado_relacionado") or "").strip(),
+                "secao_pdf": str(item.get("secao_pdf") or "").strip(),
+                "referencia_persistida": bool(item.get("referencia_persistida")),
+                "legenda_tecnica": bool(item.get("legenda_tecnica")),
+            }
+            for item in list(nr35_manifest.get("photo_slots") or [])
+            if isinstance(item, dict)
+        ],
+    }
+    return delivery, nr35_payload
+
+
+def _listar_historico_emissoes_cliente(banco: Session, laudo: Laudo) -> list[dict[str, Any]]:
+    registros = list(
+        banco.scalars(
+            select(EmissaoOficialLaudo)
+            .where(EmissaoOficialLaudo.laudo_id == int(laudo.id))
+            .order_by(EmissaoOficialLaudo.issued_at.desc(), EmissaoOficialLaudo.id.desc())
+            .limit(12)
+        ).all()
+    )
+    historico: list[dict[str, Any]] = []
+    for registro in registros:
+        item = serialize_official_issue_record(registro) or {}
+        nr35_manifest = _dict_copy_or_empty(item.get("nr35_official_pdf"))
+        historico.append(
+            {
+                "issue_number": str(item.get("issue_number") or "").strip() or None,
+                "issue_state": str(item.get("issue_state") or "").strip() or None,
+                "issue_state_label": str(item.get("issue_state_label") or "").strip() or None,
+                "issued_at": _isoformat_or_empty(item.get("issued_at")) or None,
+                "package_sha256": str(item.get("package_sha256") or "").strip() or None,
+                "primary_pdf_sha256": str(item.get("primary_pdf_sha256") or "").strip() or None,
+                "template_version": nr35_manifest.get("template_version"),
+                "schema_version": nr35_manifest.get("schema_version"),
+                "nr35_manifest_ok": bool(nr35_manifest.get("manifest_ok")),
+                "nr35_auditavel": bool(nr35_manifest.get("auditavel")),
+            }
+        )
+    return historico
 
 
 def serializar_usuario_cliente(usuario: Usuario) -> dict[str, Any]:
@@ -895,6 +1026,12 @@ def _serializar_documento_cliente(banco: Session, laudo: Laudo) -> dict[str, Any
     issue_status_label = str(emissao_oficial.get("issue_status_label") or "").strip()
     sinais_documentais = _derivar_sinais_documentais(laudo)
     resumo_nr35 = _derivar_resumo_nr35(laudo)
+    entrega_oficial, entrega_nr35 = _build_cliente_official_delivery_payload(
+        laudo=laudo,
+        emissao_oficial=emissao_oficial,
+        current_issue=current_issue,
+    )
+    historico_emissoes = _listar_historico_emissoes_cliente(banco, laudo)
     visual_state, visual_state_label, visual_state_detail = document_visual_state(
         emissao_oficial=emissao_oficial,
         payload_laudo=payload_laudo,
@@ -953,6 +1090,9 @@ def _serializar_documento_cliente(banco: Session, laudo: Laudo) -> dict[str, Any
         "issue_state_label": issue_state_label or None,
         "issued_at": _isoformat_or_empty(current_issue.get("issued_at")) or None,
         "signatory_name": str(current_issue.get("signatory_name") or "").strip() or None,
+        "emissao_oficial": entrega_oficial,
+        "historico_emissoes": historico_emissoes,
+        "nr35": entrega_nr35,
         "document_signals": sinais_documentais,
         "document_package_sections": package_sections,
         "document_summary_card": summary_card,
@@ -1011,6 +1151,9 @@ def resumir_documentos_empresa(items: list[dict[str, Any]]) -> dict[str, Any]:
         "nr35_approved": sum(1 for item in documents if str(((item.get("nr35_summary") or {}).get("conclusion_status") or "")).lower() == "aprovado"),
         "nr35_reproved": sum(1 for item in documents if str(((item.get("nr35_summary") or {}).get("conclusion_status") or "")).lower() == "reprovado"),
         "nr35_pending": sum(1 for item in documents if str(((item.get("nr35_summary") or {}).get("conclusion_status") or "")).lower() == "pendente"),
+        "nr35_official_issued": sum(1 for item in documents if bool((item.get("nr35") or {}).get("auditavel"))),
+        "official_package_ready": sum(1 for item in documents if bool((item.get("emissao_oficial") or {}).get("package_ready"))),
+        "official_issue_history_count": sum(len(list(item.get("historico_emissoes") or [])) for item in documents),
         "documents_with_art": len(with_art),
         "documents_with_pie": len(with_pie),
         "documents_with_prontuario": len(with_prontuario),

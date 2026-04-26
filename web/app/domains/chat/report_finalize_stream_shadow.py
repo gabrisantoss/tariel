@@ -179,6 +179,18 @@ async def processar_finalizacao_stream_documental(
                 historico=historico_dict,
                 dados_imagem=dados_imagem_payload,
                 texto_documento=texto_documento,
+                template_key=tipo_template_efetivo,
+                catalog_family_key=getattr(laudo, "catalog_family_key", None),
+                report_pack_draft=(
+                    getattr(laudo, "report_pack_draft_json", None)
+                    if isinstance(getattr(laudo, "report_pack_draft_json", None), dict)
+                    else None
+                ),
+                case_payload_context=(
+                    getattr(laudo, "dados_formulario", None)
+                    if isinstance(getattr(laudo, "dados_formulario", None), dict)
+                    else None
+                ),
             )
             persist_case_instance_payload_for_laudo(
                 laudo=laudo,

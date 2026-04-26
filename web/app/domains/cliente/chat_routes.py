@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+import os
+from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.domains.cliente.common import (
@@ -52,8 +54,17 @@ from app.domains.cliente.route_support import (
     _titulo_laudo_cliente,
 )
 from app.domains.chat.schemas import DadosReabrirLaudo
-from app.shared.database import Usuario, obter_banco
+from app.shared.database import Laudo, Usuario, obter_banco
+from app.shared.official_issue_package import (
+    load_active_official_issue_record,
+    resolve_official_issue_primary_pdf_artifact,
+)
 roteador_cliente_chat = APIRouter()
+
+
+def _dict_payload_or_none(value: object) -> dict[str, Any] | None:
+    return dict(value) if isinstance(value, dict) else None
+
 
 RESPOSTAS_CHAT_CLIENTE = {
     **RESPOSTA_LAUDO_NAO_ENCONTRADO,
@@ -89,6 +100,17 @@ RESPOSTAS_MESA_CLIENTE_DOWNLOAD = {
     },
     404: {"description": "Anexo da mesa não encontrado."},
 }
+RESPOSTAS_DOCUMENTO_OFICIAL_NR35_DOWNLOAD = {
+    200: {
+        "description": "Artefato oficial NR35 emitido.",
+        "content": {
+            "application/pdf": {},
+            "application/zip": {},
+            "application/octet-stream": {},
+        },
+    },
+    404: {"description": "Emissão oficial NR35 não encontrada."},
+}
 
 
 class DadosMesaAvaliacaoCliente(BaseModel):
@@ -96,6 +118,73 @@ class DadosMesaAvaliacaoCliente(BaseModel):
     motivo: str = Field(default="", max_length=600)
 
     model_config = ConfigDict(str_strip_whitespace=True)
+
+
+def _obter_laudo_documento_cliente(
+    banco: Session,
+    *,
+    laudo_id: int,
+    usuario: Usuario,
+) -> Laudo:
+    laudo = banco.scalar(
+        select(Laudo).where(
+            Laudo.id == int(laudo_id),
+            Laudo.empresa_id == int(usuario.empresa_id),
+        )
+    )
+    if laudo is None:
+        raise HTTPException(status_code=404, detail="Laudo não encontrado para este cliente.")
+    return laudo
+
+
+def _obter_emissao_oficial_nr35_cliente(
+    banco: Session,
+    *,
+    laudo: Laudo,
+):
+    registro = load_active_official_issue_record(banco, laudo=laudo)
+    if registro is None:
+        raise HTTPException(status_code=404, detail="Emissão oficial NR35 não encontrada.")
+    issue_context = (
+        dict(getattr(registro, "issue_context_json", None) or {})
+        if isinstance(getattr(registro, "issue_context_json", None), dict)
+        else {}
+    )
+    nr35_manifest = issue_context.get("nr35_official_pdf")
+    if not isinstance(nr35_manifest, dict):
+        raise HTTPException(status_code=404, detail="Emissão oficial NR35 não encontrada.")
+    mesa_review = _dict_payload_or_none(nr35_manifest.get("mesa_review")) or {}
+    approved_snapshot = _dict_payload_or_none(nr35_manifest.get("approved_snapshot")) or {}
+    official_pdf_validation = _dict_payload_or_none(nr35_manifest.get("official_pdf_validation")) or {}
+    if not bool(official_pdf_validation.get("ok")):
+        raise HTTPException(status_code=404, detail="Emissão oficial NR35 não encontrada.")
+    if str(mesa_review.get("status") or "").strip().lower() != "aprovado":
+        raise HTTPException(status_code=404, detail="Emissão oficial NR35 não encontrada.")
+    if str(mesa_review.get("aprovacao_origem") or "").strip().lower() != "mesa_humana":
+        raise HTTPException(status_code=404, detail="Emissão oficial NR35 não encontrada.")
+    if not str(getattr(registro, "package_sha256", "") or "").strip():
+        raise HTTPException(status_code=404, detail="Emissão oficial NR35 não encontrada.")
+    if not str(approved_snapshot.get("approved_payload_sha256") or "").strip():
+        raise HTTPException(status_code=404, detail="Emissão oficial NR35 não encontrada.")
+    if not str(approved_snapshot.get("approved_report_pack_sha256") or "").strip():
+        raise HTTPException(status_code=404, detail="Emissão oficial NR35 não encontrada.")
+    return registro
+
+
+def _file_response_or_404(
+    *,
+    path: str | None,
+    filename: str,
+    media_type: str,
+) -> FileResponse:
+    normalized_path = str(path or "").strip()
+    if not normalized_path or not os.path.isfile(normalized_path):
+        raise HTTPException(status_code=404, detail="Artefato oficial não encontrado.")
+    return FileResponse(
+        normalized_path,
+        media_type=media_type,
+        filename=filename,
+    )
 
 
 @roteador_cliente_chat.get("/api/chat/status")
@@ -568,6 +657,45 @@ async def api_mesa_baixar_anexo_cliente(
         anexo_id=anexo_id,
         usuario=usuario,
         banco=banco,
+    )
+
+
+@roteador_cliente_chat.get(
+    "/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial/pacote",
+    responses=RESPOSTAS_DOCUMENTO_OFICIAL_NR35_DOWNLOAD,
+)
+async def api_documentos_baixar_pacote_oficial_nr35_cliente(
+    laudo_id: int,
+    usuario: Usuario = Depends(exigir_admin_cliente_com_visibilidade_casos),
+    banco: Session = Depends(obter_banco),
+):
+    laudo = _obter_laudo_documento_cliente(banco, laudo_id=laudo_id, usuario=usuario)
+    registro = _obter_emissao_oficial_nr35_cliente(banco, laudo=laudo)
+    filename = str(getattr(registro, "package_filename", "") or "").strip() or f"nr35_emissao_oficial_{int(laudo.id)}.zip"
+    return _file_response_or_404(
+        path=getattr(registro, "package_storage_path", None),
+        filename=filename,
+        media_type="application/zip",
+    )
+
+
+@roteador_cliente_chat.get(
+    "/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial/pdf",
+    responses=RESPOSTAS_DOCUMENTO_OFICIAL_NR35_DOWNLOAD,
+)
+async def api_documentos_baixar_pdf_oficial_nr35_cliente(
+    laudo_id: int,
+    usuario: Usuario = Depends(exigir_admin_cliente_com_visibilidade_casos),
+    banco: Session = Depends(obter_banco),
+):
+    laudo = _obter_laudo_documento_cliente(banco, laudo_id=laudo_id, usuario=usuario)
+    registro = _obter_emissao_oficial_nr35_cliente(banco, laudo=laudo)
+    artifact = resolve_official_issue_primary_pdf_artifact(laudo, record=registro) or {}
+    filename = str(artifact.get("file_name") or "").strip() or f"nr35_laudo_{int(laudo.id)}.pdf"
+    return _file_response_or_404(
+        path=str(artifact.get("storage_path") or "").strip(),
+        filename=filename,
+        media_type="application/pdf",
     )
 
 

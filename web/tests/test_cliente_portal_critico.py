@@ -1,23 +1,33 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import tempfile
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
+from pathlib import Path
 
 import app.domains.admin.services as admin_services
 import app.domains.cliente.portal_bridge as portal_bridge
 import pytest
 from sqlalchemy import select
 
+from app.domains.chat.nr35_linha_vida_official_pdf import build_nr35_linha_vida_official_pdf_manifest
+from app.domains.chat.nr35_linha_vida_pdf_contract import NR35_REQUIRED_PHOTO_SLOTS
+from app.domains.chat.nr35_linha_vida_structured_review import NR35_STRUCTURED_REVIEW_VERSION
 from app.shared.database import (
     AnexoMesa,
+    ApprovedCaseSnapshot,
+    EmissaoOficialLaudo,
     Empresa,
     Laudo,
     MensagemLaudo,
     NivelAcesso,
     PlanoEmpresa,
     RegistroAuditoriaEmpresa,
+    SignatarioGovernadoLaudo,
+    StatusLaudo,
     StatusRevisao,
     TipoMensagem,
     Usuario,
@@ -114,6 +124,181 @@ def _concluir_primeiro_login_operacional(
     assert resposta_troca.headers["location"] == destino_final
     resposta_final = client.get(destino_final, follow_redirects=False)
     assert resposta_final.status_code == 200
+
+
+def _payload_nr35_cliente_aprovado() -> dict:
+    payload_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "family_schemas"
+        / "nr35_inspecao_linha_de_vida.laudo_output_exemplo.json"
+    )
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    payload["mesa_review"] = {
+        "status": StatusRevisao.APROVADO.value,
+        "aprovacao_origem": "mesa_humana",
+        "ia_aprovou_mesa": False,
+        "aprovado_por_id": 42,
+        "aprovado_por_nome": "Mesa NR35",
+        "aprovado_em": "2026-04-26T12:00:00+00:00",
+    }
+    payload["nr35_structured_review"] = {
+        "contract_version": NR35_STRUCTURED_REVIEW_VERSION,
+        "status": "mesa_approved",
+        "last_reviewed_at": "2026-04-26T11:45:00+00:00",
+        "last_reviewed_by": {"user_id": 42, "name": "Mesa NR35"},
+        "mesa_approved_at": "2026-04-26T12:00:00+00:00",
+        "mesa_approved_by": {"user_id": 42, "name": "Mesa NR35"},
+        "change_log": [
+            {
+                "path": "conclusao.justificativa",
+                "target": "payload",
+                "previous_value": "Texto preliminar",
+                "new_value": payload["conclusao"]["justificativa"],
+                "actor_user_id": 42,
+                "actor_name": "Mesa NR35",
+                "justification": "Ajuste humano para emissao oficial.",
+                "changed_at": "2026-04-26T11:50:00+00:00",
+                "resolved_issue_codes": ["nr35_required_field_missing"],
+            }
+        ],
+    }
+    payload["auditoria"]["mesa_status"] = StatusRevisao.APROVADO.value
+    return payload
+
+
+def _report_pack_nr35_cliente_quatro_fotos() -> dict:
+    return {
+        "family": "nr35_inspecao_linha_de_vida",
+        "template_key": "nr35_linha_vida",
+        "image_slots": [
+            {
+                "slot": slot,
+                "title": slot.replace("_", " "),
+                "required": True,
+                "status": "resolved",
+                "resolved_evidence_id": f"IMG_{index}",
+                "resolved_message_id": index,
+                "resolved_caption": f"Legenda tecnica {slot}",
+            }
+            for index, slot in enumerate(NR35_REQUIRED_PHOTO_SLOTS, start=701)
+        ],
+        "quality_gates": {"final_validation_mode": "mesa_required", "missing_evidence": []},
+    }
+
+
+def _criar_entrega_oficial_nr35_cliente(banco, ids: dict, tmp_path: Path) -> tuple[int, bytes, bytes]:
+    payload = _payload_nr35_cliente_aprovado()
+    report_pack = _report_pack_nr35_cliente_quatro_fotos()
+    laudo = Laudo(
+        empresa_id=ids["empresa_a"],
+        usuario_id=ids["inspetor_a"],
+        setor_industrial="NR35 Linha de Vida",
+        tipo_template="nr35_linha_vida",
+        catalog_family_key="nr35_inspecao_linha_de_vida",
+        catalog_family_label="NR35 · Linha de Vida",
+        status_revisao=StatusRevisao.APROVADO.value,
+        status_conformidade=StatusLaudo.NAO_CONFORME.value,
+        codigo_hash=f"nr35cliente{datetime.now(timezone.utc).timestamp()}".replace(".", "")[:32],
+        nome_arquivo_pdf="laudo_nr35_cliente.pdf",
+        dados_formulario=payload,
+        report_pack_draft_json=report_pack,
+    )
+    banco.add(laudo)
+    banco.flush()
+
+    snapshot_payload = {
+        "laudo_id": int(laudo.id),
+        "codigo_hash": laudo.codigo_hash,
+        "tipo_template": "nr35_linha_vida",
+        "family_key": "nr35_inspecao_linha_de_vida",
+        "status_revisao": laudo.status_revisao,
+        "status_conformidade": laudo.status_conformidade,
+        "dados_formulario": payload,
+        "report_pack_draft": report_pack,
+    }
+    snapshot = ApprovedCaseSnapshot(
+        laudo_id=int(laudo.id),
+        empresa_id=ids["empresa_a"],
+        family_key="nr35_inspecao_linha_de_vida",
+        approval_version=1,
+        approved_by_id=ids["revisor_a"],
+        source_status_revisao=StatusRevisao.APROVADO.value,
+        source_status_conformidade=StatusLaudo.NAO_CONFORME.value,
+        document_outcome="approved_by_mesa",
+        laudo_output_snapshot=snapshot_payload,
+        snapshot_hash=hashlib.sha256(
+            json.dumps(snapshot_payload, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest(),
+    )
+    banco.add(snapshot)
+    signatario = SignatarioGovernadoLaudo(
+        tenant_id=ids["empresa_a"],
+        nome="Eng. Cliente NR35",
+        funcao="Responsável técnico",
+        registro_profissional="CREA 3535",
+        valid_until=datetime.now(timezone.utc) + timedelta(days=120),
+        allowed_family_keys_json=["nr35_inspecao_linha_de_vida"],
+        ativo=True,
+        criado_por_id=ids["admin_a"],
+    )
+    banco.add(signatario)
+    banco.flush()
+
+    pdf_bytes = b"%PDF-1.4\n%nr35 cliente oficial\n"
+    package_bytes = b"nr35 official package cliente"
+    pdf_path = tmp_path / "laudo_nr35_cliente.pdf"
+    package_path = tmp_path / "TAR-NR35-CLIENTE.zip"
+    pdf_path.write_bytes(pdf_bytes)
+    package_path.write_bytes(package_bytes)
+    primary_pdf_artifact = {
+        "file_name": "laudo_nr35_cliente.pdf",
+        "archive_path": "documentos/laudo_nr35_cliente.pdf",
+        "storage_file_name": "laudo_nr35_cliente.pdf",
+        "storage_path": str(pdf_path),
+        "storage_version": "v0001",
+        "storage_version_number": 1,
+        "storage_ready": True,
+        "present_on_disk": True,
+        "sha256": hashlib.sha256(pdf_bytes).hexdigest(),
+        "source": "issue_context",
+    }
+    nr35_manifest = build_nr35_linha_vida_official_pdf_manifest(
+        laudo=laudo,
+        latest_snapshot=snapshot,
+        primary_pdf_artifact=primary_pdf_artifact,
+    )
+    assert nr35_manifest is not None
+    assert nr35_manifest["official_pdf_validation"]["ok"] is True
+    banco.add(
+        EmissaoOficialLaudo(
+            laudo_id=int(laudo.id),
+            tenant_id=ids["empresa_a"],
+            approval_snapshot_id=int(snapshot.id),
+            signatory_id=int(signatario.id),
+            issued_by_user_id=ids["revisor_a"],
+            issue_number="TAR-20260426-0001-000001",
+            issue_state="issued",
+            issued_at=datetime.now(timezone.utc),
+            verification_hash=laudo.codigo_hash,
+            public_verification_url=f"/app/public/laudo/verificar/{laudo.codigo_hash}",
+            package_sha256=hashlib.sha256(package_bytes).hexdigest(),
+            package_fingerprint_sha256="f" * 64,
+            package_filename="TAR-NR35-CLIENTE.zip",
+            package_storage_path=str(package_path),
+            package_size_bytes=len(package_bytes),
+            manifest_json={"bundle_kind": "tariel_official_issue_package", "nr35_official_pdf": nr35_manifest},
+            issue_context_json={
+                "approval_version": 1,
+                "primary_pdf_artifact": primary_pdf_artifact,
+                "nr35_official_pdf": nr35_manifest,
+                "signatory_snapshot": {"nome": signatario.nome, "funcao": signatario.funcao},
+                "issued_by_snapshot": {"nome": "Revisor A"},
+            },
+        )
+    )
+    banco.commit()
+    return int(laudo.id), pdf_bytes, package_bytes
 
 
 def test_admin_cliente_chat_obedece_portfolio_governado_por_variante(ambiente_critico) -> None:
@@ -1447,6 +1632,119 @@ def test_admin_cliente_bootstrap_documentos_resume_status_operacional_nr35_para_
     assert item_pendente["nr35_summary"]["conclusion_status"] == "Pendente"
     assert item_pendente["nr35_summary"]["operational_status"] == "complementar_inspecao"
     assert item_pendente["nr35_summary"]["component_counts"] == {"C": 0, "NC": 0, "NA": 2}
+
+
+def test_admin_cliente_documentos_expoe_entrega_oficial_nr35_auditavel(
+    ambiente_critico,
+    tmp_path,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_id, pdf_bytes, package_bytes = _criar_entrega_oficial_nr35_cliente(banco, ids, tmp_path)
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
+    assert resposta_documentos.status_code == 200
+    corpo = resposta_documentos.json()
+    summary = corpo["documentos"]["summary"]
+    item = next(item for item in corpo["documentos"]["items"] if int(item["laudo_id"]) == laudo_id)
+
+    assert summary["nr35_official_issued"] >= 1
+    assert summary["official_package_ready"] >= 1
+    assert summary["official_issue_history_count"] >= 1
+    assert item["family_key"] == "nr35_inspecao_linha_de_vida"
+    assert item["already_issued"] is True
+    assert item["emissao_oficial"]["existe"] is True
+    assert item["emissao_oficial"]["status"] == "emitido"
+    assert item["emissao_oficial"]["mesa_status"] == "aprovado"
+    assert item["emissao_oficial"]["package_sha256"] == hashlib.sha256(package_bytes).hexdigest()
+    assert item["emissao_oficial"]["primary_pdf_sha256"] == hashlib.sha256(pdf_bytes).hexdigest()
+    assert item["emissao_oficial"]["template_version"]
+    assert item["emissao_oficial"]["schema_version"]
+    assert item["emissao_oficial"]["download_pdf_url"].endswith("/nr35/emissao-oficial/pdf")
+    assert item["emissao_oficial"]["download_package_url"].endswith("/nr35/emissao-oficial/pacote")
+    assert item["nr35"]["slots_fotograficos"] == 4
+    assert item["nr35"]["manifest_ok"] is True
+    assert item["nr35"]["auditavel"] is True
+    assert {slot["slot"] for slot in item["nr35"]["photo_slots"]} == set(NR35_REQUIRED_PHOTO_SLOTS)
+    assert item["historico_emissoes"][0]["issue_number"] == "TAR-20260426-0001-000001"
+    assert item["historico_emissoes"][0]["nr35_manifest_ok"] is True
+
+    resposta_pdf = client.get(item["emissao_oficial"]["download_pdf_url"])
+    assert resposta_pdf.status_code == 200
+    assert resposta_pdf.content == pdf_bytes
+    assert "laudo_nr35_cliente.pdf" in resposta_pdf.headers["content-disposition"]
+
+    resposta_pacote = client.get(item["emissao_oficial"]["download_package_url"])
+    assert resposta_pacote.status_code == 200
+    assert resposta_pacote.content == package_bytes
+    assert "TAR-NR35-CLIENTE.zip" in resposta_pacote.headers["content-disposition"]
+
+
+def test_admin_cliente_documentos_nao_trata_rascunho_nr35_como_oficial(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="nr35_linha_vida",
+            status_revisao=StatusRevisao.AGUARDANDO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.catalog_family_key = "nr35_inspecao_linha_de_vida"
+        laudo.dados_formulario = _payload_nr35_cliente_aprovado()
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
+    assert resposta_documentos.status_code == 200
+    item = next(item for item in resposta_documentos.json()["documentos"]["items"] if int(item["laudo_id"]) == laudo_id)
+
+    assert item["emissao_oficial"]["existe"] is False
+    assert item["emissao_oficial"]["download_pdf_url"] is None
+    assert item["emissao_oficial"]["download_package_url"] is None
+    assert item["nr35"]["auditavel"] is False
+
+
+def test_admin_cliente_download_oficial_nr35_respeita_tenant(
+    ambiente_critico,
+    tmp_path,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        admin_cliente_b = Usuario(
+            empresa_id=ids["empresa_b"],
+            nome_completo="Admin Cliente B",
+            email="cliente@empresa-b.test",
+            senha_hash=SENHA_HASH_PADRAO,
+            nivel_acesso=NivelAcesso.ADMIN_CLIENTE.value,
+        )
+        banco.add(admin_cliente_b)
+        banco.commit()
+        laudo_id, _pdf_bytes, _package_bytes = _criar_entrega_oficial_nr35_cliente(banco, ids, tmp_path)
+
+    _login_cliente(client, "cliente@empresa-b.test")
+
+    resposta_pdf = client.get(f"/cliente/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial/pdf")
+    resposta_pacote = client.get(f"/cliente/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial/pacote")
+
+    assert resposta_pdf.status_code == 404
+    assert resposta_pacote.status_code == 404
 
 
 def test_admin_cliente_bootstrap_ativos_agrega_unidade_ativo_e_proxima_inspecao_para_wf(

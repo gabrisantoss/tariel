@@ -47,7 +47,7 @@ def _nr35_guided_checklist() -> list[dict[str, str]]:
             "id": "registros_fotograficos",
             "title": "Registros fotograficos",
             "prompt": "anexe fotos principais",
-            "evidence_hint": "vista geral, ponto superior e ponto inferior",
+            "evidence_hint": "vista geral, ponto superior, ponto inferior e detalhe critico",
         },
         {
             "id": "conclusao",
@@ -160,7 +160,7 @@ def _criar_laudo_nr35_guiado(
 
         if com_fotos:
             for indice, titulo in enumerate(
-                ("Vista geral", "Ponto superior", "Ponto inferior"),
+                ("Vista geral", "Ponto superior", "Ponto inferior", "Detalhe critico"),
                 start=1,
             ):
                 mensagem_foto = add_user_message("[imagem]")
@@ -241,7 +241,7 @@ def test_gate_nr35_expoe_image_slots_pendentes_antes_da_finalizacao(
         for slot in corpo["report_pack_draft"]["image_slots"]
         if slot["status"] == "pending"
     ]
-    assert len(pendentes) == 3
+    assert len(pendentes) == 4
     missing_codes = {
         item["code"]
         for item in corpo["report_pack_draft"]["quality_gates"]["missing_evidence"]
@@ -263,7 +263,7 @@ def test_gate_nr35_expoe_image_slots_pendentes_antes_da_finalizacao(
     )
 
 
-def test_finalizacao_nr35_mobile_autonomous_aprova_direto(
+def test_finalizacao_nr35_com_quatro_fotos_envia_para_mesa(
     ambiente_critico,
 ) -> None:
     client = ambiente_critico["client"]
@@ -278,21 +278,17 @@ def test_finalizacao_nr35_mobile_autonomous_aprova_direto(
 
     assert resposta.status_code == 200
     corpo = resposta.json()
-    assert corpo["review_mode_final"] == "mobile_autonomous"
-    assert "aprovado automaticamente" in corpo["message"].lower()
-    assert corpo["estado"] == "aprovado"
-    assert corpo["case_lifecycle_status"] == "aprovado"
-    assert corpo["case_workflow_mode"] == "laudo_guiado"
-    assert corpo["active_owner_role"] == "none"
-    assert corpo["allowed_next_lifecycle_statuses"] == [
-        "emitido",
-        "devolvido_para_correcao",
-    ]
-    assert corpo["laudo_card"]["case_lifecycle_status"] == "aprovado"
-    assert corpo["laudo_card"]["case_workflow_mode"] == "laudo_guiado"
-    assert corpo["laudo_card"]["active_owner_role"] == "none"
+    assert corpo["review_mode_final"] == "mesa_required"
+    assert "mesa" in corpo["message"].lower()
+    assert corpo["estado"] == "aguardando"
+    assert corpo["case_lifecycle_status"] == "aguardando_mesa"
+    assert corpo["case_workflow_mode"] == "laudo_com_mesa"
+    assert corpo["active_owner_role"] == "mesa"
+    assert corpo["laudo_card"]["case_lifecycle_status"] == "aguardando_mesa"
+    assert corpo["laudo_card"]["case_workflow_mode"] == "laudo_com_mesa"
+    assert corpo["laudo_card"]["active_owner_role"] == "mesa"
     assert corpo["report_pack_draft"]["quality_gates"]["final_validation_mode"] == (
-        "mobile_autonomous"
+        "mesa_required"
     )
     assert corpo["report_pack_draft"]["pre_laudo_outline"]["status"] == (
         "ready_for_finalization"
@@ -311,14 +307,14 @@ def test_finalizacao_nr35_mobile_autonomous_aprova_direto(
 
     status = client.get("/app/api/laudo/status", headers={"X-CSRF-Token": csrf})
     assert status.status_code == 200
-    assert status.json()["estado"] == "aprovado"
+    assert status.json()["estado"] == "aguardando"
     assert status.json()["report_pack_draft"]["quality_gates"]["autonomy_ready"] is True
     assert status.json()["pre_laudo_summary"]["status"] == "ready_for_finalization"
 
     with SessionLocal() as banco:
         laudo = banco.get(Laudo, laudo_id)
         assert laudo is not None
-        assert laudo.status_revisao == StatusRevisao.APROVADO.value
+        assert laudo.status_revisao == StatusRevisao.AGUARDANDO.value
         assert laudo.dados_formulario is not None
         assert (
             laudo.dados_formulario["componentes_inspecionados"]["fixacao_dos_pontos"]["condicao"]

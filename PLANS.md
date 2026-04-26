@@ -2,7 +2,7 @@
 
 Arquivo de trabalho para tarefas longas, confusas ou multissuperfície.
 
-Atualizado em `2026-04-25`.
+Atualizado em `2026-04-26`.
 
 ## Quando usar
 
@@ -13,6 +13,68 @@ Atualizado em `2026-04-25`.
 - correção crítica com risco de regressão.
 
 ## Estado atual
+
+### `PKT-GOLDEN-PATH-NR35-08` - E2E Golden Path NR35 com Governança de Emissão Oficial
+
+- `status`: concluido localmente em `2026-04-26`; PR 8 adiciona teste de integracao ponta a ponta para provar que o sucesso vendavel NR35 e `EmissaoOficialLaudo` ativa com pacote congelado, hash, signatario governado, Mesa humana, snapshot aprovado, manifest e download controlado no Portal Cliente
+- `checkpoint 2026-04-26`: criado `web/tests/test_nr35_golden_path_official_issue_e2e.py`, cobrindo tenant com pacote `inspector_chat_mesa`, release ativo NR35, capability `reviewer_decision`/`reviewer_issue`, signatario elegivel, caso NR35, 4 fotos, fixture IA controlada, revisao estruturada humana, aprovacao Mesa humana, `ApprovedCaseSnapshot`, PDF principal, `emitir_oficialmente_transacional`, manifest/hash e entrega no Portal Cliente
+- `checkpoint 2026-04-26`: o teste positivo valida que antes da emissao o Portal Cliente nao expõe links oficiais mesmo com status aprovado e PDF operacional; depois da emissao valida `issue_state=issued`, `issue_number`, `package_sha256`, `primary_pdf_sha256`, `nr35_official_pdf`, historico, downloads PDF/pacote e boundary de tenant retornando 404 para outro tenant
+- `checkpoint 2026-04-26`: os negativos cobrem PDF operacional sem `EmissaoOficialLaudo`, 3 fotos (`nr35_required_photo_slot_missing`), Mesa nao humana/aprovacao por IA e ausencia de signatario governado (`no_eligible_signatory`)
+- `validacao executada`: `PYTHONPATH=. python -m py_compile web/tests/test_nr35_golden_path_official_issue_e2e.py`; `cd web && PYTHONPATH=. python -m pytest tests/test_nr35_golden_path_official_issue_e2e.py -q` (`5 passed`); recorte NR35 PR1-PR7 com validador/prompt/revisao/PDF/emissao/documento (`44 passed`); recorte Portal Cliente NR35 (`4 passed, 31 deselected`); recorte Mesa/mobile handoff NR35 (`1 passed`); `git diff --check` passou com avisos CRLF preexistentes em `web/app/domains/revisor/base.py`, `web/app/domains/revisor/mesa_api.py` e `web/nucleo/cliente_ia.py`
+- `observacao de validacao`: o recorte legado opcional `tests/test_approval_idempotency.py::test_revisor_aprovar_via_api_replay_e_idempotente` retornou `422` ao aprovar NR35 guiado pela rota antiga de Mesa; nao foi corrigido neste PR por ficar fora do objetivo do E2E oficial e por tocar fluxo legado/mobile-review que esta fora do escopo desta tarefa
+- `proximo passo recomendado`: PR posterior de reemissao/auditoria deve cobrir `superseded`, divergencia pos-Mesa, eventos de download oficial e eventual polimento visual da aba Documentos
+
+### `PKT-ANALISE-EMISSAO-LAUDOS-01` - Contextos de PDF, Mesa e emissao oficial
+
+- `status`: concluido localmente em `2026-04-26`; criada a analise operacional [docs/operation/PDF_EMISSION_CONTEXTS_AND_GOVERNANCE.md](docs/operation/PDF_EMISSION_CONTEXTS_AND_GOVERNANCE.md), sem implementar fluxo, sem alterar templates, release gate, mobile smoke, Maestro, `human_ack`, Android, DB/seed/flags ou PR 8
+- `checkpoint 2026-04-26`: mapeados os caminhos distintos de criacao de caso, chat livre, fluxo guiado, mobile, Mesa, Admin Cliente, Admin CEO, preview/PDF operacional, pacote Mesa, snapshot aprovado, emissao oficial transacional e entrega no Portal Cliente
+- `checkpoint 2026-04-26`: documentada a fronteira vendavel: o E2E NR35 nao deve considerar `nome_arquivo_pdf`, `/app/api/gerar_pdf` ou pacote Mesa como entrega final; o sucesso precisa ser `EmissaoOficialLaudo` ativa com pacote congelado, hash, signatario, manifest, Mesa humana e download governado no Portal Cliente
+- `proximo passo recomendado`: PR 8 deve usar o caminho `coleta NR35 -> finalizacao -> Mesa humana -> snapshot aprovado -> PDF principal -> emissao oficial transacional -> Portal Cliente Documentos`, incluindo testes negativos para rascunho, 3 fotos, ausencia de Mesa humana, ausencia de signatario/manifest e divergencia do PDF atual
+
+### `PKT-GOLDEN-PATH-NR35-07` - Portal Cliente Entrega Oficial NR35
+
+- `status`: concluido localmente em `2026-04-26`; PR 7 fecha a entrega oficial NR35 na superficie `Documentos` do Portal Cliente com status final, hashes, versoes e downloads governados, sem alterar release gate, mobile smoke, Maestro, `human_ack` ou build Android
+- `checkpoint 2026-04-26`: `EmissaoOficialLaudo.issue_context_json.nr35_official_pdf` agora e serializado para o Portal Cliente apenas como manifest sanitizado, sem JSON bruto sensivel, expondo status Mesa, `template_version`, `schema_version`, 4 slots fotograficos, hash do pacote/PDF e flags `manifest_ok`/`auditavel`
+- `checkpoint 2026-04-26`: `surface=documentos` passou a incluir `emissao_oficial`, `historico_emissoes` e `nr35`; os links `download_pdf_url` e `download_package_url` so aparecem quando ha emissao oficial ativa, manifest NR35, hash e arquivo materializado no storage
+- `checkpoint 2026-04-26`: adicionados endpoints tenant-scoped `/cliente/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial/pdf` e `/cliente/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial/pacote`, exigindo `nr35_official_pdf` no registro oficial e retornando 404 para outro tenant ou rascunho
+- `validacao executada`: testes novos e existentes da superficie Documentos passaram, recortes NR35 de validador/prompt/contrato PDF/revisao/PDF oficial passaram, `py_compile`, `node --check` e `git diff --check` passaram; `git diff --check` manteve apenas avisos CRLF ja existentes em arquivos fora do escopo do PR 7
+
+### `PKT-GOLDEN-PATH-NR35-06` - PDF Auditavel Final NR35 Linha de Vida
+
+- `status`: concluido localmente em `2026-04-26`; PR 6 consolida a emissao oficial NR35 com snapshot aprovado, manifesto/hash/versoes, 4 fotos obrigatorias, changelog humano e bloqueios antes de emissao, sem alterar release gate, mobile smoke, Maestro, `human_ack` ou build Android
+- `checkpoint 2026-04-26`: criado `web/app/domains/chat/nr35_linha_vida_official_pdf.py` para extrair o JSON/report pack aprovados de `ApprovedCaseSnapshot`, montar manifesto auditavel NR35, resumir revisao humana e gerar blockers quando falta snapshot, quando o payload atual diverge do aprovado ou quando a validacao `official_pdf` falha
+- `checkpoint 2026-04-26`: `official_pdf` NR35 passou a exigir `template_version`, `schema_version`, 12 secoes minimas, 4 fotos com referencia/legenda/rastreabilidade e aprovacao Mesa com `aprovacao_origem = mesa_humana`; aprovacao por IA continua bloqueada
+- `checkpoint 2026-04-26`: o bundle oficial agora inclui `governanca/nr35_official_pdf_manifest.json`, `documento/nr35_dados_formulario_aprovado.json`, `documento/nr35_report_pack_aprovado.json` e `governanca/nr35_revisao_humana_changelog.json`; `manifest.json` e `EmissaoOficialLaudo.issue_context_json` carregam `nr35_official_pdf`
+- `validacao executada`: testes novos de PDF auditavel NR35 e testes existentes de pacote oficial passaram; ainda falta repetir o recorte completo final com validador, revisao estruturada, prompt, Mesa/finalizacao, `py_compile`, `git diff --check` e `AMBIENTE=dev make release-verify-local`
+
+### `PKT-GOLDEN-PATH-NR35-05` - Revisao Estruturada JSON NR35 Linha de Vida
+
+- `status`: concluido localmente em `2026-04-26`; PR 5 cria o contrato backend de revisao humana do JSON NR35 antes da aprovacao Mesa e antes da emissao oficial, sem alterar release gate, mobile smoke, Maestro, `human_ack`, DB/seed/flags ou build Android
+- `checkpoint 2026-04-26`: criado `web/app/domains/chat/nr35_linha_vida_structured_review.py` para montar estado de revisao, agrupar pendencias por bloco, aplicar edicoes humanas por caminho, registrar diff/justificativa e revalidar o payload contra os niveis `mesa` e `official_pdf`
+- `checkpoint 2026-04-26`: adicionados endpoints de Mesa `GET/PATCH /revisao/api/laudo/{laudo_id}/nr35/revisao-estruturada`, mantendo o JSON candidato em `laudo.dados_formulario`, slots/evidencias em `laudo.report_pack_draft_json`, historico em `dados_formulario.nr35_structured_review` e snapshots humanos em `laudo_revisoes` quando ha banco
+- `checkpoint 2026-04-26`: a aprovacao Mesa para NR35 agora chama o validador no nivel `mesa` antes de gravar `Aprovado`; a marcacao aprovada e feita apenas pelo fluxo humano e grava `mesa_review.aprovacao_origem = mesa_humana`, preservando `official_pdf` bloqueado ate validacao completa e Mesa aprovada
+- `validacao executada`: testes novos de revisao estruturada NR35, testes do validador NR35, prompt NR35, contrato PDF NR35, recortes de Mesa/finalizacao afetados e `py_compile` dos modulos Python alterados; `git diff --check` deve ser repetido no fechamento final do PR
+
+### `PKT-GOLDEN-PATH-NR35-04` - Prompt IA NR35 Linha de Vida
+
+- `status`: concluido localmente em `2026-04-26`; PR 4 cria prompt/contrato de IA especializado para `nr35_inspecao_linha_de_vida`, sem alterar release gate, mobile smoke, Maestro, `human_ack`, DB/seed/flags ou build Android
+- `checkpoint 2026-04-26`: criado `web/app/domains/chat/nr35_linha_vida_prompt.py` com instrucao de sistema, instrucao final, contrato de 4 fotos, bloqueio explicito de dados inventados, `mesa_review.status=pendente`, `pdf_contract`, `auditoria`, `ia_assessment` e normalizacao pos-IA sem liberar PDF oficial
+- `checkpoint 2026-04-26`: `ClienteIA.gerar_json_estruturado` passou a receber parametros opcionais de `template_key`, `catalog_family_key`, `report_pack_draft` e contexto estruturado; os chamadores de finalizacao NR35 passam esses dados para ativar o prompt apenas no alias `nr35_linha_vida`
+- `validacao executada`: teste novo com IA mockada para prompt NR35, 4 fotos, 3 fotos, ausencia de `foto_detalhe_critico`, nao conformidade sem `acao_requerida`, dados ausentes sem invencao, Mesa pendente e bloqueio de PDF oficial; passaram tambem testes do validador NR35, contrato PDF NR35, templates IA NR35, contrato documental, recorte de PDF/projecao NR35, recorte de finalizacao NR35, `py_compile` dos modulos alterados e `git diff --check`
+
+### `PKT-GOLDEN-PATH-NR35-03` - Template e contrato PDF NR35 Linha de Vida
+
+- `status`: concluido localmente em `2026-04-26`; PR 3 fortalece o contrato de template/PDF NR35 sem alterar release gate, mobile smoke, Maestro, `human_ack`, DB/seed/flags ou build Android
+- `checkpoint 2026-04-26`: `laudo_output_seed` e `laudo_output_exemplo` passam a declarar `template_version`, `pdf_contract`, `auditoria` e `registros_fotograficos.slots_obrigatorios` com as 4 fotos obrigatorias, referencia persistida, legenda tecnica, campo JSON, achado relacionado e secao PDF
+- `checkpoint 2026-04-26`: a projecao PDF NR35 materializa `document_projection.nr35_pdf_contract`, preserva `mesa_required`, expoe secoes obrigatorias, versoes e status Mesa, e consegue preencher o contrato fotografico a partir do `report_pack` quando o payload antigo ainda nao possui `slots_obrigatorios`
+- `validacao executada`: testes novos de contrato Template/PDF NR35, testes do validador NR35, contrato documental NR35, testes de PDF/projecao NR35, report pack NR35, material reference, templates IA NR35, recorte Wave 1 da familia piloto, `py_compile` dos modulos Python alterados, validacao JSON dos artefatos NR35 e `git diff --check`; prompt IA completo e E2E continuam para PRs posteriores
+
+### `PKT-GOLDEN-PATH-NR35-02` - Validador estrito NR35 Linha de Vida
+
+- `status`: concluido localmente em `2026-04-26`; PR 2 do golden path NR35 cria o validador estrito isolado em `web/app/domains/chat/nr35_linha_vida_validation.py`, sem alterar release gate, mobile smoke, Maestro, `human_ack` ou build Android
+- `checkpoint 2026-04-26`: report pack NR35 alinhado ao contrato de 4 fotos obrigatorias, adicionando `foto_detalhe_critico` e preservando os slots runtime historicos `foto_ponto_superior` e `foto_ponto_inferior` para compatibilidade com extremidade principal/secundaria
+- `checkpoint 2026-04-26`: politica do piloto mantida em `mesa_required`; a finalizacao NR35 nao cai mais para aprovacao mobile autonoma quando o contrato do piloto exige Mesa, e a emissao oficial passa a receber blocker `nr35_golden_path_validation_failed` se campos, fotos, conclusao, aprovacao Mesa ou rastreabilidade minima falharem
+- `validacao executada`: testes novos do validador NR35, teste de contrato documental NR35, testes NR35 de report pack/finalizacao, testes de emissao oficial, testes de idempotencia/mobile review afetados, `py_compile` dos modulos alterados e `git diff --check`; gate completo de release permanece fora do escopo deste PR pequeno
 
 ### `PKT-DEPLOY-READINESS-01` - Matriz de deploy readiness do release candidate
 

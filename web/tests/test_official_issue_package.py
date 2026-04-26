@@ -169,6 +169,89 @@ def test_build_official_issue_package_bloqueia_sem_signatario_e_sem_pdf(ambiente
     assert trail_statuses["primary_pdf"] == "blocked"
 
 
+def test_build_official_issue_package_bloqueia_nr35_sem_quatro_fotos(ambiente_critico) -> None:
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    payload_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "family_schemas"
+        / "nr35_inspecao_linha_de_vida.laudo_output_exemplo.json"
+    )
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+
+    with SessionLocal() as banco:
+        laudo = Laudo(
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            setor_industrial="NR35 Linha de Vida",
+            tipo_template="nr35_linha_vida",
+            catalog_family_key="nr35_inspecao_linha_de_vida",
+            status_revisao=StatusRevisao.APROVADO.value,
+            status_conformidade=StatusLaudo.NAO_CONFORME.value,
+            codigo_hash=uuid.uuid4().hex,
+            nome_arquivo_pdf="laudo_nr35.pdf",
+            dados_formulario=payload,
+            report_pack_draft_json={
+                "family": "nr35_inspecao_linha_de_vida",
+                "template_key": "nr35_linha_vida",
+                "image_slots": [
+                    {
+                        "slot": "foto_visao_geral",
+                        "status": "resolved",
+                        "resolved_evidence_id": "msg:701",
+                        "resolved_message_id": 701,
+                    },
+                    {
+                        "slot": "foto_ponto_superior",
+                        "status": "resolved",
+                        "resolved_evidence_id": "msg:702",
+                        "resolved_message_id": 702,
+                    },
+                    {
+                        "slot": "foto_ponto_inferior",
+                        "status": "resolved",
+                        "resolved_evidence_id": "msg:703",
+                        "resolved_message_id": 703,
+                    },
+                ],
+                "quality_gates": {"final_validation_mode": "mesa_required"},
+            },
+        )
+        banco.add(laudo)
+        banco.add(
+            SignatarioGovernadoLaudo(
+                tenant_id=ids["empresa_a"],
+                nome="Eng. Tariel",
+                funcao="Responsável técnico",
+                registro_profissional="CREA 1234",
+                valid_until=datetime.now(timezone.utc) + timedelta(days=120),
+                allowed_family_keys_json=["nr35_inspecao_linha_de_vida"],
+                ativo=True,
+                criado_por_id=ids["admin_a"],
+            )
+        )
+        banco.commit()
+
+        _anexo_pack, emissao_oficial = build_official_issue_package(
+            banco,
+            laudo=laudo,
+        )
+
+    blocker_codes = {item["code"] for item in emissao_oficial["blockers"]}
+    assert "nr35_golden_path_validation_failed" in blocker_codes
+    nr35_blocker = next(
+        item
+        for item in emissao_oficial["blockers"]
+        if item["code"] == "nr35_golden_path_validation_failed"
+    )
+    assert nr35_blocker["validation"]["ok"] is False
+    assert any(
+        issue["code"] == "nr35_required_photo_slot_missing"
+        for issue in nr35_blocker["validation"]["issues"]
+    )
+
+
 def test_build_official_issue_package_expoe_emissao_ativa_e_reemissao_recomendada(ambiente_critico) -> None:
     SessionLocal = ambiente_critico["SessionLocal"]
     ids = ambiente_critico["ids"]

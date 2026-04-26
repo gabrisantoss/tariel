@@ -39,6 +39,7 @@ from app.domains.chat.laudo_state_helpers import (
     serializar_card_laudo,
 )
 from app.domains.chat.mobile_ai_preferences import limpar_historico_visivel_chat
+from app.domains.chat.nr35_linha_vida_validation import is_nr35_linha_vida_context
 from app.domains.chat.report_pack_helpers import (
     atualizar_final_validation_mode_report_pack,
     atualizar_report_pack_draft_laudo,
@@ -113,8 +114,33 @@ def _resolver_review_mode_final(
     if review_mode != "mesa_required":
         return review_mode
 
+    report_pack_draft = getattr(laudo, "report_pack_draft_json", None) or {}
+    report_pack_family = (
+        str(report_pack_draft.get("family") or "").strip()
+        if isinstance(report_pack_draft, dict)
+        else ""
+    )
+    nr35_mesa_required = is_nr35_linha_vida_context(
+        payload=getattr(laudo, "dados_formulario", None),
+        template_key=str(getattr(laudo, "tipo_template", "") or "").strip() or None,
+        catalog_family_key=report_pack_family or None,
+    )
     if tenant_capability_enabled_for_user(usuario, capability="inspector_send_to_mesa"):
         return review_mode
+
+    if nr35_mesa_required:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "nr35_mesa_required_unavailable",
+                "message": (
+                    "O piloto NR35 Linha de Vida exige Mesa Avaliadora antes de emissao oficial."
+                ),
+                "review_mode_requested": "mesa_required",
+                "required_capability": "inspector_send_to_mesa",
+                "fallback_surface": "mesa",
+            },
+        )
 
     if tenant_capability_enabled_for_user(usuario, capability="mobile_case_approve"):
         request.state.final_validation_mode_reason = "tenant_without_mesa"
@@ -655,6 +681,18 @@ async def _preparar_laudo_para_decisao_final(
                 historico=historico,
                 dados_imagem="",
                 texto_documento="",
+                template_key=getattr(laudo, "tipo_template", None),
+                catalog_family_key=getattr(laudo, "catalog_family_key", None),
+                report_pack_draft=(
+                    getattr(laudo, "report_pack_draft_json", None)
+                    if isinstance(getattr(laudo, "report_pack_draft_json", None), dict)
+                    else None
+                ),
+                case_payload_context=(
+                    getattr(laudo, "dados_formulario", None)
+                    if isinstance(getattr(laudo, "dados_formulario", None), dict)
+                    else None
+                ),
             )
             persist_case_instance_payload_for_laudo(
                 laudo=laudo,

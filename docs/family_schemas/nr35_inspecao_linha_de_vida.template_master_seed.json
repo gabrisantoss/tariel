@@ -1668,6 +1668,98 @@
                   ]
                 }
               ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Contrato PDF minimo: "
+                    },
+                    {
+                      "type": "placeholder",
+                      "attrs": {
+                        "mode": "json_path",
+                        "key": "pdf_contract.required_sections_texto",
+                        "raw": "json_path:pdf_contract.required_sections_texto"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "text": " | Fotos obrigatorias: "
+                    },
+                    {
+                      "type": "placeholder",
+                      "attrs": {
+                        "mode": "json_path",
+                        "key": "registros_fotograficos.slots_obrigatorios_texto",
+                        "raw": "json_path:registros_fotograficos.slots_obrigatorios_texto"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Auditoria: schema_version "
+                    },
+                    {
+                      "type": "placeholder",
+                      "attrs": {
+                        "mode": "json_path",
+                        "key": "schema_version",
+                        "raw": "json_path:schema_version"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "text": " | template_version "
+                    },
+                    {
+                      "type": "placeholder",
+                      "attrs": {
+                        "mode": "json_path",
+                        "key": "template_version",
+                        "raw": "json_path:template_version"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "text": " | Mesa "
+                    },
+                    {
+                      "type": "placeholder",
+                      "attrs": {
+                        "mode": "json_path",
+                        "key": "mesa_review.status",
+                        "raw": "json_path:mesa_review.status"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "text": " | Rastreabilidade "
+                    },
+                    {
+                      "type": "placeholder",
+                      "attrs": {
+                        "mode": "json_path",
+                        "key": "auditoria.rastreabilidade_texto",
+                        "raw": "json_path:auditoria.rastreabilidade_texto"
+                      }
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
