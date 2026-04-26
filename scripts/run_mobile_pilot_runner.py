@@ -297,11 +297,7 @@ def write_mobile_pilot_lane_state(
 
 
 def command_display(command: list[str]) -> str:
-    if not command:
-        return "command [arguments redacted; argc=0]"
-    executable = pathlib.Path(str(command[0] or "command")).name
-    safe_executable = re.sub(r"[^A-Za-z0-9._+-]", "_", executable).strip("._-") or "command"
-    return f"{safe_executable} [arguments redacted; argc={max(len(command) - 1, 0)}]"
+    return "command [redacted]"
 
 
 def has_graphical_display() -> bool:
