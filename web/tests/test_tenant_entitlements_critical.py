@@ -574,8 +574,165 @@ def test_previa_finalizacao_sem_mesa_orienta_resolver_correcoes_abertas(
     assert corpo["blocking_items"][0]["code"] == "structured_corrections_pending"
     assert corpo["mobile_chat_first_governance"]["review_governance_mode"] == "self_review_allowed"
     assert corpo["mobile_chat_first_governance"]["self_review_allowed"] is True
-    assert corpo["chat_review_tools"]["title"] == "Pendências da revisão interna"
+    assert corpo["chat_review_tools"]["title"] == "Pendências do caso"
+    assert corpo["chat_review_tools"]["self_review_allowed"] is True
+    assert corpo["chat_review_tools"]["separate_mesa_required"] is False
+    assert corpo["chat_review_tools"]["official_issue_allowed"] is False
+    assert corpo["chat_review_tools"]["official_issue_create"] is False
+    assert corpo["chat_review_tools"]["structured_review_edit"] is False
     assert "case_self_review" in corpo["chat_review_tools"]["available_case_actions"]
+
+
+def test_previa_finalizacao_sem_mesa_expoe_revisao_interna_sem_rotulo_mesa(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat",
+        }
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        banco.commit()
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.get(f"/app/api/laudo/{laudo_id}/finalizacao-preview")
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["can_finalize"] is True
+    assert corpo["primary_action"] == "approve_without_mesa"
+    assert corpo["primary_label"] == "Aprovar sem Mesa"
+    assert corpo["chat_review_tools"]["title"] == "Revisão interna governada"
+    assert corpo["chat_review_tools"]["primary_label"] == "Confirmar revisão interna"
+    assert "Mesa Avaliadora" not in corpo["chat_review_tools"]["title"]
+    assert corpo["chat_review_tools"]["self_review_allowed"] is True
+    assert corpo["chat_review_tools"]["case_self_review"] is True
+    assert corpo["chat_review_tools"]["separate_mesa_required"] is False
+    assert corpo["chat_review_tools"]["official_issue_allowed"] is False
+    assert corpo["chat_review_tools"]["official_issue_create"] is False
+    assert corpo["mobile_chat_first_governance"]["approval_actor_scope"] == "inspector_self"
+
+
+def test_previa_finalizacao_com_mesa_mantem_rotulo_mesa_avaliadora(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat_mesa",
+        }
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        banco.commit()
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.get(f"/app/api/laudo/{laudo_id}/finalizacao-preview")
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["primary_action"] == "send_to_mesa"
+    assert corpo["chat_review_tools"]["title"] == "Revisão pela Mesa Avaliadora"
+    assert corpo["chat_review_tools"]["primary_label"] == "Enviar para Mesa"
+    assert corpo["chat_review_tools"]["separate_mesa_required"] is True
+    assert corpo["chat_review_tools"]["case_send_to_separate_review"] is True
+    assert corpo["chat_review_tools"]["self_review_allowed"] is False
+    assert corpo["mobile_chat_first_governance"]["approval_actor_scope"] == "separate_mesa"
+
+
+def test_previa_finalizacao_com_servicos_revisor_expoe_emissao_oficial_neutra(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        inspetor = banco.get(Usuario, ids["inspetor_a"])
+        assert empresa is not None
+        assert inspetor is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat_mesa_reviewer_services",
+        }
+        inspetor.allowed_portals_json = ["inspetor", "revisor"]
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        banco.commit()
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.get(f"/app/api/laudo/{laudo_id}/finalizacao-preview")
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["chat_review_tools"]["official_issue_allowed"] is True
+    assert corpo["chat_review_tools"]["official_issue_create"] is True
+    assert corpo["chat_review_tools"]["official_issue_download"] is True
+    assert corpo["chat_review_tools"]["governed_signatory_select"] is True
+    assert corpo["chat_review_tools"]["case_review_decide"] is True
+    assert corpo["chat_review_tools"]["structured_review_edit"] is True
+    assert corpo["chat_review_tools"]["suggested_labels"]["official_issue_label"] == "Emissão oficial"
+    assert "official_issue_create" in corpo["chat_review_tools"]["available_case_actions"]
+
+
+def test_previa_finalizacao_nr35_sem_mesa_continua_bloqueada_por_familia(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        empresa = banco.get(Empresa, ids["empresa_a"])
+        assert empresa is not None
+        empresa.admin_cliente_policy_json = {
+            "commercial_service_package": "inspector_chat",
+        }
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.tipo_template = "nr35_linha_vida"
+        laudo.catalog_family_key = "nr35_inspecao_linha_de_vida"
+        laudo.report_pack_draft_json = {
+            "family": "nr35_inspecao_linha_de_vida",
+            "quality_gates": {"final_validation_mode": "mesa_required"},
+        }
+        banco.commit()
+
+    _login_app_inspetor(client, "inspetor@empresa-a.test")
+    resposta = client.get(f"/app/api/laudo/{laudo_id}/finalizacao-preview")
+
+    assert resposta.status_code == 422
+    detalhe = resposta.json()["detail"]
+    assert detalhe["code"] == "nr35_mesa_required_unavailable"
+    assert detalhe["required_capability"] == "inspector_send_to_mesa"
 
 
 def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(

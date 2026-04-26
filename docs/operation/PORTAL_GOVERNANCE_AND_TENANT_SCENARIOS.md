@@ -106,6 +106,14 @@ Read model neutro adicionado no PR B:
 
 Esses aliases nao substituem as capabilities antigas e nao mudam os presets existentes. Eles existem para separar a semantica do caso tecnico da superficie `Mesa/Revisor` e permitir que Chat/Mobile consumam as mesmas capacidades quando a governanca permitir.
 
+Checkpoint PR C no Chat Inspetor:
+
+| Superficie | Ajuste | Efeito |
+| --- | --- | --- |
+| Previa de finalizacao | Expõe `mobile_chat_first_governance` e `chat_review_tools` com flags diretos para `self_review_allowed`, `separate_mesa_required`, `official_issue_allowed`, `structured_review_edit`, `case_review_decide`, `official_issue_create` e downloads oficiais. | A UI distingue `Revisao interna governada`, `Pendencias do caso` e `Revisao pela Mesa Avaliadora` sem mudar o contrato legado de finalizacao. |
+| Rail do Chat Inspetor | Ferramentas de template/editor/assinatura/PDF/pacote passam a usar aliases neutros como `structured_review_edit` e `official_issue_create`. | O Chat nao depende de chamar tudo de "Mesa" quando o tenant tem capacidade de revisao/emissao pelo cockpit tecnico. |
+| Compatibilidade JS | `window.TARIEL.hasUserCapability` consulta aliases de usuario/tenant e tambem deriva aliases de capabilities legadas. | Pacotes existentes continuam funcionando enquanto novas telas podem pedir capabilities neutras. |
+
 ## 6. Operating models
 
 | Modelo | Significado | Efeito atual |

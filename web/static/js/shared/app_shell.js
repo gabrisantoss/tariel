@@ -51,7 +51,9 @@
         const policy = rawPolicy && typeof rawPolicy === "object" ? rawPolicy : {};
         const portalEntitlements = normalizarMapaBooleano(policy.portal_entitlements);
         const capabilityEntitlements = normalizarMapaBooleano(policy.capability_entitlements);
+        const capabilityAliases = normalizarMapaBooleano(policy.capability_aliases);
         const userCapabilityEntitlements = normalizarMapaBooleano(policy.user_capability_entitlements);
+        const userCapabilityAliases = normalizarMapaBooleano(policy.user_capability_aliases);
         const allowedPortals = normalizarListaTextual(policy.allowed_portals);
         const allowedPortalLabels = normalizarListaTextual(policy.allowed_portal_labels);
 
@@ -60,17 +62,41 @@
                 ...policy,
                 portal_entitlements: portalEntitlements,
                 capability_entitlements: capabilityEntitlements,
+                capability_aliases: capabilityAliases,
                 user_capability_entitlements: userCapabilityEntitlements,
+                user_capability_aliases: userCapabilityAliases,
                 allowed_portals: allowedPortals,
                 allowed_portal_labels: allowedPortalLabels,
             },
             portalEntitlements,
             capabilityEntitlements,
+            capabilityAliases,
             userCapabilityEntitlements,
+            userCapabilityAliases,
             allowedPortals,
             allowedPortalLabels,
             governedByAdminCeo: !!policy.governed_by_admin_ceo,
         };
+    }
+
+    const MOBILE_CHAT_FIRST_CAPABILITY_ALIASES = Object.freeze({
+        case_create: "inspector_case_create",
+        case_collect: "inspector_case_create",
+        case_finalize_request: "inspector_case_finalize",
+        case_send_to_separate_review: "inspector_send_to_mesa",
+        case_self_review: "mobile_case_approve",
+        case_review_decide: "reviewer_decision",
+        structured_review_edit: "reviewer_decision",
+        official_issue_create: "reviewer_issue",
+        official_issue_download: "reviewer_issue",
+        governed_signatory_select: "reviewer_issue",
+    });
+
+    function derivarCapabilityAliases(capabilityEntitlements = {}) {
+        return Object.entries(MOBILE_CHAT_FIRST_CAPABILITY_ALIASES).reduce((acc, [alias, legacy]) => {
+            acc[alias] = !!capabilityEntitlements[legacy];
+            return acc;
+        }, {});
     }
 
     function simularPacoteReviewerServicesEmLocal(policy) {
@@ -100,6 +126,14 @@
             reviewer_decision: true,
             reviewer_issue: true,
         };
+        const capabilityAliases = {
+            ...base.capabilityAliases,
+            ...derivarCapabilityAliases(capabilityEntitlements),
+        };
+        const userCapabilityAliases = {
+            ...base.userCapabilityAliases,
+            ...derivarCapabilityAliases(userCapabilityEntitlements),
+        };
         const allowedPortals = Array.from(new Set([...(base.allowedPortals || []), "inspetor", "revisor"]));
         const allowedPortalLabels = Array.from(new Set([...(base.allowedPortalLabels || []), "Area de campo", "Area de analise"]));
 
@@ -116,13 +150,17 @@
                     || "Simulacao local com ferramentas governadas da Mesa liberadas no Inspetor.",
                 portal_entitlements: portalEntitlements,
                 capability_entitlements: capabilityEntitlements,
+                capability_aliases: capabilityAliases,
                 user_capability_entitlements: userCapabilityEntitlements,
+                user_capability_aliases: userCapabilityAliases,
                 allowed_portals: allowedPortals,
                 allowed_portal_labels: allowedPortalLabels,
             },
             portalEntitlements,
             capabilityEntitlements,
+            capabilityAliases,
             userCapabilityEntitlements,
+            userCapabilityAliases,
             allowedPortals,
             allowedPortalLabels,
             governedByAdminCeo: !!base.governedByAdminCeo,
@@ -138,8 +176,31 @@
             return !!policy.userCapabilityEntitlements[chave];
         }
 
+        if (Object.prototype.hasOwnProperty.call(policy.userCapabilityAliases, chave)) {
+            return !!policy.userCapabilityAliases[chave];
+        }
+
         if (Object.prototype.hasOwnProperty.call(policy.capabilityEntitlements, chave)) {
             return !!policy.capabilityEntitlements[chave];
+        }
+
+        if (Object.prototype.hasOwnProperty.call(policy.capabilityAliases, chave)) {
+            return !!policy.capabilityAliases[chave];
+        }
+
+        const legacyCapability = MOBILE_CHAT_FIRST_CAPABILITY_ALIASES[chave];
+        if (
+            legacyCapability &&
+            Object.prototype.hasOwnProperty.call(policy.userCapabilityEntitlements, legacyCapability)
+        ) {
+            return !!policy.userCapabilityEntitlements[legacyCapability];
+        }
+
+        if (
+            legacyCapability &&
+            Object.prototype.hasOwnProperty.call(policy.capabilityEntitlements, legacyCapability)
+        ) {
+            return !!policy.capabilityEntitlements[legacyCapability];
         }
 
         return !!fallback;
@@ -195,7 +256,9 @@
             allowedPortalLabels: Object.freeze([...tenantAccessPolicy.allowedPortalLabels]),
             portalEntitlements: Object.freeze({ ...tenantAccessPolicy.portalEntitlements }),
             capabilityEntitlements: Object.freeze({ ...tenantAccessPolicy.capabilityEntitlements }),
+            capabilityAliases: Object.freeze({ ...tenantAccessPolicy.capabilityAliases }),
             userCapabilityEntitlements: Object.freeze({ ...tenantAccessPolicy.userCapabilityEntitlements }),
+            userCapabilityAliases: Object.freeze({ ...tenantAccessPolicy.userCapabilityAliases }),
             devInspectorToolSimulation: !!tenantAccessPolicy.devInspectorToolSimulation,
             hasPortalAccess(portal, fallback = true) {
                 return tenantPolicyPortalEnabled(tenantAccessPolicy, portal, fallback);

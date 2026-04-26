@@ -329,7 +329,9 @@ Impacto: Chat vira cockpit tecnico completo para cliente sem Mesa.
 
 Testes/gates: testes de finalizacao, quality gate, revisao estruturada e Chat Inspetor.
 
-Checkpoint PR C: a previa de finalizacao do Chat Inspetor passa a expor `mobile_chat_first_governance` e `chat_review_tools`, derivados do read model neutro. O frontend usa `chat_review_tools.title`, `primary_label` e `next_step` quando presentes, permitindo mostrar `Revisao interna governada` ou `Pendencias da revisao interna` em tenants sem Mesa, sem trocar os campos legados `primary_action`, `primary_label` e `review_mode_final_preview`.
+Checkpoint PR C: a previa de finalizacao do Chat Inspetor passa a expor `mobile_chat_first_governance` e `chat_review_tools`, derivados do read model neutro. O frontend usa `chat_review_tools.title`, `primary_label` e `next_step` quando presentes, permitindo mostrar `Revisao interna governada`, `Pendencias do caso` ou `Revisao pela Mesa Avaliadora` conforme governanca, sem trocar os campos legados `primary_action`, `primary_label` e `review_mode_final_preview`.
+
+O mesmo checkpoint tambem leva os aliases neutros para a rail do Chat Inspetor. As ferramentas existentes continuam abrindo as mesmas URLs, mas passam a ser condicionadas por `structured_review_edit`, `governed_signatory_select`, `official_issue_create` e `official_issue_download`, com fallback de compatibilidade para `reviewer_decision` e `reviewer_issue` no shell JS. Isso evita chamar ferramenta de emissao/revisao de "servico de Mesa" quando a capacidade esta liberada para o proprio cockpit do Inspetor.
 
 ### PR D - Expor aprovacao/assinatura/download no Mobile quando permitido
 

@@ -119,6 +119,14 @@ def _build_chat_review_tools_payload(
             for capability, enabled in user_capabilities.items()
         },
     )
+    available_case_actions = {
+        str(action)
+        for action in list(governance.get("available_case_actions") or [])
+        if str(action or "").strip()
+    }
+    separate_mesa_required = bool(governance.get("separate_mesa_required"))
+    self_review_allowed = bool(governance.get("self_review_allowed"))
+    official_issue_allowed = bool(governance.get("official_issue_allowed"))
     if primary_action == "approve_without_mesa":
         title = "Revisão interna governada"
         tool_primary_label = "Confirmar revisão interna"
@@ -133,15 +141,20 @@ def _build_chat_review_tools_payload(
         tool_next_step = next_step
         surface = "separate_mesa"
     else:
-        title = (
-            "Pendências da revisão interna"
-            if bool(governance.get("self_review_allowed"))
-            else "Pendências antes da revisão"
-        )
+        title = "Pendências do caso"
         tool_primary_label = primary_label
         tool_next_step = next_step
         surface = "chat_review_pending"
 
+    suggested_labels = {
+        "pending_title": "Pendências do caso",
+        "self_review_title": "Revisão interna governada",
+        "self_review_primary_label": "Confirmar revisão interna",
+        "separate_mesa_title": "Revisão pela Mesa Avaliadora",
+        "separate_mesa_primary_label": "Enviar para Mesa",
+        "official_issue_label": "Emissão oficial",
+        "official_issue_download_label": "Download oficial",
+    }
     return {
         "governance": governance,
         "tools": {
@@ -150,7 +163,22 @@ def _build_chat_review_tools_payload(
             "title": title,
             "primary_label": tool_primary_label,
             "next_step": tool_next_step,
+            "review_governance_mode": str(governance.get("review_governance_mode") or ""),
+            "approval_actor_scope": str(governance.get("approval_actor_scope") or ""),
+            "issue_governance_mode": str(governance.get("issue_governance_mode") or ""),
+            "separate_mesa_required": separate_mesa_required,
+            "self_review_allowed": self_review_allowed,
+            "official_issue_allowed": official_issue_allowed,
+            "signatory_required": bool(governance.get("signatory_required")),
+            "case_self_review": "case_self_review" in available_case_actions,
+            "case_send_to_separate_review": "case_send_to_separate_review" in available_case_actions,
+            "case_review_decide": "case_review_decide" in available_case_actions,
+            "structured_review_edit": "structured_review_edit" in available_case_actions,
+            "official_issue_create": "official_issue_create" in available_case_actions,
+            "official_issue_download": "official_issue_download" in available_case_actions,
+            "governed_signatory_select": "governed_signatory_select" in available_case_actions,
             "available_case_actions": list(governance.get("available_case_actions") or []),
+            "suggested_labels": suggested_labels,
         },
     }
 
