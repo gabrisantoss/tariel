@@ -1704,6 +1704,130 @@ def test_admin_cliente_documentos_expoe_entrega_oficial_nr35_auditavel(
     assert all("storage_path" not in payload for payload in payloads)
 
 
+def test_admin_cliente_documentos_publica_linguagem_canonica_para_emissao_e_pdf_operacional(
+    ambiente_critico,
+    tmp_path,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_oficial_id, _pdf_bytes, _package_bytes = _criar_entrega_oficial_nr35_cliente(banco, ids, tmp_path)
+        laudo_operacional_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            tipo_template="padrao",
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        laudo_operacional = banco.get(Laudo, laudo_operacional_id)
+        assert laudo_operacional is not None
+        laudo_operacional.nome_arquivo_pdf = "pdf_operacional_cliente.pdf"
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
+    assert resposta_documentos.status_code == 200
+    items = resposta_documentos.json()["documentos"]["items"]
+    item_oficial = next(item for item in items if int(item["laudo_id"]) == laudo_oficial_id)
+    item_operacional = next(item for item in items if int(item["laudo_id"]) == laudo_operacional_id)
+
+    assert item_oficial["document_ui"]["official_issue_label"] == "Emissão oficial"
+    assert item_oficial["document_ui"]["official_package_label"] == "Pacote oficial"
+    assert item_oficial["document_ui"]["history_label"] == "Histórico de emissões"
+    assert item_oficial["document_ui"]["status_label"] == "Emitido"
+    assert item_operacional["document_ui"]["document_kind_label"] == "PDF operacional"
+    assert item_operacional["document_ui"]["document_kind_detail"] == "Arquivo de trabalho do caso; não substitui emissão oficial."
+    assert item_operacional["emissao_oficial"]["existe"] is False
+
+    ui_payload = json.dumps(
+        [item_oficial["document_ui"], item_operacional["document_ui"]],
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    for termo_interno in (
+        "mobile_autonomous",
+        "reviewer_issue",
+        "reviewer_decision",
+        "primary_pdf_diverged",
+        "tenant_without_mesa",
+        "nr35_mesa_required_unavailable",
+    ):
+        assert termo_interno not in ui_payload
+
+
+def test_admin_cliente_documentos_historico_traduz_emissao_substituida(
+    ambiente_critico,
+    tmp_path,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        laudo_id, _pdf_bytes, _package_bytes = _criar_entrega_oficial_nr35_cliente(banco, ids, tmp_path)
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        snapshot = banco.scalar(
+            select(ApprovedCaseSnapshot).where(ApprovedCaseSnapshot.laudo_id == laudo_id)
+        )
+        signatario = banco.scalar(
+            select(SignatarioGovernadoLaudo).where(SignatarioGovernadoLaudo.tenant_id == ids["empresa_a"])
+        )
+        assert snapshot is not None
+        assert signatario is not None
+        package_path = tmp_path / "TAR-NR35-CLIENTE-OLD.zip"
+        package_bytes = b"nr35 official old package cliente"
+        package_path.write_bytes(package_bytes)
+        banco.add(
+            EmissaoOficialLaudo(
+                laudo_id=laudo_id,
+                tenant_id=ids["empresa_a"],
+                approval_snapshot_id=int(snapshot.id),
+                signatory_id=int(signatario.id),
+                issued_by_user_id=ids["revisor_a"],
+                issue_number="TAR-20260425-0001-000001",
+                issue_state="superseded",
+                issued_at=datetime.now(timezone.utc) - timedelta(days=2),
+                superseded_at=datetime.now(timezone.utc) - timedelta(days=1),
+                verification_hash=laudo.codigo_hash,
+                public_verification_url=f"/app/public/laudo/verificar/{laudo.codigo_hash}",
+                package_sha256=hashlib.sha256(package_bytes).hexdigest(),
+                package_fingerprint_sha256="e" * 64,
+                package_filename="TAR-NR35-CLIENTE-OLD.zip",
+                package_storage_path=str(package_path),
+                package_size_bytes=len(package_bytes),
+                manifest_json={"bundle_kind": "tariel_official_issue_package"},
+                issue_context_json={
+                    "approval_version": 1,
+                    "superseded_by_issue_number": "TAR-20260426-0001-000001",
+                    "superseded_reason_summary": "Nova emissão oficial disponível.",
+                    "signatory_snapshot": {"nome": signatario.nome, "funcao": signatario.funcao},
+                    "issued_by_snapshot": {"nome": "Revisor A"},
+                },
+            )
+        )
+        banco.commit()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
+    assert resposta_documentos.status_code == 200
+    item = next(
+        item for item in resposta_documentos.json()["documentos"]["items"] if int(item["laudo_id"]) == laudo_id
+    )
+    historico_antigo = next(
+        issue for issue in item["historico_emissoes"] if issue["issue_number"] == "TAR-20260425-0001-000001"
+    )
+
+    assert item["emissao_oficial"]["issue_number"] == "TAR-20260426-0001-000001"
+    assert historico_antigo["issue_state_label"] == "Substituído"
+    assert historico_antigo["document_history_label"] == "Documento substituído"
+    assert historico_antigo["package_sha256"] == hashlib.sha256(package_bytes).hexdigest()
+
+
 def test_admin_cliente_documentos_nao_trata_rascunho_nr35_como_oficial(
     ambiente_critico,
 ) -> None:

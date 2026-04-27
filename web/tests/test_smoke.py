@@ -1802,6 +1802,58 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert ".panel--mesa .item-case-signal--focus" in portal_mesa_surface_css
 
 
+def test_ux_product_language_padroniza_documentos_do_portal_cliente() -> None:
+    raiz_web = Path(__file__).resolve().parents[1]
+    raiz_repo = raiz_web.parent
+    linguagem_doc = (raiz_repo / "docs" / "operation" / "UX_PRODUCT_LANGUAGE.md").read_text(encoding="utf-8")
+    documentos_html = (raiz_web / "templates" / "cliente" / "documentos" / "_content.html").read_text(encoding="utf-8")
+    documentos_js = (raiz_web / "static" / "js" / "cliente" / "portal_documentos_surface.js").read_text(encoding="utf-8")
+    documentos_css = (raiz_web / "static" / "css" / "cliente" / "portal_documentos_surface.css").read_text(encoding="utf-8")
+
+    for termo in (
+        "PDF operacional",
+        "Emissão oficial",
+        "Pacote oficial",
+        "Histórico de emissões",
+        "Reemissão recomendada",
+        "Documento substituído",
+        "Revisão interna governada",
+        "Mesa Avaliadora",
+        "Pendências do caso",
+        "Não incluído no pacote",
+        "Depende da família/template",
+        "Família exige Mesa",
+    ):
+        assert termo in linguagem_doc
+
+    for termo in (
+        "Emissão oficial",
+        "Pacote oficial",
+        "PDF operacional",
+        "Histórico de emissões",
+        "Reemissão recomendada",
+        "Substituído",
+    ):
+        assert termo in documentos_js
+
+    for termo_interno in (
+        "mobile_autonomous",
+        "reviewer_issue",
+        "reviewer_decision",
+        "primary_pdf_diverged",
+        "tenant_without_mesa",
+        "nr35_mesa_required_unavailable",
+    ):
+        assert termo_interno not in documentos_html
+        assert termo_interno not in documentos_js
+
+    assert "data-document-copy" in documentos_js
+    assert "document-card__audit" in documentos_js
+    assert ".document-card__hash-row" in documentos_css
+    assert ".panel--documentos .surface-nav--documentos" in documentos_css
+    assert "position: static" in documentos_css
+
+
 def test_logins_e_blueprint_nao_reintroduzem_autofill_dev() -> None:
     raiz = Path(__file__).resolve().parents[1]
     login_admin = (raiz / "templates" / "admin" / "login.html").read_text(encoding="utf-8")
