@@ -65,7 +65,7 @@ describe("reportPackHelpers", () => {
     expect(summary?.inspectionContextDetail).toContain(
       "Validar ancoragem principal",
     );
-    expect(summary?.finalValidationModeLabel).toBe("Mesa obrigatoria");
+    expect(summary?.finalValidationModeLabel).toBe("Mesa Avaliadora");
     expect(summary?.pendingBlocks).toBeGreaterThan(0);
     expect(summary?.attentionBlocks).toBeGreaterThan(0);
     expect(summary?.highlightedBlocks.map((item) => item.title)).toEqual(

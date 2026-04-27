@@ -6,6 +6,10 @@ import type {
 } from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
 import {
+  sanitizarTextoThread,
+  textoThreadContemTermoInterno,
+} from "./ThreadConversationReviewCardUtils";
+import {
   obterTomStatusBloco,
   rotuloStatusBloco,
   rotuloTipoDiffHistorico,
@@ -16,6 +20,14 @@ import {
 type ReviewCommandHandler =
   | ((payload: MobileMesaReviewCommandPayload) => Promise<void>)
   | undefined;
+
+function formatarSinalizacaoVisivel(value: string): string {
+  const sanitized = sanitizarTextoThread(value);
+  if (textoThreadContemTermoInterno(sanitized) || sanitized.includes("_")) {
+    return "";
+  }
+  return sanitized;
+}
 
 function ReviewPackageActionButton(props: {
   disabled: boolean;
@@ -156,9 +168,9 @@ export function ThreadConversationReviewOfficialIssueSection(props: {
             {summary.primaryPdfIntegrityTitle}
           </Text>
           <Text style={styles.threadReviewWarningText}>
-            {summary.primaryPdfIntegritySummary}
+            {sanitizarTextoThread(summary.primaryPdfIntegritySummary)}
             {summary.primaryPdfIntegrityVersionDetail
-              ? ` ${summary.primaryPdfIntegrityVersionDetail}.`
+              ? ` ${sanitizarTextoThread(summary.primaryPdfIntegrityVersionDetail)}.`
               : ""}
           </Text>
         </View>
@@ -211,9 +223,7 @@ export function ThreadConversationReviewDiffSection(props: {
 
   return (
     <View style={styles.threadReviewList}>
-      <Text style={styles.threadReviewSectionTitle}>
-        Histórico de alterações
-      </Text>
+      <Text style={styles.threadReviewSectionTitle}>Histórico/Auditoria</Text>
       {summary.diffBlockHighlights.map((item) => (
         <View
           key={`${item.title}-${item.totalChanges}`}
@@ -229,14 +239,18 @@ export function ThreadConversationReviewDiffSection(props: {
                 : "Sem alteração consolidada neste bloco."}
             </Text>
             {item.summary ? (
-              <Text style={styles.threadReviewListText}>{item.summary}</Text>
+              <Text style={styles.threadReviewListText}>
+                {sanitizarTextoThread(item.summary)}
+              </Text>
             ) : null}
             {item.fields.map((field) => (
               <Text
                 key={`${item.title}-${field.label}-${field.changeType}`}
                 style={styles.threadReviewFootnote}
               >
-                {field.label}: {field.previousValue} → {field.currentValue}
+                {sanitizarTextoThread(field.label)}:{" "}
+                {sanitizarTextoThread(field.previousValue)} →{" "}
+                {sanitizarTextoThread(field.currentValue)}
               </Text>
             ))}
           </View>
@@ -258,12 +272,14 @@ export function ThreadConversationReviewDiffSection(props: {
             }
           />
           <View style={styles.threadReviewListCopy}>
-            <Text style={styles.threadReviewListTitle}>{item.label}</Text>
-            <Text style={styles.threadReviewListText}>
-              Antes: {item.previousValue}
+            <Text style={styles.threadReviewListTitle}>
+              {sanitizarTextoThread(item.label)}
             </Text>
             <Text style={styles.threadReviewListText}>
-              Agora: {item.currentValue}
+              Antes: {sanitizarTextoThread(item.previousValue)}
+            </Text>
+            <Text style={styles.threadReviewListText}>
+              Agora: {sanitizarTextoThread(item.currentValue)}
             </Text>
           </View>
         </View>
@@ -290,7 +306,9 @@ export function ThreadConversationReviewRedFlagsSection(props: {
         >
           <Text style={styles.threadReviewWarningTitle}>{item.title}</Text>
           {item.message ? (
-            <Text style={styles.threadReviewWarningText}>{item.message}</Text>
+            <Text style={styles.threadReviewWarningText}>
+              {sanitizarTextoThread(item.message)}
+            </Text>
           ) : null}
         </View>
       ))}
@@ -322,11 +340,14 @@ export function ThreadConversationReviewDecisionFocusSection(props: {
           <Text style={styles.threadReviewListText}>
             {decisionContext.requiredAction}
           </Text>
-          {decisionContext.failureReasons.map((item) => (
-            <Text key={item} style={styles.threadReviewFootnote}>
-              Sinalização: {item}
-            </Text>
-          ))}
+          {decisionContext.failureReasons
+            .map(formatarSinalizacaoVisivel)
+            .filter(Boolean)
+            .map((item) => (
+              <Text key={item} style={styles.threadReviewFootnote}>
+                Sinalização: {item}
+              </Text>
+            ))}
         </View>
       </View>
     </View>

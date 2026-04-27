@@ -102,6 +102,18 @@ export const chatThreadSurfaceStyles = {
     borderColor: colors.surfaceStrokeStrong,
     ...shadows.soft,
   },
+  threadOperationalPdfCard: {
+    borderColor: colors.infoSoft,
+    backgroundColor: colors.infoWash,
+  },
+  threadOfficialIssueCard: {
+    borderColor: colors.successSoft,
+    backgroundColor: colors.successWash,
+  },
+  threadReviewGovernanceCard: {
+    borderColor: colors.accentMuted,
+    backgroundColor: colors.accentWash,
+  },
   threadReviewEyebrow: {
     color: colors.accent,
     fontSize: 10,

@@ -19,6 +19,7 @@ import {
   lerRegistro,
   lerTexto,
   resumirIntegridadePdfOficial,
+  sanitizarTextoThread,
 } from "./ThreadConversationReviewCardUtils";
 
 function rotuloModoRevisao(reviewMode: string | null | undefined): string {
@@ -26,7 +27,7 @@ function rotuloModoRevisao(reviewMode: string | null | undefined): string {
     .trim()
     .toLowerCase();
   if (value === "mesa_required") {
-    return "Mesa obrigatória";
+    return "Família exige Mesa";
   }
   if (value === "mobile_review_allowed") {
     return "Revisão interna + Mesa";
@@ -127,7 +128,7 @@ function resumirProximaAcaoRevisao(params: {
       label: "Próxima ação",
       value: "Devolver para ajuste",
       detail:
-        modeLabel === "Mesa obrigatória"
+        modeLabel === "Família exige Mesa"
           ? "Corrija os pontos sinalizados e devolva o caso para ajuste antes de qualquer decisão final."
           : "Corrija os pontos sinalizados no mobile antes de aprovar ou escalar a revisão.",
     };
@@ -309,8 +310,8 @@ export function buildThreadConversationReviewPackageSummary(
   );
   const redFlags = lerArrayRegistros(reviewPackage.red_flags).map((item) => ({
     code: lerTexto(item.code),
-    title: lerTexto(item.title, "Red flag"),
-    message: lerTexto(item.message),
+    title: sanitizarTextoThread(lerTexto(item.title, "Alerta crítico")),
+    message: sanitizarTextoThread(lerTexto(item.message)),
     severity: lerTexto(item.severity, "high"),
   }));
   const historyItems = lerArrayRegistros(
@@ -318,47 +319,55 @@ export function buildThreadConversationReviewPackageSummary(
   );
   const baseDiffHighlights = lerArrayRegistros(inspectionDiff?.highlights).map(
     (item) => ({
-      label: lerTexto(item.label, "Campo"),
+      label: sanitizarTextoThread(lerTexto(item.label, "Campo")),
       changeType: lerTexto(item.change_type, "changed"),
-      previousValue: lerTexto(item.previous_value, "vazio"),
-      currentValue: lerTexto(item.current_value, "vazio"),
+      previousValue: sanitizarTextoThread(
+        lerTexto(item.previous_value, "vazio"),
+      ),
+      currentValue: sanitizarTextoThread(lerTexto(item.current_value, "vazio")),
     }),
   );
   const identityDiffHighlights = lerArrayRegistros(
     inspectionDiff?.identity_highlights,
   ).map((item) => ({
-    label: lerTexto(item.label, "Campo"),
+    label: sanitizarTextoThread(lerTexto(item.label, "Campo")),
     changeType: lerTexto(item.change_type, "changed"),
-    previousValue: lerTexto(item.previous_value, "vazio"),
-    currentValue: lerTexto(item.current_value, "vazio"),
+    previousValue: sanitizarTextoThread(lerTexto(item.previous_value, "vazio")),
+    currentValue: sanitizarTextoThread(lerTexto(item.current_value, "vazio")),
   }));
   const diffBlockHighlights = lerArrayRegistros(
     inspectionDiff?.block_highlights,
   ).map((item) => ({
-    title: lerTexto(item.title, "Bloco"),
-    summary: lerTexto(item.summary),
+    title: sanitizarTextoThread(lerTexto(item.title, "Bloco")),
+    summary: sanitizarTextoThread(lerTexto(item.summary)),
     totalChanges: lerNumero(item.total_changes),
     fields: lerArrayRegistros(item.fields)
       .map((field) => ({
-        label: lerTexto(field.label, "Campo"),
+        label: sanitizarTextoThread(lerTexto(field.label, "Campo")),
         changeType: lerTexto(field.change_type, "changed"),
-        previousValue: lerTexto(field.previous_value, "vazio"),
-        currentValue: lerTexto(field.current_value, "vazio"),
+        previousValue: sanitizarTextoThread(
+          lerTexto(field.previous_value, "vazio"),
+        ),
+        currentValue: sanitizarTextoThread(
+          lerTexto(field.current_value, "vazio"),
+        ),
       }))
       .slice(0, 2),
   }));
   const officialIssueTrail = lerArrayRegistros(emissaoOficial?.audit_trail).map(
     (item) => ({
-      title: lerTexto(item.title, "Evento documental"),
-      statusLabel: lerTexto(item.status_label, "Rastreável"),
-      summary: lerTexto(item.summary),
+      title: sanitizarTextoThread(lerTexto(item.title, "Evento documental")),
+      statusLabel: sanitizarTextoThread(
+        lerTexto(item.status_label, "Rastreável"),
+      ),
+      summary: sanitizarTextoThread(lerTexto(item.summary)),
     }),
   );
   const blockItems = lerArrayRegistros(revisaoPorBloco?.items).map((item) => ({
     blockKey: lerTexto(item.block_key),
-    title: lerTexto(item.title, "Bloco"),
+    title: sanitizarTextoThread(lerTexto(item.title, "Bloco")),
     reviewStatus: lerTexto(item.review_status, "ready"),
-    recommendedAction: lerTexto(item.recommended_action),
+    recommendedAction: sanitizarTextoThread(lerTexto(item.recommended_action)),
   }));
   const blockerCount = Array.isArray(reviewPackage.document_blockers)
     ? reviewPackage.document_blockers.length
@@ -416,15 +425,19 @@ export function buildThreadConversationReviewPackageSummary(
     blockStatusLabel: blockStatus.label,
     blockStatusTone: blockStatus.tone,
     entitlementMessage,
-    humanOverrideReason: lerTexto(humanOverrideLatest?.reason),
-    humanOverrideActor: lerTexto(humanOverrideLatest?.actor_name),
+    humanOverrideReason: sanitizarTextoThread(
+      lerTexto(humanOverrideLatest?.reason),
+    ),
+    humanOverrideActor: sanitizarTextoThread(
+      lerTexto(humanOverrideLatest?.actor_name),
+    ),
     humanOverrideWhen: lerTexto(humanOverrideLatest?.applied_at),
     humanOverrideCount: humanOverrideEnvelope
       ? lerNumero(humanOverrideEnvelope?.count)
       : 0,
     topRedFlags: redFlags.slice(0, 3),
-    inspectionHistorySummary: lerTexto(
-      lerRegistro(inspectionHistory?.diff)?.summary,
+    inspectionHistorySummary: sanitizarTextoThread(
+      lerTexto(lerRegistro(inspectionHistory?.diff)?.summary),
     ),
     inspectionHistorySource: [
       lerTexto(inspectionHistory?.source_codigo_hash),
@@ -438,29 +451,34 @@ export function buildThreadConversationReviewPackageSummary(
       ? `${lerNumero(anexoPack.total_present)}/${lerNumero(anexoPack.total_items)} anexos prontos`
       : "",
     annexMissingItems: Array.isArray(anexoPack?.missing_items)
-      ? anexoPack.missing_items.filter(
-          (item): item is string =>
-            typeof item === "string" && item.trim().length > 0,
-        )
+      ? anexoPack.missing_items
+          .filter(
+            (item): item is string =>
+              typeof item === "string" && item.trim().length > 0,
+          )
+          .map(sanitizarTextoThread)
       : [],
-    officialIssueLabel: lerTexto(
-      emissaoOficial?.issue_status_label,
-      "Emissão oficial governada",
+    officialIssueLabel: sanitizarTextoThread(
+      lerTexto(emissaoOficial?.issue_status_label, "Emissão oficial governada"),
     ),
     currentOfficialIssueNumber: lerTexto(emissaoAtual?.issue_number),
-    currentOfficialIssueStateLabel: lerTexto(
-      emissaoAtual?.issue_state_label,
-      "Emitido",
+    currentOfficialIssueStateLabel: sanitizarTextoThread(
+      lerTexto(emissaoAtual?.issue_state_label, "Emitido"),
     ),
     currentOfficialIssueIssuedAt: lerTexto(emissaoAtual?.issued_at),
     officialIssueDownloadAttachment,
     officialIssueBlockers: lerArrayRegistros(emissaoOficial?.blockers).map(
-      (item) => lerTexto(item.title || item.message, "Bloqueio de emissão"),
+      (item) =>
+        sanitizarTextoThread(
+          lerTexto(item.title || item.message, "Bloqueio de emissão"),
+        ),
     ),
     eligibleSignatoryCount: lerNumero(emissaoOficial?.eligible_signatory_count),
-    signatoryStatusLabel: lerTexto(
-      emissaoOficial?.signature_status_label,
-      "Sem leitura de assinatura",
+    signatoryStatusLabel: sanitizarTextoThread(
+      lerTexto(
+        emissaoOficial?.signature_status_label,
+        "Sem leitura de assinatura",
+      ),
     ),
     primaryPdfDiverged: issueIntegrity.diverged,
     primaryPdfIntegrityTitle: issueIntegrity.title,

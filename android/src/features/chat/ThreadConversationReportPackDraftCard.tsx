@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import type { MobileReportPackDraft } from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
 import { buildReportPackDraftSummary } from "./reportPackHelpers";
+import { sanitizarTextoThread } from "./ThreadConversationReviewCardUtils";
 import {
   ThreadConversationReportPackActionsSection,
   ThreadConversationReportPackAnalysisBasisSection,
@@ -43,12 +44,13 @@ export function renderizarReportPackDraftCard(
   const pendingText =
     summary.pendingBlocks > 0
       ? `${summary.pendingBlocks} bloco${summary.pendingBlocks === 1 ? "" : "s"} pendente${summary.pendingBlocks === 1 ? "" : "s"}`
-      : "Sem bloqueios do pré-laudo";
+      : "Sem pendências do caso";
   const attentionText =
     summary.attentionBlocks > 0
       ? `${summary.attentionBlocks} bloco${summary.attentionBlocks === 1 ? "" : "s"} em atenção`
-      : "Sem alertas ativos";
+      : "Sem revisão pendente";
   const visibleBlocks = [...summary.blockSummaries]
+    .filter((item) => item.status !== "ready")
     .sort((left, right) => {
       const priority = (value: string) => {
         if (value === "attention") {
@@ -65,8 +67,12 @@ export function renderizarReportPackDraftCard(
   const highlightedSections = summary.highlightedDocumentSections.length
     ? summary.highlightedDocumentSections
     : summary.documentSections.slice(0, 4);
-  const visibleEvidenceSlots = summary.requiredEvidenceSlots.slice(0, 4);
-  const visibleExecutiveSections = summary.executiveSections.slice(0, 3);
+  const visibleEvidenceSlots = [...summary.requiredEvidenceSlots]
+    .sort((left, right) => Number(left.resolved) - Number(right.resolved))
+    .slice(0, 3);
+  const visibleExecutiveSections = summary.executiveSections
+    .filter((item) => item.status !== "ready")
+    .slice(0, 2);
   const analysisBasisEntries = [
     summary.analysisBasisSummary.coverage_summary
       ? {
@@ -105,6 +111,10 @@ export function renderizarReportPackDraftCard(
     `${summary.minimumEvidence.documentos} doc${summary.minimumEvidence.documentos === 1 ? "" : "s"}`,
     `${summary.minimumEvidence.textos} texto${summary.minimumEvidence.textos === 1 ? "" : "s"}`,
   ].join(" · ");
+  const hasMinimumEvidence =
+    summary.minimumEvidence.fotos > 0 ||
+    summary.minimumEvidence.documentos > 0 ||
+    summary.minimumEvidence.textos > 0;
   const showQuestionActions =
     mode === "chat" &&
     summary.nextQuestions.length > 0 &&
@@ -120,11 +130,16 @@ export function renderizarReportPackDraftCard(
     Boolean(options?.onAbrirMesaTab);
 
   return (
-    <View style={styles.threadReviewCard} testID={testID}>
+    <View
+      style={[styles.threadReviewCard, styles.threadOperationalPdfCard]}
+      testID={testID}
+    >
       <Text style={styles.threadReviewEyebrow}>PDF operacional</Text>
-      <Text style={styles.threadReviewTitle}>{summary.readinessLabel}</Text>
+      <Text style={styles.threadReviewTitle}>
+        {sanitizarTextoThread(summary.readinessLabel)}
+      </Text>
       <Text style={styles.threadReviewDescription}>
-        {summary.readinessDetail}
+        {sanitizarTextoThread(summary.readinessDetail)}
       </Text>
       <Text style={styles.threadReviewFootnote}>
         Este card resume o PDF operacional. A emissão oficial aparece em bloco
@@ -132,27 +147,21 @@ export function renderizarReportPackDraftCard(
       </Text>
       {summary.inspectionContextLabel ? (
         <Text style={styles.threadReviewFootnote}>
-          {summary.inspectionContextLabel}
+          {sanitizarTextoThread(summary.inspectionContextLabel)}
           {summary.inspectionContextDetail
-            ? ` · ${summary.inspectionContextDetail}`
+            ? ` · ${sanitizarTextoThread(summary.inspectionContextDetail)}`
             : ""}
         </Text>
       ) : null}
       <View style={styles.threadReviewMetaGrid}>
         <View style={styles.threadReviewMetaItem}>
-          <Text style={styles.threadReviewMetaLabel}>Template</Text>
+          <Text style={styles.threadReviewMetaLabel}>Documento</Text>
           <Text style={styles.threadReviewMetaValue}>
-            {summary.templateLabel}
+            {sanitizarTextoThread(summary.templateLabel)}
           </Text>
         </View>
         <View style={styles.threadReviewMetaItem}>
-          <Text style={styles.threadReviewMetaLabel}>Família</Text>
-          <Text style={styles.threadReviewMetaValue}>
-            {summary.familyLabel || summary.familyKey || "Governada"}
-          </Text>
-        </View>
-        <View style={styles.threadReviewMetaItem}>
-          <Text style={styles.threadReviewMetaLabel}>Validação final</Text>
+          <Text style={styles.threadReviewMetaLabel}>Revisão</Text>
           <Text style={styles.threadReviewMetaValue}>
             {summary.finalValidationModeLabel}
           </Text>
@@ -162,18 +171,19 @@ export function renderizarReportPackDraftCard(
           <Text style={styles.threadReviewMetaValue}>{coverageText}</Text>
         </View>
         <View style={styles.threadReviewMetaItem}>
-          <Text style={styles.threadReviewMetaLabel}>Mínimo exigido</Text>
+          <Text style={styles.threadReviewMetaLabel}>Evidências</Text>
           <Text style={styles.threadReviewMetaValue}>
-            {minimumEvidenceLabel}
-          </Text>
-        </View>
-        <View style={styles.threadReviewMetaItem}>
-          <Text style={styles.threadReviewMetaLabel}>Conflito</Text>
-          <Text style={styles.threadReviewMetaValue}>
-            {summary.maxConflictScore}
+            {summary.evidenceCount || 0}
           </Text>
         </View>
       </View>
+      <Text style={styles.threadReviewFootnote}>
+        Família:{" "}
+        {sanitizarTextoThread(
+          summary.familyLabel || summary.familyKey || "Governada",
+        )}
+        {hasMinimumEvidence ? ` · Mínimo exigido: ${minimumEvidenceLabel}` : ""}
+      </Text>
       <Text style={styles.threadReviewFootnote}>{evidenceText}</Text>
       {summary.imageCount > 0 ? (
         <Text style={styles.threadReviewFootnote}>
@@ -182,12 +192,18 @@ export function renderizarReportPackDraftCard(
       ) : null}
       {summary.readyForStructuredForm ? (
         <Text style={styles.threadReviewFootnote}>
-          Estrutura do pré-laudo já materializada para consolidação formal.
+          Documento estruturado pronto para consolidação formal.
         </Text>
       ) : null}
       {summary.checklistGroupTitles.length ? (
         <Text style={styles.threadReviewFootnote}>
-          Checklist canônico: {summary.checklistGroupTitles.join(" · ")}
+          Checklist canônico:{" "}
+          {summary.checklistGroupTitles.map(sanitizarTextoThread).join(" · ")}
+        </Text>
+      ) : null}
+      {summary.maxConflictScore > 0 ? (
+        <Text style={styles.threadReviewFootnote}>
+          Revisão normativa: sinais para conferência humana.
         </Text>
       ) : null}
       <View style={styles.threadReviewChipRail}>
@@ -209,7 +225,7 @@ export function renderizarReportPackDraftCard(
           >
             {summary.autonomyReady
               ? "Pronto para validar"
-              : "Pré-laudo em montagem"}
+              : "PDF operacional em montagem"}
           </Text>
         </View>
         <View
@@ -265,34 +281,34 @@ export function renderizarReportPackDraftCard(
           </View>
         ) : null}
       </View>
-      <ThreadConversationReportPackFlowSection
-        items={summary.documentFlowEntries}
-      />
-      <ThreadConversationReportPackExecutiveSection
-        items={visibleExecutiveSections}
-      />
-      <ThreadConversationReportPackBlocksSection items={visibleBlocks} />
-      <ThreadConversationReportPackDocumentSections
-        items={highlightedSections}
-      />
-      <ThreadConversationReportPackEvidenceSlotsSection
-        items={visibleEvidenceSlots}
-      />
-      <ThreadConversationReportPackAnalysisBasisSection
-        items={analysisBasisEntries}
-      />
-      <ThreadConversationReportPackMissingEvidenceNotes
-        items={summary.missingEvidenceMessages}
-      />
-      <ThreadConversationReportPackReviewRequiredSection
-        items={summary.reviewRequired}
-      />
       <ThreadConversationReportPackActionsSection
         onAbrirMesaTab={options?.onAbrirMesaTab}
         onAbrirQualityGate={options?.onAbrirQualityGate}
         showFinalizeAction={showFinalizeAction}
         showOpenMesaAction={showOpenMesaAction}
         testID={testID}
+      />
+      <ThreadConversationReportPackDocumentSections
+        items={highlightedSections}
+      />
+      <ThreadConversationReportPackEvidenceSlotsSection
+        items={visibleEvidenceSlots}
+      />
+      <ThreadConversationReportPackBlocksSection items={visibleBlocks} />
+      <ThreadConversationReportPackMissingEvidenceNotes
+        items={summary.missingEvidenceMessages}
+      />
+      <ThreadConversationReportPackExecutiveSection
+        items={visibleExecutiveSections}
+      />
+      <ThreadConversationReportPackReviewRequiredSection
+        items={summary.reviewRequired}
+      />
+      <ThreadConversationReportPackAnalysisBasisSection
+        items={analysisBasisEntries}
+      />
+      <ThreadConversationReportPackFlowSection
+        items={summary.documentFlowEntries}
       />
       <ThreadConversationReportPackNextQuestionsSection
         items={summary.nextQuestions}

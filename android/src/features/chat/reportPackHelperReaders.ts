@@ -81,15 +81,15 @@ export function normalizeBlockStatus(value: unknown): ReportPackBlockStatus {
 export function labelForValidationMode(value: string): string {
   const normalized = value.trim().toLowerCase();
   if (normalized === "mobile_autonomous") {
-    return "Revisao interna governada";
+    return "Revisão interna governada";
   }
   if (normalized === "mobile_review_allowed") {
-    return "Revisao interna + Mesa";
+    return "Revisão interna + Mesa";
   }
   if (normalized === "mesa_required") {
-    return "Mesa obrigatoria";
+    return "Mesa Avaliadora";
   }
-  return normalized ? normalized.replace(/_/g, " ") : "Revisao governada";
+  return normalized ? normalized.replace(/_/g, " ") : "Revisão governada";
 }
 
 export function labelForBlockStatus(value: ReportPackBlockStatus): string {
