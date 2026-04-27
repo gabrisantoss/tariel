@@ -10893,6 +10893,23 @@ def test_revisor_emite_oficialmente_bundle_congelado_com_replay_idempotente(ambi
             assert registros[0].package_storage_path
             with open(str(registros[0].package_storage_path), "rb") as arquivo_congelado:
                 assert arquivo_congelado.read() == resposta_download.content
+            registros_download = banco.scalars(
+                select(RegistroAuditoriaEmpresa)
+                .where(
+                    RegistroAuditoriaEmpresa.empresa_id == ids["empresa_a"],
+                    RegistroAuditoriaEmpresa.acao == "emissao_oficial_download",
+                    RegistroAuditoriaEmpresa.portal == "mesa",
+                )
+                .order_by(RegistroAuditoriaEmpresa.id.asc())
+            ).all()
+            assert len(registros_download) == 1
+            payload = registros_download[0].payload_json or {}
+            assert payload["laudo_id"] == laudo_id
+            assert payload["artifact_kind"] == "official_package"
+            assert payload["issue_number"] == corpo["issue_number"]
+            assert payload["route_path"] == corpo["download_url"]
+            assert "package_storage_path" not in payload
+            assert "storage_path" not in payload
     finally:
         if os.path.exists(caminho_anexo):
             os.remove(caminho_anexo)

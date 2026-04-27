@@ -49,7 +49,7 @@ export function rotuloModoValidacao(value: string | null | undefined): string {
     return "Revisão mobile";
   }
   if (normalized === "mobile_autonomous") {
-    return "Autonomia mobile";
+    return "Revisão interna";
   }
   return normalized ? normalized.replace(/_/g, " ") : "Revisão governada";
 }

@@ -1,4 +1,5 @@
 import type {
+  MobileAttachment,
   MobileLifecycleTransition,
   MobileReviewPackage,
   MobileSurfaceAction,
@@ -31,9 +32,35 @@ function rotuloModoRevisao(reviewMode: string | null | undefined): string {
     return "Mobile com revisão";
   }
   if (value === "mobile_autonomous") {
-    return "Mobile autônomo";
+    return "Revisão interna";
   }
   return value ? value.replace(/_/g, " ") : "Revisão governada";
+}
+
+function montarAnexoDownloadOficial(
+  emissaoOficial: Record<string, unknown> | null,
+  emissaoAtual: Record<string, unknown> | null,
+): MobileAttachment | null {
+  const downloadUrl =
+    lerTexto(emissaoAtual?.download_url) ||
+    lerTexto(emissaoOficial?.download_url);
+  if (!downloadUrl) {
+    return null;
+  }
+
+  const issueNumber = lerTexto(emissaoAtual?.issue_number, "emissao_oficial");
+  const packageFilename = lerTexto(emissaoAtual?.package_filename);
+  const label =
+    lerTexto(emissaoAtual?.download_label) ||
+    (issueNumber ? `Baixar pacote ${issueNumber}` : "Baixar pacote oficial");
+
+  return {
+    nome: packageFilename || `${issueNumber}.zip`,
+    label,
+    mime_type: lerTexto(emissaoAtual?.download_mime_type) || "application/zip",
+    categoria: "emissao_oficial",
+    url: downloadUrl,
+  };
 }
 
 export function rotuloStatusBloco(reviewStatus: string): string {
@@ -109,9 +136,9 @@ function resumirProximaAcaoRevisao(params: {
   if (canApprove) {
     return {
       label: "Próxima ação",
-      value: "Aprovar no mobile",
+      value: "Aprovar internamente",
       detail:
-        "O pacote já permite decisão local. Aprove no mobile quando a revisão estiver coerente com a evidência consolidada.",
+        "O pacote já permite decisão interna no app. Aprove quando a revisão estiver coerente com a evidência consolidada.",
     };
   }
 
@@ -272,6 +299,10 @@ export function buildThreadConversationReviewPackageSummary(
   const anexoPack = lerRegistro(reviewPackage.anexo_pack);
   const emissaoOficial = lerRegistro(reviewPackage.emissao_oficial);
   const emissaoAtual = lerRegistro(emissaoOficial?.current_issue);
+  const officialIssueDownloadAttachment = montarAnexoDownloadOficial(
+    emissaoOficial,
+    emissaoAtual,
+  );
   const issueIntegrity = resumirIntegridadePdfOficial(
     emissaoOficial,
     emissaoAtual,
@@ -347,7 +378,7 @@ export function buildThreadConversationReviewPackageSummary(
   if (tenantEntitlements) {
     if (Boolean(tenantEntitlements.mobile_autonomous_allowed)) {
       entitlementMessage =
-        "Tenant habilitado para autonomia mobile nesta familia.";
+        "Tenant habilitado para revisão interna governada nesta família.";
     } else if (Boolean(tenantEntitlements.mobile_review_allowed)) {
       entitlementMessage =
         "Tenant habilitado para revisão mobile governada, com escalonamento opcional.";
@@ -422,6 +453,7 @@ export function buildThreadConversationReviewPackageSummary(
       "Emitido",
     ),
     currentOfficialIssueIssuedAt: lerTexto(emissaoAtual?.issued_at),
+    officialIssueDownloadAttachment,
     officialIssueBlockers: lerArrayRegistros(emissaoOficial?.blockers).map(
       (item) => lerTexto(item.title || item.message, "Bloqueio de emissão"),
     ),

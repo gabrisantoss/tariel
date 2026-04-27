@@ -206,7 +206,7 @@
             });
             if (el.workspaceRailToolboxHint) {
                 el.workspaceRailToolboxHint.hidden = visiveis > 0;
-                el.workspaceRailToolboxHint.textContent = "Servicos de Mesa no Inspetor nao estao contratados para esta empresa.";
+                el.workspaceRailToolboxHint.textContent = "Ferramentas de revisão e emissão não estão contratadas para esta empresa.";
             }
         }
 

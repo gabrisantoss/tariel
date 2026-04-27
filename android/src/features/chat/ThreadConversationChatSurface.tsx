@@ -177,7 +177,11 @@ export function ThreadConversationChatSurface({
       testID="chat-thread-surface"
     >
       {fluxoFormalAtivo
-        ? renderizarDocumentoEmitidoCard(reviewPackage, caseLifecycleStatus)
+        ? renderizarDocumentoEmitidoCard(
+            reviewPackage,
+            caseLifecycleStatus,
+            onAbrirAnexo,
+          )
         : null}
       {fluxoFormalAtivo
         ? renderizarReportPackDraftCard(reportPackDraft, {

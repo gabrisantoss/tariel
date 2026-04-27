@@ -14,6 +14,62 @@ def _texto_curto(value: Any, *, fallback: str | None = None) -> str | None:
     return fallback
 
 
+def _bool_dict(value: Any) -> dict[str, bool]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): bool(item) for key, item in value.items()}
+
+
+def _plain_dict(value: Any) -> dict[str, Any]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _resource_status(*, available: bool, depends_on_family: bool = False) -> tuple[str, str, str]:
+    if available and depends_on_family:
+        return "Disponível por família", "aprovado", "Depende da família/template"
+    if available:
+        return "Disponível", "aprovado", "Incluído no pacote"
+    return "Não incluído", "aguardando", "Não incluído no pacote"
+
+
+def _resource_item(
+    *,
+    key: str,
+    label: str,
+    available: bool,
+    detail_available: str,
+    detail_unavailable: str,
+    depends_on_family: bool = False,
+    action_kind: str | None = None,
+    action_target: str | None = None,
+    action_label: str | None = None,
+    chips: list[str] | None = None,
+) -> dict[str, Any]:
+    status_label, tone, meta = _resource_status(
+        available=available,
+        depends_on_family=depends_on_family,
+    )
+    item: dict[str, Any] = {
+        "key": key,
+        "label": label,
+        "available": available,
+        "status_label": status_label,
+        "tone": tone,
+        "meta": meta,
+        "detail": detail_available if available else detail_unavailable,
+        "depends_on_family": depends_on_family,
+        "contractual_blocked": not available,
+        "chips": list(chips or []),
+    }
+    if available and action_kind and action_target:
+        item["action"] = {
+            "label": action_label or "Abrir",
+            "kind": action_kind,
+            "target": action_target,
+        }
+    return item
+
+
 def build_tenant_commercial_overview_cliente(
     *,
     empresa_summary: dict[str, Any],
@@ -27,7 +83,125 @@ def build_tenant_commercial_overview_cliente(
         {"key": "inspetor", "label": "Inspetor", "enabled": bool(surface_availability.get("chat", True))},
         {"key": "revisor", "label": "Mesa Avaliadora", "enabled": bool(surface_availability.get("mesa", True))},
     ]
-    capability_entitlements = dict(tenant_policy_summary.get("tenant_capability_entitlements") or {})
+    capability_entitlements = _bool_dict(tenant_policy_summary.get("tenant_capability_entitlements"))
+    capability_aliases = _bool_dict(tenant_policy_summary.get("tenant_capability_aliases"))
+    mobile_chat_first_governance = _plain_dict(tenant_policy_summary.get("mobile_chat_first_governance"))
+    mesa_contracted = bool(surface_availability.get("mesa", True))
+    chat_enabled = bool(surface_availability.get("chat", True)) and bool(
+        capability_aliases.get("case_collect") or capability_entitlements.get("inspector_case_create")
+    )
+    mobile_enabled = bool(
+        capability_aliases.get("case_collect") or capability_entitlements.get("inspector_case_create")
+    )
+    separate_mesa_available = mesa_contracted and bool(
+        capability_aliases.get("case_send_to_separate_review")
+        or capability_aliases.get("case_review_decide")
+        or capability_entitlements.get("inspector_send_to_mesa")
+        or capability_entitlements.get("reviewer_decision")
+    )
+    separate_mesa_required = bool(mobile_chat_first_governance.get("separate_mesa_required"))
+    self_review_allowed = bool(
+        mobile_chat_first_governance.get("self_review_allowed")
+        or capability_aliases.get("case_self_review")
+    ) and not separate_mesa_required
+    official_issue_allowed = bool(
+        mobile_chat_first_governance.get("official_issue_allowed")
+        or capability_aliases.get("official_issue_create")
+        or capability_entitlements.get("reviewer_issue")
+    )
+    official_issue_download_allowed = bool(
+        capability_aliases.get("official_issue_download")
+        or capability_entitlements.get("reviewer_issue")
+    )
+    signatory_required = bool(mobile_chat_first_governance.get("signatory_required"))
+    documents_enabled = bool(surface_availability.get("documentos", True))
+    resource_summary = {
+        "mobile_enabled": mobile_enabled,
+        "chat_enabled": chat_enabled,
+        "self_review_allowed": self_review_allowed,
+        "separate_mesa_available": separate_mesa_available,
+        "official_issue_allowed": official_issue_allowed,
+        "official_issue_download_allowed": official_issue_download_allowed,
+        "signatory_required": signatory_required,
+        "documents_enabled": documents_enabled,
+    }
+    resources = [
+        _resource_item(
+            key="mobile",
+            label="Mobile",
+            available=mobile_enabled,
+            detail_available="App mobile pode operar coleta, fotos, chat e finalização conforme a família liberar.",
+            detail_unavailable="Mobile não está incluído no pacote atual.",
+            chips=["Cockpit técnico", "Fotos"],
+        ),
+        _resource_item(
+            key="chat",
+            label="Chat Inspetor",
+            available=chat_enabled,
+            detail_available="Chat Inspetor web disponível para abrir casos, conversar com IA e acompanhar finalização.",
+            detail_unavailable="Chat Inspetor não está incluído no pacote atual.",
+            action_kind="chat-section",
+            action_target="chat-overview",
+            action_label="Abrir Chat",
+            chips=["IA", "Casos"],
+        ),
+        _resource_item(
+            key="self_review",
+            label="Revisão interna",
+            available=self_review_allowed,
+            detail_available="Revisão interna governada disponível para famílias que permitem aprovação sem Mesa separada.",
+            detail_unavailable="Revisão interna não está liberada neste pacote ou a família exige revisão separada.",
+            depends_on_family=True,
+            chips=["Self-review", "Governança"],
+        ),
+        _resource_item(
+            key="mesa",
+            label="Mesa Avaliadora",
+            available=separate_mesa_available,
+            detail_available="Mesa Avaliadora disponível para revisão separada, devolução e aprovação quando contratada ou exigida.",
+            detail_unavailable="Mesa Avaliadora não incluída neste pacote; isso não é erro quando a família permite revisão interna.",
+            depends_on_family=True,
+            action_kind="mesa-section",
+            action_target="mesa-overview",
+            action_label="Abrir Mesa",
+            chips=["Revisão separada", "Aprovação"],
+        ),
+        _resource_item(
+            key="official_issue",
+            label="Emissão oficial",
+            available=official_issue_allowed,
+            detail_available="Emissão oficial disponível pelo motor governado, com pacote congelado, hash e requisitos de aprovação.",
+            detail_unavailable="PDF operacional pode existir, mas não vira emissão oficial sem esta capacidade contratada.",
+            depends_on_family=True,
+            action_kind="documentos-section",
+            action_target="documentos-overview",
+            action_label="Ver documentos",
+            chips=["Hash", "Manifest"],
+        ),
+        _resource_item(
+            key="documents",
+            label="Documentos oficiais",
+            available=documents_enabled,
+            detail_available="Aba Documentos disponível para histórico, status e downloads tenant-scoped.",
+            detail_unavailable="Documentos não estão liberados para este tenant.",
+            action_kind="documentos-section",
+            action_target="documentos-overview",
+            action_label="Abrir Documentos",
+            chips=["Histórico", "Downloads"],
+        ),
+        _resource_item(
+            key="governed_signatory",
+            label="Signatário governado",
+            available=official_issue_allowed and signatory_required,
+            detail_available="Signatário governado é exigido pelo fluxo de emissão oficial quando a família/pacote pedir.",
+            detail_unavailable="Signatário governado não está ativo enquanto emissão oficial não estiver contratada ou exigida.",
+            depends_on_family=True,
+            action_kind="documentos-section",
+            action_target="documentos-overview",
+            action_label="Ver emissão",
+            chips=["Assinatura", "Responsável técnico"],
+        ),
+    ]
     assignable_portals = [
         tenant_admin_user_portal_label(item)
         for item in list(tenant_policy_summary.get("tenant_assignable_portal_set") or [])
@@ -36,25 +210,27 @@ def build_tenant_commercial_overview_cliente(
     onboarding_pending = []
     if not users:
         onboarding_pending.append("Equipe operacional não criada")
-    if not bool(surface_availability.get("mesa", True)):
-        onboarding_pending.append("Mesa contratada não liberada")
-    if not bool(capability_entitlements.get("reviewer_issue")):
-        onboarding_pending.append("Emissão oficial ainda não coberta pelo pacote")
     return {
+        "commercial_service_package": str(tenant_policy_summary.get("commercial_service_package_effective") or ""),
         "package_label": _texto_curto(tenant_policy_summary.get("commercial_service_package_label"), fallback="Pacote contratado"),
         "package_description": _texto_curto(tenant_policy_summary.get("commercial_service_package_description")),
+        "operating_model": str(tenant_policy_summary.get("operating_model") or "standard"),
         "operating_model_label": _texto_curto(tenant_policy_summary.get("operating_model_label"), fallback="Operação padrão"),
+        "capability_aliases": capability_aliases,
+        "mobile_chat_first_governance": mobile_chat_first_governance,
+        "resource_summary": resource_summary,
+        "resources": resources,
         "operators_in_use": len(users),
         "operators_limit": empresa_summary.get("usuarios_max"),
-        "mesa_contracted": bool(surface_availability.get("mesa", True)),
-        "official_issue_included": bool(capability_entitlements.get("reviewer_issue")),
+        "mesa_contracted": mesa_contracted,
+        "official_issue_included": official_issue_allowed,
         "available_surfaces": [item for item in portals if item["enabled"]],
         "assignable_portal_labels": assignable_portals,
         "active_summary": [
             f"{len([item for item in portals if item['enabled']])} portais liberados",
             f"{len(users)} operadores cadastrados",
-            "Mesa contratada" if bool(surface_availability.get("mesa", True)) else "Sem mesa contratada",
-            "Emissão oficial incluída" if bool(capability_entitlements.get("reviewer_issue")) else "Sem emissão oficial",
+            "Mesa contratada" if mesa_contracted else "Sem Mesa contratada",
+            "Emissão oficial incluída" if official_issue_allowed else "Sem emissão oficial contratada",
         ],
         "pending_configuration": onboarding_pending,
     }

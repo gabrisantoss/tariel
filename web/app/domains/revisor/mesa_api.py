@@ -64,6 +64,7 @@ from app.domains.chat.nr35_linha_vida_structured_review import (
 )
 from app.shared.database import Usuario, obter_banco
 from app.shared.backend_hotspot_metrics import observe_backend_hotspot
+from app.shared.official_issue_download_audit import registrar_auditoria_download_emissao_oficial
 from app.shared.official_issue_package import OfficialIssueConflictError, load_active_official_issue_record
 from app.shared.official_issue_transaction import emitir_oficialmente_transacional
 from app.shared.security import exigir_revisor
@@ -848,6 +849,17 @@ async def baixar_emissao_oficial_congelada(
         if not path or not os.path.isfile(path):
             raise HTTPException(status_code=404, detail="Emissão oficial congelada não encontrada.")
         filename = str(getattr(record, "package_filename", "") or getattr(record, "issue_number", "") or "emissao_oficial.zip")
+        registrar_auditoria_download_emissao_oficial(
+            banco,
+            usuario=usuario,
+            laudo=pacote_carregado.laudo,
+            record=record,
+            artifact_kind="official_package",
+            surface="mesa",
+            route_path=f"/revisao/api/laudo/{laudo_id}/emissao-oficial/download",
+            filename=filename,
+            media_type="application/zip",
+        )
         hotspot.outcome = "file_response"
         hotspot.response_status_code = 200
         return FileResponse(

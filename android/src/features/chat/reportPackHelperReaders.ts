@@ -81,7 +81,7 @@ export function normalizeBlockStatus(value: unknown): ReportPackBlockStatus {
 export function labelForValidationMode(value: string): string {
   const normalized = value.trim().toLowerCase();
   if (normalized === "mobile_autonomous") {
-    return "Autonomia mobile";
+    return "Revisao interna";
   }
   if (normalized === "mobile_review_allowed") {
     return "Revisao mobile";

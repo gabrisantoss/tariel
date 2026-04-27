@@ -55,6 +55,7 @@ from app.domains.cliente.route_support import (
 )
 from app.domains.chat.schemas import DadosReabrirLaudo
 from app.shared.database import Laudo, Usuario, obter_banco
+from app.shared.official_issue_download_audit import registrar_auditoria_download_emissao_oficial
 from app.shared.official_issue_package import (
     load_active_official_issue_record,
     resolve_official_issue_primary_pdf_artifact,
@@ -672,8 +673,22 @@ async def api_documentos_baixar_pacote_oficial_nr35_cliente(
     laudo = _obter_laudo_documento_cliente(banco, laudo_id=laudo_id, usuario=usuario)
     registro = _obter_emissao_oficial_nr35_cliente(banco, laudo=laudo)
     filename = str(getattr(registro, "package_filename", "") or "").strip() or f"nr35_emissao_oficial_{int(laudo.id)}.zip"
+    package_path = str(getattr(registro, "package_storage_path", "") or "").strip()
+    if not package_path or not os.path.isfile(package_path):
+        raise HTTPException(status_code=404, detail="Artefato oficial não encontrado.")
+    registrar_auditoria_download_emissao_oficial(
+        banco,
+        usuario=usuario,
+        laudo=laudo,
+        record=registro,
+        artifact_kind="official_package",
+        surface="cliente",
+        route_path=f"/cliente/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial/pacote",
+        filename=filename,
+        media_type="application/zip",
+    )
     return _file_response_or_404(
-        path=getattr(registro, "package_storage_path", None),
+        path=package_path,
         filename=filename,
         media_type="application/zip",
     )
@@ -692,8 +707,23 @@ async def api_documentos_baixar_pdf_oficial_nr35_cliente(
     registro = _obter_emissao_oficial_nr35_cliente(banco, laudo=laudo)
     artifact = resolve_official_issue_primary_pdf_artifact(laudo, record=registro) or {}
     filename = str(artifact.get("file_name") or "").strip() or f"nr35_laudo_{int(laudo.id)}.pdf"
+    pdf_path = str(artifact.get("storage_path") or "").strip()
+    if not pdf_path or not os.path.isfile(pdf_path):
+        raise HTTPException(status_code=404, detail="Artefato oficial não encontrado.")
+    registrar_auditoria_download_emissao_oficial(
+        banco,
+        usuario=usuario,
+        laudo=laudo,
+        record=registro,
+        artifact_kind="primary_pdf",
+        surface="cliente",
+        route_path=f"/cliente/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial/pdf",
+        filename=filename,
+        media_type="application/pdf",
+        primary_pdf_sha256=str(artifact.get("sha256") or "").strip() or None,
+    )
     return _file_response_or_404(
-        path=str(artifact.get("storage_path") or "").strip(),
+        path=pdf_path,
         filename=filename,
         media_type="application/pdf",
     )

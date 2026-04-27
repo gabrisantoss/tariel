@@ -1,6 +1,6 @@
 # Contextos de Criacao, PDF, Revisao e Emissao Oficial de Laudos
 
-Atualizado em `2026-04-26`.
+Atualizado em `2026-04-27`.
 
 Status: analise operacional. Este documento nao muda contrato, template, gate, mobile smoke, Maestro, `human_ack`, Android, seed, flags ou comportamento de produto.
 
@@ -498,7 +498,7 @@ Caminhos que nao devem ser usados como prova final do Golden Path:
 | `nome_arquivo_pdf` isolado parece suficiente | emissao pode falhar mesmo com PDF presente | `build_official_issue_summary` ainda exige aprovacao, hash, signatario, anexos | tratar `nome_arquivo_pdf` como requisito, nao como prova |
 | Admin Cliente pode operar dependendo da policy | E2E pode passar com permissao errada | `case_actions`, capabilities e tenant grants | cenarios devem testar read-only e case-actions |
 | Mobile possui caminhos de aprovacao governada | NR35 poderia escapar da Mesa se policy errada | `mobile_case_approve`, `mobile_autonomous` | NR35 deve bloquear autonomia no piloto |
-| Reemissao/historico pode ser ignorado | documento antigo pode parecer atual | `superseded`, `primary_pdf_diverged`, reissue recommended | E2E deve cobrir emissao ativa e divergencia em recorte futuro |
+| Reemissao/historico pode ser ignorado | documento antigo pode parecer atual | `superseded`, `primary_pdf_diverged`, reissue recommended | PR9 cobre reemissao, superseded, historico, download principal e auditoria |
 | Signatario ausente bloqueia venda | pacote tecnico pronto nao emite | `no_eligible_signatory` | setup de staging deve criar signatario por tenant/familia |
 | Catalog release inativo | familia existe mas nao esta vendavel para tenant | `TenantFamilyReleaseLaudo.release_status` | fixture de piloto deve provar release ativo |
 | JSON aprovado divergente do PDF | documento entregue pode nao corresponder ao aprovado | PR6 adicionou blockers NR35 | manter teste de snapshot aprovado vs payload atual |
@@ -519,6 +519,7 @@ Caminhos que nao devem ser usados como prova final do Golden Path:
 | Emissao | `EmissaoOficialLaudo.issue_state=issued`, `package_sha256`, `issue_number` |
 | Portal Cliente | status `emitido`, historico, hash, download PDF/pacote |
 | Negativo | rascunho, 3 fotos, sem Mesa, sem signatario e sem manifest nao liberam download oficial |
+| Reemissao | divergencia pos-Mesa bloqueia emissao sem snapshot novo; nova aprovacao cria nova emissao e marca a anterior como `superseded` |
 
 ## Perguntas em Aberto
 
@@ -550,6 +551,25 @@ Para reduzir risco de regressao, o E2E deve validar explicitamente:
 | com Mesa nao humana | emissao bloqueada |
 | com PDF atual divergente | reemissao recomendada ou bloqueio conforme estado |
 
+## Resultado Do PR9 NR35 Reemissao/Superseded
+
+O PR9 fecha o recorte de reemissao oficial sem alterar release gate, mobile smoke, Maestro, `human_ack`, Android ou o significado do PDF operacional.
+
+Comportamento consolidado:
+
+| Situacao | Resultado |
+|---|---|
+| existe emissao oficial ativa | apenas `EmissaoOficialLaudo.issue_state=issued` e usado como principal |
+| PDF atual diverge do PDF congelado | pacote/read model sinaliza `primary_pdf_diverged` e `reissue_recommended`, mas download oficial continua apontando para o artefato congelado da emissao ativa |
+| payload/report pack NR35 diverge do snapshot aprovado | emissao oficial nova fica bloqueada com `nr35_approved_payload_diverged` ou `nr35_approved_report_pack_diverged` ate haver nova aprovacao/snapshot |
+| nova aprovacao/snapshot e nova emissao | `emitir_oficialmente_transacional` cria novo registro `issued`, novo `issue_number`, novo `package_sha256` e vinculo ao novo `approval_snapshot_id` |
+| emissao anterior substituida | registro anterior vira `issue_state=superseded`, recebe `superseded_at`, `superseded_by_issue_id`, `superseded_by_issue_number` e motivos sanitizados |
+| concorrencia/stale overwrite | chamadas com `expected_current_issue_id`/`expected_current_issue_number` obsoletos falham com conflito em vez de sobrescrever a emissao ativa |
+| Portal Cliente | `emissao_oficial` principal usa somente a emissao ativa; `historico_emissoes` lista a anterior como `Substituida` com `approval_snapshot_id`, hash, data e linhagem |
+| downloads/auditoria | download principal usa a emissao ativa; auditoria sanitizada preserva o `issue_number` baixado, incluindo emissao antiga quando ela foi baixada antes da reemissao |
+
+Teste principal adicionado: `web/tests/test_nr35_golden_path_official_issue_e2e.py::test_nr35_reemissao_superseded_preserva_historico_downloads_e_auditoria`.
+
 ## Resultado Do PR8 NR35
 
 O PR8 adiciona `web/tests/test_nr35_golden_path_official_issue_e2e.py` como prova de integracao governada do caminho vendavel NR35.
@@ -578,10 +598,10 @@ Os negativos do PR8 deixam explicito que estes caminhos nao fecham entrega venda
 | Mesa nao humana/aprovacao por IA | emissao bloqueada por origem invalida e `ia_aprovou_mesa` |
 | sem signatario governado | emissao bloqueada por `no_eligible_signatory` |
 
-Lacunas ainda fora do PR8:
+Lacunas fechadas no PR9:
 
-| Lacuna | Motivo |
+| Lacuna | Resultado |
 |---|---|
-| reemissao completa | precisa recorte dedicado para `superseded`, divergencia do PDF e novo snapshot |
-| auditoria de download | os endpoints fazem tenant boundary, mas ainda nao registram evento de download oficial |
+| reemissao completa | coberta com `superseded`, divergencia do PDF, novo snapshot e novo pacote |
+| auditoria de download | coberta em Portal Cliente, preservando `issue_number`, estado, hashes e artefato sem paths internos |
 | polimento visual | o E2E valida payload e download, nao regressao visual da aba Documentos |

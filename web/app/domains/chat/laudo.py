@@ -74,6 +74,7 @@ from app.shared.official_issue_package import (
     build_official_issue_package,
     load_active_official_issue_record,
 )
+from app.shared.official_issue_download_audit import registrar_auditoria_download_emissao_oficial
 from app.shared.official_issue_transaction import emitir_oficialmente_transacional
 from app.shared.tenant_entitlement_guard import (
     ensure_tenant_capability_for_user,
@@ -786,6 +787,17 @@ async def api_baixar_emissao_oficial_inspetor(
             getattr(record, "package_filename", "")
             or getattr(record, "issue_number", "")
             or "emissao_oficial.zip"
+        )
+        registrar_auditoria_download_emissao_oficial(
+            banco,
+            usuario=usuario,
+            laudo=laudo,
+            record=record,
+            artifact_kind="official_package",
+            surface="inspetor",
+            route_path=f"/app/api/laudo/{laudo_id}/emissao-oficial/download",
+            filename=filename,
+            media_type="application/zip",
         )
         hotspot.outcome = "file_response"
         hotspot.response_status_code = 200

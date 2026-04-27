@@ -53,6 +53,45 @@ export type MobileCommercialServicePackage =
 export type MobileIdentityRuntimeMode =
   | "standard_role_accounts"
   | "tenant_scoped_portal_grants";
+export type MobileChatFirstCapabilityAlias =
+  | "case_create"
+  | "case_collect"
+  | "case_finalize_request"
+  | "case_send_to_separate_review"
+  | "case_self_review"
+  | "case_review_decide"
+  | "structured_review_edit"
+  | "official_issue_create"
+  | "official_issue_download"
+  | "governed_signatory_select";
+export type MobileChatFirstReviewGovernanceMode =
+  | "separate_mesa_required"
+  | "mesa_optional"
+  | "self_review_allowed"
+  | "self_review_unavailable"
+  | "review_not_configured";
+export type MobileChatFirstApprovalActorScope =
+  | "separate_mesa"
+  | "inspector_self"
+  | "tenant_reviewer"
+  | "unassigned";
+export type MobileChatFirstIssueGovernanceMode =
+  | "none"
+  | "official_issue_allowed"
+  | "signatory_required";
+
+export interface MobileChatFirstGovernance {
+  review_governance_mode?: MobileChatFirstReviewGovernanceMode | string;
+  review_mode_legacy?: string | null;
+  approval_actor_scope?: MobileChatFirstApprovalActorScope | string;
+  issue_governance_mode?: MobileChatFirstIssueGovernanceMode | string;
+  separate_mesa_required?: boolean;
+  self_review_allowed?: boolean;
+  official_issue_allowed?: boolean;
+  signatory_required?: boolean;
+  available_case_actions?: string[];
+  capability_alias_source?: Record<string, string>;
+}
 
 export interface MobileTenantAccessPolicy {
   governed_by_admin_ceo: boolean;
@@ -62,9 +101,19 @@ export interface MobileTenantAccessPolicy {
   commercial_service_package_description?: string;
   portal_entitlements?: Partial<Record<MobileUserPortal, boolean>>;
   capability_entitlements?: Record<string, boolean>;
+  capability_aliases?: Partial<
+    Record<MobileChatFirstCapabilityAlias, boolean>
+  > &
+    Record<string, boolean>;
+  mobile_chat_first_governance?: MobileChatFirstGovernance;
   allowed_portals?: MobileUserPortal[];
   allowed_portal_labels?: string[];
   user_capability_entitlements?: Record<string, boolean>;
+  user_capability_aliases?: Partial<
+    Record<MobileChatFirstCapabilityAlias, boolean>
+  > &
+    Record<string, boolean>;
+  user_mobile_chat_first_governance?: MobileChatFirstGovernance;
 }
 
 export interface MobilePortalSwitchLink {

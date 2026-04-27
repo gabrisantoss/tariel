@@ -28,16 +28,18 @@ from app.domains.chat.nr35_linha_vida_validation import (
     validate_nr35_linha_vida_golden_path,
 )
 from app.shared.database import (
+    ApprovedCaseSnapshot,
     EmissaoOficialLaudo,
     Empresa,
     Laudo,
     NivelAcesso,
+    RegistroAuditoriaEmpresa,
     SignatarioGovernadoLaudo,
     StatusLaudo,
     StatusRevisao,
     Usuario,
 )
-from app.shared.official_issue_package import build_official_issue_package
+from app.shared.official_issue_package import OfficialIssueConflictError, build_official_issue_package
 from app.shared.official_issue_transaction import emitir_oficialmente_transacional
 from app.shared.operational_memory_hooks import record_approved_case_snapshot_for_laudo
 from app.shared.tenant_admin_policy import sanitize_tenant_admin_policy
@@ -305,6 +307,7 @@ def _materialize_primary_pdf(
     empresa_id: int,
     laudo_id: int,
     filename: str,
+    version_label: str = "v0003",
     pdf_bytes: bytes | None = None,
 ) -> tuple[Path, bytes]:
     content = pdf_bytes or _pdf_base_bytes_teste()
@@ -314,12 +317,69 @@ def _materialize_primary_pdf(
         / "laudos_emitidos"
         / f"empresa_{empresa_id}"
         / f"laudo_{laudo_id}"
-        / "v0003"
+        / version_label
         / filename
     )
     caminho.parent.mkdir(parents=True, exist_ok=True)
     caminho.write_bytes(content)
     return caminho, content
+
+
+def _record_manual_snapshot_nr35(
+    banco,
+    *,
+    laudo: Laudo,
+    approved_by_id: int,
+    document_outcome: str = "approved_by_mesa",
+) -> ApprovedCaseSnapshot:
+    latest_version = (
+        banco.scalar(
+            select(ApprovedCaseSnapshot.approval_version)
+            .where(ApprovedCaseSnapshot.laudo_id == int(laudo.id))
+            .order_by(ApprovedCaseSnapshot.approval_version.desc(), ApprovedCaseSnapshot.id.desc())
+            .limit(1)
+        )
+        or 0
+    )
+    snapshot_payload = {
+        "laudo_id": int(laudo.id),
+        "codigo_hash": str(laudo.codigo_hash or ""),
+        "tipo_template": str(laudo.tipo_template or ""),
+        "family_key": str(laudo.catalog_family_key or ""),
+        "family_label": str(laudo.catalog_family_label or ""),
+        "variant_key": str(laudo.catalog_variant_key or ""),
+        "variant_label": str(laudo.catalog_variant_label or ""),
+        "status_revisao": str(laudo.status_revisao or ""),
+        "status_conformidade": str(laudo.status_conformidade or ""),
+        "dados_formulario": deepcopy(laudo.dados_formulario or {}),
+        "report_pack_draft": deepcopy(laudo.report_pack_draft_json or {}),
+    }
+    snapshot_hash = hashlib.sha256(
+        json.dumps(snapshot_payload, ensure_ascii=True, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    snapshot = ApprovedCaseSnapshot(
+        laudo_id=int(laudo.id),
+        empresa_id=int(laudo.empresa_id),
+        family_key=NR35_FAMILY_KEY,
+        approval_version=int(latest_version) + 1,
+        approved_by_id=approved_by_id,
+        source_status_revisao=str(laudo.status_revisao or ""),
+        source_status_conformidade=str(laudo.status_conformidade or ""),
+        document_outcome=document_outcome,
+        laudo_output_snapshot=snapshot_payload,
+        evidence_manifest_json=[],
+        mesa_resolution_summary_json={
+            "decision": "aprovar",
+            "decision_source": "mesa_humana",
+            "reviewer_id": int(approved_by_id),
+            "reviewer_name": "Revisor A",
+        },
+        technical_tags_json=[NR35_FAMILY_KEY, NR35_TEMPLATE_KEY, "review_mode:mesa_required"],
+        snapshot_hash=snapshot_hash,
+    )
+    banco.add(snapshot)
+    banco.flush()
+    return snapshot
 
 
 def _approve_with_human_structured_review(banco, *, laudo: Laudo, revisor: Usuario):
@@ -586,6 +646,249 @@ def test_nr35_golden_path_emite_oficialmente_e_entrega_no_portal_cliente(
     resposta_pacote_tenant_errado = client.get(item_pos_emissao["emissao_oficial"]["download_package_url"])
     assert resposta_pdf_tenant_errado.status_code == 404
     assert resposta_pacote_tenant_errado.status_code == 404
+
+
+def test_nr35_reemissao_superseded_preserva_historico_downloads_e_auditoria(
+    ambiente_critico,
+    monkeypatch,
+    tmp_path,
+) -> None:
+    _patch_official_issue_storage(monkeypatch, tmp_path)
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    pdf_v1 = _pdf_base_bytes_teste()
+    pdf_v2 = pdf_v1 + b"\n% PR9 divergent official PDF bytes\n"
+
+    with SessionLocal() as banco:
+        selection_token = _configure_tenant_nr35_governance(banco, ids)
+        signatario = _add_nr35_signatory(banco, ids)
+        laudo = _create_nr35_laudo(
+            banco,
+            ids,
+            payload=_payload_nr35_mesa_humana_aprovada(),
+            report_pack=_report_pack_nr35(quatro_fotos=True),
+            selection_token=selection_token,
+            status_revisao=StatusRevisao.APROVADO.value,
+        )
+        _materialize_primary_pdf(
+            tmp_path=tmp_path,
+            empresa_id=ids["empresa_a"],
+            laudo_id=int(laudo.id),
+            filename=str(laudo.nome_arquivo_pdf),
+            pdf_bytes=pdf_v1,
+        )
+        snapshot_v1 = record_approved_case_snapshot_for_laudo(
+            banco,
+            laudo=laudo,
+            approved_by_id=ids["revisor_a"],
+            document_outcome="approved_by_mesa",
+            mesa_resolution_summary={
+                "decision": "aprovar",
+                "decision_source": "mesa_humana",
+                "reviewer_id": ids["revisor_a"],
+            },
+        )
+        actor_user = banco.get(Usuario, ids["revisor_a"])
+        assert actor_user is not None
+        primeira = emitir_oficialmente_transacional(
+            banco,
+            laudo=laudo,
+            actor_user=actor_user,
+            signatory_id=int(signatario.id),
+        )
+        banco.commit()
+
+        laudo_id = int(laudo.id)
+        signatory_id = int(signatario.id)
+        snapshot_v1_id = int(snapshot_v1.id)
+        issue_v1_payload = dict(primeira["record_payload"])
+        issue_v1_id = int(issue_v1_payload["id"])
+        issue_v1_number = str(issue_v1_payload["issue_number"])
+        package_v1_path = Path(str(primeira["record"].package_storage_path))
+        package_v1_bytes = package_v1_path.read_bytes()
+        package_v1_sha256 = issue_v1_payload["package_sha256"]
+
+    assert issue_v1_payload["issue_state"] == "issued"
+    assert issue_v1_payload["approval_snapshot_id"] == snapshot_v1_id
+    assert issue_v1_payload["primary_pdf_sha256"] == hashlib.sha256(pdf_v1).hexdigest()
+
+    _login_cliente(client, "cliente@empresa-a.test")
+    item_v1 = _bootstrap_documento_nr35(client, laudo_id)
+    assert item_v1["emissao_oficial"]["issue_number"] == issue_v1_number
+    assert item_v1["emissao_oficial"]["issue_state"] == "issued"
+    assert item_v1["historico_emissoes"][0]["issue_number"] == issue_v1_number
+
+    resposta_pdf_v1 = client.get(item_v1["emissao_oficial"]["download_pdf_url"])
+    resposta_pacote_v1 = client.get(item_v1["emissao_oficial"]["download_package_url"])
+    assert resposta_pdf_v1.status_code == 200
+    assert resposta_pdf_v1.content == pdf_v1
+    assert resposta_pacote_v1.status_code == 200
+    assert resposta_pacote_v1.content == package_v1_bytes
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        actor_user = banco.get(Usuario, ids["revisor_a"])
+        assert laudo is not None
+        assert actor_user is not None
+        _materialize_primary_pdf(
+            tmp_path=tmp_path,
+            empresa_id=ids["empresa_a"],
+            laudo_id=laudo_id,
+            filename=str(laudo.nome_arquivo_pdf),
+            version_label="v0004",
+            pdf_bytes=pdf_v2,
+        )
+        payload_divergente = deepcopy(laudo.dados_formulario)
+        payload_divergente["identificacao"]["codigo_interno"] = "NR35-PR9-REEMITIDO"
+        laudo.dados_formulario = payload_divergente
+        banco.flush()
+
+        _anexo_pack_divergente, emissao_divergente = build_official_issue_package(banco, laudo=laudo)
+        assert emissao_divergente["already_issued"] is True
+        assert emissao_divergente["reissue_recommended"] is True
+        assert emissao_divergente["ready_for_issue"] is False
+        assert emissao_divergente["current_issue"]["issue_number"] == issue_v1_number
+        assert emissao_divergente["current_issue"]["primary_pdf_diverged"] is True
+        blocker_codes = _blocker_codes(emissao_divergente)
+        assert "nr35_approved_payload_diverged" in blocker_codes
+
+        with pytest.raises(ValueError, match="snapshot aprovado"):
+            emitir_oficialmente_transacional(
+                banco,
+                laudo=laudo,
+                actor_user=actor_user,
+                signatory_id=signatory_id,
+            )
+        assert _active_issue_count(banco, laudo_id=laudo_id) == 1
+        assert banco.scalar(
+            select(EmissaoOficialLaudo).where(
+                EmissaoOficialLaudo.laudo_id == laudo_id,
+                EmissaoOficialLaudo.issue_state == "superseded",
+            )
+        ) is None
+        banco.commit()
+
+    item_divergente = _bootstrap_documento_nr35(client, laudo_id)
+    assert item_divergente["reissue_recommended"] is True
+    assert item_divergente["emissao_oficial"]["issue_number"] == issue_v1_number
+    assert item_divergente["emissao_oficial"]["issue_state"] == "issued"
+    assert item_divergente["emissao_oficial"]["primary_pdf_sha256"] == hashlib.sha256(pdf_v1).hexdigest()
+
+    resposta_pdf_divergente = client.get(item_divergente["emissao_oficial"]["download_pdf_url"])
+    assert resposta_pdf_divergente.status_code == 200
+    assert resposta_pdf_divergente.content == pdf_v1
+
+    with SessionLocal() as banco:
+        laudo = banco.get(Laudo, laudo_id)
+        actor_user = banco.get(Usuario, ids["revisor_a"])
+        assert laudo is not None
+        assert actor_user is not None
+        snapshot_v2 = _record_manual_snapshot_nr35(
+            banco,
+            laudo=laudo,
+            approved_by_id=ids["revisor_a"],
+        )
+        segunda = emitir_oficialmente_transacional(
+            banco,
+            laudo=laudo,
+            actor_user=actor_user,
+            signatory_id=signatory_id,
+            expected_active_issue_id=issue_v1_id,
+            expected_active_issue_number=issue_v1_number,
+        )
+        banco.commit()
+
+        issue_v2_payload = dict(segunda["record_payload"])
+        issue_v2_number = str(issue_v2_payload["issue_number"])
+        issue_v2_id = int(issue_v2_payload["id"])
+        package_v2_path = Path(str(segunda["record"].package_storage_path))
+        package_v2_bytes = package_v2_path.read_bytes()
+        package_v2_sha256 = issue_v2_payload["package_sha256"]
+        snapshot_v2_id = int(snapshot_v2.id)
+
+        registros = list(
+            banco.scalars(
+                select(EmissaoOficialLaudo)
+                .where(EmissaoOficialLaudo.laudo_id == laudo_id)
+                .order_by(EmissaoOficialLaudo.issued_at.asc(), EmissaoOficialLaudo.id.asc())
+            ).all()
+        )
+        assert len(registros) == 2
+        antigo, novo = registros
+        assert antigo.issue_number == issue_v1_number
+        assert antigo.issue_state == "superseded"
+        assert int(antigo.superseded_by_issue_id) == issue_v2_id
+        assert antigo.superseded_at is not None
+        assert antigo.package_sha256 == package_v1_sha256
+        assert int(antigo.approval_snapshot_id) == snapshot_v1_id
+        assert novo.issue_number == issue_v2_number
+        assert novo.issue_state == "issued"
+        assert novo.package_sha256 == package_v2_sha256
+        assert int(novo.approval_snapshot_id) == snapshot_v2_id
+
+        with pytest.raises(OfficialIssueConflictError):
+            emitir_oficialmente_transacional(
+                banco,
+                laudo=laudo,
+                actor_user=actor_user,
+                signatory_id=signatory_id,
+                expected_active_issue_id=issue_v1_id,
+                expected_active_issue_number=issue_v1_number,
+            )
+        banco.rollback()
+
+    assert issue_v2_number != issue_v1_number
+    assert package_v2_sha256 != package_v1_sha256
+    assert issue_v2_payload["issue_state"] == "issued"
+    assert issue_v2_payload["approval_snapshot_id"] == snapshot_v2_id
+    assert issue_v2_payload["reissue_of_issue_number"] == issue_v1_number
+    assert "approval_snapshot_updated" in issue_v2_payload["reissue_reason_codes"]
+    assert "primary_pdf_diverged" in issue_v2_payload["reissue_reason_codes"]
+    assert issue_v2_payload["primary_pdf_sha256"] == hashlib.sha256(pdf_v2).hexdigest()
+
+    item_v2 = _bootstrap_documento_nr35(client, laudo_id)
+    assert item_v2["already_issued"] is True
+    assert item_v2["reissue_recommended"] is False
+    assert item_v2["emissao_oficial"]["issue_number"] == issue_v2_number
+    assert item_v2["emissao_oficial"]["issue_state"] == "issued"
+    assert item_v2["emissao_oficial"]["package_sha256"] == package_v2_sha256
+    assert item_v2["emissao_oficial"]["primary_pdf_sha256"] == hashlib.sha256(pdf_v2).hexdigest()
+    assert item_v2["historico_emissoes"][0]["issue_number"] == issue_v2_number
+    assert item_v2["historico_emissoes"][0]["issue_state"] == "issued"
+    assert item_v2["historico_emissoes"][0]["approval_snapshot_id"] == snapshot_v2_id
+    assert item_v2["historico_emissoes"][1]["issue_number"] == issue_v1_number
+    assert item_v2["historico_emissoes"][1]["issue_state"] == "superseded"
+    assert item_v2["historico_emissoes"][1]["approval_snapshot_id"] == snapshot_v1_id
+    assert item_v2["historico_emissoes"][1]["superseded_by_issue_number"] == issue_v2_number
+    assert item_v2["historico_emissoes"][1]["package_sha256"] == package_v1_sha256
+
+    resposta_pdf_v2 = client.get(item_v2["emissao_oficial"]["download_pdf_url"])
+    resposta_pacote_v2 = client.get(item_v2["emissao_oficial"]["download_package_url"])
+    assert resposta_pdf_v2.status_code == 200
+    assert resposta_pdf_v2.content == pdf_v2
+    assert resposta_pacote_v2.status_code == 200
+    assert resposta_pacote_v2.content == package_v2_bytes
+
+    with SessionLocal() as banco:
+        payloads = [
+            dict(registro.payload_json or {})
+            for registro in banco.scalars(
+                select(RegistroAuditoriaEmpresa)
+                .where(
+                    RegistroAuditoriaEmpresa.empresa_id == ids["empresa_a"],
+                    RegistroAuditoriaEmpresa.acao == "emissao_oficial_download",
+                    RegistroAuditoriaEmpresa.portal == "cliente",
+                )
+                .order_by(RegistroAuditoriaEmpresa.id.asc())
+            ).all()
+        ]
+
+    assert {payload["issue_number"] for payload in payloads} >= {issue_v1_number, issue_v2_number}
+    assert any(payload["issue_number"] == issue_v1_number and payload["issue_state"] == "issued" for payload in payloads)
+    assert any(payload["issue_number"] == issue_v2_number and payload["issue_state"] == "issued" for payload in payloads)
+    assert all("package_storage_path" not in payload for payload in payloads)
+    assert all("storage_path" not in payload for payload in payloads)
 
 
 def test_nr35_pdf_operacional_nao_vira_emissao_oficial_no_portal_cliente(

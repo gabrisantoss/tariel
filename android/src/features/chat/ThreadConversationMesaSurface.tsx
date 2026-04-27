@@ -181,6 +181,7 @@ export function ThreadConversationMesaSurface({
         },
         onExecutarComandoRevisaoMobile,
         reviewCommandBusy,
+        onAbrirAnexo,
       ) ||
         renderizarReportPackDraftCard(reportPackDraft, {
           mode: "mesa",

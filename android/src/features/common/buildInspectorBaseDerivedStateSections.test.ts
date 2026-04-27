@@ -163,7 +163,7 @@ describe("buildInspectorBaseDerivedStateSections", () => {
     });
 
     expect(state.placeholderComposer).toBe(
-      "Caso sob revisão da mesa avaliadora.",
+      "Caso sob revisão da Mesa Avaliadora.",
     );
   });
 
@@ -245,6 +245,200 @@ describe("buildInspectorBaseDerivedStateSections", () => {
       "Mesa disponível após o primeiro laudo",
     );
     expect(state.placeholderMesa).toBe("Aguardando retorno da mesa.");
+  });
+
+  it("usa revisão interna quando o pacote não exige Mesa separada", () => {
+    const state = buildInspectorConversationDerivedState({
+      anexoMesaRascunho: null,
+      anexoRascunho: null,
+      arquivosPermitidos: true,
+      abaAtiva: "mesa",
+      colorScheme: "light",
+      conversa: {
+        laudoId: 42,
+        mensagens: [],
+        permiteEdicao: true,
+        permiteReabrir: false,
+        estado: "aguardando",
+        statusCard: "aberto",
+        laudoCard: criarLaudoParcial({
+          tipo_template: "normal",
+          status_card: "aberto",
+        }),
+        modo: "detalhado",
+      },
+      corDestaque: "laranja",
+      densidadeInterface: "confortável",
+      formatarTipoTemplateLaudo: jest.fn().mockReturnValue("Normal"),
+      mensagem: "",
+      mensagemMesa: "",
+      mensagensMesa: [],
+      obterEscalaDensidade: jest.fn().mockReturnValue(1),
+      obterEscalaFonte: jest.fn().mockReturnValue(1),
+      podeEditarConversaNoComposer: jest.fn().mockReturnValue(true),
+      preparandoAnexo: false,
+      previewChatLiberadoParaConversa: jest.fn().mockReturnValue(false),
+      session: {
+        accessToken: "token-123",
+        bootstrap: {
+          ok: true,
+          app: {
+            api_base_url: "https://tariel.test",
+            nome: "Tariel Inspetor",
+            portal: "inspetor",
+            suporte_whatsapp: "",
+          },
+          usuario: {
+            id: 7,
+            nome_completo: "Inspetor Tariel",
+            email: "inspetor@tariel.test",
+            telefone: "",
+            foto_perfil_url: "",
+            empresa_nome: "Empresa A",
+            empresa_id: 33,
+            nivel_acesso: 1,
+            allowed_portals: ["inspetor"],
+            tenant_access_policy: {
+              governed_by_admin_ceo: true,
+              portal_entitlements: {
+                inspetor: true,
+                revisor: false,
+              },
+              user_capability_aliases: {
+                case_self_review: true,
+                case_send_to_separate_review: false,
+                official_issue_create: false,
+                official_issue_download: false,
+              },
+              user_mobile_chat_first_governance: {
+                review_governance_mode: "self_review_allowed",
+                approval_actor_scope: "inspector_self",
+                issue_governance_mode: "none",
+                separate_mesa_required: false,
+                self_review_allowed: true,
+                official_issue_allowed: false,
+                signatory_required: false,
+                available_case_actions: ["case_self_review"],
+              },
+            },
+          },
+        },
+      },
+      tamanhoFonte: "médio",
+      temaApp: "claro",
+      uploadArquivosAtivo: true,
+      carregandoConversa: false,
+      carregandoMesa: false,
+      enviandoMensagem: false,
+      enviandoMesa: false,
+    });
+
+    expect(state.mesaAcessoPermitido).toBe(false);
+    expect(state.reviewSurfaceLabel).toBe("Revisão interna");
+    expect(state.selfReviewAllowed).toBe(true);
+    expect(state.separateMesaRequired).toBe(false);
+    expect(state.officialIssueAllowed).toBe(false);
+    expect(state.officialIssueLabel).toBe("Emissão oficial indisponível");
+    expect(state.mesaIndisponivelTitulo).toBe("Revisão interna habilitada");
+    expect(state.placeholderMesa).toBe(
+      "Use a revisão interna do caso; este pacote não possui Mesa separada.",
+    );
+  });
+
+  it("expõe emissão oficial e download quando os aliases neutros permitem", () => {
+    const state = buildInspectorConversationDerivedState({
+      anexoMesaRascunho: null,
+      anexoRascunho: null,
+      arquivosPermitidos: true,
+      abaAtiva: "finalizar",
+      colorScheme: "light",
+      conversa: {
+        laudoId: 42,
+        mensagens: [],
+        permiteEdicao: true,
+        permiteReabrir: false,
+        estado: "aguardando",
+        statusCard: "aberto",
+        laudoCard: criarLaudoParcial({
+          tipo_template: "normal",
+          status_card: "aberto",
+        }),
+        modo: "detalhado",
+      },
+      corDestaque: "laranja",
+      densidadeInterface: "confortável",
+      formatarTipoTemplateLaudo: jest.fn().mockReturnValue("Normal"),
+      mensagem: "",
+      mensagemMesa: "",
+      mensagensMesa: [],
+      obterEscalaDensidade: jest.fn().mockReturnValue(1),
+      obterEscalaFonte: jest.fn().mockReturnValue(1),
+      podeEditarConversaNoComposer: jest.fn().mockReturnValue(true),
+      preparandoAnexo: false,
+      previewChatLiberadoParaConversa: jest.fn().mockReturnValue(false),
+      session: {
+        accessToken: "token-123",
+        bootstrap: {
+          ok: true,
+          app: {
+            api_base_url: "https://tariel.test",
+            nome: "Tariel Inspetor",
+            portal: "inspetor",
+            suporte_whatsapp: "",
+          },
+          usuario: {
+            id: 7,
+            nome_completo: "Inspetor Tariel",
+            email: "inspetor@tariel.test",
+            telefone: "",
+            foto_perfil_url: "",
+            empresa_nome: "Empresa A",
+            empresa_id: 33,
+            nivel_acesso: 1,
+            allowed_portals: ["inspetor", "revisor"],
+            tenant_access_policy: {
+              governed_by_admin_ceo: true,
+              portal_entitlements: {
+                inspetor: true,
+                revisor: true,
+              },
+              user_capability_aliases: {
+                case_send_to_separate_review: true,
+                official_issue_create: true,
+                official_issue_download: true,
+                governed_signatory_select: true,
+              },
+              user_mobile_chat_first_governance: {
+                review_governance_mode: "separate_mesa_required",
+                approval_actor_scope: "separate_mesa",
+                issue_governance_mode: "signatory_required",
+                separate_mesa_required: true,
+                self_review_allowed: false,
+                official_issue_allowed: true,
+                signatory_required: true,
+                available_case_actions: [
+                  "case_send_to_separate_review",
+                  "official_issue_create",
+                  "official_issue_download",
+                ],
+              },
+            },
+          },
+        },
+      },
+      tamanhoFonte: "médio",
+      temaApp: "claro",
+      uploadArquivosAtivo: true,
+      carregandoConversa: false,
+      carregandoMesa: false,
+      enviandoMensagem: false,
+      enviandoMesa: false,
+    });
+
+    expect(state.reviewSurfaceLabel).toBe("Mesa Avaliadora");
+    expect(state.officialIssueAllowed).toBe(true);
+    expect(state.officialIssueDownloadAllowed).toBe(true);
+    expect(state.officialIssueLabel).toBe("Emissão oficial");
   });
 
   it("prioriza a ação canônica de reabrir no placeholder do chat", () => {
