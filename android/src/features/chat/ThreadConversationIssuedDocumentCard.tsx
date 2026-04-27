@@ -50,20 +50,23 @@ export function renderizarDocumentoEmitidoCard(
 
   return (
     <View style={styles.threadReviewCard} testID={testID}>
-      <Text style={styles.threadReviewEyebrow}>documento emitido</Text>
+      <Text style={styles.threadReviewEyebrow}>Emissão oficial</Text>
       <Text style={styles.threadReviewTitle}>
-        {issueNumber || "PDF final governado"}
+        {issueNumber || "Documento oficial"}
       </Text>
       <Text style={styles.threadReviewDescription}>
         {issueIntegrity.diverged
-          ? "O PDF atual divergiu do documento emitido. Gere uma nova emissão antes de distribuir a versão atual."
+          ? "O PDF operacional atual divergiu do documento oficial emitido. Gere uma nova emissão antes de distribuir a versão atual."
           : emitted
-            ? "O caso já foi emitido. Reabra apenas se precisar iniciar um novo ciclo técnico."
+            ? "A emissão oficial deste caso está concluída. Reabra apenas se precisar iniciar um novo ciclo técnico."
             : "A emissão oficial já está registrada para este caso."}
+      </Text>
+      <Text style={styles.threadReviewFootnote}>
+        PDF operacional e emissão oficial são trilhas separadas no app.
       </Text>
       <View style={styles.threadReviewMetaGrid}>
         <View style={styles.threadReviewMetaItem}>
-          <Text style={styles.threadReviewMetaLabel}>Estado</Text>
+          <Text style={styles.threadReviewMetaLabel}>Estado da emissão</Text>
           <Text style={styles.threadReviewMetaValue}>{issueState}</Text>
         </View>
         <View style={styles.threadReviewMetaItem}>

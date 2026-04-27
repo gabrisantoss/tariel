@@ -268,7 +268,7 @@ describe("HistoryDrawerPanel", () => {
       "Operacao · Mesa avaliadora · Aprovar internamente",
     );
     expect(getByTestId("history-item-owner-80").props.children).toBe(
-      "Owner · Mesa avaliadora",
+      "Responsável · Mesa avaliadora",
     );
     expect(getByTestId("history-item-route-80").props.children).toBe(
       "Rota · Tratar na mesa",

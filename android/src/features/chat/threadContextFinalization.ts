@@ -18,10 +18,10 @@ export function rotuloModoHandoffMesa(
     return "Mesa obrigatória";
   }
   if (value === "mobile_review_allowed") {
-    return "Revisão mobile";
+    return "Revisão interna + Mesa";
   }
   if (value === "mobile_autonomous") {
-    return "Revisão interna";
+    return "Revisão interna governada";
   }
   return value ? value.replace(/_/g, " ") : "Revisão governada";
 }
@@ -479,7 +479,7 @@ function resumirRotaSugeridaFinalizacao(params: {
   if (params.reviewMode === "mesa_required" || params.ownerRole === "mesa") {
     return {
       detail:
-        "A política e o owner atual do caso apontam a Mesa como próxima etapa principal.",
+        "A política e o responsável atual do caso apontam a Mesa como próxima etapa principal.",
       icon: "clipboard-alert-outline" as const,
       key: "suggested-route",
       label: "Rota sugerida",
@@ -756,14 +756,14 @@ export function resumirContextoFinalizacao(params: {
       },
       {
         key: "current-owner",
-        label: "Owner atual",
+        label: "Responsável atual",
         value: ownerRoleLabel,
         detail:
           ownerRole === "mesa"
             ? "A Mesa domina o próximo movimento do caso neste momento."
             : ownerRole === "none"
               ? "O ciclo técnico principal já foi concluído e o restante é acompanhamento documental."
-              : "O inspetor segue como dono do próximo avanço operacional.",
+              : "O inspetor segue como responsável pelo próximo avanço operacional.",
         tone:
           ownerRole === "mesa"
             ? ("danger" as const)

@@ -248,7 +248,7 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
     ownerLabel
       ? {
           key: "owner",
-          label: `Owner · ${ownerLabel}`,
+          label: `Responsável · ${ownerLabel}`,
           testID: `history-item-owner-${item.id}`,
         }
       : null,
