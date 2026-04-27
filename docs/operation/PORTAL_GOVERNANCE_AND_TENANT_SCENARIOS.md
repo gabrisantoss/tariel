@@ -83,6 +83,10 @@ Checkpoint PR F: `web/tests/test_mobile_only_client_no_mesa_pr_f.py` prova o pac
 
 No Portal Cliente, esse cenario deve aparecer como pacote com Mobile/Chat e `Revisao interna` disponiveis, Mesa nao incluida e `Emissao oficial` nao incluida. A aba Documentos pode mostrar PDF operacional e historico do caso, mas nao deve expor `issue_number`, download oficial ou `reissue_recommended` sem uma `EmissaoOficialLaudo` ativa.
 
+Checkpoint PR G: `web/tests/test_company_no_mesa_multi_user_pr_g.py` prova a variacao empresa sem Mesa com multiplos usuarios no modelo `standard`. O Admin Cliente fica tenant-scoped: gerencia equipe operacional e acompanha documentos, mas nao cria outro Admin Cliente, nao altera plano diretamente e nao concede `revisor` quando `tenant_portal_revisor_enabled=false`. O Portal Cliente mostra dois inspetores, Mobile/Chat e `Revisao interna` disponiveis, Mesa e `Emissao oficial` nao incluidas, e a aba Documentos preserva PDF operacional sem `issue_number`, historico de emissao ou download oficial.
+
+O mesmo teste fixa o limite por familia: NR35 Linha de Vida nao cai em self-review nesse tenant sem Mesa. A finalizacao bloqueia com `nr35_mesa_required_unavailable`, sem `ApprovedCaseSnapshot` e sem `EmissaoOficialLaudo`.
+
 Capabilities atuais:
 
 | Capability | O que libera | Dependência de portal | Onde bloqueia |
