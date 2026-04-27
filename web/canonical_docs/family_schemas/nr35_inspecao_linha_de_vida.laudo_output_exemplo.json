@@ -1,6 +1,7 @@
 {
   "schema_type": "laudo_output",
   "schema_version": 1,
+  "template_version": 1,
   "family_key": "nr35_inspecao_linha_de_vida",
   "template_code": "nr35_inspecao_linha_de_vida",
   "tokens": {
@@ -14,6 +15,8 @@
     "laudo_id": "AT-IN-OZ-001-01-26",
     "empresa_nome": "Caramuru Alimentos S/A",
     "unidade_nome": "Usina Orizona",
+    "local_documento": "Orizona - GO",
+    "tipo_inspecao": "Inspecao Periodica",
     "data_execucao": "2026-01-29",
     "data_emissao": "2026-04-08",
     "status_mesa": "aprovado_com_ressalva",
@@ -29,10 +32,41 @@
     "pendencias_resolvidas_texto": "Pendencias documentais secundarias foram registradas e tratadas pela Mesa.",
     "observacoes_mesa": "Caso mantido em nr35_inspecao_linha_de_vida com rastreabilidade de escopo e evidencias."
   },
+  "pdf_contract": {
+    "required_sections": [
+      "capa_folha_rosto",
+      "controle_documental_sumario",
+      "identificacao_laudo",
+      "objeto_escopo_base_normativa",
+      "metodologia_instrumentos_equipe",
+      "evidencias_registros_fotograficos",
+      "checklist_tecnico",
+      "achados_nao_conformidades",
+      "conclusao",
+      "revisao_mesa",
+      "assinaturas_responsabilidade_tecnica",
+      "auditoria_emissao"
+    ],
+    "required_sections_texto": "capa_folha_rosto; controle_documental_sumario; identificacao_laudo; objeto_escopo_base_normativa; metodologia_instrumentos_equipe; evidencias_registros_fotograficos; checklist_tecnico; achados_nao_conformidades; conclusao; revisao_mesa; assinaturas_responsabilidade_tecnica; auditoria_emissao",
+    "required_photo_slots_texto": "foto_visao_geral; foto_ponto_superior; foto_ponto_inferior; foto_detalhe_critico",
+    "traceability_chain": "foto -> achado -> campo JSON -> secao PDF -> decisao Mesa -> emissao oficial",
+    "mesa_required": true
+  },
+  "auditoria": {
+    "family_key": "nr35_inspecao_linha_de_vida",
+    "template_code": "nr35_inspecao_linha_de_vida",
+    "schema_version": 1,
+    "template_version": 1,
+    "mesa_status": "aprovado_com_ressalva",
+    "rastreabilidade_texto": "foto -> achado -> campo JSON -> secao PDF -> decisao Mesa -> emissao oficial",
+    "emissao_oficial_status": "bloqueada_ate_validacao_mesa_pdf"
+  },
   "resumo_executivo": "Linha de vida vertical com corrosao inicial no cabo de aco proximo ao topo, rastreabilidade fotografica suficiente e necessidade de bloqueio para correcao antes da liberacao.",
   "identificacao": {
     "objeto_principal": "MC-CRMRSS-0977 Escada de acesso ao elevador 01",
     "localizacao": "Orizona - GO | Escada de acesso ao elevador 01",
+    "unidade_operacional": "Usina Orizona",
+    "local_documento": "Orizona - GO",
     "referencia_principal": {
       "disponivel": true,
       "referencias": [
@@ -44,14 +78,25 @@
       "observacao": "A referencia principal identifica o ativo e ancora a rastreabilidade do laudo."
     },
     "codigo_interno": "AT-IN-OZ-001-01-26",
+    "documento_codigo": "AT-IN-OZ-001-01-26",
     "tipo_ativo": "Vertical",
+    "tipo_inspecao": "Inspecao Periodica",
+    "tipo_sistema": "Linha de vida vertical",
     "contratante": "Caramuru Alimentos S/A",
     "contratada": "ATY Service LTDA",
+    "engenheiro_responsavel": "Gabriel Santos",
     "inspetor_lider": "Marcel Renato Silva",
     "numero_laudo_inspecao": "AT-IN-OZ-001-01-26",
     "numero_laudo_fabricante": "MC-CRMR-0032",
     "art_numero": "ART 2026-00077",
+    "vinculado_art": "ART 2026-00077",
     "data_vistoria": "2026-01-29"
+  },
+  "objeto_inspecao": {
+    "descricao_escopo": "Inspecao periodica da linha de vida vertical da escada de acesso ao elevador 01, com verificacao dos componentes criticos, registros fotograficos e parecer final de uso.",
+    "tipo_linha_de_vida": "Vertical",
+    "resumo_componentes_avaliados": "Fixacao dos pontos; Cabo de aco; Esticador; Sapatilha; Olhal; Grampos",
+    "classificacao_uso": "Sistema de trabalho em altura com acesso vertical"
   },
   "escopo_servico": {
     "tipo_entrega": "inspecao_tecnica",
@@ -67,31 +112,82 @@
       "disponivel": true,
       "referencias": [
         "IMG_702",
-        "IMG_703"
+        "IMG_703",
+        "IMG_704"
       ],
-      "referencias_texto": "IMG_702 - ponto_superior.png; IMG_703 - ponto_inferior.png",
-      "descricao": "Registros da vistoria principal cobrindo o ponto superior com corrosao inicial e o terminal inferior do sistema.",
+      "referencias_texto": "IMG_702 - ponto_superior.png; IMG_703 - ponto_inferior.png; IMG_704 - detalhe_corrosao_cabo.png",
+      "descricao": "Registros da vistoria principal cobrindo o ponto superior, o terminal inferior e o detalhe critico de corrosao inicial no cabo.",
       "observacao": "As fotos de execucao suportam o checklist tecnico da linha de vida."
     }
+  },
+  "metodologia_e_recursos": {
+    "metodologia": "Inspecao visual e dimensional da linha de vida, com verificacao dos pontos de ancoragem, componentes de uniao, integridade aparente e rastreabilidade fotografica do sistema.",
+    "instrumentos_utilizados": "Paquimetro 300 mm; Trena manual 5 m; Trena de fita 50 m; Trena digital; Dinamometro",
+    "aviso_importante": "O presente laudo limita-se a analise visual e dimensional do sistema nas condicoes observadas na vistoria. Qualquer intervencao corretiva deve ser seguida de nova inspecao antes da liberacao do uso."
+  },
+  "registros_fotograficos": {
+    "referencias_texto": "Vista geral: IMG_701 - vista_geral.png; Ponto superior: IMG_702 - ponto_superior.png; Ponto inferior: IMG_703 - ponto_inferior.png; Detalhe critico: IMG_704 - detalhe_corrosao_cabo.png",
+    "descricao": "Sequencia fotografica consolidada com vista geral do sistema, ponto superior, ponto inferior e detalhe critico da corrosao inicial.",
+    "observacao": "Os registros fotograficos suportam a verificacao dos componentes e a decisao final de bloqueio.",
+    "slots_obrigatorios": [
+      {
+        "slot": "foto_visao_geral",
+        "titulo": "Visao geral da linha de vida",
+        "referencia_persistida": "IMG_701",
+        "legenda_tecnica": "Vista geral da linha de vida vertical e do contexto da escada de acesso.",
+        "campo_json": "identificacao.referencia_principal",
+        "achado_relacionado": "contexto_do_sistema",
+        "secao_pdf": "evidencias_registros_fotograficos"
+      },
+      {
+        "slot": "foto_ponto_superior",
+        "titulo": "Ponto superior ou extremidade principal",
+        "referencia_persistida": "IMG_702",
+        "legenda_tecnica": "Ponto superior com corrosao inicial proxima ao cabo de aco.",
+        "campo_json": "execucao_servico.evidencia_execucao",
+        "achado_relacionado": "ancoragem_ou_extremidade_principal",
+        "secao_pdf": "evidencias_registros_fotograficos"
+      },
+      {
+        "slot": "foto_ponto_inferior",
+        "titulo": "Ponto inferior ou extremidade secundaria",
+        "referencia_persistida": "IMG_703",
+        "legenda_tecnica": "Terminal inferior registrado para completar a rastreabilidade do sistema.",
+        "campo_json": "evidencias_e_anexos.evidencia_complementar",
+        "achado_relacionado": "ancoragem_ou_extremidade_secundaria",
+        "secao_pdf": "evidencias_registros_fotograficos"
+      },
+      {
+        "slot": "foto_detalhe_critico",
+        "titulo": "Detalhe critico tecnico",
+        "referencia_persistida": "IMG_704",
+        "legenda_tecnica": "Detalhe critico da corrosao no cabo de aco que sustenta o bloqueio operacional.",
+        "campo_json": "nao_conformidades_ou_lacunas.evidencias",
+        "achado_relacionado": "achado_critico_ou_nao_conformidade",
+        "secao_pdf": "achados_nao_conformidades"
+      }
+    ],
+    "slots_obrigatorios_texto": "slot: foto_visao_geral; referencia: IMG_701; campo_json: identificacao.referencia_principal; secao_pdf: evidencias_registros_fotograficos; slot: foto_ponto_superior; referencia: IMG_702; campo_json: execucao_servico.evidencia_execucao; secao_pdf: evidencias_registros_fotograficos; slot: foto_ponto_inferior; referencia: IMG_703; campo_json: evidencias_e_anexos.evidencia_complementar; secao_pdf: evidencias_registros_fotograficos; slot: foto_detalhe_critico; referencia: IMG_704; campo_json: nao_conformidades_ou_lacunas.evidencias; secao_pdf: achados_nao_conformidades"
   },
   "evidencias_e_anexos": {
     "evidencia_principal": {
       "disponivel": true,
       "referencias": [
-        "IMG_702"
+        "IMG_704"
       ],
-      "referencias_texto": "IMG_702 - ponto_superior.png",
-      "descricao": "Corrosao inicial no cabo de aco proximo ao topo da linha de vida.",
+      "referencias_texto": "IMG_704 - detalhe_corrosao_cabo.png",
+      "descricao": "Detalhe critico da corrosao inicial no cabo de aco proximo ao topo da linha de vida.",
       "observacao": "Evidencia principal vinculada ao componente nao conforme."
     },
     "evidencia_complementar": {
       "disponivel": true,
       "referencias": [
         "IMG_701",
+        "IMG_702",
         "IMG_703"
       ],
-      "referencias_texto": "IMG_701 - vista_geral.png; IMG_703 - ponto_inferior.png",
-      "descricao": "Vista geral da linha de vida e registro complementar do terminal inferior durante a vistoria.",
+      "referencias_texto": "IMG_701 - vista_geral.png; IMG_702 - ponto_superior.png; IMG_703 - ponto_inferior.png",
+      "descricao": "Vista geral da linha de vida e registros complementares dos pontos superior e inferior durante a vistoria.",
       "observacao": "As evidencias complementares contextualizam o sistema e a extensao da avaliacao."
     },
     "documento_base": {
@@ -109,19 +205,21 @@
   "documentacao_e_registros": {
     "documentos_disponiveis": "Laudo inspecao: AT-IN-OZ-001-01-26; Laudo fabricante: MC-CRMR-0032; ART: ART 2026-00077; Proxima inspecao: 2026-07",
     "documentos_emitidos": "Laudo tecnico NR35 de inspecao de linha de vida com bloqueio operacional e recomendacao de correcao do cabo de aco.",
+    "proxima_inspecao_planejada": "2026-07",
     "observacoes_documentais": "A familia exige rastreabilidade fotografica, identificacao do sistema, numero do laudo e registro da proxima inspecao periodica."
   },
   "nao_conformidades_ou_lacunas": {
     "ha_pontos_de_atencao": true,
     "ha_pontos_de_atencao_texto": "Sim",
     "descricao": "Corrosao inicial localizada no cabo de aco proximo ao ponto superior, exigindo bloqueio do sistema ate correcao e reinspecao.",
+    "limitacoes_de_inspecao": "A avaliacao foi limitada ao escopo visual e dimensional nas condicoes de acesso presentes na vistoria.",
     "evidencias": {
       "disponivel": true,
       "referencias": [
-        "IMG_702"
+        "IMG_704"
       ],
-      "referencias_texto": "IMG_702 - ponto_superior.png",
-      "descricao": "Registro fotografico da nao conformidade principal do sistema.",
+      "referencias_texto": "IMG_704 - detalhe_corrosao_cabo.png",
+      "descricao": "Registro fotografico de detalhe da nao conformidade principal do sistema.",
       "observacao": "A evidencia suporta o bloqueio operacional declarado na conclusao."
     }
   },
@@ -129,9 +227,14 @@
     "texto": "Substituir o trecho comprometido do cabo de aco, reinspecionar o sistema apos a intervencao e revalidar a liberacao operacional antes do retorno ao uso."
   },
   "conclusao": {
-    "status": "bloqueio",
+    "status": "Reprovado",
+    "status_operacional": "bloqueio",
     "conclusao_tecnica": "A linha de vida vertical nao deve permanecer liberada para uso ate a substituicao do trecho comprometido do cabo de aco e a reinspecao formal do sistema.",
     "justificativa": "A conclusao considera a nao conformidade localizada no cabo de aco, a evidencia fotografica principal, o contexto de trabalho em altura e a necessidade de rastreabilidade tecnica sem lacunas criticas.",
+    "motivo_status": "Nao conformidade confirmada no cabo de aco com necessidade de bloqueio imediato.",
+    "liberado_para_uso": "nao",
+    "acao_requerida": "corrigir_e_revalidar",
+    "condicao_para_reinspecao": "Substituir o trecho comprometido do cabo de aco e repetir a inspecao formal do sistema.",
     "proxima_inspecao_periodica": "2026-07",
     "observacoes": "Substituir o trecho comprometido do cabo e reinspecionar o sistema antes da liberacao."
   },

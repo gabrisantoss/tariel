@@ -4,11 +4,11 @@
   "family_key": "nr10_inspecao_instalacoes_eletricas",
   "template_code": "nr10_inspecao_instalacoes_eletricas",
   "tokens": {
-    "cliente_nome": "Empresa Demo (DEV)",
-    "unidade_nome": "Unidade Piloto Nacional",
-    "engenheiro_responsavel": "Engenheiro Revisor (Dev)",
-    "crea_art": "CREA 123456/D | ART 2026-0001",
-    "revisao_template": "v1"
+    "cliente_nome": null,
+    "unidade_nome": null,
+    "engenheiro_responsavel": null,
+    "crea_art": null,
+    "revisao_template": null
   },
   "case_context": {
     "laudo_id": null,
@@ -86,7 +86,28 @@
   "documentacao_e_registros": {
     "documentos_disponiveis": null,
     "documentos_emitidos": null,
+    "pie": null,
+    "diagrama_unifilar": null,
+    "rti": null,
     "observacoes_documentais": null
+  },
+  "checklist_componentes": {
+    "painel_ou_quadro_principal": {
+      "condicao": null,
+      "observacao": null
+    },
+    "protecao_eletrica": {
+      "condicao": null,
+      "observacao": null
+    },
+    "aterramento_e_equipotencializacao": {
+      "condicao": null,
+      "observacao": null
+    },
+    "identificacao_dos_circuitos": {
+      "condicao": null,
+      "observacao": null
+    }
   },
   "nao_conformidades_ou_lacunas": {
     "ha_pontos_de_atencao": null,

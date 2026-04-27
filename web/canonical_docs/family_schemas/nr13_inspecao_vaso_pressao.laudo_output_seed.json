@@ -106,6 +106,28 @@
       "descricao": null
     }
   },
+  "checklist_componentes": {
+    "identificacao_por_placa": {
+      "condicao": null,
+      "observacao": null
+    },
+    "integridade_visual_do_costado": {
+      "condicao": null,
+      "observacao": null
+    },
+    "dispositivo_de_seguranca": {
+      "condicao": null,
+      "observacao": null
+    },
+    "manometro_ou_indicador": {
+      "condicao": null,
+      "observacao": null
+    },
+    "suportes_e_fixacao": {
+      "condicao": null,
+      "observacao": null
+    }
+  },
   "documentacao_e_registros": {
     "registros_disponiveis_no_local": null,
     "prontuario": {

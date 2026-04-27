@@ -4,11 +4,11 @@
   "family_key": "nr01_gro_pgr",
   "template_code": "nr01_gro_pgr",
   "tokens": {
-    "cliente_nome": "Empresa Demo (DEV)",
-    "unidade_nome": "Unidade Piloto Nacional",
-    "engenheiro_responsavel": "Engenheiro Revisor (Dev)",
-    "crea_art": "CREA 123456/D | ART 2026-0001",
-    "revisao_template": "v1"
+    "cliente_nome": null,
+    "unidade_nome": null,
+    "engenheiro_responsavel": null,
+    "crea_art": null,
+    "revisao_template": null
   },
   "case_context": {
     "laudo_id": null,
@@ -88,6 +88,7 @@
     "documentos_emitidos": null,
     "observacoes_documentais": null
   },
+  "inventario_e_classificacao": [],
   "nao_conformidades_ou_lacunas": {
     "ha_pontos_de_atencao": null,
     "ha_pontos_de_atencao_texto": null,

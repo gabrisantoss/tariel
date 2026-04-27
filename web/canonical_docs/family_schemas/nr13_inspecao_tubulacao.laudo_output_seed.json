@@ -4,11 +4,11 @@
   "family_key": "nr13_inspecao_tubulacao",
   "template_code": "nr13_inspecao_tubulacao",
   "tokens": {
-    "cliente_nome": "Empresa Teste NR13",
-    "unidade_nome": "Unidade Piloto NR13",
-    "engenheiro_responsavel": "Gabriel Santos",
-    "crea_art": "CREA 123456/D | ART 922024900",
-    "revisao_template": "v1"
+    "cliente_nome": null,
+    "unidade_nome": null,
+    "engenheiro_responsavel": null,
+    "crea_art": null,
+    "revisao_template": null
   },
   "case_context": {
     "laudo_id": null,
@@ -79,6 +79,28 @@
       "referencias": [],
       "referencias_texto": null,
       "descricao": null,
+      "observacao": null
+    }
+  },
+  "checklist_componentes": {
+    "identificacao_do_trecho": {
+      "condicao": null,
+      "observacao": null
+    },
+    "suportes_e_ancoragens": {
+      "condicao": null,
+      "observacao": null
+    },
+    "valvulas_e_acessorios": {
+      "condicao": null,
+      "observacao": null
+    },
+    "juntas_e_conexoes": {
+      "condicao": null,
+      "observacao": null
+    },
+    "isolamento_e_protecao": {
+      "condicao": null,
       "observacao": null
     }
   },

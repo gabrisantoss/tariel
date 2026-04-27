@@ -113,6 +113,28 @@
       "descricao": null
     }
   },
+  "checklist_componentes": {
+    "corpo_principal_e_revestimento": {
+      "condicao": null,
+      "observacao": null
+    },
+    "valvula_de_seguranca": {
+      "condicao": null,
+      "observacao": null
+    },
+    "manometro_e_indicadores": {
+      "condicao": null,
+      "observacao": null
+    },
+    "painel_e_comandos": {
+      "condicao": null,
+      "observacao": null
+    },
+    "queimador_ou_sistema_termico": {
+      "condicao": null,
+      "observacao": null
+    }
+  },
   "documentacao_e_registros": {
     "registros_disponiveis_no_local": null,
     "prontuario": {
