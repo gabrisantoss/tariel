@@ -1,6 +1,6 @@
 # Golden Path NR35 Linha de Vida
 
-Status: contrato funcional do piloto com validador PR 2, contrato Template/PDF PR 3, prompt IA PR 4, revisao estruturada JSON PR 5, PDF auditavel final PR 6, entrega oficial no Portal Cliente PR 7 e E2E governado PR 8 em runtime.
+Status: contrato funcional do piloto com validador PR 2, contrato Template/PDF PR 3, prompt IA PR 4, revisao estruturada JSON PR 5, PDF auditavel final PR 6, entrega oficial no Portal Cliente PR 7, E2E governado PR 8 e reemissao/superseded PR 9 em runtime.
 
 Familia: `nr35_inspecao_linha_de_vida`.
 
@@ -404,6 +404,21 @@ O PR 8 consolida um teste de integracao ponta a ponta controlado para o piloto N
 - outro tenant recebe 404 nos downloads do PDF/pacote oficial;
 - cenarios negativos cobrem PDF operacional sem emissao, 3 fotos, Mesa nao humana e ausencia de signatario governado.
 
+## Reemissao, Superseded e Divergencia Pos-Mesa PR 9
+
+O PR 9 consolida a regra de que uma emissao oficial NR35 nunca e sobrescrita silenciosamente.
+
+- a emissao ativa continua sendo somente `EmissaoOficialLaudo.issue_state = issued`;
+- se o PDF atual do caso divergir do PDF congelado, o pacote sinaliza `primary_pdf_diverged` e `reissue_recommended`, mas o download oficial principal continua usando o artefato congelado da emissao ativa;
+- se `dados_formulario` ou `report_pack_draft_json` divergir do `ApprovedCaseSnapshot`, a emissao nova fica bloqueada ate existir nova aprovacao/snapshot;
+- nova aprovacao/snapshot seguida de emissao cria novo `issue_number`, novo `package_sha256` e novo vinculo `approval_snapshot_id`;
+- a emissao anterior vira `issue_state=superseded`, com `superseded_at`, `superseded_by_issue_number`, hash, data e snapshot preservados no historico;
+- o Portal Cliente mostra a nova emissao como principal e lista a anterior apenas em `historico_emissoes`;
+- downloads oficiais auditados preservam o `issue_number` baixado, sem paths internos de storage;
+- tentativa stale de reemitir contra uma emissao ativa antiga falha por conflito usando `expected_current_issue_id`/`expected_current_issue_number`.
+
+Teste de referencia: `web/tests/test_nr35_golden_path_official_issue_e2e.py::test_nr35_reemissao_superseded_preserva_historico_downloads_e_auditoria`.
+
 ## Mapa Atual No Codigo
 
 | Item | Estado atual | Decisao para o piloto | Arquivo/fonte | Proxima acao |
@@ -424,9 +439,9 @@ O PR 8 consolida um teste de integracao ponta a ponta controlado para o piloto N
 | Gate de qualidade | Parcial | Deve bloquear PDF oficial se faltarem campos/evidencias | `web/app/domains/chat/gate_helpers.py`; `web/app/domains/chat/nr35_linha_vida_validation.py` | PR 5 expõe pendencias estruturadas no backend da Mesa |
 | Finalizacao | Alinhada em PR 2 para NR35 | Para piloto, finalizacao encaminha para Mesa | `web/app/domains/chat/laudo_decision_services.py`; `web/app/domains/chat/report_pack_semantic_builders.py` | PR 6 consome snapshot aprovado no pacote oficial |
 | Mesa | Alinhada em PR 5 | Mesa aprova apenas se o nivel `mesa` passar | `web/app/domains/revisor/mesa_api.py`; `web/app/domains/revisor/service_messaging.py` | PR 6 exige origem `mesa_humana` para emissao |
-| Emissao oficial | Alinhada em PR 6 | Emissao registra template/schema/fotos/aprovacao | `web/app/domains/chat/laudo.py`; `web/app/shared/official_issue_package.py`; `web/app/domains/revisor/service_package.py`; `web/app/shared/db/models_review_governance.py` | PR 7 deve expor entrega no Portal Cliente |
-| Portal Cliente | Alinhado em PR 7 | Cliente ve status final, hashes, versoes e baixa apenas PDF/pacote oficial aprovado | `web/app/domains/cliente/dashboard_bootstrap_support.py`; `web/app/domains/cliente/chat_routes.py`; `web/static/js/cliente/portal_documentos_surface.js` | PR 8 deve cobrir ponta a ponta |
-| Testes NR35 | E2E PR 8 adicionado | Manter cobertura incremental do golden path | `web/tests/test_nr35_golden_path_official_issue_e2e.py`; `web/tests/test_nr35_official_pdf_issue.py`; `web/tests/test_cliente_portal_critico.py`; `web/tests/test_nr35_linha_vida_validation.py`; `web/tests/test_nr35_structured_review.py`; `web/tests/test_nr35_linha_vida_prompt.py`; `web/tests/test_nr35_template_pdf_contract.py` | Proximo recorte deve cobrir reemissao e auditoria de download |
+| Emissao oficial | Alinhada em PR 9 | Emissao registra template/schema/fotos/aprovacao e reemissao cria novo registro sem sobrescrever o anterior | `web/app/domains/chat/laudo.py`; `web/app/shared/official_issue_package.py`; `web/app/shared/official_issue_transaction.py`; `web/app/domains/revisor/service_package.py`; `web/app/shared/db/models_review_governance.py` | Generalizar familia nao NR35 quando houver contrato equivalente |
+| Portal Cliente | Alinhado em PR 9 | Cliente ve status final, hashes, versoes, downloads da ativa e historico com superseded/snapshot | `web/app/domains/cliente/dashboard_bootstrap_support.py`; `web/app/domains/cliente/chat_routes.py`; `web/static/js/cliente/portal_documentos_surface.js` | Polimento visual da historico/linhagem se necessario |
+| Testes NR35 | E2E PR 9 adicionado | Manter cobertura incremental do golden path | `web/tests/test_nr35_golden_path_official_issue_e2e.py`; `web/tests/test_nr35_official_pdf_issue.py`; `web/tests/test_cliente_portal_critico.py`; `web/tests/test_nr35_linha_vida_validation.py`; `web/tests/test_nr35_structured_review.py`; `web/tests/test_nr35_linha_vida_prompt.py`; `web/tests/test_nr35_template_pdf_contract.py` | Proximo recorte deve mirar familias alem NR35 ou UX visual |
 
 ## Aceite Do Golden Path
 
