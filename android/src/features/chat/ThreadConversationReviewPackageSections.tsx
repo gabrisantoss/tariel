@@ -211,7 +211,9 @@ export function ThreadConversationReviewDiffSection(props: {
 
   return (
     <View style={styles.threadReviewList}>
-      <Text style={styles.threadReviewSectionTitle}>Diff entre emissões</Text>
+      <Text style={styles.threadReviewSectionTitle}>
+        Histórico de alterações
+      </Text>
       {summary.diffBlockHighlights.map((item) => (
         <View
           key={`${item.title}-${item.totalChanges}`}
@@ -221,8 +223,10 @@ export function ThreadConversationReviewDiffSection(props: {
             <Text style={styles.threadReviewListTitle}>{item.title}</Text>
             <Text style={styles.threadReviewListText}>
               {item.totalChanges > 0
-                ? `${item.totalChanges} delta(s) estáveis neste bloco.`
-                : "Sem delta consolidado neste bloco."}
+                ? item.totalChanges === 1
+                  ? "1 alteração estável neste bloco."
+                  : `${item.totalChanges} alterações estáveis neste bloco.`
+                : "Sem alteração consolidada neste bloco."}
             </Text>
             {item.summary ? (
               <Text style={styles.threadReviewListText}>{item.summary}</Text>

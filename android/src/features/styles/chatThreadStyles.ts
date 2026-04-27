@@ -519,6 +519,43 @@ export const chatThreadStyles = {
     flexWrap: "wrap",
     gap: 8,
   },
+  threadSection: {
+    gap: 8,
+  },
+  threadSectionLabel: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  threadSecondaryActionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  threadSecondaryActionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.surfaceStroke,
+    backgroundColor: colors.surfaceSoft,
+  },
+  threadSecondaryActionText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "700",
+    maxWidth: 180,
+  },
+  threadMoreSignalsHint: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
+  },
   threadActionButton: {
     flexDirection: "row",
     alignItems: "center",

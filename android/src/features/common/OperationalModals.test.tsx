@@ -84,7 +84,7 @@ describe("ActivityCenterModal", () => {
   });
 
   it("prioriza alertas críticos e exibe categoria operacional no item", () => {
-    const { getAllByTestId, getByText } = render(
+    const { getAllByTestId, getAllByText, getByText, queryByText } = render(
       <ActivityCenterModal
         {...baseProps}
         automationDiagnosticsEnabled={false}
@@ -123,7 +123,7 @@ describe("ActivityCenterModal", () => {
             id: "mesa-1",
             kind: "mesa_reaberta",
             title: "Pendência reaberta",
-            body: "Mesa reabriu o caso",
+            body: "Mesa reabriu o caso com primary_pdf_diverged e issue_state",
             createdAt: "2026-03-30T09:00:00.000Z",
             unread: true,
             targetThread: "mesa",
@@ -140,8 +140,20 @@ describe("ActivityCenterModal", () => {
       "activity-center-item-mesa-1",
       "activity-center-item-status-1",
     ]);
-    expect(getByText("Reemissão")).toBeTruthy();
-    expect(getByText("Abrir em Finalizar")).toBeTruthy();
+    expect(getAllByText("Reemissão recomendada").length).toBeGreaterThan(0);
+    expect(getByText("Ver emissão oficial")).toBeTruthy();
+    expect(getByText("1 atualização da Mesa Avaliadora")).toBeTruthy();
+    expect(getByText("1 status do caso")).toBeTruthy();
+    expect(
+      getByText(
+        "Mesa reabriu o caso com Reemissão recomendada e Estado da emissão",
+      ),
+    ).toBeTruthy();
+    expect(
+      queryByText(
+        /mobile_autonomous|mobile_review_allowed|primary_pdf_diverged|issue_state|superseded|reviewer_issue|reviewer_decision/,
+      ),
+    ).toBeNull();
   });
 });
 

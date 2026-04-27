@@ -10,6 +10,7 @@ import {
   ordenarNotificacoesAtividade,
   prioridadeNotificacaoAtividade,
   rotuloCategoriaNotificacaoAtividade,
+  sanitizarTextoNotificacaoAtividade,
   selecionarLaudosParaMonitoramentoMesa,
 } from "./activityNotificationHelpers";
 
@@ -53,12 +54,19 @@ describe("activityNotificationHelpers", () => {
       rotuloCategoriaNotificacaoAtividade({
         kind: "alerta_critico",
       } as any),
-    ).toBe("Reemissão");
+    ).toBe("Reemissão recomendada");
     expect(
       hintDestinoNotificacaoAtividade({
         targetThread: "finalizar",
       } as any),
-    ).toBe("Abrir em Finalizar");
+    ).toBe("Ver emissão oficial");
+    expect(
+      sanitizarTextoNotificacaoAtividade(
+        "mobile_autonomous primary_pdf_diverged issue_state superseded reviewer_issue reviewer_decision",
+      ),
+    ).toBe(
+      "Revisão interna governada Reemissão recomendada Estado da emissão Documento substituído Emissão oficial Revisão governada",
+    );
     expect(
       assinaturaStatusLaudo({
         id: 12,
@@ -144,7 +152,7 @@ describe("activityNotificationHelpers", () => {
         },
       } as any),
     ).toMatchObject({
-      title: "Caso pronto para decisão da mesa",
+      title: "Caso pronto para Mesa Avaliadora",
       targetThread: "mesa",
     });
     expect(
@@ -160,8 +168,8 @@ describe("activityNotificationHelpers", () => {
         active_owner_role: "mesa",
       } as any),
     ).toMatchObject({
-      title: "Caso enviado para a mesa",
-      body: "Laudo 25 já foi enviado para a Mesa. Abra a aba Mesa para acompanhar a entrada da revisão humana.",
+      title: "Caso enviado para a Mesa Avaliadora",
+      body: "Laudo 25 já foi enviado para a Mesa Avaliadora. Abra a aba Mesa para acompanhar a entrada da revisão humana.",
       targetThread: "mesa",
     });
     expect(
@@ -200,7 +208,7 @@ describe("activityNotificationHelpers", () => {
       } as any),
     ).toMatchObject({
       title: "Mesa revisando o caso",
-      body: "Laudo 26 está em revisão humana. Abra a aba Mesa para acompanhar pendências e respostas da avaliadora.",
+      body: "Laudo 26 está em revisão humana. Abra a Mesa Avaliadora para acompanhar pendências e respostas.",
       targetThread: "mesa",
     });
     expect(

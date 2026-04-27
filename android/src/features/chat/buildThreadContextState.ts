@@ -434,7 +434,7 @@ export function buildThreadContextState(
         guidedInspectionDraft?.mesaHandoff?.required
           ? {
               key: "mesa-handoff",
-              label: "Mesa requerida",
+              label: "Família exige Mesa",
               tone: "danger" as const,
               icon: "clipboard-alert-outline" as const,
             }
@@ -677,7 +677,7 @@ export function buildThreadContextState(
         reportPackSummary
           ? {
               key: "report-pack",
-              label: "Pre-laudo",
+              label: "Pendências do caso",
               value: reportPackSummary.totalBlocks
                 ? `${reportPackSummary.readyBlocks}/${reportPackSummary.totalBlocks} blocos`
                 : reportPackSummary.readinessLabel,
@@ -739,11 +739,11 @@ export function buildThreadContextState(
                 : null,
               {
                 key: "status",
-                label: "Lifecycle",
+                label: "Status do caso",
                 value: lifecycleLabel,
                 detail:
                   activeOwnerRole === "mesa"
-                    ? "A mesa está conduzindo esta etapa do caso."
+                    ? "A Mesa Avaliadora está conduzindo esta etapa do caso."
                     : conversaAtiva.permiteEdicao
                       ? "Resposta liberada no app"
                       : lifecycleDescription,
@@ -752,13 +752,13 @@ export function buildThreadContextState(
               },
               {
                 key: mesaTemMensagens ? "retornos" : "template",
-                label: mesaTemMensagens ? "Mesa" : "Fluxo",
+                label: mesaTemMensagens ? "Mesa Avaliadora" : "Fluxo",
                 value: mesaTemMensagens
                   ? `${mensagensMesa.length} retorno${mensagensMesa.length === 1 ? "" : "s"}`
                   : tipoTemplateAtivoLabel,
                 detail: mesaTemMensagens
                   ? "Retornos técnicos separados do chat."
-                  : "A mesa será usada quando houver retorno técnico.",
+                  : "A Mesa Avaliadora será usada quando houver retorno técnico.",
                 tone: mesaTemMensagens
                   ? ("muted" as const)
                   : ("muted" as const),
@@ -772,7 +772,7 @@ export function buildThreadContextState(
           : [
               {
                 key: activeCaseVisualFree ? "mode" : "status",
-                label: activeCaseVisualFree ? "Modo" : "Lifecycle",
+                label: activeCaseVisualFree ? "Modo" : "Status do caso",
                 value: activeCaseVisualFree ? "Chat livre" : lifecycleLabel,
                 detail: activeCaseVisualFree
                   ? "Sem trilho canônico visível no chat. A conversa segue livre até você decidir abrir outro fluxo."
@@ -813,7 +813,7 @@ export function buildThreadContextState(
               activeCaseFormalWorkflow && reportPackSummary
                 ? {
                     key: "report-pack",
-                    label: "Pre-laudo",
+                    label: "Pendências do caso",
                     value: reportPackSummary.totalBlocks
                       ? `${reportPackSummary.readyBlocks}/${reportPackSummary.totalBlocks} blocos`
                       : reportPackSummary.readinessLabel,

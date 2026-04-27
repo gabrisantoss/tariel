@@ -18,6 +18,23 @@ import {
 } from "../common/officialIssueSummary";
 
 const MAX_LAUDOS_MONITORADOS_MESA = 6;
+const INTERNAL_ACTIVITY_LABELS: Array<[RegExp, string]> = [
+  [/\bmobile_autonomous\b/gi, "Revisão interna governada"],
+  [/\bmobile_review_allowed\b/gi, "Revisão interna + Mesa"],
+  [/\bprimary_pdf_diverged\b/gi, "Reemissão recomendada"],
+  [/\bissue_state_label\b/gi, "Estado da emissão"],
+  [/\bissue_state\b/gi, "Estado da emissão"],
+  [/\bsuperseded\b/gi, "Documento substituído"],
+  [/\breviewer_issue\b/gi, "Emissão oficial"],
+  [/\breviewer_decision\b/gi, "Revisão governada"],
+];
+
+export function sanitizarTextoNotificacaoAtividade(value: string): string {
+  return INTERNAL_ACTIVITY_LABELS.reduce(
+    (text, [pattern, replacement]) => text.replace(pattern, replacement),
+    String(value || ""),
+  );
+}
 
 function resumirStatusOperacionalLaudo(params: {
   item: MobileLaudoCard;
@@ -42,11 +59,11 @@ function resumirStatusOperacionalLaudo(params: {
   }
 
   if (lifecycleStatus === "aguardando_mesa") {
-    return `${item.titulo} já foi enviado para a Mesa. Abra a aba Mesa para acompanhar a entrada da revisão humana.`;
+    return `${item.titulo} já foi enviado para a Mesa Avaliadora. Abra a aba Mesa para acompanhar a entrada da revisão humana.`;
   }
 
   if (lifecycleStatus === "em_revisao_mesa") {
-    return `${item.titulo} está em revisão humana. Abra a aba Mesa para acompanhar pendências e respostas da avaliadora.`;
+    return `${item.titulo} está em revisão humana. Abra a Mesa Avaliadora para acompanhar pendências e respostas.`;
   }
 
   if (
@@ -61,7 +78,7 @@ function resumirStatusOperacionalLaudo(params: {
     }
   }
 
-  return `${item.titulo} agora está em ${rotuloCaseLifecycle(lifecycleStatus as any).toLowerCase()}. ${lifecycleDetail}${ownerRole === "mesa" ? " Acompanhe a mesa no app." : ""}`;
+  return `${item.titulo} agora está em ${rotuloCaseLifecycle(lifecycleStatus as any).toLowerCase()}. ${lifecycleDetail}${ownerRole === "mesa" ? " Acompanhe a Mesa Avaliadora no app." : ""}`;
 }
 
 function resolverResumoReemissaoPdfOficial(item: MobileLaudoCard): {
@@ -177,8 +194,8 @@ export function criarNotificacaoStatusLaudo(
       id: `status:${item.id}:${assinaturaStatusLaudo(item)}`,
       kind: "alerta_critico",
       laudoId: item.id,
-      title: reissueSummary.title,
-      body: reissueSummary.body,
+      title: sanitizarTextoNotificacaoAtividade(reissueSummary.title),
+      body: sanitizarTextoNotificacaoAtividade(reissueSummary.body),
       createdAt: new Date().toISOString(),
       unread: true,
       targetThread: "finalizar",
@@ -201,7 +218,7 @@ export function criarNotificacaoStatusLaudo(
     analise_livre: "Caso em análise livre",
     pre_laudo: "Caso em pré-laudo",
     laudo_em_coleta: "Laudo em coleta",
-    aguardando_mesa: "Caso enviado para a mesa",
+    aguardando_mesa: "Caso enviado para a Mesa Avaliadora",
     em_revisao_mesa: "Mesa revisando o caso",
     devolvido_para_correcao: "Caso devolvido para correção",
     aprovado: "Caso aprovado",
@@ -213,8 +230,10 @@ export function criarNotificacaoStatusLaudo(
       id: `status:${item.id}:${assinaturaStatusLaudo(item)}`,
       kind: "status",
       laudoId: item.id,
-      title: "Caso pronto para decisão da mesa",
-      body: `${item.titulo} já pode seguir para a Mesa. Abra a aba Mesa para concluir a decisão humana rastreável.`,
+      title: "Caso pronto para Mesa Avaliadora",
+      body: sanitizarTextoNotificacaoAtividade(
+        `${item.titulo} já pode seguir para a Mesa Avaliadora. Abra a aba Mesa para concluir a decisão humana rastreável.`,
+      ),
       createdAt: new Date().toISOString(),
       unread: true,
       targetThread: "mesa",
@@ -227,7 +246,9 @@ export function criarNotificacaoStatusLaudo(
       kind: "status",
       laudoId: item.id,
       title: "Caso pronto para validar",
-      body: `${item.titulo} já está pronto para validação final. Abra Finalizar para revisar o quality gate do caso.`,
+      body: sanitizarTextoNotificacaoAtividade(
+        `${item.titulo} já está pronto para validação final. Abra Finalizar para revisar o quality gate do caso.`,
+      ),
       createdAt: new Date().toISOString(),
       unread: true,
       targetThread: "finalizar",
@@ -239,13 +260,15 @@ export function criarNotificacaoStatusLaudo(
     kind: "status",
     laudoId: item.id,
     title: mapaTitulo[lifecycleStatus] || "Status do laudo atualizado",
-    body: resumirStatusOperacionalLaudo({
-      item,
-      lifecycleDetail,
-      lifecycleStatus,
-      ownerRole,
-      reportPackSummary,
-    }),
+    body: sanitizarTextoNotificacaoAtividade(
+      resumirStatusOperacionalLaudo({
+        item,
+        lifecycleDetail,
+        lifecycleStatus,
+        ownerRole,
+        reportPackSummary,
+      }),
+    ),
     createdAt: new Date().toISOString(),
     unread: true,
     targetThread: targetThreadCaseLifecycle(lifecycleStatus),
@@ -261,17 +284,17 @@ export function criarNotificacaoMesa(
     "status" | "mesa_nova" | "mesa_resolvida" | "mesa_reaberta",
     string
   > = {
-    status: "Atividade da mesa",
-    mesa_nova: "Nova mensagem da mesa",
+    status: "Atividade da Mesa Avaliadora",
+    mesa_nova: "Nova mensagem da Mesa Avaliadora",
     mesa_resolvida: "Pendência marcada como resolvida",
-    mesa_reaberta: "Pendência reaberta pela mesa",
+    mesa_reaberta: "Pendência reaberta pela Mesa Avaliadora",
   };
   const fallback =
     kind === "mesa_resolvida"
-      ? "A mesa marcou uma pendência como resolvida."
+      ? "A Mesa Avaliadora marcou uma pendência como resolvida."
       : kind === "mesa_reaberta"
-        ? "A mesa reabriu uma pendência para novo ajuste."
-        : "A mesa enviou uma nova atualização.";
+        ? "A Mesa Avaliadora reabriu uma pendência para novo ajuste."
+        : "A Mesa Avaliadora enviou uma nova atualização.";
 
   return {
     id:
@@ -281,7 +304,9 @@ export function criarNotificacaoMesa(
     kind,
     laudoId: mensagemMesa.laudo_id,
     title: mapaTitulo[kind],
-    body: `${tituloLaudo}: ${resumoMensagemAtividade(mensagemMesa.texto, fallback)}`,
+    body: sanitizarTextoNotificacaoAtividade(
+      `${tituloLaudo}: ${resumoMensagemAtividade(mensagemMesa.texto, fallback)}`,
+    ),
     createdAt: new Date().toISOString(),
     unread: true,
     targetThread: "mesa",
@@ -300,8 +325,8 @@ export function criarNotificacaoSistema(params: {
     id: `${kind}:${Date.now()}:${Math.random().toString(16).slice(2, 7)}`,
     kind,
     laudoId: params.laudoId ?? null,
-    title: params.title,
-    body: params.body,
+    title: sanitizarTextoNotificacaoAtividade(params.title),
+    body: sanitizarTextoNotificacaoAtividade(params.body),
     createdAt: new Date().toISOString(),
     unread: true,
     targetThread: params.targetThread || "chat",
@@ -339,14 +364,14 @@ export function rotuloCategoriaNotificacaoAtividade(
   item: MobileActivityNotification,
 ): string {
   if (item.kind === "alerta_critico") {
-    return "Reemissão";
+    return "Reemissão recomendada";
   }
   if (
     item.kind === "mesa_nova" ||
     item.kind === "mesa_resolvida" ||
     item.kind === "mesa_reaberta"
   ) {
-    return "Mesa";
+    return "Mesa Avaliadora";
   }
   if (item.kind === "status") {
     return "Status do caso";
@@ -358,12 +383,12 @@ export function hintDestinoNotificacaoAtividade(
   item: MobileActivityNotification,
 ): string {
   if (item.targetThread === "finalizar") {
-    return "Abrir em Finalizar";
+    return "Ver emissão oficial";
   }
   if (item.targetThread === "mesa") {
-    return "Abrir na aba Mesa";
+    return "Abrir Mesa Avaliadora";
   }
-  return "Abrir no Chat";
+  return "Abrir caso";
 }
 
 export function ordenarNotificacoesAtividade(

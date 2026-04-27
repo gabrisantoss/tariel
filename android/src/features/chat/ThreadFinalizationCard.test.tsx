@@ -116,20 +116,19 @@ describe("ThreadFinalizationCard", () => {
       />,
     );
 
-    expect(getByText("Plano operacional")).toBeTruthy();
+    expect(getByText("Próxima ação")).toBeTruthy();
+    expect(getByText("Status e pendências")).toBeTruthy();
+    expect(getByText("Documento e auditoria")).toBeTruthy();
     expect(getByTestId("thread-finalization-plan-current-owner")).toBeTruthy();
-    expect(getByTestId("thread-finalization-plan-next-step")).toBeTruthy();
     expect(
       getByTestId("thread-finalization-plan-expected-decision"),
-    ).toBeTruthy();
-    expect(
-      getByTestId("thread-finalization-plan-suggested-route"),
     ).toBeTruthy();
     expect(getByTestId("thread-finalization-plan-blockers")).toBeTruthy();
     expect(
       getByTestId("thread-finalization-plan-blocking-reason"),
     ).toBeTruthy();
     expect(getByTestId("thread-finalization-plan-delivery")).toBeTruthy();
+    expect(getByTestId("thread-finalization-plan-governance")).toBeTruthy();
     fireEvent.press(getByTestId("finalization-action"));
     expect(onAction).toHaveBeenCalledTimes(1);
   });
