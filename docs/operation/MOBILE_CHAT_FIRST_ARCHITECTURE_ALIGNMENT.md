@@ -396,6 +396,10 @@ Impacto: prova que Mesa nao e universal.
 
 Testes/gates: integration tests de criar/coletar/finalizar/self-review e bloquear emissao se nao contratada.
 
+Checkpoint PR F: o teste `web/tests/test_mobile_only_client_no_mesa_pr_f.py` fixa o cenario `inspector_chat` + `mobile_single_operator` para cliente individual. A familia simples usada e `padrao`; o Chat Inspetor finaliza por revisao interna governada (`mobile_autonomous` legado com motivo `tenant_without_mesa`), grava `ApprovedCaseSnapshot` com `approved_mobile_autonomous`, nao cria `EmissaoOficialLaudo` e deixa o PDF operacional apenas como `nome_arquivo_pdf`.
+
+O mesmo teste valida que o Portal Cliente mostra Mobile/Chat e revisao interna como recursos disponiveis, mostra Mesa e emissao oficial como nao incluidas, e que o Mobile nao recebe `official_issue_summary` quando nao ha emissao oficial ativa. Para NR35 Linha de Vida, o mesmo tenant recebe bloqueio `nr35_mesa_required_unavailable`, preservando a regra de familia de alto risco sem cair em self-review.
+
 ### PR G - Testes de empresa sem Mesa
 
 Cenario multi-inspetor sem `revisor`, com Admin Cliente acompanhando e finalizacao interna governada.

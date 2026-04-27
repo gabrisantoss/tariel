@@ -1,6 +1,6 @@
 # Governança de Portais, Tenants e Cenários Operacionais
 
-Atualizado em `2026-04-26`.
+Atualizado em `2026-04-27`.
 
 Status: análise operacional e arquitetural. Este documento não altera código, rotas, permissões, release gate, mobile smoke, Maestro, `human_ack`, Android, NR35 ou comportamento de produto.
 
@@ -78,6 +78,10 @@ Pacotes atuais observados em `tenant_admin_policy.py`:
 | `inspector_chat` | `cliente`, `inspetor`; sem `revisor`. | cria/finaliza caso; não envia para Mesa; `mobile_case_approve=true`; sem `reviewer_decision`/`reviewer_issue`. | Cliente individual, pequena empresa sem Mesa, mobile/chat com finalização interna quando a família permitir. |
 | `inspector_chat_mesa` | `cliente`, `inspetor`, `revisor`. | cria/finaliza; envia para Mesa; Mesa decide; emissão oficial habilitada; `mobile_case_approve=false`. | Fluxo governado clássico: campo -> Mesa -> emissão. |
 | `inspector_chat_mesa_reviewer_services` | `cliente`, `inspetor`, `revisor`. | Igual ao anterior, com `operational_user_cross_portal_enabled=true`. | Operação em que usuários técnicos podem acumular campo e análise conforme grants. |
+
+Checkpoint PR F: `web/tests/test_mobile_only_client_no_mesa_pr_f.py` prova o pacote `inspector_chat` com `operating_model=mobile_single_operator` para cliente individual. O tenant tem `cliente` e `inspetor`, nao tem `revisor`, possui `case_create`, `case_finalize_request` e `case_self_review`, mas nao possui `reviewer_decision`, `reviewer_issue` nem `official_issue_create`. Para familia simples `padrao`, a finalizacao grava aprovacao interna governada sem Mesa. Para NR35 Linha de Vida, a mesma configuracao bloqueia por `nr35_mesa_required_unavailable`.
+
+No Portal Cliente, esse cenario deve aparecer como pacote com Mobile/Chat e `Revisao interna` disponiveis, Mesa nao incluida e `Emissao oficial` nao incluida. A aba Documentos pode mostrar PDF operacional e historico do caso, mas nao deve expor `issue_number`, download oficial ou `reissue_recommended` sem uma `EmissaoOficialLaudo` ativa.
 
 Capabilities atuais:
 
