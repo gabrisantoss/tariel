@@ -11,9 +11,11 @@ from sqlalchemy.orm import Session
 
 from app.domains.cliente.dashboard_documents_support import (
     DOCUMENT_PACKAGE_SECTION_LABELS,
+    build_document_ui_language,
     build_document_package_sections,
     build_document_summary_card,
     build_document_timeline,
+    canonical_issue_state_label,
     document_visual_state,
 )
 from app.domains.chat.laudo_state_helpers import (
@@ -185,11 +187,19 @@ def _listar_historico_emissoes_cliente(banco: Session, laudo: Laudo) -> list[dic
     for registro in registros:
         item = serialize_official_issue_record(registro) or {}
         nr35_manifest = _dict_copy_or_empty(item.get("nr35_official_pdf"))
+        issue_state = str(item.get("issue_state") or "").strip() or None
+        issue_state_label = canonical_issue_state_label(
+            issue_state,
+            fallback=str(item.get("issue_state_label") or "").strip() or None,
+        )
         historico.append(
             {
                 "issue_number": str(item.get("issue_number") or "").strip() or None,
-                "issue_state": str(item.get("issue_state") or "").strip() or None,
-                "issue_state_label": str(item.get("issue_state_label") or "").strip() or None,
+                "issue_state": issue_state,
+                "issue_state_label": issue_state_label,
+                "document_history_label": "Documento substituído"
+                if issue_state == "superseded"
+                else "Documento emitido",
                 "issued_at": _isoformat_or_empty(item.get("issued_at")) or None,
                 "superseded_at": _isoformat_or_empty(item.get("superseded_at")) or None,
                 "package_sha256": str(item.get("package_sha256") or "").strip() or None,
@@ -1054,6 +1064,13 @@ def _serializar_documento_cliente(banco: Session, laudo: Laudo) -> dict[str, Any
         verificacao_publica=verificacao_publica,
         payload_laudo=payload_laudo,
     )
+    document_ui = build_document_ui_language(
+        emissao_oficial=emissao_oficial,
+        payload_laudo=payload_laudo,
+        visual_state=visual_state,
+        visual_state_label=visual_state_label,
+        visual_state_detail=visual_state_detail,
+    )
     timeline = build_document_timeline(emissao_oficial=emissao_oficial)
     latest_event = next(
         (
@@ -1083,6 +1100,7 @@ def _serializar_documento_cliente(banco: Session, laudo: Laudo) -> dict[str, Any
         "document_visual_state": visual_state,
         "document_visual_state_label": visual_state_label,
         "document_visual_state_detail": visual_state_detail,
+        "document_ui": document_ui,
         "codigo_hash": str(getattr(laudo, "codigo_hash", "") or "").strip(),
         "hash_short": str(verificacao_publica.get("hash_short") or "").strip(),
         "verification_url": verification_url or None,

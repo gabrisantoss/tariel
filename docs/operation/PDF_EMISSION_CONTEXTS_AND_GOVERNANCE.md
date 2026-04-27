@@ -605,3 +605,20 @@ Lacunas fechadas no PR9:
 | reemissao completa | coberta com `superseded`, divergencia do PDF, novo snapshot e novo pacote |
 | auditoria de download | coberta em Portal Cliente, preservando `issue_number`, estado, hashes e artefato sem paths internos |
 | polimento visual | o E2E valida payload e download, nao regressao visual da aba Documentos |
+
+## Camada de Linguagem UX-A
+
+O UX-A não muda a fronteira técnica descrita neste documento. Ele adiciona uma matriz de linguagem em [UX_PRODUCT_LANGUAGE.md](UX_PRODUCT_LANGUAGE.md) para impedir que a UI chame PDF operacional de emissão oficial ou exponha estados crus como `superseded` e `primary_pdf_diverged`.
+
+Aplicação no Portal Cliente Documentos:
+
+| Conceito técnico | UI |
+|---|---|
+| `nome_arquivo_pdf` sem `EmissaoOficialLaudo` ativa | PDF operacional |
+| `EmissaoOficialLaudo.issue_state=issued` | Emissão oficial / Documento emitido |
+| pacote congelado da emissão | Pacote oficial |
+| divergência pós-emissão | Reemissão recomendada |
+| `issue_state=superseded` | Documento substituído |
+| hashes e manifesto | Auditoria |
+
+O download principal deve continuar apontando para a emissão oficial ativa. Histórico e auditoria podem listar emissões substituídas, preservando `issue_number` e hashes, mas sem rotular registro antigo como atual.

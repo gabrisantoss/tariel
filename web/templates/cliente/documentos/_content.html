@@ -2,8 +2,8 @@
     {% set documentos_secao_inicial = cliente_documentos_section_inicial | default('overview') %}
     <div class="section-intro section-intro--surface">
         <div>
-            <h2>Documentos técnicos</h2>
-            <p>Centralize laudos, emissão oficial e links de verificação pública por empresa.</p>
+            <h2>Documentos e emissões</h2>
+            <p>Separe PDF operacional, emissão oficial, histórico e auditoria sem depender da fila operacional.</p>
         </div>
     </div>
 
@@ -13,14 +13,14 @@
         data-surface-active-section="{{ documentos_secao_inicial | e }}"
     >
         <div class="surface-nav__intro">
-            <span class="surface-nav__eyebrow">Biblioteca documental</span>
-            <strong>Leitura por documento, não só por conversa</strong>
-            <p>Veja o estado documental do tenant sem depender da fila operacional.</p>
+            <span class="surface-nav__eyebrow">Resumo documental</span>
+            <strong>Leitura por documento, histórico e pacote</strong>
+            <p>O download principal aponta para a emissão oficial ativa quando ela existir.</p>
         </div>
         <div id="documentos-section-summary" class="surface-nav__status" aria-live="polite">
             <span class="surface-nav__status-label">Seção ativa</span>
-            <strong id="documentos-section-summary-title">Visão geral documental</strong>
-            <span id="documentos-section-summary-meta">Laudos, emissão oficial e verificação pública no mesmo painel.</span>
+            <strong id="documentos-section-summary-title">Resumo, documento oficial e auditoria</strong>
+            <span id="documentos-section-summary-meta">PDF operacional continua separado da emissão oficial.</span>
         </div>
 
         <div class="surface-tabs" role="tablist" aria-label="Seções dos documentos técnicos">
@@ -35,7 +35,7 @@
                 tabindex="{{ '0' if documentos_secao_inicial == 'overview' else '-1' }}"
             >
                 <span class="surface-tab__label">Visão geral</span>
-                <span class="surface-tab__meta">Biblioteca documental</span>
+                <span class="surface-tab__meta">Documentos por status oficial</span>
                 <span class="surface-tab__footer">
                     <span id="documentos-section-count-overview" class="surface-tab__count">documentos do tenant</span>
                 </span>
@@ -72,54 +72,59 @@
                             <strong id="documentos-verificaveis">0</strong>
                         </div>
                         <div class="metric-card">
-                            <span class="metric-card__label">Pedindo reemissão</span>
+                            <span class="metric-card__label">Reemissão recomendada</span>
                             <strong id="documentos-reemissao">0</strong>
                         </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">Oficiais</span>
-                            <strong id="documentos-state-official">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">Em revisão</span>
-                            <strong id="documentos-state-in-review">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">Rascunhos</span>
-                            <strong id="documentos-state-draft">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">Históricos</span>
-                            <strong id="documentos-state-historical">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">Internos</span>
-                            <strong id="documentos-state-internal">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">Com ART vinculada</span>
-                            <strong id="documentos-com-art-total">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">Com PIE</span>
-                            <strong id="documentos-com-pie-total">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">Com prontuário</span>
-                            <strong id="documentos-com-prontuario-total">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">NR35 aprovados</span>
-                            <strong id="documentos-nr35-aprovados">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">NR35 reprovados</span>
-                            <strong id="documentos-nr35-reprovados">0</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-card__label">NR35 pendentes</span>
-                            <strong id="documentos-nr35-pendentes">0</strong>
-                        </div>
                     </div>
+                    <details class="documentos-metric-details">
+                        <summary>Ver recortes e sinais adicionais</summary>
+                        <div class="surface-metric-grid documentos-metric-details__grid">
+                            <div class="metric-card">
+                                <span class="metric-card__label">Emissões oficiais</span>
+                                <strong id="documentos-state-official">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">Em revisão</span>
+                                <strong id="documentos-state-in-review">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">PDFs operacionais</span>
+                                <strong id="documentos-state-draft">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">Histórico</span>
+                                <strong id="documentos-state-historical">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">Internos</span>
+                                <strong id="documentos-state-internal">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">Com ART vinculada</span>
+                                <strong id="documentos-com-art-total">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">Com PIE</span>
+                                <strong id="documentos-com-pie-total">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">Com prontuário</span>
+                                <strong id="documentos-com-prontuario-total">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">NR35 aprovados</span>
+                                <strong id="documentos-nr35-aprovados">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">NR35 reprovados</span>
+                                <strong id="documentos-nr35-reprovados">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-card__label">NR35 pendentes</span>
+                                <strong id="documentos-nr35-pendentes">0</strong>
+                            </div>
+                        </div>
+                    </details>
                 </article>
 
                 <article class="surface-card">
@@ -138,8 +143,8 @@
                 <article class="surface-card">
                     <div class="surface-card__header">
                         <div>
-                            <span class="surface-card__eyebrow">Summary card</span>
-                            <h3>Documento de referência</h3>
+                            <span class="surface-card__eyebrow">Documento principal</span>
+                            <h3>Versão em foco</h3>
                         </div>
                     </div>
                     <div id="documentos-summary-card" class="empty-state">
@@ -207,7 +212,7 @@
             <article class="surface-card">
                 <div class="surface-card__header">
                     <div>
-                        <span class="surface-card__eyebrow">Biblioteca</span>
+                        <span class="surface-card__eyebrow">Histórico e auditoria</span>
                         <h3>Documentos da empresa</h3>
                     </div>
                 </div>

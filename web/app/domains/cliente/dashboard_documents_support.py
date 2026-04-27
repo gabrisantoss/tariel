@@ -6,7 +6,7 @@ from typing import Any
 
 
 DOCUMENT_PACKAGE_SECTION_LABELS = {
-    "documento_oficial": "Documento oficial",
+    "documento_oficial": "Emissão oficial",
     "historico_emissoes": "Histórico de emissões",
     "anexos_mesa": "Anexos da mesa",
     "evidencias_selecionadas": "Evidências selecionadas",
@@ -14,11 +14,30 @@ DOCUMENT_PACKAGE_SECTION_LABELS = {
 }
 
 _DOCUMENT_VISUAL_STATE_LABELS = {
-    "official": "Oficial",
-    "draft": "Rascunho",
+    "official": "Emissão oficial",
+    "draft": "PDF operacional",
     "in_review": "Em revisão",
     "historical": "Histórico",
     "internal": "Interno",
+}
+
+_ISSUE_STATE_UI_LABELS = {
+    "issued": "Emitido",
+    "superseded": "Substituído",
+    "revoked": "Revogado",
+}
+
+_DOCUMENT_STATUS_UI_LABELS = {
+    "collecting": "Em coleta",
+    "pending": "Pendente",
+    "internal_review": "Em revisão interna",
+    "mesa": "Na Mesa",
+    "approved": "Aprovado",
+    "issued": "Emitido",
+    "reissue": "Reemissão recomendada",
+    "superseded": "Substituído",
+    "package_blocked": "Bloqueado por pacote",
+    "family_blocked": "Bloqueado por família",
 }
 
 
@@ -31,6 +50,110 @@ def _texto_curto(value: Any, *, fallback: str | None = None) -> str | None:
 
 def _isoformat_or_none(value: Any) -> str | None:
     return value.isoformat() if hasattr(value, "isoformat") else None
+
+
+def canonical_issue_state_label(value: Any, *, fallback: str | None = None) -> str | None:
+    key = str(value or "").strip().lower()
+    return _ISSUE_STATE_UI_LABELS.get(key) or _texto_curto(fallback)
+
+
+def _resolve_document_status_key(
+    *,
+    emissao_oficial: dict[str, Any],
+    payload_laudo: dict[str, Any],
+    current_issue: dict[str, Any],
+) -> str:
+    issue_state = str(current_issue.get("issue_state") or "").strip().lower()
+    blockers = list(emissao_oficial.get("blockers") or [])
+    lifecycle = str(payload_laudo.get("case_lifecycle_status") or "").strip().lower()
+    review_phase = str(emissao_oficial.get("review_phase") or "").strip().lower()
+
+    if issue_state == "superseded":
+        return "superseded"
+    if bool(emissao_oficial.get("reissue_recommended")):
+        return "reissue"
+    if issue_state == "issued" or bool(emissao_oficial.get("already_issued")):
+        return "issued"
+    if lifecycle in {"aprovado", "emitido"}:
+        return "approved"
+    if review_phase == "mesa_context":
+        return "mesa"
+    if review_phase in {"awaiting_field", "review_in_progress"} or lifecycle in {"aguardando", "em_revisao"}:
+        return "internal_review"
+    blocker_codes = {str((item or {}).get("code") or "").strip().lower() for item in blockers}
+    if any("mesa_required" in code or "family" in code for code in blocker_codes):
+        return "family_blocked"
+    if blockers:
+        return "package_blocked"
+    if bool(emissao_oficial.get("ready_for_issue")):
+        return "pending"
+    return "collecting"
+
+
+def build_document_ui_language(
+    *,
+    emissao_oficial: dict[str, Any],
+    payload_laudo: dict[str, Any],
+    visual_state: str,
+    visual_state_label: str,
+    visual_state_detail: str,
+) -> dict[str, Any]:
+    current_issue = dict(emissao_oficial.get("current_issue") or {})
+    issue_state = str(current_issue.get("issue_state") or "").strip().lower()
+    issue_state_label = canonical_issue_state_label(
+        issue_state,
+        fallback=str(current_issue.get("issue_state_label") or "").strip() or None,
+    )
+    pdf_present = bool(emissao_oficial.get("pdf_present"))
+    has_official_issue = bool(current_issue) or bool(emissao_oficial.get("already_issued"))
+    reissue_recommended = bool(emissao_oficial.get("reissue_recommended"))
+    status_key = _resolve_document_status_key(
+        emissao_oficial=emissao_oficial,
+        payload_laudo=payload_laudo,
+        current_issue=current_issue,
+    )
+
+    if reissue_recommended:
+        document_kind_label = "Reemissão recomendada"
+        document_kind_detail = "O caso técnico mudou depois da emissão ativa e precisa de nova aprovação/emissão."
+    elif issue_state == "superseded":
+        document_kind_label = "Documento substituído"
+        document_kind_detail = "A emissão permanece no histórico, mas não é a versão principal."
+    elif has_official_issue:
+        document_kind_label = "Emissão oficial"
+        document_kind_detail = "Documento emitido pelo motor oficial com pacote, hash e auditoria."
+    elif pdf_present:
+        document_kind_label = "PDF operacional"
+        document_kind_detail = "Arquivo de trabalho do caso; não substitui emissão oficial."
+    else:
+        document_kind_label = "Documento técnico"
+        document_kind_detail = "Registro técnico ainda sem emissão oficial."
+
+    return {
+        "document_kind_label": document_kind_label,
+        "document_kind_detail": document_kind_detail,
+        "status_label": _DOCUMENT_STATUS_UI_LABELS.get(status_key, visual_state_label or "Documento"),
+        "status_key": status_key,
+        "visual_state_label": visual_state_label,
+        "visual_state_detail": visual_state_detail,
+        "official_issue_label": "Emissão oficial",
+        "official_package_label": "Pacote oficial",
+        "issued_document_label": "Documento emitido",
+        "operational_pdf_label": "PDF operacional",
+        "history_label": "Histórico de emissões",
+        "reissue_label": "Reemissão recomendada",
+        "superseded_label": "Documento substituído",
+        "internal_review_label": "Revisão interna governada",
+        "mesa_label": "Mesa Avaliadora",
+        "case_pending_label": "Pendências do caso",
+        "package_not_included_label": "Não incluído no pacote",
+        "family_dependent_label": "Depende da família/template",
+        "family_requires_mesa_label": "Família exige Mesa",
+        "audit_label": "Auditoria",
+        "package_resources_label": "Recursos do pacote",
+        "issue_state_label": issue_state_label,
+        "issue_number_label": _texto_curto(current_issue.get("issue_number")),
+    }
 
 
 def document_visual_state(
@@ -110,7 +233,7 @@ def build_document_package_sections(
         if "anexos_mesa/" in lowered:
             _append("anexos_mesa", path, "Anexo da mesa")
         elif "documentos/" in lowered or "metadados/verificacao_publica" in lowered:
-            _append("documento_oficial", path, "Documento oficial")
+            _append("documento_oficial", path, "Emissão oficial")
 
     if current_issue:
         issue_number = _texto_curto(current_issue.get("issue_number"), fallback="Emissão ativa") or "Emissão ativa"
@@ -222,8 +345,10 @@ def build_document_timeline(
 
 __all__ = [
     "DOCUMENT_PACKAGE_SECTION_LABELS",
+    "build_document_ui_language",
     "build_document_package_sections",
     "build_document_summary_card",
     "build_document_timeline",
+    "canonical_issue_state_label",
     "document_visual_state",
 ]

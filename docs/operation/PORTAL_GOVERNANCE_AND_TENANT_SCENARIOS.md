@@ -220,7 +220,20 @@ Portanto, o Portal Cliente não deve ser reduzido a `read-only`. Também não de
 | Grande empresa com Mesa | Sim | Sim | Sim | Sim | Sim | Arquitetura atual mais completa. |
 | Mobile-only operacional | Sim | Opcional | Principal | Opcional | Conforme pacote | `mobile_single_operator` cobre a identidade principal. |
 
-## 12. Lacunas e riscos arquiteturais
+## 12. Linguagem de produto no Portal Cliente
+
+O Portal Cliente deve usar a matriz [UX_PRODUCT_LANGUAGE.md](UX_PRODUCT_LANGUAGE.md) para traduzir contratos tecnicos em leitura comercial/operacional. A superficie `documentos` e o piloto do UX-A:
+
+- `PDF operacional` identifica arquivo de trabalho sem download oficial.
+- `Emissão oficial` identifica somente `EmissaoOficialLaudo` ativa ou registrada.
+- `Histórico de emissões` preserva registros antigos sem chama-los de atuais.
+- `Documento substituído` traduz `issue_state=superseded`.
+- `Reemissão recomendada` traduz divergencia pos-emissao sem expor `primary_pdf_diverged`.
+- `Não incluído no pacote` continua sendo o termo para capability ausente no contrato.
+
+Hashes, pacote, PDF oficial e verificacao publica devem ficar em bloco de auditoria copiavel/recolhivel quando a tela estiver densa. O download principal deve apontar para o pacote oficial ativo quando existir.
+
+## 13. Lacunas e riscos arquiteturais
 
 | Lacuna/risco | Impacto | Classificação |
 | --- | --- | --- |
@@ -233,7 +246,7 @@ Portanto, o Portal Cliente não deve ser reduzido a `read-only`. Também não de
 | Admin Cliente com ações técnicas precisa fronteira clara. | Evita virar Admin CEO informal ou revisor sem governança. | P1 segurança/produto. |
 | Reemissão/superseded ainda é follow-up. Downloads oficiais já registram auditoria sanitizada. | Histórico de substituição de emissão ainda pode ficar incompleto para produção real. | P0 para produção documental forte. |
 
-## 13. Recomendações
+## 14. Recomendações
 
 1. Manter a arquitetura por capabilities como fonte de verdade. Não criar bifurcação fixa `com Mesa` versus `sem Mesa` espalhada por tela.
 2. Formalizar mais pacotes comerciais em cima dos eixos já existentes: portais, capabilities, operating model, revisão, emissão, retenção, suporte e catálogo.
@@ -244,7 +257,7 @@ Portanto, o Portal Cliente não deve ser reduzido a `read-only`. Também não de
 7. Melhorar a UX do Portal Cliente para explicar capacidades liberadas e bloqueadas por contrato, sem parecer erro.
 8. Antes de produção real, fechar PR9 de reemissão/superseded e manter auditoria de download oficial coberta nos fluxos Portal Cliente, Chat/Mobile e Mesa.
 
-## 14. Conclusão
+## 15. Conclusão
 
 A arquitetura atual já suporta múltiplos contextos operacionais. O desenho correto é:
 

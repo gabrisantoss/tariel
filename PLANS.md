@@ -14,6 +14,14 @@ Atualizado em `2026-04-27`.
 
 ## Estado atual
 
+### `PKT-UX-PRODUCT-LANGUAGE-01` - Linguagem, status e shell visual base
+
+- `status`: concluido localmente em `2026-04-27`; PR UX-A reduz ruído visual e padroniza termos de produto sem alterar regra de negócio, release gate, mobile smoke, permissões, emissão oficial ou NR35
+- `checkpoint 2026-04-27`: criada a matriz canônica `docs/operation/UX_PRODUCT_LANGUAGE.md` para traduzir PDF operacional, emissão oficial, pacote oficial, reemissão recomendada, documento substituído, revisão interna governada, Mesa Avaliadora, pendências, limite de pacote e bloqueio por família
+- `checkpoint 2026-04-27`: Portal Cliente Documentos é a superfície piloto; o read model passa a expor `document_ui` com rótulos canônicos e a UI separa resumo, documento oficial/PDF operacional, histórico, auditoria copiável e recursos do pacote
+- `checkpoint 2026-04-27`: o submenu de Documentos deixa de ser sticky apenas nessa superfície piloto para reduzir sobreposição com o shell principal; a padronização global de headers, Chat Inspetor, Mesa e Admin CEO fica como follow-up UX-B
+- `validacao executada`: `python -m py_compile web/app/domains/cliente/dashboard_documents_support.py web/app/domains/cliente/dashboard_bootstrap_support.py web/tests/test_cliente_portal_critico.py web/tests/test_smoke.py`; `node --check web/static/js/cliente/portal_documentos_surface.js`; recorte Portal Cliente Documentos (`8 passed`); recorte smoke de template/linguagem UX (`2 passed`); `git diff --check`; `AMBIENTE=dev make release-verify-local`
+
 ### `PKT-MOBILE-CHAT-FIRST-CAPABILITIES-01` - Normalizacao de capabilities mobile/chat-first
 
 - `status`: em andamento localmente em `2026-04-26`; PR B adiciona aliases/read model neutros para revisao, aprovacao, emissao e download sem remover capabilities antigas; PR C expõe esse read model na previa de finalizacao e na rail de ferramentas do Chat Inspetor; PR D leva os aliases/sinais para o Mobile como labels e estados de governanca; PR E expõe pacote, recursos e bloqueios contratuais no Portal Cliente sem criar capability nova e sem alterar release gate, mobile smoke, Maestro, `human_ack`, NR35 ou comportamento de emissao oficial

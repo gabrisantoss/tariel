@@ -439,6 +439,12 @@ Checkpoint PR I: `web/app/domains/chat/high_risk_family_guardrails.py` centraliz
 
 O teste `web/tests/test_high_risk_family_guardrails_pr_i.py` fixa tres limites: familia simples `padrao` em tenant `inspector_chat` continua usando revisao interna governada; NR13 Caldeira sem Mesa bloqueia e nao cria snapshot/emissao; NR13 Caldeira com policy incorreta `mobile_autonomous` e pacote com Mesa e forcada para handoff `mesa_required`.
 
+### PR UX-A - Linguagem de produto e status
+
+A camada mobile/chat-first deve continuar recebendo estados tecnicos, mas as superficies visuais devem usar a matriz [UX_PRODUCT_LANGUAGE.md](UX_PRODUCT_LANGUAGE.md). Termos como `mobile_autonomous`, `primary_pdf_diverged`, `reviewer_issue` e codigos crus de bloqueio nao devem aparecer como texto de usuario quando houver label canonico.
+
+No UX-A, o piloto fica no Portal Cliente Documentos: `document_ui` traduz emissao oficial, PDF operacional, reemissao recomendada, documento substituido, historico, auditoria e recursos do pacote. Chat Inspetor e Mobile ficam como follow-up para aplicar a mesma matriz sem criar UI grande.
+
 ## 15. Conclusao
 
 O Tariel ja tem a base correta para ser mobile/chat-first: Mobile e Chat Inspetor compartilham o nucleo do caso, Admin CEO governa contrato, Admin Cliente administra o tenant, Mesa entra conforme pacote/familia e a emissao oficial ja tem motor central.
