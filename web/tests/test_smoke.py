@@ -1290,6 +1290,7 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     portal_foundation_css = (raiz / "static" / "css" / "cliente" / "portal_foundation.css").read_text(encoding="utf-8")
     portal_components_css = (raiz / "static" / "css" / "cliente" / "portal_components.css").read_text(encoding="utf-8")
     portal_workspace_css = (raiz / "static" / "css" / "cliente" / "portal_workspace.css").read_text(encoding="utf-8")
+    portal_css = (raiz / "static" / "css" / "cliente" / "portal.css").read_text(encoding="utf-8")
     portal_admin_surface_css = (raiz / "static" / "css" / "cliente" / "portal_admin_surface.css").read_text(encoding="utf-8")
     portal_servicos_surface_css = (raiz / "static" / "css" / "cliente" / "portal_servicos_surface.css").read_text(encoding="utf-8")
     portal_recorrencia_surface_css = (raiz / "static" / "css" / "cliente" / "portal_recorrencia_surface.css").read_text(encoding="utf-8")
@@ -1329,6 +1330,8 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert '{% include "cliente/_shell_header.html" %}' in portal_cliente
     assert '{% include "cliente/_shell_header.html" %}' not in portal_cliente_admin_content
     assert '{% include "cliente/_shell_header.html" %}' in portal_cliente_admin_overview
+    assert "owner dominante" not in portal_cliente_admin_overview.lower()
+    assert "responsavel predominante" in portal_cliente_admin_overview.lower()
     assert 'class="admin-surface-layout"' in portal_cliente
     assert 'class="admin-content-header"' in portal_cliente
     assert '{% include "cliente/painel/_overview.html" %}' in portal_cliente
@@ -1625,6 +1628,8 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "window.TarielClientePortalChat" in portal_chat_js
     assert "window.TarielClientePortalMesaSurface" in portal_mesa_surface_js
     assert 'aria-current", ativa ? "page" : "false"' in portal_mesa_surface_js
+    assert "owner ativo" not in portal_mesa_surface_js.lower()
+    assert "responsavel ativo" in portal_mesa_surface_js.lower()
     assert "function resumirMomentoCanonicoMesa(laudo)" in portal_mesa_surface_js
     assert "function criarMesaLaudoItem(laudo)" in portal_mesa_surface_js
     assert "item.dataset.caseFlowSummary = texto(resumoCanonico.key).trim();" in portal_mesa_surface_js
@@ -1813,11 +1818,15 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert ".context-guidance" in portal_components_css
     assert ".workspace-shell" in portal_workspace_css
     assert ".workspace-columns--chat" in portal_workspace_css
+    assert "max-height: min(68vh, 460px);" in portal_css
+    assert "overflow-y: auto;" in portal_css
     assert ".admin-map" in portal_admin_surface_css
     assert ".admin-stage" in portal_admin_surface_css
     assert "@import url(\"../admin/admin_tokens.css\")" in portal_admin_theme_css
     assert ".cliente-admin-tab" in portal_admin_theme_css
     assert ".tab-main" in portal_admin_theme_css
+    assert ".admin-sidebar.surface-nav {" in portal_admin_theme_css
+    assert "top: auto;" in portal_admin_theme_css
     assert ".workspace-radar-grid--chat" in portal_chat_surface_css
     assert ".panel--chat .workspace-box--thread" in portal_chat_surface_css
     assert ".workspace-radar-grid--mesa" in portal_mesa_surface_css

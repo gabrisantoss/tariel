@@ -793,8 +793,8 @@ tr.user-row-highlight td:first-child {
 }
 
 .admin-sidebar.surface-nav {
-    position: sticky;
-    top: 98px;
+    position: static;
+    top: auto;
     grid-template-columns: 1fr;
     gap: 14px;
     align-self: start;
