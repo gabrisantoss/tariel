@@ -87,6 +87,8 @@ Checkpoint PR G: `web/tests/test_company_no_mesa_multi_user_pr_g.py` prova a var
 
 O mesmo teste fixa o limite por familia: NR35 Linha de Vida nao cai em self-review nesse tenant sem Mesa. A finalizacao bloqueia com `nr35_mesa_required_unavailable`, sem `ApprovedCaseSnapshot` e sem `EmissaoOficialLaudo`.
 
+Checkpoint PR H: `web/tests/test_company_with_mesa_premium_pr_h.py` prova a empresa com Mesa/premium usando `inspector_chat_mesa` no modelo `standard`. O Portal Cliente mostra Mobile/Chat, Mesa, documentos oficiais, emissao oficial e signatario governado como recursos incluidos. A familia simples usada e `cbmgo`: Inspetor cria/coleta/finaliza, o caso vai para Mesa, o Revisor aprova, o PDF operacional aparece antes da emissao sem `issue_number`, e a emissao oficial so aparece depois do motor central criar `EmissaoOficialLaudo` com snapshot, signatario, pacote congelado, download e auditoria.
+
 Capabilities atuais:
 
 | Capability | O que libera | Dependência de portal | Onde bloqueia |
