@@ -42,14 +42,17 @@ export function renderizarReviewPackageMesa(
   const summaryText =
     summary.totalRequired > 0
       ? `${summary.totalAccepted}/${summary.totalRequired} evidências aceitas`
-      : "Pacote operacional pronto para revisão";
+      : "PDF operacional pronto para revisão";
   const eyebrow =
-    summary.modeLabel === "Mesa obrigatória"
+    summary.modeLabel === "Família exige Mesa"
       ? "Mesa Avaliadora"
       : "Revisão interna governada";
 
   return (
-    <View style={styles.threadReviewCard} testID="mesa-review-package-card">
+    <View
+      style={[styles.threadReviewCard, styles.threadReviewGovernanceCard]}
+      testID="mesa-review-package-card"
+    >
       <Text style={styles.threadReviewEyebrow}>{eyebrow}</Text>
       <Text style={styles.threadReviewTitle}>{summary.modeLabel}</Text>
       <Text style={styles.threadReviewDescription}>
@@ -191,9 +194,7 @@ export function renderizarReviewPackageMesa(
 
       {summary.inspectionHistorySummary ? (
         <Text style={styles.threadReviewFootnote}>
-          {summary.inspectionHistorySource
-            ? `Última base aprovada: ${summary.inspectionHistorySource}. ${summary.inspectionHistorySummary}`
-            : summary.inspectionHistorySummary}
+          Última base aprovada registrada. {summary.inspectionHistorySummary}
         </Text>
       ) : null}
       {summary.humanOverrideReason ? (

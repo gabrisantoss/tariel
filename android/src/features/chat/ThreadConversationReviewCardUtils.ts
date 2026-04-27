@@ -29,6 +29,34 @@ export function lerBooleanOuNull(value: unknown): boolean | null {
   return typeof value === "boolean" ? value : null;
 }
 
+const THREAD_INTERNAL_TERM_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/\bmobile_autonomous\b/gi, "Revisão interna governada"],
+  [/\bmobile_review_allowed\b/gi, "Revisão interna + Mesa"],
+  [/\bprimary_pdf_diverged\b/gi, "Reemissão recomendada"],
+  [/\bissue_state_label\b/gi, "Estado da emissão"],
+  [/\bissue_state\b/gi, "Estado da emissão"],
+  [/\bsuperseded\b/gi, "Documento substituído"],
+  [/\breviewer_issue\b/gi, "Emissão oficial"],
+  [/\breviewer_decision\b/gi, "Revisão governada"],
+  [/\boverride\b/gi, "ajuste humano"],
+  [/\bdiff\b/gi, "histórico de alterações"],
+  [/\bred flag\b/gi, "alerta crítico"],
+];
+
+export function sanitizarTextoThread(value: string): string {
+  return THREAD_INTERNAL_TERM_REPLACEMENTS.reduce(
+    (current, [pattern, replacement]) => current.replace(pattern, replacement),
+    value,
+  );
+}
+
+export function textoThreadContemTermoInterno(value: string): boolean {
+  return THREAD_INTERNAL_TERM_REPLACEMENTS.some(([pattern]) => {
+    pattern.lastIndex = 0;
+    return pattern.test(value);
+  });
+}
+
 export function resumirIntegridadePdfOficial(
   officialIssue: JsonRecord | null,
   currentIssue: JsonRecord | null,
@@ -54,12 +82,12 @@ export function resumirIntegridadePdfOficial(
     .join(" · ");
 
   const title = diverged
-    ? "PDF emitido divergente"
+    ? "Reemissão recomendada"
     : reissueRecommended
       ? "Reemissão recomendada"
       : "";
   const summary = diverged
-    ? "O PDF atual do caso divergiu do documento congelado na emissão oficial."
+    ? "O PDF operacional atual divergiu do documento congelado na emissão oficial."
     : reissueRecommended
       ? "A emissão segue registrada, mas a governança recomenda gerar um novo pacote antes da próxima entrega pública."
       : "";

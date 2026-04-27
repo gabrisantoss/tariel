@@ -144,7 +144,7 @@ describe("exportDataFlow", () => {
         allowedActions: "Aprovar internamente · Devolver para ajuste",
         reportPackReadiness: "Pre-laudo em montagem",
         reportPackCoverage: "0/5 blocos",
-        reportPackValidationMode: "Mesa obrigatoria",
+        reportPackValidationMode: "Mesa Avaliadora",
         reportPackInspectionContext: "Linha de vida cobertura A · Bloco 2",
         reissueRecommended: true,
         governanceStatus: "Reemissão recomendada",
@@ -180,7 +180,7 @@ describe("exportDataFlow", () => {
       expect.objectContaining({
         extension: "txt",
         content: expect.stringContaining(
-          "Caso 88: Aguardando mesa · Mesa avaliadora · Aprovar internamente · Devolver para ajuste · Pre-laudo em montagem · 0/5 blocos · Mesa obrigatoria · Linha de vida cobertura A · Bloco 2 · Reemissão recomendada · PDF emitido divergente · Emitido v0003 · Atual v0004",
+          "Caso 88: Aguardando mesa · Mesa avaliadora · Aprovar internamente · Devolver para ajuste · Pre-laudo em montagem · 0/5 blocos · Mesa Avaliadora · Linha de vida cobertura A · Bloco 2 · Reemissão recomendada · PDF emitido divergente · Emitido v0003 · Atual v0004",
         ),
       }),
     );

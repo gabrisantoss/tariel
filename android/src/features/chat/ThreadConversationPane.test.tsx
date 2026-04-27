@@ -253,7 +253,7 @@ describe("ThreadConversationPane", () => {
 
     expect(getByTestId("mesa-review-package-card")).toBeTruthy();
     expect(getByTestId("mesa-review-verification-qr")).toBeTruthy();
-    expect(getByText("Mesa obrigatória")).toBeTruthy();
+    expect(getByText("Família exige Mesa")).toBeTruthy();
     expect(getByText("Mesa em revisão")).toBeTruthy();
     expect(getByText("Mesa avaliadora")).toBeTruthy();
     expect(
@@ -274,16 +274,18 @@ describe("ThreadConversationPane", () => {
         "Próxima ação: Devolver para ajuste. Corrija os pontos sinalizados e devolva o caso para ajuste antes de qualquer decisão final.",
       ),
     ).toBeTruthy();
-    expect(getByText("Sinalização: missing_required_evidence")).toBeTruthy();
+    expect(
+      getByText("Sinalização: Evidência obrigatória pendente"),
+    ).toBeTruthy();
     expect(getByText("Emissão oficial")).toBeTruthy();
     expect(getByText("Pronto para emissão oficial")).toBeTruthy();
     expect(
       getByText("TAR-20260410-000123 · Emitido · 2026-04-10T13:40:00+00:00"),
     ).toBeTruthy();
-    expect(getByText("PDF emitido divergente")).toBeTruthy();
+    expect(getByText("Reemissão recomendada")).toBeTruthy();
     expect(
       getByText(
-        "O PDF atual do caso divergiu do documento congelado na emissão oficial. Emitido v0003 · Atual v0004.",
+        "O PDF operacional atual divergiu do documento congelado na emissão oficial. Emitido v0003 · Atual v0004.",
       ),
     ).toBeTruthy();
     expect(getByText("Aprovação governada")).toBeTruthy();
@@ -295,7 +297,7 @@ describe("ThreadConversationPane", () => {
         url: "/app/api/laudo/123/emissao-oficial/download",
       }),
     );
-    expect(getByText("Histórico de alterações")).toBeTruthy();
+    expect(getByText("Histórico/Auditoria")).toBeTruthy();
     expect(getAllByText("Identificação").length).toBeGreaterThan(0);
     expect(getByText("Identificação / Tag")).toBeTruthy();
     expect(getByText("Antes: TAG-001")).toBeTruthy();
@@ -323,6 +325,98 @@ describe("ThreadConversationPane", () => {
 
     expect(queryByTestId("mesa-review-action-approve")).toBeNull();
     expect(queryByTestId("mesa-review-action-return")).toBeTruthy();
+  });
+
+  it("não exibe termos internos nos cards da thread", () => {
+    const { getAllByText, queryByText } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        activeOwnerRole="inspetor"
+        caseLifecycleStatus="em_revisao_mobile"
+        reviewPackage={{
+          review_mode: "mobile_autonomous",
+          review_required: true,
+          document_blockers: [],
+          coverage_map: {
+            total_required: 2,
+            total_accepted: 2,
+            total_missing: 0,
+            total_irregular: 0,
+          },
+          revisao_por_bloco: {
+            attention_blocks: 1,
+            returned_blocks: 0,
+            items: [
+              {
+                block_key: "documento",
+                title: "Documento",
+                review_status: "attention",
+                recommended_action:
+                  "Revisar primary_pdf_diverged antes da entrega.",
+              },
+            ],
+          },
+          red_flags: [
+            {
+              code: "primary_pdf_diverged",
+              title: "red flag issue_state",
+              message:
+                "mobile_autonomous mobile_review_allowed reviewer_issue reviewer_decision superseded override diff",
+            },
+          ],
+          tenant_entitlements: {
+            mobile_autonomous_allowed: true,
+          },
+          inspection_history: {
+            diff: {
+              summary: "diff com reviewer_decision e override",
+              highlights: [
+                {
+                  label: "issue_state",
+                  change_type: "changed",
+                  previous_value: "superseded",
+                  current_value: "primary_pdf_diverged",
+                },
+              ],
+            },
+          },
+          human_override_summary: {
+            count: 1,
+            latest: {
+              actor_name: "Inspetor Demo",
+              reason: "override mobile_review_allowed diff",
+            },
+          },
+          emissao_oficial: {
+            reissue_recommended: true,
+            current_issue: {
+              issue_number: "TAR-20260414-000777",
+              issue_state_label: "superseded",
+              primary_pdf_diverged: true,
+              primary_pdf_storage_version: "v0001",
+              current_primary_pdf_storage_version: "v0002",
+            },
+            audit_trail: [
+              {
+                title: "reviewer_issue",
+                status_label: "issue_state",
+                summary: "reviewer_decision diff override",
+              },
+            ],
+          },
+          allowed_decisions: ["devolver_no_mobile"],
+        }}
+      />,
+    );
+
+    expect(getAllByText("Revisão interna governada").length).toBeGreaterThan(0);
+    expect(getAllByText("Reemissão recomendada").length).toBeGreaterThan(0);
+    expect(getAllByText(/Documento substituído/).length).toBeGreaterThan(0);
+    expect(
+      queryByText(
+        /mobile_autonomous|mobile_review_allowed|primary_pdf_diverged|issue_state|superseded|reviewer_issue|reviewer_decision|override|diff|red flag/i,
+      ),
+    ).toBeNull();
   });
 
   it("aciona comandos de revisão mobile a partir do card operacional", () => {
@@ -465,7 +559,7 @@ describe("ThreadConversationPane", () => {
     const onAbrirMesaTab = jest.fn();
     const onAbrirQualityGate = jest.fn();
     const onUsarPerguntaPreLaudo = jest.fn();
-    const { getByTestId, getByText } = render(
+    const { getAllByText, getByTestId, getByText } = render(
       <ThreadConversationPane
         {...baseProps}
         allowedSurfaceActions={["chat_finalize"]}
@@ -635,16 +729,16 @@ describe("ThreadConversationPane", () => {
 
     expect(getByTestId("chat-report-pack-card")).toBeTruthy();
     expect(getByText("PDF operacional")).toBeTruthy();
-    expect(getByText("Rota canônica")).toBeTruthy();
-    expect(getByText("Seções do documento")).toBeTruthy();
-    expect(getByText("Slots de evidência")).toBeTruthy();
+    expect(getAllByText("Histórico/Auditoria").length).toBeGreaterThan(0);
+    expect(getAllByText("Documento").length).toBeGreaterThan(0);
+    expect(getByText("Conversa e evidências")).toBeTruthy();
     expect(
       getByText(
-        "Próxima ação: validar no quality gate ou abrir a Mesa para decisão humana.",
+        "Próxima ação: abrir a Mesa Avaliadora para decisão humana rastreável. O quality gate fica como ação secundária.",
       ),
     ).toBeTruthy();
     expect(getByText("Validar e finalizar")).toBeTruthy();
-    expect(getByText("Abrir Mesa")).toBeTruthy();
+    expect(getByText("Abrir Mesa Avaliadora")).toBeTruthy();
 
     fireEvent.press(getByTestId("chat-report-pack-card-next-question-0"));
     fireEvent.press(getByTestId("chat-report-pack-card-open-quality-gate"));
@@ -717,13 +811,13 @@ describe("ThreadConversationPane", () => {
     );
 
     expect(getAllByText("Pronto para validar").length).toBeGreaterThan(0);
-    expect(getByText("Sem bloqueios do pré-laudo")).toBeTruthy();
-    expect(getByText("Sem alertas ativos")).toBeTruthy();
+    expect(getByText("Sem pendências do caso")).toBeTruthy();
+    expect(getByText("Sem revisão pendente")).toBeTruthy();
   });
 
   it("destaca o documento emitido na thread quando o caso já tem emissão oficial", () => {
     const onAbrirAnexo = jest.fn();
-    const { getByTestId, getByText } = render(
+    const { getAllByText, getByTestId, getByText } = render(
       <ThreadConversationPane
         {...baseProps}
         vendoMesa={false}
@@ -763,16 +857,18 @@ describe("ThreadConversationPane", () => {
     );
 
     expect(getByTestId("chat-issued-document-card")).toBeTruthy();
-    expect(getByText("Emissão oficial")).toBeTruthy();
+    expect(getAllByText("Emissão oficial").length).toBeGreaterThan(0);
     expect(getByText("TAR-20260413-000321")).toBeTruthy();
-    expect(getByText("PDF emitido divergente")).toBeTruthy();
+    expect(getAllByText("Reemissão recomendada").length).toBeGreaterThan(0);
     expect(
       getByText(
-        "O PDF atual do caso divergiu do documento congelado na emissão oficial. Emitido v0003 · Atual v0004.",
+        "O PDF operacional atual divergiu do documento congelado na emissão oficial. Emitido v0003 · Atual v0004.",
       ),
     ).toBeTruthy();
     expect(
-      getByText("Verificação pública: /app/public/laudo/verificar/hash321"),
+      getByText(
+        "Histórico/Auditoria: verificação pública disponível em /app/public/laudo/verificar/hash321",
+      ),
     ).toBeTruthy();
 
     fireEvent.press(getByTestId("chat-issued-document-download"));

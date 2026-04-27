@@ -6,6 +6,7 @@ import {
   lerRegistro,
   lerTexto,
   resumirIntegridadePdfOficial,
+  sanitizarTextoThread,
 } from "./ThreadConversationReviewCardUtils";
 
 export function renderizarDocumentoEmitidoCard(
@@ -35,7 +36,9 @@ export function renderizarDocumentoEmitidoCard(
         url: downloadUrl,
       }
     : null;
-  const issueState = lerTexto(currentIssue?.issue_state_label, "Emitido");
+  const issueState = sanitizarTextoThread(
+    lerTexto(currentIssue?.issue_state_label, "Emitido"),
+  );
   const issuedAt = lerTexto(currentIssue?.issued_at);
   const verificationUrl = lerTexto(verification?.verification_url);
   const issueIntegrity = resumirIntegridadePdfOficial(
@@ -49,24 +52,67 @@ export function renderizarDocumentoEmitidoCard(
   }
 
   return (
-    <View style={styles.threadReviewCard} testID={testID}>
+    <View
+      style={[styles.threadReviewCard, styles.threadOfficialIssueCard]}
+      testID={testID}
+    >
       <Text style={styles.threadReviewEyebrow}>Emissão oficial</Text>
       <Text style={styles.threadReviewTitle}>
-        {issueNumber || "Documento oficial"}
+        {issueNumber || "Documento emitido"}
       </Text>
       <Text style={styles.threadReviewDescription}>
         {issueIntegrity.diverged
-          ? "O PDF operacional atual divergiu do documento oficial emitido. Gere uma nova emissão antes de distribuir a versão atual."
+          ? "Reemissão recomendada: o PDF operacional atual não é o mesmo documento congelado na emissão oficial."
           : emitted
-            ? "A emissão oficial deste caso está concluída. Reabra apenas se precisar iniciar um novo ciclo técnico."
+            ? "A emissão oficial está concluída e o pacote oficial está pronto para entrega auditável."
             : "A emissão oficial já está registrada para este caso."}
       </Text>
       <Text style={styles.threadReviewFootnote}>
         PDF operacional e emissão oficial são trilhas separadas no app.
       </Text>
+      <View style={styles.threadReviewChipRail}>
+        <View style={[styles.threadReviewChip, styles.threadReviewChipSuccess]}>
+          <Text
+            style={[
+              styles.threadReviewChipText,
+              styles.threadReviewChipTextSuccess,
+            ]}
+          >
+            Emissão oficial
+          </Text>
+        </View>
+        {downloadAttachment ? (
+          <View
+            style={[styles.threadReviewChip, styles.threadReviewChipAccent]}
+          >
+            <Text
+              style={[
+                styles.threadReviewChipText,
+                styles.threadReviewChipTextAccent,
+              ]}
+            >
+              Pacote oficial
+            </Text>
+          </View>
+        ) : null}
+        {issueIntegrity.summary ? (
+          <View
+            style={[styles.threadReviewChip, styles.threadReviewChipDanger]}
+          >
+            <Text
+              style={[
+                styles.threadReviewChipText,
+                styles.threadReviewChipTextDanger,
+              ]}
+            >
+              Reemissão recomendada
+            </Text>
+          </View>
+        ) : null}
+      </View>
       <View style={styles.threadReviewMetaGrid}>
         <View style={styles.threadReviewMetaItem}>
-          <Text style={styles.threadReviewMetaLabel}>Estado da emissão</Text>
+          <Text style={styles.threadReviewMetaLabel}>Status</Text>
           <Text style={styles.threadReviewMetaValue}>{issueState}</Text>
         </View>
         <View style={styles.threadReviewMetaItem}>
@@ -82,9 +128,9 @@ export function renderizarDocumentoEmitidoCard(
             {issueIntegrity.title}
           </Text>
           <Text style={styles.threadReviewWarningText}>
-            {issueIntegrity.summary}
+            {sanitizarTextoThread(issueIntegrity.summary)}
             {issueIntegrity.versionDetail
-              ? ` ${issueIntegrity.versionDetail}.`
+              ? ` ${sanitizarTextoThread(issueIntegrity.versionDetail)}.`
               : ""}
           </Text>
         </View>
@@ -115,7 +161,8 @@ export function renderizarDocumentoEmitidoCard(
       ) : null}
       {verificationUrl ? (
         <Text style={styles.threadReviewFootnote}>
-          Verificação pública: {verificationUrl}
+          Histórico/Auditoria: verificação pública disponível em{" "}
+          {verificationUrl}
         </Text>
       ) : null}
     </View>

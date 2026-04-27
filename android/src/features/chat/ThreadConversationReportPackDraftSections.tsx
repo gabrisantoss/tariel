@@ -10,6 +10,7 @@ import type {
   MobileReportPackSlotSummary,
   ReportPackBlockStatus,
 } from "./reportPackHelpers";
+import { sanitizarTextoThread } from "./ThreadConversationReviewCardUtils";
 
 type AnalysisBasisEntry = {
   key: string;
@@ -108,9 +109,16 @@ export function ThreadConversationReportPackFlowSection(props: {
   }
 
   return (
-    <ReportPackListSection title="Rota canônica">
+    <ReportPackListSection title="Histórico/Auditoria">
       {items.map((item) => (
-        <ReportPackStatusRow key={`${item.key}-${item.status}`} item={item} />
+        <ReportPackStatusRow
+          key={`${item.key}-${item.status}`}
+          item={{
+            ...item,
+            summary: sanitizarTextoThread(item.summary),
+            title: sanitizarTextoThread(item.title),
+          }}
+        />
       ))}
     </ReportPackListSection>
   );
@@ -125,12 +133,19 @@ export function ThreadConversationReportPackExecutiveSection(props: {
   }
 
   return (
-    <ReportPackListSection title="Critérios de emissão">
+    <ReportPackListSection title="Revisão">
       {items.map((item) => (
-        <ReportPackStatusRow key={`${item.key}-${item.status}`} item={item}>
+        <ReportPackStatusRow
+          key={`${item.key}-${item.status}`}
+          item={{
+            ...item,
+            summary: sanitizarTextoThread(item.summary),
+            title: sanitizarTextoThread(item.title),
+          }}
+        >
           {item.bullets.map((bullet) => (
             <Text key={bullet} style={styles.threadReviewFootnote}>
-              {`- ${bullet}`}
+              {`- ${sanitizarTextoThread(bullet)}`}
             </Text>
           ))}
         </ReportPackStatusRow>
@@ -148,9 +163,16 @@ export function ThreadConversationReportPackBlocksSection(props: {
   }
 
   return (
-    <ReportPackListSection title="Blocos do pré-laudo">
+    <ReportPackListSection title="Pendências do caso">
       {items.map((item) => (
-        <ReportPackStatusRow key={`${item.key}-${item.status}`} item={item} />
+        <ReportPackStatusRow
+          key={`${item.key}-${item.status}`}
+          item={{
+            ...item,
+            summary: sanitizarTextoThread(item.summary),
+            title: sanitizarTextoThread(item.title),
+          }}
+        />
       ))}
     </ReportPackListSection>
   );
@@ -165,20 +187,21 @@ export function ThreadConversationReportPackDocumentSections(props: {
   }
 
   return (
-    <ReportPackListSection title="Seções do documento">
+    <ReportPackListSection title="Documento">
       {items.map((item) => (
         <ReportPackStatusRow
           key={item.key}
           item={{
             status: item.status,
             statusLabel: item.statusLabel,
-            summary: item.summary,
-            title: item.title,
+            summary: sanitizarTextoThread(item.summary),
+            title: sanitizarTextoThread(item.title),
           }}
         >
           {item.highlights.length ? (
             <Text style={styles.threadReviewFootnote}>
-              Campos-chave: {item.highlights.join(" · ")}
+              Campos-chave:{" "}
+              {item.highlights.map(sanitizarTextoThread).join(" · ")}
             </Text>
           ) : null}
         </ReportPackStatusRow>
@@ -196,15 +219,15 @@ export function ThreadConversationReportPackEvidenceSlotsSection(props: {
   }
 
   return (
-    <ReportPackListSection title="Slots de evidência">
+    <ReportPackListSection title="Conversa e evidências">
       {items.map((item) => (
         <ReportPackStatusRow
           key={item.key}
           item={{
             status: item.status,
             statusLabel: item.statusLabel,
-            summary: item.summary,
-            title: item.label,
+            summary: sanitizarTextoThread(item.summary),
+            title: sanitizarTextoThread(item.label),
           }}
         >
           {item.acceptedTypes.length ? (
@@ -214,7 +237,7 @@ export function ThreadConversationReportPackEvidenceSlotsSection(props: {
           ) : null}
           {item.bindingPath ? (
             <Text style={styles.threadReviewFootnote}>
-              Vincula em: {item.bindingPath}
+              Usada no bloco de evidências do PDF operacional.
             </Text>
           ) : null}
         </ReportPackStatusRow>
@@ -232,12 +255,16 @@ export function ThreadConversationReportPackAnalysisBasisSection(props: {
   }
 
   return (
-    <ReportPackListSection title="Base analítica">
+    <ReportPackListSection title="Histórico/Auditoria">
       {items.map((item) => (
         <View key={item.key} style={styles.threadReviewListItem}>
           <View style={styles.threadReviewListCopy}>
-            <Text style={styles.threadReviewListTitle}>{item.title}</Text>
-            <Text style={styles.threadReviewListText}>{item.summary}</Text>
+            <Text style={styles.threadReviewListTitle}>
+              {sanitizarTextoThread(item.title)}
+            </Text>
+            <Text style={styles.threadReviewListText}>
+              {sanitizarTextoThread(item.summary)}
+            </Text>
           </View>
         </View>
       ))}
@@ -257,7 +284,7 @@ export function ThreadConversationReportPackMissingEvidenceNotes(props: {
     <>
       {items.map((item) => (
         <Text key={item} style={styles.threadReviewFootnote}>
-          Evidência faltante: {item}
+          Pendência: {sanitizarTextoThread(item)}
         </Text>
       ))}
     </>
@@ -273,10 +300,10 @@ export function ThreadConversationReportPackReviewRequiredSection(props: {
   }
 
   return (
-    <ReportPackListSection title="Revisão obrigatória">
+    <ReportPackListSection title="Revisão">
       {items.map((item) => (
         <Text key={item} style={styles.threadReviewFootnote}>
-          {`- ${item}`}
+          {`- ${sanitizarTextoThread(item)}`}
         </Text>
       ))}
     </ReportPackListSection>
@@ -306,9 +333,9 @@ export function ThreadConversationReportPackActionsSection(props: {
     <View style={styles.threadReviewActionsRail}>
       <Text style={styles.threadReviewFootnote}>
         {showOpenMesaAction && showFinalizeAction
-          ? "Próxima ação: validar no quality gate ou abrir a Mesa para decisão humana."
+          ? "Próxima ação: abrir a Mesa Avaliadora para decisão humana rastreável. O quality gate fica como ação secundária."
           : showOpenMesaAction
-            ? "Próxima ação: abrir a Mesa para decisão humana rastreável."
+            ? "Próxima ação: abrir a Mesa Avaliadora para decisão humana rastreável."
             : "Próxima ação: validar no quality gate para seguir com o fechamento."}
       </Text>
       {showFinalizeAction ? (
@@ -349,7 +376,7 @@ export function ThreadConversationReportPackActionsSection(props: {
               styles.threadReviewActionButtonTextDanger,
             ]}
           >
-            Abrir Mesa
+            Abrir Mesa Avaliadora
           </Text>
         </Pressable>
       ) : null}
@@ -369,7 +396,7 @@ export function ThreadConversationReportPackNextQuestionsSection(props: {
   }
 
   return (
-    <ReportPackListSection title="Próximas confirmações">
+    <ReportPackListSection title="Pendências do caso">
       {items.map((item, index) =>
         showQuestionActions ? (
           <Pressable
@@ -379,11 +406,13 @@ export function ThreadConversationReportPackNextQuestionsSection(props: {
             style={styles.threadReviewInlineAction}
             testID={`${testID}-next-question-${index}`}
           >
-            <Text style={styles.threadReviewInlineActionText}>{item}</Text>
+            <Text style={styles.threadReviewInlineActionText}>
+              {sanitizarTextoThread(item)}
+            </Text>
           </Pressable>
         ) : (
           <Text key={item} style={styles.threadReviewFootnote}>
-            {`- ${item}`}
+            {`- ${sanitizarTextoThread(item)}`}
           </Text>
         ),
       )}
