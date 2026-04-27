@@ -235,6 +235,9 @@ Hashes, pacote, PDF oficial e verificacao publica devem ficar em bloco de audito
 
 Checkpoint UX-C (`2026-04-27`): a superficie `documentos` foi reorganizada visualmente em blocos explicitos de leitura por item (`Resumo`, `Documento oficial`, `Historico de emissoes`, `Auditoria` e `Recursos do pacote`). O ajuste e apenas de UX/copy/CSS da superficie piloto, sem alterar payload, endpoint, permissionamento ou regra de emissao.
 
+Checkpoint UX-D (`2026-04-27`): as superficies `chat` e `mesa` do Portal Cliente alinham status para linguagem canonica (`Em coleta`, `Na Mesa`, `Pendente`, `Aprovado`, `Emitido`), removem o rótulo cru `Owner` da leitura visual e deixam de fixar a barra de seção no scroll nessas duas telas. O ajuste permanece estritamente visual (copy/CSS/JS), sem alterar fluxo, endpoint ou permissao.
+Checkpoint UX-D.1 (`2026-04-27`): o mesmo corte de shell visual foi estendido para `servicos`, `ativos`, `recorrencia` e `painel admin`, com subnav nao-sticky e menor densidade de chips. O painel administrativo tambem troca `Owner predominante` por `Responsavel predominante`, mantendo o mesmo payload e as mesmas regras de governanca.
+
 ## 13. Lacunas e riscos arquiteturais
 
 | Lacuna/risco | Impacto | Classificação |

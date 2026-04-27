@@ -449,6 +449,10 @@ No UX-B, o Chat Inspetor passa a aplicar essa matriz na previa de finalizacao e 
 
 No UX-C, o piloto de `Portal Cliente > Documentos` avanca no shell visual sem mexer em regra: a leitura da carteira passa a explicitar blocos de `Resumo`, `Documento oficial`, `Historico de emissoes`, `Auditoria` e `Recursos do pacote`, reduzindo chips em excesso e mantendo o `Baixar pacote oficial` como acao principal quando existir emissao ativa.
 
+No UX-D, o Portal Cliente aplica o mesmo corte de linguagem/cromia em `Chat` e `Mesa`: status canonicos (`Em coleta`, `Na Mesa`, `Pendente`, `Aprovado`, `Emitido`) substituem termos legados em rótulos de fluxo/owner, e a barra de seção dessas duas superfícies deixa de ser sticky para reduzir empilhamento visual durante scroll.
+No mesmo ciclo, o Portal Cliente estende esse ajuste para `Servicos`, `Ativos`, `Recorrencia` e `Painel Admin` (subnav nao-sticky e menos ruido de chips), enquanto o Inspetor padroniza a copy de `preparar-emissao` para separar com mais clareza `PDF operacional` de `emissao oficial`.
+O painel da Mesa Avaliadora (`/revisao/painel`) tambem recebe a mesma linguagem canônica em sinais de fila (`Status`, `Responsavel`, `Decisao da Mesa disponivel`) e remove rótulos legados (`Fluxo legado`, `Owner`) sem alterar o fluxo de aprovacao humana.
+
 ## 15. Conclusao
 
 O Tariel ja tem a base correta para ser mobile/chat-first: Mobile e Chat Inspetor compartilham o nucleo do caso, Admin CEO governa contrato, Admin Cliente administra o tenant, Mesa entra conforme pacote/familia e a emissao oficial ja tem motor central.

@@ -31,19 +31,19 @@
     {% set lifecycle_status = laudo.case_lifecycle_status | default('', true) %}
     {% set owner_role = laudo.active_owner_role | default('', true) %}
     {% set allowed_surface_actions = laudo.allowed_surface_actions | default([], true) %}
-    {% set lifecycle_label = 'Fluxo legado' %}
+    {% set lifecycle_label = 'Em acompanhamento' %}
     {% if lifecycle_status == 'analise_livre' %}
-        {% set lifecycle_label = 'Analise livre' %}
+        {% set lifecycle_label = 'Em acompanhamento' %}
     {% elif lifecycle_status == 'pre_laudo' %}
-        {% set lifecycle_label = 'Pre-laudo' %}
+        {% set lifecycle_label = 'Em preparacao' %}
     {% elif lifecycle_status == 'laudo_em_coleta' %}
-        {% set lifecycle_label = 'Laudo guiado' %}
+        {% set lifecycle_label = 'Em coleta' %}
     {% elif lifecycle_status == 'aguardando_mesa' %}
-        {% set lifecycle_label = 'Aguardando mesa' %}
+        {% set lifecycle_label = 'Na Mesa' %}
     {% elif lifecycle_status == 'em_revisao_mesa' %}
-        {% set lifecycle_label = 'Em revisao na mesa' %}
+        {% set lifecycle_label = 'Na Mesa' %}
     {% elif lifecycle_status == 'devolvido_para_correcao' %}
-        {% set lifecycle_label = 'Devolvido para correcao' %}
+        {% set lifecycle_label = 'Pendente' %}
     {% elif lifecycle_status == 'aprovado' %}
         {% set lifecycle_label = 'Aprovado' %}
     {% elif lifecycle_status == 'emitido' %}
@@ -64,7 +64,7 @@
     {% set issued_reopen_hidden = issued_reopen and (issued_reopen.visible_in_active_case is sameas false) %}
     {% if 'mesa_approve' in allowed_surface_actions or 'mesa_return' in allowed_surface_actions %}
         {% set flow_summary_key = 'decision_ready' %}
-        {% set flow_summary_label = 'Decisao disponivel' %}
+        {% set flow_summary_label = 'Decisao da Mesa disponivel' %}
     {% elif 'chat_finalize' in allowed_surface_actions %}
         {% set flow_summary_key = 'waiting_field_send' %}
         {% set flow_summary_label = 'Aguardando envio do campo' %}
@@ -73,10 +73,10 @@
         {% set flow_summary_label = 'Campo em acao' %}
     {% elif owner_role == 'mesa' %}
         {% set flow_summary_key = 'mesa_owner' %}
-        {% set flow_summary_label = 'Mesa em acao' %}
+        {% set flow_summary_label = 'Mesa em analise' %}
     {% elif lifecycle_status == 'emitido' %}
         {% set flow_summary_key = 'issued' %}
-        {% set flow_summary_label = 'Caso emitido' %}
+        {% set flow_summary_label = 'Documento emitido' %}
     {% endif %}
     <article class="item-lista mesa-queue-item js-item-laudo" data-id="{{ laudo.id }}"
         data-whispers-nao-lidos="{{ laudo.whispers_nao_lidos or 0 }}"
@@ -111,8 +111,8 @@
         </div>
         <div class="item-proxima-acao js-proxima-acao">Próxima: {{ laudo.proxima_acao | default('Abrir caso e definir o próximo passo', true) | e }}</div>
         <div class="item-case-signals" aria-label="Sinais canonicos do caso">
-            <span class="item-case-signal">Fluxo {{ lifecycle_label | e }}</span>
-            <span class="item-case-signal">Owner {{ owner_label | e }}</span>
+            <span class="item-case-signal">Status {{ lifecycle_label | e }}</span>
+            <span class="item-case-signal">Responsavel {{ owner_label | e }}</span>
             <span class="item-case-signal item-case-signal--focus">{{ flow_summary_label | e }}</span>
             {% if issued_reopen_visible %}
             <span class="item-case-signal">Reemissão · PDF anterior visível</span>
@@ -120,9 +120,9 @@
             <span class="item-case-signal">Reemissão · histórico interno</span>
             {% endif %}
             {% if lifecycle_status == 'aprovado' %}
-            <span class="item-case-signal">Pronto para emissao</span>
+            <span class="item-case-signal">Pronto para emissao oficial</span>
             {% elif lifecycle_status == 'emitido' %}
-            <span class="item-case-signal">Emissao concluida</span>
+            <span class="item-case-signal">Documento emitido</span>
             {% endif %}
         </div>
         <div class="item-meta-rodape">

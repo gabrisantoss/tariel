@@ -1880,6 +1880,131 @@ def test_ux_product_language_padroniza_documentos_do_portal_cliente() -> None:
     assert "position: static" in documentos_css
 
 
+def test_ux_d_padroniza_status_chat_mesa_sem_owner_cru() -> None:
+    raiz_web = Path(__file__).resolve().parents[1]
+    chat_js = (raiz_web / "static" / "js" / "cliente" / "portal_chat_surface.js").read_text(encoding="utf-8")
+    mesa_js = (raiz_web / "static" / "js" / "cliente" / "portal_mesa_surface.js").read_text(encoding="utf-8")
+    chat_css = (raiz_web / "static" / "css" / "cliente" / "portal_chat_surface.css").read_text(encoding="utf-8")
+    mesa_css = (raiz_web / "static" / "css" / "cliente" / "portal_mesa_surface.css").read_text(encoding="utf-8")
+
+    for termo in (
+        "Na Mesa",
+        "Em coleta",
+        "Pendente",
+        "Mesa Avaliadora",
+        "Responsavel ",
+        "Decisao da Mesa disponivel",
+        "Pronto para emissao oficial",
+        "Documento emitido",
+    ):
+        assert termo in chat_js + "\n" + mesa_js
+
+    for termo_interno in (
+        "Owner ",
+        "Fluxo legado",
+    ):
+        assert termo_interno not in chat_js
+        assert termo_interno not in mesa_js
+
+    assert ".panel--chat .surface-nav--chat" in chat_css
+    assert ".panel--mesa .surface-nav--mesa" in mesa_css
+    assert "position: static" in chat_css
+    assert "position: static" in mesa_css
+
+
+def test_ux_d_reduz_ruido_visual_em_servicos_ativos_recorrencia() -> None:
+    raiz_web = Path(__file__).resolve().parents[1]
+    servicos_js = (raiz_web / "static" / "js" / "cliente" / "portal_servicos_surface.js").read_text(encoding="utf-8")
+    ativos_js = (raiz_web / "static" / "js" / "cliente" / "portal_ativos_surface.js").read_text(encoding="utf-8")
+    servicos_css = (raiz_web / "static" / "css" / "cliente" / "portal_servicos_surface.css").read_text(encoding="utf-8")
+    ativos_css = (raiz_web / "static" / "css" / "cliente" / "portal_ativos_surface.css").read_text(encoding="utf-8")
+    recorrencia_css = (raiz_web / "static" / "css" / "cliente" / "portal_recorrencia_surface.css").read_text(encoding="utf-8")
+
+    for termo in (
+        "service-card__rows",
+        "service-card__row",
+        "Pendências do caso",
+        "asset-card__section-title",
+        "Serviços relacionados",
+        "asset-card__tag",
+    ):
+        assert termo in servicos_js + "\n" + ativos_js
+
+    assert "hero-chip" not in ativos_js
+
+    for seletor in (
+        ".panel--servicos .surface-nav--servicos",
+        ".panel--ativos .surface-nav--ativos",
+        ".panel--recorrencia .surface-nav--recorrencia",
+        ".service-card__row",
+        ".asset-card__section",
+        ".asset-card__tag",
+    ):
+        assert seletor in servicos_css + "\n" + ativos_css + "\n" + recorrencia_css
+
+    assert "position: static" in servicos_css
+    assert "position: static" in ativos_css
+    assert "position: static" in recorrencia_css
+
+
+def test_ux_d_padroniza_linguagem_preparar_emissao_inspetor() -> None:
+    raiz_web = Path(__file__).resolve().parents[1]
+    preparar_emissao_html = (
+        raiz_web / "templates" / "inspetor" / "preparar_emissao.html"
+    ).read_text(encoding="utf-8")
+
+    for termo in (
+        "Resumo da emissao oficial",
+        "PDF operacional",
+        "Baixar pacote oficial",
+        "Baixar PDF operacional",
+        "Mudancas desde a emissao ativa",
+        "Acao sugerida",
+    ):
+        assert termo in preparar_emissao_html
+
+    for termo_legacy in (
+        "PDF operacional divergiu",
+        "Mudancas desde a ultima emissao",
+    ):
+        assert termo_legacy not in preparar_emissao_html
+
+
+def test_ux_d_padroniza_admin_sem_owner_cru() -> None:
+    raiz_web = Path(__file__).resolve().parents[1]
+    admin_js = (raiz_web / "static" / "js" / "cliente" / "portal_admin_surface.js").read_text(encoding="utf-8")
+    admin_css = (raiz_web / "static" / "css" / "cliente" / "portal_admin_surface.css").read_text(encoding="utf-8")
+
+    assert "Responsavel predominante: " in admin_js
+    assert "Owner predominante:" not in admin_js
+    assert ".panel--admin .surface-nav--admin" in admin_css
+    assert "position: static" in admin_css
+
+
+def test_ux_d_padroniza_painel_revisor_sem_owner_cru() -> None:
+    raiz_web = Path(__file__).resolve().parents[1]
+    painel_revisor_html = (raiz_web / "templates" / "painel_revisor.html").read_text(encoding="utf-8")
+    painel_revisor_css = (raiz_web / "static" / "css" / "revisor" / "painel_revisor.css").read_text(encoding="utf-8")
+
+    for termo in (
+        "Status {{ lifecycle_label | e }}",
+        "Responsavel {{ owner_label | e }}",
+        "Decisao da Mesa disponivel",
+        "Pronto para emissao oficial",
+        "Documento emitido",
+    ):
+        assert termo in painel_revisor_html
+
+    for termo_legacy in (
+        "Fluxo legado",
+        "Owner ",
+    ):
+        assert termo_legacy not in painel_revisor_html
+
+    assert "body.mesa-shell .lista-scroll .lista-header" in painel_revisor_css
+    assert "position: static" in painel_revisor_css
+
+
 def test_logins_e_blueprint_nao_reintroduzem_autofill_dev() -> None:
     raiz = Path(__file__).resolve().parents[1]
     login_admin = (raiz / "templates" / "admin" / "login.html").read_text(encoding="utf-8")

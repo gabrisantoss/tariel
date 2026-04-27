@@ -3688,3 +3688,7 @@
                 text-align: left;
             }
         }
+
+        body.mesa-shell .lista-scroll .lista-header {
+            position: static;
+        }

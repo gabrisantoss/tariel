@@ -123,9 +123,9 @@ def test_revisor_painel_ssr_expoe_sinais_canonicos_do_caso_na_fila(
 
     assert resposta.status_code == 200
     assert 'data-case-flow-summary="decision_ready"' in resposta.text
-    assert "Fluxo Aguardando mesa" in resposta.text
-    assert "Owner Mesa" in resposta.text
-    assert "Decisao disponivel" in resposta.text
+    assert "Status Na Mesa" in resposta.text
+    assert "Responsavel Mesa" in resposta.text
+    assert "Decisao da Mesa disponivel" in resposta.text
 
 
 @pytest.mark.parametrize(
