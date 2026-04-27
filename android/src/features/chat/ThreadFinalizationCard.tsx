@@ -29,21 +29,28 @@ export function ThreadFinalizationCard({
   actions,
   insights,
 }: ThreadFinalizationCardProps) {
-  const highlightedInsights = insights.filter((item) =>
-    ["next-step", "blockers", "delivery"].includes(item.key),
-  );
-  const operationalPlanInsights = [
+  const primaryAction = actions[0] ?? null;
+  const secondaryActions = actions.slice(1);
+  const statusInsights = [
     insights.find((item) => item.key === "current-owner"),
-    insights.find((item) => item.key === "next-step"),
     insights.find((item) => item.key === "expected-decision"),
-    insights.find((item) => item.key === "suggested-route"),
     insights.find((item) => item.key === "blockers"),
     insights.find((item) => item.key === "blocking-reason"),
+    insights.find((item) => item.key === "suggested-route"),
+  ]
+    .filter((item): item is ThreadInsight => Boolean(item))
+    .slice(0, 4);
+  const documentAuditInsights = [
     insights.find((item) => item.key === "delivery"),
-  ].filter((item): item is ThreadInsight => Boolean(item));
-  const visibleDetailedInsights = (
-    highlightedInsights.length ? highlightedInsights : insights
-  ).slice(0, 3);
+    insights.find((item) => item.key === "verification"),
+    insights.find((item) => item.key === "governance"),
+    insights.find((item) => item.key === "final-output"),
+  ]
+    .filter((item): item is ThreadInsight => Boolean(item))
+    .slice(0, 4);
+  const fallbackStatusInsights = statusInsights.length
+    ? statusInsights
+    : insights.slice(0, 3);
 
   const renderChip = (item: ThreadChip) => (
     <View
@@ -93,6 +100,7 @@ export function ThreadFinalizationCard({
   const renderAction = (item: ThreadAction) => (
     <Pressable
       key={item.key}
+      accessibilityRole="button"
       onPress={item.onPress}
       style={[
         styles.threadActionButton,
@@ -135,71 +143,6 @@ export function ThreadFinalizationCard({
         {item.label}
       </Text>
     </Pressable>
-  );
-
-  const renderInsightSummary = (items: ThreadInsight[]) => (
-    <View style={styles.threadInsightSummaryRow}>
-      {items.map((item) => (
-        <View key={item.key} style={styles.threadInsightSummaryChip}>
-          <Text style={styles.threadInsightSummaryLabel}>{item.label}</Text>
-          <Text numberOfLines={1} style={styles.threadInsightSummaryValue}>
-            {item.value}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-
-  const renderInsights = (items: ThreadInsight[]) => (
-    <View style={styles.threadInsightGrid}>
-      {items.map((item) => (
-        <View
-          key={item.key}
-          style={[
-            styles.threadInsightCard,
-            item.tone === "accent"
-              ? styles.threadInsightCardAccent
-              : item.tone === "success"
-                ? styles.threadInsightCardSuccess
-                : item.tone === "danger"
-                  ? styles.threadInsightCardDanger
-                  : null,
-          ]}
-        >
-          <View
-            style={[
-              styles.threadInsightIcon,
-              item.tone === "accent"
-                ? styles.threadInsightIconAccent
-                : item.tone === "success"
-                  ? styles.threadInsightIconSuccess
-                  : item.tone === "danger"
-                    ? styles.threadInsightIconDanger
-                    : null,
-            ]}
-          >
-            <MaterialCommunityIcons
-              color={
-                item.tone === "accent"
-                  ? colors.accent
-                  : item.tone === "success"
-                    ? colors.success
-                    : item.tone === "danger"
-                      ? colors.danger
-                      : colors.textSecondary
-              }
-              name={item.icon}
-              size={18}
-            />
-          </View>
-          <View style={styles.threadInsightCopy}>
-            <Text style={styles.threadInsightLabel}>{item.label}</Text>
-            <Text style={styles.threadInsightValue}>{item.value}</Text>
-            <Text style={styles.threadInsightDetail}>{item.detail}</Text>
-          </View>
-        </View>
-      ))}
-    </View>
   );
 
   const renderOperationalPlan = (items: ThreadInsight[]) => (
@@ -320,38 +263,56 @@ export function ThreadFinalizationCard({
       {actions.length ? (
         <View style={styles.threadFinalizationSection}>
           <Text style={styles.threadFinalizationSectionLabel}>
-            Próximas ações
+            Próxima ação
           </Text>
-          <View style={styles.threadActionRow}>
-            {actions.map((item) => renderAction(item))}
-          </View>
+          {primaryAction ? (
+            <View style={styles.threadActionRow}>
+              {renderAction(primaryAction)}
+            </View>
+          ) : null}
+          {secondaryActions.length ? (
+            <View style={styles.threadSecondaryActionRow}>
+              {secondaryActions.map((item) => (
+                <Pressable
+                  key={item.key}
+                  accessibilityRole="button"
+                  onPress={item.onPress}
+                  style={styles.threadSecondaryActionButton}
+                  testID={item.testID}
+                >
+                  <MaterialCommunityIcons
+                    color={colors.textSecondary}
+                    name={item.icon}
+                    size={14}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    style={styles.threadSecondaryActionText}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
         </View>
       ) : null}
 
-      {operationalPlanInsights.length ? (
+      {fallbackStatusInsights.length ? (
         <View style={styles.threadFinalizationSection}>
           <Text style={styles.threadFinalizationSectionLabel}>
-            Plano operacional
+            Status e pendências
           </Text>
-          {renderOperationalPlan(operationalPlanInsights)}
+          {renderOperationalPlan(fallbackStatusInsights)}
         </View>
       ) : null}
 
-      {insights.length ? (
+      {documentAuditInsights.length ? (
         <View style={styles.threadFinalizationSection}>
           <Text style={styles.threadFinalizationSectionLabel}>
-            Radar de emissão
+            Documento e auditoria
           </Text>
-          {renderInsightSummary(insights)}
-        </View>
-      ) : null}
-
-      {visibleDetailedInsights.length ? (
-        <View style={styles.threadFinalizationSection}>
-          <Text style={styles.threadFinalizationSectionLabel}>
-            Pontos críticos
-          </Text>
-          {renderInsights(visibleDetailedInsights)}
+          {renderOperationalPlan(documentAuditInsights)}
         </View>
       ) : null}
     </View>

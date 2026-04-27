@@ -43,16 +43,20 @@ export function renderizarReviewPackageMesa(
     summary.totalRequired > 0
       ? `${summary.totalAccepted}/${summary.totalRequired} evidências aceitas`
       : "Pacote operacional pronto para revisão";
+  const eyebrow =
+    summary.modeLabel === "Mesa obrigatória"
+      ? "Mesa Avaliadora"
+      : "Revisão interna governada";
 
   return (
     <View style={styles.threadReviewCard} testID="mesa-review-package-card">
-      <Text style={styles.threadReviewEyebrow}>revisão operacional</Text>
+      <Text style={styles.threadReviewEyebrow}>{eyebrow}</Text>
       <Text style={styles.threadReviewTitle}>{summary.modeLabel}</Text>
       <Text style={styles.threadReviewDescription}>
         {summary.redFlagCount > 0
           ? summary.redFlagCount === 1
-            ? "1 red flag governada exige atenção antes da decisão."
-            : `${summary.redFlagCount} red flags governadas exigem atenção antes da decisão.`
+            ? "1 alerta crítico exige atenção antes da decisão."
+            : `${summary.redFlagCount} alertas críticos exigem atenção antes da decisão.`
           : summary.blockerCount > 0
             ? summary.blockerCount === 1
               ? "1 bloqueio documental ainda aberto."
@@ -81,7 +85,7 @@ export function renderizarReviewPackageMesa(
       ) : null}
       {summary.surfaceActionSummary ? (
         <Text style={styles.threadReviewFootnote}>
-          Ações canônicas: {summary.surfaceActionSummary}
+          Ações disponíveis: {summary.surfaceActionSummary}
         </Text>
       ) : null}
 
@@ -194,7 +198,7 @@ export function renderizarReviewPackageMesa(
       ) : null}
       {summary.humanOverrideReason ? (
         <Text style={styles.threadReviewFootnote}>
-          {`Override humano interno${summary.humanOverrideActor ? ` por ${summary.humanOverrideActor}` : ""}${
+          {`Ajuste humano registrado${summary.humanOverrideActor ? ` por ${summary.humanOverrideActor}` : ""}${
             summary.humanOverrideWhen ? ` em ${summary.humanOverrideWhen}` : ""
           }: ${summary.humanOverrideReason}${
             summary.humanOverrideCount > 1

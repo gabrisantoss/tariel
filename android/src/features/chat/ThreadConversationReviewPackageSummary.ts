@@ -173,8 +173,8 @@ function resumirStatusDocumental(params: {
     return {
       label:
         redFlagCount === 1
-          ? "1 red flag crítica"
-          : `${redFlagCount} red flags críticas`,
+          ? "1 alerta crítico"
+          : `${redFlagCount} alertas críticos`,
       tone: "danger" as const,
     };
   }

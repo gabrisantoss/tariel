@@ -260,9 +260,11 @@ describe("ThreadConversationPane", () => {
       getByText("Próximas transições: Devolvido para correção · Aprovado"),
     ).toBeTruthy();
     expect(
-      getByText("Ações canônicas: Aprovar internamente · Devolver para ajuste"),
+      getByText(
+        "Ações disponíveis: Aprovar internamente · Devolver para ajuste",
+      ),
     ).toBeTruthy();
-    expect(getByText("1 red flag crítica")).toBeTruthy();
+    expect(getByText("1 alerta crítico")).toBeTruthy();
     expect(getByText("1 bloco para refazer")).toBeTruthy();
     expect(getAllByText("Revisar a foto da placa.").length).toBeGreaterThan(0);
     expect(getByText("Evidência obrigatória pendente")).toBeTruthy();
@@ -293,14 +295,14 @@ describe("ThreadConversationPane", () => {
         url: "/app/api/laudo/123/emissao-oficial/download",
       }),
     );
-    expect(getByText("Diff entre emissões")).toBeTruthy();
+    expect(getByText("Histórico de alterações")).toBeTruthy();
     expect(getAllByText("Identificação").length).toBeGreaterThan(0);
     expect(getByText("Identificação / Tag")).toBeTruthy();
     expect(getByText("Antes: TAG-001")).toBeTruthy();
     expect(getByText("Agora: TAG-002")).toBeTruthy();
     expect(
       getByText(
-        "Override humano interno por Inspetor Demo em 2026-04-13T18:00:00+00:00: Inspeção seguiu com base na validação humana e nas evidências textuais rastreáveis.",
+        "Ajuste humano registrado por Inspetor Demo em 2026-04-13T18:00:00+00:00: Inspeção seguiu com base na validação humana e nas evidências textuais rastreáveis.",
       ),
     ).toBeTruthy();
   });

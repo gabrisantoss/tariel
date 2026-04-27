@@ -30,6 +30,7 @@ import {
   hintDestinoNotificacaoAtividade,
   ordenarNotificacoesAtividade,
   rotuloCategoriaNotificacaoAtividade,
+  sanitizarTextoNotificacaoAtividade,
 } from "../activity/activityNotificationHelpers";
 
 type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
@@ -139,6 +140,44 @@ export function ActivityCenterModal({
       )
     : "";
   const notificacoesOrdenadas = ordenarNotificacoesAtividade(notificacoes);
+  const reemissaoCount = notificacoesOrdenadas.filter(
+    (item) => item.kind === "alerta_critico",
+  ).length;
+  const mesaCount = notificacoesOrdenadas.filter(
+    (item) =>
+      item.kind === "mesa_nova" ||
+      item.kind === "mesa_resolvida" ||
+      item.kind === "mesa_reaberta",
+  ).length;
+  const unreadCount = notificacoesOrdenadas.filter(
+    (item) => item.unread,
+  ).length;
+  const statusCount = notificacoesOrdenadas.filter(
+    (item) => item.kind === "status",
+  ).length;
+  const summaryItems = [
+    unreadCount
+      ? {
+          key: "unread",
+          label: `${unreadCount} nova${unreadCount === 1 ? "" : "s"}`,
+        }
+      : null,
+    reemissaoCount
+      ? {
+          key: "reissue",
+          label: `${reemissaoCount} reemissão${reemissaoCount === 1 ? "" : "ões"} recomendada${reemissaoCount === 1 ? "" : "s"}`,
+        }
+      : null,
+    mesaCount
+      ? {
+          key: "mesa",
+          label: `${mesaCount} atualização${mesaCount === 1 ? "" : "ões"} da Mesa Avaliadora`,
+        }
+      : null,
+    statusCount
+      ? { key: "status", label: `${statusCount} status do caso` }
+      : null,
+  ].filter((item): item is { key: string; label: string } => Boolean(item));
 
   return (
     <Modal
@@ -192,8 +231,8 @@ export function ActivityCenterModal({
                 Central de atividade
               </Text>
               <Text style={styles.activityModalDescription}>
-                Alertas recentes do laudo ativo e da mesa enquanto o app estiver
-                em uso.
+                Alertas recentes do caso ativo, pendências, documentos oficiais
+                e Mesa Avaliadora enquanto o app estiver em uso.
               </Text>
             </View>
             <Pressable
@@ -221,6 +260,18 @@ export function ActivityCenterModal({
             </View>
           ) : null}
 
+          {summaryItems.length ? (
+            <View style={styles.activitySummaryRail}>
+              {summaryItems.map((item) => (
+                <View key={item.key} style={styles.activitySummaryChip}>
+                  <Text style={styles.activitySummaryChipText}>
+                    {item.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           <ScrollView
             contentContainerStyle={styles.activityModalList}
             testID="activity-center-list"
@@ -241,11 +292,13 @@ export function ActivityCenterModal({
                       name={
                         item.kind === "status"
                           ? "progress-clock"
-                          : item.kind === "mesa_resolvida"
-                            ? "check-decagram-outline"
-                            : item.kind === "mesa_reaberta"
-                              ? "alert-circle-outline"
-                              : "message-text-outline"
+                          : item.kind === "alerta_critico"
+                            ? "file-alert-outline"
+                            : item.kind === "mesa_resolvida"
+                              ? "check-decagram-outline"
+                              : item.kind === "mesa_reaberta"
+                                ? "alert-circle-outline"
+                                : "message-text-outline"
                       }
                       size={18}
                       color={colors.accent}
@@ -253,17 +306,28 @@ export function ActivityCenterModal({
                   </View>
                   <View style={styles.activityItemBody}>
                     <View style={styles.activityItemTop}>
-                      <Text style={styles.activityItemTitle}>{item.title}</Text>
+                      <Text style={styles.activityItemTitle}>
+                        {sanitizarTextoNotificacaoAtividade(item.title)}
+                      </Text>
                       <Text style={styles.activityItemTime}>
                         {formatarHorarioAtividade(item.createdAt)}
                       </Text>
                     </View>
-                    <Text style={styles.activityItemHint}>
-                      {rotuloCategoriaNotificacaoAtividade(item)}
-                    </Text>
-                    <Text style={styles.activityItemText}>{item.body}</Text>
-                    <Text style={styles.activityItemHint}>
-                      {hintDestinoNotificacaoAtividade(item)}
+                    <View style={styles.activityItemBadgeRow}>
+                      <Text style={styles.activityItemHint}>
+                        {rotuloCategoriaNotificacaoAtividade(item)}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.activityItemHint,
+                          styles.activityItemHintAction,
+                        ]}
+                      >
+                        {hintDestinoNotificacaoAtividade(item)}
+                      </Text>
+                    </View>
+                    <Text numberOfLines={3} style={styles.activityItemText}>
+                      {sanitizarTextoNotificacaoAtividade(item.body)}
                     </Text>
                   </View>
                 </Pressable>
@@ -282,8 +346,8 @@ export function ActivityCenterModal({
                   Nenhuma atividade recente
                 </Text>
                 <Text style={styles.activityEmptyText}>
-                  Quando a mesa responder ou um laudo mudar de status, isso
-                  aparece aqui.
+                  Quando a Mesa Avaliadora responder ou um caso mudar de status,
+                  isso aparece aqui com a próxima ação.
                 </Text>
               </View>
             )}

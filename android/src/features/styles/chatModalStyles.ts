@@ -172,6 +172,24 @@ export const chatModalStyles = {
     gap: spacing.sm,
     paddingBottom: spacing.lg,
   },
+  activitySummaryRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  activitySummaryChip: {
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.surfaceStrokeStrong,
+    backgroundColor: colors.surfaceCanvas,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  activitySummaryChipText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: "700",
+  },
   activityItem: {
     borderRadius: radii.md,
     backgroundColor: colors.surfacePanelRaised,
@@ -220,10 +238,27 @@ export const chatModalStyles = {
     fontSize: 12,
     lineHeight: 18,
   },
+  activityItemBadgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    alignItems: "center",
+  },
   activityItemHint: {
     color: colors.accent,
     fontSize: 11,
     fontWeight: "700",
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.accentMuted,
+    backgroundColor: colors.accentWash,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  activityItemHintAction: {
+    color: colors.textSecondary,
+    borderColor: colors.surfaceStrokeStrong,
+    backgroundColor: colors.surfaceCanvas,
   },
   activityEmptyState: {
     alignItems: "center",

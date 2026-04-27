@@ -141,7 +141,7 @@ describe("buildThreadContextState", () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: "mesa-handoff",
-          label: "Mesa requerida",
+          label: "Família exige Mesa",
         }),
       ]),
     );
@@ -593,7 +593,7 @@ describe("buildThreadContextState", () => {
     expect(state.threadSpotlight.label).toBe("Mesa em revisão");
     expect(state.threadInsights[0]).toEqual(
       expect.objectContaining({
-        label: "Lifecycle",
+        label: "Status do caso",
         value: "Mesa em revisão",
       }),
     );
@@ -785,7 +785,7 @@ describe("buildThreadContextState", () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: "report-pack",
-          label: "Pre-laudo",
+          label: "Pendências do caso",
           value: "0/5 blocos",
           detail: expect.stringContaining("Pre-laudo em montagem"),
           tone: "accent",

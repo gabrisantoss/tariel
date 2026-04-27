@@ -121,7 +121,13 @@ export function ThreadContextCard({
   const primaryAction = actions[0] ?? null;
   const visibleChips = expanded ? chips : chips.slice(0, 1);
   const visibleActions = expanded ? actions : actions.slice(0, 1);
-  const visibleInsights = expanded ? insights : [];
+  const visibleInsights = expanded ? insights.slice(0, 3) : [];
+  const primaryExpandedAction = visibleActions[0] ?? null;
+  const secondaryExpandedActions = visibleActions.slice(1);
+  const hiddenInsightsCount = Math.max(
+    0,
+    insights.length - visibleInsights.length,
+  );
   const hasMoreContent =
     chips.length > visibleChips.length ||
     actions.length > visibleActions.length ||
@@ -318,15 +324,53 @@ export function ThreadContextCard({
       ) : null}
 
       {expanded && visibleActions.length ? (
-        <View style={styles.threadActionRow}>
-          {visibleActions.map((item) => (
-            <ThreadContextActionButton key={item.key} item={item} />
-          ))}
+        <View style={styles.threadSection}>
+          <Text style={styles.threadSectionLabel}>Próxima ação</Text>
+          {primaryExpandedAction ? (
+            <View style={styles.threadActionRow}>
+              <ThreadContextActionButton item={primaryExpandedAction} />
+            </View>
+          ) : null}
+          {secondaryExpandedActions.length ? (
+            <View style={styles.threadSecondaryActionRow}>
+              {secondaryExpandedActions.map((item) => (
+                <Pressable
+                  key={item.key}
+                  accessibilityRole="button"
+                  onPress={item.onPress}
+                  style={styles.threadSecondaryActionButton}
+                  testID={item.testID}
+                >
+                  <MaterialCommunityIcons
+                    color={colors.textSecondary}
+                    name={item.icon}
+                    size={14}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    style={styles.threadSecondaryActionText}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
         </View>
       ) : null}
 
       {expanded && visibleInsights.length ? (
-        <ThreadContextInsightsGrid items={visibleInsights} />
+        <View style={styles.threadSection}>
+          <Text style={styles.threadSectionLabel}>Status do caso</Text>
+          <ThreadContextInsightsGrid items={visibleInsights} />
+          {hiddenInsightsCount > 0 ? (
+            <Text style={styles.threadMoreSignalsHint}>
+              {hiddenInsightsCount === 1
+                ? "+1 sinal disponível na central de atividade."
+                : `+${hiddenInsightsCount} sinais disponíveis na central de atividade.`}
+            </Text>
+          ) : null}
+        </View>
       ) : null}
 
       {expanded ? (

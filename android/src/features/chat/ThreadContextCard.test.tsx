@@ -257,7 +257,7 @@ describe("ThreadContextCard", () => {
           },
           {
             key: "mesa",
-            label: "Mesa requerida",
+            label: "Família exige Mesa",
             tone: "danger",
             icon: "alert-outline",
           },
@@ -296,7 +296,7 @@ describe("ThreadContextCard", () => {
           },
           {
             key: "bundle",
-            label: "Pre-laudo",
+            label: "Pendências do caso",
             value: "0/5 blocos",
             detail: "Checklist guiado e fotos obrigatorias pendentes.",
             tone: "muted",
@@ -316,13 +316,15 @@ describe("ThreadContextCard", () => {
 
     expect(getByText("Detalhes")).toBeTruthy();
     expect(getByText("Avancar etapa")).toBeTruthy();
-    expect(queryByText("Mesa requerida")).toBeNull();
+    expect(queryByText("Família exige Mesa")).toBeNull();
     expect(queryByText("Finalizar caso")).toBeNull();
     expect(queryByText("A politica ativa exige revisão humana.")).toBeNull();
 
     fireEvent.press(getByTestId("thread-context-toggle"));
 
-    expect(getByText("Mesa requerida")).toBeTruthy();
+    expect(getByText("Próxima ação")).toBeTruthy();
+    expect(getByText("Status do caso")).toBeTruthy();
+    expect(getByText("Família exige Mesa")).toBeTruthy();
     expect(getByText("Finalizar caso")).toBeTruthy();
     expect(getByText("A politica ativa exige revisão humana.")).toBeTruthy();
   });
