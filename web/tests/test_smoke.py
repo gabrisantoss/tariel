@@ -1843,6 +1843,21 @@ def test_ux_product_language_padroniza_documentos_do_portal_cliente() -> None:
     ):
         assert termo in documentos_js
 
+    for termo in (
+        "Resumo da versão principal",
+        "Carteira por documento",
+        "Recursos do pacote",
+    ):
+        assert termo in documentos_html
+
+    for termo in (
+        "document-summary-card__blocks",
+        "Sinais do caso",
+        "Hashes e verificação",
+        "document-card__row",
+    ):
+        assert termo in documentos_js
+
     for termo_interno in (
         "mobile_autonomous",
         "reviewer_issue",
@@ -1856,7 +1871,11 @@ def test_ux_product_language_padroniza_documentos_do_portal_cliente() -> None:
 
     assert "data-document-copy" in documentos_js
     assert "document-card__audit" in documentos_js
+    assert "hero-chip" not in documentos_js
     assert ".document-card__hash-row" in documentos_css
+    assert ".document-card__row" in documentos_css
+    assert ".document-card__badge" in documentos_css
+    assert ".document-summary-card__blocks" in documentos_css
     assert ".panel--documentos .surface-nav--documentos" in documentos_css
     assert "position: static" in documentos_css
 
