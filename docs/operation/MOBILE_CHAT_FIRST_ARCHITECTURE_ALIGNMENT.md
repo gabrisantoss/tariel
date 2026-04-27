@@ -150,6 +150,10 @@ Este e o fluxo mais completo hoje. Inspetor/Mobile coletam, enviam para Mesa, Me
 | Acoes separadas | Revisar, devolver, aprovar, emitir e baixar pacote ficam no portal Mesa ou servicos equivalentes. |
 | Encaixe arquitetural | Forte. E o caminho mais maduro para venda governada. |
 
+Checkpoint PR H: `web/tests/test_company_with_mesa_premium_pr_h.py` fixa a empresa premium com `inspector_chat_mesa` e `operating_model=standard`. A familia simples usada e `cbmgo`; o Chat Inspetor cria/coleta/finaliza, a previa indica `send_to_mesa`, a Mesa aprova por `reviewer_decision`, o PDF operacional fica apenas como documento de trabalho ate a emissao governada e o motor central cria `EmissaoOficialLaudo` ativa com `issue_number`, `package_sha256`, signatario governado, download ZIP e auditoria.
+
+O mesmo teste valida que o Portal Cliente mostra Mesa e emissao oficial incluidas, que antes da emissao o PDF operacional nao aparece como oficial, que depois da emissao a aba Documentos aponta para a emissao ativa e que o Mobile/Chat continua usando `official_issue_summary.current_issue` para baixar o pacote oficial. Isso protege o fluxo premium depois dos cenarios sem Mesa dos PRs F/G.
+
 ### Familia de alto risco
 
 Familia de alto risco deve poder endurecer regra independentemente do pacote. NR35 Linha de Vida ja exemplifica isso: mesmo que o tenant nao tenha Mesa, o piloto vendavel bloqueia se a familia exigir Mesa.
@@ -419,6 +423,8 @@ Garantir que fluxo com Mesa continua intacto: handoff, revisao, devolucao, aprov
 Impacto: protege cliente governado/premium.
 
 Testes/gates: Mesa/revisor, pacote, official issue, Portal Cliente.
+
+Checkpoint PR H: o teste `web/tests/test_company_with_mesa_premium_pr_h.py` cobre `inspector_chat_mesa` com CBMGO modelado, handoff para Mesa, aprovacao humana, snapshot aprovado, PDF operacional pre-emissao sem `issue_number`, emissao oficial por signatario governado, pacote congelado, Portal Cliente como consumidor da emissao ativa e Mobile/Chat apontando para o download oficial ativo.
 
 ### PR I - Guardrails para familia de alto risco
 
