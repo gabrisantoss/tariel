@@ -136,6 +136,10 @@ Hoje o pacote `inspector_chat` libera `mobile_case_approve` e bloqueia `reviewer
 | Como gera documento? | PDF operacional pode existir; emissao oficial precisa modelo de capability separado de Mesa. |
 | Diferenca critica | PDF operacional nao e `EmissaoOficialLaudo`. Sem capability de emissao, nao vender como documento oficial auditavel. |
 
+Checkpoint PR G: `web/tests/test_company_no_mesa_multi_user_pr_g.py` fixa o cenario de empresa sem Mesa com pacote `inspector_chat` e `operating_model=standard`. O Admin Cliente cria e lista multiplos inspetores, mas nao cria outro Admin Cliente, nao altera plano direto e nao concede portal `revisor` quando o pacote nao inclui Mesa. O inspetor A cria e finaliza caso `padrao` por revisao interna governada, o inspetor B da mesma empresa nao acessa o caso fora do seu escopo, o Portal Cliente mostra Mobile/Chat/self-review disponiveis e Mesa/emissao/signatario nao incluidos, e o Mobile nao recebe `official_issue_summary` sem `EmissaoOficialLaudo`.
+
+No mesmo PR, NR35 Linha de Vida continua bloqueada por `nr35_mesa_required_unavailable` no tenant `inspector_chat` sem Mesa. Isso preserva a regra de que self-review e valido para familias simples permitidas, nao para familias de alto risco que exigem Mesa/governanca separada.
+
 ### Empresa com Mesa
 
 Este e o fluxo mais completo hoje. Inspetor/Mobile coletam, enviam para Mesa, Mesa decide, snapshot aprovado e motor oficial emite pacote com hash/signatario/manifest.
