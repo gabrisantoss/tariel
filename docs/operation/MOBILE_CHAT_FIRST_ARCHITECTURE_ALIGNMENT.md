@@ -378,6 +378,8 @@ backend mobile precise de endpoint dedicado.
 
 Checkpoint PR9: o app não precisa de UI grande para reemissão neste recorte. O contrato disponível já diferencia PDF operacional de emissão oficial e permite mostrar sinais neutros de divergência/reemissão quando o backend publicar `reissue_recommended`; downloads seguem presos à emissão ativa.
 
+Checkpoint pós-PR9: o sinal leve de reemissão passa a trafegar em `official_issue_summary` para Mobile e Chat Inspetor com `reissue_recommended`, `issue_status`, `reissue_reason_codes` e `reissue_reason_summary`. O Mobile interpreta `reissue_recommended || primary_pdf_diverged`, então cobre tanto divergência do PDF atual quanto nova aprovação/snapshot sem criar tela nova. A exposição fica limitada a chip, busca/histórico, central de atividade, configurações/exportação e card de documento emitido; PDF operacional continua sem virar emissão oficial.
+
 ### PR E - UX do Admin Cliente mostrando pacote/capacidades
 
 Mostrar de forma clara o pacote ativo, o que pode agir, se ha Mesa, se ha emissao oficial, se ha signatario e quais familias exigem revisao.

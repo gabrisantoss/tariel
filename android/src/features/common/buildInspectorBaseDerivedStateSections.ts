@@ -36,6 +36,7 @@ import {
 import { buildOfflineQueueOperationalSummary } from "../offline/offlineQueueHelpers";
 import { summarizeOfflinePendingQueueV1 } from "../offline/offlineSyncObservability";
 import { buildGuidedInspectionPlaceholder } from "../inspection/guidedInspection";
+import { isOfficialIssueReissueRecommended } from "./officialIssueSummary";
 import type {
   InspectorConversationDerivedStateInput,
   InspectorHistoryAndOfflineDerivedStateInput,
@@ -618,15 +619,15 @@ export function buildInspectorSettingsDerivedState(
   const resumoContaAcesso = buildMobileAccessSummary(
     session?.bootstrap.usuario,
   );
-  const reemissoesRecomendadasTotal = (laudosDisponiveis ?? []).filter(
-    (item) => item.official_issue_summary?.primary_pdf_diverged,
+  const reemissoesRecomendadasTotal = (laudosDisponiveis ?? []).filter((item) =>
+    isOfficialIssueReissueRecommended(item.official_issue_summary),
   ).length;
   const resumoGovernancaConfiguracao = reemissoesRecomendadasTotal
     ? `${reemissoesRecomendadasTotal} caso${reemissoesRecomendadasTotal === 1 ? "" : "s"} com reemissão recomendada`
     : "Nenhum caso com reemissão recomendada";
   const detalheGovernancaConfiguracao = reemissoesRecomendadasTotal
-    ? `PDF oficial divergente em ${reemissoesRecomendadasTotal} caso${reemissoesRecomendadasTotal === 1 ? "" : "s"} disponível${reemissoesRecomendadasTotal === 1 ? "" : "is"} no mobile.`
-    : "Nenhum PDF oficial divergente nos casos disponíveis no mobile.";
+    ? `Reemissão oficial recomendada em ${reemissoesRecomendadasTotal} caso${reemissoesRecomendadasTotal === 1 ? "" : "s"} disponível${reemissoesRecomendadasTotal === 1 ? "" : "is"} no mobile.`
+    : "Nenhuma reemissão oficial recomendada nos casos disponíveis no mobile.";
   const provedoresConectadosTotal = provedoresConectados.filter(
     (item) => item.connected,
   ).length;

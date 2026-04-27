@@ -461,12 +461,15 @@ describe("buildThreadContextState", () => {
             id: 202,
             official_issue_summary: {
               label: "Reemissão recomendada",
-              detail: "PDF emitido divergente · Emitido v0002 · Atual v0003",
-              primary_pdf_diverged: true,
+              detail: "Reemissão motivada por nova aprovação governada.",
+              reissue_recommended: true,
+              primary_pdf_diverged: false,
               issue_number: "EO-202",
               issue_state_label: "Emitido",
               primary_pdf_storage_version: "v0002",
-              current_primary_pdf_storage_version: "v0003",
+              reissue_reason_codes: ["approval_snapshot_updated"],
+              reissue_reason_summary:
+                "Reemissão motivada por nova aprovação governada.",
             },
           },
         ],

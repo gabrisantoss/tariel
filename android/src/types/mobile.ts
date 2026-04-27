@@ -263,11 +263,16 @@ export interface MobileLaudoListResponse {
 export interface MobileOfficialIssueSummary {
   label: string;
   detail: string;
+  reissue_recommended?: boolean;
+  issue_status?: string | null;
+  issue_status_label?: string | null;
   primary_pdf_diverged: boolean;
   issue_number?: string | null;
   issue_state_label?: string | null;
   primary_pdf_storage_version?: string | null;
   current_primary_pdf_storage_version?: string | null;
+  reissue_reason_codes?: string[];
+  reissue_reason_summary?: string | null;
 }
 
 export interface MobileLaudoCard {

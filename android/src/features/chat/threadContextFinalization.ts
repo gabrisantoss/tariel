@@ -166,8 +166,8 @@ export function resumirReemissaoRecomendada(total: number): string {
 
 export function detalharReemissaoRecomendada(total: number): string {
   return total === 1
-    ? "Há 1 caso com PDF oficial divergente no mobile. Revise o histórico ou a central de atividade para reemitir o documento."
-    : `Há ${total} casos com PDF oficial divergente no mobile. Revise o histórico ou a central de atividade para reemitir os documentos.`;
+    ? "Há 1 caso com reemissão oficial recomendada no mobile. Revise o histórico ou a central de atividade para reemitir o documento."
+    : `Há ${total} casos com reemissão oficial recomendada no mobile. Revise o histórico ou a central de atividade para reemitir os documentos.`;
 }
 
 function resumirProximoPassoFinalizacao(params: {

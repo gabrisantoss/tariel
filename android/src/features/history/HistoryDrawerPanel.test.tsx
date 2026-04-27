@@ -115,8 +115,10 @@ describe("HistoryDrawerPanel", () => {
               },
               official_issue_summary: {
                 label: "Reemissão recomendada",
-                detail: "PDF emitido divergente",
-                primary_pdf_diverged: true,
+                detail: "Reemissão motivada por nova aprovação governada.",
+                reissue_recommended: true,
+                primary_pdf_diverged: false,
+                reissue_reason_codes: ["approval_snapshot_updated"],
               },
             },
             {

@@ -231,6 +231,35 @@ describe("activityNotificationHelpers", () => {
       body: "Laudo 6: PDF emitido divergente · Emitido v0003 · Atual v0004. Abra a finalização para reemitir.",
       targetThread: "finalizar",
     });
+    expect(
+      criarNotificacaoStatusLaudo({
+        id: 7,
+        titulo: "Laudo 7",
+        status_card: "emitido",
+        status_card_label: "Emitido",
+        status_revisao: "aprovado",
+        permite_reabrir: true,
+        permite_edicao: false,
+        case_lifecycle_status: "emitido",
+        active_owner_role: "none",
+        allowed_surface_actions: ["chat_reopen"],
+        official_issue_summary: {
+          label: "Reemissão recomendada",
+          detail: "Reemissão motivada por nova aprovação governada.",
+          reissue_recommended: true,
+          primary_pdf_diverged: false,
+          issue_number: "EO-7",
+          reissue_reason_codes: ["approval_snapshot_updated"],
+          reissue_reason_summary:
+            "Reemissão motivada por nova aprovação governada.",
+        },
+      } as any),
+    ).toMatchObject({
+      kind: "alerta_critico",
+      title: "Reemissão recomendada",
+      body: "Laudo 7: Reemissão motivada por nova aprovação governada. Abra a finalização para reemitir.",
+      targetThread: "finalizar",
+    });
 
     expect(
       criarNotificacaoMesa(

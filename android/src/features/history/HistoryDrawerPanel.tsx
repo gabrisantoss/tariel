@@ -15,6 +15,10 @@ import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import { resolverCaseLifecycleStatus } from "../chat/caseLifecycle";
 import { buildReportPackDraftSummary } from "../chat/reportPackHelpers";
+import {
+  getOfficialIssueReissueDetail,
+  isOfficialIssueReissueRecommended,
+} from "../common/officialIssueSummary";
 import { HistoryDrawerListItem } from "./HistoryDrawerListItem";
 import type {
   HistoryDrawerPanelItem,
@@ -74,7 +78,7 @@ function buildHistorySignalCounts(items: readonly HistoryDrawerPanelItem[]) {
         acc.chatLivre += 1;
       }
 
-      if (item.official_issue_summary?.primary_pdf_diverged) {
+      if (isOfficialIssueReissueRecommended(item.official_issue_summary)) {
         acc.reemissao += 1;
       }
 
@@ -103,7 +107,9 @@ function buildHistoryResumeSuggestion(
   }
 
   const pick =
-    items.find((item) => item.official_issue_summary?.primary_pdf_diverged) ||
+    items.find((item) =>
+      isOfficialIssueReissueRecommended(item.official_issue_summary),
+    ) ||
     items.find((item) => {
       const summary = buildReportPackDraftSummary(item.report_pack_draft);
       return Boolean(summary?.autonomyReady || summary?.readyForStructuredForm);
@@ -132,9 +138,12 @@ function buildHistoryResumeSuggestion(
   });
   const inspectionContext =
     reportPackSummary?.inspectionContextLabel?.trim() || "";
-  const governanceDetail = pick.official_issue_summary?.detail?.trim() || "";
+  const governanceDetail = getOfficialIssueReissueDetail(
+    pick.official_issue_summary,
+    "",
+  );
 
-  if (pick.official_issue_summary?.primary_pdf_diverged) {
+  if (isOfficialIssueReissueRecommended(pick.official_issue_summary)) {
     return {
       title: pick.titulo || "Documento com reemissão pendente",
       detail:
