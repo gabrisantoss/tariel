@@ -1,19 +1,22 @@
 {
   "schema_type": "laudo_output",
   "schema_version": 1,
+  "template_version": 1,
   "family_key": "nr35_inspecao_linha_de_vida",
   "template_code": "nr35_inspecao_linha_de_vida",
   "tokens": {
-    "cliente_nome": "Empresa Demo (DEV)",
-    "unidade_nome": "Unidade Piloto Nacional",
-    "engenheiro_responsavel": "Engenheiro Revisor (Dev)",
-    "crea_art": "CREA 123456/D | ART 2026-0001",
-    "revisao_template": "v1"
+    "cliente_nome": null,
+    "unidade_nome": null,
+    "engenheiro_responsavel": null,
+    "crea_art": null,
+    "revisao_template": null
   },
   "case_context": {
     "laudo_id": null,
     "empresa_nome": null,
     "unidade_nome": null,
+    "local_documento": null,
+    "tipo_inspecao": null,
     "data_execucao": null,
     "data_emissao": null,
     "status_mesa": null,
@@ -29,10 +32,41 @@
     "pendencias_resolvidas_texto": null,
     "observacoes_mesa": null
   },
+  "pdf_contract": {
+    "required_sections": [
+      "capa_folha_rosto",
+      "controle_documental_sumario",
+      "identificacao_laudo",
+      "objeto_escopo_base_normativa",
+      "metodologia_instrumentos_equipe",
+      "evidencias_registros_fotograficos",
+      "checklist_tecnico",
+      "achados_nao_conformidades",
+      "conclusao",
+      "revisao_mesa",
+      "assinaturas_responsabilidade_tecnica",
+      "auditoria_emissao"
+    ],
+    "required_sections_texto": "capa_folha_rosto; controle_documental_sumario; identificacao_laudo; objeto_escopo_base_normativa; metodologia_instrumentos_equipe; evidencias_registros_fotograficos; checklist_tecnico; achados_nao_conformidades; conclusao; revisao_mesa; assinaturas_responsabilidade_tecnica; auditoria_emissao",
+    "required_photo_slots_texto": "foto_visao_geral; foto_ponto_superior; foto_ponto_inferior; foto_detalhe_critico",
+    "traceability_chain": "foto -> achado -> campo JSON -> secao PDF -> decisao Mesa -> emissao oficial",
+    "mesa_required": true
+  },
+  "auditoria": {
+    "family_key": "nr35_inspecao_linha_de_vida",
+    "template_code": "nr35_inspecao_linha_de_vida",
+    "schema_version": 1,
+    "template_version": 1,
+    "mesa_status": null,
+    "rastreabilidade_texto": "foto -> achado -> campo JSON -> secao PDF -> decisao Mesa -> emissao oficial",
+    "emissao_oficial_status": null
+  },
   "resumo_executivo": null,
   "identificacao": {
     "objeto_principal": null,
     "localizacao": null,
+    "unidade_operacional": null,
+    "local_documento": null,
     "referencia_principal": {
       "disponivel": null,
       "referencias": [],
@@ -41,14 +75,25 @@
       "observacao": null
     },
     "codigo_interno": null,
+    "documento_codigo": null,
     "tipo_ativo": null,
+    "tipo_inspecao": null,
+    "tipo_sistema": null,
     "contratante": null,
     "contratada": null,
+    "engenheiro_responsavel": null,
     "inspetor_lider": null,
     "numero_laudo_inspecao": null,
     "numero_laudo_fabricante": null,
     "art_numero": null,
+    "vinculado_art": null,
     "data_vistoria": null
+  },
+  "objeto_inspecao": {
+    "descricao_escopo": null,
+    "tipo_linha_de_vida": null,
+    "resumo_componentes_avaliados": null,
+    "classificacao_uso": null
   },
   "escopo_servico": {
     "tipo_entrega": null,
@@ -67,6 +112,55 @@
       "descricao": null,
       "observacao": null
     }
+  },
+  "metodologia_e_recursos": {
+    "metodologia": null,
+    "instrumentos_utilizados": null,
+    "aviso_importante": null
+  },
+  "registros_fotograficos": {
+    "referencias_texto": null,
+    "descricao": null,
+    "observacao": null,
+    "slots_obrigatorios": [
+      {
+        "slot": "foto_visao_geral",
+        "titulo": "Visao geral da linha de vida",
+        "referencia_persistida": null,
+        "legenda_tecnica": null,
+        "campo_json": "identificacao.referencia_principal",
+        "achado_relacionado": "contexto_do_sistema",
+        "secao_pdf": "evidencias_registros_fotograficos"
+      },
+      {
+        "slot": "foto_ponto_superior",
+        "titulo": "Ponto superior ou extremidade principal",
+        "referencia_persistida": null,
+        "legenda_tecnica": null,
+        "campo_json": "execucao_servico.evidencia_execucao",
+        "achado_relacionado": "ancoragem_ou_extremidade_principal",
+        "secao_pdf": "evidencias_registros_fotograficos"
+      },
+      {
+        "slot": "foto_ponto_inferior",
+        "titulo": "Ponto inferior ou extremidade secundaria",
+        "referencia_persistida": null,
+        "legenda_tecnica": null,
+        "campo_json": "evidencias_e_anexos.evidencia_complementar",
+        "achado_relacionado": "ancoragem_ou_extremidade_secundaria",
+        "secao_pdf": "evidencias_registros_fotograficos"
+      },
+      {
+        "slot": "foto_detalhe_critico",
+        "titulo": "Detalhe critico tecnico",
+        "referencia_persistida": null,
+        "legenda_tecnica": null,
+        "campo_json": "nao_conformidades_ou_lacunas.evidencias",
+        "achado_relacionado": "achado_critico_ou_nao_conformidade",
+        "secao_pdf": "achados_nao_conformidades"
+      }
+    ],
+    "slots_obrigatorios_texto": null
   },
   "evidencias_e_anexos": {
     "evidencia_principal": {
@@ -94,12 +188,17 @@
   "documentacao_e_registros": {
     "documentos_disponiveis": null,
     "documentos_emitidos": null,
+    "projeto_executivo": null,
+    "memorial_de_calculo": null,
+    "anotacao_responsabilidade_tecnica": null,
+    "proxima_inspecao_planejada": null,
     "observacoes_documentais": null
   },
   "nao_conformidades_ou_lacunas": {
     "ha_pontos_de_atencao": null,
     "ha_pontos_de_atencao_texto": null,
     "descricao": null,
+    "limitacoes_de_inspecao": null,
     "evidencias": {
       "disponivel": null,
       "referencias": [],
@@ -113,8 +212,13 @@
   },
   "conclusao": {
     "status": null,
+    "status_operacional": null,
     "conclusao_tecnica": null,
     "justificativa": null,
+    "motivo_status": null,
+    "liberado_para_uso": null,
+    "acao_requerida": null,
+    "condicao_para_reinspecao": null,
     "proxima_inspecao_periodica": null,
     "observacoes": null
   },

@@ -1,8 +1,8 @@
 {
   "schema_type": "laudo_output",
   "schema_version": 1,
-  "family_key": "nr35_inspecao_ponto_ancoragem",
-  "template_code": "nr35_inspecao_ponto_ancoragem",
+  "family_key": "nr35_montagem_linha_de_vida",
+  "template_code": "nr35_montagem_linha_de_vida",
   "tokens": {
     "cliente_nome": null,
     "unidade_nome": null,
@@ -18,7 +18,7 @@
     "data_emissao": null,
     "status_mesa": null,
     "wave_portfolio": 1,
-    "modalidade_laudo": "inspecao_tecnica"
+    "modalidade_laudo": "montagem_linha_de_vida"
   },
   "mesa_review": {
     "status": null,
@@ -33,14 +33,14 @@
   "identificacao": {
     "objeto_principal": null,
     "localizacao": null,
+    "codigo_interno": null,
     "referencia_principal": {
       "disponivel": null,
       "referencias": [],
       "referencias_texto": null,
       "descricao": null,
       "observacao": null
-    },
-    "codigo_interno": null
+    }
   },
   "escopo_servico": {
     "tipo_entrega": null,
@@ -59,6 +59,12 @@
       "descricao": null,
       "observacao": null
     }
+  },
+  "execucao_montagem": {
+    "componentes_instalados": null,
+    "fixacoes_e_suportes": null,
+    "alinhamento_ou_tensionamento": null,
+    "liberacao_para_uso": null
   },
   "evidencias_e_anexos": {
     "evidencia_principal": {
@@ -80,28 +86,6 @@
       "referencias": [],
       "referencias_texto": null,
       "descricao": null,
-      "observacao": null
-    }
-  },
-  "checklist_componentes": {
-    "base_estrutural": {
-      "condicao": null,
-      "observacao": null
-    },
-    "elementos_de_fixacao": {
-      "condicao": null,
-      "observacao": null
-    },
-    "plaqueta_ou_identificacao": {
-      "condicao": null,
-      "observacao": null
-    },
-    "geometria_e_posicionamento": {
-      "condicao": null,
-      "observacao": null
-    },
-    "corrosao_ou_deformacao": {
-      "condicao": null,
       "observacao": null
     }
   },

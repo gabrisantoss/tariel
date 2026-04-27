@@ -27,7 +27,7 @@
       "suave": "#eef3f7",
       "borda": "#c5d2dc"
     },
-    "cabecalho_texto": "Tariel | NR12 - Inspecao maquina equipamento | {token:cliente_nome}",
+    "cabecalho_texto": "PARECER TECNICO NR12 | {{token:cliente_nome}} | {{json_path:identificacao.numero_laudo}}",
     "rodape_texto": "Family {{json_path:family_key}} | Revisao {{token:revisao_template}} | Emissao {{json_path:case_context.data_emissao}}",
     "marca_dagua": {
       "texto": "",
@@ -157,6 +157,729 @@
                             "mode": "token",
                             "key": "cliente_nome",
                             "raw": "token:cliente_nome"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Status operacional / parecer final"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "conclusao.status_operacional",
+                            "raw": "json_path:conclusao.status_operacional"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "conclusao.parecer_final",
+                            "raw": "json_path:conclusao.parecer_final"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Grafico de risco"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "analise_risco.grafico_risco_categoria",
+                            "raw": "json_path:analise_risco.grafico_risco_categoria"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Grau de risco antes / apos"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "analise_risco.grau_risco_antes",
+                            "raw": "json_path:analise_risco.grau_risco_antes"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "analise_risco.grau_risco_apos",
+                            "raw": "json_path:analise_risco.grau_risco_apos"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Resumo de risco"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "analise_risco.resumo_risco",
+                            "raw": "json_path:analise_risco.resumo_risco"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Manual / inventario / checklist"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "documentacao_e_registros.manual_maquina",
+                            "raw": "json_path:documentacao_e_registros.manual_maquina"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "documentacao_e_registros.inventario_nr12",
+                            "raw": "json_path:documentacao_e_registros.inventario_nr12"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "documentacao_e_registros.checklist_nr12",
+                            "raw": "json_path:documentacao_e_registros.checklist_nr12"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Apreciacao de risco / LOTO"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "documentacao_e_registros.apreciacao_risco",
+                            "raw": "json_path:documentacao_e_registros.apreciacao_risco"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "documentacao_e_registros.procedimento_loto",
+                            "raw": "json_path:documentacao_e_registros.procedimento_loto"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Checklist de referencia"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "metodologia_e_criterios.checklist_referencia",
+                            "raw": "json_path:metodologia_e_criterios.checklist_referencia"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Criterios de risco"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "metodologia_e_criterios.criterios_risco",
+                            "raw": "json_path:metodologia_e_criterios.criterios_risco"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Categoria / processo associado"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "objeto_inspecao.categoria_maquina",
+                            "raw": "json_path:objeto_inspecao.categoria_maquina"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "objeto_inspecao.processo_associado",
+                            "raw": "json_path:objeto_inspecao.processo_associado"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Funcao / fabricante"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.funcao_equipamento",
+                            "raw": "json_path:identificacao.funcao_equipamento"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.fabricante",
+                            "raw": "json_path:identificacao.fabricante"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "TAG / modelo / serie"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.tag",
+                            "raw": "json_path:identificacao.tag"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.modelo",
+                            "raw": "json_path:identificacao.modelo"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.numero_serie",
+                            "raw": "json_path:identificacao.numero_serie"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Voltagem / comando / operadores"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.voltagem",
+                            "raw": "json_path:identificacao.voltagem"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.comando",
+                            "raw": "json_path:identificacao.comando"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.operadores_por_turno",
+                            "raw": "json_path:identificacao.operadores_por_turno"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Tipo de inspecao / relatorio"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "case_context.tipo_inspecao",
+                            "raw": "json_path:case_context.tipo_inspecao"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.relatorio_codigo",
+                            "raw": "json_path:identificacao.relatorio_codigo"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Numero do laudo / ART"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.numero_laudo",
+                            "raw": "json_path:identificacao.numero_laudo"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.art_numero",
+                            "raw": "json_path:identificacao.art_numero"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Responsavel tecnico / inspetor"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.responsavel_tecnico",
+                            "raw": "json_path:identificacao.responsavel_tecnico"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": " | "
+                        },
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "identificacao.inspetor",
+                            "raw": "json_path:identificacao.inspetor"
                           }
                         }
                       ]
@@ -386,6 +1109,43 @@
                   ]
                 }
               ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Proxima acao"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "conclusao.proxima_acao",
+                            "raw": "json_path:conclusao.proxima_acao"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -422,7 +1182,7 @@
           "content": [
             {
               "type": "text",
-              "text": "3. Escopo Tecnico e Premissas"
+              "text": "3. Objetivo, Normas e Premissas"
             }
           ]
         },
@@ -511,6 +1271,72 @@
                         "mode": "json_path",
                         "key": "escopo_servico.resumo_escopo",
                         "raw": "json_path:escopo_servico.resumo_escopo"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Objetivo do parecer: "
+                    },
+                    {
+                      "type": "placeholder",
+                      "attrs": {
+                        "mode": "json_path",
+                        "key": "objetivo_e_base_normativa.objetivo",
+                        "raw": "json_path:objetivo_e_base_normativa.objetivo"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Normas aplicaveis: "
+                    },
+                    {
+                      "type": "placeholder",
+                      "attrs": {
+                        "mode": "json_path",
+                        "key": "objetivo_e_base_normativa.normas_aplicaveis",
+                        "raw": "json_path:objetivo_e_base_normativa.normas_aplicaveis"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Generalidades do levantamento: "
+                    },
+                    {
+                      "type": "placeholder",
+                      "attrs": {
+                        "mode": "json_path",
+                        "key": "objetivo_e_base_normativa.generalidades",
+                        "raw": "json_path:objetivo_e_base_normativa.generalidades"
                       }
                     }
                   ]
@@ -947,6 +1773,525 @@
                             "mode": "json_path",
                             "key": "execucao_servico.evidencia_execucao.descricao",
                             "raw": "json_path:execucao_servico.evidencia_execucao.descricao"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 3
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "5.1 Checklist NR12 por Grupo"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "attrs": {
+            "className": "doc-matrix"
+          },
+          "content": [
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableHeader",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Grupo"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableHeader",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Status"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableHeader",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Comentarios"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableHeader",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Risco"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Arranjos fisicos e instalacoes"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.arranjos_fisicos_instalacoes.status",
+                            "raw": "json_path:checklist_grupos.arranjos_fisicos_instalacoes.status"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.arranjos_fisicos_instalacoes.comentarios",
+                            "raw": "json_path:checklist_grupos.arranjos_fisicos_instalacoes.comentarios"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.arranjos_fisicos_instalacoes.risco_nivel",
+                            "raw": "json_path:checklist_grupos.arranjos_fisicos_instalacoes.risco_nivel"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Instalacoes eletricas e partida/parada"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.instalacoes_eletricas_partida_parada.status",
+                            "raw": "json_path:checklist_grupos.instalacoes_eletricas_partida_parada.status"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.instalacoes_eletricas_partida_parada.comentarios",
+                            "raw": "json_path:checklist_grupos.instalacoes_eletricas_partida_parada.comentarios"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.instalacoes_eletricas_partida_parada.risco_nivel",
+                            "raw": "json_path:checklist_grupos.instalacoes_eletricas_partida_parada.risco_nivel"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Sistemas de seguranca e transportadores"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.sistemas_seguranca_transportadores.status",
+                            "raw": "json_path:checklist_grupos.sistemas_seguranca_transportadores.status"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.sistemas_seguranca_transportadores.comentarios",
+                            "raw": "json_path:checklist_grupos.sistemas_seguranca_transportadores.comentarios"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.sistemas_seguranca_transportadores.risco_nivel",
+                            "raw": "json_path:checklist_grupos.sistemas_seguranca_transportadores.risco_nivel"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Aspectos ergonomicos"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.aspectos_ergonomicos.status",
+                            "raw": "json_path:checklist_grupos.aspectos_ergonomicos.status"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.aspectos_ergonomicos.comentarios",
+                            "raw": "json_path:checklist_grupos.aspectos_ergonomicos.comentarios"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.aspectos_ergonomicos.risco_nivel",
+                            "raw": "json_path:checklist_grupos.aspectos_ergonomicos.risco_nivel"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Riscos adicionais, manutencao e sinalizacao"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.riscos_adicionais_manutencao_sinalizacao.status",
+                            "raw": "json_path:checklist_grupos.riscos_adicionais_manutencao_sinalizacao.status"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.riscos_adicionais_manutencao_sinalizacao.comentarios",
+                            "raw": "json_path:checklist_grupos.riscos_adicionais_manutencao_sinalizacao.comentarios"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.riscos_adicionais_manutencao_sinalizacao.risco_nivel",
+                            "raw": "json_path:checklist_grupos.riscos_adicionais_manutencao_sinalizacao.risco_nivel"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Manuais, procedimentos e capacitacao"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.manuais_procedimentos_capacitacao.status",
+                            "raw": "json_path:checklist_grupos.manuais_procedimentos_capacitacao.status"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.manuais_procedimentos_capacitacao.comentarios",
+                            "raw": "json_path:checklist_grupos.manuais_procedimentos_capacitacao.comentarios"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "placeholder",
+                          "attrs": {
+                            "mode": "json_path",
+                            "key": "checklist_grupos.manuais_procedimentos_capacitacao.risco_nivel",
+                            "raw": "json_path:checklist_grupos.manuais_procedimentos_capacitacao.risco_nivel"
                           }
                         }
                       ]

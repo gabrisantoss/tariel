@@ -4,11 +4,11 @@
   "family_key": "nr33_avaliacao_espaco_confinado",
   "template_code": "nr33_avaliacao_espaco_confinado",
   "tokens": {
-    "cliente_nome": "Empresa Demo (DEV)",
-    "unidade_nome": "Unidade Piloto Nacional",
-    "engenheiro_responsavel": "Engenheiro Revisor (Dev)",
-    "crea_art": "CREA 123456/D | ART 2026-0001",
-    "revisao_template": "v1"
+    "cliente_nome": null,
+    "unidade_nome": null,
+    "engenheiro_responsavel": null,
+    "crea_art": null,
+    "revisao_template": null
   },
   "case_context": {
     "laudo_id": null,
@@ -83,6 +83,7 @@
       "observacao": null
     }
   },
+  "analise_de_risco": [],
   "documentacao_e_registros": {
     "documentos_disponiveis": null,
     "documentos_emitidos": null,

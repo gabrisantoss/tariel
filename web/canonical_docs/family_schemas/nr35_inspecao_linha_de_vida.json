@@ -89,6 +89,64 @@
         "purpose": "Registrar a conclusao tecnica estruturada para revisao."
       }
     ],
+    "required_photo_slots": [
+      {
+        "slot_id": "foto_visao_geral",
+        "label": "Visao geral da linha de vida",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": true,
+        "min_items": 1,
+        "binding_path": "registros_fotograficos.slots_obrigatorios",
+        "json_field": "identificacao.referencia_principal",
+        "finding_key": "contexto_do_sistema",
+        "pdf_section": "evidencias_registros_fotograficos",
+        "purpose": "Registrar o contexto geral da linha de vida e ancorar a identificacao do sistema."
+      },
+      {
+        "slot_id": "foto_ponto_superior",
+        "label": "Ponto superior ou extremidade principal",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": true,
+        "min_items": 1,
+        "binding_path": "registros_fotograficos.slots_obrigatorios",
+        "json_field": "execucao_servico.evidencia_execucao",
+        "finding_key": "ancoragem_ou_extremidade_principal",
+        "pdf_section": "evidencias_registros_fotograficos",
+        "purpose": "Registrar o ponto superior, ancoragem ou extremidade principal do sistema."
+      },
+      {
+        "slot_id": "foto_ponto_inferior",
+        "label": "Ponto inferior ou extremidade secundaria",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": true,
+        "min_items": 1,
+        "binding_path": "registros_fotograficos.slots_obrigatorios",
+        "json_field": "evidencias_e_anexos.evidencia_complementar",
+        "finding_key": "ancoragem_ou_extremidade_secundaria",
+        "pdf_section": "evidencias_registros_fotograficos",
+        "purpose": "Registrar o ponto inferior ou extremidade secundaria para completar a rastreabilidade do sistema."
+      },
+      {
+        "slot_id": "foto_detalhe_critico",
+        "label": "Detalhe critico tecnico",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": true,
+        "min_items": 1,
+        "binding_path": "registros_fotograficos.slots_obrigatorios",
+        "json_field": "nao_conformidades_ou_lacunas.evidencias",
+        "finding_key": "achado_critico_ou_nao_conformidade",
+        "pdf_section": "achados_nao_conformidades",
+        "purpose": "Registrar detalhe tecnico relevante que sustenta achado, nao conformidade, bloqueio ou conclusao."
+      }
+    ],
     "optional_slots": [
       {
         "slot_id": "evidencia_complementar",
@@ -126,6 +184,50 @@
         "min_items": 0,
         "binding_path": "nao_conformidades_ou_lacunas.evidencias",
         "purpose": "Registrar visualmente ou documentalmente os pontos de atencao do servico."
+      },
+      {
+        "slot_id": "foto_panoramica_contexto",
+        "label": "Foto panoramica de contexto",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": false,
+        "min_items": 0,
+        "binding_path": "registros_fotograficos",
+        "purpose": "Registrar o contexto geral ampliado da area inspecionada quando a vista geral principal nao for suficiente."
+      },
+      {
+        "slot_id": "foto_tag_identificacao",
+        "label": "Foto da tag de identificacao",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": false,
+        "min_items": 0,
+        "binding_path": "registros_fotograficos",
+        "purpose": "Vincular a tag, placa ou identificacao fisica do sistema quando isso reforcar a rastreabilidade do laudo."
+      },
+      {
+        "slot_id": "foto_contexto_restricao_acesso",
+        "label": "Foto do contexto de restricao de acesso",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": false,
+        "min_items": 0,
+        "binding_path": "registros_fotograficos",
+        "purpose": "Registrar visualmente a restricao de acesso, obstrucao ou limitacao de inspeção em casos pendentes ou parciais."
+      },
+      {
+        "slot_id": "foto_detalhe_achado_principal",
+        "label": "Foto do detalhe do achado principal",
+        "accepted_types": [
+          "foto"
+        ],
+        "required": false,
+        "min_items": 0,
+        "binding_path": "nao_conformidades_ou_lacunas.evidencias",
+        "purpose": "Registrar em close o achado principal, dano, montagem incorreta ou outro ponto tecnico que sustente a conclusao."
       }
     ],
     "checklist_groups": [
@@ -244,19 +346,28 @@
     ]
   },
   "document_blueprint": {
-    "opening_statement": "Template governado para inspecao de linha de vida, estruturado para identificacao do sistema, checklist de componentes, evidencias e conclusao tecnica auditavel.",
+    "opening_statement": "Laudo tecnico governado para inspecao de linha de vida, estruturado conforme o esqueleto recorrente observado no material real: identificacao documental, identificacao da vistoria, objeto da inspecao, registros fotograficos, metodologia, conclusao, proxima inspecao periodica e observacoes.",
     "section_order": [
+      "capa_folha_rosto",
       "controle_documental_sumario",
-      "resumo_executivo",
+      "identificacao_laudo",
       "objeto_escopo_base_normativa",
-      "identificacao_tecnica_do_objeto",
       "metodologia_instrumentos_equipe",
-      "checklist_tecnico",
       "evidencias_registros_fotograficos",
-      "nao_conformidades_criticidade",
+      "checklist_tecnico",
+      "achados_nao_conformidades",
       "conclusao",
-      "assinaturas_responsabilidade_tecnica"
+      "revisao_mesa",
+      "assinaturas_responsabilidade_tecnica",
+      "auditoria_emissao",
+      "anexos"
     ],
+    "pdf_contract": {
+      "required_sections_texto": "capa_folha_rosto; controle_documental_sumario; identificacao_laudo; objeto_escopo_base_normativa; metodologia_instrumentos_equipe; evidencias_registros_fotograficos; checklist_tecnico; achados_nao_conformidades; conclusao; revisao_mesa; assinaturas_responsabilidade_tecnica; auditoria_emissao",
+      "required_photo_slots_texto": "foto_visao_geral; foto_ponto_superior; foto_ponto_inferior; foto_detalhe_critico",
+      "traceability_chain": "foto -> achado -> campo JSON -> secao PDF -> decisao Mesa -> emissao oficial",
+      "mesa_required": true
+    },
     "signature_roles": [
       {
         "role": "Responsavel tecnico",
@@ -294,7 +405,12 @@
       "findings": 4
     },
     "section_intros": {
-      "checklist_tecnico": "Quadro-base para fixacoes, cabo, terminais, suportes, identificacao e demais itens sensiveis do sistema."
+      "checklist_tecnico": "Quadro-base para fixacoes, cabo, terminais, suportes, identificacao e demais itens sensiveis do sistema.",
+      "evidencias_registros_fotograficos": "Sequencia de registros do inicio, termino e pontos relevantes da linha, com espaco para contexto panoramico, tag de identificacao, restricao de acesso e detalhe do achado principal.",
+      "achados_nao_conformidades": "Achados tecnicos, lacunas, restricoes de acesso e nao conformidades vinculados a evidencias rastreaveis.",
+      "conclusao": "Fechamento tecnico do laudo com status final, motivo do enquadramento, proxima inspecao periodica e observacoes complementares.",
+      "revisao_mesa": "Registro do status, bloqueios, pendencias resolvidas e observacoes da Mesa antes da emissao oficial.",
+      "auditoria_emissao": "Registro de template_version, schema_version, rastreabilidade fotografica e emissao oficial."
     },
     "field_semantics": {
       "checklist_componentes": "instance_fill",
@@ -524,6 +640,15 @@
             "source_hint": "Descricao das lacunas, pontos de atencao ou ausencia declarada."
           },
           {
+            "field_id": "limitacoes_de_inspecao",
+            "label": "Limitacoes de inspecao",
+            "type": "textarea",
+            "required": false,
+            "critical": false,
+            "binding_path": "nao_conformidades_ou_lacunas.limitacoes_de_inspecao",
+            "source_hint": "Restricoes de acesso, vistoria parcial ou limites relevantes para a conclusao."
+          },
+          {
             "field_id": "evidencias",
             "label": "Evidencias relacionadas",
             "type": "image_slot",
@@ -581,6 +706,42 @@
             "critical": false,
             "binding_path": "conclusao.justificativa",
             "source_hint": "Sintese das evidencias e fundamentos da conclusao."
+          },
+          {
+            "field_id": "motivo_status",
+            "label": "Motivo do status",
+            "type": "textarea",
+            "required": false,
+            "critical": false,
+            "binding_path": "conclusao.motivo_status",
+            "source_hint": "Motivo resumido do status final atribuido ao sistema."
+          },
+          {
+            "field_id": "liberado_para_uso",
+            "label": "Liberado para uso",
+            "type": "enum",
+            "required": false,
+            "critical": false,
+            "binding_path": "conclusao.liberado_para_uso",
+            "source_hint": "Indica se o sistema esta liberado, nao liberado ou nao avaliavel."
+          },
+          {
+            "field_id": "acao_requerida",
+            "label": "Acao requerida",
+            "type": "text",
+            "required": false,
+            "critical": false,
+            "binding_path": "conclusao.acao_requerida",
+            "source_hint": "Encaminhamento operacional principal apos a conclusao."
+          },
+          {
+            "field_id": "condicao_para_reinspecao",
+            "label": "Condicao para reinspecao",
+            "type": "textarea",
+            "required": false,
+            "critical": false,
+            "binding_path": "conclusao.condicao_para_reinspecao",
+            "source_hint": "Pre-condicao ou gatilho para nova inspeção quando aplicavel."
           }
         ]
       }
@@ -616,6 +777,11 @@
       "identificacao.objeto_principal",
       "identificacao.localizacao",
       "identificacao.referencia_principal",
+      "registros_fotograficos.slots_obrigatorios",
+      "registros_fotograficos.slots_obrigatorios_texto",
+      "pdf_contract.required_sections_texto",
+      "pdf_contract.required_photo_slots_texto",
+      "auditoria.rastreabilidade_texto",
       "escopo_servico.tipo_entrega",
       "escopo_servico.modo_execucao",
       "escopo_servico.resumo_escopo",
@@ -627,9 +793,13 @@
       "documentacao_e_registros.documentos_disponiveis",
       "documentacao_e_registros.documentos_emitidos",
       "nao_conformidades_ou_lacunas.descricao",
+      "nao_conformidades_ou_lacunas.limitacoes_de_inspecao",
       "recomendacoes.texto",
       "conclusao.status",
-      "conclusao.conclusao_tecnica"
+      "conclusao.conclusao_tecnica",
+      "conclusao.motivo_status",
+      "conclusao.acao_requerida",
+      "conclusao.condicao_para_reinspecao"
     ],
     "expected_image_slots": [
       "referencia_principal",
@@ -637,6 +807,12 @@
       "evidencia_principal",
       "evidencia_complementar",
       "registro_lacuna_ou_ponto"
+    ],
+    "expected_photo_slots": [
+      "foto_visao_geral",
+      "foto_ponto_superior",
+      "foto_ponto_inferior",
+      "foto_detalhe_critico"
     ]
   },
   "notes": {
