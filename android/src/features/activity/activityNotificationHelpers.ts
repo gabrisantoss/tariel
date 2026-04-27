@@ -20,13 +20,15 @@ import {
 const MAX_LAUDOS_MONITORADOS_MESA = 6;
 const INTERNAL_ACTIVITY_LABELS: Array<[RegExp, string]> = [
   [/\bmobile_autonomous\b/gi, "Revisão interna governada"],
-  [/\bmobile_review_allowed\b/gi, "Revisão interna + Mesa"],
+  [/\bmobile_review_allowed\b/gi, "Revisão interna governada"],
   [/\bprimary_pdf_diverged\b/gi, "Reemissão recomendada"],
   [/\bissue_state_label\b/gi, "Estado da emissão"],
   [/\bissue_state\b/gi, "Estado da emissão"],
   [/\bsuperseded\b/gi, "Documento substituído"],
   [/\breviewer_issue\b/gi, "Emissão oficial"],
   [/\breviewer_decision\b/gi, "Revisão governada"],
+  [/\btenant_without_mesa\b/gi, "Não incluído no pacote"],
+  [/\bnr35_mesa_required_unavailable\b/gi, "Família exige Mesa"],
 ];
 
 export function sanitizarTextoNotificacaoAtividade(value: string): string {

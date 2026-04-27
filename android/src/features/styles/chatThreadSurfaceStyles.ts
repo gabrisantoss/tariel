@@ -257,11 +257,37 @@ export const chatThreadSurfaceStyles = {
     flexWrap: "wrap",
     gap: spacing.xs,
   },
+  threadReviewActionStack: {
+    gap: spacing.xs,
+  },
+  threadReviewPrimaryActionRail: {
+    alignSelf: "stretch",
+  },
+  threadReviewSecondaryActionGroup: {
+    gap: spacing.xs,
+  },
+  threadReviewActionGroupTitle: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
   threadReviewActionButton: {
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     borderRadius: 16,
     borderWidth: 1,
+  },
+  threadReviewActionButtonPrimary: {
+    alignSelf: "stretch",
+    alignItems: "center",
+    paddingVertical: 12,
+    shadowColor: colors.ink900,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   threadReviewActionButtonAccent: {
     backgroundColor: colors.accentWash,

@@ -78,6 +78,19 @@ export function renderizarReviewPackageMesa(
           <Text style={styles.threadReviewMetaValue}>{summary.ownerLabel}</Text>
         </View>
       </View>
+      <View style={styles.threadReviewList}>
+        <Text style={styles.threadReviewSectionTitle}>Revisão</Text>
+        <View style={styles.threadReviewListItem}>
+          <View style={styles.threadReviewListCopy}>
+            <Text style={styles.threadReviewListTitle}>
+              {summary.reviewRouteLabel}
+            </Text>
+            <Text style={styles.threadReviewListText}>
+              {summary.reviewRouteDetail}
+            </Text>
+          </View>
+        </View>
+      </View>
       <Text style={styles.threadReviewFootnote}>
         {summary.lifecycleDescription}
       </Text>
@@ -216,17 +229,17 @@ export function renderizarReviewPackageMesa(
       />
       <ThreadConversationReviewDiffSection summary={summary} />
       <ThreadConversationReviewRedFlagsSection summary={summary} />
+      <ThreadConversationReviewHighlightedBlocksSection
+        onExecutarComandoRevisaoMobile={onExecutarComandoRevisaoMobile}
+        reviewCommandBusy={reviewCommandBusy}
+        summary={summary}
+      />
       <ThreadConversationReviewDecisionFocusSection
         decisionContext={decisionContext}
         summary={summary}
       />
       <ThreadConversationReviewActionsSection
         decisionContext={decisionContext}
-        onExecutarComandoRevisaoMobile={onExecutarComandoRevisaoMobile}
-        reviewCommandBusy={reviewCommandBusy}
-        summary={summary}
-      />
-      <ThreadConversationReviewHighlightedBlocksSection
         onExecutarComandoRevisaoMobile={onExecutarComandoRevisaoMobile}
         reviewCommandBusy={reviewCommandBusy}
         summary={summary}

@@ -35,6 +35,7 @@ function ReviewPackageActionButton(props: {
   testID: string;
   tone: "success" | "accent" | "danger";
   label: string;
+  primary?: boolean;
 }) {
   const toneStyle =
     props.tone === "danger"
@@ -57,6 +58,7 @@ function ReviewPackageActionButton(props: {
       style={[
         styles.threadReviewActionButton,
         toneStyle,
+        props.primary ? styles.threadReviewActionButtonPrimary : null,
         props.disabled ? styles.threadReviewActionButtonDisabled : null,
       ]}
       testID={props.testID}
@@ -67,6 +69,13 @@ function ReviewPackageActionButton(props: {
     </Pressable>
   );
 }
+
+type ReviewDecisionButtonConfig = {
+  command: "aprovar_no_mobile" | "devolver_no_mobile" | "enviar_para_mesa";
+  label: string;
+  testID: string;
+  tone: "success" | "accent" | "danger";
+};
 
 function ReviewPackageStatusBadge(props: {
   label: string;
@@ -368,65 +377,115 @@ export function ThreadConversationReviewActionsSection(props: {
   } = props;
   const actionDisabled = reviewCommandBusy || !onExecutarComandoRevisaoMobile;
 
-  if (!summary.allowedDecisions.length) {
+  if (!summary.allowedDecisions.length && !summary.nextAction) {
     return null;
   }
 
+  const canApprove =
+    summary.allowedDecisions.includes("aprovar_no_mobile") &&
+    (!summary.surfaceActionsKnown ||
+      summary.allowedSurfaceActions.includes("mesa_approve"));
+  const canSendMesa = summary.allowedDecisions.includes("enviar_para_mesa");
+  const canReturn =
+    summary.allowedDecisions.includes("devolver_no_mobile") &&
+    (!summary.surfaceActionsKnown ||
+      summary.allowedSurfaceActions.includes("mesa_return"));
+  const actionConfigs: ReviewDecisionButtonConfig[] = [
+    canApprove
+      ? {
+          command: "aprovar_no_mobile",
+          label: "Aprovar internamente",
+          testID: "mesa-review-action-approve",
+          tone: "success" as const,
+        }
+      : null,
+    canSendMesa
+      ? {
+          command: "enviar_para_mesa",
+          label: "Enviar para Mesa Avaliadora",
+          testID: "mesa-review-action-send",
+          tone: "accent" as const,
+        }
+      : null,
+    canReturn
+      ? {
+          command: "devolver_no_mobile",
+          label: "Devolver para ajuste",
+          testID: "mesa-review-action-return",
+          tone: "danger" as const,
+        }
+      : null,
+  ].filter((item): item is ReviewDecisionButtonConfig => item !== null);
+  const primaryCommand = summary.nextAction?.command || null;
+  const primaryAction =
+    actionConfigs.find((item) => item.command === primaryCommand) || null;
+  const secondaryActions = actionConfigs.filter(
+    (item) => item.command !== primaryAction?.command,
+  );
+
+  const renderActionButton = (
+    item: ReviewDecisionButtonConfig,
+    primary = false,
+  ) => {
+    const onPress = () => {
+      if (item.command === "aprovar_no_mobile") {
+        void onExecutarComandoRevisaoMobile?.({
+          command: "aprovar_no_mobile",
+        });
+        return;
+      }
+      if (item.command === "enviar_para_mesa") {
+        void onExecutarComandoRevisaoMobile?.({
+          command: "enviar_para_mesa",
+        });
+        return;
+      }
+      void onExecutarComandoRevisaoMobile?.({
+        command: "devolver_no_mobile",
+        block_key: decisionContext.blockKey,
+        title: decisionContext.title,
+        reason: decisionContext.reason,
+        summary: decisionContext.summary,
+        required_action: decisionContext.requiredAction,
+        failure_reasons: decisionContext.failureReasons,
+      });
+    };
+
+    return (
+      <ReviewPackageActionButton
+        key={item.command}
+        disabled={actionDisabled}
+        label={item.label}
+        onPress={onPress}
+        primary={primary}
+        testID={item.testID}
+        tone={item.tone}
+      />
+    );
+  };
+
   return (
-    <View style={styles.threadReviewActionsRail}>
+    <View style={styles.threadReviewActionStack}>
+      <Text style={styles.threadReviewSectionTitle}>Próxima ação</Text>
       {summary.nextAction ? (
         <Text style={styles.threadReviewFootnote}>
           {`${summary.nextAction.label}: ${summary.nextAction.value}. ${summary.nextAction.detail}`}
         </Text>
       ) : null}
-      {summary.allowedDecisions.includes("aprovar_no_mobile") &&
-      (!summary.surfaceActionsKnown ||
-        summary.allowedSurfaceActions.includes("mesa_approve")) ? (
-        <ReviewPackageActionButton
-          disabled={actionDisabled}
-          label="Aprovar internamente"
-          onPress={() => {
-            void onExecutarComandoRevisaoMobile?.({
-              command: "aprovar_no_mobile",
-            });
-          }}
-          testID="mesa-review-action-approve"
-          tone="success"
-        />
+      {primaryAction ? (
+        <View style={styles.threadReviewPrimaryActionRail}>
+          {renderActionButton(primaryAction, true)}
+        </View>
       ) : null}
-      {summary.allowedDecisions.includes("enviar_para_mesa") ? (
-        <ReviewPackageActionButton
-          disabled={actionDisabled}
-          label="Enviar para Mesa"
-          onPress={() => {
-            void onExecutarComandoRevisaoMobile?.({
-              command: "enviar_para_mesa",
-            });
-          }}
-          testID="mesa-review-action-send"
-          tone="accent"
-        />
-      ) : null}
-      {summary.allowedDecisions.includes("devolver_no_mobile") &&
-      (!summary.surfaceActionsKnown ||
-        summary.allowedSurfaceActions.includes("mesa_return")) ? (
-        <ReviewPackageActionButton
-          disabled={actionDisabled}
-          label="Devolver para ajuste"
-          onPress={() => {
-            void onExecutarComandoRevisaoMobile?.({
-              command: "devolver_no_mobile",
-              block_key: decisionContext.blockKey,
-              title: decisionContext.title,
-              reason: decisionContext.reason,
-              summary: decisionContext.summary,
-              required_action: decisionContext.requiredAction,
-              failure_reasons: decisionContext.failureReasons,
-            });
-          }}
-          testID="mesa-review-action-return"
-          tone="danger"
-        />
+      {secondaryActions.length ? (
+        <View style={styles.threadReviewSecondaryActionGroup}>
+          <Text style={styles.threadReviewActionGroupTitle}>
+            Ações secundárias
+          </Text>
+          <View style={styles.threadReviewActionsRail}>
+            {secondaryActions.map((item) => renderActionButton(item))}
+          </View>
+        </View>
       ) : null}
     </View>
   );
@@ -446,6 +505,7 @@ export function ThreadConversationReviewHighlightedBlocksSection(props: {
 
   return (
     <View style={styles.threadReviewList}>
+      <Text style={styles.threadReviewSectionTitle}>Pendências do caso</Text>
       {summary.highlightedBlocks.map((item) => {
         const tone = obterTomStatusBloco(item.reviewStatus);
 
