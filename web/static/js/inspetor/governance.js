@@ -116,7 +116,7 @@
             }
             partes.push(
                 normalizarCaseLifecycleStatusSeguro(lifecycleStatus) === "emitido"
-                    ? "PDF final emitido"
+                    ? "Documento emitido"
                     : "Pronto para emissão"
             );
             if (verification?.statusVisualLabel) {
@@ -213,8 +213,8 @@
         function formatarModoValidacaoWorkspace(valor = "") {
             const modo = String(valor || "").trim().toLowerCase();
             if (!modo) return "";
-            if (modo === "mesa_required") return "Mesa obrigatória";
-            if (modo === "mobile_autonomous") return "Autonomia assistida";
+            if (modo === "mesa_required") return "Mesa Avaliadora obrigatoria";
+            if (modo === "mobile_autonomous") return "Revisao interna governada";
             if (modo === "human_override") return "Override humano";
             return modo.replace(/[_-]+/g, " ");
         }

@@ -294,9 +294,9 @@
     function formatarModoFinalizacaoPreview(preview = {}) {
         const tituloFerramentas = String(preview?.chat_review_tools?.title || "").trim();
         if (tituloFerramentas) return tituloFerramentas;
-        if (preview?.primary_action === "approve_without_mesa") return "Aprovação interna sem Mesa";
-        if (preview?.primary_action === "send_to_mesa") return "Envio para Mesa Avaliadora";
-        return "Resolver pendências antes de finalizar";
+        if (preview?.primary_action === "approve_without_mesa") return "Revisao interna governada";
+        if (preview?.primary_action === "send_to_mesa") return "Mesa Avaliadora";
+        return "Pendencias do caso";
     }
 
     function obterRotuloPrimarioFinalizacaoPreview(preview = {}) {
@@ -339,29 +339,29 @@
             overlay.innerHTML = `
                 <div class="finalizacao-preview-modal">
                     <header class="finalizacao-preview-modal__header">
-                        <span class="finalizacao-preview-modal__eyebrow">Revisão antes de finalizar</span>
+                        <span class="finalizacao-preview-modal__eyebrow">Revisao antes de finalizar</span>
                         <h2>${escaparHTML(formatarModoFinalizacaoPreview(preview))}</h2>
                         <p>${escaparHTML(obterProximoPassoFinalizacaoPreview(preview))}</p>
                     </header>
-                    <section class="finalizacao-preview-modal__grid" aria-label="Resumo de finalização">
+                    <section class="finalizacao-preview-modal__grid" aria-label="Resumo de finalizacao">
                         <article>
-                            <strong>Destino</strong>
+                            <strong>Fluxo de revisao</strong>
                             <span>${escaparHTML(obterRotuloPrimarioFinalizacaoPreview(preview))}</span>
                         </article>
                         <article>
-                            <strong>Correções</strong>
+                            <strong>Correcoes</strong>
                             <div class="finalizacao-preview-modal__chips">${montarListaCorrecoesPreview(preview)}</div>
                         </article>
                         <article>
-                            <strong>Qualidade</strong>
-                            <span>${Number(preview?.quality_gates?.missing_evidence_count || 0)} evidência(s) faltante(s)</span>
+                            <strong>Pendencias do caso</strong>
+                            <span>${Number(preview?.quality_gates?.missing_evidence_count || 0)} evidencia(s) faltante(s)</span>
                         </article>
                     </section>
                     ${bloqueios.length ? `
                         <section class="finalizacao-preview-modal__blockers" aria-label="Bloqueios">
                             <strong>Antes de finalizar</strong>
                             <ul>
-                                ${bloqueios.map((item) => `<li>${escaparHTML(item.message || item.code || "Pendência aberta")}</li>`).join("")}
+                                ${bloqueios.map((item) => `<li>${escaparHTML(item.message || item.code || "Pendencia do caso")}</li>`).join("")}
                             </ul>
                         </section>
                     ` : ""}
@@ -373,7 +373,7 @@
                             </button>
                         ` : `
                             <button type="button" class="technical-record-btn technical-record-btn--primary" data-preview-action="resolve">
-                                Resolver pendências
+                                Resolver pendencias
                             </button>
                         `}
                     </footer>
@@ -428,7 +428,7 @@
         }
 
         const manterVisivel = window.confirm(
-            "Ao reabrir este laudo, deseja manter o PDF final anterior visivel no caso?\n\nOK = manter visivel\nCancelar = escolher outra opcao"
+            "Ao reabrir este laudo, deseja manter o documento emitido anterior visivel no caso?\n\nOK = manter visivel\nCancelar = escolher outra opcao"
         );
 
         if (manterVisivel) {
@@ -436,7 +436,7 @@
         }
 
         const ocultarDoCaso = window.confirm(
-            "Deseja reabrir ocultando o PDF final anterior da area ativa do caso?\n\nOK = ocultar do caso\nCancelar = desistir da reabertura"
+            "Deseja reabrir ocultando o documento emitido anterior da area ativa do caso?\n\nOK = ocultar do caso\nCancelar = desistir da reabertura"
         );
 
         if (!ocultarDoCaso) {
@@ -637,10 +637,10 @@
                 : "A mesa respondeu com ajustes. A conversa fica bloqueada até a próxima reabertura autorizada.";
         } else if (estado === "aprovado") {
             if (lifecycleStatus === "emitido") {
-                tituloTexto = "PDF final emitido";
+                tituloTexto = "Documento emitido";
                 descricaoTexto = permiteReabrir
-                    ? "O PDF final já foi emitido. O caso fica em leitura até uma nova reabertura autorizada."
-                    : "O PDF final já foi emitido e este caso agora está disponível apenas para consulta.";
+                    ? "A emissao oficial ja foi registrada. O caso fica em leitura ate uma nova reabertura autorizada."
+                    : "A emissao oficial ja foi registrada e este caso agora esta disponivel apenas para consulta.";
             } else {
                 tituloTexto = "Laudo aprovado pela mesa";
                 descricaoTexto = "Este laudo foi aprovado e agora está disponível apenas para consulta.";
@@ -667,7 +667,7 @@
         }
         if (estado === "aprovado") {
             if (lifecycleStatus === "emitido") {
-                return "PDF final emitido. Este histórico está somente leitura.";
+                return "Documento emitido. Este historico esta somente leitura.";
             }
             return "Laudo aprovado. Este histórico está somente leitura.";
         }
@@ -818,7 +818,7 @@
 
         if (iaRespondendoAtiva()) {
             sincronizarAcaoFinalizarPorAtividadeIA();
-            TP.toast?.("Aguarde a IA terminar antes de enviar para a mesa.", "aviso", 3000);
+            TP.toast?.("Aguarde a IA terminar antes de concluir a revisao.", "aviso", 3000);
             return null;
         }
 
@@ -838,7 +838,7 @@
         }
 
         if (!resolverPermiteFinalizarPorSnapshot(snapshotAtual, estadoAtual)) {
-            TP.toast?.("Somente laudos em coleta podem ser enviados para a mesa.", "aviso", 3000);
+            TP.toast?.("Somente laudos em coleta podem seguir para revisao.", "aviso", 3000);
             return null;
         }
 
