@@ -49,10 +49,11 @@ Este documento define a camada de tradução entre estados técnicos do Tariel e
 - O read model expõe `document_ui` com rótulos canônicos para a UI sem remover campos técnicos legados.
 - A superfície separa resumo, documento oficial/PDF operacional, histórico, auditoria e recursos do pacote.
 - O submenu de Documentos deixa de ser sticky nessa superfície piloto para reduzir poluição durante scroll.
+- UX-B aplicado no Chat Inspetor (prévia de finalização e `preparar-emissao`) com separação explícita entre `PDF operacional` e `Emissão oficial`.
 
-## Gaps para UX-B
+## Gaps após UX-B
 
-- Aplicar a mesma matriz no Chat Inspetor em preparação/finalização de emissão.
 - Revisar Mesa Avaliadora para substituir capabilities internas por labels canônicos nas mensagens de bloqueio.
+- Revisar cartões de histórico e prompts de reabertura do Chat Inspetor para reduzir termos legados em torno de `PDF final`.
 - Padronizar badges globais em CSS compartilhado, reduzindo variações locais de `pill` e `hero-chip`.
 - Revisar Admin CEO, onde termos técnicos ainda podem aparecer em configurações avançadas; manter técnicos apenas em modo avançado.

@@ -13,8 +13,8 @@
                 {% if tool == "assinatura" %}
                 Selecione o signatario governado, valide elegibilidade e siga para a emissao oficial quando o pacote estiver pronto.
                 {% else %}
-                Valide template, assinatura, PDF, correcoes aplicadas e pacote tecnico antes de emitir ou baixar
-                o documento oficial. Esta tela separa o tratamento documental do chat.
+                Valide template, assinatura, PDF operacional, correcoes aplicadas e pacote oficial antes de emitir.
+                Esta tela separa o documento operacional da emissao oficial no fluxo do chat.
                 {% endif %}
             </p>
         </div>
@@ -37,7 +37,7 @@
     <section class="emissao-preparo-grid">
         <article class="technical-record-card emissao-preparo-card emissao-preparo-card--status">
             <div class="technical-record-card__header">
-                <h2>Status de emissao</h2>
+                <h2>Status da emissao oficial</h2>
                 <span class="technical-record-status-pill">{{ emissao_oficial.issue_status_label | e }}</span>
             </div>
             <p data-emissao-state-detail>{{ estado_preparo_emissao.detail | e }}</p>
@@ -51,7 +51,7 @@
                     <dd>{{ emissao_oficial.status_visual_label | default("Nao informado", true) | e }}</dd>
                 </div>
                 <div>
-                    <dt>PDF atual</dt>
+                    <dt>PDF operacional</dt>
                     <dd>{{ "Materializado" if emissao_oficial.pdf_present else "Pendente" }}</dd>
                 </div>
                 <div>
@@ -59,7 +59,7 @@
                     <dd>{{ "Pronta" if emissao_oficial.public_verification_present else "Pendente" }}</dd>
                 </div>
                 <div>
-                    <dt>Emissao</dt>
+                    <dt>Documento emitido</dt>
                     <dd data-emissao-issue-number>
                         {{ current_issue.issue_number | default("Ainda nao emitida", true) | e }}
                     </dd>
@@ -224,7 +224,7 @@
                     <dd>{{ contexto_reemissao.approval_version | default("Nao registrada", true) | e }}</dd>
                 </div>
                 <div>
-                    <dt>PDF divergiu</dt>
+                    <dt>PDF operacional divergiu</dt>
                     <dd>{{ "Sim" if contexto_reemissao.primary_pdf_diverged else "Nao" }}</dd>
                 </div>
                 <div>
@@ -287,11 +287,11 @@
                 {% endif %}
                 {% if emissao_oficial.already_issued %}
                 <a class="technical-record-btn technical-record-btn--primary" href="{{ download_emissao_url | e }}" target="_blank" rel="noopener noreferrer">
-                    Baixar emissao oficial
+                    Baixar pacote oficial
                 </a>
                 {% endif %}
                 <a class="technical-record-btn technical-record-btn--outline" href="{{ pacote_pdf_url | e }}" target="_blank" rel="noopener noreferrer">
-                    Baixar pacote tecnico
+                    Baixar PDF operacional
                 </a>
             </div>
             <p class="emissao-preparo-feedback" data-issue-feedback role="status" aria-live="polite"></p>
@@ -380,7 +380,7 @@
                         link.target = "_blank";
                         link.rel = "noopener noreferrer";
                         link.dataset.issuedDownload = "true";
-                        link.textContent = "Baixar emissao oficial";
+                        link.textContent = "Baixar pacote oficial";
                         form.insertBefore(link, button.nextSibling);
                     }
                     button.textContent = "Reemitir oficialmente";

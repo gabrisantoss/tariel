@@ -443,7 +443,9 @@ O teste `web/tests/test_high_risk_family_guardrails_pr_i.py` fixa tres limites: 
 
 A camada mobile/chat-first deve continuar recebendo estados tecnicos, mas as superficies visuais devem usar a matriz [UX_PRODUCT_LANGUAGE.md](UX_PRODUCT_LANGUAGE.md). Termos como `mobile_autonomous`, `primary_pdf_diverged`, `reviewer_issue` e codigos crus de bloqueio nao devem aparecer como texto de usuario quando houver label canonico.
 
-No UX-A, o piloto fica no Portal Cliente Documentos: `document_ui` traduz emissao oficial, PDF operacional, reemissao recomendada, documento substituido, historico, auditoria e recursos do pacote. Chat Inspetor e Mobile ficam como follow-up para aplicar a mesma matriz sem criar UI grande.
+No UX-A, o piloto fica no Portal Cliente Documentos: `document_ui` traduz emissao oficial, PDF operacional, reemissao recomendada, documento substituido, historico, auditoria e recursos do pacote.
+
+No UX-B, o Chat Inspetor passa a aplicar essa matriz na previa de finalizacao e na tela `preparar-emissao`: `Revisao interna governada`, `Mesa Avaliadora`, `Pendencias do caso`, `Baixar pacote oficial` e `Baixar PDF operacional` substituem termos ambiguos sem mudar endpoint, permissionamento ou regra de emissao.
 
 ## 15. Conclusao
 

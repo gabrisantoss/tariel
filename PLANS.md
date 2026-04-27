@@ -22,6 +22,14 @@ Atualizado em `2026-04-27`.
 - `checkpoint 2026-04-27`: o submenu de Documentos deixa de ser sticky apenas nessa superfície piloto para reduzir sobreposição com o shell principal; a padronização global de headers, Chat Inspetor, Mesa e Admin CEO fica como follow-up UX-B
 - `validacao executada`: `python -m py_compile web/app/domains/cliente/dashboard_documents_support.py web/app/domains/cliente/dashboard_bootstrap_support.py web/tests/test_cliente_portal_critico.py web/tests/test_smoke.py`; `node --check web/static/js/cliente/portal_documentos_surface.js`; recorte Portal Cliente Documentos (`8 passed`); recorte smoke de template/linguagem UX (`2 passed`); `git diff --check`; `AMBIENTE=dev make release-verify-local`
 
+### `PKT-UX-PRODUCT-LANGUAGE-02` - Chat Inspetor finalizacao e emissao
+
+- `status`: concluido localmente em `2026-04-27`; UX-B aplica linguagem canonica na previa de finalizacao e na tela `preparar-emissao` sem alterar regras de negocio, permissao ou fluxo de emissao
+- `checkpoint 2026-04-27`: `chat_painel_relatorio.js` troca rotulos de fluxo para `Revisao interna governada`, `Mesa Avaliadora` e `Pendencias do caso`, evitando termos ambíguos como `Aprovacao interna sem Mesa` e textos acoplados a um unico fluxo
+- `checkpoint 2026-04-27`: `preparar_emissao.html` diferencia `PDF operacional` de `Emissao oficial`, renomeia download principal para `Baixar pacote oficial` e expõe `Baixar PDF operacional` como artefato separado
+- `checkpoint 2026-04-27`: `governance.js` alinha `mobile_autonomous` para `Revisao interna governada` e leitura de `emitido` para `Documento emitido`
+- `validacao executada`: `node --check web/static/js/chat/chat_painel_relatorio.js web/static/js/chat/chat_painel_laudos.js web/static/js/inspetor/governance.js`; `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q -k templates_chat_mantem_controles_essenciais_de_ui` (`1 passed`); `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py -q -k 'preparacao_de_emissao or previa_finalizacao_sem_mesa_expoe_revisao_interna_sem_rotulo_mesa or previa_finalizacao_com_mesa_mantem_rotulo_mesa_avaliadora or inspetor_sem_servicos_da_mesa_nao_abre_preparacao_de_emissao'` (`4 passed`)
+
 ### `PKT-MOBILE-CHAT-FIRST-CAPABILITIES-01` - Normalizacao de capabilities mobile/chat-first
 
 - `status`: em andamento localmente em `2026-04-26`; PR B adiciona aliases/read model neutros para revisao, aprovacao, emissao e download sem remover capabilities antigas; PR C expõe esse read model na previa de finalizacao e na rail de ferramentas do Chat Inspetor; PR D leva os aliases/sinais para o Mobile como labels e estados de governanca; PR E expõe pacote, recursos e bloqueios contratuais no Portal Cliente sem criar capability nova e sem alterar release gate, mobile smoke, Maestro, `human_ack`, NR35 ou comportamento de emissao oficial

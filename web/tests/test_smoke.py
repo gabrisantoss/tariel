@@ -241,6 +241,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     gate_modal_html = (raiz / "templates" / "inspetor" / "modals" / "_gate_qualidade.html").read_text(encoding="utf-8")
     nova_inspecao_html = (raiz / "templates" / "inspetor" / "modals" / "_nova_inspecao.html").read_text(encoding="utf-8")
     chat_index_js = (raiz / "static" / "js" / "chat" / "chat_index_page.js").read_text(encoding="utf-8")
+    chat_painel_relatorio_js = (raiz / "static" / "js" / "chat" / "chat_painel_relatorio.js").read_text(encoding="utf-8")
     modals_js = (raiz / "static" / "js" / "inspetor" / "modals.js").read_text(encoding="utf-8")
     ui_bindings_js = (raiz / "static" / "js" / "inspetor" / "ui_bindings.js").read_text(encoding="utf-8")
     workspace_page_elements_js = (raiz / "static" / "js" / "inspetor" / "workspace_page_elements.js").read_text(encoding="utf-8")
@@ -385,7 +386,13 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "Assinatura digital" in preparar_emissao_html
     assert "data-issue-submit" in preparar_emissao_html
     assert "data-emissao-state-pill" in preparar_emissao_html
-    assert "Baixar pacote tecnico" in preparar_emissao_html
+    assert "Baixar pacote oficial" in preparar_emissao_html
+    assert "Baixar PDF operacional" in preparar_emissao_html
+    assert "Baixar pacote tecnico" not in preparar_emissao_html
+    assert "Revisao interna governada" in chat_painel_relatorio_js
+    assert "Pendencias do caso" in chat_painel_relatorio_js
+    assert "Aprovação interna sem Mesa" not in chat_painel_relatorio_js
+    assert "Resolver pendências antes de finalizar" not in chat_painel_relatorio_js
     assert 'id="workspace-assistant-landing"' in workspace_assistant_html
     assert 'data-workspace-user-greeting-name' in workspace_assistant_html
     assert "Por onde começamos?" in workspace_assistant_html

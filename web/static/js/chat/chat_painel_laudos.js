@@ -329,7 +329,7 @@
         if (normalizado === "chat_reopen") return "Próxima ação: reabrir no chat";
         if (normalizado === "mesa_approve") return "Próxima ação: aprovar na mesa";
         if (normalizado === "mesa_return") return "Próxima ação: devolver para correção";
-        if (normalizado === "system_issue") return "Próxima ação: emitir PDF final";
+        if (normalizado === "system_issue") return "Próxima ação: emitir oficialmente";
         return "";
     }
 
