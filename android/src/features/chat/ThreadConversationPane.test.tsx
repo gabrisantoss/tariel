@@ -50,6 +50,20 @@ const baseProps = {
   vendoMesa: true,
 };
 
+function coletarTextosRenderizados(node: unknown): string[] {
+  if (typeof node === "string") {
+    return [node];
+  }
+  if (Array.isArray(node)) {
+    return node.flatMap(coletarTextosRenderizados);
+  }
+  if (!node || typeof node !== "object") {
+    return [];
+  }
+  const children = (node as { children?: unknown }).children;
+  return coletarTextosRenderizados(children);
+}
+
 describe("ThreadConversationPane", () => {
   it("expõe marker estável quando a conta não tem acesso à mesa", () => {
     const { getByTestId, getByText } = render(
@@ -253,7 +267,7 @@ describe("ThreadConversationPane", () => {
 
     expect(getByTestId("mesa-review-package-card")).toBeTruthy();
     expect(getByTestId("mesa-review-verification-qr")).toBeTruthy();
-    expect(getByText("Família exige Mesa")).toBeTruthy();
+    expect(getAllByText("Família exige Mesa").length).toBeGreaterThan(0);
     expect(getByText("Mesa em revisão")).toBeTruthy();
     expect(getByText("Mesa avaliadora")).toBeTruthy();
     expect(
@@ -271,7 +285,7 @@ describe("ThreadConversationPane", () => {
     expect(getByText("Foco da decisão")).toBeTruthy();
     expect(
       getByText(
-        "Próxima ação: Devolver para ajuste. Corrija os pontos sinalizados e devolva o caso para ajuste antes de qualquer decisão final.",
+        "Próxima ação: Devolver para ajuste. Há pendências antes da Mesa decidir. Devolva o caso para correção rastreável.",
       ),
     ).toBeTruthy();
     expect(
@@ -327,6 +341,95 @@ describe("ThreadConversationPane", () => {
     expect(queryByTestId("mesa-review-action-return")).toBeTruthy();
   });
 
+  it("mostra pendências antes da aprovação e prioriza correção", () => {
+    const rendered = render(
+      <ThreadConversationPane
+        {...baseProps}
+        activeOwnerRole="mesa"
+        allowedSurfaceActions={["mesa_approve", "mesa_return"]}
+        caseLifecycleStatus="em_revisao_mesa"
+        reviewPackage={{
+          review_mode: "mesa_required",
+          document_blockers: [{ code: "missing_required_evidence" }],
+          revisao_por_bloco: {
+            returned_blocks: 1,
+            items: [
+              {
+                block_key: "evidencias",
+                title: "Evidências",
+                review_status: "returned",
+                recommended_action: "Corrigir fotos obrigatórias.",
+              },
+            ],
+          },
+          allowed_decisions: ["aprovar_no_mobile", "devolver_no_mobile"],
+          supports_block_reopen: true,
+        }}
+      />,
+    );
+    const renderedText = coletarTextosRenderizados(rendered.toJSON()).join("|");
+
+    expect(rendered.getByText("Pendências do caso")).toBeTruthy();
+    expect(rendered.getByText("Próxima ação")).toBeTruthy();
+    expect(renderedText.indexOf("Pendências do caso")).toBeLessThan(
+      renderedText.indexOf("Próxima ação"),
+    );
+    expect(
+      rendered.getByText(
+        "Próxima ação: Devolver para ajuste. Há pendências antes da Mesa decidir. Devolva o caso para correção rastreável.",
+      ),
+    ).toBeTruthy();
+    expect(rendered.getByTestId("mesa-review-action-return")).toBeTruthy();
+  });
+
+  it("usa Enviar para Mesa Avaliadora como ação principal quando a família exige Mesa", () => {
+    const { getAllByText, getByTestId, getByText } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        activeOwnerRole="inspetor"
+        caseLifecycleStatus="laudo_em_coleta"
+        reviewPackage={{
+          review_mode: "mesa_required",
+          document_blockers: [],
+          allowed_decisions: ["enviar_para_mesa"],
+        }}
+      />,
+    );
+
+    expect(getAllByText("Família exige Mesa").length).toBeGreaterThan(0);
+    expect(
+      getByText(
+        "Próxima ação: Enviar para Mesa Avaliadora. A revisão local já pode escalar o caso. Envie para a Mesa Avaliadora quando a decisão humana final precisar continuar fora do mobile.",
+      ),
+    ).toBeTruthy();
+    expect(getByTestId("mesa-review-action-send")).toBeTruthy();
+  });
+
+  it("orienta aguardar a Mesa quando o caso já está com a Mesa Avaliadora", () => {
+    const { getAllByText, getByText, queryByTestId } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        activeOwnerRole="mesa"
+        caseLifecycleStatus="aguardando_mesa"
+        reviewPackage={{
+          review_mode: "mesa_required",
+          document_blockers: [],
+          allowed_decisions: [],
+        }}
+      />,
+    );
+
+    expect(getAllByText("Mesa Avaliadora").length).toBeGreaterThan(0);
+    expect(
+      getByText(
+        "Próxima ação: Aguardar decisão da Mesa. A Mesa Avaliadora está conduzindo a decisão. Acompanhe pendências e respostas antes de tentar concluir o caso.",
+      ),
+    ).toBeTruthy();
+    expect(queryByTestId("mesa-review-action-approve")).toBeNull();
+    expect(queryByTestId("mesa-review-action-send")).toBeNull();
+    expect(queryByTestId("mesa-review-action-return")).toBeNull();
+  });
+
   it("não exibe termos internos nos cards da thread", () => {
     const { getAllByText, queryByText } = render(
       <ThreadConversationPane
@@ -361,7 +464,7 @@ describe("ThreadConversationPane", () => {
               code: "primary_pdf_diverged",
               title: "red flag issue_state",
               message:
-                "mobile_autonomous mobile_review_allowed reviewer_issue reviewer_decision superseded override diff",
+                "mobile_autonomous mobile_review_allowed reviewer_issue reviewer_decision superseded override diff tenant_without_mesa nr35_mesa_required_unavailable",
             },
           ],
           tenant_entitlements: {
@@ -414,7 +517,7 @@ describe("ThreadConversationPane", () => {
     expect(getAllByText(/Documento substituído/).length).toBeGreaterThan(0);
     expect(
       queryByText(
-        /mobile_autonomous|mobile_review_allowed|primary_pdf_diverged|issue_state|superseded|reviewer_issue|reviewer_decision|override|diff|red flag/i,
+        /mobile_autonomous|mobile_review_allowed|primary_pdf_diverged|issue_state|superseded|reviewer_issue|reviewer_decision|override|diff|red flag|tenant_without_mesa|nr35_mesa_required_unavailable/i,
       ),
     ).toBeNull();
   });

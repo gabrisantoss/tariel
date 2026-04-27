@@ -41,6 +41,8 @@ const THREAD_INTERNAL_TERM_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\boverride\b/gi, "ajuste humano"],
   [/\bdiff\b/gi, "histórico de alterações"],
   [/\bred flag\b/gi, "alerta crítico"],
+  [/\btenant_without_mesa\b/gi, "Não incluído no pacote"],
+  [/\bnr35_mesa_required_unavailable\b/gi, "Família exige Mesa"],
 ];
 
 export function sanitizarTextoThread(value: string): string {

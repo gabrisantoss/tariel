@@ -62,10 +62,10 @@ describe("activityNotificationHelpers", () => {
     ).toBe("Ver emissão oficial");
     expect(
       sanitizarTextoNotificacaoAtividade(
-        "mobile_autonomous primary_pdf_diverged issue_state superseded reviewer_issue reviewer_decision",
+        "mobile_autonomous mobile_review_allowed primary_pdf_diverged issue_state superseded reviewer_issue reviewer_decision tenant_without_mesa nr35_mesa_required_unavailable",
       ),
     ).toBe(
-      "Revisão interna governada Reemissão recomendada Estado da emissão Documento substituído Emissão oficial Revisão governada",
+      "Revisão interna governada Revisão interna governada Reemissão recomendada Estado da emissão Documento substituído Emissão oficial Revisão governada Não incluído no pacote Família exige Mesa",
     );
     expect(
       assinaturaStatusLaudo({

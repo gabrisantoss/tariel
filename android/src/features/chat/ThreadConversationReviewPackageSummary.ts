@@ -30,12 +30,55 @@ function rotuloModoRevisao(reviewMode: string | null | undefined): string {
     return "Família exige Mesa";
   }
   if (value === "mobile_review_allowed") {
-    return "Revisão interna + Mesa";
+    return "Revisão interna governada";
   }
   if (value === "mobile_autonomous") {
     return "Revisão interna governada";
   }
   return value ? value.replace(/_/g, " ") : "Revisão governada";
+}
+
+type ReviewDecisionCommand =
+  | "aprovar_no_mobile"
+  | "devolver_no_mobile"
+  | "enviar_para_mesa";
+
+function resumirRotaRevisao(params: {
+  canSendMesa: boolean;
+  modeLabel: string;
+  ownerRole: "inspetor" | "mesa" | "none";
+}) {
+  const { canSendMesa, modeLabel, ownerRole } = params;
+
+  if (ownerRole === "mesa") {
+    return {
+      label: "Mesa Avaliadora",
+      detail:
+        "A decisão está com a Mesa Avaliadora. Use o mobile para acompanhar pendências, respostas e devoluções.",
+    };
+  }
+
+  if (modeLabel === "Família exige Mesa") {
+    return {
+      label: "Família exige Mesa",
+      detail:
+        "Este caso precisa da Mesa Avaliadora antes de qualquer aprovação final.",
+    };
+  }
+
+  if (canSendMesa) {
+    return {
+      label: "Revisão interna governada",
+      detail:
+        "Este caso pode ser decidido no mobile ou escalado para a Mesa Avaliadora quando a política exigir.",
+    };
+  }
+
+  return {
+    label: "Revisão interna governada",
+    detail:
+      "Este caso pode ser concluído por revisão humana interna quando as pendências estiverem resolvidas.",
+  };
 }
 
 function montarAnexoDownloadOficial(
@@ -115,27 +158,57 @@ function deduplicarRazoesFalha(items: string[]): string[] {
 function resumirProximaAcaoRevisao(params: {
   allowedDecisions: string[];
   blockerCount: number;
+  lifecycleStatus: string;
   modeLabel: string;
+  ownerRole: "inspetor" | "mesa" | "none";
   redFlagCount: number;
-}) {
-  const { allowedDecisions, blockerCount, modeLabel, redFlagCount } = params;
+  returnedBlocks: number;
+}): {
+  command: ReviewDecisionCommand | null;
+  detail: string;
+  label: string;
+  value: string;
+} | null {
+  const {
+    allowedDecisions,
+    blockerCount,
+    lifecycleStatus,
+    modeLabel,
+    ownerRole,
+    redFlagCount,
+    returnedBlocks,
+  } = params;
   const canApprove = allowedDecisions.includes("aprovar_no_mobile");
   const canSendMesa = allowedDecisions.includes("enviar_para_mesa");
   const canReturn = allowedDecisions.includes("devolver_no_mobile");
+  const hasBlockingPending =
+    blockerCount > 0 || redFlagCount > 0 || returnedBlocks > 0;
 
-  if ((blockerCount > 0 || redFlagCount > 0) && canReturn) {
+  if (hasBlockingPending && canReturn) {
     return {
+      command: "devolver_no_mobile",
       label: "Próxima ação",
       value: "Devolver para ajuste",
       detail:
         modeLabel === "Família exige Mesa"
-          ? "Corrija os pontos sinalizados e devolva o caso para ajuste antes de qualquer decisão final."
-          : "Corrija os pontos sinalizados no mobile antes de aprovar ou escalar a revisão.",
+          ? "Há pendências antes da Mesa decidir. Devolva o caso para correção rastreável."
+          : "Há pendências antes da aprovação. Devolva o caso para ajuste e corrija os pontos sinalizados.",
+    };
+  }
+
+  if (hasBlockingPending) {
+    return {
+      command: null,
+      label: "Próxima ação",
+      value: "Corrigir pendências",
+      detail:
+        "Resolva as pendências do caso antes de aprovar internamente ou enviar para Mesa Avaliadora.",
     };
   }
 
   if (canApprove) {
     return {
+      command: "aprovar_no_mobile",
       label: "Próxima ação",
       value: "Aprovar internamente",
       detail:
@@ -145,19 +218,35 @@ function resumirProximaAcaoRevisao(params: {
 
   if (canSendMesa) {
     return {
+      command: "enviar_para_mesa",
       label: "Próxima ação",
-      value: "Enviar para Mesa",
+      value: "Enviar para Mesa Avaliadora",
       detail:
-        "A revisão local já pode escalar o caso. Envie para a Mesa quando a decisão humana final precisar continuar fora do mobile.",
+        "A revisão local já pode escalar o caso. Envie para a Mesa Avaliadora quando a decisão humana final precisar continuar fora do mobile.",
     };
   }
 
   if (canReturn) {
     return {
+      command: "devolver_no_mobile",
       label: "Próxima ação",
       value: "Devolver para ajuste",
       detail:
         "Devolva o caso para ajuste antes de concluir a revisão governada.",
+    };
+  }
+
+  if (
+    ownerRole === "mesa" ||
+    lifecycleStatus === "aguardando_mesa" ||
+    lifecycleStatus === "em_revisao_mesa"
+  ) {
+    return {
+      command: null,
+      label: "Próxima ação",
+      value: "Aguardar decisão da Mesa",
+      detail:
+        "A Mesa Avaliadora está conduzindo a decisão. Acompanhe pendências e respostas antes de tentar concluir o caso.",
     };
   }
 
@@ -281,6 +370,18 @@ export function buildThreadConversationReviewPackageSummary(
     : [];
   const surfaceActionSummary = resumirCaseSurfaceActions(allowedSurfaceActions);
   const modeLabel = rotuloModoRevisao(reviewPackage.review_mode);
+  const allowedDecisions = Array.isArray(reviewPackage.allowed_decisions)
+    ? reviewPackage.allowed_decisions.filter(
+        (item): item is string =>
+          typeof item === "string" && item.trim().length > 0,
+      )
+    : [];
+  const canSendMesa = allowedDecisions.includes("enviar_para_mesa");
+  const reviewRoute = resumirRotaRevisao({
+    canSendMesa,
+    modeLabel,
+    ownerRole,
+  });
 
   const coverageMap = lerRegistro(reviewPackage.coverage_map);
   const revisaoPorBloco = lerRegistro(reviewPackage.revisao_por_bloco);
@@ -485,12 +586,9 @@ export function buildThreadConversationReviewPackageSummary(
     primaryPdfIntegritySummary: issueIntegrity.summary,
     primaryPdfIntegrityVersionDetail: issueIntegrity.versionDetail,
     officialIssueTrail: officialIssueTrail.slice(0, 4),
-    allowedDecisions: Array.isArray(reviewPackage.allowed_decisions)
-      ? reviewPackage.allowed_decisions.filter(
-          (item): item is string =>
-            typeof item === "string" && item.trim().length > 0,
-        )
-      : [],
+    allowedDecisions,
+    reviewRouteLabel: reviewRoute.label,
+    reviewRouteDetail: reviewRoute.detail,
     supportsBlockReopen: Boolean(reviewPackage.supports_block_reopen),
     diffHighlights: (identityDiffHighlights.length
       ? identityDiffHighlights
@@ -504,15 +602,13 @@ export function buildThreadConversationReviewPackageSummary(
       )
       .slice(0, 3),
     nextAction: resumirProximaAcaoRevisao({
-      allowedDecisions: Array.isArray(reviewPackage.allowed_decisions)
-        ? reviewPackage.allowed_decisions.filter(
-            (item): item is string =>
-              typeof item === "string" && item.trim().length > 0,
-          )
-        : [],
+      allowedDecisions,
       blockerCount,
+      lifecycleStatus,
       modeLabel,
+      ownerRole,
       redFlagCount: redFlags.length,
+      returnedBlocks,
     }),
   };
 }
