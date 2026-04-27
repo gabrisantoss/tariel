@@ -65,9 +65,10 @@ O comportamento observado em `laudo_decision_services.py` e:
 
 | Condicao | Resultado |
 | --- | --- |
-| `review_mode != mesa_required` | Modo segue como veio da policy/report pack. |
+| Familia de alto risco com guardrail estrito | Forca `mesa_required`, mesmo se policy/report pack vier como `mobile_autonomous`. |
+| `review_mode != mesa_required` em familia simples | Modo segue como veio da policy/report pack. |
 | `mesa_required` + capability `inspector_send_to_mesa` | Caso segue para Mesa. |
-| `mesa_required` + NR35 Linha de Vida | Bloqueia se nao houver Mesa, porque a familia exige Mesa no piloto. |
+| `mesa_required` + familia de alto risco estrita | Bloqueia se nao houver Mesa, porque a familia exige revisao separada. |
 | `mesa_required` sem Mesa + capability `mobile_case_approve` | Cai para `mobile_autonomous`, registrando motivo `tenant_without_mesa`. |
 | Sem Mesa e sem aprovacao mobile | Bloqueia com erro acionavel. |
 
@@ -433,6 +434,10 @@ Generalizar o padrao de familia que exige Mesa/signatario/validator estrito, usa
 Impacto: venda segura por familia tecnica.
 
 Testes/gates: contrato de familia, validadores, finalizacao e emissao oficial.
+
+Checkpoint PR I: `web/app/domains/chat/high_risk_family_guardrails.py` centraliza familias modeladas que exigem revisao separada: NR35 Linha de Vida, NR35 Ponto de Ancoragem, NR13 Caldeira, NR13 Vaso de Pressao, NR20 Prontuario e NR10 Prontuario. Na finalizacao do Chat/Mobile, essas familias forcam `mesa_required`; se o tenant nao possui `inspector_send_to_mesa`, a finalizacao bloqueia antes de cair em self-review. O codigo legado `nr35_mesa_required_unavailable` foi preservado para NR35 Linha de Vida, e as demais familias usam `high_risk_mesa_required_unavailable`.
+
+O teste `web/tests/test_high_risk_family_guardrails_pr_i.py` fixa tres limites: familia simples `padrao` em tenant `inspector_chat` continua usando revisao interna governada; NR13 Caldeira sem Mesa bloqueia e nao cria snapshot/emissao; NR13 Caldeira com policy incorreta `mobile_autonomous` e pacote com Mesa e forcada para handoff `mesa_required`.
 
 ## 15. Conclusao
 

@@ -16,7 +16,7 @@ O papel do `Chat Inspetor` é ser a superfície técnica web de campo. Ele cria 
 
 O papel do `Mobile` é ser o canal operacional principal ou complementar do inspetor. O app usa o portal lógico `inspetor`, consome grants do tenant, lê catálogo/template liberado e participa de chat, histórico, anexos, Mesa, fila offline e finalização conforme política. Para alguns clientes, especialmente operação individual ou mobile-first, o mobile pode ser a superfície principal. Para outros, ele é apenas canal de coleta integrado ao web e à Mesa.
 
-O papel da `Mesa Avaliadora` é revisar, devolver, aprovar, decidir tecnicamente e, quando a capability `reviewer_issue` existe, participar da emissão oficial governada. Ela pode ser obrigatória, opcional ou não contratada. O runtime não deve forçar Mesa para todo tenant. A Mesa entra quando o pacote, a família ou o `report_pack` pedem `mesa_required` e quando o tenant possui capability para envio/revisão. Para NR35 Linha de Vida vendável, a Mesa é obrigatória por decisão específica do piloto, mas isso não generaliza para todos os clientes e famílias.
+O papel da `Mesa Avaliadora` é revisar, devolver, aprovar, decidir tecnicamente e, quando a capability `reviewer_issue` existe, participar da emissão oficial governada. Ela pode ser obrigatória, opcional ou não contratada. O runtime não deve forçar Mesa para todo tenant. A Mesa entra quando o pacote, a família ou o `report_pack` pedem `mesa_required` e quando o tenant possui capability para envio/revisão. Para famílias modeladas de alto risco com guardrail estrito, como NR35 Linha de Vida, NR35 Ponto de Ancoragem, NR13 Caldeira, NR13 Vaso de Pressão, NR20 Prontuário e NR10 Prontuário, a finalização não pode cair em self-review se a Mesa exigida não estiver contratada.
 
 Pacotes e capabilities mudam o comportamento do sistema. Hoje há três presets principais em `tenant_admin_policy.py`: `inspector_chat`, `inspector_chat_mesa` e `inspector_chat_mesa_reviewer_services`. Eles derivam portais (`cliente`, `inspetor`, `revisor`) e capabilities como `admin_manage_team`, `inspector_case_create`, `inspector_case_finalize`, `inspector_send_to_mesa`, `mobile_case_approve`, `reviewer_decision` e `reviewer_issue`. Além disso, há `operating_model`, incluindo `standard` e `mobile_single_operator`, que muda a leitura de conta operacional, limite de operador e acesso cross-surface.
 
@@ -88,6 +88,8 @@ Checkpoint PR G: `web/tests/test_company_no_mesa_multi_user_pr_g.py` prova a var
 O mesmo teste fixa o limite por familia: NR35 Linha de Vida nao cai em self-review nesse tenant sem Mesa. A finalizacao bloqueia com `nr35_mesa_required_unavailable`, sem `ApprovedCaseSnapshot` e sem `EmissaoOficialLaudo`.
 
 Checkpoint PR H: `web/tests/test_company_with_mesa_premium_pr_h.py` prova a empresa com Mesa/premium usando `inspector_chat_mesa` no modelo `standard`. O Portal Cliente mostra Mobile/Chat, Mesa, documentos oficiais, emissao oficial e signatario governado como recursos incluidos. A familia simples usada e `cbmgo`: Inspetor cria/coleta/finaliza, o caso vai para Mesa, o Revisor aprova, o PDF operacional aparece antes da emissao sem `issue_number`, e a emissao oficial so aparece depois do motor central criar `EmissaoOficialLaudo` com snapshot, signatario, pacote congelado, download e auditoria.
+
+Checkpoint PR I: `web/tests/test_high_risk_family_guardrails_pr_i.py` generaliza o limite por familia. O tenant `inspector_chat` sem Mesa continua apto para self-review em familia simples, mas NR13 Caldeira bloqueia com `high_risk_mesa_required_unavailable`, mantendo o caso em rascunho sem `ApprovedCaseSnapshot` e sem `EmissaoOficialLaudo`. Se a mesma familia vier por engano como `mobile_autonomous` em pacote com Mesa, o runtime força `mesa_required` e mostra handoff para Mesa.
 
 Capabilities atuais:
 
@@ -175,9 +177,9 @@ O fluxo de finalização não deve ser lido como regra única. A decisão combin
 | Policy V2 em `request.state.v2_policy_decision_summary` | Pode trazer `review_mode` efetivo. |
 | Capability `inspector_send_to_mesa` | Permite handoff para Mesa quando a Mesa existe para o tenant. |
 | Capability `mobile_case_approve` | Permite fallback de aprovação interna/mobile quando não há Mesa e a família permite. |
-| Família/template | Pode endurecer regra. NR35 Linha de Vida, por exemplo, exige Mesa no piloto vendável. |
+| Família/template | Pode endurecer regra. Familias modeladas de alto risco podem forcar `mesa_required` mesmo se a policy vier como self-review. |
 
-Em `laudo_decision_services.py`, se o modo é `mesa_required` e o tenant possui `inspector_send_to_mesa`, o caso segue para Mesa. Se não possui Mesa, o sistema só cai para `mobile_autonomous` quando `mobile_case_approve` está liberado e a família não exige Mesa estrita. Se a família exigir Mesa, a finalização deve bloquear com erro acionável.
+Em `laudo_decision_services.py`, o helper `high_risk_family_guardrails.py` resolve primeiro se a familia exige revisao separada. Se exigir, o modo efetivo vira `mesa_required`. Com `inspector_send_to_mesa`, o caso segue para Mesa. Sem Mesa, o sistema bloqueia com erro acionavel. O fallback para `mobile_autonomous` so existe quando `mobile_case_approve` esta liberado e a familia nao possui guardrail estrito.
 
 ## 9. Catálogo, templates e releases por tenant
 
