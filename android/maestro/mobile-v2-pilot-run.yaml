@@ -58,7 +58,27 @@ env:
 - tapOn:
     id: history-search-input
 
+- eraseText
+
 - inputText: ${TARGET_LAUDO_ID}
+
+- hideKeyboard
+
+- runFlow:
+    when:
+      visible:
+        id: history-results-empty
+    commands:
+      - takeScreenshot: pilot-run-history-empty-after-first-search
+      - tapOn:
+          id: history-search-input
+      - eraseText
+      - inputText: ${TARGET_LAUDO_ID}
+      - hideKeyboard
+      - extendedWaitUntil:
+          visible:
+            id: history-item-${TARGET_LAUDO_ID}
+          timeout: 15000
 
 - extendedWaitUntil:
     visible:

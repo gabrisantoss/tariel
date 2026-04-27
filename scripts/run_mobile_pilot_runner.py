@@ -147,6 +147,7 @@ class ExecutionState:
     android_localhost_strategy_for_build: str = ""
     ui_marker_summary: dict[str, Any] | None = None
     maestro_target_tap_completed: bool = False
+    maestro_history_item_visible_before_tap: bool = False
     maestro_selection_callback_confirmed: bool = False
     maestro_shell_selection_confirmed: bool = False
     maestro_selection_callback_wait_failed: bool = False
@@ -2187,6 +2188,19 @@ def extract_ui_texts(path: pathlib.Path) -> list[str]:
     ]
 
 
+def extract_ui_text_for_resource_id(path: pathlib.Path, resource_id: str) -> str | None:
+    if not path.exists() or not resource_id:
+        return None
+    content = path.read_text(encoding="utf-8", errors="replace")
+    pattern = re.compile(
+        rf'text="([^"]*)" resource-id="{re.escape(resource_id)}"'
+    )
+    match = pattern.search(content)
+    if not match:
+        return None
+    return html.unescape(match.group(1))
+
+
 def detect_environment_failure_signals(
     ui_dump_path: pathlib.Path,
     *,
@@ -2319,6 +2333,10 @@ def summarize_ui_markers(ui_dump_path: pathlib.Path, target_laudo_id: int | None
     test_ids = extract_ui_test_ids(ui_dump_path)
     content_descs = extract_ui_content_descs(ui_dump_path)
     ui_texts = extract_ui_texts(ui_dump_path)
+    history_search_query_observed = extract_ui_text_for_resource_id(
+        ui_dump_path,
+        "history-search-input",
+    )
     selection_probe = parse_selection_probe(content_descs)
     activity_center_probe = parse_activity_center_probe(content_descs)
     login_probe = parse_login_probe(content_descs)
@@ -2516,6 +2534,8 @@ def summarize_ui_markers(ui_dump_path: pathlib.Path, target_laudo_id: int | None
     return {
         "selected_history_item_marker": "selected-history-item-marker" in test_ids,
         "selected_history_item_none": "selected-history-item-none" in test_ids,
+        "history_results_empty_visible": "history-results-empty" in test_ids,
+        "history_search_query_observed": history_search_query_observed,
         "selected_target_id": selected_target_id,
         "selection_callback_fired": selection_callback_fired,
         "selection_callback_completed": selection_callback_completed,
@@ -2523,6 +2543,9 @@ def summarize_ui_markers(ui_dump_path: pathlib.Path, target_laudo_id: int | None
         "selection_lost": selection_lost,
         "history_target_visible": bool(
             target_id and f"history-target-visible-{target_id}" in test_ids
+        ),
+        "history_item_target_visible": bool(
+            target_id and f"history-item-{target_id}" in test_ids
         ),
         "activity_center_modal": "activity-center-modal" in test_ids,
         "activity_center_state": activity_center_state,
@@ -3691,6 +3714,14 @@ def run_maestro_flow(state: ExecutionState, mobile_password: str) -> CommandResu
         stream_output=state.visual_mode,
     )
     output = result.stdout or ""
+    state.maestro_history_item_visible_before_tap = (
+        "Assert that id: history-item-${TARGET_LAUDO_ID} is visible... COMPLETED" in output
+        or (
+            state.target_laudo_id is not None
+            and f"Assert that id: history-item-{state.target_laudo_id} is visible... COMPLETED"
+            in output
+        )
+    )
     state.maestro_target_tap_completed = (
         "Tap on id: history-item-${TARGET_LAUDO_ID}... COMPLETED" in output
         or f"Tap on id: history-item-{state.target_laudo_id}... COMPLETED" in output
@@ -3942,6 +3973,7 @@ def build_operator_action_diagnostics(
     maestro_result: CommandResult,
 ) -> dict[str, Any]:
     target_id = state.target_laudo_id
+    expected_history_query = str(target_id) if target_id else None
     ui_summary = state.ui_marker_summary or {}
     backend_evidence = extract_backend_evidence(state.summary_after)
     human_ack_events = backend_evidence.get("human_ack_recent_events") or []
@@ -4014,6 +4046,7 @@ def build_operator_action_diagnostics(
         "maestro_action": {
             "flow_path": str(FLOW_PATH.relative_to(REPO_ROOT)),
             "tap_selector": f"history-item-{target_id}" if target_id else None,
+            "history_item_visible_before_tap": state.maestro_history_item_visible_before_tap,
             "tap_completed": state.maestro_target_tap_completed,
             "selection_confirmation": {
                 "chat_surface_confirmed": state.maestro_shell_selection_confirmed,
@@ -4028,6 +4061,14 @@ def build_operator_action_diagnostics(
             "returncode": maestro_result.returncode,
         },
         "target_observed": {
+            "history_search_query_expected": expected_history_query,
+            "history_search_query_observed": ui_summary.get("history_search_query_observed"),
+            "history_results_empty_visible": bool(
+                ui_summary.get("history_results_empty_visible")
+            ),
+            "history_item_target_visible": bool(
+                ui_summary.get("history_item_target_visible")
+            ),
             "chat_thread_surface_visible": bool(ui_summary.get("chat_thread_surface_visible")),
             "target_seed_text_visible": bool(ui_summary.get("target_seed_text_visible")),
             "activity_center_delivery_mode": ui_summary.get("activity_center_delivery_mode"),
@@ -4266,6 +4307,28 @@ def evaluate_result(state: ExecutionState) -> str:
     activity_center_terminal_state = str(
         ui_summary.get("activity_center_terminal_state") or "unknown"
     )
+    expected_history_query = str(state.target_laudo_id) if state.target_laudo_id else ""
+    observed_history_query = str(
+        ui_summary.get("history_search_query_observed") or ""
+    ).strip()
+    history_item_target_visible = bool(ui_summary.get("history_item_target_visible"))
+    history_results_empty_visible = bool(ui_summary.get("history_results_empty_visible"))
+    if (
+        state.flow_ran
+        and expected_history_query
+        and history_results_empty_visible
+        and not history_item_target_visible
+        and observed_history_query
+        and observed_history_query != expected_history_query
+    ):
+        return "maestro_input_flakiness"
+    if (
+        state.flow_ran
+        and expected_history_query
+        and history_results_empty_visible
+        and not history_item_target_visible
+    ):
+        return "history_search_empty_results"
     if ui_summary.get("selection_lost"):
         return "selection_lost_after_update"
     if state.feed_covered and state.thread_covered:
@@ -4455,6 +4518,11 @@ def build_final_report(state: ExecutionState) -> str:
             f"ui_login_carregando: {(state.ui_marker_summary or {}).get('login_carregando')}",
             f"ui_login_error: {(state.ui_marker_summary or {}).get('login_error')}",
             f"ui_selected_target_id: {(state.ui_marker_summary or {}).get('selected_target_id')}",
+            f"ui_history_search_query_expected: {state.target_laudo_id if state.target_laudo_id else None}",
+            f"ui_history_search_query_observed: {(state.ui_marker_summary or {}).get('history_search_query_observed')}",
+            f"ui_history_results_empty_visible: {(state.ui_marker_summary or {}).get('history_results_empty_visible')}",
+            f"ui_history_item_target_visible: {(state.ui_marker_summary or {}).get('history_item_target_visible')}",
+            f"maestro_history_item_visible_before_tap: {state.maestro_history_item_visible_before_tap}",
             f"ui_selection_callback_fired: {(state.ui_marker_summary or {}).get('selection_callback_fired')}",
             f"ui_selection_callback_completed: {(state.ui_marker_summary or {}).get('selection_callback_completed')}",
             f"ui_shell_selection_ready: {(state.ui_marker_summary or {}).get('shell_selection_ready')}",
@@ -4764,6 +4832,19 @@ def collect_ui_diagnostics_after_maestro(
     ui_dump_path: pathlib.Path,
 ) -> None:
     state.ui_marker_summary = summarize_ui_markers(ui_dump_path, state.target_laudo_id)
+    expected_history_query = str(state.target_laudo_id) if state.target_laudo_id else None
+    observed_history_query = str(
+        (state.ui_marker_summary or {}).get("history_search_query_observed") or ""
+    ).strip() or None
+    if (
+        expected_history_query
+        and observed_history_query
+        and observed_history_query != expected_history_query
+    ):
+        append_note(
+            state,
+            f"Busca do historico divergiu no device: esperado={expected_history_query} observado={observed_history_query}.",
+        )
     save_http_json(
         state.artifacts_dir / "ui_marker_summary.json",
         state.ui_marker_summary,
