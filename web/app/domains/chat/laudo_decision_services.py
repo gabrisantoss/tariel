@@ -27,6 +27,7 @@ from app.domains.chat.laudo_workflow_support import (
     texto_curto_limpo,
 )
 from app.domains.chat.gate_helpers import avaliar_gate_qualidade_laudo
+from app.domains.chat.high_risk_family_guardrails import resolve_high_risk_family_guardrail
 from app.domains.chat.ia_runtime import obter_cliente_ia_ativo
 from app.domains.chat.laudo_state_helpers import (
     aplicar_finalizacao_inspetor_ao_laudo,
@@ -39,7 +40,6 @@ from app.domains.chat.laudo_state_helpers import (
     serializar_card_laudo,
 )
 from app.domains.chat.mobile_ai_preferences import limpar_historico_visivel_chat
-from app.domains.chat.nr35_linha_vida_validation import is_nr35_linha_vida_context
 from app.domains.chat.report_pack_helpers import (
     atualizar_final_validation_mode_report_pack,
     atualizar_report_pack_draft_laudo,
@@ -199,35 +199,36 @@ def _resolver_review_mode_final(
         )
         or "mesa_required"
     ).strip().lower()
-    if review_mode != "mesa_required":
-        return review_mode
-
+    requested_review_mode = review_mode
     report_pack_draft = getattr(laudo, "report_pack_draft_json", None) or {}
     report_pack_family = (
         str(report_pack_draft.get("family") or "").strip()
         if isinstance(report_pack_draft, dict)
         else ""
     )
-    nr35_mesa_required = is_nr35_linha_vida_context(
+    high_risk_guardrail = resolve_high_risk_family_guardrail(
         payload=getattr(laudo, "dados_formulario", None),
         template_key=str(getattr(laudo, "tipo_template", "") or "").strip() or None,
-        catalog_family_key=report_pack_family or None,
+        catalog_family_key=str(getattr(laudo, "catalog_family_key", "") or "").strip()
+        or None,
+        report_pack_family=report_pack_family or None,
     )
+    if high_risk_guardrail is not None and review_mode != "mesa_required":
+        request.state.final_validation_mode_reason = "high_risk_family_requires_mesa"
+        review_mode = "mesa_required"
+
+    if review_mode != "mesa_required":
+        return review_mode
+
     if tenant_capability_enabled_for_user(usuario, capability="inspector_send_to_mesa"):
         return review_mode
 
-    if nr35_mesa_required:
+    if high_risk_guardrail is not None:
         raise HTTPException(
             status_code=422,
-            detail={
-                "code": "nr35_mesa_required_unavailable",
-                "message": (
-                    "O piloto NR35 Linha de Vida exige Mesa Avaliadora antes de emissao oficial."
-                ),
-                "review_mode_requested": "mesa_required",
-                "required_capability": "inspector_send_to_mesa",
-                "fallback_surface": "mesa",
-            },
+            detail=high_risk_guardrail.unavailable_detail(
+                requested_review_mode=requested_review_mode,
+            ),
         )
 
     if tenant_capability_enabled_for_user(usuario, capability="mobile_case_approve"):

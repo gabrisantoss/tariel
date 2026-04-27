@@ -337,7 +337,7 @@ Classificacao:
 | Mobile emite ZIP oficial? | Nao observado como caminho direto |
 | Mobile baixa/emite PDF oficial? | Consome sinais/downloads de anexos, mas emissao oficial e governada no backend web/Mesa |
 
-Para NR35 vendavel, nao usar `mobile_autonomous` como atalho, porque o contrato do piloto exige Mesa humana.
+Para NR35 vendavel e demais familias modeladas de alto risco com guardrail estrito, nao usar `mobile_autonomous` como atalho. O runtime deve forcar `mesa_required` e bloquear tenant sem Mesa em vez de aprovar por self-review.
 
 ### Contexto D - Mesa com Emissao Oficial
 
@@ -497,7 +497,7 @@ Caminhos que nao devem ser usados como prova final do Golden Path:
 | Multiplos renderizadores de PDF | divergencia visual/semantica entre preview e oficial | `GeradorLaudos`, editor rico, template preview, pacote Mesa | contrato por familia deve definir renderer oficial |
 | `nome_arquivo_pdf` isolado parece suficiente | emissao pode falhar mesmo com PDF presente | `build_official_issue_summary` ainda exige aprovacao, hash, signatario, anexos | tratar `nome_arquivo_pdf` como requisito, nao como prova |
 | Admin Cliente pode operar dependendo da policy | E2E pode passar com permissao errada | `case_actions`, capabilities e tenant grants | cenarios devem testar read-only e case-actions |
-| Mobile possui caminhos de aprovacao governada | NR35 poderia escapar da Mesa se policy errada | `mobile_case_approve`, `mobile_autonomous` | NR35 deve bloquear autonomia no piloto |
+| Mobile possui caminhos de aprovacao governada | familia de alto risco poderia escapar da Mesa se policy errada | `mobile_case_approve`, `mobile_autonomous` | PR I centraliza guardrails: NR35 preserva erro proprio e demais familias usam `high_risk_mesa_required_unavailable` |
 | Reemissao/historico pode ser ignorado | documento antigo pode parecer atual | `superseded`, `primary_pdf_diverged`, reissue recommended | PR9 cobre reemissao, superseded, historico, download principal e auditoria |
 | Signatario ausente bloqueia venda | pacote tecnico pronto nao emite | `no_eligible_signatory` | setup de staging deve criar signatario por tenant/familia |
 | Catalog release inativo | familia existe mas nao esta vendavel para tenant | `TenantFamilyReleaseLaudo.release_status` | fixture de piloto deve provar release ativo |
