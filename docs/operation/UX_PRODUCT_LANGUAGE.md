@@ -50,6 +50,7 @@ Este documento define a camada de tradução entre estados técnicos do Tariel e
 - A superfície separa resumo, documento oficial/PDF operacional, histórico, auditoria e recursos do pacote.
 - O submenu de Documentos deixa de ser sticky nessa superfície piloto para reduzir poluição durante scroll.
 - UX-B aplicado no Chat Inspetor (prévia de finalização e `preparar-emissao`) com separação explícita entre `PDF operacional` e `Emissão oficial`.
+- UX-C aplicado no Portal Cliente Documentos com layout de blocos (`Resumo`, `Documento oficial`, `Histórico de emissões`, `Auditoria`, `Recursos do pacote`) e redução de chips em excesso.
 
 ## Gaps após UX-B
 

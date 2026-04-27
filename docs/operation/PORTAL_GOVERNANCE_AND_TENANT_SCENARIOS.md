@@ -233,6 +233,8 @@ O Portal Cliente deve usar a matriz [UX_PRODUCT_LANGUAGE.md](UX_PRODUCT_LANGUAGE
 
 Hashes, pacote, PDF oficial e verificacao publica devem ficar em bloco de auditoria copiavel/recolhivel quando a tela estiver densa. O download principal deve apontar para o pacote oficial ativo quando existir.
 
+Checkpoint UX-C (`2026-04-27`): a superficie `documentos` foi reorganizada visualmente em blocos explicitos de leitura por item (`Resumo`, `Documento oficial`, `Historico de emissoes`, `Auditoria` e `Recursos do pacote`). O ajuste e apenas de UX/copy/CSS da superficie piloto, sem alterar payload, endpoint, permissionamento ou regra de emissao.
+
 ## 13. Lacunas e riscos arquiteturais
 
 | Lacuna/risco | Impacto | Classificação |
