@@ -1,125 +1,209 @@
-<nav class="cliente-tabs" aria-label="Navegação principal do portal da empresa">
-    {% set _surface_availability = cliente_surface_availability | default({}, true) %}
-    {% set _policy = tenant_admin_policy | default({}, true) %}
-    <a
-        id="tab-admin"
-        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'admin' %} active{% endif %}"
-        data-tab="admin"
-        href="{{ cliente_surface_routes.admin | default('/cliente/painel') | e }}?sec={{ cliente_admin_section_inicial | default('overview') | e }}"
-        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'admin' else 'false' }}"
-        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'admin' else 'false' }}"
-    >
-        <span class="tab-main">
-            <span class="material-symbols-rounded" aria-hidden="true">corporate_fare</span>
-            <span class="tab-copy">
-                <span class="tab-title">Admin</span>
-                <span class="tab-desc">Empresa, plano e equipe</span>
-            </span>
-        </span>
-        <span class="tab-badge" id="tab-admin-count">0</span>
-    </a>
-    <a
-        id="tab-servicos"
-        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'servicos' %} active{% endif %}"
-        data-tab="servicos"
-        href="{{ cliente_surface_routes.servicos | default('/cliente/servicos') | e }}?sec={{ cliente_servicos_section_inicial | default('overview') | e }}"
-        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'servicos' else 'false' }}"
-        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'servicos' else 'false' }}"
-    >
-        <span class="tab-main">
-            <span class="material-symbols-rounded" aria-hidden="true">business_center</span>
-            <span class="tab-copy">
-                <span class="tab-title">Serviços</span>
-                <span class="tab-desc">Escopo contratado e pendências</span>
-            </span>
-        </span>
-        <span class="tab-badge" id="tab-servicos-count">0</span>
-    </a>
-    <a
-        id="tab-recorrencia"
-        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'recorrencia' %} active{% endif %}"
-        data-tab="recorrencia"
-        href="{{ cliente_surface_routes.recorrencia | default('/cliente/recorrencia') | e }}?sec={{ cliente_recorrencia_section_inicial | default('overview') | e }}"
-        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'recorrencia' else 'false' }}"
-        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'recorrencia' else 'false' }}"
-    >
-        <span class="tab-main">
-            <span class="material-symbols-rounded" aria-hidden="true">event_upcoming</span>
-            <span class="tab-copy">
-                <span class="tab-title">Recorrência</span>
-                <span class="tab-desc">Agenda, vencimentos e reinspeções</span>
-            </span>
-        </span>
-        <span class="tab-badge" id="tab-recorrencia-count">0</span>
-    </a>
-    <a
-        id="tab-ativos"
-        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'ativos' %} active{% endif %}"
-        data-tab="ativos"
-        href="{{ cliente_surface_routes.ativos | default('/cliente/ativos') | e }}?sec={{ cliente_ativos_section_inicial | default('overview') | e }}"
-        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'ativos' else 'false' }}"
-        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'ativos' else 'false' }}"
-    >
-        <span class="tab-main">
-            <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
-            <span class="tab-copy">
-                <span class="tab-title">Ativos</span>
-                <span class="tab-desc">Unidades, equipamentos e inspeções</span>
-            </span>
-        </span>
-        <span class="tab-badge" id="tab-ativos-count">0</span>
-    </a>
-    <a
-        id="tab-documentos"
-        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'documentos' %} active{% endif %}"
-        data-tab="documentos"
-        href="{{ cliente_surface_routes.documentos | default('/cliente/documentos') | e }}?sec={{ cliente_documentos_section_inicial | default('overview') | e }}"
-        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'documentos' else 'false' }}"
-        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'documentos' else 'false' }}"
-    >
-        <span class="tab-main">
-            <span class="material-symbols-rounded" aria-hidden="true">folder_managed</span>
-            <span class="tab-copy">
-                <span class="tab-title">Documentos</span>
-                <span class="tab-desc">Laudos emitidos e trilha técnica</span>
-            </span>
-        </span>
-        <span class="tab-badge" id="tab-documentos-count">0</span>
-    </a>
-    <a
-        id="tab-chat"
-        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'chat' %} active{% endif %}"
-        data-tab="chat"
-        href="{{ cliente_surface_routes.chat | default('/cliente/chat') | e }}?sec={{ cliente_chat_section_inicial | default('overview') | e }}"
-        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'chat' else 'false' }}"
-        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'chat' else 'false' }}"
-        {% if not _surface_availability.get('chat', true) %}aria-disabled="true" data-surface-disabled="true" title="Não contratado pelo pacote atual"{% endif %}
-    >
-        <span class="tab-main">
-            <span class="material-symbols-rounded" aria-hidden="true">forum</span>
-            <span class="tab-copy">
-                <span class="tab-title">Chat</span>
-                <span class="tab-desc">Operacao e laudos da empresa</span>
-            </span>
-        </span>
-        <span class="tab-badge" id="tab-chat-count">{{ "ativo" if _surface_availability.get('chat', true) else "não contratado" }}</span>
-    </a>
-    <a
-        id="tab-mesa"
-        class="cliente-tab{% if (cliente_tab_inicial | default('admin')) == 'mesa' %} active{% endif %}"
-        data-tab="mesa"
-        href="{{ cliente_surface_routes.mesa | default('/cliente/mesa') | e }}?sec={{ cliente_mesa_section_inicial | default('overview') | e }}"
-        aria-selected="{{ 'true' if (cliente_tab_inicial | default('admin')) == 'mesa' else 'false' }}"
-        aria-current="{{ 'page' if (cliente_tab_inicial | default('admin')) == 'mesa' else 'false' }}"
-        {% if not _surface_availability.get('mesa', true) %}aria-disabled="true" data-surface-disabled="true" title="Mesa não contratada pelo pacote {{ _policy.get('commercial_service_package_label', 'atual') | e }}"{% endif %}
-    >
-        <span class="tab-main">
-            <span class="material-symbols-rounded" aria-hidden="true">rule</span>
-            <span class="tab-copy">
-                <span class="tab-title">Mesa Avaliadora</span>
-                <span class="tab-desc">Fila, pendencias e aprovacoes</span>
-            </span>
-        </span>
-        <span class="tab-badge" id="tab-mesa-count">{{ "ativo" if _surface_availability.get('mesa', true) else "não contratado" }}</span>
-    </a>
+{% set _surface_availability = cliente_surface_availability | default({}, true) %}
+{% set _policy = tenant_admin_policy | default({}, true) %}
+{% set _tab_inicial = cliente_tab_inicial | default("admin") %}
+{% set _tab_title = "Admin" %}
+{% set _tab_desc = "Empresa, plano e equipe" %}
+{% if _tab_inicial == "servicos" %}
+    {% set _tab_title = "Serviços" %}
+    {% set _tab_desc = "Escopo contratado e pendências" %}
+{% elif _tab_inicial == "recorrencia" %}
+    {% set _tab_title = "Recorrência" %}
+    {% set _tab_desc = "Agenda, vencimentos e reinspeções" %}
+{% elif _tab_inicial == "ativos" %}
+    {% set _tab_title = "Ativos" %}
+    {% set _tab_desc = "Unidades, equipamentos e inspeções" %}
+{% elif _tab_inicial == "documentos" %}
+    {% set _tab_title = "Documentos" %}
+    {% set _tab_desc = "Laudos emitidos e trilha técnica" %}
+{% elif _tab_inicial == "chat" %}
+    {% set _tab_title = "Chat" %}
+    {% set _tab_desc = "Operação e laudos da empresa" %}
+{% elif _tab_inicial == "mesa" %}
+    {% set _tab_title = "Mesa Avaliadora" %}
+    {% set _tab_desc = "Fila, pendências e aprovações" %}
+{% endif %}
+
+<nav class="cliente-tabs" aria-label="Navegação principal do portal da empresa" data-cliente-shell-nav="compact">
+    <div class="cliente-tabs__bar">
+        <div class="cliente-tabs__current">
+            <span class="cliente-tabs__eyebrow">Portal Cliente</span>
+            <strong id="cliente-shell-current-title">{{ _tab_title | e }}</strong>
+            <p id="cliente-shell-current-meta">{{ _tab_desc | e }}</p>
+        </div>
+        <div class="cliente-tabs__actions">
+            <button
+                id="cliente-areas-toggle"
+                class="cliente-areas-toggle"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded="false"
+                aria-controls="cliente-areas-menu"
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">apps</span>
+                <span id="cliente-areas-toggle-label">Áreas</span>
+                <span class="material-symbols-rounded cliente-areas-toggle__chevron" aria-hidden="true">expand_more</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="cliente-areas-menu" class="cliente-areas-menu" role="menu" hidden>
+        <ul class="cliente-areas-list" role="none">
+            <li role="none">
+                <a
+                    id="tab-admin"
+                    class="cliente-tab{% if _tab_inicial == 'admin' %} active{% endif %}"
+                    data-tab="admin"
+                    data-surface-title="Admin"
+                    data-surface-desc="Empresa, plano e equipe"
+                    href="{{ cliente_surface_routes.admin | default('/cliente/painel') | e }}?sec={{ cliente_admin_section_inicial | default('overview') | e }}"
+                    role="menuitem"
+                    aria-selected="{{ 'true' if _tab_inicial == 'admin' else 'false' }}"
+                    aria-current="{{ 'page' if _tab_inicial == 'admin' else 'false' }}"
+                >
+                    <span class="tab-main">
+                        <span class="material-symbols-rounded" aria-hidden="true">corporate_fare</span>
+                        <span class="tab-copy">
+                            <span class="tab-title">Admin</span>
+                            <span class="tab-desc">Empresa, plano e equipe</span>
+                        </span>
+                    </span>
+                    <span class="tab-badge" id="tab-admin-count">0</span>
+                </a>
+            </li>
+            <li role="none">
+                <a
+                    id="tab-servicos"
+                    class="cliente-tab{% if _tab_inicial == 'servicos' %} active{% endif %}"
+                    data-tab="servicos"
+                    data-surface-title="Serviços"
+                    data-surface-desc="Escopo contratado e pendências"
+                    href="{{ cliente_surface_routes.servicos | default('/cliente/servicos') | e }}?sec={{ cliente_servicos_section_inicial | default('overview') | e }}"
+                    role="menuitem"
+                    aria-selected="{{ 'true' if _tab_inicial == 'servicos' else 'false' }}"
+                    aria-current="{{ 'page' if _tab_inicial == 'servicos' else 'false' }}"
+                >
+                    <span class="tab-main">
+                        <span class="material-symbols-rounded" aria-hidden="true">business_center</span>
+                        <span class="tab-copy">
+                            <span class="tab-title">Serviços</span>
+                            <span class="tab-desc">Escopo contratado e pendências</span>
+                        </span>
+                    </span>
+                    <span class="tab-badge" id="tab-servicos-count">0</span>
+                </a>
+            </li>
+            <li role="none">
+                <a
+                    id="tab-recorrencia"
+                    class="cliente-tab{% if _tab_inicial == 'recorrencia' %} active{% endif %}"
+                    data-tab="recorrencia"
+                    data-surface-title="Recorrência"
+                    data-surface-desc="Agenda, vencimentos e reinspeções"
+                    href="{{ cliente_surface_routes.recorrencia | default('/cliente/recorrencia') | e }}?sec={{ cliente_recorrencia_section_inicial | default('overview') | e }}"
+                    role="menuitem"
+                    aria-selected="{{ 'true' if _tab_inicial == 'recorrencia' else 'false' }}"
+                    aria-current="{{ 'page' if _tab_inicial == 'recorrencia' else 'false' }}"
+                >
+                    <span class="tab-main">
+                        <span class="material-symbols-rounded" aria-hidden="true">event_upcoming</span>
+                        <span class="tab-copy">
+                            <span class="tab-title">Recorrência</span>
+                            <span class="tab-desc">Agenda, vencimentos e reinspeções</span>
+                        </span>
+                    </span>
+                    <span class="tab-badge" id="tab-recorrencia-count">0</span>
+                </a>
+            </li>
+            <li role="none">
+                <a
+                    id="tab-ativos"
+                    class="cliente-tab{% if _tab_inicial == 'ativos' %} active{% endif %}"
+                    data-tab="ativos"
+                    data-surface-title="Ativos"
+                    data-surface-desc="Unidades, equipamentos e inspeções"
+                    href="{{ cliente_surface_routes.ativos | default('/cliente/ativos') | e }}?sec={{ cliente_ativos_section_inicial | default('overview') | e }}"
+                    role="menuitem"
+                    aria-selected="{{ 'true' if _tab_inicial == 'ativos' else 'false' }}"
+                    aria-current="{{ 'page' if _tab_inicial == 'ativos' else 'false' }}"
+                >
+                    <span class="tab-main">
+                        <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+                        <span class="tab-copy">
+                            <span class="tab-title">Ativos</span>
+                            <span class="tab-desc">Unidades, equipamentos e inspeções</span>
+                        </span>
+                    </span>
+                    <span class="tab-badge" id="tab-ativos-count">0</span>
+                </a>
+            </li>
+            <li role="none">
+                <a
+                    id="tab-documentos"
+                    class="cliente-tab{% if _tab_inicial == 'documentos' %} active{% endif %}"
+                    data-tab="documentos"
+                    data-surface-title="Documentos"
+                    data-surface-desc="Laudos emitidos e trilha técnica"
+                    href="{{ cliente_surface_routes.documentos | default('/cliente/documentos') | e }}?sec={{ cliente_documentos_section_inicial | default('overview') | e }}"
+                    role="menuitem"
+                    aria-selected="{{ 'true' if _tab_inicial == 'documentos' else 'false' }}"
+                    aria-current="{{ 'page' if _tab_inicial == 'documentos' else 'false' }}"
+                >
+                    <span class="tab-main">
+                        <span class="material-symbols-rounded" aria-hidden="true">folder_managed</span>
+                        <span class="tab-copy">
+                            <span class="tab-title">Documentos</span>
+                            <span class="tab-desc">Laudos emitidos e trilha técnica</span>
+                        </span>
+                    </span>
+                    <span class="tab-badge" id="tab-documentos-count">0</span>
+                </a>
+            </li>
+            <li role="none">
+                <a
+                    id="tab-chat"
+                    class="cliente-tab{% if _tab_inicial == 'chat' %} active{% endif %}"
+                    data-tab="chat"
+                    data-surface-title="Chat"
+                    data-surface-desc="Operação e laudos da empresa"
+                    href="{{ cliente_surface_routes.chat | default('/cliente/chat') | e }}?sec={{ cliente_chat_section_inicial | default('overview') | e }}"
+                    role="menuitem"
+                    aria-selected="{{ 'true' if _tab_inicial == 'chat' else 'false' }}"
+                    aria-current="{{ 'page' if _tab_inicial == 'chat' else 'false' }}"
+                    {% if not _surface_availability.get('chat', true) %}aria-disabled="true" data-surface-disabled="true" title="Não contratado pelo pacote atual"{% endif %}
+                >
+                    <span class="tab-main">
+                        <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+                        <span class="tab-copy">
+                            <span class="tab-title">Chat</span>
+                            <span class="tab-desc">Operação e laudos da empresa</span>
+                        </span>
+                    </span>
+                    <span class="tab-badge" id="tab-chat-count">{{ "ativo" if _surface_availability.get('chat', true) else "não contratado" }}</span>
+                </a>
+            </li>
+            <li role="none">
+                <a
+                    id="tab-mesa"
+                    class="cliente-tab{% if _tab_inicial == 'mesa' %} active{% endif %}"
+                    data-tab="mesa"
+                    data-surface-title="Mesa Avaliadora"
+                    data-surface-desc="Fila, pendências e aprovações"
+                    href="{{ cliente_surface_routes.mesa | default('/cliente/mesa') | e }}?sec={{ cliente_mesa_section_inicial | default('overview') | e }}"
+                    role="menuitem"
+                    aria-selected="{{ 'true' if _tab_inicial == 'mesa' else 'false' }}"
+                    aria-current="{{ 'page' if _tab_inicial == 'mesa' else 'false' }}"
+                    {% if not _surface_availability.get('mesa', true) %}aria-disabled="true" data-surface-disabled="true" title="Mesa não contratada pelo pacote {{ _policy.get('commercial_service_package_label', 'atual') | e }}"{% endif %}
+                >
+                    <span class="tab-main">
+                        <span class="material-symbols-rounded" aria-hidden="true">rule</span>
+                        <span class="tab-copy">
+                            <span class="tab-title">Mesa Avaliadora</span>
+                            <span class="tab-desc">Fila, pendências e aprovações</span>
+                        </span>
+                    </span>
+                    <span class="tab-badge" id="tab-mesa-count">{{ "ativo" if _surface_availability.get('mesa', true) else "não contratado" }}</span>
+                </a>
+            </li>
+        </ul>
+    </div>
 </nav>

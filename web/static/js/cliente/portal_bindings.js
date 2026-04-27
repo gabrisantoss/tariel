@@ -106,6 +106,108 @@
         }
 
         function bindTabs() {
+            const navShell = documentRef.querySelector('[data-cliente-shell-nav="compact"]');
+            const areasToggle = $("cliente-areas-toggle");
+            const areasMenu = $("cliente-areas-menu");
+            const menuSelector = "#cliente-areas-menu .cliente-tab";
+            const menuEnabledSelector = `${menuSelector}:not([aria-disabled="true"])`;
+
+            const menuEstaAberto = () => Boolean(navShell && !areasMenu?.hidden);
+            const atualizarEstadoMenu = (aberto) => {
+                if (!navShell || !areasToggle || !areasMenu) return;
+                navShell.classList.toggle("is-open", aberto);
+                areasToggle.setAttribute("aria-expanded", String(aberto));
+                areasMenu.hidden = !aberto;
+            };
+            const fecharAreasMenu = ({ focusToggle = false } = {}) => {
+                if (!menuEstaAberto()) return;
+                atualizarEstadoMenu(false);
+                if (focusToggle) {
+                    areasToggle?.focus();
+                }
+            };
+            const abrirAreasMenu = ({ focusFirst = false } = {}) => {
+                if (!navShell || !areasToggle || !areasMenu || menuEstaAberto()) return;
+                atualizarEstadoMenu(true);
+                if (focusFirst) {
+                    queueMicrotask(() => {
+                        const primeiroItem = documentRef.querySelector(menuEnabledSelector);
+                        primeiroItem?.focus();
+                    });
+                }
+            };
+
+            if (navShell && areasToggle && areasMenu) {
+                areasToggle.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    if (menuEstaAberto()) {
+                        fecharAreasMenu();
+                        return;
+                    }
+                    abrirAreasMenu();
+                });
+
+                areasToggle.addEventListener("keydown", (event) => {
+                    if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        abrirAreasMenu({ focusFirst: true });
+                    }
+                    if (event.key === "Escape") {
+                        event.preventDefault();
+                        fecharAreasMenu({ focusToggle: true });
+                    }
+                });
+
+                areasMenu.addEventListener("keydown", (event) => {
+                    if (!menuEstaAberto()) return;
+
+                    if (event.key === "Escape") {
+                        event.preventDefault();
+                        fecharAreasMenu({ focusToggle: true });
+                        return;
+                    }
+
+                    if (event.key !== "Tab") return;
+
+                    const itens = Array.from(documentRef.querySelectorAll(menuEnabledSelector));
+                    if (!itens.length) {
+                        fecharAreasMenu();
+                        return;
+                    }
+
+                    const primeiro = itens[0];
+                    const ultimo = itens[itens.length - 1];
+                    if (event.shiftKey && documentRef.activeElement === primeiro) {
+                        event.preventDefault();
+                        ultimo.focus();
+                        return;
+                    }
+                    if (!event.shiftKey && documentRef.activeElement === ultimo) {
+                        event.preventDefault();
+                        primeiro.focus();
+                    }
+                });
+
+                documentRef.addEventListener("click", (event) => {
+                    if (!menuEstaAberto()) return;
+                    const alvo = event.target;
+                    if (!(alvo instanceof Element)) return;
+                    if (alvo.closest("#cliente-areas-toggle") || alvo.closest("#cliente-areas-menu")) return;
+                    fecharAreasMenu();
+                });
+
+                documentRef.addEventListener("keydown", (event) => {
+                    if (event.key !== "Escape") return;
+                    fecharAreasMenu({ focusToggle: true });
+                });
+
+                documentRef.querySelectorAll(menuSelector).forEach((link) => {
+                    link.addEventListener("click", () => {
+                        fecharAreasMenu();
+                    });
+                });
+            }
+
             documentRef.querySelectorAll(".cliente-tab").forEach((link) => {
                 link.addEventListener("click", async (event) => {
                     if (link.dataset.surfaceDisabled === "true") {

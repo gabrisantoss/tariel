@@ -120,6 +120,36 @@
             }
             return "admin";
         })();
+        const shellSurfaceLabels = Object.freeze({
+            admin: Object.freeze({
+                title: "Admin",
+                desc: "Empresa, plano e equipe",
+            }),
+            servicos: Object.freeze({
+                title: "Serviços",
+                desc: "Escopo contratado e pendências",
+            }),
+            recorrencia: Object.freeze({
+                title: "Recorrência",
+                desc: "Agenda, vencimentos e reinspeções",
+            }),
+            ativos: Object.freeze({
+                title: "Ativos",
+                desc: "Unidades, equipamentos e inspeções",
+            }),
+            documentos: Object.freeze({
+                title: "Documentos",
+                desc: "Laudos emitidos e trilha técnica",
+            }),
+            chat: Object.freeze({
+                title: "Chat",
+                desc: "Operação e laudos da empresa",
+            }),
+            mesa: Object.freeze({
+                title: "Mesa Avaliadora",
+                desc: "Fila, pendências e aprovações",
+            }),
+        });
 
         function ehAbortError(erro) {
             return erro?.name === "AbortError" || erro?.code === windowRef.DOMException?.ABORT_ERR;
@@ -455,6 +485,32 @@
             } catch (_) {}
         }
 
+        function sincronizarResumoShellTab(tab) {
+            const resumoTitulo = getById("cliente-shell-current-title");
+            const resumoMeta = getById("cliente-shell-current-meta");
+            const toggleLabel = getById("cliente-areas-toggle-label");
+            const toggleButton = getById("cliente-areas-toggle");
+            const navShell = documentRef.querySelector('[data-cliente-shell-nav="compact"]');
+
+            if (!resumoTitulo && !resumoMeta && !toggleLabel && !toggleButton && !navShell) return;
+
+            const chave = ["servicos", "recorrencia", "ativos", "documentos", "chat", "mesa"].includes(tab) ? tab : "admin";
+            const fallback = shellSurfaceLabels[chave] || shellSurfaceLabels.admin;
+            const tabAtiva = documentRef.querySelector(`.cliente-tab[data-tab="${chave}"]`);
+            const titulo = texto(tabAtiva?.dataset?.surfaceTitle).trim() || fallback.title;
+            const descricao = texto(tabAtiva?.dataset?.surfaceDesc).trim() || fallback.desc;
+
+            if (resumoTitulo) resumoTitulo.textContent = titulo;
+            if (resumoMeta) resumoMeta.textContent = descricao;
+            if (toggleLabel) toggleLabel.textContent = "Áreas";
+            if (toggleButton) {
+                toggleButton.setAttribute("aria-label", `Áreas do portal cliente. Atual: ${titulo}`);
+            }
+            if (navShell) {
+                navShell.setAttribute("data-current-tab", chave);
+            }
+        }
+
         function definirTab(nome, persistir = true, options = {}) {
             perfSync("cliente.definirTab", () => {
                 const tab = ["servicos", "recorrencia", "ativos", "documentos", "chat", "mesa"].includes(nome) ? nome : "admin";
@@ -478,6 +534,7 @@
                 documentRef.querySelectorAll(".panel").forEach((panel) => {
                     panel.classList.toggle("active", panel.id === `panel-${tab}`);
                 });
+                sincronizarResumoShellTab(tab);
                 perfSnapshot(`cliente:tab:${tab}`);
             }, { tab: nome, persistir }, "transition");
         }

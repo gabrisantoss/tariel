@@ -1352,6 +1352,16 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'id="tab-chat"' in portal_cliente
     assert 'id="tab-mesa"' in portal_cliente
     assert 'aria-label="Navegação principal do portal da empresa"' in portal_cliente
+    assert 'data-cliente-shell-nav="compact"' in portal_cliente
+    assert 'id="cliente-shell-current-title"' in portal_cliente
+    assert 'id="cliente-shell-current-meta"' in portal_cliente
+    assert 'id="cliente-areas-toggle"' in portal_cliente
+    assert 'id="cliente-areas-toggle-label"' in portal_cliente
+    assert 'aria-haspopup="menu"' in portal_cliente
+    assert 'aria-controls="cliente-areas-menu"' in portal_cliente
+    assert 'id="cliente-areas-menu"' in portal_cliente
+    assert 'role="menuitem"' in portal_cliente
+    assert '<nav class="cliente-tabs" aria-label="Navegação principal do portal da empresa">' not in portal_cliente
     assert "Administrador da empresa" in portal_cliente
     assert 'id="admin-resumo-geral"' in portal_cliente
     assert 'id="admin-auditoria-lista"' in portal_cliente
@@ -1626,7 +1636,11 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "mesaMessagePolicyNote" in portal_shared_helpers_js
     assert "window.TarielClientePortalShell" in portal_shell_js
     assert "window.TarielClientePortalBindings" in portal_bindings_js
+    assert 'const areasToggle = $("cliente-areas-toggle");' in portal_bindings_js
+    assert 'const areasMenu = $("cliente-areas-menu");' in portal_bindings_js
+    assert "if (event.key === \"Escape\")" in portal_bindings_js
     assert "function definirTab(nome, persistir = true, options = {})" in portal_runtime_js
+    assert "function sincronizarResumoShellTab(tab)" in portal_runtime_js
     assert "function sincronizarTabComUrl({ replace = false } = {})" in portal_runtime_js
     assert "function tabAtualDaUrl()" in portal_runtime_js
     assert "const INITIAL_TAB = [" in portal_js
@@ -1721,7 +1735,10 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "resolverSecaoMesaPorTarget" in portal_mesa_bundle_js
     assert "preparar-upgrade" in portal_bindings_js
     assert "renderCentralPrioridades" in portal_shell_js
-    assert "await bootstrapPortal({ surface: tab, carregarDetalhes: true, force: false })" in portal_bindings_js
+    assert "await bootstrapPortal({" in portal_bindings_js
+    assert "surface: tab" in portal_bindings_js
+    assert "carregarDetalhes: true" in portal_bindings_js
+    assert "force: false" in portal_bindings_js
     assert "abrir-prioridade" in portal_bindings_js
     assert "data-admin-section-tab" in portal_admin_bundle_js
     assert "data-servicos-section-tab" in portal_bindings_js

@@ -149,16 +149,23 @@
         if (!select) return null;
 
         const itens = Array.isArray(options) ? options : [];
+        const hasOwnFunction = (name) =>
+          Boolean(
+            config &&
+              typeof config === "object" &&
+              Object.prototype.hasOwnProperty.call(config, name) &&
+              typeof config[name] === "function",
+          );
         const valueOf =
-          typeof config.valueOf === "function"
+          hasOwnFunction("valueOf")
             ? config.valueOf
             : (item) => texto(item?.value).trim();
         const labelOf =
-          typeof config.labelOf === "function"
+          hasOwnFunction("labelOf")
             ? config.labelOf
             : (item) => texto(item?.label).trim() || valueOf(item);
         const groupOf =
-          typeof config.groupOf === "function"
+          hasOwnFunction("groupOf")
             ? config.groupOf
             : (item) =>
                 texto(item?.group_label).trim() ||
