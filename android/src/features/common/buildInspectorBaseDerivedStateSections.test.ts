@@ -334,12 +334,12 @@ describe("buildInspectorBaseDerivedStateSections", () => {
     });
 
     expect(state.mesaAcessoPermitido).toBe(false);
-    expect(state.reviewSurfaceLabel).toBe("Revisão interna");
+    expect(state.reviewSurfaceLabel).toBe("Revisão interna governada");
     expect(state.selfReviewAllowed).toBe(true);
     expect(state.separateMesaRequired).toBe(false);
     expect(state.officialIssueAllowed).toBe(false);
     expect(state.officialIssueLabel).toBe("Emissão oficial indisponível");
-    expect(state.mesaIndisponivelTitulo).toBe("Revisão interna habilitada");
+    expect(state.mesaIndisponivelTitulo).toBe("Revisão interna governada");
     expect(state.placeholderMesa).toBe(
       "Use a revisão interna do caso; este pacote não possui Mesa separada.",
     );

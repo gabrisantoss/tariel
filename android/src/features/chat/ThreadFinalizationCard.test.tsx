@@ -43,7 +43,7 @@ describe("ThreadFinalizationCard", () => {
         insights={[
           {
             key: "current-owner",
-            label: "Owner atual",
+            label: "Responsável atual",
             value: "Mesa avaliadora",
             detail: "A Mesa domina o próximo movimento do caso neste momento.",
             tone: "danger",

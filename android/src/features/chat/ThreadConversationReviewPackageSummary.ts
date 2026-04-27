@@ -29,10 +29,10 @@ function rotuloModoRevisao(reviewMode: string | null | undefined): string {
     return "Mesa obrigatória";
   }
   if (value === "mobile_review_allowed") {
-    return "Mobile com revisão";
+    return "Revisão interna + Mesa";
   }
   if (value === "mobile_autonomous") {
-    return "Revisão interna";
+    return "Revisão interna governada";
   }
   return value ? value.replace(/_/g, " ") : "Revisão governada";
 }
@@ -381,7 +381,7 @@ export function buildThreadConversationReviewPackageSummary(
         "Tenant habilitado para revisão interna governada nesta família.";
     } else if (Boolean(tenantEntitlements.mobile_review_allowed)) {
       entitlementMessage =
-        "Tenant habilitado para revisão mobile governada, com escalonamento opcional.";
+        "Tenant habilitado para revisão interna governada, com escalonamento opcional para a Mesa.";
     } else if (tenantEntitlements.family_release_active === false) {
       entitlementMessage =
         "Liberação da família inativa para este tenant; o caso sobe para Mesa.";

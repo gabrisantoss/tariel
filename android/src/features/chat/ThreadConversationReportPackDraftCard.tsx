@@ -121,10 +121,14 @@ export function renderizarReportPackDraftCard(
 
   return (
     <View style={styles.threadReviewCard} testID={testID}>
-      <Text style={styles.threadReviewEyebrow}>pré-laudo canônico</Text>
+      <Text style={styles.threadReviewEyebrow}>PDF operacional</Text>
       <Text style={styles.threadReviewTitle}>{summary.readinessLabel}</Text>
       <Text style={styles.threadReviewDescription}>
         {summary.readinessDetail}
+      </Text>
+      <Text style={styles.threadReviewFootnote}>
+        Este card resume o PDF operacional. A emissão oficial aparece em bloco
+        separado quando estiver disponível.
       </Text>
       {summary.inspectionContextLabel ? (
         <Text style={styles.threadReviewFootnote}>

@@ -123,7 +123,7 @@ export function buildInspectorConversationDerivedState(
     separateMesaRequired || activeOwnerRole === "mesa"
       ? "Mesa Avaliadora"
       : selfReviewAllowed
-        ? "Revisão interna"
+        ? "Revisão interna governada"
         : "Pendências do caso";
   const pendingCaseLabel = "Pendências do caso";
   const officialIssueLabel = officialIssueAllowed
@@ -253,7 +253,7 @@ export function buildInspectorConversationDerivedState(
     mesaIndisponivelTitulo: mesaAcessoPermitido
       ? "Mesa disponível após o primeiro laudo"
       : selfReviewAllowed && !separateMesaRequired
-        ? "Revisão interna habilitada"
+        ? "Revisão interna governada"
         : "Mesa indisponível para esta conta",
     mensagensVisiveis,
     mobileChatFirstGovernance,

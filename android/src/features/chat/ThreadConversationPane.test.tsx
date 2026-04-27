@@ -632,7 +632,7 @@ describe("ThreadConversationPane", () => {
     );
 
     expect(getByTestId("chat-report-pack-card")).toBeTruthy();
-    expect(getByText("pré-laudo canônico")).toBeTruthy();
+    expect(getByText("PDF operacional")).toBeTruthy();
     expect(getByText("Rota canônica")).toBeTruthy();
     expect(getByText("Seções do documento")).toBeTruthy();
     expect(getByText("Slots de evidência")).toBeTruthy();
@@ -761,6 +761,7 @@ describe("ThreadConversationPane", () => {
     );
 
     expect(getByTestId("chat-issued-document-card")).toBeTruthy();
+    expect(getByText("Emissão oficial")).toBeTruthy();
     expect(getByText("TAR-20260413-000321")).toBeTruthy();
     expect(getByText("PDF emitido divergente")).toBeTruthy();
     expect(
@@ -816,8 +817,8 @@ describe("ThreadConversationPane", () => {
 
     expect(queryByTestId("chat-report-pack-card")).toBeNull();
     expect(queryByTestId("chat-issued-document-card")).toBeNull();
-    expect(queryByText("pré-laudo canônico")).toBeNull();
-    expect(queryByText("documento emitido")).toBeNull();
+    expect(queryByText("PDF operacional")).toBeNull();
+    expect(queryByText("Emissão oficial")).toBeNull();
   });
 
   it("sanitiza preferencias internas vazadas na renderizacao do chat", () => {
@@ -892,7 +893,7 @@ describe("ThreadConversationPane", () => {
     expect(
       queryAllByTestId("chat-last-assistant-document-attachment"),
     ).toHaveLength(1);
-    expect(queryByText("documento emitido")).toBeNull();
+    expect(queryByText("PDF operacional")).toBeNull();
     expect(queryByText("Emissão oficial")).toBeNull();
   });
 });
