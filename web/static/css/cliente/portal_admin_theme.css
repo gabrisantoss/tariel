@@ -348,8 +348,41 @@ tr.user-row-highlight td:first-child {
     backdrop-filter: blur(14px);
 }
 
+.cliente-tabs__bar {
+    align-items: flex-start;
+}
+
+.cliente-tabs__eyebrow {
+    color: var(--cliente-text-soft);
+}
+
+.cliente-tabs__current strong {
+    color: var(--cliente-primary);
+}
+
+.cliente-tabs__current p {
+    color: var(--cliente-text-soft);
+}
+
+.cliente-areas-toggle {
+    border-color: var(--cliente-primary-stroke);
+    background: var(--cliente-primary-soft);
+    color: var(--cliente-primary);
+}
+
+.cliente-areas-toggle:hover {
+    border-color: color-mix(in srgb, var(--cliente-primary) 34%, var(--cliente-primary-stroke));
+    background: color-mix(in srgb, var(--cliente-primary-soft) 82%, white);
+}
+
+.cliente-areas-menu {
+    border-color: color-mix(in srgb, var(--cliente-primary-stroke) 55%, rgba(18, 35, 60, 0.14));
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 20px 46px rgba(18, 35, 60, 0.16);
+}
+
 .cliente-tab {
-    min-height: 76px;
+    min-height: 64px;
     border-radius: var(--adm-radius-md);
     background: rgba(255, 255, 255, 0.82);
     color: var(--cliente-text);
