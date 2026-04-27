@@ -304,27 +304,27 @@
 
       function humanizarLifecycleStatus(valor) {
         const mapa = {
-          analise_livre: "Analise livre",
-          pre_laudo: "Pre-laudo",
-          laudo_em_coleta: "Laudo guiado",
-          aguardando_mesa: "Aguardando mesa",
-          em_revisao_mesa: "Em revisao na mesa",
-          devolvido_para_correcao: "Devolvido para correcao",
+          analise_livre: "Em coleta",
+          pre_laudo: "Em coleta",
+          laudo_em_coleta: "Em coleta",
+          aguardando_mesa: "Na Mesa",
+          em_revisao_mesa: "Na Mesa",
+          devolvido_para_correcao: "Pendente",
           aprovado: "Aprovado",
           emitido: "Emitido",
         };
         const chave = texto(valor).trim().toLowerCase();
-        return mapa[chave] || "Fluxo legado";
+        return mapa[chave] || "Em acompanhamento";
       }
 
       function humanizarOwnerRole(valor) {
         const mapa = {
-          inspetor: "Responsavel: campo",
-          mesa: "Responsavel: mesa",
-          none: "Responsavel: conclusao",
+          inspetor: "Campo tecnico",
+          mesa: "Mesa Avaliadora",
+          none: "Ciclo encerrado",
         };
         const chave = texto(valor).trim().toLowerCase();
-        return mapa[chave] || "Responsavel nao definido";
+        return mapa[chave] || "Responsavel em definicao";
       }
 
       function laudoAllowedSurfaceActions(laudo) {
@@ -370,7 +370,7 @@
           return {
             ...base,
             key: "decision_ready",
-            label: "Decisao disponivel",
+            label: "Decisao da Mesa disponivel",
             detail:
               "A mesa ja pode aprovar ou devolver com orientacao objetiva.",
             tone: "aprovado",
@@ -417,7 +417,7 @@
           return {
             ...base,
             key: "issue_ready",
-            label: "Pronto para emissao",
+            label: "Pronto para emissao oficial",
             detail:
               "O caso ja foi aprovado e aguarda a etapa final documental.",
             tone: "aprovado",
@@ -428,7 +428,7 @@
           return {
             ...base,
             key: "issued",
-            label: "Emissao concluida",
+            label: "Documento emitido",
             detail: "O caso ja fechou o ciclo atual com documento emitido.",
             tone: "aprovado",
           };
@@ -445,7 +445,7 @@
 
         [
           `Fluxo ${resumo.lifecycleLabel}`,
-          `Owner ${resumo.ownerLabel}`,
+          `Responsavel ${resumo.ownerLabel}`,
           resumo.label,
         ].forEach((label, index) => {
           const signal = documentRef.createElement("span");
@@ -601,7 +601,7 @@
         [
           `Status ${momentoCanonico.statusVisualLabel}`,
           `Fluxo ${momentoCanonico.lifecycleLabel}`,
-          `Owner ${momentoCanonico.ownerLabel}`,
+          `Responsavel ${momentoCanonico.ownerLabel}`,
           momentoCanonico.label,
         ].forEach((label, index) => {
           const signal = documentRef.createElement("span");
@@ -742,7 +742,10 @@
         const title = documentRef.createElement("strong");
         title.textContent = texto(laudo.titulo);
         head.appendChild(title);
-        const badgeHtml = laudoBadge(laudo.status_card_label, laudo.status_card);
+        const badgeHtml = laudoBadge(
+          laudo.status_card_label,
+          laudo.status_card,
+        );
         if (badgeHtml) {
           head.insertAdjacentHTML("beforeend", badgeHtml);
         }
@@ -1000,7 +1003,9 @@
 
         const detail = documentRef.createElement("p");
         detail.className = "activity-detail";
-        detail.textContent = texto(laudo.preview || "Sem resumo recente na mesa.");
+        detail.textContent = texto(
+          laudo.preview || "Sem resumo recente na mesa.",
+        );
         article.appendChild(detail);
 
         const toolbar = documentRef.createElement("div");
@@ -1072,7 +1077,8 @@
         title.textContent = "Movimentos recentes da mesa";
         const meta = documentRef.createElement("span");
         meta.className = "activity-meta";
-        meta.textContent = "Os laudos mais novos tocados na fila da Mesa Avaliadora.";
+        meta.textContent =
+          "Os laudos mais novos tocados na fila da Mesa Avaliadora.";
         copy.appendChild(title);
         copy.appendChild(meta);
         head.appendChild(copy);
@@ -1200,7 +1206,9 @@
             criarMesaContextGuidanceNode({
               tone: "aguardando",
               eyebrow: "Fila parada",
-              title: resumoEsperaHoras(horasDesdeAtualizacao(alvo.atualizado_em)),
+              title: resumoEsperaHoras(
+                horasDesdeAtualizacao(alvo.atualizado_em),
+              ),
               detail:
                 "Vale revisar este laudo para nao deixar a mesa esfriar com pendencias ou resposta em aberto.",
               pillText: "Retomar",
@@ -1403,7 +1411,10 @@
           if (appendAnexos) {
             appendAnexos(article, mensagem.anexos);
           } else {
-            article.insertAdjacentHTML("beforeend", renderAnexos(mensagem.anexos));
+            article.insertAdjacentHTML(
+              "beforeend",
+              renderAnexos(mensagem.anexos),
+            );
           }
 
           if (pendencia) {

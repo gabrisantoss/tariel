@@ -51,8 +51,13 @@ Este documento define a camada de tradução entre estados técnicos do Tariel e
 - O submenu de Documentos deixa de ser sticky nessa superfície piloto para reduzir poluição durante scroll.
 - UX-B aplicado no Chat Inspetor (prévia de finalização e `preparar-emissao`) com separação explícita entre `PDF operacional` e `Emissão oficial`.
 - UX-C aplicado no Portal Cliente Documentos com layout de blocos (`Resumo`, `Documento oficial`, `Histórico de emissões`, `Auditoria`, `Recursos do pacote`) e redução de chips em excesso.
+- UX-D aplicado no Portal Cliente Chat/Mesa com status canônico (`Em coleta`, `Na Mesa`, `Pendente`, `Aprovado`, `Emitido`), remoção de `Owner` cru e barra de seção não-sticky nessas duas superfícies.
+- UX-D estendido para `Servicos`, `Ativos` e `Recorrencia` no Portal Cliente com subnav nao-sticky e leitura em blocos/linhas para reduzir densidade de chips.
+- UX-D estendido para `Painel Admin Cliente` com troca de `Owner predominante` por `Responsavel predominante` e subnav nao-sticky na superficie.
+- UX-D estendido para `Inspetor > Preparar emissao` com copy mais direta entre emissao oficial e PDF operacional (`Mudancas desde a emissao ativa`, `Acao sugerida`).
+- UX-D estendido para `Mesa Avaliadora` (`/revisao/painel`) com sinais canônicos nos itens de fila (`Status`, `Responsavel`, `Decisao da Mesa disponivel`), remoção de `Fluxo legado`/`Owner` e cabeçalhos de seção da lista sem sticky.
 
-## Gaps após UX-B
+## Gaps após UX-D
 
 - Revisar Mesa Avaliadora para substituir capabilities internas por labels canônicos nas mensagens de bloqueio.
 - Revisar cartões de histórico e prompts de reabertura do Chat Inspetor para reduzir termos legados em torno de `PDF final`.

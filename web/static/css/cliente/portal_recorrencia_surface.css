@@ -1,36 +1,40 @@
+.panel--recorrencia .surface-nav--recorrencia {
+  position: static;
+}
+
 .panel--recorrencia .surface-stage__grid--recorrencia {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .recorrencia-lista {
-    display: grid;
-    gap: 1rem;
+  display: grid;
+  gap: 1rem;
 }
 
 .recorrencia-card {
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 1rem;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.84);
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
 }
 
 .recorrencia-card__head,
 .recorrencia-card__meta {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .recorrencia-card__head h4 {
-    margin: 0.5rem 0 0;
+  margin: 0.5rem 0 0;
 }
 
 .recorrencia-card__meta,
 .recorrencia-card__status {
-    color: rgba(15, 23, 42, 0.72);
+  color: rgba(15, 23, 42, 0.72);
 }

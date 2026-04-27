@@ -1041,7 +1041,7 @@ def test_preparacao_emissao_exibe_contexto_documental_e_fotos_curadas(
     assert "Fotos para emissao" in resposta.text
     assert "2 foto(s) elegiveis para emissao." in resposta.text
     assert "msg:701" in resposta.text
-    assert "Mudancas desde a ultima emissao" in resposta.text
+    assert "Mudancas desde a emissao ativa" in resposta.text
     assert f"/revisao/templates-laudo/editor?laudo_id={laudo_id}&amp;origin=inspetor_preparar_emissao" in resposta.text
 
 

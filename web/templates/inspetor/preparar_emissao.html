@@ -37,7 +37,7 @@
     <section class="emissao-preparo-grid">
         <article class="technical-record-card emissao-preparo-card emissao-preparo-card--status">
             <div class="technical-record-card__header">
-                <h2>Status da emissao oficial</h2>
+                <h2>Resumo da emissao oficial</h2>
                 <span class="technical-record-status-pill">{{ emissao_oficial.issue_status_label | e }}</span>
             </div>
             <p data-emissao-state-detail>{{ estado_preparo_emissao.detail | e }}</p>
@@ -47,7 +47,7 @@
                     <dd>#{{ laudo.id | int }}</dd>
                 </div>
                 <div>
-                    <dt>Estado</dt>
+                    <dt>Fase</dt>
                     <dd>{{ emissao_oficial.status_visual_label | default("Nao informado", true) | e }}</dd>
                 </div>
                 <div>
@@ -59,7 +59,7 @@
                     <dd>{{ "Pronta" if emissao_oficial.public_verification_present else "Pendente" }}</dd>
                 </div>
                 <div>
-                    <dt>Documento emitido</dt>
+                    <dt>Emissao ativa</dt>
                     <dd data-emissao-issue-number>
                         {{ current_issue.issue_number | default("Ainda nao emitida", true) | e }}
                     </dd>
@@ -202,7 +202,7 @@
 
         <article class="technical-record-card emissao-preparo-card">
             <div class="technical-record-card__header">
-                <h2>Mudancas desde a ultima emissao</h2>
+                <h2>Mudancas desde a emissao ativa</h2>
                 <span class="technical-record-status-pill">
                     {% if contexto_reemissao.reissue_recommended %}
                     Reemissao recomendada
@@ -224,12 +224,12 @@
                     <dd>{{ contexto_reemissao.approval_version | default("Nao registrada", true) | e }}</dd>
                 </div>
                 <div>
-                    <dt>PDF operacional divergiu</dt>
-                    <dd>{{ "Sim" if contexto_reemissao.primary_pdf_diverged else "Nao" }}</dd>
+                    <dt>Mudanca no PDF operacional</dt>
+                    <dd>{{ "Sim, houve mudanca" if contexto_reemissao.primary_pdf_diverged else "Nao" }}</dd>
                 </div>
                 <div>
-                    <dt>Status</dt>
-                    <dd>{{ "Reemitir" if contexto_reemissao.reissue_recommended else "Mantida" }}</dd>
+                    <dt>Acao sugerida</dt>
+                    <dd>{{ "Criar nova emissao" if contexto_reemissao.reissue_recommended else "Manter emissao ativa" }}</dd>
                 </div>
             </dl>
             <p>
@@ -246,7 +246,7 @@
             </ul>
             {% endif %}
             {% else %}
-            <p>Esta sera a primeira emissao oficial deste laudo. Depois da emissao, esta area passa a mostrar divergencias de PDF, troca de aprovacao e historico de reemissao.</p>
+            <p>Esta sera a primeira emissao oficial deste laudo. Depois da emissao, esta area passa a mostrar mudancas no PDF operacional, nova aprovacao e historico de reemissao.</p>
             {% endif %}
         </article>
 
