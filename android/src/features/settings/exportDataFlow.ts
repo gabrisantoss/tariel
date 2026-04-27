@@ -17,6 +17,7 @@ import {
   rotuloCaseOwnerRole,
 } from "../chat/caseLifecycle";
 import { buildReportPackDraftSummary } from "../chat/reportPackHelpers";
+import { isOfficialIssueReissueRecommended } from "../common/officialIssueSummary";
 import type { SettingsSecurityEventPayload } from "./settingsConfirmActions";
 import type { SettingsSheetState } from "./settingsSheetTypes";
 
@@ -109,7 +110,7 @@ function buildOfficialIssueExportFields(
   const governanceIssueNumber = String(summary?.issue_number || "").trim();
 
   return {
-    reissueRecommended: Boolean(summary?.primary_pdf_diverged),
+    reissueRecommended: isOfficialIssueReissueRecommended(summary),
     governanceStatus,
     governanceDetail,
     governanceIssueNumber,

@@ -37,7 +37,7 @@ from app.shared.database import (
     TipoMensagem,
     Usuario,
 )
-from app.shared.official_issue_package import serialize_official_issue_record
+from app.shared.official_issue_package import build_official_issue_summary, serialize_official_issue_record
 from app.shared.db.contracts import EntryModeEffective, EntryModePreference
 from app.shared.tenant_admin_policy import (
     summarize_tenant_admin_operational_package,
@@ -826,9 +826,22 @@ def listar_cards_laudos_mobile_inspetor(
 
 def _build_mobile_official_issue_alert(
     record: EmissaoOficialLaudo | None,
+    *,
+    issue_summary: dict[str, object] | None = None,
 ) -> dict[str, object] | None:
-    payload = serialize_official_issue_record(record)
+    summary_payload = issue_summary if isinstance(issue_summary, dict) else {}
+    current_issue_payload = summary_payload.get("current_issue")
+    payload = current_issue_payload if isinstance(current_issue_payload, dict) else serialize_official_issue_record(record)
     if not isinstance(payload, dict) or not bool(payload.get("primary_pdf_diverged")):
+        if not bool(summary_payload.get("reissue_recommended")):
+            return None
+
+    if not isinstance(payload, dict):
+        return None
+
+    primary_pdf_diverged = bool(payload.get("primary_pdf_diverged"))
+    reissue_recommended = bool(summary_payload.get("reissue_recommended") or primary_pdf_diverged)
+    if not reissue_recommended:
         return None
 
     frozen_version = str(payload.get("primary_pdf_storage_version") or "").strip()
@@ -838,18 +851,36 @@ def _build_mobile_official_issue_alert(
         version_bits.append(f"Emitido {frozen_version}")
     if current_version:
         version_bits.append(f"Atual {current_version}")
-    detail = "PDF emitido divergente"
-    if version_bits:
+    raw_reason_codes = summary_payload.get("reissue_reason_codes") or payload.get("reissue_reason_codes") or []
+    if not isinstance(raw_reason_codes, list):
+        raw_reason_codes = []
+    reason_codes = [str(item).strip() for item in raw_reason_codes if str(item).strip()]
+    if primary_pdf_diverged and "primary_pdf_diverged" not in reason_codes:
+        reason_codes.append("primary_pdf_diverged")
+    reason_summary = str(
+        summary_payload.get("reissue_reason_summary") or payload.get("reissue_reason_summary") or ""
+    ).strip()
+    detail = (
+        "PDF emitido divergente"
+        if primary_pdf_diverged
+        else reason_summary or "Nova aprovação governada recomenda reemissão"
+    )
+    if primary_pdf_diverged and version_bits:
         detail = f"{detail} · {' · '.join(version_bits)}"
 
     return {
-        "label": "Reemissão recomendada",
+        "label": str(summary_payload.get("issue_status_label") or "").strip() or "Reemissão recomendada",
         "detail": detail,
+        "reissue_recommended": True,
+        "issue_status": str(summary_payload.get("issue_status") or "").strip() or None,
+        "issue_status_label": str(summary_payload.get("issue_status_label") or "").strip() or None,
         "issue_number": payload.get("issue_number"),
         "issue_state_label": payload.get("issue_state_label"),
-        "primary_pdf_diverged": True,
+        "primary_pdf_diverged": primary_pdf_diverged,
         "primary_pdf_storage_version": frozen_version or None,
         "current_primary_pdf_storage_version": current_version or None,
+        "reissue_reason_codes": reason_codes,
+        "reissue_reason_summary": reason_summary or None,
     }
 
 
@@ -885,7 +916,13 @@ def _load_mobile_official_issue_alerts(
         if laudo_id <= 0 or laudo_id in seen_laudo_ids:
             continue
         seen_laudo_ids.add(laudo_id)
-        alert_payload = _build_mobile_official_issue_alert(record)
+        issue_summary = None
+        try:
+            if getattr(record, "laudo", None) is not None:
+                issue_summary = build_official_issue_summary(banco, laudo=record.laudo)
+        except Exception:
+            logger.debug("Falha ao derivar resumo de reemissão oficial para mobile.", exc_info=True)
+        alert_payload = _build_mobile_official_issue_alert(record, issue_summary=issue_summary)
         if alert_payload is not None:
             alerts_by_laudo[laudo_id] = alert_payload
     return alerts_by_laudo

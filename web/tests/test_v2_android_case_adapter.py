@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 from starlette.requests import Request
@@ -12,9 +12,12 @@ from app.domains.chat.auth_mobile_support import montar_contexto_portal_inspetor
 from app.domains.chat.auth_mobile_routes import api_listar_laudos_mobile_inspetor
 import app.shared.official_issue_package as official_issue_package
 from app.shared.database import (
+    ApprovedCaseSnapshot,
     EmissaoOficialLaudo,
     Laudo,
     NivelAcesso,
+    SignatarioGovernadoLaudo,
+    StatusLaudo,
     StatusRevisao,
     TemplateLaudo,
     Usuario,
@@ -364,8 +367,121 @@ def test_mobile_laudos_expoe_alerta_de_reemissao_do_pdf_oficial(
     summary = payload["itens"][0]["official_issue_summary"]
     assert summary["label"] == "Reemissão recomendada"
     assert summary["detail"] == "PDF emitido divergente · Emitido v0003 · Atual v0004"
+    assert summary["reissue_recommended"] is True
     assert summary["primary_pdf_diverged"] is True
     assert summary["issue_number"] == "EO-NR35-1"
+    assert summary["reissue_reason_codes"] == ["primary_pdf_diverged"]
+
+
+def test_mobile_laudos_expoe_reemissao_recomendada_por_novo_snapshot_aprovado(
+    ambiente_critico,
+    monkeypatch,
+) -> None:
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+
+    with SessionLocal() as banco:
+        usuario = banco.get(Usuario, ids["inspetor_a"])
+        assert usuario is not None
+
+        laudo = Laudo(
+            empresa_id=usuario.empresa_id,
+            usuario_id=usuario.id,
+            setor_industrial="NR13 Caldeira",
+            tipo_template="nr13",
+            catalog_family_key="nr13_inspecao_caldeira",
+            status_revisao=StatusRevisao.APROVADO.value,
+            status_conformidade=StatusLaudo.CONFORME.value,
+            codigo_hash=uuid.uuid4().hex,
+            dados_formulario={"campo": "valor"},
+            primeira_mensagem="Nova aprovação pós-emissão",
+            nome_arquivo_pdf="nr13_emitido.pdf",
+        )
+        banco.add(laudo)
+        banco.flush()
+
+        signatario = SignatarioGovernadoLaudo(
+            tenant_id=usuario.empresa_id,
+            nome="Eng. Tariel",
+            funcao="Responsável técnico",
+            registro_profissional="CREA 1234",
+            valid_until=datetime.now(timezone.utc) + timedelta(days=90),
+            allowed_family_keys_json=["nr13_inspecao_caldeira"],
+            ativo=True,
+            criado_por_id=ids["admin_a"],
+        )
+        banco.add(signatario)
+        banco.flush()
+
+        snapshot_v1 = ApprovedCaseSnapshot(
+            laudo_id=int(laudo.id),
+            empresa_id=int(usuario.empresa_id),
+            family_key="nr13_inspecao_caldeira",
+            approval_version=1,
+            approved_at=datetime.now(timezone.utc) - timedelta(minutes=5),
+            approved_by_id=ids["revisor_a"],
+            source_status_revisao=StatusRevisao.APROVADO.value,
+            source_status_conformidade=StatusLaudo.CONFORME.value,
+            document_outcome="approved",
+            laudo_output_snapshot={"versao": 1},
+        )
+        snapshot_v2 = ApprovedCaseSnapshot(
+            laudo_id=int(laudo.id),
+            empresa_id=int(usuario.empresa_id),
+            family_key="nr13_inspecao_caldeira",
+            approval_version=2,
+            approved_at=datetime.now(timezone.utc),
+            approved_by_id=ids["revisor_a"],
+            source_status_revisao=StatusRevisao.APROVADO.value,
+            source_status_conformidade=StatusLaudo.CONFORME.value,
+            document_outcome="approved",
+            laudo_output_snapshot={"versao": 2},
+        )
+        banco.add_all([snapshot_v1, snapshot_v2])
+        banco.flush()
+
+        emissao = EmissaoOficialLaudo(
+            laudo_id=laudo.id,
+            tenant_id=usuario.empresa_id,
+            approval_snapshot_id=int(snapshot_v1.id),
+            signatory_id=int(signatario.id),
+            issued_by_user_id=ids["revisor_a"],
+            issue_number="EO-NR13-SNAPSHOT-1",
+            issue_state="issued",
+            issued_at=datetime.now(timezone.utc),
+            verification_hash=laudo.codigo_hash,
+            public_verification_url=f"/app/public/laudo/verificar/{laudo.codigo_hash}",
+            package_sha256="a" * 64,
+            package_fingerprint_sha256="b" * 64,
+            package_filename="EO-NR13-SNAPSHOT-1.zip",
+            package_storage_path="/tmp/EO-NR13-SNAPSHOT-1.zip",
+            manifest_json={"bundle_kind": "tariel_official_issue_package"},
+            issue_context_json={"approval_version": 1},
+        )
+        banco.add(emissao)
+        banco.commit()
+
+        request = _build_mobile_request()
+        monkeypatch.setenv("TARIEL_V2_ANDROID_CASE_ADAPTER", "1")
+        response = asyncio.run(
+            api_listar_laudos_mobile_inspetor(
+                request=request,
+                usuario=usuario,
+                banco=banco,
+            )
+        )
+        payload = json.loads(response.body)
+
+    assert payload["ok"] is True
+    summary = payload["itens"][0]["official_issue_summary"]
+    assert summary["label"] == "Reemissão recomendada"
+    assert summary["detail"] == "Reemissão motivada por nova aprovação governada."
+    assert summary["reissue_recommended"] is True
+    assert summary["primary_pdf_diverged"] is False
+    assert summary["issue_status"] == "reissue_recommended"
+    assert summary["issue_number"] == "EO-NR13-SNAPSHOT-1"
+    assert summary["reissue_reason_codes"] == ["approval_snapshot_updated"]
+    assert summary["reissue_reason_summary"] == "Reemissão motivada por nova aprovação governada."
 
 
 def test_portal_inspetor_expoe_resumo_de_reemissao_no_contexto_ssr(

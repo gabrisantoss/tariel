@@ -15,6 +15,7 @@ import {
   reasonLabelForInspectionEntryMode,
   resolveInspectionEntryMode,
 } from "../inspection/inspectionEntryMode";
+import { isOfficialIssueReissueRecommended } from "../common/officialIssueSummary";
 import { buildThreadContextActions } from "./buildThreadContextActions";
 import { buildReportPackDraftSummary } from "./reportPackHelpers";
 import {
@@ -61,8 +62,8 @@ export function buildThreadContextState(
   const guidedProgress = guidedInspectionDraft
     ? getGuidedInspectionProgress(guidedInspectionDraft)
     : null;
-  const reemissoesRecomendadasTotal = laudosDisponiveis.filter(
-    (item) => item.official_issue_summary?.primary_pdf_diverged,
+  const reemissoesRecomendadasTotal = laudosDisponiveis.filter((item) =>
+    isOfficialIssueReissueRecommended(item.official_issue_summary),
   ).length;
   const resumoReemissaoRecomendada = resumirReemissaoRecomendada(
     reemissoesRecomendadasTotal,

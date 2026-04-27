@@ -1558,6 +1558,15 @@ def build_official_issue_summary(
         else None
     )
     document_reissue_recommended = bool((current_primary_pdf_comparison or {}).get("diverged"))
+    recommended_reissue_reason_codes = _normalize_key_list(
+        [
+            "approval_snapshot_updated" if snapshot_reissue_recommended else "",
+            "primary_pdf_diverged" if document_reissue_recommended else "",
+        ]
+    )
+    recommended_reissue_reason_summary = _build_official_issue_reissue_reason_summary(
+        recommended_reissue_reason_codes
+    )
     reissue_recommended = bool(snapshot_reissue_recommended or document_reissue_recommended)
 
     audit_trail = _build_official_issue_audit_trail(
@@ -1700,6 +1709,8 @@ def build_official_issue_summary(
         "document_visual_state_label": document_visual_state_label,
         "already_issued": already_issued,
         "reissue_recommended": reissue_recommended,
+        "reissue_reason_codes": recommended_reissue_reason_codes,
+        "reissue_reason_summary": recommended_reissue_reason_summary,
         "issue_action_label": "Reemitir oficialmente" if already_issued else "Emitir oficialmente",
         "issue_action_enabled": ready_for_issue and int(signatory_summary.get("eligible_signatory_count") or 0) > 0,
         "current_issue": current_issue,

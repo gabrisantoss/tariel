@@ -12,6 +12,10 @@ import {
 import { buildReportPackDraftSummary } from "../chat/reportPackHelpers";
 import type { ActiveThread, MobileActivityNotification } from "../chat/types";
 import { resumoMensagemAtividade } from "../common/messagePreviewHelpers";
+import {
+  getOfficialIssueReissueDetail,
+  isOfficialIssueReissueRecommended,
+} from "../common/officialIssueSummary";
 
 const MAX_LAUDOS_MONITORADOS_MESA = 6;
 
@@ -65,14 +69,13 @@ function resolverResumoReemissaoPdfOficial(item: MobileLaudoCard): {
   body: string;
 } | null {
   const summary = item.official_issue_summary;
-  if (!summary?.primary_pdf_diverged) {
+  if (!isOfficialIssueReissueRecommended(summary)) {
     return null;
   }
 
-  const detail =
-    String(summary.detail || "").trim() || "PDF emitido divergente";
+  const detail = getOfficialIssueReissueDetail(summary).replace(/[.。]+$/u, "");
   return {
-    title: String(summary.label || "").trim() || "Reemissão recomendada",
+    title: String(summary?.label || "").trim() || "Reemissão recomendada",
     body: `${item.titulo}: ${detail}. Abra a finalização para reemitir.`,
   };
 }
@@ -127,12 +130,12 @@ export function assinaturaStatusLaudo(item: MobileLaudoCard): string {
     surfaceActions.join(","),
   );
   const reissueSummary = item.official_issue_summary;
-  if (reissueSummary?.primary_pdf_diverged) {
+  if (isOfficialIssueReissueRecommended(reissueSummary)) {
     base.push(
       "reissue",
-      String(reissueSummary.issue_number || ""),
-      String(reissueSummary.primary_pdf_storage_version || ""),
-      String(reissueSummary.current_primary_pdf_storage_version || ""),
+      String(reissueSummary?.issue_number || ""),
+      String(reissueSummary?.primary_pdf_storage_version || ""),
+      String(reissueSummary?.current_primary_pdf_storage_version || ""),
     );
   }
   return base.join("|");
