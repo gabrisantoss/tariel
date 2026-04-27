@@ -1,6 +1,6 @@
 # Alinhamento Arquitetural Mobile/Chat-First
 
-Atualizado em `2026-04-26`.
+Atualizado em `2026-04-27`.
 
 Status: analise arquitetural. Este documento nao altera codigo, rotas, templates, release gate, mobile smoke, Maestro, `human_ack`, Android, NR35 ou comportamento de produto.
 
@@ -228,6 +228,8 @@ Checkpoint Mobile download oficial: quando o backend já possui `EmissaoOficialL
 
 Checkpoint auditoria de download oficial: os downloads oficiais existentes passam a registrar auditoria sanitizada no tenant para Portal Cliente, Chat/Mobile pelo endpoint `/app` e Mesa pelo endpoint `/revisao`. O registro preserva `laudo_id`, `issue_number`, estado da emissão, tipo de artefato, hash do pacote/PDF quando aplicável e superfície de origem, sem expor `package_storage_path`, `storage_path` ou conteúdo do arquivo.
 
+Checkpoint reemissão/superseded: o motor central de emissão oficial passa a ser validado para reemissão sem sobrescrita. Quando há divergência pós-Mesa, Chat/Mobile/Mesa podem consumir `reissue_recommended`, `primary_pdf_diverged` e `current_issue`, mas o download oficial continua apontando para a emissão ativa `issued`. Nova emissão exige novo snapshot aprovado; a emissão anterior vira `superseded` e permanece apenas como histórico/auditoria.
+
 ## 11. Portal Cliente
 
 O Portal Cliente deve continuar sendo o lugar de administracao, visibilidade, auditoria e entrega. Ele pode ter operacao quando pacote permitir, mas nao deve virar cockpit tecnico padrao para todo tenant.
@@ -373,6 +375,8 @@ Limite do PR D: não foi criada ação nova de emissão oficial no app nem
 assinatura local/ad hoc. O mobile agora lê disponibilidade, rótulos e estado de
 download oficial; emissão/download completos seguem como PR posterior caso o
 backend mobile precise de endpoint dedicado.
+
+Checkpoint PR9: o app não precisa de UI grande para reemissão neste recorte. O contrato disponível já diferencia PDF operacional de emissão oficial e permite mostrar sinais neutros de divergência/reemissão quando o backend publicar `reissue_recommended`; downloads seguem presos à emissão ativa.
 
 ### PR E - UX do Admin Cliente mostrando pacote/capacidades
 

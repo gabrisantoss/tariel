@@ -2,7 +2,7 @@
 
 Arquivo de trabalho para tarefas longas, confusas ou multissuperfície.
 
-Atualizado em `2026-04-26`.
+Atualizado em `2026-04-27`.
 
 ## Quando usar
 
@@ -29,6 +29,15 @@ Atualizado em `2026-04-26`.
 - `validacao acumulada PR B/C`: `PYTHONPATH=web python -m py_compile web/app/shared/tenant_admin_policy.py web/app/shared/tenant_entitlement_guard.py web/app/domains/chat/laudo_decision_services.py web/tests/test_mobile_chat_first_capability_aliases.py web/tests/test_tenant_entitlements_critical.py`; `node --check web/static/js/shared/app_shell.js web/static/js/chat/chat_painel_relatorio.js web/static/js/inspetor/ui_bindings.js`; `cd web && PYTHONPATH=. python -m pytest tests/test_mobile_chat_first_capability_aliases.py tests/test_tenant_entitlements_critical.py -q` (`29 passed`); `git diff --check`; `AMBIENTE=dev make release-verify-local`
 - `validacao PR D`: `cd android && npm test -- --runInBand src/features/common/mobileUserAccess.test.ts src/features/common/buildInspectorBaseDerivedStateSections.test.ts src/features/chat/ThreadConversationPane.test.tsx src/features/chat/buildThreadContextState.test.ts src/features/chat/reportPackHelpers.test.ts src/features/settings/exportDataFlow.test.ts src/features/history/HistoryDrawerPanel.test.tsx` (`76 passed`); `cd android && npm run typecheck`; `cd android && npx prettier --check ...`; `make mobile-ci` (`113 passed`, `431 passed`); `git diff --check`
 - `observacao`: `tests/test_approval_idempotency.py` ainda retorna `422` em dois cenarios legados de aprovacao NR35 via Mesa; pendencia ja conhecida e mantida fora deste PR para nao alterar Mesa/NR35/reemissao
+
+### `PKT-GOLDEN-PATH-NR35-09` - Reemissao, Superseded e Divergencia Pos-Mesa
+
+- `status`: concluido localmente em `2026-04-27`; PR 9 fecha o recorte de reemissao oficial NR35 sem mexer em release gate, mobile smoke, Maestro, `human_ack`, Android build ou PDF operacional
+- `checkpoint 2026-04-27`: confirmado que o motor central ja usa `EmissaoOficialLaudo.issue_state=issued` como ativa, calcula `package_fingerprint_sha256`, detecta divergencia por snapshot/PDF, cria nova emissao quando o fingerprint muda e marca a emissao anterior como `superseded`
+- `checkpoint 2026-04-27`: `web/app/domains/cliente/dashboard_bootstrap_support.py` passa a expor no `historico_emissoes` metadados de linhagem e snapshot: `approval_snapshot_id`, `approval_version`, `superseded_at`, `reissue_of_issue_number`, `superseded_by_issue_number`, motivos e hashes, sem paths internos
+- `checkpoint 2026-04-27`: adicionado `test_nr35_reemissao_superseded_preserva_historico_downloads_e_auditoria`, cobrindo emissao v1, download/auditoria v1, divergencia pos-Mesa por PDF e payload, bloqueio sem snapshot novo, download principal ainda apontando para v1, snapshot v2, reemissao, `superseded`, conflito stale e download/auditoria v2
+- `validacao executada`: `cd web && PYTHONPATH=. python -m pytest tests/test_nr35_golden_path_official_issue_e2e.py -q` (`6 passed`); `cd web && PYTHONPATH=. python -m pytest tests/test_nr35_official_pdf_issue.py -q` (`4 passed`); `cd web && PYTHONPATH=. python -m pytest tests/test_official_issue_package.py -q` (`6 passed`); `cd web && PYTHONPATH=. python -m pytest tests/test_cliente_portal_critico.py::test_admin_cliente_documentos_expoe_entrega_oficial_nr35_auditavel tests/test_cliente_portal_critico.py::test_admin_cliente_documentos_nao_trata_rascunho_nr35_como_oficial tests/test_cliente_portal_critico.py::test_admin_cliente_download_oficial_nr35_respeita_tenant -q` (`3 passed`); `cd web && PYTHONPATH=. python -m pytest tests/test_tenant_entitlements_critical.py::test_inspetor_com_servicos_da_mesa_emite_oficialmente_no_fluxo_do_chat tests/test_regras_rotas_criticas.py::test_revisor_emite_oficialmente_bundle_congelado_com_replay_idempotente tests/test_regras_rotas_criticas.py::test_revisor_reemite_oficialmente_quando_pdf_diverge_e_limpa_alerta -q` (`3 passed`); `cd web && PYTHONPATH=. python -m pytest tests/test_public_verification.py tests/test_v2_reviewdesk_read_side.py tests/test_v2_reviewdesk_projection.py -q` (`18 passed`); `cd web && PYTHONPATH=. python -m pytest tests/test_v2_android_public_contract.py tests/test_mobile_chat_first_capability_aliases.py -q` (`9 passed`); `cd web && PYTHONPATH=. python -m pytest tests/test_nr35_golden_path_contract_doc.py -q` (`3 passed`); `python -m py_compile web/app/domains/cliente/dashboard_bootstrap_support.py web/tests/test_nr35_golden_path_official_issue_e2e.py`; `git diff --check`; `AMBIENTE=dev make release-verify-local`
+- `observacao`: `cd web && PYTHONPATH=. python -m pytest tests/test_nr35_golden_path_contract_doc.py tests/test_canonical_docs_bundle.py -q` falhou apenas em `test_bundled_canonical_docs_match_repo_docs` por divergencia preexistente entre `docs/family_schemas` e `web/canonical_docs`; o teste documental NR35 isolado passou
 
 ### `PKT-GOLDEN-PATH-NR35-08` - E2E Golden Path NR35 com Governança de Emissão Oficial
 
