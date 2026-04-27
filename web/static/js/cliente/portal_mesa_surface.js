@@ -1271,7 +1271,7 @@
             accent: "live",
             label: "Decisao disponivel",
             value: formatarInteiro(prontosParaRevisar),
-            meta: `${formatarInteiro(emCampo)} caso(s) ainda estao com o campo como owner ativo.`,
+            meta: `${formatarInteiro(emCampo)} caso(s) ainda estao com o campo como responsavel ativo.`,
           },
           {
             accent: momentoSelecionado
