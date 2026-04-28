@@ -235,10 +235,10 @@
             el.workspaceMesaStageStatusVisual.textContent = `Status ${statusVisualLabel}`;
         }
         if (el.workspaceMesaStageLifecycle) {
-            el.workspaceMesaStageLifecycle.textContent = `Fluxo ${momentoCanonico.lifecycleLabel}`;
+            el.workspaceMesaStageLifecycle.textContent = `Etapa do caso ${momentoCanonico.lifecycleLabel}`;
         }
         if (el.workspaceMesaStageOwner) {
-            el.workspaceMesaStageOwner.textContent = `Owner ${momentoCanonico.ownerLabel}`;
+            el.workspaceMesaStageOwner.textContent = `Responsável ativo ${momentoCanonico.ownerLabel}`;
         }
         if (el.workspaceMesaStageMoment) {
             el.workspaceMesaStageMoment.textContent = momentoCanonico.label;
@@ -351,7 +351,7 @@
         if (chave === "devolvido_para_correcao") return "Devolvido para correção";
         if (chave === "aprovado") return "Aprovado";
         if (chave === "emitido") return "Emitido";
-        return "Fluxo legado";
+        return "Etapa não classificada";
     }
 
     function escaparHtmlMesaInspector(valor = "") {

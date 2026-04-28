@@ -1649,6 +1649,7 @@ tr.user-row-highlight td:first-child {
     }
 
     .surface-nav {
+        grid-template-columns: 1fr;
         position: static;
     }
 }

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
+from urllib.parse import urlparse
 
 import requests
 from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
@@ -60,6 +61,22 @@ html {
 
 DOM_AUDIT_SCRIPT = """
 () => {
+  const internalTerms = [
+    "owner",
+    "fluxo legado",
+    "reviewer_issue",
+    "reviewer_decision",
+    "issue_state",
+    "primary_pdf_diverged",
+    "reissue_reason_codes",
+    "mobile_autonomous",
+    "tenant_without_mesa",
+    "nr35_mesa_required_unavailable",
+    "superseded",
+    "revoked",
+    "package_sha256",
+    "approval_snapshot_id"
+  ];
   const pick = (selector) => Array.from(document.querySelectorAll(selector)).filter((el) => {
     if (!(el instanceof Element)) return false;
     const style = window.getComputedStyle(el);
@@ -88,6 +105,15 @@ DOM_AUDIT_SCRIPT = """
   const cards = pick('[class*="card"], [class*="panel"], [class*="box"], [class*="surface"]');
   const headings = pick("h1, h2, h3");
   const sections = pick("section");
+  const fixedSticky = Array.from(document.querySelectorAll("body *")).filter((el) => {
+    if (!(el instanceof Element)) return false;
+    const style = window.getComputedStyle(el);
+    if (!["fixed", "sticky"].includes(style.position)) return false;
+    if (style.display === "none" || style.visibility === "hidden") return false;
+    const rect = el.getBoundingClientRect();
+    return rect.width > 1 && rect.height > 1;
+  });
+  const lowerText = mainText.toLowerCase();
   return {
     title: document.title,
     url: window.location.pathname + window.location.search,
@@ -109,8 +135,10 @@ DOM_AUDIT_SCRIPT = """
       cards: cards.length,
       headings: headings.length,
       sections: sections.length,
+      fixedSticky: fixedSticky.length,
       wordsMain: mainText ? mainText.split(/\\s+/).length : 0,
     },
+    internalTermsFound: internalTerms.filter((term) => lowerText.includes(term.toLowerCase())),
     samples: {
       buttons: sample(buttons),
       inputs: sample(inputs),
@@ -121,6 +149,7 @@ DOM_AUDIT_SCRIPT = """
       tabs: sample(tabs),
       cards: sample(cards),
       headings: sample(headings),
+      fixedSticky: sample(fixedSticky),
     },
   };
 }
@@ -384,28 +413,133 @@ def _capture_page(
 
 
 def _prepare_inspetor_workspace(page: Page, _base_url: str) -> None:
-    _abrir_home_explicita(page)
+    page.wait_for_function(
+        """() => document.getElementById("painel-chat")?.getAttribute("data-inspecao-ui") === "workspace" """,
+        timeout=15000,
+    )
     _abrir_modal_nova_inspecao(page)
     _preencher_modal_nova_inspecao(page)
-    _confirmar_modal_nova_inspecao(page)
+    try:
+        _confirmar_modal_nova_inspecao(page)
+    except Exception:
+        page.locator("#painel-chat").wait_for(state="visible")
+        page.wait_for_function(
+            """() => document.getElementById("painel-chat")?.getAttribute("data-inspecao-ui") === "workspace" """,
+            timeout=15000,
+        )
     laudo_id = _obter_laudo_ativo(page)
     _forcar_estado_relatorio_workspace(page, laudo_id)
-    page.locator("#workspace-titulo-laudo").wait_for(state="visible")
+    page.wait_for_function(
+        """() => Boolean(
+            document.querySelector("[data-screen-root='workspace']:not([hidden])") ||
+            document.querySelector("[data-workspace-view-root='inspection_record']:not([hidden])") ||
+            document.querySelector("[data-workspace-view-root='inspection_conversation']:not([hidden])")
+        )""",
+        timeout=10000,
+    )
 
 
 def _open_inspetor_mesa_workspace(page: Page, _base_url: str) -> None:
     workspace_title = page.locator("#workspace-titulo-laudo").first
     if workspace_title.count() == 0 or not workspace_title.is_visible():
         _prepare_inspetor_workspace(page, _base_url)
-    mesa_tab = page.locator('[data-tab="mesa"]').first
+    mesa_tab = page.locator('[data-tab="mesa"], [data-workspace-nav="inspection_mesa"], #btn-mesa-widget-toggle').first
     mesa_tab.wait_for(state="visible")
     mesa_tab.click()
-    page.locator("#workspace-mesa-stage").wait_for(state="visible")
+    page.wait_for_function(
+        """() => Boolean(
+            document.querySelector("#workspace-mesa-stage:not([hidden])") ||
+            document.querySelector("[data-workspace-view-root='inspection_mesa']:not([hidden])") ||
+            document.querySelector("#painel-mesa-widget:not([hidden])")
+        )""",
+        timeout=10000,
+    )
 
 
 def _ensure_inspetor_home(page: Page, _base_url: str) -> None:
     _abrir_home_explicita(page)
-    page.locator("#tela-boas-vindas").wait_for(state="visible")
+    page.wait_for_function(
+        """() => Boolean(
+            document.querySelector("#workspace-assistant-landing:not([hidden])") ||
+            document.querySelector("#tela-boas-vindas:not([hidden])") ||
+            document.querySelector("[data-workspace-view-root='assistant_landing']:not([hidden])")
+        )""",
+        timeout=10000,
+    )
+
+
+def _is_loopback_base_url(base_url: str) -> bool:
+    parsed = urlparse(base_url)
+    return parsed.hostname in {"127.0.0.1", "localhost", "::1"}
+
+
+def _ensure_visual_catalog_family(page: Page, base_url: str) -> None:
+    family_links = page.locator('a[href*="/admin/catalogo-laudos/familias/"]')
+    if family_links.count() > 0:
+        return
+    if not _is_loopback_base_url(base_url):
+        return
+
+    csrf = page.locator('meta[name="csrf-token"]').first.get_attribute("content") or ""
+    response = page.request.post(
+        f"{base_url}/admin/catalogo-laudos/familias/importar-canonico",
+        form={
+            "csrf_token": csrf,
+            "family_key": "nr35_inspecao_linha_de_vida",
+            "status_catalogo": "publicado",
+        },
+    )
+    if not response.ok:
+        return
+    page.goto(f"{base_url}/admin/catalogo-laudos", wait_until="domcontentloaded")
+    page.locator(".admin-layout").wait_for(state="visible", timeout=20000)
+
+
+def _open_first_admin_client_detail(page: Page, _base_url: str) -> None:
+    detail_link = page.locator('a.btn-ver[href^="/admin/clientes/"]').first
+    if detail_link.count() == 0:
+        detail_link = page.locator('a[href^="/admin/clientes/"]').filter(has_text=re.compile(r"Ver|Abrir", re.I)).first
+    detail_link.wait_for(state="visible", timeout=10000)
+    detail_link.click()
+    _safe_wait_for_url(page, r"/admin/clientes/\d+(?:\?.*)?$")
+    page.locator(".admin-governance-flow").wait_for(state="visible", timeout=20000)
+
+
+def _open_first_admin_client_actions(page: Page, base_url: str) -> None:
+    _open_first_admin_client_detail(page, base_url)
+    tab = page.locator('[data-admin-tab-target="acoes"]').first
+    tab.wait_for(state="visible", timeout=10000)
+    tab.click()
+    page.locator('[data-admin-tab-panel="acoes"]').wait_for(state="visible", timeout=10000)
+
+
+def _open_first_catalog_family(page: Page, _base_url: str) -> None:
+    _ensure_visual_catalog_family(page, _base_url)
+    family_link = (
+        page.locator('a[href*="/admin/catalogo-laudos/familias/"]')
+        .filter(has_text=re.compile(r"Abrir família", re.I))
+        .first
+    )
+    family_link.wait_for(state="visible", timeout=10000)
+    family_link.click()
+    _safe_wait_for_url(page, r"/admin/catalogo-laudos/familias/[^/?#]+(?:\?.*)?$")
+    page.locator(".catalog-family-tabs").wait_for(state="visible", timeout=20000)
+
+
+def _open_first_catalog_family_tab(page: Page, base_url: str, tab: str) -> None:
+    _open_first_catalog_family(page, base_url)
+    family_url = page.url.split("?", 1)[0].split("#", 1)[0]
+    page.goto(f"{family_url}?tab={tab}#{tab}", wait_until="domcontentloaded")
+    page.locator(".catalog-family-tabs").wait_for(state="visible", timeout=20000)
+    page.locator(f"#catalog-panel-{tab}").wait_for(state="attached", timeout=10000)
+
+
+def _open_first_catalog_family_offers(page: Page, base_url: str) -> None:
+    _open_first_catalog_family_tab(page, base_url, "ofertas")
+
+
+def _open_first_catalog_family_release(page: Page, base_url: str) -> None:
+    _open_first_catalog_family_tab(page, base_url, "liberacao")
 
 
 def _surface_plans() -> list[SurfacePlan]:
@@ -419,6 +553,47 @@ def _surface_plans() -> list[SurfacePlan]:
                 ShotPlan("admin_login", "Admin Login", "/admin/login", ".auth-card", False),
                 ShotPlan("admin_dashboard", "Admin Dashboard", "/admin/painel", ".admin-layout", True),
                 ShotPlan("admin_clients", "Admin Clients", "/admin/clientes", ".admin-layout", True),
+                ShotPlan(
+                    "admin_client_detail",
+                    "Admin Client Detail",
+                    "/admin/clientes",
+                    ".admin-layout",
+                    True,
+                    _open_first_admin_client_detail,
+                ),
+                ShotPlan(
+                    "admin_client_package_capabilities",
+                    "Admin Client Package Capabilities",
+                    "/admin/clientes",
+                    ".admin-layout",
+                    True,
+                    _open_first_admin_client_actions,
+                ),
+                ShotPlan("admin_catalog", "Admin Catalog", "/admin/catalogo-laudos", ".admin-layout", True),
+                ShotPlan(
+                    "admin_catalog_family",
+                    "Admin Catalog Family",
+                    "/admin/catalogo-laudos",
+                    ".admin-layout",
+                    True,
+                    _open_first_catalog_family,
+                ),
+                ShotPlan(
+                    "admin_catalog_family_package",
+                    "Admin Catalog Family Package",
+                    "/admin/catalogo-laudos",
+                    ".admin-layout",
+                    True,
+                    _open_first_catalog_family_offers,
+                ),
+                ShotPlan(
+                    "admin_catalog_family_tenants",
+                    "Admin Catalog Family Tenants",
+                    "/admin/catalogo-laudos",
+                    ".admin-layout",
+                    True,
+                    _open_first_catalog_family_release,
+                ),
             ],
         ),
         SurfacePlan(
@@ -429,8 +604,25 @@ def _surface_plans() -> list[SurfacePlan]:
             shots=[
                 ShotPlan("cliente_login", "Cliente Login", "/cliente/login", ".auth-card", False),
                 ShotPlan("cliente_admin", "Cliente Admin Surface", "/cliente/painel", ".cliente-shell", True),
+                ShotPlan("cliente_documentos", "Cliente Documentos Surface", "/cliente/documentos", ".cliente-shell", True),
                 ShotPlan("cliente_chat", "Cliente Chat Surface", "/cliente/chat", ".cliente-shell", True),
                 ShotPlan("cliente_mesa", "Cliente Mesa Surface", "/cliente/mesa", ".cliente-shell", True),
+                ShotPlan("cliente_servicos", "Cliente Servicos Surface", "/cliente/servicos", ".cliente-shell", True),
+                ShotPlan("cliente_ativos", "Cliente Ativos Surface", "/cliente/ativos", ".cliente-shell", True),
+                ShotPlan("cliente_recorrencia", "Cliente Recorrencia Surface", "/cliente/recorrencia", ".cliente-shell", True),
+            ],
+        ),
+        SurfacePlan(
+            surface="cliente_mobile_web",
+            login_url="/cliente/login",
+            bootstrap=_login_cliente,
+            viewport={"width": 390, "height": 844},
+            shots=[
+                ShotPlan("cliente_mobile_login", "Cliente Mobile Login", "/cliente/login", ".auth-card", False),
+                ShotPlan("cliente_mobile_admin", "Cliente Mobile Admin Surface", "/cliente/painel", ".cliente-shell", True),
+                ShotPlan("cliente_mobile_documentos", "Cliente Mobile Documentos Surface", "/cliente/documentos", ".cliente-shell", True),
+                ShotPlan("cliente_mobile_chat", "Cliente Mobile Chat Surface", "/cliente/chat", ".cliente-shell", True),
+                ShotPlan("cliente_mobile_mesa", "Cliente Mobile Mesa Surface", "/cliente/mesa", ".cliente-shell", True),
             ],
         ),
         SurfacePlan(
