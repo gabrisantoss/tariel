@@ -991,10 +991,52 @@ def _has_meaningful_payload_content(value: Any) -> bool:
     return value is not None
 
 
+def _has_meaningful_photo_register_content(value: Any) -> bool:
+    if isinstance(value, list):
+        return _has_meaningful_payload_content(value)
+    if not isinstance(value, dict):
+        return _has_meaningful_payload_content(value)
+
+    slots = value.get("slots_obrigatorios") or value.get("required_slots")
+    if isinstance(slots, list):
+        for item in slots:
+            if not isinstance(item, dict):
+                continue
+            for key in (
+                "referencia_persistida",
+                "referencia_anexo",
+                "referencia",
+                "reference",
+                "resolved_evidence_id",
+                "legenda_tecnica",
+                "legenda",
+                "caption",
+                "resolved_caption",
+            ):
+                if str(item.get(key) or "").strip():
+                    return True
+        return False
+
+    for key in (
+        "referencias_texto",
+        "referencia_anexo",
+        "referencia_persistida",
+        "legenda",
+        "legenda_tecnica",
+    ):
+        if str(value.get(key) or "").strip():
+            return True
+
+    description = str(value.get("descricao") or "").strip()
+    if description and not description.startswith("Contrato fotografico NR35"):
+        return True
+    return False
+
+
 def _prune_empty_client_pdf_blocks(payload: dict[str, Any]) -> None:
     for path in ("registros_fotograficos",):
         block = _value_by_path(payload, path)
-        if isinstance(block, dict) and not _has_meaningful_payload_content(block):
+        if isinstance(block, dict) and not _has_meaningful_photo_register_content(block):
             _delete_path(payload, path)
 
 
@@ -1561,12 +1603,17 @@ def build_catalog_pdf_payload(
         recommendation_hint=recommendation_hint,
         title_hint=title_hint,
     )
+    source_photo_register = _value_by_path(
+        existing_payload if isinstance(existing_payload, dict) else {},
+        "registros_fotograficos",
+    )
+    source_had_public_photo_register = _has_meaningful_payload_content(source_photo_register)
     existing_photo_register = _value_by_path(payload, "registros_fotograficos")
     if selected_issued_photo_records and (
         existing_photo_register in (None, [], {})
         or (
             isinstance(existing_photo_register, dict)
-            and not _has_meaningful_payload_content(existing_photo_register)
+            and not _has_meaningful_photo_register_content(existing_photo_register)
         )
     ):
         payload["registros_fotograficos"] = deepcopy(selected_issued_photo_records)
@@ -1587,8 +1634,9 @@ def build_catalog_pdf_payload(
             ),
         )
     final_photo_register = _value_by_path(payload, "registros_fotograficos")
-    payload["delivery_package"]["issued_photo_evidence_available"] = _has_meaningful_payload_content(
-        final_photo_register
+    payload["delivery_package"]["issued_photo_evidence_available"] = (
+        source_had_public_photo_register
+        or _has_meaningful_photo_register_content(final_photo_register)
     )
     if isinstance(final_photo_register, list) and final_photo_register:
         payload["delivery_package"]["issued_photo_evidence_source"] = (
@@ -1603,12 +1651,18 @@ def build_catalog_pdf_payload(
                 if isinstance(item, dict)
             ]
         )
-    elif isinstance(final_photo_register, dict) and _has_meaningful_payload_content(final_photo_register):
+    elif (
+        isinstance(final_photo_register, dict)
+        and (
+            source_had_public_photo_register
+            or _has_meaningful_photo_register_content(final_photo_register)
+        )
+    ):
         payload["delivery_package"]["issued_photo_evidence_source"] = "canonical_payload"
     else:
         payload["delivery_package"]["issued_photo_evidence_source"] = "absent"
 
-    if render_mode_norm == RENDER_MODE_CLIENT_PDF_FILLED:
+    if render_mode_norm == RENDER_MODE_CLIENT_PDF_FILLED and not source_had_public_photo_register:
         _prune_empty_client_pdf_blocks(payload)
 
     _set_path_if_blank(payload, "identificacao.localizacao", location_hint)

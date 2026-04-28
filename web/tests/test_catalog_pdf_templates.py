@@ -4,6 +4,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import app.domains.chat.catalog_pdf_templates as catalog_pdf_templates
+from app.domains.chat.catalog_document_view_model import build_catalog_document_view_model
 from app.domains.chat.catalog_pdf_templates import (
     RENDER_MODE_CLIENT_PDF_FILLED,
     RENDER_MODE_TEMPLATE_PREVIEW_BLANK,
@@ -2426,6 +2427,143 @@ def test_build_catalog_pdf_payload_materializa_nr35_linha_de_vida_pendente_com_l
     assert "reinspecao" in str(payload["conclusao"]["conclusao_tecnica"]).lower()
     assert "Trecho inferior sem acesso" in str(payload["nao_conformidades_ou_lacunas"]["limitacoes_de_inspecao"])
     assert "graos na moega" in str(payload["conclusao"]["condicao_para_reinspecao"])
+
+
+def test_nr35_pdf_visual_view_model_separa_fotos_mesa_conclusao_e_auditoria() -> None:
+    laudo = SimpleNamespace(
+        id=735,
+        catalog_family_key="nr35_inspecao_linha_de_vida",
+        catalog_family_label="NR35 · Linha de vida",
+        catalog_variant_label="Prime altura",
+        status_revisao=StatusRevisao.APROVADO.value,
+        setor_industrial="usina",
+        parecer_ia="Linha de vida vertical com nao conformidade localizada no cabo de aco proximo ao topo.",
+        primeira_mensagem="Inspecao NR35 na linha de vida vertical da escada de acesso ao elevador 01",
+        motivo_rejeicao=None,
+        report_pack_draft_json={
+            "image_slots": [
+                {
+                    "slot": "foto_visao_geral",
+                    "required": True,
+                    "status": "resolved",
+                    "resolved_evidence_id": "IMG_701 - vista_geral.png",
+                    "resolved_caption": "Vista geral da linha de vida vertical.",
+                },
+                {
+                    "slot": "foto_ponto_superior",
+                    "required": True,
+                    "status": "resolved",
+                    "resolved_evidence_id": "IMG_702 - ponto_superior.png",
+                    "resolved_caption": "Corrosao inicial no cabo proximo ao topo.",
+                },
+                {
+                    "slot": "foto_ponto_inferior",
+                    "required": True,
+                    "status": "resolved",
+                    "resolved_evidence_id": "IMG_703 - ponto_inferior.png",
+                    "resolved_caption": "Terminal inferior registrado durante a vistoria.",
+                },
+                {
+                    "slot": "foto_detalhe_critico",
+                    "required": True,
+                    "status": "resolved",
+                    "resolved_evidence_id": "IMG_704 - detalhe_cabo.png",
+                    "resolved_caption": "Detalhe do ponto critico observado no cabo de aco.",
+                },
+            ],
+            "quality_gates": {"final_validation_mode": "mesa_required", "missing_evidence": []},
+        },
+        dados_formulario={
+            "schema_version": 1,
+            "template_version": 1,
+            "informacoes_gerais": {
+                "unidade": "Usina Orizona",
+                "local": "Orizona - GO",
+                "tipo_inspecao": "Inspecao Periodica",
+                "contratante": "Caramuru Alimentos S/A",
+                "contratada": "ATY Service LTDA",
+                "engenheiro_responsavel": "Gabriel Santos",
+                "inspetor_lider": "Marcel Renato Silva",
+                "numero_laudo_inspecao": "AT-IN-OZ-001-01-26",
+                "art_numero": "ART 2026-00077",
+                "data_vistoria": "2026-01-29",
+            },
+            "objeto_inspecao": {
+                "identificacao_linha_vida": "MC-CRMRSS-0977 Escada de acesso ao elevador 01",
+                "tipo_linha_vida": "Vertical",
+                "escopo_inspecao": "Diagnostico geral da linha de vida vertical da escada de acesso.",
+            },
+            "componentes_inspecionados": {
+                "fixacao_dos_pontos": {"condicao": "C", "observacao": "Fixacao integra."},
+                "condicao_cabo_aco": {"condicao": "NC", "observacao": "Corrosao inicial proxima ao ponto superior."},
+            },
+            "mesa_review": {
+                "status": StatusRevisao.APROVADO.value,
+                "aprovacao_origem": "mesa_humana",
+                "aprovado_por_nome": "Mesa NR35",
+                "aprovado_em": "2026-04-26T12:00:00+00:00",
+                "pendencias_resolvidas_texto": "Nao conformidade confirmada e registrada antes da emissao.",
+                "observacoes_mesa": "Aprovado para emissao oficial com bloqueio de uso ate correcao.",
+            },
+            "conclusao": {
+                "status": "Reprovado",
+                "motivo_status": "Nao conformidade confirmada no cabo de aco.",
+                "proxima_inspecao_periodica": "2026-07",
+                "observacoes": "Substituir o trecho comprometido do cabo e reinspecionar o sistema.",
+            },
+            "resumo_executivo": "Linha de vida vertical com corrosao inicial no cabo de aco e necessidade de bloqueio para correcoes.",
+        },
+    )
+
+    payload = build_catalog_pdf_payload(
+        laudo=laudo,
+        template_ref=_template_ref(
+            family_key="nr35_inspecao_linha_de_vida",
+            template_code="nr35_inspecao_linha_de_vida",
+        ),
+        diagnostico="Resumo executivo do caso piloto NR35 para linha de vida vertical.",
+        inspetor="Gabriel Santos",
+        empresa="Empresa Teste NR35",
+        data="09/04/2026",
+    )
+
+    view_model = build_catalog_document_view_model(
+        payload,
+        audience="client",
+        render_mode=RENDER_MODE_CLIENT_PDF_FILLED,
+    )
+
+    section_ids = [section["id"] for section in view_model["sections"]]
+    assert "identificacao_laudo" in section_ids
+    assert "evidencias_registros_fotograficos" in section_ids
+    assert "achados_nao_conformidades" in section_ids
+    assert "revisao_mesa" in section_ids
+    assert "auditoria_emissao" in section_ids
+
+    evidence = next(section for section in view_model["sections"] if section["id"] == "evidencias_registros_fotograficos")
+    photo_rows = [row for row in evidence["blocks"][0]["rows"] if row[1]["text"] == "Foto obrigatoria"]
+    assert len(photo_rows) == 4
+    assert photo_rows[0][0]["text"] == "Visao geral da linha de vida"
+    assert "IMG_701" in photo_rows[0][3]["text"]
+    assert "Corrosao inicial" in photo_rows[1][2]["text"]
+
+    conclusion = next(section for section in view_model["sections"] if section["id"] == "conclusao")
+    conclusion_labels = {row["label"] for row in conclusion["blocks"][0]["rows"]}
+    assert "Liberado para uso" in conclusion_labels
+    assert "Acao requerida" in conclusion_labels
+    assert "Condicao para reinspecao" in conclusion_labels
+    assert "Proxima inspecao periodica" in conclusion_labels
+
+    mesa = next(section for section in view_model["sections"] if section["id"] == "revisao_mesa")
+    assert "Mesa Avaliadora" in str(mesa)
+    assert "mesa_humana" not in str(mesa)
+
+    audit = next(section for section in view_model["sections"] if section["id"] == "auditoria_emissao")
+    assert "Auditoria da Emissao Oficial" in audit["title"]
+    assert "Hash e QR Code" in str(audit)
+    assert "campo do documento" in str(audit)
+    assert "campo JSON" not in str(audit)
+    assert "foto_visao_geral" not in str(audit)
 
 
 def test_build_catalog_pdf_payload_mantem_analysis_basis_apenas_na_trilha_interna() -> None:

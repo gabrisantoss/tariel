@@ -63,6 +63,25 @@ _STATUS_LABELS = {
     "reprovado": "Reprovado",
 }
 
+_NR35_LINHA_VIDA_FAMILY_KEY = "nr35_inspecao_linha_de_vida"
+
+_PDF_SECTION_LABELS = {
+    "capa_folha_rosto": "Capa e folha de rosto",
+    "controle_documental_sumario": "Controle documental e sumario",
+    "identificacao_laudo": "Identificacao do laudo",
+    "identificacao_tecnica_do_objeto": "Identificacao tecnica do objeto",
+    "objeto_escopo_base_normativa": "Objeto, escopo e base normativa",
+    "metodologia_instrumentos_equipe": "Metodologia, instrumentos e equipe",
+    "evidencias_registros_fotograficos": "Evidencias e registros fotograficos",
+    "checklist_tecnico": "Checklist tecnico",
+    "achados_nao_conformidades": "Achados e nao conformidades",
+    "nao_conformidades_criticidade": "Achados tecnicos e providencias",
+    "conclusao": "Conclusao",
+    "revisao_mesa": "Revisao da Mesa Avaliadora",
+    "assinaturas_responsabilidade_tecnica": "Assinaturas e responsabilidade tecnica",
+    "auditoria_emissao": "Auditoria da emissao oficial",
+}
+
 _OBJECT_PATHS: tuple[str, ...] = (
     "identificacao.objeto_principal",
     "identificacao.identificacao_do_vaso",
@@ -259,6 +278,125 @@ def _join_unique(values: list[str]) -> str | None:
         seen.add(key)
         ordered.append(clean)
     return "; ".join(ordered) or None
+
+
+def _is_nr35_linha_vida(ctx: dict[str, Any]) -> bool:
+    return str(ctx.get("family_key") or "").strip() == _NR35_LINHA_VIDA_FAMILY_KEY
+
+
+def _format_mesa_origin(value: Any) -> str | None:
+    text = str(value or "").strip()
+    normalized = text.lower()
+    if not normalized:
+        return None
+    if normalized in {"mesa_humana", "mesa", "humana", "human"}:
+        return "Mesa Avaliadora"
+    if normalized in {"ia", "ai", "automatizada"}:
+        return "Origem automatizada"
+    return _humanize_key(text)
+
+
+def _format_official_issue_status(value: Any) -> str | None:
+    text = str(value or "").strip()
+    normalized = text.lower()
+    if not normalized:
+        return None
+    if normalized in {"bloqueada_ate_validacao_mesa_pdf", "blocked_until_mesa_pdf_validation"}:
+        return "Bloqueada ate validacao da Mesa e do PDF oficial"
+    if normalized in {"issued", "emitido", "emissao_oficial"}:
+        return "Emissao oficial"
+    if normalized in {"ready", "ready_for_issue", "pronto"}:
+        return "Pronto para emissao oficial"
+    return _humanize_key(text)
+
+
+def _format_traceability_chain(value: Any) -> str | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    replacements = {
+        "campo JSON": "campo do documento",
+        "secao PDF": "secao do PDF",
+        "decisao Mesa": "decisao da Mesa Avaliadora",
+        "emissao oficial": "emissao oficial",
+    }
+    for source, target in replacements.items():
+        text = text.replace(source, target)
+    return text
+
+
+def _pdf_section_summary(value: Any) -> str | None:
+    if isinstance(value, str):
+        raw_items = [item.strip() for item in value.replace(",", ";").split(";")]
+    elif isinstance(value, list):
+        raw_items = [str(item or "").strip() for item in value]
+    else:
+        raw_items = []
+    labels = [_PDF_SECTION_LABELS.get(item, _humanize_key(item)) for item in raw_items if item]
+    return _join_unique(labels)
+
+
+def _nr35_photo_records(ctx: dict[str, Any]) -> list[dict[str, Any]]:
+    payload = ctx["payload"]
+    registros = _value_by_path(payload, "registros_fotograficos")
+    raw_records: list[Any] = []
+    if isinstance(registros, dict):
+        slots = registros.get("slots_obrigatorios") or registros.get("required_slots")
+        if isinstance(slots, list):
+            raw_records = list(slots)
+    if not raw_records:
+        projection_slots = _value_by_path(payload, "document_projection.required_photo_slots")
+        if isinstance(projection_slots, list):
+            raw_records = list(projection_slots)
+    if not raw_records:
+        contract_slots = _value_by_path(payload, "pdf_contract.required_photo_slots")
+        if isinstance(contract_slots, list):
+            raw_records = list(contract_slots)
+
+    records: list[dict[str, Any]] = []
+    for item in raw_records:
+        if not isinstance(item, dict):
+            continue
+        label = _pick_first_text(item.get("label"), item.get("titulo"), item.get("title"), item.get("slot"))
+        reference = _pick_first_text(
+            item.get("referencia_persistida"),
+            item.get("referencia_anexo"),
+            item.get("referencia"),
+            item.get("reference"),
+            item.get("resolved_evidence_id"),
+        )
+        caption = _pick_first_text(
+            item.get("legenda_tecnica"),
+            item.get("legenda"),
+            item.get("caption"),
+            item.get("resolved_caption"),
+            item.get("descricao"),
+            item.get("description"),
+        )
+        records.append(
+            {
+                "slot": str(item.get("slot") or item.get("slot_id") or "").strip(),
+                "label": label or "Registro fotografico",
+                "reference": reference or "",
+                "caption": caption or "",
+                "json_field": _pick_first_text(item.get("campo_json"), item.get("json_field")) or "",
+                "finding_key": _pick_first_text(item.get("achado_relacionado"), item.get("finding_key")) or "",
+                "pdf_section": _pick_first_text(item.get("secao_pdf"), item.get("pdf_section")) or "",
+            }
+        )
+    return records
+
+
+def _nr35_photo_contract_summary(ctx: dict[str, Any]) -> str | None:
+    parts: list[str] = []
+    for record in _nr35_photo_records(ctx):
+        label = str(record.get("label") or "").strip()
+        reference = str(record.get("reference") or "").strip()
+        if label and reference:
+            parts.append(f"{label}: {reference}")
+        elif label:
+            parts.append(label)
+    return _join_unique(parts)
 
 
 def _is_internal_path(path: str, *, audience: str) -> bool:
@@ -654,13 +792,19 @@ def _build_identification_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
         )
     if not rows and ctx["render_mode"] != RENDER_MODE_TEMPLATE_PREVIEW_BLANK:
         return None
+    title = "Identificacao do Laudo e da Linha de Vida" if _is_nr35_linha_vida(ctx) else "Identificacao Tecnica do Objeto"
+    intro = (
+        "Dados de rastreabilidade do laudo, local da vistoria, contratante, ativo e responsaveis tecnicos."
+        if _is_nr35_linha_vida(ctx)
+        else "Quadro tecnico do item, frente, unidade ou documento principal analisado."
+    )
     return {
-        "id": "identificacao_tecnica_do_objeto",
-        "title": "Identificacao Tecnica do Objeto",
+        "id": "identificacao_laudo" if _is_nr35_linha_vida(ctx) else "identificacao_tecnica_do_objeto",
+        "title": title,
         "intro": _section_intro(
             ctx,
-            "identificacao_tecnica_do_objeto",
-            "Quadro tecnico do item, frente, unidade ou documento principal analisado.",
+            "identificacao_laudo" if _is_nr35_linha_vida(ctx) else "identificacao_tecnica_do_objeto",
+            intro,
         ),
         "blocks": [{"type": "kv_grid", "variant": "identification", "rows": rows}],
     }
@@ -737,6 +881,23 @@ def _build_checklist_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
 
 def _build_evidence_rows(ctx: dict[str, Any]) -> list[list[dict[str, Any]]]:
     rows: list[list[dict[str, Any]]] = []
+    if _is_nr35_linha_vida(ctx):
+        for record in _nr35_photo_records(ctx):
+            caption = str(record.get("caption") or "").strip()
+            reference = str(record.get("reference") or "").strip()
+            finding = str(record.get("finding_key") or "").strip()
+            purpose = caption or "Vincular evidencia fotografica ao achado, ao campo do documento e a secao do PDF."
+            if finding and caption:
+                purpose = f"{caption} Achado vinculado: {_humanize_key(finding)}."
+            rows.append(
+                [
+                    {"text": str(record.get("label") or "Registro fotografico"), "blank": False},
+                    {"text": "Foto obrigatoria", "blank": False},
+                    {"text": purpose, "blank": False},
+                    {"text": reference, "blank": not bool(reference)},
+                ]
+            )
+
     slots = list(ctx["required_slots"]) + list(ctx["optional_slots"])
     for slot in slots:
         binding_path = str(slot.get("binding_path") or "").strip()
@@ -820,6 +981,53 @@ def _build_evidence_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
 
 def _build_findings_rows(ctx: dict[str, Any]) -> list[list[dict[str, Any]]]:
     rows: list[list[dict[str, Any]]] = []
+    if _is_nr35_linha_vida(ctx):
+        status_text = _pick_first_text(
+            _format_scalar(_value_by_path(ctx["payload"], "conclusao.status")),
+            _format_scalar(_value_by_path(ctx["payload"], "conclusao.status_operacional")),
+        )
+        finding_text = _pick_first_text(
+            _format_scalar(_value_by_path(ctx["payload"], "nao_conformidades_ou_lacunas.descricao")),
+            _format_scalar(_value_by_path(ctx["payload"], "conclusao.motivo_status")),
+            _format_scalar(_value_by_path(ctx["payload"], "conclusao.justificativa")),
+        )
+        action_text = _pick_first_text(
+            _format_scalar(_value_by_path(ctx["payload"], "conclusao.acao_requerida")),
+            _format_scalar(_value_by_path(ctx["payload"], "conclusao.condicao_para_reinspecao")),
+            _format_scalar(_value_by_path(ctx["payload"], "recomendacoes.texto")),
+        )
+        if status_text or finding_text or action_text:
+            rows.append(
+                [
+                    {"text": "Achado principal", "blank": False},
+                    {"text": status_text or "", "blank": not bool(status_text)},
+                    {"text": finding_text or "", "blank": not bool(finding_text)},
+                    {"text": action_text or "", "blank": not bool(action_text)},
+                ]
+            )
+        limitation_text = _format_scalar(_value_by_path(ctx["payload"], "nao_conformidades_ou_lacunas.limitacoes_de_inspecao"))
+        if limitation_text:
+            rows.append(
+                [
+                    {"text": "Limitacao de inspecao", "blank": False},
+                    {"text": "Pendente" if not status_text else status_text, "blank": False},
+                    {"text": limitation_text, "blank": False},
+                    {"text": "Complementar vistoria ou registrar justificativa tecnica.", "blank": False},
+                ]
+            )
+        evidence_text = _format_scalar(_value_by_path(ctx["payload"], "nao_conformidades_ou_lacunas.evidencias"))
+        if evidence_text:
+            rows.append(
+                [
+                    {"text": "Evidencia vinculada", "blank": False},
+                    {"text": "Registro fotografico", "blank": False},
+                    {"text": evidence_text, "blank": False},
+                    {"text": "Manter rastreabilidade no pacote oficial.", "blank": False},
+                ]
+            )
+        if rows:
+            return rows[:4]
+
     finding_text = _pick_first_text(
         *[_format_scalar(_value_by_path(ctx["payload"], path)) for path in _FINDING_PATHS]
     )
@@ -854,13 +1062,19 @@ def _build_findings_rows(ctx: dict[str, Any]) -> list[list[dict[str, Any]]]:
 
 
 def _build_findings_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
+    title = "Achados e Nao Conformidades" if _is_nr35_linha_vida(ctx) else "Achados Tecnicos e Providencias"
+    intro = (
+        "Achados, limitacoes, evidencias e encaminhamentos que sustentam a conclusao da inspecao NR35."
+        if _is_nr35_linha_vida(ctx)
+        else "Nao conformidades, pontos de atencao, restricoes ou lacunas que exigem leitura objetiva no documento."
+    )
     return {
-        "id": "nao_conformidades_criticidade",
-        "title": "Achados Tecnicos e Providencias",
+        "id": "achados_nao_conformidades" if _is_nr35_linha_vida(ctx) else "nao_conformidades_criticidade",
+        "title": title,
         "intro": _section_intro(
             ctx,
-            "nao_conformidades_criticidade",
-            "Nao conformidades, pontos de atencao, restricoes ou lacunas que exigem leitura objetiva no documento.",
+            "achados_nao_conformidades" if _is_nr35_linha_vida(ctx) else "nao_conformidades_criticidade",
+            intro,
         ),
         "blocks": [
             {
@@ -1099,15 +1313,29 @@ def _build_program_inventory_section(ctx: dict[str, Any]) -> dict[str, Any] | No
 
 
 def _build_conclusion_rows(ctx: dict[str, Any]) -> list[dict[str, Any]]:
-    return _rows_from_specs(
-        ctx,
-        [
-            FieldSpec("Status tecnico", ("conclusao.status",), semantics="computed_on_emit"),
-            FieldSpec("Conclusao tecnica", ("conclusao.conclusao_tecnica",), semantics="computed_on_emit", multiline=True),
-            FieldSpec("Justificativa", ("conclusao.justificativa",), semantics="computed_on_emit", multiline=True),
-            FieldSpec("Proxima acao", ("conclusao.proxima_acao", "recomendacoes.texto"), semantics="computed_on_emit", multiline=True),
-        ],
-    )
+    specs = [
+        FieldSpec("Status tecnico", ("conclusao.status",), semantics="computed_on_emit"),
+        FieldSpec("Conclusao tecnica", ("conclusao.conclusao_tecnica",), semantics="computed_on_emit", multiline=True),
+        FieldSpec("Justificativa", ("conclusao.justificativa",), semantics="computed_on_emit", multiline=True),
+    ]
+    if _is_nr35_linha_vida(ctx):
+        specs.extend(
+            [
+                FieldSpec("Liberado para uso", ("conclusao.liberado_para_uso",), semantics="computed_on_emit"),
+                FieldSpec(
+                    "Acao requerida",
+                    ("conclusao.acao_requerida", "conclusao.proxima_acao", "recomendacoes.texto"),
+                    semantics="computed_on_emit",
+                    multiline=True,
+                ),
+                FieldSpec("Condicao para reinspecao", ("conclusao.condicao_para_reinspecao",), semantics="computed_on_emit", multiline=True),
+                FieldSpec("Proxima inspecao periodica", ("conclusao.proxima_inspecao_periodica",), semantics="computed_on_emit"),
+                FieldSpec("Observacoes finais", ("conclusao.observacoes",), semantics="computed_on_emit", multiline=True),
+            ]
+        )
+    else:
+        specs.append(FieldSpec("Proxima acao", ("conclusao.proxima_acao", "recomendacoes.texto"), semantics="computed_on_emit", multiline=True))
+    return _rows_from_specs(ctx, specs)
 
 
 def _build_conclusion_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
@@ -1211,6 +1439,131 @@ def _build_signature_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def _build_mesa_review_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
+    if not _is_nr35_linha_vida(ctx):
+        return None
+    rows = [
+        {
+            "label": "Status da Mesa Avaliadora",
+            "value": _format_scalar(_value_by_path(ctx["payload"], "mesa_review.status")) or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "mesa_review.status")),
+            "semantics": "computed_on_emit",
+        },
+        {
+            "label": "Origem da aprovacao",
+            "value": _format_mesa_origin(_value_by_path(ctx["payload"], "mesa_review.aprovacao_origem")) or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "mesa_review.aprovacao_origem")),
+            "semantics": "computed_on_emit",
+        },
+        {
+            "label": "Aprovado por",
+            "value": _format_scalar(_value_by_path(ctx["payload"], "mesa_review.aprovado_por_nome")) or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "mesa_review.aprovado_por_nome")),
+            "semantics": "computed_on_emit",
+        },
+        {
+            "label": "Data da aprovacao",
+            "value": _format_scalar(_value_by_path(ctx["payload"], "mesa_review.aprovado_em")) or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "mesa_review.aprovado_em")),
+            "semantics": "computed_on_emit",
+        },
+        {
+            "label": "Pendencias resolvidas",
+            "value": _format_scalar(_value_by_path(ctx["payload"], "mesa_review.pendencias_resolvidas_texto")) or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "mesa_review.pendencias_resolvidas_texto")),
+            "semantics": "computed_on_emit",
+            "multiline": True,
+        },
+        {
+            "label": "Observacoes da Mesa",
+            "value": _format_scalar(_value_by_path(ctx["payload"], "mesa_review.observacoes_mesa")) or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "mesa_review.observacoes_mesa")),
+            "semantics": "computed_on_emit",
+            "multiline": True,
+        },
+    ]
+    if all(bool(row.get("blank")) for row in rows) and ctx["render_mode"] != RENDER_MODE_TEMPLATE_PREVIEW_BLANK:
+        return None
+    return {
+        "id": "revisao_mesa",
+        "title": "Revisao da Mesa Avaliadora",
+        "intro": _section_intro(
+            ctx,
+            "revisao_mesa",
+            "Registro da decisao humana que autoriza a emissao oficial do documento NR35.",
+        ),
+        "blocks": [{"type": "kv_grid", "variant": "mesa-review", "rows": rows}],
+    }
+
+
+def _build_issue_audit_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
+    if not _is_nr35_linha_vida(ctx):
+        return None
+    required_sections = _pdf_section_summary(_value_by_path(ctx["payload"], "pdf_contract.required_sections"))
+    if not required_sections:
+        required_sections = _pdf_section_summary(_value_by_path(ctx["payload"], "pdf_contract.required_sections_texto"))
+    rows = [
+        {
+            "label": "Rastreabilidade da emissao",
+            "value": _format_traceability_chain(_value_by_path(ctx["payload"], "auditoria.rastreabilidade_texto")) or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "auditoria.rastreabilidade_texto")),
+            "semantics": "computed_on_emit",
+            "multiline": True,
+        },
+        {
+            "label": "Contrato fotografico",
+            "value": _nr35_photo_contract_summary(ctx) or "",
+            "blank": not bool(_nr35_photo_contract_summary(ctx)),
+            "semantics": "computed_on_emit",
+            "multiline": True,
+        },
+        {
+            "label": "Secoes obrigatorias",
+            "value": required_sections or "",
+            "blank": not bool(required_sections),
+            "semantics": "template_static",
+            "multiline": True,
+        },
+        {
+            "label": "Versao do template",
+            "value": _format_scalar(_value_by_path(ctx["payload"], "auditoria.template_version"))
+            or _format_scalar(ctx["payload"].get("template_version"))
+            or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "auditoria.template_version")) and _is_blank(ctx["payload"].get("template_version")),
+            "semantics": "template_static",
+        },
+        {
+            "label": "Schema do documento",
+            "value": _format_scalar(_value_by_path(ctx["payload"], "auditoria.schema_version")) or _format_scalar(ctx["payload"].get("schema_version")) or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "auditoria.schema_version")) and _is_blank(ctx["payload"].get("schema_version")),
+            "semantics": "template_static",
+        },
+        {
+            "label": "Status da emissao oficial",
+            "value": _format_official_issue_status(_value_by_path(ctx["payload"], "auditoria.emissao_oficial_status")) or "",
+            "blank": _is_blank(_value_by_path(ctx["payload"], "auditoria.emissao_oficial_status")),
+            "semantics": "computed_on_emit",
+        },
+        {
+            "label": "Hash e verificacao publica",
+            "value": "Hash e QR Code aparecem no bloco de verificacao publica quando o documento e emitido oficialmente.",
+            "blank": False,
+            "semantics": "computed_on_emit",
+            "multiline": True,
+        },
+    ]
+    return {
+        "id": "auditoria_emissao",
+        "title": "Auditoria da Emissao Oficial",
+        "intro": _section_intro(
+            ctx,
+            "auditoria_emissao",
+            "Rastreabilidade do PDF oficial, contrato fotografico, versoes e verificacao publica.",
+        ),
+        "blocks": [{"type": "kv_grid", "variant": "audit", "rows": rows}],
+    }
+
+
 def _build_admin_appendix_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
     if ctx["audience"] != "admin":
         return None
@@ -1256,15 +1609,19 @@ _SECTION_BUILDERS: dict[str, Callable[[dict[str, Any]], dict[str, Any] | None]] 
     "objeto_escopo_base_normativa": _build_scope_section,
     "metodologia_instrumentos_equipe": _build_methodology_section,
     "identificacao_tecnica_do_objeto": _build_identification_section,
+    "identificacao_laudo": _build_identification_section,
     "checklist_tecnico": _build_checklist_section,
     "evidencias_registros_fotograficos": _build_evidence_section,
     "nao_conformidades_criticidade": _build_findings_section,
+    "achados_nao_conformidades": _build_findings_section,
     "medicoes_e_resultados": _build_measurement_section,
     "analise_de_risco": _build_risk_section,
     "indice_e_documentacao_base": _build_document_index_section,
     "inventario_e_classificacao": _build_program_inventory_section,
     "conclusao": _build_conclusion_section,
+    "revisao_mesa": _build_mesa_review_section,
     "assinaturas_responsabilidade_tecnica": _build_signature_section,
+    "auditoria_emissao": _build_issue_audit_section,
 }
 
 
