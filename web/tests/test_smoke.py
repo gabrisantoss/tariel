@@ -212,11 +212,14 @@ def test_readiness_retorna_503_quando_bootstrap_do_banco_esta_pendente(cliente_m
     assert corpo["db_bootstrap"]["supervisor_attempt"] == 3
 
 
-def test_raiz_redireciona_para_login_sem_sessao(cliente_main_isolado: TestClient) -> None:
+def test_raiz_publica_exibe_landing_sem_sessao(cliente_main_isolado: TestClient) -> None:
     resposta = cliente_main_isolado.get("/", follow_redirects=False)
 
-    assert resposta.status_code in {302, 303, 307}
-    assert resposta.headers["location"] == "/app/login"
+    assert resposta.status_code == 200
+    assert "<title>Tariel</title>" in resposta.text
+    assert "Inspeção técnica governada" in resposta.text
+    assert 'href="/app/login"' in resposta.text
+    assert "/static/css/shared/public_landing.css" in resposta.text
 
 
 def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:

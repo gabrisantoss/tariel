@@ -14,6 +14,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -375,6 +376,7 @@ def registrar_rotas_operacionais(
     redirecionar_por_nivel: Callable[[Any], RedirectResponse],
 ) -> None:
     registrar_rotas_perf(app)
+    templates_publicos = Jinja2Templates(directory=str(dir_static.parent / "templates"))
 
     def _rate_limit_storage_status() -> str:
         limiter = getattr(app.state, "limiter", None)
@@ -563,10 +565,10 @@ def registrar_rotas_operacionais(
             }
 
     @app.get("/", include_in_schema=False)
-    def redirecionamento_raiz(
+    def pagina_publica_raiz(
         request: Request,
         banco: Session = Depends(obter_banco),
-    ) -> RedirectResponse:
+    ) -> Response:
         usuario = obter_usuario_da_sessao(request, banco)
 
         if usuario:
@@ -579,5 +581,10 @@ def registrar_rotas_operacionais(
             )
             return redirecionar_por_nivel(usuario)
 
-        logger.debug("Sessão inválida ou inexistente. Redirecionando para /app/login")
-        return RedirectResponse(url="/app/login", status_code=302)
+        return templates_publicos.TemplateResponse(
+            request,
+            "public_landing.html",
+            {
+                "v_app": app_versao,
+            },
+        )
