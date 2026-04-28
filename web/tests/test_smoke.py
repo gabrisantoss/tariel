@@ -1690,7 +1690,7 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     admin_clients_css = (raiz / "static" / "css" / "admin" / "admin_clients.css").read_text(encoding="utf-8")
     assert "Momento canônico da plataforma" in dashboard_admin
     assert 'data-platform-flow-summary="{{ _platform_moment_key | e }}"' in dashboard_admin
-    assert "Owner predominante" in dashboard_admin
+    assert "Responsável predominante" in dashboard_admin
     assert "Prioridades executivas da plataforma" in dashboard_admin
     assert "Abrir bloqueios" in dashboard_admin
     assert ".governance-signals" in admin_dashboard_css
@@ -1699,7 +1699,7 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert ".executive-priority-card" in admin_dashboard_css
     assert "Momento canônico" in clientes_admin
     assert 'data-tenant-flow-summary="{{ _tenant_moment_key | e }}"' in clientes_admin
-    assert "Owner {{ _tenant_owner_label | e }}" in clientes_admin
+    assert "Responsável ativo {{ _tenant_owner_label | e }}" in clientes_admin
     assert "Triagem executiva da carteira" in clientes_admin
     assert "Filtrar bloqueios" in clientes_admin
     assert ".tenant-flow-summary" in admin_clients_css
@@ -2165,6 +2165,35 @@ def test_ux_g_admin_ceo_fluxo_guiado_governanca() -> None:
         "Ajustes da empresa",
     ):
         assert termo_legacy not in resumo_html
+
+
+def test_ux_i_visual_qa_remove_termos_internos_e_preserva_mobile() -> None:
+    raiz_web = Path(__file__).resolve().parents[1]
+    dashboard_admin = (raiz_web / "templates" / "admin" / "dashboard.html").read_text(encoding="utf-8")
+    clientes_admin = (raiz_web / "templates" / "admin" / "clientes.html").read_text(encoding="utf-8")
+    workspace_mesa_html = (
+        raiz_web / "templates" / "inspetor" / "workspace" / "_inspection_mesa.html"
+    ).read_text(encoding="utf-8")
+    workspace_mesa_js = (
+        raiz_web / "static" / "js" / "inspetor" / "workspace_mesa_status.js"
+    ).read_text(encoding="utf-8")
+    admin_css = (raiz_web / "static" / "css" / "admin" / "admin.css").read_text(encoding="utf-8")
+    portal_theme_css = (
+        raiz_web / "static" / "css" / "cliente" / "portal_admin_theme.css"
+    ).read_text(encoding="utf-8")
+
+    assert "Responsável predominante" in dashboard_admin
+    assert "Responsável ativo {{ _tenant_owner_label | e }}" in clientes_admin
+    assert "Responsável ativo indefinido" in workspace_mesa_html
+    assert "Etapa do caso ${momentoCanonico.lifecycleLabel}" in workspace_mesa_js
+    assert ".link-acao-tabela" in admin_css
+    assert "grid-template-columns: 1fr;" in portal_theme_css
+
+    texto_usuario = "\n".join(
+        [dashboard_admin, clientes_admin, workspace_mesa_html, workspace_mesa_js]
+    )
+    for termo_interno in ("Owner ", "Owner predominante", "Fluxo legado"):
+        assert termo_interno not in texto_usuario
 
 
 def test_logins_e_blueprint_nao_reintroduzem_autofill_dev() -> None:
