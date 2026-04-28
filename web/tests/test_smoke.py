@@ -2110,6 +2110,63 @@ def test_ux_f_mesa_separa_decisao_documento_e_auditoria() -> None:
         assert termo_legacy not in painel_revisor_html
 
 
+def test_ux_g_admin_ceo_fluxo_guiado_governanca() -> None:
+    raiz_web = Path(__file__).resolve().parents[1]
+    cliente_detalhe_html = (raiz_web / "templates" / "admin" / "cliente_detalhe.html").read_text(encoding="utf-8")
+    resumo_html = (
+        raiz_web / "templates" / "admin" / "cliente_detalhe" / "_tab_resumo.html"
+    ).read_text(encoding="utf-8")
+    acoes_html = (
+        raiz_web / "templates" / "admin" / "cliente_detalhe" / "_tab_acoes.html"
+    ).read_text(encoding="utf-8")
+    layout_css = (
+        raiz_web / "static" / "css" / "admin" / "admin_client_detail" / "_layout.css"
+    ).read_text(encoding="utf-8")
+
+    for termo in (
+        "Fluxo guiado de governança",
+        "Resumo do cliente",
+        "Pacote contratado",
+        "Checklist de operação",
+        "Pronto para operar",
+        "Pendente de signatário",
+        "Pendente de família/template",
+        'data-uxg-block="pacote-portais"',
+        'data-uxg-block="capacidades"',
+        'data-uxg-block="familias-templates"',
+        'data-uxg-block="signatarios-emissao"',
+    ):
+        assert termo in cliente_detalhe_html
+
+    for termo in (
+        "Mesa Avaliadora",
+        "Revisão interna governada",
+        "Emissão oficial",
+        "Pacote oficial",
+        "Não incluído no pacote",
+        "Depende da família/template",
+        "Família exige Mesa",
+        "Signatário governado",
+        "Detalhes técnicos da liberação",
+    ):
+        assert termo in cliente_detalhe_html + "\n" + resumo_html + "\n" + acoes_html
+
+    for seletor in (
+        ".admin-governance-flow",
+        ".admin-governance-flow__blocks",
+        ".admin-governance-pill",
+        ".admin-governance-capability-list",
+        ".admin-governance-readiness-list",
+    ):
+        assert seletor in layout_css
+
+    for termo_legacy in (
+        "Responsaveis pela assinatura",
+        "Ajustes da empresa",
+    ):
+        assert termo_legacy not in resumo_html
+
+
 def test_logins_e_blueprint_nao_reintroduzem_autofill_dev() -> None:
     raiz = Path(__file__).resolve().parents[1]
     login_admin = (raiz / "templates" / "admin" / "login.html").read_text(encoding="utf-8")
