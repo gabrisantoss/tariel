@@ -281,13 +281,6 @@ export function renderizarReportPackDraftCard(
           </View>
         ) : null}
       </View>
-      <ThreadConversationReportPackActionsSection
-        onAbrirMesaTab={options?.onAbrirMesaTab}
-        onAbrirQualityGate={options?.onAbrirQualityGate}
-        showFinalizeAction={showFinalizeAction}
-        showOpenMesaAction={showOpenMesaAction}
-        testID={testID}
-      />
       <ThreadConversationReportPackDocumentSections
         items={highlightedSections}
       />
@@ -297,6 +290,13 @@ export function renderizarReportPackDraftCard(
       <ThreadConversationReportPackBlocksSection items={visibleBlocks} />
       <ThreadConversationReportPackMissingEvidenceNotes
         items={summary.missingEvidenceMessages}
+      />
+      <ThreadConversationReportPackActionsSection
+        onAbrirMesaTab={options?.onAbrirMesaTab}
+        onAbrirQualityGate={options?.onAbrirQualityGate}
+        showFinalizeAction={showFinalizeAction}
+        showOpenMesaAction={showOpenMesaAction}
+        testID={testID}
       />
       <ThreadConversationReportPackExecutiveSection
         items={visibleExecutiveSections}

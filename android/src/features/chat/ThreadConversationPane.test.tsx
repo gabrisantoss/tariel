@@ -240,12 +240,16 @@ describe("ThreadConversationPane", () => {
             reissue_recommended: true,
             current_issue: {
               issue_number: "TAR-20260410-000123",
+              issue_state: "issued",
               issue_state_label: "Emitido",
               issued_at: "2026-04-10T13:40:00+00:00",
+              package_sha256:
+                "aaaaaaaaaaaabbbbbbbbbbbbccccccccccccddddddddddddeeeeeeeeeeeeffff",
               package_filename: "TAR-20260410-000123.zip",
               download_url: "/app/api/laudo/123/emissao-oficial/download",
               download_label: "Baixar pacote oficial",
               download_mime_type: "application/zip",
+              approval_snapshot_id: 91,
               primary_pdf_diverged: true,
               primary_pdf_storage_version: "v0003",
               current_primary_pdf_storage_version: "v0004",
@@ -292,10 +296,11 @@ describe("ThreadConversationPane", () => {
       getByText("Sinalização: Evidência obrigatória pendente"),
     ).toBeTruthy();
     expect(getByText("Emissão oficial")).toBeTruthy();
-    expect(getByText("Pronto para emissão oficial")).toBeTruthy();
+    expect(getAllByText("Documento emitido").length).toBeGreaterThan(0);
     expect(
       getByText("TAR-20260410-000123 · Emitido · 2026-04-10T13:40:00+00:00"),
     ).toBeTruthy();
+    expect(getByText("Hash do pacote")).toBeTruthy();
     expect(getByText("Reemissão recomendada")).toBeTruthy();
     expect(
       getByText(
@@ -464,7 +469,7 @@ describe("ThreadConversationPane", () => {
               code: "primary_pdf_diverged",
               title: "red flag issue_state",
               message:
-                "mobile_autonomous mobile_review_allowed reviewer_issue reviewer_decision superseded override diff tenant_without_mesa nr35_mesa_required_unavailable",
+                "mobile_autonomous mobile_review_allowed reviewer_issue reviewer_decision superseded revoked issued package_sha256 approval_snapshot_id override diff tenant_without_mesa nr35_mesa_required_unavailable",
             },
           ],
           tenant_entitlements: {
@@ -487,17 +492,21 @@ describe("ThreadConversationPane", () => {
             count: 1,
             latest: {
               actor_name: "Inspetor Demo",
-              reason: "override mobile_review_allowed diff",
+              reason:
+                "override mobile_review_allowed diff reissue_reason_codes approval_snapshot_updated",
             },
           },
           emissao_oficial: {
             reissue_recommended: true,
             current_issue: {
               issue_number: "TAR-20260414-000777",
+              issue_state: "superseded",
               issue_state_label: "superseded",
               primary_pdf_diverged: true,
               primary_pdf_storage_version: "v0001",
               current_primary_pdf_storage_version: "v0002",
+              package_sha256: "abc123",
+              approval_snapshot_id: 77,
             },
             audit_trail: [
               {
@@ -517,7 +526,7 @@ describe("ThreadConversationPane", () => {
     expect(getAllByText(/Documento substituído/).length).toBeGreaterThan(0);
     expect(
       queryByText(
-        /mobile_autonomous|mobile_review_allowed|primary_pdf_diverged|issue_state|superseded|reviewer_issue|reviewer_decision|override|diff|red flag|tenant_without_mesa|nr35_mesa_required_unavailable/i,
+        /mobile_autonomous|mobile_review_allowed|primary_pdf_diverged|reissue_reason_codes|approval_snapshot_updated|issue_state|superseded|revoked|issued|package_sha256|approval_snapshot_id|reviewer_issue|reviewer_decision|override|diff|red flag|tenant_without_mesa|nr35_mesa_required_unavailable/i,
       ),
     ).toBeNull();
   });
@@ -662,7 +671,7 @@ describe("ThreadConversationPane", () => {
     const onAbrirMesaTab = jest.fn();
     const onAbrirQualityGate = jest.fn();
     const onUsarPerguntaPreLaudo = jest.fn();
-    const { getAllByText, getByTestId, getByText } = render(
+    const { getAllByText, getByTestId, getByText, queryByText } = render(
       <ThreadConversationPane
         {...baseProps}
         allowedSurfaceActions={["chat_finalize"]}
@@ -832,6 +841,7 @@ describe("ThreadConversationPane", () => {
 
     expect(getByTestId("chat-report-pack-card")).toBeTruthy();
     expect(getByText("PDF operacional")).toBeTruthy();
+    expect(queryByText("Baixar pacote oficial")).toBeNull();
     expect(getAllByText("Histórico/Auditoria").length).toBeGreaterThan(0);
     expect(getAllByText("Documento").length).toBeGreaterThan(0);
     expect(getByText("Conversa e evidências")).toBeTruthy();
@@ -851,6 +861,53 @@ describe("ThreadConversationPane", () => {
       "Confirme a conclusão técnica da ancoragem principal.",
     );
     expect(onAbrirQualityGate).toHaveBeenCalled();
+    expect(onAbrirMesaTab).toHaveBeenCalled();
+  });
+
+  it("mantém CTA da Mesa quando o modo vem apenas do outline do pre-laudo", () => {
+    const onAbrirMesaTab = jest.fn();
+    const { getByTestId, getByText } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        caseLifecycleStatus="laudo_em_coleta"
+        onAbrirMesaTab={onAbrirMesaTab}
+        vendoMesa={false}
+        conversaVazia={false}
+        mensagensVisiveis={[
+          {
+            id: 1,
+            papel: "assistente",
+            texto: "Mobile pilot V2 target",
+            tipo: "assistant",
+            citacoes: [],
+          },
+        ]}
+        reportPackDraft={{
+          modeled: false,
+          template_label: "Inspeção Geral (Padrão)",
+          quality_gates: {
+            autonomy_ready: false,
+            missing_evidence: [
+              {
+                message:
+                  "Esta familia ainda nao possui report pack incremental modelado.",
+              },
+            ],
+          },
+          pre_laudo_outline: {
+            final_validation_mode: "mesa_required",
+            next_questions: [
+              "Esta familia ainda nao possui report pack incremental modelado.",
+            ],
+          },
+        }}
+      />,
+    );
+
+    expect(getByTestId("chat-report-pack-card-open-mesa")).toBeTruthy();
+    expect(getByText("Abrir Mesa Avaliadora")).toBeTruthy();
+
+    fireEvent.press(getByTestId("chat-report-pack-card-open-mesa"));
     expect(onAbrirMesaTab).toHaveBeenCalled();
   });
 
@@ -941,12 +998,16 @@ describe("ThreadConversationPane", () => {
             reissue_recommended: true,
             current_issue: {
               issue_number: "TAR-20260413-000321",
+              issue_state: "issued",
               issue_state_label: "Emitido",
               issued_at: "2026-04-13T18:45:00+00:00",
+              package_sha256:
+                "ffffffffeeeeeeeeddddddddccccccccbbbbbbbbaaaaaaaa9999999988888888",
               package_filename: "TAR-20260413-000321.zip",
               download_url: "/app/api/laudo/321/emissao-oficial/download",
               download_label: "Baixar pacote oficial",
               download_mime_type: "application/zip",
+              approval_snapshot_id: 321,
               primary_pdf_diverged: true,
               primary_pdf_storage_version: "v0003",
               current_primary_pdf_storage_version: "v0004",
@@ -961,7 +1022,10 @@ describe("ThreadConversationPane", () => {
 
     expect(getByTestId("chat-issued-document-card")).toBeTruthy();
     expect(getAllByText("Emissão oficial").length).toBeGreaterThan(0);
+    expect(getAllByText("Documento emitido").length).toBeGreaterThan(0);
     expect(getByText("TAR-20260413-000321")).toBeTruthy();
+    expect(getByText("Download oficial")).toBeTruthy();
+    expect(getByText("Hash do pacote")).toBeTruthy();
     expect(getAllByText("Reemissão recomendada").length).toBeGreaterThan(0);
     expect(
       getByText(
@@ -983,6 +1047,48 @@ describe("ThreadConversationPane", () => {
         url: "/app/api/laudo/321/emissao-oficial/download",
       }),
     );
+  });
+
+  it("mantém documento substituído como histórico sem download principal", () => {
+    const onAbrirAnexo = jest.fn();
+    const { getAllByText, queryByTestId } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        vendoMesa={false}
+        conversaVazia={false}
+        caseLifecycleStatus="emitido"
+        onAbrirAnexo={onAbrirAnexo}
+        mensagensVisiveis={[
+          {
+            id: 1,
+            papel: "assistente",
+            texto: "Documento substituído preservado.",
+            tipo: "assistant",
+            citacoes: [],
+          },
+        ]}
+        reviewPackage={{
+          emissao_oficial: {
+            current_issue: {
+              issue_number: "TAR-20260413-000111",
+              issue_state: "superseded",
+              issue_state_label: "superseded",
+              issued_at: "2026-04-13T18:45:00+00:00",
+              package_filename: "TAR-20260413-000111.zip",
+              download_url: "/app/api/laudo/111/emissao-oficial/download",
+              download_label: "Baixar pacote oficial",
+              download_mime_type: "application/zip",
+              package_sha256: "hash-substituido",
+            },
+          },
+        }}
+      />,
+    );
+
+    expect(getAllByText("Histórico de emissões").length).toBeGreaterThan(0);
+    expect(getAllByText("Documento substituído").length).toBeGreaterThan(0);
+    expect(queryByTestId("chat-issued-document-download")).toBeNull();
+    expect(onAbrirAnexo).not.toHaveBeenCalled();
   });
 
   it("não mostra cards formais quando o caso segue em análise livre", () => {

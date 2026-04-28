@@ -13,6 +13,7 @@ import {
   rotuloCaseOwnerRole,
 } from "./caseLifecycle";
 import {
+  classificarEstadoEmissaoOficial,
   lerArrayRegistros,
   lerBooleanOuNull,
   lerNumero,
@@ -42,6 +43,14 @@ type ReviewDecisionCommand =
   | "aprovar_no_mobile"
   | "devolver_no_mobile"
   | "enviar_para_mesa";
+
+function formatarHashCurto(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= 24) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, 12)}...${trimmed.slice(-8)}`;
+}
 
 function resumirRotaRevisao(params: {
   canSendMesa: boolean;
@@ -85,6 +94,11 @@ function montarAnexoDownloadOficial(
   emissaoOficial: Record<string, unknown> | null,
   emissaoAtual: Record<string, unknown> | null,
 ): MobileAttachment | null {
+  const issueState = classificarEstadoEmissaoOficial(emissaoAtual);
+  if (!issueState.active) {
+    return null;
+  }
+
   const downloadUrl =
     lerTexto(emissaoAtual?.download_url) ||
     lerTexto(emissaoOficial?.download_url);
@@ -401,6 +415,7 @@ export function buildThreadConversationReviewPackageSummary(
   const anexoPack = lerRegistro(reviewPackage.anexo_pack);
   const emissaoOficial = lerRegistro(reviewPackage.emissao_oficial);
   const emissaoAtual = lerRegistro(emissaoOficial?.current_issue);
+  const estadoEmissaoAtual = classificarEstadoEmissaoOficial(emissaoAtual);
   const officialIssueDownloadAttachment = montarAnexoDownloadOficial(
     emissaoOficial,
     emissaoAtual,
@@ -464,6 +479,38 @@ export function buildThreadConversationReviewPackageSummary(
       summary: sanitizarTextoThread(lerTexto(item.summary)),
     }),
   );
+  const currentIssueAuditRows = [
+    lerTexto(emissaoAtual?.package_filename)
+      ? {
+          title: "Pacote oficial",
+          value: lerTexto(emissaoAtual?.package_filename),
+        }
+      : null,
+    lerTexto(emissaoAtual?.package_sha256)
+      ? {
+          title: "Hash do pacote",
+          value: formatarHashCurto(lerTexto(emissaoAtual?.package_sha256)),
+        }
+      : null,
+    lerTexto(emissaoAtual?.verification_hash)
+      ? {
+          title: "Auditoria",
+          value: `Hash de verificação ${formatarHashCurto(
+            lerTexto(emissaoAtual?.verification_hash),
+          )}`,
+        }
+      : null,
+    lerTexto(emissaoAtual?.verification_url) ||
+    lerTexto(verification?.verification_url)
+      ? {
+          title: "Auditoria",
+          value: `Verificação pública ${
+            lerTexto(emissaoAtual?.verification_url) ||
+            lerTexto(verification?.verification_url)
+          }`,
+        }
+      : null,
+  ].filter((item): item is { title: string; value: string } => item !== null);
   const blockItems = lerArrayRegistros(revisaoPorBloco?.items).map((item) => ({
     blockKey: lerTexto(item.block_key),
     title: sanitizarTextoThread(lerTexto(item.title, "Bloco")),
@@ -562,11 +609,20 @@ export function buildThreadConversationReviewPackageSummary(
     officialIssueLabel: sanitizarTextoThread(
       lerTexto(emissaoOficial?.issue_status_label, "Emissão oficial governada"),
     ),
+    currentOfficialIssueHasRecord: Boolean(emissaoAtual),
+    currentOfficialIssueIsHistorical: estadoEmissaoAtual.historical,
+    currentOfficialIssueTitle: emissaoAtual
+      ? estadoEmissaoAtual.title
+      : sanitizarTextoThread(
+          lerTexto(
+            emissaoOficial?.issue_status_label,
+            "Emissão oficial governada",
+          ),
+        ),
     currentOfficialIssueNumber: lerTexto(emissaoAtual?.issue_number),
-    currentOfficialIssueStateLabel: sanitizarTextoThread(
-      lerTexto(emissaoAtual?.issue_state_label, "Emitido"),
-    ),
+    currentOfficialIssueStateLabel: estadoEmissaoAtual.label,
     currentOfficialIssueIssuedAt: lerTexto(emissaoAtual?.issued_at),
+    currentIssueAuditRows,
     officialIssueDownloadAttachment,
     officialIssueBlockers: lerArrayRegistros(emissaoOficial?.blockers).map(
       (item) =>
