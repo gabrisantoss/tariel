@@ -35,6 +35,35 @@
     {% set _admin_cliente_policy = admin_cliente_policy or {} %}
     {% set _primeiro_acesso = primeiro_acesso_empresa or {} %}
     {% set _empresa_bloqueada = _status.get('value') == 'bloqueado' %}
+    {% set _portais_admin = _admin_cliente_policy.get("tenant_portal_entitlements", {}) %}
+    {% set _capabilities_admin = _admin_cliente_policy.get("tenant_capability_entitlements", {}) %}
+    {% set _mesa_liberada = _capabilities_admin.get("inspector_send_to_mesa") or _capabilities_admin.get("reviewer_decision") %}
+    {% set _emissao_liberada = _capabilities_admin.get("reviewer_issue") %}
+    {% set _familias_ativas = _portfolio.get("active_family_count", 0) | int %}
+    {% set _modelos_ativos = _portfolio.get("active_activation_count", 0) | int %}
+    {% set _signatarios_total = signatarios_governados | length %}
+    {% set _admin_cliente_pronto = (admins_cliente | length) > 0 and not _primeiro_acesso.get("requires_password_reset") %}
+    {% if _empresa_bloqueada %}
+        {% set _readiness_label = "Pendente de configuração" %}
+        {% set _readiness_badge = "critico" %}
+        {% set _readiness_reason = "Empresa bloqueada no Admin CEO." %}
+    {% elif not _admin_cliente_pronto %}
+        {% set _readiness_label = "Pendente de usuários" %}
+        {% set _readiness_badge = "atencao" %}
+        {% set _readiness_reason = "Configure o primeiro acesso da empresa." %}
+    {% elif _familias_ativas == 0 %}
+        {% set _readiness_label = "Pendente de família/template" %}
+        {% set _readiness_badge = "atencao" %}
+        {% set _readiness_reason = "Libere ao menos uma família com template operacional." %}
+    {% elif _emissao_liberada and _signatarios_total == 0 %}
+        {% set _readiness_label = "Pendente de signatário" %}
+        {% set _readiness_badge = "atencao" %}
+        {% set _readiness_reason = "Emissão oficial exige Signatário governado." %}
+    {% else %}
+        {% set _readiness_label = "Pronto para operar" %}
+        {% set _readiness_badge = "conforme" %}
+        {% set _readiness_reason = "Pacote, portais e configuração mínima estão coerentes." %}
+    {% endif %}
 
     <div class="admin-layout">
         <aside class="sidebar" aria-label="Menu administrativo">
@@ -115,6 +144,95 @@
                 <button type="button" class="alert-fechar" aria-label="Fechar alerta">×</button>
             </div>
             {% endfor %}
+
+            <section class="admin-governance-flow" aria-labelledby="admin-governance-flow-title">
+                <div class="admin-governance-flow__header">
+                    <div>
+                        <span class="admin-governance-flow__eyebrow">Fluxo guiado de governança</span>
+                        <h2 id="admin-governance-flow-title">Configuração comercial e técnica do cliente</h2>
+                        <p>Resumo operacional para entender pacote, portais, capacidades, famílias, Mesa Avaliadora, Emissão oficial e prontidão antes de operar.</p>
+                    </div>
+                    <span class="badge {{ _readiness_badge | e }}">{{ _readiness_label | e }}</span>
+                </div>
+
+                <div class="admin-governance-flow__summary" aria-label="Resumo do cliente">
+                    <article class="admin-governance-step admin-governance-step--wide">
+                        <span class="admin-governance-step__label">Resumo do cliente</span>
+                        <strong>{{ empresa.nome_fantasia | e }}</strong>
+                        <p>
+                            Pacote {{ _admin_cliente_policy.get("commercial_service_package_label", "Chat Inspetor + Mesa Avaliadora") | e }}
+                            · {{ _admin_cliente_policy.get("operating_model_label", "Operação padrão") | e }}
+                            · {{ _readiness_reason | e }}
+                        </p>
+                    </article>
+                    <article class="admin-governance-step">
+                        <span class="admin-governance-step__label">Pacote contratado</span>
+                        <strong>{{ _admin_cliente_policy.get("commercial_service_package_label", "Chat Inspetor + Mesa Avaliadora") | e }}</strong>
+                        <p>{{ _admin_cliente_policy.get("commercial_service_package_description", "Modelo governado pelo Admin CEO.") | e }}</p>
+                    </article>
+                    <article class="admin-governance-step">
+                        <span class="admin-governance-step__label">Checklist de operação</span>
+                        <strong>{{ _readiness_label | e }}</strong>
+                        <p>{{ _readiness_reason | e }}</p>
+                    </article>
+                </div>
+
+                <div class="admin-governance-flow__blocks">
+                    <section class="admin-governance-block" data-uxg-block="pacote-portais">
+                        <header>
+                            <span>Pacote e portais</span>
+                            <h3>Superfícies liberadas</h3>
+                        </header>
+                        <div class="admin-governance-pill-grid">
+                            <span class="admin-governance-pill {{ 'is-on' if _portais_admin.get('cliente') else 'is-off' }}">Portal Cliente · {{ "liberado" if _portais_admin.get("cliente") else "Não incluído no pacote" }}</span>
+                            <span class="admin-governance-pill {{ 'is-on' if _portais_admin.get('inspetor') else 'is-off' }}">Chat Inspetor · {{ "liberado" if _portais_admin.get("inspetor") else "Não incluído no pacote" }}</span>
+                            <span class="admin-governance-pill {{ 'is-on' if _mesa_liberada else 'is-off' }}">Mesa Avaliadora · {{ "Mesa habilitada" if _mesa_liberada else "Pacote sem Mesa" }}</span>
+                            <span class="admin-governance-pill {{ 'is-on' if _emissao_liberada else 'is-off' }}">Documentos oficiais · {{ "Emissão oficial liberada" if _emissao_liberada else "Não incluído no pacote" }}</span>
+                        </div>
+                    </section>
+
+                    <section class="admin-governance-block" data-uxg-block="capacidades">
+                        <header>
+                            <span>Capacidades</span>
+                            <h3>Ações por estado</h3>
+                        </header>
+                        <div class="admin-governance-capability-list">
+                            <span>Criar casos <strong>{{ "liberado" if _capabilities_admin.get("inspector_case_create") else "Não incluído no pacote" }}</strong></span>
+                            <span>Finalizar coleta <strong>{{ "liberado" if _capabilities_admin.get("inspector_case_finalize") else "Não incluído no pacote" }}</strong></span>
+                            <span>Revisão interna governada <strong>{{ "liberada" if _capabilities_admin.get("mobile_case_approve") else "Depende da família/template" }}</strong></span>
+                            <span>Enviar para Mesa <strong>{{ "liberado" if _capabilities_admin.get("inspector_send_to_mesa") else "Não incluído no pacote" }}</strong></span>
+                            <span>Decisão da Mesa <strong>{{ "liberada" if _capabilities_admin.get("reviewer_decision") else "Não incluído no pacote" }}</strong></span>
+                            <span>Emissão oficial e download oficial <strong>{{ "liberados" if _emissao_liberada else "Não incluído no pacote" }}</strong></span>
+                        </div>
+                    </section>
+
+                    <section class="admin-governance-block" data-uxg-block="familias-templates">
+                        <header>
+                            <span>Famílias e templates</span>
+                            <h3>Liberação operacional</h3>
+                        </header>
+                        <div class="admin-governance-readiness-list">
+                            <span><strong>{{ _familias_ativas }}</strong> família(s) liberada(s)</span>
+                            <span><strong>{{ _modelos_ativos }}</strong> modelo(s) ativo(s)</span>
+                            <span>{{ "Família exige Mesa quando a regra do catálogo exigir" if _mesa_liberada else "Famílias com Mesa ficam indisponíveis neste pacote" }}</span>
+                            <span>{{ "Release ativo configurado por família/template" if _modelos_ativos else "Pendente de família/template" }}</span>
+                        </div>
+                    </section>
+
+                    <section class="admin-governance-block" data-uxg-block="signatarios-emissao">
+                        <header>
+                            <span>Signatários e emissão</span>
+                            <h3>Documento oficial</h3>
+                        </header>
+                        <div class="admin-governance-readiness-list">
+                            <span>Signatário governado <strong>{{ _signatarios_total }} cadastrado(s)</strong></span>
+                            <span>Emissão oficial <strong>{{ "liberada" if _emissao_liberada else "Não incluído no pacote" }}</strong></span>
+                            <span>Pacote oficial <strong>{{ "disponível após emissão" if _emissao_liberada else "Não incluído no pacote" }}</strong></span>
+                            <span>{{ "Pendente de signatário" if _emissao_liberada and _signatarios_total == 0 else "Hash e auditoria entram no pacote oficial" }}</span>
+                        </div>
+                    </section>
+                </div>
+            </section>
 
             <section class="info-grid" aria-label="Indicadores da empresa">
                 <div class="info-card">

@@ -52,6 +52,154 @@
     margin-bottom: 24px;
 }
 
+.admin-governance-flow {
+    display: grid;
+    gap: 18px;
+    margin-bottom: 24px;
+    padding: 22px;
+    border: 1px solid rgba(35, 74, 115, .16);
+    border-radius: var(--tariel-radius-lg);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(244, 248, 252, .92));
+    box-shadow: var(--tariel-shadow);
+}
+
+.admin-governance-flow__header,
+.admin-governance-step,
+.admin-governance-block header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.admin-governance-flow__header h2 {
+    margin: 2px 0 6px;
+    color: var(--tariel-text);
+    font-size: 22px;
+    line-height: 1.2;
+}
+
+.admin-governance-flow__header p,
+.admin-governance-step p,
+.admin-governance-block header p {
+    margin: 0;
+    color: var(--tariel-text-soft);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.admin-governance-flow__eyebrow,
+.admin-governance-step__label,
+.admin-governance-block header span {
+    color: var(--tariel-accent);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.admin-governance-flow__summary,
+.admin-governance-flow__blocks {
+    display: grid;
+    gap: 14px;
+}
+
+.admin-governance-flow__summary {
+    grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(220px, 1fr));
+}
+
+.admin-governance-flow__blocks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-governance-step,
+.admin-governance-block {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid rgba(31, 79, 130, .12);
+    border-radius: var(--tariel-radius-md);
+    background: rgba(255, 255, 255, .86);
+}
+
+.admin-governance-step {
+    flex-direction: column;
+}
+
+.admin-governance-step strong,
+.admin-governance-block h3,
+.admin-governance-capability-list strong,
+.admin-governance-readiness-list strong {
+    color: var(--tariel-text);
+}
+
+.admin-governance-step strong {
+    font-size: 17px;
+}
+
+.admin-governance-block {
+    display: grid;
+    gap: 12px;
+}
+
+.admin-governance-block h3 {
+    margin: 2px 0 0;
+    font-size: 16px;
+}
+
+.admin-governance-pill-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-governance-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 7px 10px;
+    border: 1px solid rgba(31, 79, 130, .14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .78);
+    color: var(--tariel-text-soft);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-governance-pill.is-on {
+    border-color: rgba(41, 133, 82, .24);
+    background: rgba(236, 253, 245, .9);
+    color: #17663a;
+}
+
+.admin-governance-pill.is-off {
+    border-color: rgba(152, 162, 179, .26);
+    background: rgba(248, 250, 252, .92);
+}
+
+.admin-governance-capability-list,
+.admin-governance-readiness-list {
+    display: grid;
+    gap: 8px;
+}
+
+.admin-governance-capability-list span,
+.admin-governance-readiness-list span {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(31, 79, 130, .08);
+    color: var(--tariel-text-soft);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.admin-governance-capability-list span:last-child,
+.admin-governance-readiness-list span:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
 .info-card,
 .secao {
     background: var(--tariel-surface);
@@ -271,4 +419,34 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
     margin-top: 16px;
+}
+
+@media (max-width: 980px) {
+    .admin-governance-flow__summary,
+    .admin-governance-flow__blocks,
+    .grid-2,
+    .grid-3,
+    .auditoria-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-governance-flow {
+        padding: 16px;
+    }
+
+    .admin-governance-flow__header,
+    .admin-governance-block header,
+    .secao-subtop,
+    .topbar-detalhe {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-governance-capability-list span,
+    .admin-governance-readiness-list span {
+        flex-direction: column;
+        gap: 4px;
+    }
 }

@@ -121,8 +121,8 @@
                 <div class="secao-bloco secao-bloco--portfolio">
                     <div class="secao-subtop">
                         <div>
-                            <h4 class="subsecao-titulo">Laudos liberados para esta empresa</h4>
-                            <p>Liberte apenas os serviços que esta empresa pode contratar e abrir no portal. Se nada estiver ativo, a empresa continua sem modelos liberados.</p>
+                            <h4 class="subsecao-titulo">Famílias e templates liberados</h4>
+                            <p>Libere apenas as famílias, templates e releases que este cliente contratou. Se nada estiver ativo, o cliente fica pendente de família/template.</p>
                         </div>
                         <span class="badge {{ 'conforme' if _portfolio.get('governed_mode') else 'info' }}">
                             {{ _portfolio.get('active_activation_count', 0) | int }} modelos ativos
@@ -131,17 +131,17 @@
 
                     <div class="grid-3">
                         <div class="info-card">
-                            <div class="label">Controle de liberação</div>
-                            <div class="valor">{{ 'Controlado pelo Admin-CEO' if _portfolio.get('governed_mode') else 'Sem liberação ativa' }}</div>
-                            <div class="valor-auxiliar">Quando houver ao menos um modelo ativo, a abertura passa a seguir a liberação feita aqui.</div>
+                            <div class="label">Controle de pacote</div>
+                            <div class="valor">{{ 'Governado pelo Admin CEO' if _portfolio.get('governed_mode') else 'Pendente de família/template' }}</div>
+                            <div class="valor-auxiliar">Quando houver ao menos um modelo ativo, a abertura passa a seguir esta liberação comercial.</div>
                         </div>
                         <div class="info-card">
-                            <div class="label">Linhas de serviço prontas</div>
+                            <div class="label">Famílias liberadas</div>
                             <div class="valor">{{ _portfolio.get('active_family_count', 0) | int }}</div>
-                            <div class="valor-auxiliar">{{ _portfolio.get('operational_variant_count', 0) | int }} modelos já prontos para uso.</div>
+                            <div class="valor-auxiliar">{{ _portfolio.get('operational_variant_count', 0) | int }} template(s) já prontos para uso.</div>
                         </div>
                         <div class="info-card">
-                            <div class="label">Modelos publicados</div>
+                            <div class="label">Releases publicados</div>
                             <div class="valor">{{ _portfolio.get('available_variant_count', 0) | int }}</div>
                             <div class="valor-auxiliar">Opções que já estão publicadas para liberação comercial.</div>
                         </div>
@@ -195,8 +195,8 @@
                                         {% endif %}
                                     </div>
                                     <div class="tenant-catalog-governance__copy">
-                                        <small>Regra padrão do serviço: {{ familia.review_governance.default_review_mode.label | e }}{% if familia.review_governance.requires_release_active %} • exige liberação ativa{% endif %}</small>
-                                        <small>Regra aplicada nesta empresa: {{ familia.tenant_release.force_review_mode.label | e }} • {{ familia.tenant_release.mobile_review_override.label | e }} • {{ familia.tenant_release.release_channel_override.label | e }}</small>
+                                        <small>Governança da família: {{ "Família exige Mesa" if familia.review_governance.default_review_mode.key == "mesa_required" else familia.review_governance.default_review_mode.label }}{% if familia.review_governance.requires_release_active %} • exige release ativo{% endif %}</small>
+                                        <small>Regra aplicada neste cliente: {{ familia.tenant_release.force_review_mode.label | e }} • {{ familia.tenant_release.mobile_review_override.label | e }} • {{ familia.tenant_release.release_channel_override.label | e }}</small>
                                     </div>
                                 </div>
 
@@ -244,7 +244,7 @@
                                 </div>
 
                                 <details class="tenant-catalog-release-disclosure">
-                                    <summary>Ajustes da empresa</summary>
+                                    <summary>Detalhes técnicos da liberação</summary>
                                     <form method="POST" action="/admin/catalogo-laudos/familias/{{ familia.family_key | e }}/liberacao-tenant" class="tenant-catalog-release-form">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                         <input type="hidden" name="tenant_id" value="{{ empresa.id | int }}">
@@ -271,32 +271,32 @@
                                             </label>
                                             <label>
                                                 <span class="label-with-help">
-                                                    <span>Como o caso segue para analise</span>
-                                                    {{ help_icon("Escolha se a empresa usa a configuracao padrao deste servico ou se vai exigir uma regra propria de analise.", "Ajuda sobre fluxo de analise") }}
+                                                    <span>Governança de revisão</span>
+                                                    {{ help_icon("Escolha se o cliente usa a configuração padrão desta família ou se exige uma regra própria de revisão.", "Ajuda sobre governança de revisão") }}
                                                 </span>
                                                 <select name="force_review_mode">
                                                     <option value="" {% if familia.tenant_release.force_review_mode.key == 'inherit' %}selected{% endif %}>Usar configuracao padrao</option>
-                                                    <option value="mesa_required" {% if familia.tenant_release.force_review_mode.key == 'mesa_required' %}selected{% endif %}>Analise interna obrigatoria</option>
-                                                    <option value="mobile_review_allowed" {% if familia.tenant_release.force_review_mode.key == 'mobile_review_allowed' %}selected{% endif %}>Aplicativo com apoio da analise</option>
-                                                    <option value="mobile_autonomous" {% if familia.tenant_release.force_review_mode.key == 'mobile_autonomous' %}selected{% endif %}>Aplicativo com autonomia</option>
+                                                    <option value="mesa_required" {% if familia.tenant_release.force_review_mode.key == 'mesa_required' %}selected{% endif %}>Família exige Mesa</option>
+                                                    <option value="mobile_review_allowed" {% if familia.tenant_release.force_review_mode.key == 'mobile_review_allowed' %}selected{% endif %}>Revisão interna governada</option>
+                                                    <option value="mobile_autonomous" {% if familia.tenant_release.force_review_mode.key == 'mobile_autonomous' %}selected{% endif %}>Revisão interna governada sem Mesa</option>
                                                 </select>
                                             </label>
                                             <label>
                                                 <span class="label-with-help">
-                                                    <span>Limite de autonomia do aplicativo</span>
-                                                    {{ help_icon("Define ate onde o aplicativo pode avancar antes de depender de uma etapa de analise.", "Ajuda sobre limite do aplicativo") }}
+                                                    <span>Limite de revisão interna</span>
+                                                    {{ help_icon("Define até onde o aplicativo pode avançar antes de depender da Mesa Avaliadora.", "Ajuda sobre limite de revisão interna") }}
                                                 </span>
                                                 <select name="max_review_mode">
                                                     <option value="" {% if familia.tenant_release.max_review_mode.key == 'inherit' %}selected{% endif %}>Sem limite extra</option>
-                                                    <option value="mesa_required" {% if familia.tenant_release.max_review_mode.key == 'mesa_required' %}selected{% endif %}>Analise interna obrigatoria</option>
-                                                    <option value="mobile_review_allowed" {% if familia.tenant_release.max_review_mode.key == 'mobile_review_allowed' %}selected{% endif %}>Aplicativo com apoio da analise</option>
-                                                    <option value="mobile_autonomous" {% if familia.tenant_release.max_review_mode.key == 'mobile_autonomous' %}selected{% endif %}>Aplicativo com autonomia</option>
+                                                    <option value="mesa_required" {% if familia.tenant_release.max_review_mode.key == 'mesa_required' %}selected{% endif %}>Família exige Mesa</option>
+                                                    <option value="mobile_review_allowed" {% if familia.tenant_release.max_review_mode.key == 'mobile_review_allowed' %}selected{% endif %}>Revisão interna governada</option>
+                                                    <option value="mobile_autonomous" {% if familia.tenant_release.max_review_mode.key == 'mobile_autonomous' %}selected{% endif %}>Revisão interna governada sem Mesa</option>
                                                 </select>
                                             </label>
                                             <label>
                                                 <span class="label-with-help">
-                                                    <span>Permitir analise no aplicativo</span>
-                                                    {{ help_icon("Use para liberar ou bloquear especificamente a etapa de analise dentro do aplicativo para esta empresa.", "Ajuda sobre analise no aplicativo") }}
+                                                    <span>Permitir revisão interna governada</span>
+                                                    {{ help_icon("Use para liberar ou bloquear especificamente a revisão interna no aplicativo para este cliente.", "Ajuda sobre revisão interna governada") }}
                                                 </span>
                                                 <select name="mobile_review_override">
                                                     <option value="" {% if familia.tenant_release.mobile_review_override.key == 'inherit' %}selected{% endif %}>Usar configuracao padrao</option>
@@ -306,8 +306,8 @@
                                             </label>
                                             <label>
                                                 <span class="label-with-help">
-                                                    <span>Permitir uso autonomo no aplicativo</span>
-                                                    {{ help_icon("Use quando a empresa puder concluir esse servico no aplicativo sem depender de analise adicional.", "Ajuda sobre uso autonomo no aplicativo") }}
+                                                    <span>Permitir conclusão sem Mesa</span>
+                                                    {{ help_icon("Use quando o cliente puder concluir este serviço no aplicativo sem depender da Mesa Avaliadora.", "Ajuda sobre conclusão sem Mesa") }}
                                                 </span>
                                                 <select name="mobile_autonomous_override">
                                                     <option value="" {% if familia.tenant_release.mobile_autonomous_override.key == 'inherit' %}selected{% endif %}>Usar configuracao padrao</option>
@@ -326,8 +326,8 @@
                                             </label>
                                             <label class="tenant-catalog-release-form__field tenant-catalog-release-form__field--wide">
                                                 <span class="label-with-help">
-                                                    <span>Funcionalidades extras liberadas</span>
-                                                    {{ help_icon("Liste aqui funcionalidades extras que ficam habilitadas para esta empresa. Use uma por linha.", "Ajuda sobre funcionalidades extras") }}
+                                                    <span>Recursos extras liberados</span>
+                                                    {{ help_icon("Detalhe técnico: liste recursos extras que ficam habilitados para este cliente. Use uma por linha.", "Ajuda sobre recursos extras") }}
                                                 </span>
                                                 <textarea name="included_features" rows="3" placeholder="Uma funcionalidade por linha.">{{ familia.tenant_release.contract_entitlements_override.included_features | map(attribute='key') | join('\n') if familia.tenant_release.contract_entitlements_override.has_data else '' }}</textarea>
                                             </label>
@@ -432,10 +432,10 @@
                     <div class="secao-subtop">
                         <div>
                             <h4 class="subsecao-titulo">
-                                Responsaveis pela assinatura
-                                {{ help_icon("Cadastre aqui quem pode assinar ou validar a emissao oficial pela empresa.", "Ajuda sobre responsaveis pela assinatura") }}
+                                Signatários governados
+                                {{ help_icon("Cadastre aqui quem pode assinar ou validar a Emissão oficial pela empresa.", "Ajuda sobre Signatários governados") }}
                             </h4>
-                            <p>Cadastre os responsaveis tecnicos autorizados para emissao oficial, com validade e escopo por tipo de servico.</p>
+                            <p>Cadastre os Signatários governados autorizados para Emissão oficial, com validade e escopo por família.</p>
                         </div>
                         <span class="badge {{ 'conforme' if signatarios_governados else 'info' }}">
                             {{ signatarios_governados | length }} cadastrado(s)
@@ -468,7 +468,7 @@
                             {% endif %}
 
                             <details class="tenant-catalog-release-disclosure">
-                                <summary>Editar responsavel</summary>
+                                <summary>Editar Signatário governado</summary>
                                 <form method="POST" action="/admin/clientes/{{ empresa.id | int }}/signatarios-governados" class="tenant-catalog-release-form">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                     <input type="hidden" name="signatario_id" value="{{ signatario.id | int }}">
@@ -503,7 +503,7 @@
                                             <textarea name="observacoes" rows="3" placeholder="Escopo de assinatura, restrições ou observações técnicas.">{{ signatario.observacoes | default('', true) | e }}</textarea>
                                         </label>
                                     </div>
-                                    <div class="valor-auxiliar">Marque em quais tipos de servico essa pessoa pode atuar na emissao oficial.</div>
+                                    <div class="valor-auxiliar">Marque em quais famílias essa pessoa pode atuar na Emissão oficial.</div>
                                     <div class="tenant-catalog-release-checks">
                                         {% for family in signatario_family_options %}
                                         <label class="tenant-catalog-release-check">
@@ -519,11 +519,11 @@
                                     </div>
                                     <label class="tenant-catalog-release-check">
                                         <input type="checkbox" name="ativo" {% if signatario.ativo %}checked{% endif %}>
-                                        <span>Pode ser usado na emissao oficial</span>
+                                        <span>Pode ser usado na Emissão oficial</span>
                                     </label>
                                     <button type="submit" class="btn-add tenant-catalog-release-form__submit">
                                         <span class="material-symbols-rounded" aria-hidden="true">draw</span>
-                                        Salvar responsavel
+                                        Salvar Signatário governado
                                     </button>
                                 </form>
                             </details>
@@ -533,8 +533,8 @@
                         <article class="tenant-catalog-card">
                             <header class="tenant-catalog-card__header">
                                 <div>
-                                    <strong>Novo responsavel pela assinatura</strong>
-                                    <p>Cadastre quem pode assinar a emissao oficial desta empresa.</p>
+                                    <strong>Novo Signatário governado</strong>
+                                    <p>Cadastre quem pode assinar a Emissão oficial desta empresa.</p>
                                 </div>
                                 <span class="badge info">Novo</span>
                             </header>
@@ -572,7 +572,7 @@
                                         <textarea name="observacoes" rows="3" placeholder="Escopo de assinatura, restrições ou contexto comercial."></textarea>
                                     </label>
                                 </div>
-                                <div class="valor-auxiliar">Marque em quais tipos de servico essa pessoa pode atuar na emissao oficial.</div>
+                                <div class="valor-auxiliar">Marque em quais famílias essa pessoa pode atuar na Emissão oficial.</div>
                                 <div class="tenant-catalog-release-checks">
                                     {% for family in signatario_family_options %}
                                     <label class="tenant-catalog-release-check">
@@ -587,11 +587,11 @@
                                 </div>
                                 <label class="tenant-catalog-release-check">
                                     <input type="checkbox" name="ativo" checked>
-                                    <span>Pode ser usado na emissao oficial</span>
+                                    <span>Pode ser usado na Emissão oficial</span>
                                 </label>
                                 <button type="submit" class="btn-add tenant-catalog-release-form__submit">
                                     <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
-                                    Cadastrar responsavel
+                                    Cadastrar Signatário governado
                                 </button>
                             </form>
                         </article>

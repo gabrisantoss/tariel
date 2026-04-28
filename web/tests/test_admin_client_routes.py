@@ -227,7 +227,12 @@ def test_admin_clientes_renderiza_console_operacional_na_lista_e_no_detalhe(ambi
     assert "Segurança" in resposta_detalhe.text
     assert "Ações críticas" in resposta_detalhe.text
     assert "Suporte excepcional" in resposta_detalhe.text
-    assert "Responsaveis pela assinatura" in resposta_detalhe.text
+    assert "Fluxo guiado de governança" in resposta_detalhe.text
+    assert "Checklist de operação" in resposta_detalhe.text
+    assert "Pacote e portais" in resposta_detalhe.text
+    assert "Capacidades" in resposta_detalhe.text
+    assert "Signatários governados" in resposta_detalhe.text
+    assert "Signatário governado" in resposta_detalhe.text
     assert "Administradores da empresa (" in resposta_detalhe.text
     assert 'id="modal-bloqueio-empresa"' in resposta_detalhe.text
     assert "window.prompt" not in resposta_detalhe.text
@@ -1097,11 +1102,11 @@ def test_admin_detalhe_cliente_sincroniza_portfolio_comercial_do_tenant(ambiente
     _login_admin(client, "admin@empresa-a.test")
     resposta_detalhe = client.get(f"/admin/clientes/{ids['empresa_a']}")
     assert resposta_detalhe.status_code == 200
-    assert "Laudos liberados para esta empresa" in resposta_detalhe.text
+    assert "Famílias e templates liberados" in resposta_detalhe.text
     assert "Sincronizar portfólio" in resposta_detalhe.text
-    assert "Ajustes da empresa" in resposta_detalhe.text
+    assert "Detalhes técnicos da liberação" in resposta_detalhe.text
     assert "Foto inadequada" not in resposta_detalhe.text
-    assert "Aplicativo com apoio da analise" in resposta_detalhe.text
+    assert "Revisão interna governada" in resposta_detalhe.text
 
     csrf = _csrf_pagina(client, f"/admin/clientes/{ids['empresa_a']}")
     resposta_release = client.post(

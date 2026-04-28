@@ -3,9 +3,9 @@
                     <div class="secao-header__copy">
                         <h3>
                             <span class="material-symbols-rounded" aria-hidden="true">warning</span>
-                            Ações críticas
+                            Governança do cliente
                         </h3>
-                        <p>Bloqueio de empresa, troca de plano e resets operacionais com historico de auditoria.</p>
+                        <p>Configuração guiada de pacote, portais, capacidades e ações críticas com histórico de auditoria.</p>
                     </div>
                 </div>
 
@@ -27,17 +27,17 @@
                         <div class="secao-header__copy">
                             <h3>
                                 <span class="material-symbols-rounded" aria-hidden="true">tune</span>
-                                Configuracao de acesso da empresa
+                                Pacote e capacidades do cliente
                             </h3>
-                            <p>Defina por empresa se o painel principal fica so em acompanhamento ou se tambem participa da rotina operacional.</p>
+                            <p>Defina por empresa o pacote contratado, as superfícies liberadas e a governança de revisão sem expor flags cruas como leitura principal.</p>
                         </div>
                     </div>
 
                     <div class="grid-2">
                         <div class="info-card">
-                            <div class="label">Pacote do Chat Inspetor</div>
+                            <div class="label">Pacote contratado</div>
                             <div class="valor">{{ _admin_cliente_policy.get("commercial_service_package_label", "Chat Inspetor + Mesa Avaliadora") | e }}</div>
-                            <div class="valor-auxiliar">{{ _admin_cliente_policy.get("commercial_service_package_description", "Define se a empresa usa Mesa, aprovacao interna ou servicos de Mesa acumulados pelo inspetor.") | e }}</div>
+                            <div class="valor-auxiliar">{{ _admin_cliente_policy.get("commercial_service_package_description", "Define Portal Cliente, Chat Inspetor, Mesa Avaliadora e Emissão oficial.") | e }}</div>
                         </div>
                         <div class="info-card">
                             <div class="label">Modelo contratado</div>
@@ -56,7 +56,7 @@
                             <div class="valor">{{ _admin_cliente_policy.get("case_visibility_mode_label", "Não definida") | e }}</div>
                             <div class="valor-auxiliar">
                                 {% if _policy.get("case_list_visible") %}
-                                A empresa pode acompanhar os casos em detalhe e usar a area de analise.
+                                A empresa pode acompanhar os casos em detalhe e usar a Mesa Avaliadora quando contratada.
                                 {% else %}
                                 O portal da empresa fica so com visao resumida.
                                 {% endif %}
@@ -76,8 +76,8 @@
                         <div class="campo-form campo-form--full">
                             <label for="admin-cliente-commercial-service-package">
                                 <span class="label-with-help">
-                                    <span>Pacote comercial do Chat Inspetor</span>
-                                    {{ help_icon("Escolha o pacote vendido pelo Admin-CEO. Este pacote libera ou bloqueia Mesa, revisao e aprovacao interna nos demais portais.", "Ajuda sobre pacote comercial") }}
+                                    <span>Pacote comercial governado</span>
+                                    {{ help_icon("Escolha o pacote vendido pelo Admin CEO. Este pacote libera ou bloqueia Portal Cliente, Chat Inspetor, Mesa Avaliadora e Emissão oficial.", "Ajuda sobre pacote comercial") }}
                                 </span>
                             </label>
                             <select id="admin-cliente-commercial-service-package" name="admin_cliente_commercial_service_package">
@@ -86,7 +86,7 @@
                                 {% endfor %}
                             </select>
                             <div class="valor-auxiliar">
-                                Sem Mesa: o inspetor finaliza internamente. Com Mesa: o caso vai para avaliacao. Com servicos no Inspetor: usuarios autorizados podem acumular campo e analise.
+                                Sem Mesa: o inspetor finaliza internamente. Com Mesa Avaliadora: o caso vai para decisão governada. Com serviços no Inspetor: usuários autorizados podem acumular campo e revisão interna governada.
                             </div>
                         </div>
                         <div class="campo-form">
@@ -98,7 +98,7 @@
                             </label>
                             <select id="admin-cliente-operating-model" name="admin_cliente_operating_model">
                                 <option value="standard" {% if _admin_cliente_policy.get("operating_model") == "standard" %}selected{% endif %}>Operação padrão</option>
-                                <option value="mobile_single_operator" {% if _admin_cliente_policy.get("operating_model") == "mobile_single_operator" %}selected{% endif %}>Aplicativo principal com uma pessoa responsavel</option>
+                                <option value="mobile_single_operator" {% if _admin_cliente_policy.get("operating_model") == "mobile_single_operator" %}selected{% endif %}>Aplicativo principal com uma pessoa responsável</option>
                             </select>
                         </div>
                         <div class="campo-form">
@@ -116,8 +116,8 @@
                         <div class="campo-form">
                             <label for="admin-cliente-mobile-web-mesa">
                                 <span class="label-with-help">
-                                    <span>A mesma pessoa pode usar a area de analise no navegador</span>
-                                    {{ help_icon("Ative quando a mesma pessoa puder revisar e concluir etapas tambem pela area web de analise.", "Ajuda sobre area de analise no navegador") }}
+                                    <span>A mesma pessoa pode usar a Mesa Avaliadora no navegador</span>
+                                    {{ help_icon("Ative quando a mesma pessoa puder revisar e concluir etapas também pela Mesa Avaliadora web.", "Ajuda sobre Mesa Avaliadora no navegador") }}
                                 </span>
                             </label>
                             <select id="admin-cliente-mobile-web-mesa" name="admin_cliente_mobile_web_review_enabled">
@@ -128,8 +128,8 @@
                         <div class="campo-form">
                             <label for="admin-cliente-cross-portal">
                                 <span class="label-with-help">
-                                    <span>A mesma pessoa pode acumular execucao e analise</span>
-                                    {{ help_icon("Use quando uma mesma pessoa puder executar e analisar etapas diferentes do processo.", "Ajuda sobre acumulacao de funcoes") }}
+                                    <span>A mesma pessoa pode acumular execução e revisão</span>
+                                    {{ help_icon("Use quando uma mesma pessoa puder executar e revisar etapas diferentes do processo.", "Ajuda sobre acúmulo de funções") }}
                                 </span>
                             </label>
                             <select id="admin-cliente-cross-portal" name="admin_cliente_operational_user_cross_portal_enabled">
@@ -152,8 +152,8 @@
                         <div class="campo-form">
                             <label for="admin-cliente-visibility-mode">
                                 <span class="label-with-help">
-                                    <span>Visao operacional</span>
-                                    {{ help_icon("Escolha se o painel principal da empresa vai ver cada caso em detalhe ou apenas resumos.", "Ajuda sobre visao operacional") }}
+                                    <span>Visão operacional</span>
+                                    {{ help_icon("Escolha se o Portal Cliente vai ver cada caso em detalhe ou apenas resumos.", "Ajuda sobre visão operacional") }}
                                 </span>
                             </label>
                             <select id="admin-cliente-visibility-mode" name="admin_cliente_case_visibility_mode">
@@ -169,13 +169,13 @@
                                 </span>
                             </label>
                             <p class="campo-ajuda">
-                                Este painel altera contrato, superficies e limites do cliente; não bloqueia ações operacionais dos funcionarios.
+                                Este painel altera contrato, portais e limites do cliente; não muda regras de aprovação nem bloqueia ações operacionais dos funcionários.
                             </p>
                         </div>
                         <div class="campo-form campo-form--full">
                             <div class="valor-auxiliar">
                                 {% if _admin_cliente_policy.get("shared_mobile_operator_enabled") %}
-                                Este modelo deixa a rotina principal concentrada em uma pessoa, com uso do aplicativo e das areas web liberadas.
+                                Este modelo deixa a rotina principal concentrada em uma pessoa, com uso do aplicativo e das áreas web liberadas.
                                 O sistema limita acessos paralelos quando esse formato estiver contratado.
                                 {% else %}
                                 Use estas configuracoes quando a empresa trabalhar com equipe distribuida, mas com combinacoes especificas de acesso para cada pessoa.
