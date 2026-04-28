@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f6f7f2">
+    <meta name="description" content="Tariel organiza coleta, Mesa Avaliadora, emissão oficial e pacote auditável para inspeções técnicas.">
+    <meta property="og:title" content="Tariel">
+    <meta property="og:description" content="Do campo ao pacote oficial, com governança e auditoria.">
+    <meta property="og:image" content="/static/img/og-image.png">
+    <title>Tariel</title>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/shared/material-symbols.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/shared/public_landing.css?v={{ v_app }}">
+</head>
+<body class="public-landing">
+    <header class="public-nav" aria-label="Navegação pública">
+        <a class="public-brand" href="/" aria-label="Tariel">
+            <img src="/static/img/logo-horizontal-dark.png" alt="Tariel">
+        </a>
+        <nav class="public-nav__links" aria-label="Portais">
+            <a href="/app/login">Inspetor</a>
+            <a href="/cliente/login">Cliente</a>
+            <a href="/revisao/login">Mesa</a>
+            <a class="public-nav__admin" href="/admin/login">Admin CEO</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="public-hero" aria-labelledby="landing-title">
+            <div class="public-hero__content">
+                <p class="public-eyebrow">Inspeção técnica governada</p>
+                <h1 id="landing-title">Tariel</h1>
+                <p class="public-hero__copy">
+                    Uma operação única para coletar evidências, revisar com Mesa Avaliadora, emitir documentos oficiais e entregar pacotes auditáveis ao cliente.
+                </p>
+                <div class="public-hero__actions" aria-label="Acessos principais">
+                    <a class="public-button public-button--primary" href="/app/login">
+                        <span class="material-symbols-rounded" aria-hidden="true">login</span>
+                        <span>Entrar como inspetor</span>
+                    </a>
+                    <a class="public-button public-button--secondary" href="#demo">
+                        <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+                        <span>Ver fluxo</span>
+                    </a>
+                </div>
+            </div>
+            <div class="public-hero__status" aria-label="Resumo operacional">
+                <span>Mobile</span>
+                <span>Mesa Avaliadora</span>
+                <span>Emissão oficial</span>
+                <span>Pacote oficial</span>
+            </div>
+        </section>
+
+        <section class="public-section public-section--journey" id="demo" aria-labelledby="journey-title">
+            <div class="public-section__heading">
+                <p class="public-section__kicker">Fluxo de ponta a ponta</p>
+                <h2 id="journey-title">Da coleta ao documento certo</h2>
+            </div>
+            <div class="journey-grid">
+                <article class="journey-card">
+                    <span class="material-symbols-rounded" aria-hidden="true">assignment_add</span>
+                    <h3>Caso aberto</h3>
+                    <p>O cliente, pacote e família técnica definem o que pode ser coletado, revisado e emitido.</p>
+                </article>
+                <article class="journey-card">
+                    <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+                    <h3>Coleta em campo</h3>
+                    <p>O inspetor registra evidências e acompanha pendências sem confundir rascunho com emissão oficial.</p>
+                </article>
+                <article class="journey-card">
+                    <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
+                    <h3>Mesa Avaliadora</h3>
+                    <p>A revisão separa decisão operacional de histórico, auditoria e acompanhamento técnico.</p>
+                </article>
+                <article class="journey-card">
+                    <span class="material-symbols-rounded" aria-hidden="true">verified</span>
+                    <h3>Emissão oficial</h3>
+                    <p>O documento aprovado vira pacote oficial com assinatura, hash e cadeia de auditoria.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="public-section public-section--product" aria-labelledby="product-title">
+            <div class="public-section__heading">
+                <p class="public-section__kicker">Superfícies conectadas</p>
+                <h2 id="product-title">Cada tela responde uma pergunta operacional</h2>
+            </div>
+            <div class="surface-board" aria-label="Prévia das superfícies Tariel">
+                <article class="surface-panel surface-panel--mobile">
+                    <div class="surface-panel__bar">
+                        <span>Mobile</span>
+                        <strong>Em campo</strong>
+                    </div>
+                    <div class="surface-panel__body">
+                        <p class="surface-panel__title">Linha de vida NR35</p>
+                        <p class="surface-panel__status">Reemissão recomendada</p>
+                        <span class="surface-action">Ver PDF operacional</span>
+                    </div>
+                </article>
+                <article class="surface-panel surface-panel--mesa">
+                    <div class="surface-panel__bar">
+                        <span>Mesa</span>
+                        <strong>Decidir agora</strong>
+                    </div>
+                    <div class="surface-panel__body">
+                        <p class="surface-panel__title">Pendências do caso</p>
+                        <p class="surface-panel__status">2 evidências exigem revisão</p>
+                        <span class="surface-action">Aprovar ou devolver</span>
+                    </div>
+                </article>
+                <article class="surface-panel surface-panel--cliente">
+                    <div class="surface-panel__bar">
+                        <span>Cliente</span>
+                        <strong>Entrega</strong>
+                    </div>
+                    <div class="surface-panel__body">
+                        <p class="surface-panel__title">Emissão oficial</p>
+                        <p class="surface-panel__status">Documento emitido</p>
+                        <span class="surface-action">Baixar pacote oficial</span>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="public-section public-section--governance" aria-labelledby="governance-title">
+            <div class="public-section__heading">
+                <p class="public-section__kicker">Governança comercial e técnica</p>
+                <h2 id="governance-title">O Admin CEO enxerga prontidão antes da operação começar</h2>
+            </div>
+            <div class="readiness-list">
+                <div><span>Pacote contratado</span><strong>Governado</strong></div>
+                <div><span>Portais liberados</span><strong>Mobile, Cliente, Mesa</strong></div>
+                <div><span>Famílias</span><strong>NR35 com Mesa</strong></div>
+                <div><span>Emissão oficial</span><strong>Pronta com signatário</strong></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="public-footer">
+        <span>Tariel</span>
+        <nav aria-label="Acessos de rodapé">
+            <a href="/app/login">Inspetor</a>
+            <a href="/cliente/login">Cliente</a>
+            <a href="/admin/login">Admin CEO</a>
+        </nav>
+    </footer>
+</body>
+</html>

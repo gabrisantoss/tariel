@@ -1,0 +1,512 @@
+:root {
+    color-scheme: light;
+    --landing-ink: #17211f;
+    --landing-muted: #5c6661;
+    --landing-soft: #f6f7f2;
+    --landing-paper: #ffffff;
+    --landing-line: rgba(23, 33, 31, 0.12);
+    --landing-green: #1f6f58;
+    --landing-teal: #147f82;
+    --landing-amber: #b66b16;
+    --landing-red: #9d3d32;
+    --landing-shadow: 0 18px 54px rgba(23, 33, 31, 0.14);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body.public-landing {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: Inter, "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--landing-soft);
+    color: var(--landing-ink);
+}
+
+.public-landing a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.public-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 72px;
+    padding: 14px clamp(20px, 4vw, 64px);
+    background: rgba(246, 247, 242, 0.86);
+    border-bottom: 1px solid rgba(23, 33, 31, 0.08);
+    backdrop-filter: blur(16px);
+}
+
+.public-brand {
+    display: inline-flex;
+    align-items: center;
+    min-width: 128px;
+}
+
+.public-brand img {
+    display: block;
+    width: 134px;
+    height: auto;
+}
+
+.public-nav__links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.92rem;
+    font-weight: 650;
+    color: rgba(23, 33, 31, 0.72);
+}
+
+.public-nav__links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 13px;
+    border-radius: 999px;
+}
+
+.public-nav__links a:hover,
+.public-nav__links a:focus-visible {
+    background: rgba(31, 111, 88, 0.1);
+    color: var(--landing-green);
+}
+
+.public-nav__admin {
+    border: 1px solid var(--landing-line);
+    background: rgba(255, 255, 255, 0.66);
+}
+
+.public-hero {
+    position: relative;
+    display: grid;
+    align-items: center;
+    min-height: 88svh;
+    padding: 118px clamp(20px, 6vw, 84px) 86px;
+    overflow: hidden;
+    background-image: url("/static/img/bg-dashboard.webp");
+    background-position: center;
+    background-size: cover;
+}
+
+.public-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(246, 247, 242, 0.84);
+}
+
+.public-hero__content {
+    position: relative;
+    z-index: 1;
+    width: min(720px, 100%);
+}
+
+.public-eyebrow,
+.public-section__kicker {
+    margin: 0 0 12px;
+    color: var(--landing-teal);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.public-hero h1 {
+    margin: 0;
+    font-size: 8.4rem;
+    line-height: 0.86;
+    letter-spacing: 0;
+}
+
+.public-hero__copy {
+    max-width: 650px;
+    margin: 28px 0 0;
+    color: rgba(23, 33, 31, 0.78);
+    font-size: 1.32rem;
+    line-height: 1.48;
+}
+
+.public-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 34px;
+}
+
+.public-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 999px;
+    font-weight: 750;
+    border: 1px solid transparent;
+}
+
+.public-button .material-symbols-rounded {
+    font-size: 1.24rem;
+}
+
+.public-button--primary {
+    background: var(--landing-green);
+    color: #fff;
+    box-shadow: 0 14px 32px rgba(31, 111, 88, 0.22);
+}
+
+.public-button--secondary {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: var(--landing-line);
+    color: var(--landing-ink);
+}
+
+.public-button:hover,
+.public-button:focus-visible {
+    transform: translateY(-1px);
+}
+
+.public-hero__status {
+    position: absolute;
+    z-index: 1;
+    left: clamp(20px, 6vw, 84px);
+    right: clamp(20px, 6vw, 84px);
+    bottom: 24px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid rgba(23, 33, 31, 0.1);
+    border-radius: 8px;
+    background: rgba(23, 33, 31, 0.1);
+    box-shadow: var(--landing-shadow);
+}
+
+.public-hero__status span {
+    min-width: 0;
+    padding: 17px 16px;
+    background: rgba(255, 255, 255, 0.84);
+    color: rgba(23, 33, 31, 0.76);
+    font-size: 0.88rem;
+    font-weight: 750;
+    text-align: center;
+}
+
+.public-section {
+    padding: 74px clamp(20px, 5vw, 72px);
+}
+
+.public-section--journey {
+    background: #fff;
+}
+
+.public-section--product {
+    background: #eef4f0;
+}
+
+.public-section--governance {
+    background: var(--landing-soft);
+}
+
+.public-section__heading {
+    max-width: 760px;
+    margin-bottom: 30px;
+}
+
+.public-section h2 {
+    margin: 0;
+    max-width: 760px;
+    font-size: 3.4rem;
+    line-height: 1.02;
+    letter-spacing: 0;
+}
+
+.journey-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.journey-card {
+    min-height: 224px;
+    padding: 22px;
+    border: 1px solid var(--landing-line);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.journey-card .material-symbols-rounded {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 22px;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--landing-green);
+    font-size: 1.35rem;
+}
+
+.journey-card:nth-child(2) .material-symbols-rounded {
+    background: var(--landing-teal);
+}
+
+.journey-card:nth-child(3) .material-symbols-rounded {
+    background: var(--landing-amber);
+}
+
+.journey-card:nth-child(4) .material-symbols-rounded {
+    background: var(--landing-red);
+}
+
+.journey-card h3,
+.surface-panel__title {
+    margin: 0;
+    font-size: 1.04rem;
+    line-height: 1.25;
+}
+
+.journey-card p {
+    margin: 12px 0 0;
+    color: var(--landing-muted);
+    line-height: 1.5;
+}
+
+.surface-board {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.surface-panel {
+    overflow: hidden;
+    min-height: 310px;
+    border: 1px solid rgba(23, 33, 31, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 22px 52px rgba(23, 33, 31, 0.12);
+}
+
+.surface-panel__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--landing-line);
+    background: #f7f8f4;
+    color: var(--landing-muted);
+    font-size: 0.82rem;
+}
+
+.surface-panel__bar strong {
+    color: var(--landing-ink);
+}
+
+.surface-panel__body {
+    display: flex;
+    min-height: 238px;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 13px;
+    padding: 20px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.92)),
+        repeating-linear-gradient(0deg, rgba(23, 33, 31, 0.05), rgba(23, 33, 31, 0.05) 1px, transparent 1px, transparent 34px);
+}
+
+.surface-panel__status {
+    margin: 0;
+    color: var(--landing-muted);
+}
+
+.surface-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 42px;
+    border-radius: 7px;
+    color: #fff;
+    font-weight: 750;
+}
+
+.surface-panel--mobile .surface-action {
+    background: var(--landing-amber);
+}
+
+.surface-panel--mesa .surface-action {
+    background: var(--landing-teal);
+}
+
+.surface-panel--cliente .surface-action {
+    background: var(--landing-green);
+}
+
+.readiness-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid var(--landing-line);
+    border-radius: 8px;
+    background: var(--landing-line);
+}
+
+.readiness-list div {
+    min-height: 118px;
+    padding: 18px;
+    background: #fff;
+}
+
+.readiness-list span,
+.readiness-list strong {
+    display: block;
+}
+
+.readiness-list span {
+    color: var(--landing-muted);
+    font-size: 0.84rem;
+}
+
+.readiness-list strong {
+    margin-top: 12px;
+    font-size: 1.04rem;
+}
+
+.public-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 26px clamp(20px, 5vw, 72px);
+    border-top: 1px solid var(--landing-line);
+    background: #fff;
+    color: var(--landing-muted);
+    font-size: 0.9rem;
+}
+
+.public-footer span {
+    color: var(--landing-ink);
+    font-weight: 800;
+}
+
+.public-footer nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.public-footer a:hover,
+.public-footer a:focus-visible {
+    color: var(--landing-green);
+}
+
+@media (max-width: 900px) {
+    .public-nav {
+        position: absolute;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding-bottom: 16px;
+    }
+
+    .public-nav__links {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+
+    .public-hero {
+        min-height: 92svh;
+        padding-top: 168px;
+        padding-bottom: 118px;
+    }
+
+    .public-hero h1 {
+        font-size: 5.6rem;
+    }
+
+    .public-hero__copy {
+        font-size: 1.14rem;
+    }
+
+    .public-section h2 {
+        font-size: 2.55rem;
+    }
+
+    .public-hero__status,
+    .journey-grid,
+    .surface-board,
+    .readiness-list {
+        grid-template-columns: 1fr;
+    }
+
+    .public-hero__status {
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        margin-top: 42px;
+    }
+
+    .public-hero__status span {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 560px) {
+    .public-nav__links a {
+        min-height: 34px;
+        padding: 0 10px;
+        font-size: 0.84rem;
+    }
+
+    .public-nav__links .public-nav__admin {
+        display: none;
+    }
+
+    .public-hero__actions {
+        flex-direction: column;
+    }
+
+    .public-hero h1 {
+        font-size: 3.8rem;
+    }
+
+    .public-section h2 {
+        font-size: 2rem;
+    }
+
+    .public-button {
+        width: 100%;
+    }
+
+    .public-section {
+        padding-top: 56px;
+        padding-bottom: 56px;
+    }
+
+    .public-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
