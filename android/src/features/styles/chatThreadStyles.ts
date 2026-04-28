@@ -830,9 +830,8 @@ export const chatThreadStyles = {
     borderColor: colors.dangerSoft,
   },
   threadFinalizationHeroTop: {
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "flex-start",
-    justifyContent: "space-between",
     gap: spacing.sm,
   },
   threadFinalizationTitle: {
