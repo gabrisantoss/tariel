@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#f6f7f2">
-    <meta name="description" content="Tariel organiza coleta, Mesa Avaliadora, emissão oficial e pacote auditável para inspeções técnicas.">
+    <meta name="description" content="Tariel organiza inspeções técnicas com coleta em campo, revisão governada, emissão oficial e pacote auditável.">
     <meta property="og:title" content="Tariel">
-    <meta property="og:description" content="Do campo ao pacote oficial, com governança e auditoria.">
+    <meta property="og:description" content="Inspeções técnicas com coleta, revisão e emissão oficial em um só fluxo.">
     <meta property="og:image" content="/static/img/og-image.png">
     <title>Tariel</title>
     <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
@@ -18,10 +18,11 @@
         <a class="public-brand" href="/" aria-label="Tariel">
             <img src="/static/img/logo-horizontal-dark.png" alt="Tariel">
         </a>
-        <nav class="public-nav__links" aria-label="Portais">
-            <a href="/app/login">Inspetor</a>
-            <a href="/cliente/login">Cliente</a>
-            <a href="/revisao/login">Mesa</a>
+        <nav class="public-nav__links" aria-label="Seções da página">
+            <a href="#produto">Produto</a>
+            <a href="#governanca">Governança</a>
+            <a href="#pdf">PDF NR35</a>
+            <a class="public-nav__login" href="/app/login">Entrar</a>
         </nav>
     </header>
 
@@ -30,25 +31,68 @@
             <div class="public-hero__content">
                 <p class="public-eyebrow">Inspeção técnica governada</p>
                 <h1 id="landing-title">Tariel</h1>
+                <p class="public-hero__lead">Inspeções técnicas com coleta, revisão e emissão oficial em um só fluxo.</p>
                 <p class="public-hero__copy">
-                    Uma operação única para coletar evidências, revisar com Mesa Avaliadora, emitir documentos oficiais e entregar pacotes auditáveis ao cliente.
+                    Organize evidências em campo, valide com Mesa Avaliadora e entregue pacotes oficiais auditáveis sem confundir rascunho, revisão e documento emitido.
                 </p>
-                <div class="public-hero__actions" aria-label="Acessos principais">
-                    <a class="public-button public-button--primary" href="/app/login">
-                        <span class="material-symbols-rounded" aria-hidden="true">login</span>
-                        <span>Entrar como inspetor</span>
+                <div class="public-hero__actions" aria-label="Ações principais">
+                    <a class="public-button public-button--primary" href="mailto:contato@tariel.ia?subject=Quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Tariel">
+                        <span class="material-symbols-rounded" aria-hidden="true">calendar_month</span>
+                        <span>Solicitar demonstração</span>
                     </a>
-                    <a class="public-button public-button--secondary" href="#demo">
-                        <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
-                        <span>Ver fluxo</span>
+                    <a class="public-button public-button--secondary" href="/app/login">
+                        <span class="material-symbols-rounded" aria-hidden="true">login</span>
+                        <span>Acessar plataforma</span>
                     </a>
                 </div>
             </div>
+            <div class="hero-product-preview" aria-label="Prévia do fluxo Tariel">
+                <div class="hero-product-preview__toolbar">
+                    <span>Operação NR35</span>
+                    <strong>Pronto para emitir</strong>
+                </div>
+                <div class="hero-product-preview__body">
+                    <div class="hero-product-preview__case">
+                        <span class="preview-tag preview-tag--active">Emissão oficial</span>
+                        <h2>Linha de vida - Galpão A</h2>
+                        <p>4 evidências revisadas, Mesa aprovada e pacote oficial disponível para o cliente.</p>
+                    </div>
+                    <div class="hero-product-preview__steps" aria-label="Etapas do caso">
+                        <span><i></i>Coleta concluída</span>
+                        <span><i></i>Mesa Avaliadora aprovada</span>
+                        <span><i></i>Pacote oficial emitido</span>
+                    </div>
+                </div>
+            </div>
             <div class="public-hero__status" aria-label="Resumo operacional">
-                <span>Mobile</span>
+                <span>Coleta mobile</span>
                 <span>Mesa Avaliadora</span>
                 <span>Emissão oficial</span>
-                <span>Pacote oficial</span>
+                <span>Pacote auditável</span>
+            </div>
+        </section>
+
+        <section class="public-section public-section--audience" aria-labelledby="audience-title">
+            <div class="public-section__heading">
+                <p class="public-section__kicker">Para quem é</p>
+                <h2 id="audience-title">Feito para operações que precisam provar o que foi inspecionado</h2>
+            </div>
+            <div class="audience-grid">
+                <article>
+                    <span class="material-symbols-rounded" aria-hidden="true">engineering</span>
+                    <h3>Consultorias técnicas</h3>
+                    <p>Padronize coleta, revisão e entrega sem depender de planilhas, pastas soltas e versões manuais de PDF.</p>
+                </article>
+                <article>
+                    <span class="material-symbols-rounded" aria-hidden="true">corporate_fare</span>
+                    <h3>Empresas com inspeções recorrentes</h3>
+                    <p>Acompanhe pendências, documentos emitidos, histórico e auditoria em um fluxo visível para cliente e operação.</p>
+                </article>
+                <article>
+                    <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
+                    <h3>Times com exigência de governança</h3>
+                    <p>Separe PDF operacional, revisão, emissão oficial, reemissão recomendada e documento substituído.</p>
+                </article>
             </div>
         </section>
 
@@ -81,7 +125,7 @@
             </div>
         </section>
 
-        <section class="public-section public-section--product" aria-labelledby="product-title">
+        <section class="public-section public-section--product" id="produto" aria-labelledby="product-title">
             <div class="public-section__heading">
                 <p class="public-section__kicker">Superfícies conectadas</p>
                 <h2 id="product-title">Cada tela responde uma pergunta operacional</h2>
@@ -93,8 +137,9 @@
                         <strong>Em campo</strong>
                     </div>
                     <div class="surface-panel__body">
+                        <span class="preview-tag preview-tag--warning">Reemissão recomendada</span>
                         <p class="surface-panel__title">Linha de vida NR35</p>
-                        <p class="surface-panel__status">Reemissão recomendada</p>
+                        <p class="surface-panel__status">PDF operacional separado da emissão oficial.</p>
                         <span class="surface-action">Ver PDF operacional</span>
                     </div>
                 </article>
@@ -104,8 +149,9 @@
                         <strong>Decidir agora</strong>
                     </div>
                     <div class="surface-panel__body">
-                        <p class="surface-panel__title">Pendências do caso</p>
-                        <p class="surface-panel__status">2 evidências exigem revisão</p>
+                        <span class="preview-tag preview-tag--review">Pendências do caso</span>
+                        <p class="surface-panel__title">2 evidências exigem revisão</p>
+                        <p class="surface-panel__status">Ação principal clara: aprovar ou devolver.</p>
                         <span class="surface-action">Aprovar ou devolver</span>
                     </div>
                 </article>
@@ -115,18 +161,36 @@
                         <strong>Entrega</strong>
                     </div>
                     <div class="surface-panel__body">
+                        <span class="preview-tag preview-tag--active">Documento emitido</span>
                         <p class="surface-panel__title">Emissão oficial</p>
-                        <p class="surface-panel__status">Documento emitido</p>
+                        <p class="surface-panel__status">Pacote oficial com auditoria e hash.</p>
                         <span class="surface-action">Baixar pacote oficial</span>
                     </div>
                 </article>
             </div>
         </section>
 
-        <section class="public-section public-section--governance" aria-labelledby="governance-title">
+        <section class="public-section public-section--governance" id="governanca" aria-labelledby="governance-title">
             <div class="public-section__heading">
                 <p class="public-section__kicker">Governança comercial e técnica</p>
-                <h2 id="governance-title">A governança interna confirma prontidão antes da operação começar</h2>
+                <h2 id="governance-title">A operação sabe o que está pronto, pendente ou substituído</h2>
+            </div>
+            <div class="governance-grid">
+                <article>
+                    <span>01</span>
+                    <h3>PDF operacional não é oficial</h3>
+                    <p>Prévia de trabalho, documento emitido e pacote oficial aparecem com hierarquia própria.</p>
+                </article>
+                <article>
+                    <span>02</span>
+                    <h3>Reemissão aparece como alerta</h3>
+                    <p>O usuário entende quando precisa revisar/reemitir sem parecer que a reemissão já aconteceu.</p>
+                </article>
+                <article>
+                    <span>03</span>
+                    <h3>Histórico não compete com o ativo</h3>
+                    <p>Documento substituído, auditoria e hash ficam em leitura secundária, preservando a ação principal.</p>
+                </article>
             </div>
             <div class="readiness-list">
                 <div><span>Pacote contratado</span><strong>Governado</strong></div>
@@ -135,6 +199,70 @@
                 <div><span>Emissão oficial</span><strong>Pronta com signatário</strong></div>
             </div>
         </section>
+
+        <section class="public-section public-section--pdf" id="pdf" aria-labelledby="pdf-title">
+            <div class="public-section__heading">
+                <p class="public-section__kicker">Documento final</p>
+                <h2 id="pdf-title">PDF NR35 com evidência, conclusão e auditoria no mesmo pacote</h2>
+            </div>
+            <div class="pdf-showcase">
+                <div class="pdf-sheet" aria-label="Prévia visual de PDF NR35">
+                    <div class="pdf-sheet__header">
+                        <strong>Relatório Técnico NR35</strong>
+                        <span>Emissão oficial</span>
+                    </div>
+                    <div class="pdf-sheet__photo-grid" aria-label="Evidências fotográficas">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="pdf-sheet__lines" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="pdf-sheet__footer">
+                        <span>Signatário governado</span>
+                        <span>Hash do pacote</span>
+                    </div>
+                </div>
+                <div class="pdf-benefits">
+                    <article>
+                        <span class="material-symbols-rounded" aria-hidden="true">image</span>
+                        <div>
+                            <h3>Fotos e achados legíveis</h3>
+                            <p>Evidências, legendas e conclusão aparecem com leitura técnica, não como anexo solto.</p>
+                        </div>
+                    </article>
+                    <article>
+                        <span class="material-symbols-rounded" aria-hidden="true">draw</span>
+                        <div>
+                            <h3>Assinatura e emissão oficial</h3>
+                            <p>O pacote deixa claro o que foi oficialmente emitido e quem responde pela assinatura.</p>
+                        </div>
+                    </article>
+                    <article>
+                        <span class="material-symbols-rounded" aria-hidden="true">encrypted</span>
+                        <div>
+                            <h3>Auditoria sem poluir a leitura</h3>
+                            <p>Hash, histórico e documentos substituídos ficam disponíveis sem competir com o conteúdo principal.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="public-section public-section--cta" aria-labelledby="cta-title">
+            <div>
+                <p class="public-section__kicker">Próximo passo</p>
+                <h2 id="cta-title">Veja o fluxo com um caso técnico realista</h2>
+            </div>
+            <a class="public-button public-button--primary" href="mailto:contato@tariel.ia?subject=Quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Tariel">
+                <span class="material-symbols-rounded" aria-hidden="true">calendar_month</span>
+                <span>Solicitar demonstração</span>
+            </a>
+        </section>
     </main>
 
     <footer class="public-footer">
@@ -142,6 +270,7 @@
         <nav aria-label="Acessos de rodapé">
             <a href="/app/login">Inspetor</a>
             <a href="/cliente/login">Cliente</a>
+            <a href="/revisao/login">Mesa</a>
         </nav>
     </footer>
 </body>
