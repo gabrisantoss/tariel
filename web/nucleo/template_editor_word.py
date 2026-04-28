@@ -887,14 +887,17 @@ def montar_html_documento_editor(
     }}
     .tariel-body .doc-cover-shell {{
       display: grid;
-      gap: 10px;
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(23, 50, 77, 0.12);
+      align-content: center;
+      gap: 12px;
+      min-height: 112mm;
+      margin-bottom: 18px;
+      padding: 16mm 0 12mm;
+      border-bottom: 2px solid rgba(23, 50, 77, 0.18);
     }}
     .tariel-body .doc-title {{
       margin-bottom: 0;
-      font-size: 29px;
+      max-width: 94%;
+      font-size: 32px;
       line-height: 1.08;
       letter-spacing: 0.005em;
     }}
@@ -916,7 +919,7 @@ def montar_html_documento_editor(
       margin: 0;
       padding: 5px 10px;
       border: 1px solid rgba(23, 50, 77, 0.12);
-      border-radius: 999px;
+      border-radius: 12px;
       background: #fff;
       color: var(--tariel-secondary);
       font-family: "Segoe UI", Arial, sans-serif;
@@ -943,6 +946,10 @@ def montar_html_documento_editor(
       display: grid;
       gap: 10px;
       margin-bottom: 16px;
+    }}
+    .tariel-body .doc-section--auditoria_emissao {{
+      break-before: page;
+      page-break-before: always;
     }}
     .tariel-body .doc-section-heading {{
       margin: 0;
@@ -1089,10 +1096,10 @@ def montar_html_documento_editor(
       display: grid;
       gap: 10px;
       padding: 16px;
-      border: 1px solid rgba(23, 50, 77, 0.14);
+      border: 1px solid rgba(159, 111, 47, 0.26);
       border-radius: 18px;
       background:
-        linear-gradient(180deg, rgba(23, 50, 77, 0.05), rgba(23, 50, 77, 0.01)),
+        linear-gradient(180deg, rgba(159, 111, 47, 0.08), rgba(23, 50, 77, 0.02)),
         #fff;
     }}
     .tariel-body .doc-status-chip {{
@@ -1146,7 +1153,7 @@ def montar_html_documento_editor(
       padding: 14px 14px 12px;
       border: 1px solid rgba(23, 50, 77, 0.10);
       border-radius: 16px;
-      background: #fff;
+      background: linear-gradient(180deg, rgba(23, 50, 77, 0.025), rgba(23, 50, 77, 0.00)), #fff;
     }}
     .tariel-body .doc-sign-role {{
       margin: 0 0 10px;
