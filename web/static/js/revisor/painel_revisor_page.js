@@ -63,7 +63,8 @@
         contextoLaudoAindaValido,
         sincronizarTenantAccessPolicy,
         userCapabilityEnabled,
-        tenantCapabilityReason
+        tenantCapabilityReason,
+        sanitizarTextoMesa
     } = NS;
 
     const pendingCollaborationRefreshByLaudo = new Map();
@@ -79,9 +80,9 @@
         responder_agora: "Responder agora",
         validar_aprendizado: "Validar aprendizado",
         aguardando_inspetor: "Aguardando campo",
-        fechamento_mesa: "Fechamento",
+        fechamento_mesa: "Fila de decisão",
         acompanhamento: "Acompanhamento",
-        historico: "Histórico"
+        historico: "Histórico e auditoria"
     };
 
     const PRIORIDADE_LABELS = {
@@ -180,16 +181,35 @@
         const whispers = Math.max(0, Number(origem?.dataset?.whispersNaoLidos || 0) || 0);
         const pendencias = Math.max(0, Number(origem?.dataset?.pendenciasAbertas || 0) || 0);
         const aprendizados = Math.max(0, Number(origem?.dataset?.aprendizadosPendentes || 0) || 0);
-        const inspetor = String(origem?.dataset?.inspetorNome || "").trim() || "Inspetor não identificado";
-        const setor = String(origem?.dataset?.setorIndustrial || dados?.setor || "").trim() || "Setor não informado";
-        const proximaAcao = String(origem?.dataset?.proximaAcao || "").trim() || "Abrir caso e definir o próximo passo";
+        const inspetor = sanitizarTextoMesa(origem?.dataset?.inspetorNome || "") || "Inspetor não identificado";
+        const setor = sanitizarTextoMesa(origem?.dataset?.setorIndustrial || dados?.setor || "") || "Setor não informado";
+        const proximaAcao = sanitizarTextoMesa(origem?.dataset?.proximaAcao || "") || "Abrir caso e definir o próximo passo";
+        const activeOwnerRole = String(
+            origem?.dataset?.activeOwnerRole
+            || dados?.active_owner_role
+            || ""
+        ).trim().toLowerCase();
+        const responsavelAtivo = activeOwnerRole === "mesa"
+            ? "Mesa Avaliadora"
+            : activeOwnerRole === "inspetor"
+                ? "Campo"
+                : activeOwnerRole === "none"
+                    ? "Conclusão"
+                    : "Responsável ativo não definido";
+        const decisionLabel = pendencias > 0
+            ? "Solicitar correção"
+            : fila === "fechamento_mesa"
+                ? "Aprovar ou devolver"
+                : fila === "historico"
+                    ? "Acompanhar histórico"
+                    : "Acompanhar caso";
         const tempoEmCampo = String(origem?.dataset?.tempoEmCampo || "").trim();
         const template = formatarTipoTemplate(dados?.tipo_template);
-        const status = String(
+        const status = sanitizarTextoMesa(
             origem?.dataset?.statusVisualLabel
             || dados?.status_visual_label
             || ""
-        ).trim() || "Em analise";
+        ) || "Em analise";
         const criadoEm = String(dados?.criado_em || "").trim() || formatarDataHora(new Date());
         let issuedDocumentReopenSummary = null;
         try {
@@ -220,7 +240,7 @@
             <div class="view-case-summary-head">
                 <div>
                     <span class="view-case-summary-kicker">${escapeHtml(setor)}</span>
-                    <strong>Resumo executivo do caso</strong>
+                    <strong>Caso selecionado</strong>
                 </div>
                 <span class="view-case-summary-status">${escapeHtml(status)}</span>
             </div>
@@ -228,7 +248,8 @@
                 <span class="view-case-summary-pill">${escapeHtml(template)}</span>
                 <span class="view-case-summary-pill">${escapeHtml(FILA_LABELS[fila] || "Operação")}</span>
                 <span class="view-case-summary-pill">Prioridade ${escapeHtml(PRIORIDADE_LABELS[prioridade] || "Média")}</span>
-                <span class="view-case-summary-pill">${escapeHtml(inspetor)}</span>
+                <span class="view-case-summary-pill">Responsável ativo: ${escapeHtml(responsavelAtivo)}</span>
+                <span class="view-case-summary-pill">Inspetor: ${escapeHtml(inspetor)}</span>
                 <span class="view-case-summary-pill">${tempoEmCampo ? `Em campo há ${escapeHtml(tempoEmCampo)}` : `Criado em ${escapeHtml(criadoEm)}`}</span>
             </div>
             <div class="view-case-summary-grid">
@@ -237,12 +258,16 @@
                     <strong>${escapeHtml(proximaAcao)}</strong>
                 </article>
                 <article class="view-case-summary-card">
-                    <span>Chamados</span>
-                    <strong>${escapeHtml(String(whispers))}</strong>
+                    <span>Decisão da Mesa</span>
+                    <strong>${escapeHtml(decisionLabel)}</strong>
                 </article>
                 <article class="view-case-summary-card">
-                    <span>Pendências</span>
+                    <span>Pendências do caso</span>
                     <strong>${escapeHtml(String(pendencias))}</strong>
+                </article>
+                <article class="view-case-summary-card">
+                    <span>Chamados</span>
+                    <strong>${escapeHtml(String(whispers))}</strong>
                 </article>
                 <article class="view-case-summary-card">
                     <span>Aprendizados</span>
@@ -253,7 +278,7 @@
                 <div class="view-case-summary-alert" data-summary-tone="attention">
                     <span class="material-symbols-rounded" aria-hidden="true">history</span>
                     <div>
-                        <strong>Reemissão em andamento</strong>
+                        <strong>Reemissão recomendada</strong>
                         <p>
                             ${escapeHtml(reopenVisibilityLabel)}
                             ${(reopenFileLabel || reopenVersionLabel)

@@ -786,7 +786,7 @@ def test_template_revisor_aponta_websocket_com_prefixo_revisao() -> None:
     revisor_page_js = (raiz / "static" / "js" / "revisor" / "painel_revisor_page.js").read_text(encoding="utf-8")
     revisor_governanca_js = (raiz / "static" / "js" / "revisor" / "revisor_painel_governanca.js").read_text(encoding="utf-8")
     assert "extrairResumoReaberturaDocumentoEmitidoMesa" in revisor_operacao_js
-    assert "Reemissão em andamento" in revisor_operacao_js
+    assert "Reemissão recomendada" in revisor_operacao_js
     assert "view-case-summary-alert" in revisor_page_js
     assert "Política de reabertura" in revisor_governanca_js
 
@@ -2014,9 +2014,9 @@ def test_ux_d_padroniza_painel_revisor_sem_owner_cru() -> None:
 
     for termo in (
         "Status {{ lifecycle_label | e }}",
-        "Responsavel {{ owner_label | e }}",
+        "Responsável ativo {{ owner_label | e }}",
         "Decisao da Mesa disponivel",
-        "Pronto para emissao oficial",
+        "Pronto para emissão oficial",
         "Documento emitido",
     ):
         assert termo in painel_revisor_html
@@ -2029,6 +2029,85 @@ def test_ux_d_padroniza_painel_revisor_sem_owner_cru() -> None:
 
     assert "body.mesa-shell .lista-scroll .lista-header" in painel_revisor_css
     assert "position: static" in painel_revisor_css
+
+
+def test_ux_f_mesa_separa_decisao_documento_e_auditoria() -> None:
+    raiz_web = Path(__file__).resolve().parents[1]
+    painel_revisor_html = (raiz_web / "templates" / "painel_revisor.html").read_text(encoding="utf-8")
+    painel_revisor_css = (raiz_web / "static" / "css" / "revisor" / "painel_revisor.css").read_text(encoding="utf-8")
+    core_js = (raiz_web / "static" / "js" / "revisor" / "revisor_painel_core.js").read_text(encoding="utf-8")
+    historico_js = (raiz_web / "static" / "js" / "revisor" / "revisor_painel_historico.js").read_text(encoding="utf-8")
+    operacao_js = (raiz_web / "static" / "js" / "revisor" / "revisor_painel_operacao.js").read_text(encoding="utf-8")
+    governanca_js = (raiz_web / "static" / "js" / "revisor" / "revisor_painel_governanca.js").read_text(encoding="utf-8")
+
+    for termo in (
+        "Fila de decisão",
+        "Recorte da fila",
+        "Responsável ativo",
+        "Solicitar correção",
+    ):
+        assert termo in painel_revisor_html
+
+    for termo in (
+        "data-uxf-block=\"decidir-agora\"",
+        "data-uxf-block=\"decisao-mesa\"",
+        "data-uxf-block=\"documento-emissao\"",
+        "data-uxf-block=\"historico-auditoria\"",
+        "Pendências do caso",
+        "Decisão da Mesa",
+        "Documento e emissão",
+        "Histórico e auditoria",
+    ):
+        assert termo in operacao_js
+
+    for termo in (
+        "Aprovar caso",
+        "Solicitar correção",
+        "Baixar PDF operacional",
+        "Exportar pacote técnico",
+        "Auditoria do caso",
+        "view-action-cluster--primary",
+    ):
+        assert termo in historico_js
+
+    for termo in (
+        "PDF operacional separado",
+        "Emissão oficial",
+        "Pacote oficial com manifesto e Hash do pacote",
+        "Reemissão recomendada",
+        "Documento substituído aparece apenas como histórico",
+        "Baixar pacote oficial",
+        "Auditoria pública",
+    ):
+        assert termo in governanca_js
+
+    for termo in (
+        "primary_pdf_diverged",
+        "reviewer_issue",
+        "reviewer_decision",
+        "issue_state",
+        "superseded",
+        "mobile_autonomous",
+        "tenant_without_mesa",
+        "nr35_mesa_required_unavailable",
+    ):
+        assert termo in core_js
+
+    for termo in (
+        ".view-action-cluster",
+        ".mesa-operacao-bloco--decision",
+        ".mesa-operacao-bloco--audit",
+        ".mesa-operacao-inline-tag--primary",
+    ):
+        assert termo in painel_revisor_css
+
+    for termo_legacy in (
+        "Fluxo legado",
+        "Owner ",
+        "Devolver Laudo",
+        "Confirmar Devolução",
+    ):
+        assert termo_legacy not in painel_revisor_html
 
 
 def test_logins_e_blueprint_nao_reintroduzem_autofill_dev() -> None:

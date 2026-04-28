@@ -159,12 +159,12 @@
                 if (!pacote) return;
                 const hashCurto = String(pacote.codigo_hash || state.laudoAtivoId).slice(-6);
                 downloadJson(`pacote_mesa_${hashCurto}.json`, pacote);
-                showStatus("Dados do caso baixados.", "download_done");
+                showStatus("Auditoria do caso baixada.", "download_done");
             } catch (erro) {
                 if (ehAbortError(erro) || !contextoLaudoAindaValido(contexto)) {
                     return;
                 }
-                showStatus("Erro ao baixar pacote de dados.", "error");
+                showStatus("Erro ao baixar auditoria do caso.", "error");
                 console.error("[Tariel] Falha ao baixar pacote de dados:", erro);
             }
         }, { laudoId: Number(state.laudoAtivoId || 0) || 0 });
@@ -179,7 +179,7 @@
                 return;
             }
             acionarDownloadMesa(`/revisao/api/laudo/${contexto.laudoId}/pacote/exportar-pdf`);
-            showStatus("Gerando PDF do pacote...", "picture_as_pdf");
+            showStatus("Gerando PDF operacional...", "picture_as_pdf");
         }, { laudoId: Number(state.laudoAtivoId || 0) || 0 });
     };
 
@@ -192,7 +192,7 @@
                 return;
             }
             acionarDownloadMesa(`/revisao/api/laudo/${contexto.laudoId}/pacote/exportar-oficial`);
-            showStatus("Gerando ZIP oficial...", "folder_zip");
+            showStatus("Exportando pacote técnico...", "folder_zip");
         }, { laudoId: Number(state.laudoAtivoId || 0) || 0 });
     };
 
@@ -205,7 +205,7 @@
                 return;
             }
             acionarDownloadMesa(`/revisao/api/laudo/${contexto.laudoId}/emissao-oficial/download`);
-            showStatus("Baixando bundle oficial congelado...", "folder_zip");
+            showStatus("Baixando pacote oficial...", "folder_zip");
         }, { laudoId: Number(state.laudoAtivoId || 0) || 0 });
     };
 

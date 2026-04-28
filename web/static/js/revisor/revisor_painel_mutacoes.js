@@ -197,7 +197,7 @@
             }
             showStatus("Refazer enviado ao inspetor.", "send");
         } catch (erro) {
-            showStatus("Erro ao devolver item de coverage.", "error");
+            showStatus("Erro ao solicitar ajuste do item.", "error");
             console.error("[Tariel] Falha ao solicitar refazer de coverage:", erro);
         } finally {
             elemento.disabled = false;
@@ -215,7 +215,7 @@
             }
 
             els.btnConfirmarMotivo.disabled = true;
-            els.btnConfirmarMotivo.textContent = "Devolvendo...";
+            els.btnConfirmarMotivo.textContent = "Registrando correção...";
 
             try {
                 const fd = new FormData();
@@ -235,8 +235,8 @@
                 window.location.reload();
             } catch (erro) {
                 els.btnConfirmarMotivo.disabled = false;
-                els.btnConfirmarMotivo.textContent = "Confirmar Devolução";
-                showStatus("Erro ao devolver laudo.", "error");
+                els.btnConfirmarMotivo.textContent = "Confirmar correção";
+                showStatus("Erro ao solicitar correção.", "error");
                 console.error("[Tariel] Falha ao devolver:", erro);
             }
         }, { laudoId: Number(state.laudoAtivoId || 0) || 0 });
