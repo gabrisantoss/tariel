@@ -219,6 +219,8 @@ def test_raiz_publica_exibe_landing_sem_sessao(cliente_main_isolado: TestClient)
     assert "<title>Tariel</title>" in resposta.text
     assert "Inspeção técnica governada" in resposta.text
     assert 'href="/app/login"' in resposta.text
+    assert 'href="/admin/login"' not in resposta.text
+    assert "Admin CEO" not in resposta.text
     assert "/static/css/shared/public_landing.css" in resposta.text
 
 
