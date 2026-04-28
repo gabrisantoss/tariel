@@ -3,7 +3,7 @@ WEB_PYTHON := $(shell [ -x web/.venv-linux/bin/python ] && echo web/.venv-linux/
 WEB_PYTHON_IN_WEB := $(shell [ -x web/.venv-linux/bin/python ] && echo ./.venv-linux/bin/python || echo python)
 PRE_COMMIT := $(WEB_PYTHON) -m pre_commit
 
-.PHONY: help doctor bootstrap hooks-install web-lint web-typecheck web-test web-ci mesa-smoke mesa-acceptance document-acceptance document-pdf-qa document-pdf-qa-full observability-acceptance hygiene-check binary-assets-audit binary-assets-audit-strict hygiene-acceptance v2-acceptance post-plan-benchmarks contract-check document-contract-check smoke-web demo-local-reset full-regression-audit full-regression-audit-critical full-regression-audit-hosted full-regression-audit-human full-regression-audit-exhaustive full-regression-audit-exhaustive-hosted full-regression-audit-exhaustive-human mobile-install mobile-lint mobile-typecheck mobile-test mobile-format-check mobile-baseline mobile-preview mobile-wifi mobile-native-preflight mobile-acceptance mobile-ci smoke-mobile python-security-audit mobile-security-audit security-audit verify release-verify-local release-verify production-ops-check production-ops-check-strict uploads-restore-drill uploads-cleanup-check uploads-cleanup-apply post-deploy-cleanup-observation release-gate-hosted release-gate-real release-gate final-product-stamp clean-generated baseline-snapshot ci
+.PHONY: help doctor bootstrap hooks-install web-lint web-typecheck web-test web-ci mesa-smoke mesa-acceptance document-acceptance document-pdf-qa document-pdf-qa-full observability-acceptance hygiene-check binary-assets-audit binary-assets-audit-strict hygiene-acceptance v2-acceptance post-plan-benchmarks contract-check document-contract-check smoke-web demo-local-reset full-regression-audit full-regression-audit-critical full-regression-audit-hosted full-regression-audit-human full-regression-audit-exhaustive full-regression-audit-exhaustive-hosted full-regression-audit-exhaustive-human mobile-install mobile-lint mobile-typecheck mobile-test mobile-format-check mobile-baseline mobile-preview mobile-wifi mobile-native-preflight mobile-acceptance mobile-ci smoke-mobile python-security-audit mobile-security-audit public-repo-secret-scan security-audit verify release-verify-local release-verify production-ops-check production-ops-check-strict uploads-restore-drill uploads-cleanup-check uploads-cleanup-apply post-deploy-cleanup-observation release-gate-hosted release-gate-real release-gate final-product-stamp clean-generated baseline-snapshot ci
 
 help: ## Lista comandos úteis do repositório
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -165,6 +165,10 @@ python-security-audit: ## Audita dependencias Python em venv descartavel local
 
 mobile-security-audit: ## Audita dependencias mobile de runtime com severidade alta
 	cd android && npm audit --omit=dev --audit-level=high
+
+public-repo-secret-scan: ## Varre historico Git com gitleaks via Docker para repo publico
+	mkdir -p artifacts/security
+	docker run --rm --user "$$(id -u):$$(id -g)" -v "$$PWD":/repo zricethezav/gitleaks:latest detect --source=/repo --redact --report-format=json --report-path=/repo/artifacts/security/gitleaks_report.json
 
 security-audit: python-security-audit mobile-security-audit ## Executa auditoria de seguranca Python + mobile runtime
 
