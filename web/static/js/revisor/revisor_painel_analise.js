@@ -12,7 +12,8 @@
 
     const {
         escapeHtml,
-        formatarDataHora
+        formatarDataHora,
+        sanitizarTextoMesa
     } = NS;
 
     const COVERAGE_STATUS_LABELS = {
@@ -54,7 +55,12 @@
     };
 
     const humanizarSlugAnalise = (value) => {
-        const text = String(value || "").trim().replace(/_/g, " ");
+        const raw = String(value || "").trim();
+        const canonical = sanitizarTextoMesa(raw);
+        if (canonical && canonical !== raw) {
+            return canonical;
+        }
+        const text = raw.replace(/_/g, " ");
         if (!text) return "";
         return text.replace(/\b\w/g, (match) => match.toUpperCase());
     };
@@ -111,10 +117,10 @@
                             Number(item?.open_return_count || 0) > 0 ? `${Number(item.open_return_count)} refazer(es)` : ""
                         ].filter(Boolean).join(" | ");
                         const detalhes = [
-                            item?.summary || "",
-                            item?.diff_short ? `Destaque: ${item.diff_short}` : "",
+                            sanitizarTextoMesa(item?.summary || ""),
+                            item?.diff_short ? `Destaque: ${sanitizarTextoMesa(item.diff_short)}` : "",
                             item?.latest_return_at ? `Ultimo retorno: ${formatarDataHora(item.latest_return_at)}` : "",
-                            item?.recommended_action ? `Acao: ${item.recommended_action}` : ""
+                            item?.recommended_action ? `Acao: ${sanitizarTextoMesa(item.recommended_action)}` : ""
                         ].filter(Boolean).join(" | ");
                         return `
                             <li class="mesa-operacao-coverage-item ${escapeHtml(status)}">
@@ -197,11 +203,11 @@
                             item?.mesa_status ? rotuloMesaStatus(item.mesa_status) : ""
                         ].filter(Boolean).join(" | ");
                         const detalhes = [
-                            item?.summary || "",
+                            sanitizarTextoMesa(item?.summary || ""),
                             Array.isArray(item?.failure_reasons) && item.failure_reasons.length
-                                ? `Alertas: ${item.failure_reasons.join(", ")}`
+                                ? `Alertas: ${item.failure_reasons.map((reason) => sanitizarTextoMesa(reason)).join(", ")}`
                                 : "",
-                            item?.replacement_evidence_key ? `Substituicao: ${item.replacement_evidence_key}` : ""
+                            item?.replacement_evidence_key ? `Substituição: ${sanitizarTextoMesa(item.replacement_evidence_key)}` : ""
                         ].filter(Boolean).join(" | ");
                         const botaoRefazer = status !== "accepted"
                             ? `
@@ -219,7 +225,7 @@
                                         data-mesa-status="${escapeHtml(String(item?.mesa_status || ""))}"
                                         data-component-type="${escapeHtml(String(item?.component_type || ""))}"
                                         data-view-angle="${escapeHtml(String(item?.view_angle || ""))}"
-                                        data-summary="${escapeHtml(String(item?.summary || ""))}"
+                                        data-summary="${escapeHtml(sanitizarTextoMesa(item?.summary || ""))}"
                                         data-failure-reasons="${escapeHtml(encodeURIComponent(JSON.stringify(Array.isArray(item?.failure_reasons) ? item.failure_reasons : [])))}"
                                     >
                                         <span class="material-symbols-rounded" aria-hidden="true">assignment_return</span>
@@ -236,10 +242,10 @@
                                 </div>
                                 <div class="mesa-operacao-inline-tags">
                                     ${requiredTag}
-                                    ${validationMode ? `<span class="mesa-operacao-inline-tag">${escapeHtml(validationMode)}</span>` : ""}
+                                    ${validationMode ? `<span class="mesa-operacao-inline-tag">${escapeHtml(humanizarSlugAnalise(validationMode))}</span>` : ""}
                                 </div>
-                                ${meta ? `<p>${escapeHtml(meta)}</p>` : ""}
-                                ${detalhes ? `<div class="mesa-operacao-meta"><span>${escapeHtml(detalhes)}</span></div>` : ""}
+                                ${meta ? `<p>${escapeHtml(sanitizarTextoMesa(meta))}</p>` : ""}
+                                ${detalhes ? `<div class="mesa-operacao-meta"><span>${escapeHtml(sanitizarTextoMesa(detalhes))}</span></div>` : ""}
                                 ${botaoRefazer}
                             </li>
                         `;
@@ -329,7 +335,7 @@
                         <strong>${escapeHtml(String(diff.total_changes || (diff.changed_count || 0) + (diff.added_count || 0) + (diff.removed_count || 0)))}</strong>
                     </article>
                 </div>
-                ${diff.summary ? `<p>${escapeHtml(String(diff.summary || ""))}</p>` : ""}
+                ${diff.summary ? `<p>${escapeHtml(sanitizarTextoMesa(diff.summary || ""))}</p>` : ""}
                 ${history.approved_at ? `<div class="mesa-operacao-meta"><span>Base aprovada em ${escapeHtml(formatarDataHora(history.approved_at))}</span></div>` : ""}
                 ${diffCounters.length ? `
                     <div class="mesa-operacao-inline-tags">
@@ -351,7 +357,7 @@
                                             <strong>${escapeHtml(String(item?.title || "Bloco"))}</strong>
                                             <span class="mesa-operacao-chip attention">${escapeHtml(String(item?.total_changes || 0))} delta(s)</span>
                                         </div>
-                                        ${item?.summary ? `<p>${escapeHtml(String(item.summary))}</p>` : ""}
+                                        ${item?.summary ? `<p>${escapeHtml(sanitizarTextoMesa(item.summary))}</p>` : ""}
                                         <div class="mesa-operacao-inline-tags">
                                             <span class="mesa-operacao-inline-tag attention">Alterados: ${escapeHtml(String(item?.changed_count || 0))}</span>
                                             ${Number(item?.added_count || 0) > 0 ? `<span class="mesa-operacao-inline-tag accepted">Novos: ${escapeHtml(String(item.added_count || 0))}</span>` : ""}
@@ -364,7 +370,7 @@
                                                     <article>
                                                         <span>${escapeHtml(rotuloTipoDiffHistorico(field?.change_type || "changed"))}</span>
                                                         <strong>${escapeHtml(String(field?.label || "Campo"))}</strong>
-                                                        <p>${escapeHtml(String(field?.previous_value || "vazio"))} → ${escapeHtml(String(field?.current_value || "vazio"))}</p>
+                                                        <p>${escapeHtml(sanitizarTextoMesa(field?.previous_value || "vazio"))} → ${escapeHtml(sanitizarTextoMesa(field?.current_value || "vazio"))}</p>
                                                     </article>
                                                 `).join("")}
                                             </div>
@@ -387,16 +393,16 @@
                                             <span class="mesa-operacao-chip attention">${escapeHtml(rotuloTipoDiffHistorico(item?.change_type || "changed"))}</span>
                                         </div>
                                         <div class="mesa-operacao-meta">
-                                            <span>${escapeHtml(String(item?.path || ""))}</span>
+                                            <span>${escapeHtml(sanitizarTextoMesa(item?.path || ""))}</span>
                                         </div>
                                         <div class="mesa-operacao-diff-values">
                                             <article>
                                                 <span>Antes</span>
-                                                <strong>${escapeHtml(String(item?.previous_value || "vazio"))}</strong>
+                                                <strong>${escapeHtml(sanitizarTextoMesa(item?.previous_value || "vazio"))}</strong>
                                             </article>
                                             <article>
                                                 <span>Agora</span>
-                                                <strong>${escapeHtml(String(item?.current_value || "vazio"))}</strong>
+                                                <strong>${escapeHtml(sanitizarTextoMesa(item?.current_value || "vazio"))}</strong>
                                             </article>
                                         </div>
                                     </li>
@@ -414,16 +420,16 @@
                                     <span class="mesa-operacao-chip attention">${escapeHtml(rotuloTipoDiffHistorico(item?.change_type || "changed"))}</span>
                                 </div>
                                 <div class="mesa-operacao-meta">
-                                    <span>${escapeHtml(String(item?.path || ""))}</span>
+                                    <span>${escapeHtml(sanitizarTextoMesa(item?.path || ""))}</span>
                                 </div>
                                 <div class="mesa-operacao-diff-values">
                                     <article>
                                         <span>Antes</span>
-                                        <strong>${escapeHtml(String(item?.previous_value || "vazio"))}</strong>
+                                        <strong>${escapeHtml(sanitizarTextoMesa(item?.previous_value || "vazio"))}</strong>
                                     </article>
                                     <article>
                                         <span>Agora</span>
-                                        <strong>${escapeHtml(String(item?.current_value || "vazio"))}</strong>
+                                        <strong>${escapeHtml(sanitizarTextoMesa(item?.current_value || "vazio"))}</strong>
                                     </article>
                                 </div>
                             </li>

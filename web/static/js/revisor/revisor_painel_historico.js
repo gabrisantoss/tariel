@@ -235,40 +235,94 @@
     const renderActionButtons = (dados) => {
         sincronizarTenantAccessPolicy(dados?.tenant_access_policy);
 
-        const partes = [];
+        const primaryActions = [];
+        const secondaryActions = [];
+        const auditActions = [];
         const reviewerDecisionEnabled = userCapabilityEnabled("reviewer_decision");
         const reviewerIssueEnabled = userCapabilityEnabled("reviewer_issue");
+        const allowedSurfaceActions = Array.isArray(dados?.allowed_surface_actions)
+            ? dados.allowed_surface_actions.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean)
+            : [];
+        const itemAtivo = dados?.id
+            ? document.querySelector(`.js-item-laudo[data-id="${CSS.escape(String(dados.id))}"]`)
+            : null;
+        const pendenciasAbertas = Math.max(
+            0,
+            Number(
+                itemAtivo?.dataset?.pendenciasAbertas
+                ?? dados?.pendencias_abertas
+                ?? dados?.resumo_pendencias?.abertas
+                ?? 0
+            ) || 0
+        );
+        const canApprove = allowedSurfaceActions.includes("mesa_approve");
+        const canReturn = allowedSurfaceActions.includes("mesa_return");
 
-        partes.push(`
+        if (canReturn && pendenciasAbertas > 0) {
+            primaryActions.push(`
+                <button class="btn btn-rejeitar btn-principal-mesa js-btn-abrir-dev" type="button">
+                    <span class="material-symbols-rounded" aria-hidden="true">assignment_return</span>
+                    <span>Solicitar correção</span>
+                </button>
+            `);
+        } else if (canApprove) {
+            primaryActions.push(`
+                <form action="/revisao/api/laudo/${dados.id}/avaliar" method="POST" class="js-form-aprovar">
+                    <input type="hidden" name="csrf_token" value="${escapeHtml(tokenCsrf)}">
+                    <input type="hidden" name="acao" value="aprovar">
+                    <button type="submit" class="btn btn-aprovar btn-principal-mesa">
+                        <span class="material-symbols-rounded" aria-hidden="true">check</span>
+                        <span>Aprovar caso</span>
+                    </button>
+                </form>
+            `);
+        } else if (canReturn) {
+            primaryActions.push(`
+                <button class="btn btn-rejeitar btn-principal-mesa js-btn-abrir-dev" type="button">
+                    <span class="material-symbols-rounded" aria-hidden="true">assignment_return</span>
+                    <span>Devolver para ajuste</span>
+                </button>
+            `);
+        }
+
+        if (canApprove && !(canReturn && pendenciasAbertas > 0)) {
+            secondaryActions.push(`
+                <span class="view-action-note">Decisão disponível</span>
+            `);
+        }
+
+        if (canReturn && primaryActions.join("").indexOf("js-btn-abrir-dev") === -1) {
+            secondaryActions.push(`
+                <button class="btn btn-rejeitar js-btn-abrir-dev" type="button">
+                    <span class="material-symbols-rounded" aria-hidden="true">assignment_return</span>
+                    <span>Devolver para ajuste</span>
+                </button>
+            `);
+        }
+
+        secondaryActions.push(`
             <button class="btn btn-ver js-btn-pacote-resumo" type="button">
                 <span class="material-symbols-rounded" aria-hidden="true">insights</span>
                 <span>Resumo da revisão</span>
             </button>
         `);
 
-        partes.push(`
-            <button class="btn btn-ver js-btn-pacote-json" type="button">
-                <span class="material-symbols-rounded" aria-hidden="true">download</span>
-                <span>Baixar dados do caso</span>
-            </button>
-        `);
-
-        partes.push(`
+        secondaryActions.push(`
             <button class="btn btn-ver js-btn-pacote-pdf" type="button" ${reviewerDecisionEnabled ? "" : "disabled aria-disabled=\"true\""} title="${escapeHtml(reviewerDecisionEnabled ? "" : tenantCapabilityReason("reviewer_decision"))}">
                 <span class="material-symbols-rounded" aria-hidden="true">picture_as_pdf</span>
-                <span>Baixar resumo em PDF</span>
+                <span>Baixar PDF operacional</span>
             </button>
         `);
 
-        partes.push(`
+        secondaryActions.push(`
             <button class="btn btn-ver js-btn-pacote-oficial" type="button" ${reviewerIssueEnabled ? "" : "disabled aria-disabled=\"true\""} title="${escapeHtml(reviewerIssueEnabled ? "" : tenantCapabilityReason("reviewer_issue"))}">
                 <span class="material-symbols-rounded" aria-hidden="true">folder_zip</span>
-                <span>Baixar pacote oficial</span>
+                <span>Exportar pacote técnico</span>
             </button>
         `);
 
         if (dados.dados_formulario) {
-            partes.push(`
+            secondaryActions.push(`
                 <button class="btn btn-ver js-btn-abrir-rel" type="button">
                     <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
                     <span>Resumo do caso</span>
@@ -276,33 +330,26 @@
             `);
         }
 
-        const allowedSurfaceActions = Array.isArray(dados?.allowed_surface_actions)
-            ? dados.allowed_surface_actions.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean)
-            : [];
+        auditActions.push(`
+            <button class="btn btn-ver js-btn-pacote-json" type="button">
+                <span class="material-symbols-rounded" aria-hidden="true">data_object</span>
+                <span>Auditoria do caso</span>
+            </button>
+        `);
 
-        if (allowedSurfaceActions.includes("mesa_approve")) {
-            partes.push(`
-                <form action="/revisao/api/laudo/${dados.id}/avaliar" method="POST" style="margin:0;" class="js-form-aprovar">
-                    <input type="hidden" name="csrf_token" value="${escapeHtml(tokenCsrf)}">
-                    <input type="hidden" name="acao" value="aprovar">
-                    <button type="submit" class="btn btn-aprovar">
-                        <span class="material-symbols-rounded" aria-hidden="true">check</span>
-                        <span>Aprovar</span>
-                    </button>
-                </form>
-            `);
-        }
-
-        if (allowedSurfaceActions.includes("mesa_return")) {
-            partes.push(`
-                <button class="btn btn-rejeitar js-btn-abrir-dev" type="button">
-                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
-                    <span>Devolver</span>
-                </button>
-            `);
-        }
-
-        els.viewAcoes.innerHTML = partes.join("");
+        els.viewAcoes.innerHTML = `
+            ${primaryActions.length ? `
+                <div class="view-action-cluster view-action-cluster--primary" aria-label="Decisão da Mesa">
+                    ${primaryActions.join("")}
+                </div>
+            ` : ""}
+            <div class="view-action-cluster" aria-label="Documento e emissão">
+                ${secondaryActions.join("")}
+            </div>
+            <div class="view-action-cluster view-action-cluster--audit" aria-label="Histórico e auditoria">
+                ${auditActions.join("")}
+            </div>
+        `;
         els.boxResposta.hidden = false;
     };
 

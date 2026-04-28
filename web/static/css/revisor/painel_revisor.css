@@ -1836,6 +1836,42 @@
             gap: 8px;
         }
 
+        .view-action-cluster {
+            display: inline-flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .view-action-cluster--primary {
+            padding-right: 8px;
+            border-right: 1px solid rgba(18, 35, 60, 0.08);
+        }
+
+        .view-action-cluster--audit {
+            opacity: .88;
+        }
+
+        .view-action-note {
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+            padding: 0 10px;
+            border: 1px solid rgba(18, 35, 60, 0.08);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.74);
+            color: var(--tariel-text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .btn-principal-mesa {
+            min-width: 156px;
+            justify-content: center;
+        }
+
         .btn,
         .btn-enviar-chat {
             border-radius: 12px;
@@ -3094,7 +3130,7 @@
 
         .view-case-summary-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 12px;
         }
 
@@ -3578,6 +3614,65 @@
             padding: 20px 20px 22px 0;
             border-left: 1px solid rgba(18, 35, 60, 0.08);
             background: linear-gradient(180deg, rgba(247, 250, 252, 0.88), rgba(245, 248, 252, 0.98));
+        }
+
+        body.mesa-shell .mesa-operacao-eyebrow,
+        body.mesa-shell .mesa-operacao-bloco-header span {
+            display: inline-flex;
+            margin-bottom: 4px;
+            color: var(--texto-fraco);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        body.mesa-shell .mesa-operacao-blocos {
+            display: grid;
+            gap: 14px;
+        }
+
+        body.mesa-shell .mesa-operacao-bloco {
+            display: grid;
+            gap: 12px;
+            padding: 14px;
+            border: 1px solid rgba(18, 35, 60, 0.08);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.58);
+        }
+
+        body.mesa-shell .mesa-operacao-bloco--decision {
+            border-color: rgba(36, 92, 147, 0.14);
+            background: rgba(236, 246, 253, 0.62);
+        }
+
+        body.mesa-shell .mesa-operacao-bloco--audit {
+            background: rgba(248, 250, 252, 0.72);
+        }
+
+        body.mesa-shell .mesa-operacao-bloco-header {
+            display: grid;
+            gap: 4px;
+        }
+
+        body.mesa-shell .mesa-operacao-bloco-header h4 {
+            margin: 0;
+            color: var(--tariel-ink-900);
+            font-size: 15px;
+            line-height: 1.25;
+        }
+
+        body.mesa-shell .mesa-operacao-bloco-header p {
+            margin: 0;
+            color: var(--texto-mutado);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        body.mesa-shell .mesa-operacao-inline-tag--primary {
+            border-color: rgba(36, 92, 147, 0.34);
+            background: rgba(36, 92, 147, 0.14);
+            color: #184873;
         }
 
         body.mesa-shell .btn-contexto-mesa,

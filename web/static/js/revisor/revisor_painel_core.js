@@ -156,7 +156,39 @@
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
 
-    const nl2br = (text) => escapeHtml(text).replace(/\n/g, "<br>");
+    const MESA_INTERNAL_TERM_REPLACEMENTS = [
+        [/\bprimary_pdf_diverged\b/gi, "Reemissão recomendada"],
+        [/\breissue_reason_codes\b/gi, "motivos da reemissão"],
+        [/\bapproval_snapshot_updated\b/gi, "nova aprovação governada"],
+        [/\bissue_state_label\b/gi, "Estado da emissão"],
+        [/\bissue_state\b/gi, "Estado da emissão"],
+        [/\bissued\b/gi, "Documento emitido"],
+        [/\bsuperseded\b/gi, "Documento substituído"],
+        [/\brevoked\b/gi, "Histórico de emissões"],
+        [/\bpackage_sha256\b/gi, "Hash do pacote"],
+        [/\bapproval_snapshot_id\b/gi, "Snapshot aprovado"],
+        [/\breviewer_issue\b/gi, "Emissão oficial"],
+        [/\breviewer_decision\b/gi, "Decisão da Mesa"],
+        [/\bmobile_autonomous\b/gi, "Revisão interna governada"],
+        [/\bmobile_review_allowed\b/gi, "Revisão interna governada"],
+        [/\btenant_without_mesa\b/gi, "Não incluído no pacote"],
+        [/\bnr35_mesa_required_unavailable\b/gi, "Família exige Mesa"],
+        [/\bowner\b/gi, "Responsável ativo"],
+        [/\bfluxo legado\b/gi, "fluxo da revisão"],
+    ];
+
+    const sanitizarTextoMesa = (texto) => {
+        let resultado = String(texto || "").trim();
+        if (!resultado) return "";
+        MESA_INTERNAL_TERM_REPLACEMENTS.forEach(([pattern, replacement]) => {
+            resultado = resultado.replace(pattern, replacement);
+        });
+        return resultado.replace(/\s+/g, " ").trim();
+    };
+
+    const nl2br = (text) =>
+        escapeHtml(String(text || "").split("\n").map((line) => sanitizarTextoMesa(line)).join("\n"))
+            .replace(/\n/g, "<br>");
 
     const formatarTamanhoBytes = (totalBytes) => {
         const valor = Number(totalBytes || 0);
@@ -282,7 +314,7 @@
     const showStatus = (texto, icone = "info") => {
         if (!els.statusFlutuante) return;
         els.statusFlutuante.innerHTML =
-            `<span class="material-symbols-rounded" aria-hidden="true">${icone}</span><span>${escapeHtml(texto)}</span>`;
+            `<span class="material-symbols-rounded" aria-hidden="true">${icone}</span><span>${escapeHtml(sanitizarTextoMesa(texto))}</span>`;
         els.statusFlutuante.classList.add("mostrar");
         clearTimeout(showStatus._timer);
         showStatus._timer = setTimeout(() => {
@@ -291,7 +323,7 @@
     };
 
     const resumoMensagem = (texto) => {
-        const base = String(texto || "").replace(/\s+/g, " ").trim();
+        const base = sanitizarTextoMesa(texto);
         if (!base) return "Mensagem sem conteúdo";
         return base.length > 140 ? `${base.slice(0, 140)}...` : base;
     };
@@ -728,10 +760,10 @@
         if (ownerRole === "mesa" || lifecycleStatus === "aguardando_mesa" || lifecycleStatus === "em_revisao_mesa") {
             return {
                 fila: "fechamento_mesa",
-                filaLabel: "Fechamento",
+                filaLabel: "Decisão da Mesa",
                 prioridade: "media",
                 prioridadeLabel: "Prioridade média",
-                proximaAcao: "Próxima: Fechar revisão"
+                proximaAcao: "Próxima: Aprovar ou devolver"
             };
         }
         if (ownerRole === "inspetor") {
@@ -746,10 +778,10 @@
         }
         return {
             fila: "historico",
-            filaLabel: "Histórico",
+            filaLabel: "Histórico e auditoria",
             prioridade: "baixa",
             prioridadeLabel: "Prioridade baixa",
-            proximaAcao: "Próxima: Consultar histórico"
+            proximaAcao: "Próxima: Consultar histórico e auditoria"
         };
     };
 
@@ -1060,6 +1092,7 @@ Object.assign(NS, {
     MIME_ANEXOS_MESA_PERMITIDOS,
     focusableSelector,
     escapeHtml,
+    sanitizarTextoMesa,
     nl2br,
     formatarTamanhoBytes,
     normalizarAnexoMensagem,

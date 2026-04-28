@@ -14,7 +14,8 @@
         escapeHtml,
         formatarDataHora,
         userCapabilityEnabled,
-        tenantCapabilityReason
+        tenantCapabilityReason,
+        sanitizarTextoMesa
     } = NS;
 
     const IRREGULARITY_TYPE_LABELS = {
@@ -30,7 +31,12 @@
     };
 
     const humanizarSlugGovernanca = (value) => {
-        const text = String(value || "").trim().replace(/_/g, " ");
+        const raw = String(value || "").trim();
+        const canonical = sanitizarTextoMesa(raw);
+        if (canonical && canonical !== raw) {
+            return canonical;
+        }
+        const text = raw.replace(/_/g, " ");
         if (!text) return "";
         return text.replace(/\b\w/g, (match) => match.toUpperCase());
     };
@@ -82,9 +88,9 @@
 
         if (diverged) {
             return {
-                title: "Integridade do PDF principal",
-                summary: "O PDF atual do caso divergiu do PDF congelado na emissão oficial.",
-                chip: "Reemitir",
+                title: "Reemissão recomendada",
+                summary: "O PDF operacional atual divergiu do documento congelado na Emissão oficial.",
+                chip: "Revisar para reemissão",
                 tone: "returned",
                 meta,
             };
@@ -95,8 +101,8 @@
         }
 
         return {
-            title: "Integridade do PDF principal",
-            summary: "O PDF principal atual continua compatível com a emissão oficial congelada.",
+            title: "PDF operacional",
+            summary: "O PDF operacional atual continua compatível com a Emissão oficial congelada.",
             chip: "Íntegro",
             tone: "accepted",
             meta,
@@ -116,26 +122,26 @@
             <section class="mesa-operacao-card">
                 <header>
                     <div>
-                        <h4>Verificação Pública</h4>
+                        <h4>Auditoria pública</h4>
                         <p>Hash público e link oficial para conferência documental.</p>
                     </div>
                 </header>
                 <div class="mesa-operacao-card-kpis">
                     <article>
-                        <span>Hash</span>
+                        <span>Hash público</span>
                         <strong>${escapeHtml(String(verification.hash_short || verification.codigo_hash || "-"))}</strong>
                     </article>
                     <article>
-                        <span>Fluxo</span>
-                        <strong>${escapeHtml(statusVisualLabel)}</strong>
+                        <span>Status</span>
+                        <strong>${escapeHtml(sanitizarTextoMesa(statusVisualLabel))}</strong>
                     </article>
                     <article>
                         <span>Conformidade</span>
                         <strong>${escapeHtml(String(verification.status_conformidade || "-"))}</strong>
                     </article>
                     <article>
-                        <span>Outcome</span>
-                        <strong>${escapeHtml(String(verification.document_outcome || "-"))}</strong>
+                        <span>Resultado</span>
+                        <strong>${escapeHtml(sanitizarTextoMesa(verification.document_outcome || "-"))}</strong>
                     </article>
                 </div>
                 <div class="mesa-operacao-verification-shell">
@@ -175,11 +181,11 @@
                                     <strong>${escapeHtml(rotuloIrregularityType(item?.irregularity_type))}</strong>
                                     <span class="mesa-operacao-chip ${escapeHtml(status)}">${escapeHtml(rotuloIrregularityStatus(status))}</span>
                                 </div>
-                                ${item?.summary ? `<p>${escapeHtml(String(item.summary))}</p>` : ""}
+                                ${item?.summary ? `<p>${escapeHtml(sanitizarTextoMesa(item.summary))}</p>` : ""}
                                 <div class="mesa-operacao-meta">
                                     ${meta ? `<span>${escapeHtml(meta)}</span>` : ""}
                                     ${resolucao ? `<span>Resolucao: ${escapeHtml(resolucao)}</span>` : ""}
-                                    ${item?.resolution_notes ? `<span>${escapeHtml(String(item.resolution_notes))}</span>` : ""}
+                                    ${item?.resolution_notes ? `<span>${escapeHtml(sanitizarTextoMesa(item.resolution_notes))}</span>` : ""}
                                 </div>
                             </li>
                         `;
@@ -192,8 +198,8 @@
             <section class="mesa-operacao-card mesa-operacao-card--history">
                 <header>
                     <div>
-                        <h4>Refazer Inspetor</h4>
-                        <p>Historico rastreavel de reaberturas e devolucoes para campo.</p>
+                        <h4>Histórico de devoluções</h4>
+                        <p>Histórico rastreável de reaberturas e devoluções para campo.</p>
                     </div>
                 </header>
                 ${body}
@@ -207,11 +213,11 @@
                 <section class="mesa-operacao-card mesa-operacao-card--memory">
                     <header>
                         <div>
-                            <h4>Memoria da Familia</h4>
-                            <p>Sem memoria consolidada para esta familia ainda.</p>
+                            <h4>Memória operacional</h4>
+                            <p>Sem memória consolidada para esta família ainda.</p>
                         </div>
                     </header>
-                    <p class="mesa-operacao-vazio">Os snapshots aprovados e os eventos operacionais passam a fortalecer esta base conforme a operacao cresce.</p>
+                    <p class="mesa-operacao-vazio">Os snapshots aprovados e os eventos operacionais passam a fortalecer esta base conforme a operação cresce.</p>
                 </section>
             `;
         }
@@ -222,7 +228,7 @@
             <section class="mesa-operacao-card mesa-operacao-card--memory">
                 <header>
                     <div>
-                        <h4>Memoria da Familia</h4>
+                        <h4>Memória operacional</h4>
                         <p>${escapeHtml(humanizarSlugGovernanca(memory.family_key || ""))}</p>
                     </div>
                 </header>
@@ -236,7 +242,7 @@
                         <strong>${escapeHtml(String(memory.operational_event_count || 0))}</strong>
                     </article>
                     <article>
-                        <span>Evidencias validadas</span>
+                        <span>Evidências validadas</span>
                         <strong>${escapeHtml(String(memory.validated_evidence_count || 0))}</strong>
                     </article>
                     <article>
@@ -275,8 +281,8 @@
             <section class="mesa-operacao-card mesa-operacao-card--coverage">
                 <header>
                     <div>
-                        <h4>Anexo Pack</h4>
-                        <p>Pacote de anexos e artefatos exigidos para a emissão oficial.</p>
+                        <h4>Pacote técnico</h4>
+                        <p>Anexos e artefatos que sustentam o PDF operacional e a Emissão oficial.</p>
                     </div>
                 </header>
                 <div class="mesa-operacao-card-kpis">
@@ -319,8 +325,8 @@
                                         <strong>${escapeHtml(String(item?.label || "Anexo"))}</strong>
                                         <span class="mesa-operacao-chip ${escapeHtml(status)}">${escapeHtml(item?.present ? "Pronto" : "Pendente")}</span>
                                     </div>
-                                    ${meta ? `<p>${escapeHtml(meta)}</p>` : ""}
-                                    ${item?.summary ? `<div class="mesa-operacao-meta"><span>${escapeHtml(String(item.summary))}</span></div>` : ""}
+                                    ${meta ? `<p>${escapeHtml(sanitizarTextoMesa(meta))}</p>` : ""}
+                                    ${item?.summary ? `<div class="mesa-operacao-meta"><span>${escapeHtml(sanitizarTextoMesa(item.summary))}</span></div>` : ""}
                                 </li>
                             `;
                         }).join("")}
@@ -328,6 +334,43 @@
                 ` : '<p class="mesa-operacao-vazio">Sem anexos materializados para este laudo ainda.</p>'}
             </section>
         `;
+    };
+
+    const classificarEstadoEmissaoMesa = (currentIssue) => {
+        if (!currentIssue || typeof currentIssue !== "object") {
+            return {
+                active: false,
+                historical: false,
+                label: "Emissão oficial",
+                title: "Emissão oficial pendente",
+            };
+        }
+
+        const fingerprint = `${currentIssue.issue_state || ""} ${currentIssue.issue_state_label || ""}`.toLowerCase();
+        const superseded = fingerprint.includes("superseded");
+        const revoked = fingerprint.includes("revoked");
+        if (superseded) {
+            return {
+                active: false,
+                historical: true,
+                label: "Documento substituído",
+                title: "Documento substituído",
+            };
+        }
+        if (revoked) {
+            return {
+                active: false,
+                historical: true,
+                label: "Histórico de emissões",
+                title: "Emissão preservada no histórico",
+            };
+        }
+        return {
+            active: true,
+            historical: false,
+            label: sanitizarTextoMesa(currentIssue.issue_state_label || "Documento emitido") || "Documento emitido",
+            title: "Documento emitido",
+        };
     };
 
     const renderizarEmissaoOficialMesa = (officialIssue) => {
@@ -341,6 +384,7 @@
         const currentIssue = officialIssue.current_issue && typeof officialIssue.current_issue === "object"
             ? officialIssue.current_issue
             : null;
+        const currentIssueState = classificarEstadoEmissaoMesa(currentIssue);
         const reopenedIssuedDocument = officialIssue.last_reopened_issued_document
             && typeof officialIssue.last_reopened_issued_document === "object"
             ? officialIssue.last_reopened_issued_document
@@ -363,14 +407,14 @@
             <section class="mesa-operacao-card mesa-operacao-card--memory">
                 <header>
                     <div>
-                        <h4>Emissão Oficial</h4>
-                        <p>${escapeHtml(String(officialIssue.issue_status_label || "Governança documental"))}</p>
+                        <h4>Emissão oficial</h4>
+                        <p>PDF operacional, pacote oficial, hash e auditoria em trilhas separadas.</p>
                     </div>
                 </header>
                 <div class="mesa-operacao-card-kpis">
                     <article>
                         <span>Status</span>
-                        <strong>${escapeHtml(String(officialIssue.issue_status || "-"))}</strong>
+                        <strong>${escapeHtml(sanitizarTextoMesa(officialIssue.issue_status_label || officialIssue.issue_status || "-"))}</strong>
                     </article>
                     <article>
                         <span>Compatíveis</span>
@@ -386,29 +430,31 @@
                     </article>
                 </div>
                 <div class="mesa-operacao-inline-tags">
-                    <span class="mesa-operacao-inline-tag ${escapeHtml(tone)}">${escapeHtml(String(officialIssue.signature_status_label || "Sem leitura de assinatura"))}</span>
-                    ${officialIssue.verification_url ? `<span class="mesa-operacao-inline-tag">${escapeHtml(String(officialIssue.verification_url))}</span>` : ""}
+                    <span class="mesa-operacao-inline-tag neutra">PDF operacional separado</span>
+                    <span class="mesa-operacao-inline-tag ${escapeHtml(tone)}">${escapeHtml(sanitizarTextoMesa(officialIssue.signature_status_label || "Sem leitura de assinatura"))}</span>
+                    ${officialIssue.verification_url ? `<span class="mesa-operacao-inline-tag">Auditoria pública disponível</span>` : ""}
                     ${documentIntegrity && documentIntegrity.tone === "returned"
-                        ? '<span class="mesa-operacao-inline-tag returned">PDF emitido divergente</span>'
+                        ? '<span class="mesa-operacao-inline-tag returned">Reemissão recomendada</span>'
                         : ""}
                     ${genericReissueWarning ? '<span class="mesa-operacao-inline-tag attention">Reemissão recomendada</span>' : ""}
-                    <span class="mesa-operacao-inline-tag neutra">ZIP com manifesto e hash SHA-256</span>
+                    <span class="mesa-operacao-inline-tag neutra">Pacote oficial com manifesto e Hash do pacote</span>
                 </div>
                 ${currentIssue ? `
                     <div class="mesa-operacao-inline-lists">
                         <div>
-                            <strong>Emissão congelada</strong>
+                            <strong>${currentIssueState.historical ? "Histórico de emissões" : "Emissão oficial ativa"}</strong>
                             <ul class="mesa-operacao-coverage-lista">
-                                <li class="mesa-operacao-coverage-item accepted">
+                                <li class="mesa-operacao-coverage-item ${currentIssueState.historical ? "attention" : "accepted"}">
                                     <div class="mesa-operacao-item-topo">
-                                        <strong>${escapeHtml(String(currentIssue.issue_number || "Emissão oficial"))}</strong>
-                                        <span class="mesa-operacao-chip accepted">${escapeHtml(String(currentIssue.issue_state_label || "Emitido"))}</span>
+                                        <strong>${escapeHtml(String(currentIssue.issue_number || currentIssueState.title))}</strong>
+                                        <span class="mesa-operacao-chip ${currentIssueState.historical ? "attention" : "accepted"}">${escapeHtml(currentIssueState.label)}</span>
                                     </div>
                                     <p>${escapeHtml(String(currentIssue.signatory_name || "Signatário não informado"))}${currentIssue.signatory_registration ? ` · ${escapeHtml(String(currentIssue.signatory_registration))}` : ""}</p>
                                     <div class="mesa-operacao-meta">
                                         ${currentIssue.issued_at ? `<span>${escapeHtml(formatarDataHora(currentIssue.issued_at))}</span>` : ""}
-                                        ${currentIssue.package_sha256 ? `<span>SHA-256 ${escapeHtml(String(currentIssue.package_sha256).slice(0, 16))}...</span>` : ""}
+                                        ${currentIssue.package_sha256 ? `<span>Hash do pacote ${escapeHtml(String(currentIssue.package_sha256).slice(0, 16))}...</span>` : ""}
                                     </div>
+                                    ${currentIssueState.historical ? `<p>Documento substituído aparece apenas como histórico; a ação principal fica reservada para a emissão ativa.</p>` : ""}
                                 </li>
                                 ${documentIntegrity ? `
                                     <li class="mesa-operacao-coverage-item ${escapeHtml(documentIntegrity.tone)}">
@@ -437,7 +483,7 @@
                                         )}</p>
                                         ${reissueReasonSummary ? `
                                             <div class="mesa-operacao-meta">
-                                                <span>${escapeHtml(reissueReasonSummary)}</span>
+                                                <span>${escapeHtml(sanitizarTextoMesa(reissueReasonSummary))}</span>
                                             </div>
                                         ` : ""}
                                     </li>
@@ -446,12 +492,12 @@
                                     <li class="mesa-operacao-coverage-item attention">
                                         <div class="mesa-operacao-item-topo">
                                             <strong>Política de reabertura</strong>
-                                            <span class="mesa-operacao-chip attention">Reemissão em andamento</span>
+                                            <span class="mesa-operacao-chip attention">Reemissão recomendada</span>
                                         </div>
                                         <p>${escapeHtml(
                                             reopenedIssuedDocument.visible_in_active_case === true
-                                                ? "O PDF emitido anterior continua visível no caso enquanto a nova revisão avança."
-                                                : "O PDF emitido anterior saiu da superfície ativa e segue preservado no histórico interno."
+                                                ? "O PDF operacional anterior continua visível no caso enquanto a nova revisão avança."
+                                                : "Documento substituído saiu da superfície ativa e segue preservado no histórico interno."
                                         )}</p>
                                         <div class="mesa-operacao-meta">
                                             ${reopenedIssuedDocument.file_name ? `<span>${escapeHtml(String(reopenedIssuedDocument.file_name))}</span>` : ""}
@@ -478,10 +524,10 @@
                         ${blockers.map((item) => `
                             <li class="mesa-operacao-coverage-item returned">
                                 <div class="mesa-operacao-item-topo">
-                                    <strong>${escapeHtml(String(item?.title || "Bloqueio"))}</strong>
+                                    <strong>${escapeHtml(sanitizarTextoMesa(item?.title || "Bloqueio"))}</strong>
                                     <span class="mesa-operacao-chip returned">${escapeHtml(item?.blocking ? "Bloqueante" : "Aviso")}</span>
                                 </div>
-                                ${item?.message ? `<p>${escapeHtml(String(item.message))}</p>` : ""}
+                                ${item?.message ? `<p>${escapeHtml(sanitizarTextoMesa(item.message))}</p>` : ""}
                             </li>
                         `).join("")}
                     </ul>
@@ -489,20 +535,20 @@
                 ${auditTrail.length ? `
                     <div class="mesa-operacao-inline-lists">
                         <div>
-                            <strong>Trilha documental</strong>
+                            <strong>Histórico e auditoria</strong>
                             <ul class="mesa-operacao-coverage-lista mesa-operacao-trail-lista">
                                 ${auditTrail.map((item) => `
                                     <li class="mesa-operacao-coverage-item ${escapeHtml(String(item?.status || "attention"))}">
                                         <div class="mesa-operacao-item-topo">
-                                            <strong>${escapeHtml(String(item?.title || "Evento documental"))}</strong>
+                                            <strong>${escapeHtml(sanitizarTextoMesa(item?.title || "Evento documental"))}</strong>
                                             <span class="mesa-operacao-chip ${escapeHtml(String(item?.status || "attention"))}">
                                                 ${escapeHtml(rotuloTrailStatus(item?.status || "attention"))}
                                             </span>
                                         </div>
-                                        ${item?.summary ? `<p>${escapeHtml(String(item.summary))}</p>` : ""}
+                                        ${item?.summary ? `<p>${escapeHtml(sanitizarTextoMesa(item.summary))}</p>` : ""}
                                         <div class="mesa-operacao-meta">
                                             ${item?.recorded_at ? `<span>${escapeHtml(formatarDataHora(item.recorded_at))}</span>` : ""}
-                                            <span>${item?.blocking ? "Bloqueante" : "Rastreavel"}</span>
+                                            <span>${item?.blocking ? "Bloqueante" : "Rastreável"}</span>
                                         </div>
                                     </li>
                                 `).join("")}
@@ -524,7 +570,7 @@
                         </div>
                     </div>
                 ` : ""}
-                ${(officialIssue.issue_action_enabled && eligibleSignatories.length) || (currentIssue && currentIssue.package_storage_ready) ? `
+                ${(officialIssue.issue_action_enabled && eligibleSignatories.length) || (currentIssue && currentIssue.package_storage_ready && currentIssueState.active) ? `
                     <div class="mesa-operacao-action-rail">
                         ${userCapabilityEnabled("reviewer_issue") ? eligibleSignatories.map((item) => `
                             <button
@@ -536,7 +582,7 @@
                                 data-current-issue-id="${escapeHtml(String(currentIssue?.id || ""))}"
                                 data-current-issue-number="${escapeHtml(String(currentIssue?.issue_number || ""))}"
                             >
-                                ${escapeHtml(String(officialIssue.issue_action_label || "Emitir oficialmente"))} · ${escapeHtml(String(item?.nome || "Signatário"))}
+                                ${escapeHtml(sanitizarTextoMesa(officialIssue.issue_action_label || "Emitir oficialmente"))} · ${escapeHtml(String(item?.nome || "Signatário"))}
                             </button>
                         `).join("") : `
                             <button
@@ -546,16 +592,16 @@
                                 aria-disabled="true"
                                 title="${escapeHtml(tenantCapabilityReason("reviewer_issue"))}"
                             >
-                                Emissão oficial governada
+                                Emissão oficial indisponível
                             </button>
                         `}
-                        ${currentIssue && currentIssue.package_storage_ready && userCapabilityEnabled("reviewer_issue") ? `
+                        ${currentIssue && currentIssue.package_storage_ready && currentIssueState.active && userCapabilityEnabled("reviewer_issue") ? `
                             <button
                                 type="button"
-                                class="mesa-operacao-inline-tag mesa-operacao-inline-tag--button"
+                                class="mesa-operacao-inline-tag mesa-operacao-inline-tag--button mesa-operacao-inline-tag--primary"
                                 data-mesa-action="baixar-emissao-oficial"
                             >
-                                Baixar bundle emitido
+                                Baixar pacote oficial
                             </button>
                         ` : ""}
                     </div>
@@ -588,8 +634,8 @@
             <section class="mesa-operacao-card mesa-operacao-card--policy">
                 <header>
                     <div>
-                        <h4>Governança da Revisão</h4>
-                        <p>Modo efetivo, liberacao da empresa e alertas que endurecem a decisao.</p>
+                        <h4>Governança da revisão</h4>
+                        <p>Modo efetivo, liberação da empresa e alertas que endurecem a decisão.</p>
                     </div>
                 </header>
                 <div class="mesa-operacao-card-kpis">
@@ -606,7 +652,7 @@
                         <strong>${escapeHtml(String(familyPolicy.release_status || "sem release"))}</strong>
                     </article>
                     <article>
-                        <span>Red flags</span>
+                        <span>Alertas</span>
                         <strong>${escapeHtml(String(redFlags.length))}</strong>
                     </article>
                 </div>
@@ -625,10 +671,10 @@
                                 return `
                                     <li class="mesa-operacao-coverage-item ${escapeHtml(tone)}">
                                         <div class="mesa-operacao-item-topo">
-                                            <strong>${escapeHtml(String(item?.title || "Red flag"))}</strong>
+                                            <strong>${escapeHtml(sanitizarTextoMesa(item?.title || "Alerta de governança"))}</strong>
                                             <span class="mesa-operacao-chip ${escapeHtml(tone)}">${escapeHtml(humanizarSlugGovernanca(severity))}</span>
                                         </div>
-                                        ${item?.message ? `<p>${escapeHtml(String(item.message))}</p>` : ""}
+                                        ${item?.message ? `<p>${escapeHtml(sanitizarTextoMesa(item.message))}</p>` : ""}
                                         <div class="mesa-operacao-meta">
                                             ${item?.source ? `<span>Fonte: ${escapeHtml(humanizarSlugGovernanca(item.source))}</span>` : ""}
                                             ${item?.blocking ? "<span>Eleva para Mesa</span>" : ""}
@@ -638,7 +684,7 @@
                             }).join("")}
                         </ul>
                     `
-                    : '<p class="mesa-operacao-vazio">Sem red flags governadas ativas para este caso.</p>'}
+                    : '<p class="mesa-operacao-vazio">Sem alertas governados ativos para este caso.</p>'}
             </section>
         `;
     };

@@ -124,7 +124,7 @@
                 <div class="mesa-operacao-acoes">
                     <button type="button" class="btn-mesa-acao" data-mesa-action="timeline-msg" data-msg-id="${mensagemId}">
                         <span class="material-symbols-rounded" aria-hidden="true">forum</span>
-                        <span>Ir para historico</span>
+                        <span>Ir para histórico</span>
                     </button>
                     ${contextoBotao}
                     ${botaoPendencia}
@@ -176,7 +176,7 @@
         if (resolvidas > 0) {
             return {
                 icone: "task_alt",
-                rotulo: "Fluxo com resoluções recentes",
+                rotulo: "Pendências resolvidas",
                 descricao: "A mesa já recebeu retorno do campo e não há pendências abertas agora.",
             };
         }
@@ -184,7 +184,7 @@
         return {
             icone: "hourglass_top",
             rotulo: "Canal em triagem",
-            descricao: "Sem pendencias abertas no momento. Acompanhe novas mensagens e chamados do laudo.",
+            descricao: "Sem pendências abertas no momento. Acompanhe novas mensagens e chamados do laudo.",
         };
     };
 
@@ -231,6 +231,9 @@
             });
             const totalWhispers = collaboration.recentWhisperCount;
             const statusOperacional = obterResumoStatusOperacaoMesa(collaboration);
+            const decisionSummary = collaboration.openPendencyCount > 0
+                ? "Solicitar correção"
+                : "Aprovar ou devolver";
             const reopenSummary = extrairResumoReaberturaDocumentoEmitidoMesa(pacote);
             atualizarIndicadoresListaLaudo(state.laudoAtivoId, {
                 collaborationSummary: pacote?.collaboration?.summary || {
@@ -248,7 +251,8 @@
             els.mesaOperacaoConteudo.innerHTML = `
                 <div class="mesa-operacao-topo">
                     <div>
-                        <h3>Operação da Mesa</h3>
+                        <span class="mesa-operacao-eyebrow">Caso selecionado</span>
+                        <h3>Mesa Avaliadora</h3>
                         <p>${escapeHtml(statusOperacional.descricao)}</p>
                     </div>
                     <span class="mesa-operacao-tag">
@@ -259,12 +263,12 @@
 
                 ${reopenSummary ? `
                     <div class="mesa-operacao-inline-tags">
-                        <span class="mesa-operacao-inline-tag attention">Reemissão em andamento</span>
+                        <span class="mesa-operacao-inline-tag attention">Reemissão recomendada</span>
                         <span class="mesa-operacao-inline-tag">
                             ${escapeHtml(
                                 reopenSummary.visibleInActiveCase
-                                    ? "PDF anterior ainda visível no caso"
-                                    : "PDF anterior preservado em histórico interno"
+                                    ? "PDF operacional anterior ainda visível no caso"
+                                    : "Documento substituído preservado no histórico interno"
                             )}
                         </span>
                         ${(reopenSummary.fileName || reopenSummary.storageVersion)
@@ -277,14 +281,14 @@
 
                 <div class="mesa-operacao-resumo">
                     <article class="mesa-operacao-kpi">
-                        <span>Pendências abertas</span>
+                        <span>Pendências do caso</span>
                         <strong>${escapeHtml(String(collaboration.openPendencyCount || 0))}</strong>
                         <small>Mensagens da mesa ainda em aberto para o inspetor.</small>
                     </article>
                     <article class="mesa-operacao-kpi">
-                        <span>Resolvidas</span>
-                        <strong>${escapeHtml(String(collaboration.resolvedPendencyCount || 0))}</strong>
-                        <small>Itens já encerrados pelo fluxo em campo.</small>
+                        <span>Decisão da Mesa</span>
+                        <strong>${escapeHtml(decisionSummary)}</strong>
+                        <small>${escapeHtml(String(collaboration.resolvedPendencyCount || 0))} pendência(s) resolvida(s) recentemente.</small>
                     </article>
                     <article class="mesa-operacao-kpi">
                         <span>Última interação</span>
@@ -298,40 +302,76 @@
                     </article>
                 </div>
 
-                <div class="mesa-operacao-insights">
-                    ${NS.renderizarGovernancaPolicyMesa?.(pacote.policy_summary) || ""}
-                    ${NS.renderizarRevisaoPorBlocoMesa?.(pacote.revisao_por_bloco) || ""}
-                    ${NS.renderizarCoverageMapMesa?.(pacote.coverage_map) || ""}
-                    ${NS.renderizarHistoricoInspecaoMesa?.(pacote.historico_inspecao) || ""}
-                    ${NS.renderizarVerificacaoPublicaMesa?.(pacote.verificacao_publica) || ""}
-                    ${NS.renderizarAnexoPackMesa?.(pacote.anexo_pack) || ""}
-                    ${NS.renderizarEmissaoOficialMesa?.(pacote.emissao_oficial) || ""}
-                    ${NS.renderizarHistoricoRefazerInspetor?.(pacote.historico_refazer_inspetor) || ""}
-                    ${NS.renderizarMemoriaOperacionalFamilia?.(pacote.memoria_operacional_familia) || ""}
-                </div>
+                <div class="mesa-operacao-blocos">
+                    <section class="mesa-operacao-bloco mesa-operacao-bloco--decision" data-uxf-block="decidir-agora">
+                        <header class="mesa-operacao-bloco-header">
+                            <span>Decidir agora</span>
+                            <h4>Pendências do caso</h4>
+                            <p>Itens acionáveis que impedem aprovação, emissão ou continuidade sem retorno do campo.</p>
+                        </header>
+                        <div class="mesa-operacao-grid">
+                            ${renderizarColunaOperacaoMesa({
+                                titulo: "Abertas",
+                                itens: pacote.pendencias_abertas,
+                                tipo: "aberta",
+                                mensagemVazia: "Nenhuma pendência aberta neste momento.",
+                                permitirResponder: true
+                            })}
+                            ${renderizarColunaOperacaoMesa({
+                                titulo: "Resolvidas",
+                                itens: pacote.pendencias_resolvidas_recentes,
+                                tipo: "resolvida",
+                                mensagemVazia: "Ainda não há resoluções recentes para este laudo.",
+                                permitirResponder: false
+                            })}
+                            ${renderizarColunaOperacaoMesa({
+                                titulo: "Chamados",
+                                itens: pacote.whispers_recentes,
+                                tipo: "whisper",
+                                mensagemVazia: "Nenhum chamado recente registrado.",
+                                permitirResponder: true
+                            })}
+                        </div>
+                    </section>
 
-                <div class="mesa-operacao-grid">
-                    ${renderizarColunaOperacaoMesa({
-                        titulo: "Pendências abertas",
-                        itens: pacote.pendencias_abertas,
-                        tipo: "aberta",
-                        mensagemVazia: "Nenhuma pendência aberta neste momento.",
-                        permitirResponder: true
-                    })}
-                    ${renderizarColunaOperacaoMesa({
-                        titulo: "Resolvidas recentes",
-                        itens: pacote.pendencias_resolvidas_recentes,
-                        tipo: "resolvida",
-                        mensagemVazia: "Ainda não há resoluções recentes para este laudo.",
-                        permitirResponder: false
-                    })}
-                    ${renderizarColunaOperacaoMesa({
-                        titulo: "Chamados recentes",
-                        itens: pacote.whispers_recentes,
-                        tipo: "whisper",
-                        mensagemVazia: "Nenhum chamado recente registrado.",
-                        permitirResponder: true
-                    })}
+                    <section class="mesa-operacao-bloco" data-uxf-block="decisao-mesa">
+                        <header class="mesa-operacao-bloco-header">
+                            <span>Decisão operacional</span>
+                            <h4>Decisão da Mesa</h4>
+                            <p>Leitura de governança, revisão por seção e evidências que sustentam aprovar ou devolver.</p>
+                        </header>
+                        <div class="mesa-operacao-insights">
+                            ${NS.renderizarGovernancaPolicyMesa?.(pacote.policy_summary) || ""}
+                            ${NS.renderizarRevisaoPorBlocoMesa?.(pacote.revisao_por_bloco) || ""}
+                            ${NS.renderizarCoverageMapMesa?.(pacote.coverage_map) || ""}
+                        </div>
+                    </section>
+
+                    <section class="mesa-operacao-bloco" data-uxf-block="documento-emissao">
+                        <header class="mesa-operacao-bloco-header">
+                            <span>Documento</span>
+                            <h4>Documento e emissão</h4>
+                            <p>PDF operacional, pacote técnico e Emissão oficial ficam separados para evitar decisão ambígua.</p>
+                        </header>
+                        <div class="mesa-operacao-insights">
+                            ${NS.renderizarAnexoPackMesa?.(pacote.anexo_pack) || ""}
+                            ${NS.renderizarEmissaoOficialMesa?.(pacote.emissao_oficial) || ""}
+                        </div>
+                    </section>
+
+                    <section class="mesa-operacao-bloco mesa-operacao-bloco--audit" data-uxf-block="historico-auditoria">
+                        <header class="mesa-operacao-bloco-header">
+                            <span>Acompanhar e auditar</span>
+                            <h4>Histórico e auditoria</h4>
+                            <p>Eventos, hashes, documentos substituídos e memória operacional sem competir com a ação principal.</p>
+                        </header>
+                        <div class="mesa-operacao-insights">
+                            ${NS.renderizarHistoricoInspecaoMesa?.(pacote.historico_inspecao) || ""}
+                            ${NS.renderizarVerificacaoPublicaMesa?.(pacote.verificacao_publica) || ""}
+                            ${NS.renderizarHistoricoRefazerInspetor?.(pacote.historico_refazer_inspetor) || ""}
+                            ${NS.renderizarMemoriaOperacionalFamilia?.(pacote.memoria_operacional_familia) || ""}
+                        </div>
+                    </section>
                 </div>
             `;
 
