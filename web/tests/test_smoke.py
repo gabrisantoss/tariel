@@ -221,10 +221,17 @@ def test_raiz_publica_exibe_landing_sem_sessao(cliente_main_isolado: TestClient)
     assert "Solicitar demonstração" in resposta.text
     assert "PDF NR35" in resposta.text
     assert "A operação sabe o que está pronto" in resposta.text
+    assert "/static/img/landing/landing-mobile-inspetor.webp" in resposta.text
+    assert "/static/img/landing/landing-portal-cliente.webp" in resposta.text
+    assert "/static/img/landing/landing-mesa-avaliadora.webp" in resposta.text
+    assert "/static/img/landing/landing-pdf-nr35.webp" in resposta.text
+    assert 'id="demo-form"' in resposta.text
+    assert 'name="empresa"' in resposta.text
     assert 'href="/app/login"' in resposta.text
     assert 'href="/admin/login"' not in resposta.text
     assert "Admin CEO" not in resposta.text
     assert "/static/css/shared/public_landing.css" in resposta.text
+    assert "/static/js/shared/public_landing.js" in resposta.text
 
 
 def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
