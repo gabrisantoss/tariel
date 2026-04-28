@@ -88,11 +88,6 @@ body.public-landing {
     color: var(--landing-green);
 }
 
-.public-nav__admin {
-    border: 1px solid var(--landing-line);
-    background: rgba(255, 255, 255, 0.66);
-}
-
 .public-hero {
     position: relative;
     display: grid;
@@ -478,10 +473,6 @@ body.public-landing {
         min-height: 34px;
         padding: 0 10px;
         font-size: 0.84rem;
-    }
-
-    .public-nav__links .public-nav__admin {
-        display: none;
     }
 
     .public-hero__actions {
