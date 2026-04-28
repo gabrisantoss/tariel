@@ -22,6 +22,7 @@
             <a href="#produto">Produto</a>
             <a href="#governanca">Governança</a>
             <a href="#pdf">PDF NR35</a>
+            <a href="#demonstracao">Demo</a>
             <a class="public-nav__login" href="/app/login">Entrar</a>
         </nav>
     </header>
@@ -46,24 +47,13 @@
                     </a>
                 </div>
             </div>
-            <div class="hero-product-preview" aria-label="Prévia do fluxo Tariel">
-                <div class="hero-product-preview__toolbar">
-                    <span>Operação NR35</span>
-                    <strong>Pronto para emitir</strong>
-                </div>
-                <div class="hero-product-preview__body">
-                    <div class="hero-product-preview__case">
-                        <span class="preview-tag preview-tag--active">Emissão oficial</span>
-                        <h2>Linha de vida - Galpão A</h2>
-                        <p>4 evidências revisadas, Mesa aprovada e pacote oficial disponível para o cliente.</p>
-                    </div>
-                    <div class="hero-product-preview__steps" aria-label="Etapas do caso">
-                        <span><i></i>Coleta concluída</span>
-                        <span><i></i>Mesa Avaliadora aprovada</span>
-                        <span><i></i>Pacote oficial emitido</span>
-                    </div>
-                </div>
-            </div>
+            <figure class="hero-product-shot" aria-label="Prévia real do portal mobile do inspetor">
+                <img src="/static/img/landing/landing-mobile-inspetor.webp" alt="Tela real do Portal do Inspetor com painel mobile, chat guiado e nova inspeção" loading="eager" width="390" height="844">
+                <figcaption>
+                    <strong>Coleta mobile em campo</strong>
+                    <span>Chat guiado, templates técnicos e estado operacional em uma tela.</span>
+                </figcaption>
+            </figure>
             <div class="public-hero__status" aria-label="Resumo operacional">
                 <span>Coleta mobile</span>
                 <span>Mesa Avaliadora</span>
@@ -131,40 +121,34 @@
                 <h2 id="product-title">Cada tela responde uma pergunta operacional</h2>
             </div>
             <div class="surface-board" aria-label="Prévia das superfícies Tariel">
-                <article class="surface-panel surface-panel--mobile">
-                    <div class="surface-panel__bar">
-                        <span>Mobile</span>
-                        <strong>Em campo</strong>
+                <article class="surface-shot surface-shot--mobile">
+                    <div class="surface-shot__media">
+                        <img src="/static/img/landing/landing-mobile-inspetor.webp" alt="Screenshot real do Portal do Inspetor mobile" loading="eager" width="390" height="844">
                     </div>
-                    <div class="surface-panel__body">
-                        <span class="preview-tag preview-tag--warning">Reemissão recomendada</span>
-                        <p class="surface-panel__title">Linha de vida NR35</p>
-                        <p class="surface-panel__status">PDF operacional separado da emissão oficial.</p>
-                        <span class="surface-action">Ver PDF operacional</span>
+                    <div class="surface-shot__copy">
+                        <span class="preview-tag preview-tag--warning">Mobile</span>
+                        <h3>Coleta em campo</h3>
+                        <p>O inspetor abre serviços, acompanha estado operacional e usa templates guiados no mesmo fluxo.</p>
                     </div>
                 </article>
-                <article class="surface-panel surface-panel--mesa">
-                    <div class="surface-panel__bar">
-                        <span>Mesa</span>
-                        <strong>Decidir agora</strong>
+                <article class="surface-shot">
+                    <div class="surface-shot__media">
+                        <img src="/static/img/landing/landing-mesa-avaliadora.webp" alt="Screenshot real da Mesa Avaliadora com fila de decisão" loading="eager" width="980" height="581">
                     </div>
-                    <div class="surface-panel__body">
-                        <span class="preview-tag preview-tag--review">Pendências do caso</span>
-                        <p class="surface-panel__title">2 evidências exigem revisão</p>
-                        <p class="surface-panel__status">Ação principal clara: aprovar ou devolver.</p>
-                        <span class="surface-action">Aprovar ou devolver</span>
+                    <div class="surface-shot__copy">
+                        <span class="preview-tag preview-tag--review">Mesa Avaliadora</span>
+                        <h3>Decidir agora</h3>
+                        <p>A fila separa o que exige resposta imediata do que é acompanhamento, histórico e auditoria.</p>
                     </div>
                 </article>
-                <article class="surface-panel surface-panel--cliente">
-                    <div class="surface-panel__bar">
-                        <span>Cliente</span>
-                        <strong>Entrega</strong>
+                <article class="surface-shot">
+                    <div class="surface-shot__media">
+                        <img src="/static/img/landing/landing-portal-cliente.webp" alt="Screenshot real do Portal Cliente com blocos administrativos" loading="eager" width="980" height="581">
                     </div>
-                    <div class="surface-panel__body">
-                        <span class="preview-tag preview-tag--active">Documento emitido</span>
-                        <p class="surface-panel__title">Emissão oficial</p>
-                        <p class="surface-panel__status">Pacote oficial com auditoria e hash.</p>
-                        <span class="surface-action">Baixar pacote oficial</span>
+                    <div class="surface-shot__copy">
+                        <span class="preview-tag preview-tag--active">Portal Cliente</span>
+                        <h3>Entrega e acompanhamento</h3>
+                        <p>Cliente enxerga pacote, equipe, documentos, pendências e acompanhamento sem entrar no cockpit operacional.</p>
                     </div>
                 </article>
             </div>
@@ -206,27 +190,10 @@
                 <h2 id="pdf-title">PDF NR35 com evidência, conclusão e auditoria no mesmo pacote</h2>
             </div>
             <div class="pdf-showcase">
-                <div class="pdf-sheet" aria-label="Prévia visual de PDF NR35">
-                    <div class="pdf-sheet__header">
-                        <strong>Relatório Técnico NR35</strong>
-                        <span>Emissão oficial</span>
-                    </div>
-                    <div class="pdf-sheet__photo-grid" aria-label="Evidências fotográficas">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                    <div class="pdf-sheet__lines" aria-hidden="true">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                    <div class="pdf-sheet__footer">
-                        <span>Signatário governado</span>
-                        <span>Hash do pacote</span>
-                    </div>
-                </div>
+                <figure class="pdf-shot">
+                    <img src="/static/img/landing/landing-pdf-nr35.webp" alt="Primeira página de um PDF NR35 de referência com evidência, status final e dados do documento" loading="eager" width="760" height="761">
+                    <figcaption>PDF de referência sintética para demonstração visual controlada.</figcaption>
+                </figure>
                 <div class="pdf-benefits">
                     <article>
                         <span class="material-symbols-rounded" aria-hidden="true">image</span>
@@ -253,15 +220,52 @@
             </div>
         </section>
 
-        <section class="public-section public-section--cta" aria-labelledby="cta-title">
-            <div>
+        <section class="public-section public-section--cta" id="demonstracao" aria-labelledby="cta-title">
+            <div class="demo-form-copy">
                 <p class="public-section__kicker">Próximo passo</p>
                 <h2 id="cta-title">Veja o fluxo com um caso técnico realista</h2>
+                <p>Conte rapidamente o tipo de operação. O formulário abre um e-mail pronto com as informações, sem gravar dados no servidor público.</p>
             </div>
-            <a class="public-button public-button--primary" href="mailto:contato@tariel.ia?subject=Quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Tariel">
-                <span class="material-symbols-rounded" aria-hidden="true">calendar_month</span>
-                <span>Solicitar demonstração</span>
-            </a>
+            <form class="demo-form" id="demo-form" action="mailto:contato@tariel.ia" method="post" enctype="text/plain">
+                <div class="demo-form__grid">
+                    <label>
+                        <span>Nome</span>
+                        <input type="text" name="nome" autocomplete="name" required>
+                    </label>
+                    <label>
+                        <span>Empresa</span>
+                        <input type="text" name="empresa" autocomplete="organization" required>
+                    </label>
+                    <label>
+                        <span>E-mail</span>
+                        <input type="email" name="email" autocomplete="email" required>
+                    </label>
+                    <label>
+                        <span>Telefone ou WhatsApp</span>
+                        <input type="tel" name="telefone" autocomplete="tel">
+                    </label>
+                    <label class="demo-form__full">
+                        <span>Tipo de operação</span>
+                        <select name="operacao" required>
+                            <option value="">Selecione</option>
+                            <option>NR35 - trabalho em altura</option>
+                            <option>NR12 - máquinas e equipamentos</option>
+                            <option>NR13 - vasos, caldeiras e tubulações</option>
+                            <option>NR10 - elétrica</option>
+                            <option>Outro fluxo técnico</option>
+                        </select>
+                    </label>
+                    <label class="demo-form__full">
+                        <span>O que você quer demonstrar?</span>
+                        <textarea name="mensagem" rows="4" placeholder="Ex.: coleta em campo, Mesa Avaliadora, emissão oficial, Portal Cliente, PDF NR35"></textarea>
+                    </label>
+                </div>
+                <button class="public-button public-button--primary" type="submit">
+                    <span class="material-symbols-rounded" aria-hidden="true">calendar_month</span>
+                    <span>Solicitar demonstração</span>
+                </button>
+                <p class="demo-form__status" id="demo-form-status" aria-live="polite"></p>
+            </form>
         </section>
     </main>
 
@@ -273,5 +277,6 @@
             <a href="/revisao/login">Mesa</a>
         </nav>
     </footer>
+    <script src="/static/js/shared/public_landing.js?v={{ v_app }}" defer></script>
 </body>
 </html>
