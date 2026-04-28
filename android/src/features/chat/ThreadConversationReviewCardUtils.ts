@@ -33,9 +33,15 @@ const THREAD_INTERNAL_TERM_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bmobile_autonomous\b/gi, "Revisão interna governada"],
   [/\bmobile_review_allowed\b/gi, "Revisão interna + Mesa"],
   [/\bprimary_pdf_diverged\b/gi, "Reemissão recomendada"],
+  [/\breissue_reason_codes\b/gi, "motivos da reemissão"],
+  [/\bapproval_snapshot_updated\b/gi, "nova aprovação governada"],
   [/\bissue_state_label\b/gi, "Estado da emissão"],
   [/\bissue_state\b/gi, "Estado da emissão"],
+  [/\bissued\b/gi, "Documento emitido"],
   [/\bsuperseded\b/gi, "Documento substituído"],
+  [/\brevoked\b/gi, "Histórico de emissões"],
+  [/\bpackage_sha256\b/gi, "Hash do pacote"],
+  [/\bapproval_snapshot_id\b/gi, "Snapshot aprovado"],
   [/\breviewer_issue\b/gi, "Emissão oficial"],
   [/\breviewer_decision\b/gi, "Revisão governada"],
   [/\boverride\b/gi, "ajuste humano"],
@@ -57,6 +63,33 @@ export function textoThreadContemTermoInterno(value: string): boolean {
     pattern.lastIndex = 0;
     return pattern.test(value);
   });
+}
+
+export function classificarEstadoEmissaoOficial(
+  currentIssue: JsonRecord | null,
+) {
+  const rawState = lerTexto(currentIssue?.issue_state).trim().toLowerCase();
+  const rawLabel = lerTexto(currentIssue?.issue_state_label, rawState);
+  const stateFingerprint = `${rawState} ${rawLabel}`.toLowerCase();
+  const substituted =
+    stateFingerprint.includes("superseded") ||
+    stateFingerprint.includes("substitu");
+  const revoked =
+    stateFingerprint.includes("revoked") ||
+    stateFingerprint.includes("revogad");
+  const historical = substituted || revoked;
+  const label = substituted
+    ? "Documento substituído"
+    : revoked
+      ? "Histórico de emissões"
+      : sanitizarTextoThread(rawLabel || "Documento emitido");
+
+  return {
+    active: !historical,
+    historical,
+    label,
+    title: historical ? "Documento substituído" : "Documento emitido",
+  };
 }
 
 export function resumirIntegridadePdfOficial(

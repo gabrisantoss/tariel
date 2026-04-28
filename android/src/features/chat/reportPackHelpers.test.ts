@@ -126,6 +126,53 @@ describe("reportPackHelpers", () => {
     );
   });
 
+  it("usa o modo de validação do outline quando quality_gates vem parcial", () => {
+    const summary = buildReportPackDraftSummary({
+      modeled: false,
+      template_label: "Inspeção Geral (Padrão)",
+      quality_gates: {
+        autonomy_ready: false,
+        missing_evidence: [
+          {
+            message:
+              "Esta familia ainda nao possui report pack incremental modelado.",
+          },
+        ],
+      },
+      pre_laudo_outline: {
+        final_validation_mode: "mesa_required",
+        next_questions: [
+          "Esta familia ainda nao possui report pack incremental modelado.",
+        ],
+      },
+    });
+
+    expect(summary?.finalValidationMode).toBe("mesa_required");
+    expect(summary?.finalValidationModeLabel).toBe("Mesa Avaliadora");
+    expect(summary?.nextQuestions).toEqual([
+      "Esta familia ainda nao possui report pack incremental modelado.",
+    ]);
+  });
+
+  it("usa os sinais de workflow quando o modo nao veio nos gates", () => {
+    const summary = buildReportPackDraftSummary({
+      modeled: false,
+      template_label: "Inspeção Geral (Padrão)",
+      quality_gates: {
+        autonomy_ready: false,
+        missing_evidence: [],
+      },
+      analysis_basis: {
+        workflow_signals: {
+          final_validation_mode: "mesa_required",
+        },
+      },
+    });
+
+    expect(summary?.finalValidationMode).toBe("mesa_required");
+    expect(summary?.finalValidationModeLabel).toBe("Mesa Avaliadora");
+  });
+
   it("aproveita o pre-laudo canonico vindo do catalogo admin para o mobile", () => {
     const summary = buildReportPackDraftSummary({
       modeled: true,

@@ -123,7 +123,7 @@ describe("ActivityCenterModal", () => {
             id: "mesa-1",
             kind: "mesa_reaberta",
             title: "Pendência reaberta",
-            body: "Mesa reabriu o caso com primary_pdf_diverged e issue_state",
+            body: "Mesa reabriu o caso com primary_pdf_diverged, issue_state, package_sha256 e approval_snapshot_id",
             createdAt: "2026-03-30T09:00:00.000Z",
             unread: true,
             targetThread: "mesa",
@@ -146,12 +146,12 @@ describe("ActivityCenterModal", () => {
     expect(getByText("1 status do caso")).toBeTruthy();
     expect(
       getByText(
-        "Mesa reabriu o caso com Reemissão recomendada e Estado da emissão",
+        "Mesa reabriu o caso com Reemissão recomendada, Estado da emissão, Hash do pacote e Snapshot aprovado",
       ),
     ).toBeTruthy();
     expect(
       queryByText(
-        /mobile_autonomous|mobile_review_allowed|primary_pdf_diverged|issue_state|superseded|reviewer_issue|reviewer_decision/,
+        /mobile_autonomous|mobile_review_allowed|primary_pdf_diverged|reissue_reason_codes|approval_snapshot_updated|issue_state|superseded|revoked|issued|package_sha256|approval_snapshot_id|reviewer_issue|reviewer_decision/,
       ),
     ).toBeNull();
   });

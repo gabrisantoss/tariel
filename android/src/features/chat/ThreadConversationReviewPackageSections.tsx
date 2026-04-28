@@ -144,11 +144,25 @@ export function ThreadConversationReviewOfficialIssueSection(props: {
 
   return (
     <View style={styles.threadReviewList}>
-      <Text style={styles.threadReviewSectionTitle}>Emissão oficial</Text>
+      <Text style={styles.threadReviewSectionTitle}>
+        {summary.currentOfficialIssueIsHistorical
+          ? "Histórico de emissões"
+          : "Emissão oficial"}
+      </Text>
       <View style={styles.threadReviewListItem}>
+        {summary.currentOfficialIssueIsHistorical ? (
+          <ReviewPackageStatusBadge
+            label="Documento substituído"
+            tone="danger"
+          />
+        ) : summary.currentOfficialIssueHasRecord ? (
+          <ReviewPackageStatusBadge label="Documento emitido" tone="success" />
+        ) : (
+          <ReviewPackageStatusBadge label="Emissão oficial" tone="accent" />
+        )}
         <View style={styles.threadReviewListCopy}>
           <Text style={styles.threadReviewListTitle}>
-            {summary.officialIssueLabel}
+            {summary.currentOfficialIssueTitle || summary.officialIssueLabel}
           </Text>
           {summary.currentOfficialIssueNumber ? (
             <Text style={styles.threadReviewListText}>
@@ -165,9 +179,11 @@ export function ThreadConversationReviewOfficialIssueSection(props: {
             </Text>
           ) : null}
           <Text style={styles.threadReviewListText}>
-            {summary.eligibleSignatoryCount > 0
-              ? `${summary.eligibleSignatoryCount} signatário(s) elegível(is). ${summary.signatoryStatusLabel}`
-              : summary.signatoryStatusLabel}
+            {summary.currentOfficialIssueIsHistorical
+              ? "Emissão anterior preservada para auditoria; não é a versão principal do caso."
+              : summary.eligibleSignatoryCount > 0
+                ? `${summary.eligibleSignatoryCount} signatário(s) elegível(is). ${summary.signatoryStatusLabel}`
+                : summary.signatoryStatusLabel}
           </Text>
         </View>
       </View>
@@ -189,9 +205,20 @@ export function ThreadConversationReviewOfficialIssueSection(props: {
           disabled={!onAbrirAnexoOficial}
           label="Baixar pacote oficial"
           onPress={() => onAbrirAnexoOficial?.(officialDownloadAttachment)}
+          primary
           testID="mesa-review-official-issue-download"
           tone="accent"
         />
+      ) : null}
+      {summary.currentOfficialIssueIsHistorical ? (
+        <Text style={styles.threadReviewFootnote}>
+          Documento substituído aparece apenas no histórico; o download
+          principal fica reservado para a emissão oficial ativa.
+        </Text>
+      ) : officialDownloadAttachment ? (
+        <Text style={styles.threadReviewFootnote}>
+          Ação principal: baixar o pacote oficial ativo deste caso.
+        </Text>
       ) : null}
       {summary.officialIssueBlockers.slice(0, 3).map((item) => (
         <View key={item} style={styles.threadReviewWarningItem}>
@@ -203,20 +230,41 @@ export function ThreadConversationReviewOfficialIssueSection(props: {
           Anexo pendente: {item}
         </Text>
       ))}
-      {summary.officialIssueTrail.map((item) => (
-        <View
-          key={`${item.title}-${item.statusLabel}`}
-          style={styles.threadReviewListItem}
-        >
-          <View style={styles.threadReviewListCopy}>
-            <Text style={styles.threadReviewListTitle}>{item.title}</Text>
-            <Text style={styles.threadReviewListText}>{item.statusLabel}</Text>
-            {item.summary ? (
-              <Text style={styles.threadReviewListText}>{item.summary}</Text>
-            ) : null}
-          </View>
+      {summary.currentIssueAuditRows.length ||
+      summary.officialIssueTrail.length ? (
+        <View style={styles.threadReviewList}>
+          <Text style={styles.threadReviewSectionTitle}>Auditoria</Text>
+          {summary.currentIssueAuditRows.map((item) => (
+            <View
+              key={`${item.title}-${item.value}`}
+              style={styles.threadReviewListItem}
+            >
+              <View style={styles.threadReviewListCopy}>
+                <Text style={styles.threadReviewListTitle}>{item.title}</Text>
+                <Text style={styles.threadReviewListText}>{item.value}</Text>
+              </View>
+            </View>
+          ))}
+          {summary.officialIssueTrail.map((item) => (
+            <View
+              key={`${item.title}-${item.statusLabel}`}
+              style={styles.threadReviewListItem}
+            >
+              <View style={styles.threadReviewListCopy}>
+                <Text style={styles.threadReviewListTitle}>{item.title}</Text>
+                <Text style={styles.threadReviewListText}>
+                  {item.statusLabel}
+                </Text>
+                {item.summary ? (
+                  <Text style={styles.threadReviewListText}>
+                    {item.summary}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          ))}
         </View>
-      ))}
+      ) : null}
     </View>
   );
 }

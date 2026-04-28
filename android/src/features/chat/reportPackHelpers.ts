@@ -91,6 +91,8 @@ export function buildReportPackDraftSummary(
   const preLaudoDocument = normalizePreLaudoDocument(draft.pre_laudo_document);
   const guidedContext = readRecord(draft.guided_context);
   const evidenceSummary = readRecord(draft.evidence_summary);
+  const analysisBasis = readRecord(draft.analysis_basis);
+  const workflowSignals = readRecord(analysisBasis?.workflow_signals);
   const structuredDataCandidate = readRecord(draft.structured_data_candidate);
   const candidateCaseContext = readRecord(
     structuredDataCandidate?.case_context,
@@ -131,7 +133,11 @@ export function buildReportPackDraftSummary(
     qualityGates?.requires_normative_curation,
   );
   const autonomyReady = Boolean(qualityGates?.autonomy_ready);
-  const finalValidationMode = readText(qualityGates?.final_validation_mode);
+  const finalValidationMode =
+    readText(qualityGates?.final_validation_mode) ||
+    readText(preLaudoOutline?.final_validation_mode) ||
+    readText(workflowSignals?.final_validation_mode) ||
+    readText(draft.final_validation_mode);
   const readyForStructuredForm = Boolean(
     preLaudoOutline?.ready_for_structured_form,
   );
@@ -441,7 +447,7 @@ export function buildReportPackDraftSummary(
     optionalEvidenceSlots,
     analysisBasisSummary:
       preLaudoDocument?.analysis_basis_summary ||
-      normalizeAnalysisBasisSummary(draft.analysis_basis),
+      normalizeAnalysisBasisSummary(analysisBasis),
     missingEvidenceMessages,
     nextQuestions,
   };
