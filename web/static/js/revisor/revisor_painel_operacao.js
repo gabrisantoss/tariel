@@ -253,7 +253,7 @@
                     <div>
                         <span class="mesa-operacao-eyebrow">Caso selecionado</span>
                         <h3>Mesa Avaliadora</h3>
-                        <p>${escapeHtml(statusOperacional.descricao)}</p>
+                        <p>Operação da Mesa: ${escapeHtml(statusOperacional.descricao)}</p>
                     </div>
                     <span class="mesa-operacao-tag">
                         <span class="material-symbols-rounded" aria-hidden="true">${escapeHtml(statusOperacional.icone)}</span>

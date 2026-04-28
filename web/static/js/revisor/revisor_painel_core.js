@@ -174,6 +174,8 @@
         [/\btenant_without_mesa\b/gi, "Não incluído no pacote"],
         [/\bnr35_mesa_required_unavailable\b/gi, "Família exige Mesa"],
         [/\bowner\b/gi, "Responsável ativo"],
+        [/\bResponsavel\b/gi, "Responsável"],
+        [/\bAnexo pack\b/gi, "Pacote técnico"],
         [/\bfluxo legado\b/gi, "fluxo da revisão"],
     ];
 
@@ -876,7 +878,8 @@
                 itemEl.dataset.statusVisualLabel = statusLabel;
                 const statusVisualEl = itemEl.querySelector(".js-status-visual-label");
                 if (statusVisualEl) {
-                    statusVisualEl.textContent = statusLabel ? `Fluxo: ${statusLabel}` : "Fluxo: Em analise";
+                    const statusCanonico = sanitizarTextoMesa(statusLabel);
+                    statusVisualEl.textContent = statusCanonico ? `Status: ${statusCanonico}` : "Status: Em analise";
                 }
             }
 
