@@ -1,0 +1,13 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Tariel domain identifiers that look like generic API keys"
+regexTarget = "match"
+regexes = [
+  '''(?i)(family_key|catalog_family_key|template_key)["'`]?\s*(=|:|==)\s*["'`]?[a-z0-9][a-z0-9_.-]{6,}["'`]?''',
+  '''(?i)\bkey:\s*["'`]nr[0-9]{2}[a-z0-9_-]*["'`]''',
+  '''(?i)\b[A-Za-z_][A-Za-z0-9_]*\.catalog_family_key\s*=\s*["'`][a-z0-9][a-z0-9_.-]{6,}["'`]''',
+  '''mfa_secret_b32\s*=\s*usuario\.mfa_secret_b32\s+or\s+generate_totp_secret\(\)''',
+  '''API contract, without changing business rules, official emission''',
+]
