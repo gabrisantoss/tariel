@@ -104,3 +104,49 @@ Os relatórios JSON ficam em `artifacts/security/` e não devem ser commitados.
 2. Alinhar o serviço Render a produção real somente quando houver decisão operacional sobre plano/disco persistente.
 3. Revalidar `/ready` até `production_ops_ready=true` antes de aceitar piloto com arquivos reais de cliente.
 4. Depois do Render production-ready, executar uma emissão oficial NR35 ponta a ponta no ambiente hospedado.
+
+## Tentativa De Alinhamento Production-Ready
+
+Data: 2026-04-28
+
+Depois da autorização operacional, foi tentado anexar o disco persistente canônico ao serviço publicado via Render API:
+
+- endpoint: `POST https://api.render.com/v1/disks`
+- service ID: `srv-d795sq2a214c73alec20`
+- disk name: `tariel-web-uploads`
+- mount path: `/opt/render/project/src/web/static/uploads`
+- size: `5GB`
+
+Resultado:
+
+- Render retornou `402`
+- mensagem: `Payment information is required to complete this request. To add a card, visit https://dashboard.render.com/billing`
+
+Leitura:
+
+- O serviço não pode ser promovido para production-ready com storage persistente enquanto o workspace Render não tiver billing configurado.
+- Não foram alteradas env vars de uploads para `persistent_disk`, porque isso faria o `/ready` parecer parcialmente configurado sem o disco real anexado.
+- O serviço continua válido para demonstração pública, mas não para piloto com uploads/anexos/pacotes oficiais reais.
+
+Checklist para concluir depois do billing:
+
+1. Adicionar forma de pagamento em `https://dashboard.render.com/billing`.
+2. Anexar disco persistente ao serviço `srv-d795sq2a214c73alec20`:
+   - name: `tariel-web-uploads`
+   - mount path: `/opt/render/project/src/web/static/uploads`
+   - size: `5GB`
+3. Configurar env vars de produção:
+   - `TARIEL_UPLOADS_STORAGE_MODE=persistent_disk`
+   - `PASTA_UPLOADS_PERFIS=/opt/render/project/src/web/static/uploads/perfis`
+   - `PASTA_ANEXOS_MESA=/opt/render/project/src/web/static/uploads/mesa_anexos`
+   - `PASTA_APRENDIZADOS_VISUAIS_IA=/opt/render/project/src/web/static/uploads/aprendizados_ia`
+   - `TARIEL_UPLOADS_CLEANUP_ENABLED=1`
+   - `TARIEL_UPLOADS_BACKUP_REQUIRED=1`
+   - `TARIEL_UPLOADS_RESTORE_DRILL_REQUIRED=1`
+4. Redeploy do serviço.
+5. Validar `/ready` com:
+   - `production_ops_ready=true`
+   - `uploads_storage_mode=persistent_disk`
+   - `uploads_persistent_storage_ready=true`
+   - `uploads_cleanup_enabled=true`
+6. Executar smoke Render e uma emissão oficial NR35 ponta a ponta no ambiente hospedado.
