@@ -1064,6 +1064,8 @@ def apply_nr35_projection(
         review_status=getattr(laudo, "status_revisao", None),
         has_nonconformity=has_attention_points,
     )
+    if family_key != "nr35_inspecao_linha_de_vida":
+        resolved_conclusion_status = _pick_first_text(explicit_conclusion_status) or resolved_conclusion_status
     resolved_operational_status = _resolve_nr35_operational_status(
         explicit_conclusion_status,
         conclusion_note,

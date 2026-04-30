@@ -3307,3 +3307,49 @@ Próximo passo imediato:
 
 - acompanhar a execução GitHub Actions do commit após o push;
 - se os avisos de runtime sumirem, retomar a limpeza de `innerHTML` no inspetor ou a próxima extração pequena em `admin/services.py`.
+
+## Ciclo 82 — Revisão oficial NR13 e baseline de fontes NR
+
+Status:
+
+- concluído e validado localmente em `2026-04-30`
+
+Problema observado:
+
+- `scripts/check_nr_official_updates.py` apontou mudanças nas fontes oficiais monitoradas;
+- a triagem mostrou diffs em páginas HTML do `gov.br`, mas a página vigente da NR13 expunha como PDF principal `nr-13-atualizada-2023-b.pdf`;
+- schemas NR13 ainda apontavam para `nr-13-atualizada-2022-retificada.pdf` ou para `arquivos/normas-regulamentadoras/nr-13.pdf`.
+
+Corte executado:
+
+- schemas NR13 em `docs/family_schemas` e `web/canonical_docs/family_schemas` passaram a usar `nr-13-atualizada-2023-b.pdf` como fonte primária vigente;
+- anchors e `requirement_mapping` das famílias foram preservados;
+- `scripts/sync_nr_official_basis.py` passou a reconhecer a fonte vigente da NR13 e a canonicalizar URLs antigas sem perder anchors;
+- `scripts/check_nr_official_updates.py` passou a hashear o conteúdo principal de páginas HTML quando há `<main>`, reduzindo falso positivo por menu/rodapé do `gov.br`;
+- baseline `docs/nr_official_source_baseline.json` foi regravada após a revisão manual;
+- registrada a triagem em `docs/operation/NR_OFFICIAL_REVIEW_2026-04-30.md`.
+
+Arquivos do ciclo:
+
+- `scripts/check_nr_official_updates.py`
+- `scripts/sync_nr_official_basis.py`
+- `docs/nr_official_source_baseline.json`
+- `docs/family_schemas/*.json`
+- `web/canonical_docs/family_schemas/*.json`
+- `web/tests/test_nr_official_basis_policy.py`
+- `docs/operation/NR_OFFICIAL_REVIEW_2026-04-30.md`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `python scripts/sync_nr_official_basis.py`
+- `python scripts/check_nr_official_updates.py --write-baseline`
+- `python scripts/check_nr_official_updates.py --report-dir /tmp/tariel_nr_official_watch_after_nr13`
+- resultado:
+  - baseline oficial regravada com `71` fontes;
+  - recheck oficial sem mudanças pendentes: `has_changes: false`.
+
+Próximo passo imediato:
+
+- rodar testes de política NR e QA de catálogo antes do commit;
+- em ciclo separado, revisar item-a-item o impacto da NR13 vigente em tanques metálicos, tubulações e levantamento in loco antes de criar novos gates técnicos.

@@ -637,6 +637,13 @@
         "title": "Nota informativa - Nova NR 18",
         "url": "https://www.gov.br/gestao/pt-br/central-de-conteudo/publicacoes/notas-informativas/2020/nr18_10_02_2020.pdf",
         "used_for": "Fonte oficial complementar para contextualizar a racionalidade da nova NR-18 e seu foco em PGR e simplificacao do canteiro."
+      },
+      {
+        "authority": "Ministerio do Trabalho e Emprego",
+        "title": "Seguranca e Saude no Trabalho na Industria da Construcao",
+        "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-18.pdf",
+        "anchors": [],
+        "used_for": "Texto oficial vigente da NR usado como base normativa primaria do family_schema."
       }
     ],
     "requirement_mapping": [

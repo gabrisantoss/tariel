@@ -648,6 +648,13 @@
         "title": "Manual de Aplicacao da NR-17",
         "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-17_manual_de_aplicacao_da_nr_17.pdf",
         "used_for": "Fonte oficial interpretativa para detalhar a observacao ergonomica aplicada do checklist e a leitura dos fatores de risco no posto de trabalho."
+      },
+      {
+        "authority": "Ministerio do Trabalho e Emprego",
+        "title": "Ergonomia",
+        "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-17.pdf",
+        "anchors": [],
+        "used_for": "Texto oficial vigente da NR usado como base normativa primaria do family_schema."
       }
     ],
     "requirement_mapping": [

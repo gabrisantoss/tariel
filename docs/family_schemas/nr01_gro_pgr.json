@@ -717,6 +717,13 @@
           }
         ],
         "used_for": "Fonte oficial interpretativa de apoio para detalhar a implementacao do GRO/PGR sem inovar obrigacoes alem da norma."
+      },
+      {
+        "authority": "Ministerio do Trabalho e Emprego",
+        "title": "Disposicoes Gerais e Gerenciamento de Riscos Ocupacionais",
+        "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-01.pdf",
+        "anchors": [],
+        "used_for": "Texto oficial vigente da NR usado como base normativa primaria do family_schema."
       }
     ],
     "requirement_mapping": [

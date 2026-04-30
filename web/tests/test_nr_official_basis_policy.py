@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -26,12 +27,47 @@ def _load_schema(name: str) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _load_official_watch_content_hash():
+    module_path = _repo_root() / "scripts" / "check_nr_official_updates.py"
+    spec = importlib.util.spec_from_file_location("check_nr_official_updates", module_path)
+    assert spec is not None
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module._content_hash
+
+
 def test_project_declares_official_nr_basis_standard() -> None:
     content = (_repo_root() / "docs" / "padrao_base_oficial_familias_nr.md").read_text(encoding="utf-8")
     assert "Toda implementacao ou reforco de familia NR deve" in content
     assert "python3 scripts/sync_nr_official_basis.py" in content
     assert "monitoramento oficial preparado, mas com gatilho manual" in content
     assert "Nao atualizar template oficial automaticamente sem revisao humana do admin responsavel." in content
+
+
+def test_official_watch_html_hash_ignores_govbr_navigation_shell() -> None:
+    content_hash = _load_official_watch_content_hash()
+    html_a = b"""
+    <html><body>
+      <nav>menu antigo</nav>
+      <main><h1>Norma Regulamentadora</h1><p>Conteudo oficial da pagina.</p></main>
+      <footer>rodape antigo</footer>
+    </body></html>
+    """
+    html_b = b"""
+    <html><body>
+      <nav>menu novo com outros links</nav>
+      <main><h1>Norma Regulamentadora</h1><p>Conteudo oficial da pagina.</p></main>
+      <footer>rodape novo</footer>
+    </body></html>
+    """
+
+    hash_a, mode_a = content_hash(body=html_a, content_type="text/html;charset=utf-8")
+    hash_b, mode_b = content_hash(body=html_b, content_type="text/html;charset=utf-8")
+
+    assert mode_a == "main_html_text"
+    assert mode_b == "main_html_text"
+    assert hash_a == hash_b
 
 
 def test_all_nr_family_schemas_register_official_sources() -> None:
@@ -67,6 +103,37 @@ def test_all_nr_family_schemas_register_official_sources() -> None:
             for url in official_urls
             if url != overview_url
         ), path.name
+
+
+def test_nr13_families_use_current_mte_pdf_source() -> None:
+    current_url = (
+        "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/"
+        "conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/"
+        "normas-regulamentadora/normas-regulamentadoras-vigentes/nr-13-atualizada-2023-b.pdf"
+    )
+    obsolete_urls = {
+        (
+            "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/"
+            "conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/"
+            "arquivos/normas-regulamentadoras/nr-13-atualizada-2022-retificada.pdf"
+        ),
+        (
+            "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/"
+            "conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/"
+            "arquivos/normas-regulamentadoras/nr-13.pdf"
+        ),
+    }
+
+    nr13_paths = [path for path in _family_schema_paths() if path.name.startswith("nr13_")]
+    assert nr13_paths
+
+    for path in nr13_paths:
+        schema = json.loads(path.read_text(encoding="utf-8"))
+        sources = schema["normative_basis"]["sources"]
+        urls = {str(source.get("url") or "").strip() for source in sources if isinstance(source, dict)}
+
+        assert current_url in urls, path.name
+        assert urls.isdisjoint(obsolete_urls), path.name
 
 
 def test_priority_family_blocks_have_granular_official_basis() -> None:

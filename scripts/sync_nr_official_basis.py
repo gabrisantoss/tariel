@@ -29,6 +29,22 @@ OFFICIAL_SOURCE_OVERRIDES: dict[str, dict[str, Any]] = {
         ),
         "used_for": "Base oficial vigente da parte principal da NR-09 e suas atualizacoes estruturantes.",
     },
+    "nr13": {
+        "title": "NR-13 - Caldeiras, Vasos de Pressao, Tubulacoes e Tanques Metalicos de Armazenamento",
+        "url": (
+            "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/"
+            "conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/"
+            "normas-regulamentadora/normas-regulamentadoras-vigentes/nr-13-atualizada-2023-b.pdf"
+        ),
+        "obsolete_urls": [
+            (
+                "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/"
+                "conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/"
+                "arquivos/normas-regulamentadoras/nr-13-atualizada-2022-retificada.pdf"
+            ),
+        ],
+        "used_for": "Texto oficial vigente da NR-13 usado como base normativa primaria do family_schema.",
+    },
     "nr16": {
         "title": "Norma Regulamentadora No. 16 (NR-16)",
         "url": (
@@ -171,21 +187,36 @@ def _merge_sources(existing: list[dict[str, Any]], required: list[dict[str, Any]
     return merged
 
 
-def _prune_existing_sources(*, code: str, existing: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    if code not in OFFICIAL_SOURCE_OVERRIDES:
+def _canonicalize_existing_sources(*, code: str, existing: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    override = OFFICIAL_SOURCE_OVERRIDES.get(code)
+    if not override:
         return existing
-    obsolete_pdf_url = _official_pdf_url(code)
-    if not obsolete_pdf_url:
+    canonical_url = str(override.get("url") or "").strip()
+    if not canonical_url:
         return existing
-    pruned: list[dict[str, Any]] = []
+    obsolete_urls = {
+        str(url).strip()
+        for url in [*_ensure_list(override.get("obsolete_urls")), _official_pdf_url(code)]
+        if str(url or "").strip()
+    }
+    canonicalized: list[dict[str, Any]] = []
     for source in existing:
         if not isinstance(source, dict):
             continue
         url = str(source.get("url") or "").strip()
-        if url == obsolete_pdf_url:
+        if url in obsolete_urls:
+            updated_source = dict(source)
+            updated_source["title"] = str(override.get("title") or source.get("title") or "").strip()
+            updated_source["url"] = canonical_url
+            updated_source["used_for"] = str(override.get("used_for") or source.get("used_for") or "").strip()
+            canonicalized.append(updated_source)
             continue
-        pruned.append(source)
-    return pruned
+        canonicalized.append(source)
+    return canonicalized
+
+
+def _ensure_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
 
 
 def _sync_schema(path: Path, registry_by_code: dict[str, dict[str, Any]]) -> bool:
@@ -204,7 +235,7 @@ def _sync_schema(path: Path, registry_by_code: dict[str, dict[str, Any]]) -> boo
     else:
         payload["normative_basis"] = {**default_basis, **current_basis}
         existing_sources = current_basis.get("sources")
-        normalized_existing_sources = _prune_existing_sources(
+        normalized_existing_sources = _canonicalize_existing_sources(
             code=nr_code,
             existing=existing_sources if isinstance(existing_sources, list) else [],
         )

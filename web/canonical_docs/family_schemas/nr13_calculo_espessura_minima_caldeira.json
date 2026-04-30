@@ -618,8 +618,8 @@
       },
       {
         "authority": "Ministerio do Trabalho e Emprego",
-        "title": "Caldeiras, Vasos de Pressao e Tubulacoes e Tanques Metalicos de Armazenamento",
-        "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-13-atualizada-2022-retificada.pdf",
+        "title": "NR-13 - Caldeiras, Vasos de Pressao, Tubulacoes e Tanques Metalicos de Armazenamento",
+        "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/nr-13-atualizada-2023-b.pdf",
         "anchors": [
           {
             "item_ref": "13.3.3.1 / 13.3.3.2 / 13.3.3.3 / 13.3.3.4",
@@ -634,7 +634,7 @@
             "used_for": "Vincular a conclusao de espessura minima a teste hidrostático, relatorio de inspeção e atualizacao de dados da placa e da documentacao."
           }
         ],
-        "used_for": "Texto oficial vigente da NR13 usado como base normativa primaria desta familia."
+        "used_for": "Texto oficial vigente da NR-13 usado como base normativa primaria do family_schema."
       },
       {
         "authority": "Ministerio do Trabalho e Emprego",

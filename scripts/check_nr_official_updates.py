@@ -100,12 +100,16 @@ def _content_hash(*, body: bytes, content_type: str | None) -> tuple[str, str]:
         return hashlib.sha256(body).hexdigest(), "raw_bytes"
 
     text = body.decode("utf-8", errors="ignore")
+    main_match = re.search(r"(?is)<main\b[^>]*>(.*?)</main>", text)
+    if main_match:
+        text = main_match.group(1)
     text = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", text)
     text = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", text)
     text = re.sub(r"(?is)<!--.*?-->", " ", text)
     text = re.sub(r"(?is)<[^>]+>", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
-    return hashlib.sha256(text.encode("utf-8")).hexdigest(), "normalized_html_text"
+    hash_mode = "main_html_text" if main_match else "normalized_html_text"
+    return hashlib.sha256(text.encode("utf-8")).hexdigest(), hash_mode
 
 
 def _build_snapshot() -> dict[str, Any]:

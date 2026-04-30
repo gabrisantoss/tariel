@@ -635,6 +635,13 @@
         "title": "Equipamentos de Protecao Individual - EPI",
         "url": "https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/inspecao-do-trabalho/seguranca-e-saude-no-trabalho/equipamentos-de-protecao-individual",
         "used_for": "Fonte oficial complementar do MTE para contextualizar a logica de Certificado de Aprovacao, certificacao do EPI e canal institucional ligado ao tema."
+      },
+      {
+        "authority": "Ministerio do Trabalho e Emprego",
+        "title": "Equipamento de Protecao Individual - EPI",
+        "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-06.pdf",
+        "anchors": [],
+        "used_for": "Texto oficial vigente da NR usado como base normativa primaria do family_schema."
       }
     ],
     "requirement_mapping": [

@@ -646,6 +646,13 @@
         "title": "Norma Regulamentadora No. 7 (NR-7)",
         "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-7-nr-7",
         "used_for": "Fonte oficial complementar do MTE para contextualizar a revisao da NR-07 e sua integracao com o gerenciamento de riscos ocupacionais."
+      },
+      {
+        "authority": "Ministerio do Trabalho e Emprego",
+        "title": "Programa de Controle Medico de Saude Ocupacional",
+        "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-07.pdf",
+        "anchors": [],
+        "used_for": "Texto oficial vigente da NR usado como base normativa primaria do family_schema."
       }
     ],
     "requirement_mapping": [

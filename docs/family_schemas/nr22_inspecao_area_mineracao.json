@@ -637,6 +637,13 @@
         "title": "Portaria MTE nº 225 - Nova NR-22",
         "url": "https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/inspecao-do-trabalho/seguranca-e-saude-no-trabalho/sst-portarias/2024/portaria-mte-no-225-nova-nr-22.pdf",
         "used_for": "Fonte oficial complementar para registrar a consolidacao normativa recente da NR-22 e sua entrada na redacao vigente."
+      },
+      {
+        "authority": "Ministerio do Trabalho e Emprego",
+        "title": "Seguranca e Saude Ocupacional na Mineracao",
+        "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-22.pdf",
+        "anchors": [],
+        "used_for": "Texto oficial vigente da NR usado como base normativa primaria do family_schema."
       }
     ],
     "requirement_mapping": [

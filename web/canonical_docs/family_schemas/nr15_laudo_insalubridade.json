@@ -658,6 +658,13 @@
         "title": "Solicitar Licenca Previa para Prorrogacao de Jornada em Atividade Insalubre",
         "url": "https://www.gov.br/pt-br/servicos/solicitar-licenca-previa-para-prorrogacao-de-jornada-em-atividade-insalubre",
         "used_for": "Referencia oficial complementar sobre exame local e verificacao de metodos e processos de trabalho em atividades insalubres."
+      },
+      {
+        "authority": "Ministerio do Trabalho e Emprego",
+        "title": "Atividades e Operacoes Insalubres",
+        "url": "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-15.pdf",
+        "anchors": [],
+        "used_for": "Texto oficial vigente da NR usado como base normativa primaria do family_schema."
       }
     ],
     "requirement_mapping": [
