@@ -3208,3 +3208,61 @@ Próximo passo imediato:
 
 - continuar reduzindo `chat_index_page.js` pelo próximo bloco coeso de runtime residual, preferindo sincronização de rail/widgets ou outro bloco de orquestração ainda local;
 - no backend, seguir com a próxima fatia administrativa ainda grande em `admin/services.py`, priorizando governança ou template library rollup, que ainda concentram volume real.
+
+## Ciclo 80 — Alinhamento de runtime local/CI e limpeza segura no workspace
+
+Status:
+
+- concluído e validado localmente em `2026-04-30`
+
+Problema observado:
+
+- produção e ambiente local executavam Python `3.12.3`, mas `pyproject.toml`, README e workflows ainda anunciavam Python `3.14` ou `3.13`;
+- o workspace Android fixava `22.13.1` em `.nvmrc`, mas os alvos mobile do `Makefile` chamavam `npm` direto e podiam rodar com Node `22.12.x`;
+- `chat_index_page.js` ainda tinha um ponto simples de `innerHTML` para montar botões de ação do workspace.
+
+Corte executado:
+
+- ferramentas Python e CI passaram a declarar Python `3.12`;
+- workflows mobile passaram a usar `android/.nvmrc` no `setup-node`;
+- alvos mobile do `Makefile` passaram a carregar `nvm`, instalar a versão do `.nvmrc` quando necessário e só então chamar `npm`;
+- `criarBotaoAcaoWorkspace` passou a montar ícone e rótulo via DOM/texto em vez de interpolar HTML.
+
+Arquivos do ciclo:
+
+- `web/pyproject.toml`
+- `web/README.md`
+- `README.md`
+- `android/README.md`
+- `.github/workflows/ci.yml`
+- `.github/workflows/baseline-snapshot.yml`
+- `.github/workflows/contract-check.yml`
+- `.github/workflows/devkit-operational-baseline.yml`
+- `.github/workflows/e2e-local-stress.yml`
+- `Makefile`
+- `web/static/js/chat/chat_index_page.js`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `node --check web/static/js/chat/chat_index_page.js`
+- `cd web && PYTHONPATH=. python -m ruff check .`
+- `cd web && PYTHONPATH=. python -m mypy --config-file pyproject.toml`
+- `make mobile-typecheck`
+- `make verify`
+- `make contract-check`
+- `git diff --check`
+- resultado:
+  - `make verify` verde
+  - `20 passed, 2 skipped` em `contract-check`
+
+Observação externa:
+
+- `render deploys list` falhou com `401 Unauthorized` para os IDs testados;
+- `https://tariel-web-free.onrender.com/health` e `/ready` não responderam dentro de `90s`;
+- portanto, a validação Render real ficou bloqueada por autenticação/timeout, não concluída.
+
+Próximo passo imediato:
+
+- continuar reduzindo `innerHTML` em arquivos do inspetor que ainda montam listas por string, começando por `workspace_derivatives.js` ou `workspace_composer.js`;
+- no backend, retomar a extração de `admin/services.py` ou dos módulos documentais sem mudar contrato de produto.

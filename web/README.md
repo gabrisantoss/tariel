@@ -10,7 +10,7 @@ Backlog mestre da etapa antiga (priorizado e com status):
 
 ## Stack detectada
 
-- Python 3.14
+- Python 3.12 (produção no Render fixa 3.12.3)
 - FastAPI + Uvicorn
 - SQLAlchemy + Alembic (PostgreSQL local por padrão; SQLite isolado só para testes e previews)
 - Redis local por padrão para realtime distribuído da Mesa

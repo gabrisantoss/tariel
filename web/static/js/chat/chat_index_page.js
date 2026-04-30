@@ -1877,10 +1877,13 @@
         botao.type = "button";
         botao.className = "workspace-message-action";
         botao.dataset.workspaceAction = nomeEvento;
-        botao.innerHTML = `
-            <span class="material-symbols-rounded" aria-hidden="true">${icone}</span>
-            <span>${escaparHtml(rotulo)}</span>
-        `;
+        const iconNode = document.createElement("span");
+        iconNode.className = "material-symbols-rounded";
+        iconNode.setAttribute("aria-hidden", "true");
+        iconNode.textContent = String(icone || "");
+        const labelNode = document.createElement("span");
+        labelNode.textContent = String(rotulo || "");
+        botao.append(iconNode, labelNode);
         botao.addEventListener("click", () => {
             document.dispatchEvent(new CustomEvent(`tariel:mensagem-${nomeEvento}`, {
                 detail: detalhe,

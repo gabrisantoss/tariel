@@ -48,7 +48,7 @@ Leitura rápida:
 - `make release-verify-local`: gate forte local antes de promoção
 - `make release-verify`: gate completo de promoção, incluindo a lane real já modelada em `release-gate-real`
 - `make smoke-mobile`: lane real do Android; materializa `android/android` via preflight oficial se o projeto nativo ainda nao existir e usa SQLite temporario auditado para backend local
-- Android prebuild: requer Node `^20.19.0 || ^22.13.0 || >=24`; o preflight usa `nvm` para selecionar uma versao compativel quando disponivel
+- Android prebuild: requer Node `^20.19.0 || ^22.13.0 || >=24`; use a versão fixada em `android/.nvmrc` (`22.13.1`) quando houver `nvm` disponível
 
 Checkout limpo local:
 

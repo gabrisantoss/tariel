@@ -22,7 +22,7 @@ npm run start
 
 - Use `Node 22.13.1` para o workspace mobile.
 - O arquivo [`android/.nvmrc`](./.nvmrc) fixa essa versão.
-- O alvo `make mobile-test` já executa o Jest com `node 22.13.1` para evitar falhas de bootstrap do preset Expo em `22.12.x`.
+- Os alvos mobile do `Makefile` carregam `android/.nvmrc` quando `nvm` está disponível, evitando o runtime `22.12.x`.
 
 ## Comandos principais
 

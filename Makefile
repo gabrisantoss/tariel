@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 WEB_PYTHON := $(shell [ -x web/.venv-linux/bin/python ] && echo web/.venv-linux/bin/python || echo python)
 WEB_PYTHON_IN_WEB := $(shell [ -x web/.venv-linux/bin/python ] && echo ./.venv-linux/bin/python || echo python)
+ANDROID_NPM := if [ -s "$$HOME/.nvm/nvm.sh" ]; then . "$$HOME/.nvm/nvm.sh"; nvm use --silent >/dev/null || nvm install >/dev/null || exit $$?; nvm use --silent >/dev/null || exit $$?; fi; npm
 PRE_COMMIT := $(WEB_PYTHON) -m pre_commit
 
 .PHONY: help doctor bootstrap hooks-install web-lint web-typecheck web-test web-ci mesa-smoke mesa-acceptance document-acceptance document-pdf-qa document-pdf-qa-full observability-acceptance hygiene-check binary-assets-audit binary-assets-audit-strict hygiene-acceptance v2-acceptance post-plan-benchmarks contract-check document-contract-check smoke-web demo-local-reset full-regression-audit full-regression-audit-critical full-regression-audit-hosted full-regression-audit-human full-regression-audit-exhaustive full-regression-audit-exhaustive-hosted full-regression-audit-exhaustive-human mobile-install mobile-lint mobile-typecheck mobile-test mobile-format-check mobile-baseline mobile-preview mobile-wifi mobile-native-preflight mobile-acceptance mobile-ci smoke-mobile python-security-audit mobile-security-audit public-repo-secret-scan security-audit verify release-verify-local release-verify production-ops-check production-ops-check-strict uploads-restore-drill uploads-cleanup-check uploads-cleanup-apply post-deploy-cleanup-observation release-gate-hosted release-gate-real release-gate final-product-stamp clean-generated baseline-snapshot ci
@@ -128,24 +129,24 @@ full-regression-audit-exhaustive-human: ## Executa a varredura mais ampla com ri
 	TARIEL_AUDIT_BASE_URL=$${TARIEL_AUDIT_BASE_URL:-https://tariel-web-free.onrender.com} python3 scripts/run_full_regression_audit.py --profile exhaustive --human-paced
 
 mobile-install: ## Instala dependências do workspace mobile
-	cd android && npm install
+	cd android && $(ANDROID_NPM) install
 
 mobile-lint: ## Roda ESLint no workspace mobile
-	cd android && npm run lint
+	cd android && $(ANDROID_NPM) run lint
 
 mobile-typecheck: ## Roda TypeScript no workspace mobile
-	cd android && npm run typecheck
+	cd android && $(ANDROID_NPM) run typecheck
 
 mobile-test: ## Roda Jest no workspace mobile
-	cd android && npm run test:baseline
+	cd android && $(ANDROID_NPM) run test:baseline
 
 mobile-format-check: ## Confere formatação do workspace mobile
-	cd android && npm run format:check
+	cd android && $(ANDROID_NPM) run format:check
 
 mobile-baseline: mobile-typecheck mobile-lint mobile-format-check mobile-test ## Executa a baseline local do workspace mobile
 
 mobile-preview: ## Gera e instala a APK preview local do mobile
-	cd android && npm run android:preview
+	cd android && $(ANDROID_NPM) run android:preview
 
 mobile-wifi: ## Religa app Android real por Wi-Fi com API local + Metro em LAN
 	./scripts/dev/run_mobile_wifi.sh
