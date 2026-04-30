@@ -3266,3 +3266,44 @@ Próximo passo imediato:
 
 - continuar reduzindo `innerHTML` em arquivos do inspetor que ainda montam listas por string, começando por `workspace_derivatives.js` ou `workspace_composer.js`;
 - no backend, retomar a extração de `admin/services.py` ou dos módulos documentais sem mudar contrato de produto.
+
+## Ciclo 81 — Atualização de actions para Node 24 e CodeQL v4
+
+Status:
+
+- concluído e validado localmente em `2026-04-30`
+
+Problema observado:
+
+- a validação GitHub do pacote anterior ainda emitia avisos de depreciação de actions executando em Node.js 20;
+- o workflow CodeQL também apontava a necessidade de sair da linha `github/codeql-action@v3`.
+
+Corte executado:
+
+- `github/codeql-action/init` e `github/codeql-action/analyze` passaram para `@v4`;
+- todos os usos de `actions/upload-artifact` nos workflows passaram de `@v4` para `@v6`, que executa em Node.js 24.
+
+Arquivos do ciclo:
+
+- `.github/workflows/codeql.yml`
+- `.github/workflows/baseline-snapshot.yml`
+- `.github/workflows/ci.yml`
+- `.github/workflows/devkit-operational-baseline.yml`
+- `.github/workflows/e2e-local-stress.yml`
+- `.github/workflows/nr-official-watch.yml`
+- `docs/LOOP_ORGANIZACAO_FULLSTACK.md`
+
+Validação local executada:
+
+- `rg -n "github/codeql-action/.+@v3|actions/upload-artifact@v4|Node.js 20 actions are deprecated|CodeQL Action v3" .github/workflows || true`
+- parse YAML de todos os arquivos em `.github/workflows/*.yml`
+- `git diff --check`
+- resultado:
+  - sem referências antigas encontradas;
+  - todos os workflows parsearam com sucesso;
+  - `git diff --check` sem apontamentos.
+
+Próximo passo imediato:
+
+- acompanhar a execução GitHub Actions do commit após o push;
+- se os avisos de runtime sumirem, retomar a limpeza de `innerHTML` no inspetor ou a próxima extração pequena em `admin/services.py`.
