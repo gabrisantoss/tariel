@@ -348,6 +348,18 @@ body.auth-shell .auth-layout--single .auth-card {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 252, 0.98)) !important;
 }
 
+/* O Chat Inspetor usa containers externos como layout, nao como cards. */
+body.pagina-chat-dashboard-v2 .chat-thread-surface,
+body.pagina-chat-dashboard-v2 .technical-record-header,
+body.pagina-chat-dashboard-v2 .thread-nav-shell,
+body.pagina-chat-dashboard-v2 .workspace-assistant-landing__shell,
+body.pagina-chat-dashboard-v2 .workspace-mesa-stage {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
 body.auth-shell .auth-hero {
     background:
         radial-gradient(circle at top right, rgba(31, 94, 142, 0.1), transparent 34%),

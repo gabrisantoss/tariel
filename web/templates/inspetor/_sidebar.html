@@ -4,6 +4,8 @@
 {% set tenant_policy = tenant_access_policy | default({}, true) %}
 {% set tenant_operating_model = tenant_policy.operating_model | default('', true) %}
 {% set exibir_upgrade_plano = (usuario and usuario.eh_admin_cliente) or tenant_operating_model == "mobile_single_operator" %}
+{% set empresa_label = empresa_nome if empresa_nome else "Operação Tariel" %}
+{% set conversas_total = laudos_sidebar | length %}
 
 <aside
     id="barra-historico"
@@ -21,6 +23,16 @@
                     <strong data-action="go-home">Tariel IA</strong>
                     <span>Chat do Inspetor</span>
                 </div>
+            </div>
+
+            <div class="inspetor-sidebar__meta" aria-label="Resumo da operação atual">
+                <span class="inspetor-sidebar__meta-pill">
+                    {{ "Caso ativo" if laudo_selecionado_id else "Pronto para iniciar" }}
+                </span>
+                <strong>{{ empresa_label }}</strong>
+                <span>
+                    {{ conversas_total }} {{ "conversa disponível" if conversas_total == 1 else "conversas disponíveis" }}
+                </span>
             </div>
 
             <button

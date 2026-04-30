@@ -1,4 +1,5 @@
 {% from "inspetor/_macros.html" import render_portal_recent %}
+{% set hero_operational_items = portal_operational_summary["items"] | default([], true) %}
 
 <section
     id="tela-boas-vindas"
@@ -26,30 +27,58 @@
             </div>
         </div>
 
-        <div class="inspetor-portal__header-actions portal-hero-actions" aria-label="Ações principais do portal">
-            <button
-                type="button"
-                class="technical-record-btn technical-record-btn--ghost inspetor-portal__chat-entry-btn inspetor-portal__hero-btn"
-                data-action="open-assistant-chat"
-                data-inspector-entry="portal-open-chat"
-                aria-label="Abrir novo chat livre com o assistente"
-            >
-                <span class="material-symbols-rounded" aria-hidden="true">forum</span>
-                <span>Chat livre</span>
-            </button>
+        <div class="inspetor-portal__hero-panel" aria-label="Resumo operacional do portal">
+            <div class="inspetor-portal__hero-panel-copy">
+                <span class="inspetor-portal__hero-panel-eyebrow">Pulso da operação</span>
+                <strong>{{ portal_operational_summary.primary_action_label | default("Entrar no fluxo do inspetor", true) }}</strong>
+                <p>
+                    {% if portal_operational_summary.visible %}
+                        {{ portal_operational_summary.primary_action_detail | default("Acompanhe o progresso técnico e priorize o próximo passo.", true) }}
+                    {% else %}
+                        {{ portal_operational_summary.empty_message | default("Sem casos ativos. Use o chat livre ou abra uma nova inspeção para começar.", true) }}
+                    {% endif %}
+                </p>
+            </div>
 
-            <button
-                type="button"
-                id="btn-abrir-modal-novo"
-                class="inspetor-primary-btn inspetor-primary-btn--header inspetor-portal__hero-btn"
-                data-inspector-entry="portal-new-inspection"
-                aria-haspopup="dialog"
-                aria-controls="modal-nova-inspecao"
-                aria-expanded="false"
-            >
-                <span class="material-symbols-rounded" aria-hidden="true">add</span>
-                <span>Nova Inspeção</span>
-            </button>
+            {% if hero_operational_items %}
+            <div class="inspetor-portal__hero-metrics" aria-label="Métricas resumidas da operação">
+                {% for item in hero_operational_items[:4] %}
+                <article class="inspetor-portal__hero-kpi inspetor-portal__hero-kpi--{{ item.tone | default('info', true) }}">
+                    <span class="material-symbols-rounded" aria-hidden="true">{{ item.icon }}</span>
+                    <div class="inspetor-portal__hero-kpi-copy">
+                        <strong>{{ item.value }}</strong>
+                        <span>{{ item.label }}</span>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="inspetor-portal__header-actions portal-hero-actions" aria-label="Ações principais do portal">
+                <button
+                    type="button"
+                    class="technical-record-btn technical-record-btn--ghost inspetor-portal__chat-entry-btn inspetor-portal__hero-btn"
+                    data-action="open-assistant-chat"
+                    data-inspector-entry="portal-open-chat"
+                    aria-label="Abrir novo chat livre com o assistente"
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+                    <span>Chat livre</span>
+                </button>
+
+                <button
+                    type="button"
+                    id="btn-abrir-modal-novo"
+                    class="inspetor-primary-btn inspetor-primary-btn--header inspetor-portal__hero-btn"
+                    data-inspector-entry="portal-new-inspection"
+                    aria-haspopup="dialog"
+                    aria-controls="modal-nova-inspecao"
+                    aria-expanded="false"
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">add</span>
+                    <span>Nova Inspeção</span>
+                </button>
+            </div>
         </div>
     </header>
 

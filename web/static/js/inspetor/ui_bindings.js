@@ -887,6 +887,30 @@
                     origem: "sugestao",
                 });
             });
+            el.workspaceConversationEmpty?.addEventListener("click", (event) => {
+                const botaoTexto = event.target?.closest?.("[data-suggestion-text]");
+                if (!botaoTexto) return;
+                inserirTextoNoComposer(String(botaoTexto.dataset.suggestionText || "").trim());
+            });
+            el.painelChat?.addEventListener("click", (event) => {
+                const botaoFocoComposer = event.target?.closest?.("[data-focus-composer]");
+                if (botaoFocoComposer) {
+                    focarComposerInspector();
+                    return;
+                }
+
+                const botaoTexto = event.target?.closest?.("[data-suggestion-text]");
+                if (!botaoTexto) return;
+                if (
+                    botaoTexto.closest("#composer-suggestions") ||
+                    botaoTexto.closest("#workspace-conversation-empty")
+                ) {
+                    return;
+                }
+
+                inserirTextoNoComposer(String(botaoTexto.dataset.suggestionText || "").trim());
+                focarComposerInspector();
+            });
             el.slashCommandPalette?.addEventListener("click", (event) => {
                 const botao = event.target?.closest?.("[data-slash-command]");
                 if (!botao) return;

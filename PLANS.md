@@ -14,6 +14,15 @@ Atualizado em `2026-04-27`.
 
 ## Estado atual
 
+### `PKT-INSPECTOR-VISUAL-REFRESH-01` - Portal do inspetor home e landing
+
+- `status`: concluido localmente em `2026-04-29`; primeira passada visual no portal do inspetor sem alterar regra de negocio, rotas, payloads, permissao, emissao oficial, mobile smoke ou gates de release
+- `checkpoint 2026-04-29`: `_portal_home.html` ganhou hero lateral com pulso operacional e CTAs agrupados; `_assistant_landing.html` passou a explicitar os tres modos de entrada (`Inspecao guiada`, `Chat livre`, `Mesa integrada`); `_sidebar.html` agora expõe um resumo curto da operacao/empresa para dar mais contexto ao shell
+- `checkpoint 2026-04-29`: `_inspection_conversation.html` e `_workspace.html` passaram a tratar melhor o início da conversa com a IA, com estado vazio mais guiado, CTA de `Nova inspecao guiada`, starters de prompt e helper visual para a primeira mensagem; `ui_bindings.js` reaproveita esses starters para preencher o composer sem criar fluxo paralelo
+- `checkpoint 2026-04-29`: `web/static/css/inspetor/visual_refinements.css` recebeu a camada visual dessa passada, com novo hero escuro do portal, cards de entrada da landing, refinamento de sinais/chips, melhor hierarquia dos cards e responsividade para a home e o ponto de entrada do inspetor
+- `checkpoint 2026-04-29`: segunda rodada no chat IA reduz competicao de CTAs na landing, transforma cards de entrada em acoes reais do composer/modal, recoloca o cabecalho tecnico na conversa aberta, aproxima conversas curtas do composer e encurta o fluxo mobile com cards em carrossel horizontal e strip de templates mais leve
+- `validacao executada`: `make verify`; `cd web && PYTHONPATH=. python -m pytest tests/test_smoke.py -q`; `git diff --check`
+
 ### `PKT-UX-PRODUCT-LANGUAGE-01` - Linguagem, status e shell visual base
 
 - `status`: concluido localmente em `2026-04-27`; PR UX-A reduz ruído visual e padroniza termos de produto sem alterar regra de negócio, release gate, mobile smoke, permissões, emissão oficial ou NR35

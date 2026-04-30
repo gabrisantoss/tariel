@@ -53,9 +53,56 @@
             aria-hidden="true"
             hidden
         >
-            <span class="material-symbols-rounded" aria-hidden="true">chat</span>
-            <strong>A conversa aparecerá aqui</strong>
-            <p>Envie a primeira mensagem para abrir a conversa com o assistente ou continue um historico ja existente.</p>
+            <div class="workspace-conversation-empty__hero">
+                <span class="material-symbols-rounded" aria-hidden="true">chat</span>
+                <div class="workspace-conversation-empty__copy">
+                    <span class="workspace-conversation-empty__eyebrow">Conversa inicial</span>
+                    <strong>Abra a primeira linha técnica</strong>
+                    <p>Comece com ativo, TAG, local, sintoma observado e o que já foi coletado. A Tariel organiza a análise enquanto você escreve.</p>
+                </div>
+            </div>
+
+            <div class="workspace-conversation-empty__actions" aria-label="Ações para começar">
+                <button
+                    type="button"
+                    class="workspace-conversation-empty__action workspace-conversation-empty__action--primary"
+                    data-open-inspecao-modal
+                    data-inspector-entry="conversation-empty-new-inspection"
+                    aria-haspopup="dialog"
+                    aria-controls="modal-nova-inspecao"
+                    aria-expanded="false"
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">assignment_add</span>
+                    <span>Nova inspeção guiada</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="workspace-conversation-empty__starter"
+                    data-suggestion-text="Vou te passar o contexto do equipamento e do cenário. Estruture a sessão técnica e diga o que preciso observar primeiro."
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">schema</span>
+                    <strong>Estruturar contexto</strong>
+                    <span>Organizar ativo, cenário e critérios de verificação.</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="workspace-conversation-empty__starter"
+                    data-suggestion-text="Tenho uma dúvida técnica. Me responda de forma objetiva, auditável e com os critérios que preciso verificar em campo."
+                >
+                    <span class="material-symbols-rounded" aria-hidden="true">help</span>
+                    <strong>Fazer uma dúvida técnica</strong>
+                    <span>Receber uma resposta direta e verificável para campo.</span>
+                </button>
+            </div>
+
+            <div class="workspace-conversation-empty__tips" aria-label="Informações úteis para a primeira mensagem">
+                <span class="workspace-conversation-empty__tip">Ativo ou TAG</span>
+                <span class="workspace-conversation-empty__tip">Local e setor</span>
+                <span class="workspace-conversation-empty__tip">Sintoma observado</span>
+                <span class="workspace-conversation-empty__tip">Fotos ou PDF</span>
+            </div>
         </div>
 
         <div
