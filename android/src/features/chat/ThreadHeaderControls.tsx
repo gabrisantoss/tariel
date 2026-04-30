@@ -49,6 +49,9 @@ export function ThreadHeaderControls({
   };
 
   const totalBadge = notificacoesNaoLidas + filaOfflineTotal;
+  const settingsAccessibilityLabel = totalBadge
+    ? `Abrir configuracoes, ${totalBadge} aviso${totalBadge === 1 ? "" : "s"} pendente${totalBadge === 1 ? "" : "s"}`
+    : "Abrir configuracoes";
   const blankChatEntry = !vendoMesa && !vendoFinalizacao && !chatHasActiveCase;
   const eyebrow = vendoFinalizacao
     ? "Entrega técnica"
@@ -110,6 +113,8 @@ export function ThreadHeaderControls({
       >
         <View style={styles.cleanHeaderTopRow}>
           <Pressable
+            accessibilityLabel="Abrir historico de inspecoes"
+            accessibilityRole="button"
             hitSlop={12}
             onPress={onOpenHistory}
             style={[
@@ -154,6 +159,8 @@ export function ThreadHeaderControls({
           <View style={styles.cleanHeaderActions}>
             {showNewChatShortcut ? (
               <Pressable
+                accessibilityLabel="Iniciar nova inspecao"
+                accessibilityRole="button"
                 hitSlop={12}
                 onPress={onOpenNewChat}
                 style={[
@@ -170,6 +177,8 @@ export function ThreadHeaderControls({
               </Pressable>
             ) : null}
             <Pressable
+              accessibilityLabel={settingsAccessibilityLabel}
+              accessibilityRole="button"
               hitSlop={12}
               onPress={onOpenSettings}
               style={[
@@ -240,6 +249,11 @@ export function ThreadHeaderControls({
             ]}
           >
             <Pressable
+              accessibilityLabel="Abrir aba Chat"
+              accessibilityRole="tab"
+              accessibilityState={{
+                selected: !vendoMesa && !vendoFinalizacao,
+              }}
               onPress={onOpenChatTab}
               style={[
                 styles.threadTab,
@@ -271,6 +285,13 @@ export function ThreadHeaderControls({
             </Pressable>
             {mesaAcessoPermitido ? (
               <Pressable
+                accessibilityLabel={
+                  notificacoesMesaLaudoAtual
+                    ? `Abrir aba Mesa, ${notificacoesMesaLaudoAtual} retorno${notificacoesMesaLaudoAtual === 1 ? "" : "s"} novo${notificacoesMesaLaudoAtual === 1 ? "" : "s"}`
+                    : "Abrir aba Mesa"
+                }
+                accessibilityRole="tab"
+                accessibilityState={{ selected: vendoMesa }}
                 onPress={onOpenMesaTab}
                 style={[
                   styles.threadTab,
@@ -316,6 +337,9 @@ export function ThreadHeaderControls({
             ) : null}
             {finalizacaoDisponivel ? (
               <Pressable
+                accessibilityLabel="Abrir aba Finalizar"
+                accessibilityRole="tab"
+                accessibilityState={{ selected: vendoFinalizacao }}
                 onPress={onOpenFinalizarTab}
                 style={[
                   styles.threadTab,

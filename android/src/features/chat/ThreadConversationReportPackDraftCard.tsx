@@ -124,9 +124,16 @@ export function renderizarReportPackDraftCard(
     Boolean(options?.canFinalize) &&
     summary.readyForStructuredForm &&
     Boolean(options?.onAbrirQualityGate);
+  const needsHumanFallbackForUnmodeledFamily = summary.missingEvidenceMessages
+    .concat(summary.nextQuestions)
+    .some((message) =>
+      message.toLowerCase().includes("report pack incremental modelado"),
+    );
   const showOpenMesaAction =
     mode === "chat" &&
-    summary.finalValidationMode === "mesa_required" &&
+    (summary.finalValidationMode === "mesa_required" ||
+      !summary.modeled ||
+      needsHumanFallbackForUnmodeledFamily) &&
     Boolean(options?.onAbrirMesaTab);
 
   return (

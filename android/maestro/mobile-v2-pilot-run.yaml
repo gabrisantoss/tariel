@@ -197,11 +197,11 @@ env:
 
 - extendedWaitUntil:
     visible:
-      id: chat-report-pack-card-open-mesa
+      id: mesa-tab-button
     timeout: 15000
 
 - tapOn:
-    id: chat-report-pack-card-open-mesa
+    id: mesa-tab-button
 
 - extendedWaitUntil:
     visible:

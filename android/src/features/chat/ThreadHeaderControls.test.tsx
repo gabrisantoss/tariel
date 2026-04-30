@@ -123,4 +123,42 @@ describe("ThreadHeaderControls", () => {
 
     expect(getByText("2 pendências na fila offline.")).toBeTruthy();
   });
+
+  it("expõe rótulos e estado selecionado para navegação assistiva", () => {
+    const { getByLabelText, getByTestId } = render(
+      <ThreadHeaderControls
+        chatHasActiveCase
+        finalizacaoDisponivel
+        filaOfflineTotal={2}
+        headerSafeTopInset={0}
+        keyboardVisible={false}
+        mesaAcessoPermitido
+        notificacoesMesaLaudoAtual={3}
+        notificacoesNaoLidas={1}
+        onOpenChatTab={jest.fn()}
+        onOpenFinalizarTab={jest.fn()}
+        onOpenHistory={jest.fn()}
+        onOpenMesaTab={jest.fn()}
+        onOpenNewChat={jest.fn()}
+        onOpenSettings={jest.fn()}
+        vendoFinalizacao={false}
+        vendoMesa={false}
+      />,
+    );
+
+    expect(getByLabelText("Abrir historico de inspecoes")).toBeTruthy();
+    expect(getByLabelText("Iniciar nova inspecao")).toBeTruthy();
+    expect(
+      getByLabelText("Abrir configuracoes, 3 avisos pendentes"),
+    ).toBeTruthy();
+    expect(getByLabelText("Abrir aba Chat")).toBeTruthy();
+    expect(getByLabelText("Abrir aba Mesa, 3 retornos novos")).toBeTruthy();
+    expect(getByLabelText("Abrir aba Finalizar")).toBeTruthy();
+    expect(getByTestId("mesa-tab-button").props.accessibilityState).toEqual({
+      selected: false,
+    });
+    expect(getByTestId("chat-tab-button").props.accessibilityState).toEqual({
+      selected: true,
+    });
+  });
 });

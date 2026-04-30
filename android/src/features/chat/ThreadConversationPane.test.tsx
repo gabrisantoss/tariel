@@ -883,7 +883,6 @@ describe("ThreadConversationPane", () => {
           },
         ]}
         reportPackDraft={{
-          modeled: false,
           template_label: "Inspeção Geral (Padrão)",
           quality_gates: {
             autonomy_ready: false,
@@ -906,6 +905,55 @@ describe("ThreadConversationPane", () => {
 
     expect(getByTestId("chat-report-pack-card-open-mesa")).toBeTruthy();
     expect(getByText("Abrir Mesa Avaliadora")).toBeTruthy();
+
+    fireEvent.press(getByTestId("chat-report-pack-card-open-mesa"));
+    expect(onAbrirMesaTab).toHaveBeenCalled();
+  });
+
+  it("mantém CTA da Mesa como fallback quando a família ainda não tem report pack modelado", () => {
+    const onAbrirMesaTab = jest.fn();
+    const { getAllByText, getByTestId } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        caseLifecycleStatus="laudo_em_coleta"
+        onAbrirMesaTab={onAbrirMesaTab}
+        vendoMesa={false}
+        conversaVazia={false}
+        mensagensVisiveis={[
+          {
+            id: 1,
+            papel: "assistente",
+            texto: "Mobile pilot V2 target",
+            tipo: "assistant",
+            citacoes: [],
+          },
+        ]}
+        reportPackDraft={{
+          template_label: "Inspeção Geral (Padrão)",
+          quality_gates: {
+            autonomy_ready: false,
+            missing_evidence: [
+              {
+                message:
+                  "Esta familia ainda nao possui report pack incremental modelado.",
+              },
+            ],
+          },
+          pre_laudo_outline: {
+            next_questions: [
+              "Esta familia ainda nao possui report pack incremental modelado.",
+            ],
+          },
+        }}
+      />,
+    );
+
+    expect(
+      getAllByText(
+        /Esta familia ainda nao possui report pack incremental modelado/,
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(getByTestId("chat-report-pack-card-open-mesa")).toBeTruthy();
 
     fireEvent.press(getByTestId("chat-report-pack-card-open-mesa"));
     expect(onAbrirMesaTab).toHaveBeenCalled();
