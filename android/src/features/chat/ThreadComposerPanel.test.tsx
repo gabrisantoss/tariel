@@ -105,7 +105,7 @@ describe("ThreadComposerPanel", () => {
   });
 
   it("expõe markers estáveis para rascunho de imagem no chat", () => {
-    const { getByTestId } = render(
+    const { getByTestId, queryByTestId } = render(
       <ThreadComposerPanel
         {...createProps({
           anexoRascunho: {
@@ -123,13 +123,11 @@ describe("ThreadComposerPanel", () => {
     expect(getByTestId("chat-attachment-draft-title").props.children).toBe(
       "evidencia.png",
     );
-    expect(
-      getByTestId("chat-attachment-draft-description").props.children,
-    ).toBe("Imagem pronta para a conversa.");
+    expect(queryByTestId("chat-attachment-draft-description")).toBeNull();
   });
 
   it("mostra carrossel de fotos selecionadas na ordem no chat", () => {
-    const { getByTestId } = render(
+    const { getByTestId, queryByTestId } = render(
       <ThreadComposerPanel
         {...createProps({
           anexoRascunho: {
@@ -159,6 +157,7 @@ describe("ThreadComposerPanel", () => {
     expect(getByTestId("chat-attachment-draft-title").props.children).toBe(
       "3 fotos selecionadas",
     );
+    expect(queryByTestId("chat-attachment-draft-description")).toBeNull();
   });
 
   it("mantém ids estáveis para documento na mesa e permite limpar o rascunho", () => {

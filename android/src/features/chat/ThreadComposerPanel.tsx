@@ -109,6 +109,7 @@ function AttachmentDraftCard({
   const { t } = useAppTranslation();
   const baseTestId = `${scope}-attachment-draft`;
   const showImageCarousel = attachment.kind === "image_set";
+  const showDescription = attachment.kind === "document";
 
   return (
     <View
@@ -152,15 +153,17 @@ function AttachmentDraftCard({
           >
             {t(attachment.label)}
           </Text>
-          <Text
-            style={[
-              styles.attachmentDraftDescription,
-              darkMode ? styles.attachmentDraftDescriptionDark : null,
-            ]}
-            testID={`${baseTestId}-description`}
-          >
-            {t(attachment.resumo)}
-          </Text>
+          {showDescription ? (
+            <Text
+              style={[
+                styles.attachmentDraftDescription,
+                darkMode ? styles.attachmentDraftDescriptionDark : null,
+              ]}
+              testID={`${baseTestId}-description`}
+            >
+              {t(attachment.resumo)}
+            </Text>
+          ) : null}
         </View>
         <Pressable
           onPress={onRemove}
