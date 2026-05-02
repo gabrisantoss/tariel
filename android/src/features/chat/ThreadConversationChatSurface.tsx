@@ -227,6 +227,15 @@ export function ThreadConversationChatSurface({
           mensagemEhUsuario &&
           textoEhFallbackImagem(textoRenderizado, textoImagemFallback) &&
           mensagemTemImagem(item);
+        const mensagemUsuarioImagemFallback =
+          mensagemEhUsuario &&
+          textoEhFallbackImagem(textoRenderizado, textoImagemFallback);
+        const mostrarFallbackImagemSemAnexo =
+          mensagemUsuarioImagemFallback && !mensagemTemImagem(item);
+        const mensagemUsuarioSomenteImagem =
+          mensagemUsuarioImagemFallback &&
+          (!item.anexos?.length ||
+            Boolean(item.anexos.some((anexo) => ehImagemAnexo(anexo))));
         const nomeAutor = mensagemEhEngenharia ? t("Revisão") : "";
         const referenciaId = Number(item.referencia_mensagem_id || 0) || null;
         const referenciaPreview = obterResumoReferenciaMensagem(
@@ -257,7 +266,11 @@ export function ThreadConversationChatSurface({
                   styles.messageBubble,
                   styles.messageBubbleOutgoing,
                   mensagemDestacada ? styles.messageBubbleReferenced : null,
+                  mensagemUsuarioSomenteImagem
+                    ? styles.messageBubbleImageOnly
+                    : null,
                 ]}
+                testID={item.id ? `chat-message-bubble-${item.id}` : undefined}
               >
                 {referenciaId ? (
                   <MessageReferenceCard
@@ -268,7 +281,30 @@ export function ThreadConversationChatSurface({
                     variant="outgoing"
                   />
                 ) : null}
-                {!ocultarTextoImagemUsuario ? (
+                {mostrarFallbackImagemSemAnexo ? (
+                  <View
+                    style={styles.messageImageFallbackCard}
+                    testID={
+                      item.id ? `chat-image-fallback-${item.id}` : undefined
+                    }
+                  >
+                    <View style={styles.messageImageFallbackIcon}>
+                      <MaterialCommunityIcons
+                        color="white"
+                        name="image-outline"
+                        size={20}
+                      />
+                    </View>
+                    <View style={styles.messageImageFallbackCopy}>
+                      <Text style={styles.messageImageFallbackTitle}>
+                        {textoImagemFallback}
+                      </Text>
+                      <Text style={styles.messageImageFallbackCaption}>
+                        {t("Evidência fotográfica")}
+                      </Text>
+                    </View>
+                  </View>
+                ) : !ocultarTextoImagemUsuario ? (
                   <Text
                     style={[
                       styles.messageText,

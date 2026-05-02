@@ -53,6 +53,53 @@ export function MessageAttachmentCard({
     attachment,
     imageAttachment ? t("Imagem") : t("Documento"),
   );
+  const richImagePreview = Boolean(imageAttachment && imagePreviewSource);
+
+  if (richImagePreview && imagePreviewSource) {
+    return (
+      <Pressable
+        disabled={disabled}
+        onPress={() => onPress(attachment)}
+        style={[
+          styles.messageAttachmentCard,
+          styles.messageAttachmentCardImage,
+          disabled ? styles.messageAttachmentCardDisabled : null,
+        ]}
+        testID={testID}
+      >
+        <View style={styles.messageAttachmentImageFrame}>
+          <Image
+            source={imagePreviewSource}
+            resizeMode="contain"
+            style={styles.messageAttachmentImagePreview}
+          />
+          <View style={styles.messageAttachmentImageActionBadge}>
+            {opening ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <MaterialCommunityIcons
+                name={disabled ? "lock-outline" : "image-search-outline"}
+                size={18}
+                color={colors.white}
+              />
+            )}
+          </View>
+        </View>
+
+        <View style={styles.messageAttachmentImageFooter}>
+          <View style={styles.messageAttachmentImageCopy}>
+            <Text numberOfLines={1} style={styles.messageAttachmentTitle}>
+              {titulo}
+            </Text>
+            <Text style={styles.messageAttachmentCaption}>
+              {t("Imagem")}
+              {tamanho ? ` • ${tamanho}` : ""}
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
@@ -60,7 +107,6 @@ export function MessageAttachmentCard({
       onPress={() => onPress(attachment)}
       style={[
         styles.messageAttachmentCard,
-        imageAttachment ? styles.messageAttachmentCardImage : null,
         disabled ? styles.messageAttachmentCardDisabled : null,
       ]}
       testID={testID}

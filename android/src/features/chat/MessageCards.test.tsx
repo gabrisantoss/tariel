@@ -38,6 +38,9 @@ describe("MessageAttachmentCard", () => {
 
     const preview = UNSAFE_getByType(Image);
     expect(preview.props.resizeMode).toBe("contain");
+    expect(styles.messageAttachmentImageFrame.height).toBeGreaterThanOrEqual(
+      200,
+    );
     expect(preview.props.source).toMatchObject({
       uri: expect.stringContaining("/app/api/laudo/80/mesa/anexos/8"),
       headers: {

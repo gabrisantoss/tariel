@@ -1,6 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import { Image } from "react-native";
 
+import { styles } from "../InspectorMobileApp.styles";
 import { ThreadConversationPane } from "./ThreadConversationPane";
 
 jest.mock("@expo/vector-icons", () => {
@@ -135,7 +136,7 @@ describe("ThreadConversationPane", () => {
   });
 
   it("mostra a imagem enviada usando o preview local", () => {
-    const { UNSAFE_getAllByType, getByText, queryByText } = render(
+    const { UNSAFE_getAllByType, getByTestId, getByText, queryByText } = render(
       <ThreadConversationPane
         {...baseProps}
         vendoMesa={false}
@@ -160,6 +161,9 @@ describe("ThreadConversationPane", () => {
     );
 
     const imagens = UNSAFE_getAllByType(Image);
+    expect(getByTestId("chat-message-bubble-22").props.style).toEqual(
+      expect.arrayContaining([styles.messageBubbleImageOnly]),
+    );
     expect(
       imagens.some(
         (imagem) => imagem.props.source?.uri === "file:///tmp/foto-enviada.jpg",
@@ -167,6 +171,30 @@ describe("ThreadConversationPane", () => {
     ).toBe(true);
     expect(getByText("foto-enviada.jpg")).toBeTruthy();
     expect(queryByText("Imagem enviada")).toBeNull();
+  });
+
+  it("renderiza fallback visual quando a mensagem de imagem não traz anexo", () => {
+    const { getByTestId, getByText } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        vendoMesa={false}
+        mensagensVisiveis={[
+          {
+            id: 23,
+            papel: "usuario",
+            texto: "Imagem enviada",
+            tipo: "user",
+            citacoes: [],
+          },
+        ]}
+      />,
+    );
+
+    expect(getByTestId("chat-message-bubble-23").props.style).toEqual(
+      expect.arrayContaining([styles.messageBubbleImageOnly]),
+    );
+    expect(getByTestId("chat-image-fallback-23")).toBeTruthy();
+    expect(getByText("Evidência fotográfica")).toBeTruthy();
   });
 
   it("renderiza o card de revisão operacional quando o pacote está disponível", () => {
