@@ -21,6 +21,7 @@ MIME_ANEXOS_MESA_PERMITIDOS = {
     "image/jpeg": ("imagem", ".jpg"),
     "image/jpg": ("imagem", ".jpg"),
     "image/webp": ("imagem", ".webp"),
+    "image/gif": ("imagem", ".gif"),
     "application/pdf": ("documento", ".pdf"),
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ("documento", ".docx"),
 }
@@ -38,7 +39,7 @@ def categoria_mime_anexo_mesa(mime_type: str) -> tuple[str, str]:
     if not categoria_ext:
         raise HTTPException(
             status_code=415,
-            detail="Use PNG, JPG, WebP, PDF ou DOCX no canal da mesa.",
+            detail="Use PNG, JPG, WebP, GIF, PDF ou DOCX no canal da mesa.",
         )
     return categoria_ext
 

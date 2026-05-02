@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import io
+from pathlib import Path
 
 import pytest
 
+import app.domains.chat.routes as rotas_inspetor
 from app.domains.chat.learning_helpers import registrar_aprendizado_visual_automatico_chat
 from app.shared.database import AnexoMesa, Laudo, MensagemLaudo, StatusRevisao, TipoMensagem
 from nucleo.inspetor.comandos_chat import analisar_pedido_relatorio_chat_livre
 from tests.regras_rotas_criticas_support import (
     _criar_laudo,
+    _imagem_png_bytes_teste,
     _imagem_png_data_uri_teste,
     _login_app_inspetor,
 )
@@ -19,6 +22,68 @@ def test_analisar_pedido_relatorio_chat_livre_detecta_variacoes() -> None:
     assert analisar_pedido_relatorio_chat_livre("gera um relatorio profissional")
     assert analisar_pedido_relatorio_chat_livre("consegue criar um pdf com isso?")
     assert not analisar_pedido_relatorio_chat_livre("preciso analisar o equipamento")
+
+
+def test_api_chat_com_imagem_persiste_foto_no_historico(ambiente_critico) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+
+    class ClienteIAStub:
+        def gerar_resposta_stream(self, *args, **kwargs):  # noqa: ANN002, ANN003
+            yield "Imagem registrada no histórico."
+
+    cliente_original = rotas_inspetor.cliente_ia
+    rotas_inspetor.cliente_ia = ClienteIAStub()
+    try:
+        resposta = client.post(
+            "/app/api/chat",
+            headers={"X-CSRF-Token": csrf},
+            json={
+                "mensagem": "Analise esta foto do equipamento.",
+                "historico": [],
+                "laudo_id": laudo_id,
+                "dados_imagem": _imagem_png_data_uri_teste(),
+            },
+        )
+    finally:
+        rotas_inspetor.cliente_ia = cliente_original
+
+    assert resposta.status_code == 200
+
+    historico = client.get(f"/app/api/laudo/{laudo_id}/mensagens")
+    assert historico.status_code == 200
+    itens_usuario = [
+        item for item in historico.json()["itens"] if item["tipo"] == TipoMensagem.USER.value
+    ]
+    assert len(itens_usuario) == 1
+    anexos = itens_usuario[0]["anexos"]
+    assert len(anexos) == 1
+    anexo = anexos[0]
+    assert anexo["categoria"] == "imagem"
+    assert anexo["eh_imagem"] is True
+    assert anexo["mime_type"] == "image/png"
+    assert anexo["url"].endswith(f"/app/api/laudo/{laudo_id}/mesa/anexos/{anexo['id']}")
+
+    download = client.get(anexo["url"])
+    assert download.status_code == 200
+    assert download.content == _imagem_png_bytes_teste()
+
+    with SessionLocal() as banco:
+        anexo_db = banco.get(AnexoMesa, int(anexo["id"]))
+        assert anexo_db is not None
+        assert anexo_db.laudo_id == laudo_id
+        assert anexo_db.mensagem_id == int(itens_usuario[0]["id"])
+        assert Path(str(anexo_db.caminho_arquivo)).is_file()
 
 
 def test_api_chat_pedido_natural_de_relatorio_gera_pdf_com_fotos(ambiente_critico) -> None:

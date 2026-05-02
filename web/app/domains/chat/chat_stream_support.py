@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import uuid
 from dataclasses import dataclass
 from decimal import Decimal
@@ -77,11 +79,16 @@ from app.domains.chat.template_governance import (
     apply_template_governance_to_laudo,
     resolve_guided_template_governance,
 )
+from app.domains.mesa.attachments import (
+    remover_arquivo_anexo_mesa,
+    salvar_arquivo_anexo_mesa,
+)
 from app.v2.case_runtime import (
     build_legacy_case_status_payload_from_laudo,
     build_technical_case_context_bundle,
 )
 from app.shared.database import (
+    AnexoMesa,
     Laudo,
     MensagemLaudo,
     StatusRevisao,
@@ -147,6 +154,61 @@ class FreeAssistantChatContext:
     empresa_id_atual: int
     usuario_id_atual: int
     eh_deep: bool
+
+
+def _extrair_imagem_chat_data_uri(dados_imagem: str) -> tuple[str, bytes]:
+    try:
+        cabecalho, conteudo_b64 = str(dados_imagem or "").strip().split(",", 1)
+        mime_type = cabecalho.split(";", 1)[0].split(":", 1)[1].strip().lower()
+        conteudo = base64.b64decode("".join(conteudo_b64.split()), validate=True)
+    except (IndexError, ValueError, binascii.Error) as exc:
+        raise HTTPException(status_code=400, detail="Imagem base64 inválida.") from exc
+
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="Imagem enviada está vazia.")
+
+    return mime_type, conteudo
+
+
+def _persistir_imagem_chat_como_anexo(
+    *,
+    banco: Session,
+    usuario: Usuario,
+    laudo: Laudo,
+    mensagem: MensagemLaudo,
+    dados_imagem: str,
+) -> str | None:
+    if not str(dados_imagem or "").strip():
+        return None
+
+    mime_type, conteudo = _extrair_imagem_chat_data_uri(dados_imagem)
+    dados_arquivo = salvar_arquivo_anexo_mesa(
+        empresa_id=int(usuario.empresa_id),
+        laudo_id=int(laudo.id),
+        nome_original=f"imagem_chat_{int(mensagem.id)}",
+        mime_type=mime_type,
+        conteudo=conteudo,
+    )
+    caminho_arquivo = str(dados_arquivo["caminho_arquivo"])
+    try:
+        anexo = AnexoMesa(
+            laudo_id=int(laudo.id),
+            mensagem_id=int(mensagem.id),
+            enviado_por_id=int(usuario.id),
+            nome_original=dados_arquivo["nome_original"],
+            nome_arquivo=dados_arquivo["nome_arquivo"],
+            mime_type=dados_arquivo["mime_type"],
+            categoria=dados_arquivo["categoria"],
+            tamanho_bytes=dados_arquivo["tamanho_bytes"],
+            caminho_arquivo=caminho_arquivo,
+        )
+        banco.add(anexo)
+        mensagem.anexos_mesa.append(anexo)
+        banco.flush()
+    except Exception:
+        remover_arquivo_anexo_mesa(caminho_arquivo)
+        raise
+    return caminho_arquivo
 
 
 def _resolver_review_mode_guided_flow(
@@ -616,11 +678,22 @@ def persist_chat_user_message(
     ):
         prepared.laudo.guided_inspection_draft_json["mesa_handoff"] = None
 
-    commit_ou_rollback_operacional(
-        banco,
-        logger_operacao=logger,
-        mensagem_erro="Falha ao confirmar mensagem inicial do stream de chat.",
+    caminho_imagem_chat_persistida = _persistir_imagem_chat_como_anexo(
+        banco=banco,
+        usuario=usuario,
+        laudo=prepared.laudo,
+        mensagem=mensagem_usuario,
+        dados_imagem=prepared.dados_imagem_validos,
     )
+    try:
+        commit_ou_rollback_operacional(
+            banco,
+            logger_operacao=logger,
+            mensagem_erro="Falha ao confirmar mensagem inicial do stream de chat.",
+        )
+    except Exception:
+        remover_arquivo_anexo_mesa(caminho_imagem_chat_persistida)
+        raise
     aplicar_contexto_laudo_selecionado(request, banco, prepared.laudo, usuario)
 
     laudo_id_atual = prepared.laudo.id
