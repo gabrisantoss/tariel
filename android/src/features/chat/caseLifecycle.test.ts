@@ -1,4 +1,7 @@
-import { hasFormalCaseWorkflow } from "./caseLifecycle";
+import {
+  hasFormalCaseWorkflow,
+  hasFreeChatDocumentReviewFlow,
+} from "./caseLifecycle";
 
 describe("hasFormalCaseWorkflow", () => {
   it("mantém o fluxo formal quando o report pack já foi materializado", () => {
@@ -27,5 +30,33 @@ describe("hasFormalCaseWorkflow", () => {
         reportPackDraft: {},
       }),
     ).toBe(false);
+  });
+});
+
+describe("hasFreeChatDocumentReviewFlow", () => {
+  it("identifica análise livre como revisão de documento do chat livre", () => {
+    expect(
+      hasFreeChatDocumentReviewFlow({
+        entryModeEffective: "chat_first",
+        workflowMode: "analise_livre",
+      }),
+    ).toBe(true);
+  });
+
+  it("mantém o chat guiado fora da regra do chat livre", () => {
+    expect(
+      hasFreeChatDocumentReviewFlow({
+        entryModeEffective: "chat_first",
+        workflowMode: "laudo_guiado",
+      }),
+    ).toBe(false);
+  });
+
+  it("usa chat-first como fallback apenas quando o workflow não veio explícito", () => {
+    expect(
+      hasFreeChatDocumentReviewFlow({
+        entryModeEffective: "chat_first",
+      }),
+    ).toBe(true);
   });
 });

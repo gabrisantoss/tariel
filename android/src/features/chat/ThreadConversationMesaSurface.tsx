@@ -23,6 +23,7 @@ import type {
   MobileSurfaceAction,
 } from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
+import { hasFreeChatDocumentReviewFlow } from "./caseLifecycle";
 import { ThreadConversationMesaMessageList } from "./ThreadConversationMesaMessageList";
 import { renderizarReportPackDraftCard } from "./ThreadConversationReportPackDraftCard";
 import { renderizarReviewPackageMesa } from "./ThreadConversationReviewPackageCard";
@@ -34,6 +35,8 @@ interface ThreadConversationMesaSurfaceProps {
   reportPackDraft?: MobileReportPackDraft | null;
   reviewPackage?: MobileReviewPackage | null;
   caseLifecycleStatus?: string;
+  caseWorkflowMode?: string;
+  entryModeEffective?: string;
   activeOwnerRole?: string;
   allowedNextLifecycleStatuses?: string[];
   allowedLifecycleTransitions?: MobileLifecycleTransition[];
@@ -71,15 +74,33 @@ interface ThreadConversationMesaSurfaceProps {
 function buildReviewStage(params: {
   activeOwnerRole?: string;
   caseLifecycleStatus?: string;
+  freeChatDocumentReviewFlow?: boolean;
   hasReviewSummary: boolean;
   messagesCount: number;
 }): { label: string; title: string; description: string } {
   const {
     activeOwnerRole,
     caseLifecycleStatus,
+    freeChatDocumentReviewFlow = false,
     hasReviewSummary,
     messagesCount,
   } = params;
+
+  if (freeChatDocumentReviewFlow) {
+    return hasReviewSummary
+      ? {
+          label: "Revisão do relatório",
+          title: "Relatório pronto para revisar",
+          description:
+            "Corrija o relatório gerado no chat e baixe uma nova versão quando necessário.",
+        }
+      : {
+          label: "Revisão do relatório",
+          title: "Relatório ainda não gerado",
+          description:
+            "Peça o laudo no chat livre. Quando o PDF ficar pronto, ele aparece aqui para revisão e download.",
+        };
+  }
 
   if (caseLifecycleStatus === "aprovado" || caseLifecycleStatus === "emitido") {
     return {
@@ -136,6 +157,8 @@ export function ThreadConversationMesaSurface({
   reportPackDraft,
   reviewPackage,
   caseLifecycleStatus,
+  caseWorkflowMode,
+  entryModeEffective,
   activeOwnerRole,
   allowedNextLifecycleStatuses,
   allowedLifecycleTransitions,
@@ -165,6 +188,10 @@ export function ThreadConversationMesaSurface({
 }: ThreadConversationMesaSurfaceProps) {
   const { t } = useAppTranslation();
   const visibleAccentColor = resolveAccentColorForMode(accentColor, darkMode);
+  const freeChatDocumentReviewFlow = hasFreeChatDocumentReviewFlow({
+    entryModeEffective,
+    workflowMode: caseWorkflowMode,
+  });
   const reviewSummary =
     renderizarReviewPackageMesa(
       reviewPackage,
@@ -186,6 +213,7 @@ export function ThreadConversationMesaSurface({
   const reviewStage = buildReviewStage({
     activeOwnerRole,
     caseLifecycleStatus,
+    freeChatDocumentReviewFlow,
     hasReviewSummary: Boolean(reviewSummary),
     messagesCount: mensagensMesa.length,
   });
@@ -304,6 +332,7 @@ export function ThreadConversationMesaSurface({
         conversaPermiteEdicao={conversaPermiteEdicao}
         dynamicMessageBubbleStyle={dynamicMessageBubbleStyle}
         dynamicMessageTextStyle={dynamicMessageTextStyle}
+        freeChatDocumentReviewFlow={freeChatDocumentReviewFlow}
         hasReviewSummary={Boolean(reviewSummary)}
         keyboardVisible={keyboardVisible}
         mensagensMesa={mensagensMesa}

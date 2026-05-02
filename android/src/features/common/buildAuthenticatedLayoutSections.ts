@@ -9,6 +9,7 @@ import type { ThreadComposerPanelProps } from "../chat/ThreadComposerPanel";
 import type { ThreadConversationPaneProps } from "../chat/ThreadConversationPane";
 import {
   hasCaseSurfaceAction,
+  hasFreeChatDocumentReviewFlow,
   hasFormalCaseWorkflow,
 } from "../chat/caseLifecycle";
 import { guidedInspectionEmptyStateImageSource } from "../chat/guidedInspectionEmptyStateAssets";
@@ -218,8 +219,16 @@ export function buildThreadConversationPaneProps(
 export function buildThreadHeaderControlsProps(
   input: AuthenticatedLayoutInput,
 ): ThreadHeaderControlsPanelProps {
+  const freeChatDocumentReviewFlow = hasFreeChatDocumentReviewFlow({
+    conversation: input.conversaAtiva,
+    entryModeEffective:
+      input.conversaAtiva?.entryModeEffective ||
+      input.conversaAtiva?.laudoCard?.entry_mode_effective,
+    workflowMode: input.conversaAtiva?.caseWorkflowMode,
+  });
   const finalizacaoDisponivel = Boolean(
     input.conversaAtiva?.laudoId &&
+    !freeChatDocumentReviewFlow &&
     hasFormalCaseWorkflow({
       allowedSurfaceActions: input.conversaAtiva?.allowedSurfaceActions,
       conversation: input.conversaAtiva,

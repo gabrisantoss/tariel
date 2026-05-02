@@ -923,6 +923,32 @@ describe("ThreadConversationPane", () => {
     expect(getByText("PDF operacional")).toBeTruthy();
   });
 
+  it("usa linguagem de revisão do relatório para chat livre", () => {
+    const { getByText, getByTestId } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        caseWorkflowMode="analise_livre"
+        entryModeEffective="chat_first"
+        reportPackDraft={{
+          modeled: true,
+          template_label: "Tema livre",
+          pre_laudo_document: {
+            template_label: "Tema livre",
+          },
+        }}
+      />,
+    );
+
+    expect(getByTestId("mesa-report-pack-card")).toBeTruthy();
+    expect(getByText("Revisão do relatório")).toBeTruthy();
+    expect(getByText("Relatório pronto para revisar")).toBeTruthy();
+    expect(
+      getByText(
+        "Corrija o relatório gerado no chat e baixe uma nova versão quando necessário.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("não injeta CTA da Mesa do pre-laudo dentro do chat", () => {
     const { getByText, queryByTestId, queryByText } = render(
       <ThreadConversationPane

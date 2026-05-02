@@ -388,3 +388,38 @@ export function hasFormalCaseWorkflow(params: {
     }).length > 0
   );
 }
+
+export function hasFreeChatDocumentReviewFlow(params: {
+  conversation?: ChatState | null;
+  card?: Partial<MobileLaudoCard> | null;
+  workflowMode?: MobileCaseWorkflowMode | string | null;
+  entryModeEffective?: MobileInspectionEntryModeEffective | string | null;
+}): boolean {
+  const workflowMode =
+    normalizarCaseWorkflowMode(params.workflowMode) ||
+    normalizarCaseWorkflowMode(params.conversation?.caseWorkflowMode) ||
+    normalizarCaseWorkflowMode(
+      params.conversation?.laudoCard?.case_workflow_mode,
+    ) ||
+    normalizarCaseWorkflowMode(params.card?.case_workflow_mode);
+
+  if (workflowMode === "analise_livre") {
+    return true;
+  }
+
+  if (workflowMode === "laudo_guiado" || workflowMode === "laudo_com_mesa") {
+    return false;
+  }
+
+  const entryModeEffective = String(
+    params.entryModeEffective ||
+      params.conversation?.entryModeEffective ||
+      params.conversation?.laudoCard?.entry_mode_effective ||
+      params.card?.entry_mode_effective ||
+      "",
+  )
+    .trim()
+    .toLowerCase();
+
+  return entryModeEffective === "chat_first";
+}

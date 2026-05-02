@@ -143,9 +143,11 @@ export function ThreadConversationPane({
         anexoAbrindoChave={anexoAbrindoChave}
         carregandoMesa={carregandoMesa}
         caseLifecycleStatus={caseLifecycleStatus}
+        caseWorkflowMode={caseWorkflowMode}
         conversaPermiteEdicao={conversaPermiteEdicao}
         dynamicMessageBubbleStyle={dynamicMessageBubbleStyle}
         dynamicMessageTextStyle={dynamicMessageTextStyle}
+        entryModeEffective={entryModeEffective}
         keyboardVisible={keyboardVisible}
         mesaAcessoPermitido={mesaAcessoPermitido}
         mesaDisponivel={mesaDisponivel}

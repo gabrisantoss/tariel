@@ -93,6 +93,7 @@ type ThreadConversationMesaMessageListProps = {
   conversaPermiteEdicao: boolean;
   dynamicMessageBubbleStyle: StyleProp<ViewStyle>;
   dynamicMessageTextStyle: StyleProp<TextStyle>;
+  freeChatDocumentReviewFlow?: boolean;
   hasReviewSummary: boolean;
   keyboardVisible: boolean;
   mensagensMesa: MobileMesaMessage[];
@@ -113,13 +114,35 @@ type ThreadConversationMesaMessageListProps = {
 function buildReviewEmptyState(params: {
   activeOwnerRole?: string;
   caseLifecycleStatus?: string;
+  freeChatDocumentReviewFlow?: boolean;
   hasReviewSummary: boolean;
 }): {
   description: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   title: string;
 } {
-  const { activeOwnerRole, caseLifecycleStatus, hasReviewSummary } = params;
+  const {
+    activeOwnerRole,
+    caseLifecycleStatus,
+    freeChatDocumentReviewFlow = false,
+    hasReviewSummary,
+  } = params;
+
+  if (freeChatDocumentReviewFlow) {
+    return hasReviewSummary
+      ? {
+          description:
+            "O relatório gerado no chat está acima. Novas correções e versões baixadas ficam concentradas nesta revisão.",
+          icon: "clipboard-text-outline",
+          title: "Sem novas correções",
+        }
+      : {
+          description:
+            "Peça o laudo no chat livre. O relatório gerado aparece aqui para revisão e novo download.",
+          icon: "message-reply-text-outline",
+          title: "Relatório ainda não gerado",
+        };
+  }
 
   if (caseLifecycleStatus === "aprovado" || caseLifecycleStatus === "emitido") {
     return {
@@ -463,6 +486,7 @@ export function ThreadConversationMesaMessageList(
     conversaPermiteEdicao,
     dynamicMessageBubbleStyle,
     dynamicMessageTextStyle,
+    freeChatDocumentReviewFlow,
     hasReviewSummary,
     keyboardVisible,
     mensagensMesa,
@@ -480,6 +504,7 @@ export function ThreadConversationMesaMessageList(
     const emptyState = buildReviewEmptyState({
       activeOwnerRole,
       caseLifecycleStatus,
+      freeChatDocumentReviewFlow,
       hasReviewSummary,
     });
 
