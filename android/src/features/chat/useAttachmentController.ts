@@ -108,8 +108,8 @@ interface UseAttachmentControllerParams {
   montarAnexoDocumentoMesa: (
     asset: import("expo-document-picker").DocumentPickerAsset,
   ) => ComposerAttachment;
-  montarAnexoImagem: (
-    asset: import("expo-image-picker").ImagePickerAsset,
+  montarAnexoImagens: (
+    assets: import("expo-image-picker").ImagePickerAsset[],
     resumo: string,
   ) => ComposerAttachment;
   nomeArquivoSeguro: (nome: string, fallback: string) => string;
@@ -152,7 +152,7 @@ export function useAttachmentController({
   inferirExtensaoAnexo,
   montarAnexoDocumentoLocal,
   montarAnexoDocumentoMesa,
-  montarAnexoImagem,
+  montarAnexoImagens,
   nomeArquivoSeguro,
   onBuildAttachmentKey,
   onShowAlert,
@@ -209,7 +209,7 @@ export function useAttachmentController({
       uploadArquivosAtivo,
       imageQuality,
       arquivosPermitidos,
-      montarAnexoImagem,
+      montarAnexoImagens,
       onSetAnexoMesaRascunho: setAnexoMesaRascunho,
       onSetAnexoRascunho: setAnexoRascunho,
       onSetErroConversa: setErroConversa,
@@ -228,7 +228,7 @@ export function useAttachmentController({
       uploadArquivosAtivo,
       imageQuality,
       cameraPermitida,
-      montarAnexoImagem,
+      montarAnexoImagem: (asset, resumo) => montarAnexoImagens([asset], resumo),
       onSetAnexoMesaRascunho: setAnexoMesaRascunho,
       onSetAnexoRascunho: setAnexoRascunho,
       onSetErroConversa: setErroConversa,

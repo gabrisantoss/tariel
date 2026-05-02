@@ -62,7 +62,7 @@ export interface SupportQueueItem {
   status: string;
   attachmentLabel?: string;
   attachmentUri?: string;
-  attachmentKind?: "image" | "document";
+  attachmentKind?: "image" | "document" | "image_set";
 }
 
 const DEFAULT_PLAN = PLAN_OPTIONS[1] ?? "Pro";

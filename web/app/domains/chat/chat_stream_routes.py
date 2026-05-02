@@ -114,7 +114,7 @@ async def rota_chat(
                 banco=banco,
                 laudo=stream_context.laudo,
                 historico_dict=stream_context.historico_dict,
-                dados_imagem_validos=stream_context.dados_imagem_validos,
+                dados_imagem_validos=stream_context.dados_imagens_validas,
                 texto_documento=stream_context.texto_documento,
                 tipo_template_finalizacao=stream_context.tipo_template_finalizacao or "padrao",
                 headers=stream_context.headers,

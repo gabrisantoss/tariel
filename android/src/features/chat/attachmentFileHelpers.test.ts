@@ -4,6 +4,7 @@ import {
   montarAnexoDocumentoLocal,
   montarAnexoDocumentoMesa,
   montarAnexoImagem,
+  montarAnexoImagens,
   nomeArquivoSeguro,
 } from "./attachmentFileHelpers";
 
@@ -93,5 +94,23 @@ describe("attachmentFileHelpers", () => {
     expect(() =>
       montarAnexoImagem({ uri: "file://img.jpg" } as any, "Resumo"),
     ).toThrow("Não foi possível preparar a imagem selecionada.");
+  });
+
+  it("monta pacote com no maximo 10 imagens selecionadas", () => {
+    const assets = Array.from({ length: 12 }, (_, index) => ({
+      base64: `base64-${index}`,
+      mimeType: "image/jpeg",
+      fileName: `foto-${index}.jpg`,
+      uri: `file://foto-${index}.jpg`,
+    }));
+
+    const anexo = montarAnexoImagens(assets as any, "Fotos prontas");
+
+    expect(anexo).toMatchObject({
+      kind: "image_set",
+      label: "10 fotos selecionadas",
+      resumo: "Fotos prontas",
+    });
+    expect(anexo.kind === "image_set" ? anexo.imagens : []).toHaveLength(10);
   });
 });

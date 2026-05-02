@@ -265,6 +265,7 @@ export async function enviarMensagemChatMobile(
     mensagem: string;
     preferenciasIaMobile?: string;
     dadosImagem?: string;
+    dadosImagens?: string[];
     setor?: string;
     textoDocumento?: string;
     nomeDocumento?: string;
@@ -281,6 +282,9 @@ export async function enviarMensagemChatMobile(
   },
 ): Promise<MobileChatSendResult> {
   const modo = normalizarModoChat(payload.modo);
+  const dadosImagens = Array.isArray(payload.dadosImagens)
+    ? payload.dadosImagens.filter((item) => String(item || "").trim())
+    : [];
   const response = await fetchComObservabilidade(
     "chat_send",
     buildApiUrl("/app/api/chat"),
@@ -292,7 +296,8 @@ export async function enviarMensagemChatMobile(
       body: JSON.stringify({
         mensagem: payload.mensagem,
         preferencias_ia_mobile: payload.preferenciasIaMobile || "",
-        dados_imagem: payload.dadosImagem || "",
+        dados_imagem: dadosImagens.length ? "" : payload.dadosImagem || "",
+        dados_imagens: dadosImagens,
         setor: (payload.setor || "geral").trim() || "geral",
         texto_documento: payload.textoDocumento || "",
         nome_documento: payload.nomeDocumento || "",

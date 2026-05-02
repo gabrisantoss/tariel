@@ -67,6 +67,14 @@ export type BugAttachmentDraft =
       resumo: string;
     }
   | {
+      kind: "image_set";
+      label: string;
+      resumo: string;
+      imagens: Array<{
+        previewUri: string;
+      }>;
+    }
+  | {
       kind: "document";
       nomeDocumento: string;
     }

@@ -122,6 +122,92 @@ describe("sendInspectorMessageFlow", () => {
     expect(carregarListaLaudos).toHaveBeenCalledTimes(1);
   });
 
+  it("envia pacote de fotos selecionadas em um unico envio", async () => {
+    const anexoAtual: ComposerAttachment = {
+      kind: "image_set",
+      label: "2 fotos selecionadas",
+      resumo: "Fotos prontas",
+      imagens: [
+        {
+          kind: "image",
+          dadosImagem: "base64-image-1",
+          fileUri: "file:///tmp/foto-1.jpg",
+          label: "foto-1.jpg",
+          mimeType: "image/jpeg",
+          previewUri: "file:///tmp/foto-1-preview.jpg",
+          resumo: "Fotos prontas",
+        },
+        {
+          kind: "image",
+          dadosImagem: "base64-image-2",
+          fileUri: "file:///tmp/foto-2.jpg",
+          label: "foto-2.jpg",
+          mimeType: "image/jpeg",
+          previewUri: "file:///tmp/foto-2-preview.jpg",
+          resumo: "Fotos prontas",
+        },
+      ],
+    };
+    const onApplyOptimisticMessage = jest.fn();
+
+    await sendInspectorMessageFlow({
+      mensagem: "",
+      anexoAtual,
+      snapshotConversa: {
+        estado: "relatorio_ativo",
+        laudoCard: null,
+        laudoId: 42,
+        mensagens: [],
+        modo: "detalhado",
+        permiteEdicao: true,
+        permiteReabrir: false,
+        statusCard: "aberto",
+      },
+      guidedInspectionDraft: null,
+      aiRequestConfig,
+      sessionAccessToken: "token-123",
+      statusApi: "online",
+      podeEditarConversaNoComposer: () => true,
+      textoFallbackAnexo: () => "2 fotos enviadas",
+      normalizarModoChat: () => "detalhado",
+      inferirSetorConversa: () => "geral",
+      montarHistoricoParaEnvio: () => [],
+      criarMensagemAssistenteServidor: () => null,
+      carregarConversaAtual: jest.fn(),
+      carregarListaLaudos: jest.fn(),
+      erroSugereModoOffline: () => false,
+      criarItemFilaOffline: jest.fn(),
+      onSetMensagem: jest.fn(),
+      onSetAnexoRascunho: jest.fn(),
+      onSetErroConversa: jest.fn(),
+      onSetEnviandoMensagem: jest.fn(),
+      onApplyOptimisticMessage,
+      onApplyAssistantResponse: jest.fn(),
+      onReverterConversa: jest.fn(),
+      onQueueOfflineItem: jest.fn(),
+      onSetStatusOffline: jest.fn(),
+      onRestoreDraft: jest.fn(),
+    });
+
+    expect(onApplyOptimisticMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        anexos: [
+          expect.objectContaining({ label: "foto-1.jpg" }),
+          expect.objectContaining({ label: "foto-2.jpg" }),
+        ],
+        texto: "2 fotos enviadas",
+      }),
+      "detalhado",
+    );
+    expect(enviarMensagemChatMobile).toHaveBeenCalledWith(
+      "token-123",
+      expect.objectContaining({
+        dadosImagem: "base64-image-1",
+        dadosImagens: ["base64-image-1", "base64-image-2"],
+      }),
+    );
+  });
+
   it("nao duplica a mensagem atual dentro do historico enviado para IA", async () => {
     const historicoAnterior: MobileChatMessage[] = [
       {

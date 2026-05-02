@@ -169,12 +169,35 @@ describe("chatApi", () => {
     expect(body.guided_inspection_draft?.evidence_bundle_kind).toBe(
       "case_thread",
     );
+    expect(body.dados_imagens).toEqual([]);
     expect(body.guided_inspection_context).toEqual({
       template_key: "nr35_linha_vida",
       step_id: "contexto_vistoria",
       step_title: "Contexto da vistoria",
       attachment_kind: "image",
     });
+  });
+
+  it("envia ate 10 imagens no payload do chat", async () => {
+    fetchMock.mockResolvedValue(
+      criarResposta(
+        JSON.stringify({
+          laudo_id: 78,
+          texto: "Resposta pronta",
+          modo: "detalhado",
+        }),
+      ),
+    );
+
+    await enviarMensagemChatMobile("token-123", {
+      mensagem: "Registrar fotos",
+      laudoId: 78,
+      dadosImagens: ["img-1", "img-2"],
+    });
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body || "{}"));
+    expect(body.dados_imagem).toBe("");
+    expect(body.dados_imagens).toEqual(["img-1", "img-2"]);
   });
 
   it("envia preferencias de IA em campo interno separado do texto visivel", async () => {

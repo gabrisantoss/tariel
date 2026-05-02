@@ -26,7 +26,10 @@ function rotuloEtapaGuiadaPendente(
     return "";
   }
 
-  if (item.attachment?.kind === "image") {
+  if (
+    item.attachment?.kind === "image" ||
+    item.attachment?.kind === "image_set"
+  ) {
     return `Imagem da etapa ${stepTitle}`;
   }
   if (item.attachment?.kind === "document") {
@@ -138,7 +141,10 @@ export function iconePendenciaOffline(
   if (item.channel === "mesa") {
     return item.attachment ? "paperclip" : "clipboard-text-outline";
   }
-  if (item.attachment?.kind === "image") {
+  if (
+    item.attachment?.kind === "image" ||
+    item.attachment?.kind === "image_set"
+  ) {
     return "image-outline";
   }
   if (item.attachment?.kind === "document") {
@@ -159,6 +165,9 @@ export function legendaPendenciaOffline(item: OfflinePendingMessage): string {
   }
   if (item.attachment?.kind === "image") {
     return "Imagem pronta para reenvio";
+  }
+  if (item.attachment?.kind === "image_set") {
+    return `${item.attachment.imagens.length} fotos prontas para reenvio`;
   }
   if (item.attachment?.kind === "document") {
     return "Documento pronto para reenvio";

@@ -24,7 +24,7 @@ def test_analisar_pedido_relatorio_chat_livre_detecta_variacoes() -> None:
     assert not analisar_pedido_relatorio_chat_livre("preciso analisar o equipamento")
 
 
-def test_api_chat_com_imagem_persiste_foto_no_historico(ambiente_critico) -> None:
+def test_api_chat_com_imagens_persiste_fotos_no_historico(ambiente_critico) -> None:
     client = ambiente_critico["client"]
     SessionLocal = ambiente_critico["SessionLocal"]
     ids = ambiente_critico["ids"]
@@ -52,7 +52,10 @@ def test_api_chat_com_imagem_persiste_foto_no_historico(ambiente_critico) -> Non
                 "mensagem": "Analise esta foto do equipamento.",
                 "historico": [],
                 "laudo_id": laudo_id,
-                "dados_imagem": _imagem_png_data_uri_teste(),
+                "dados_imagens": [
+                    _imagem_png_data_uri_teste(),
+                    _imagem_png_data_uri_teste(),
+                ],
             },
         )
     finally:
@@ -67,23 +70,24 @@ def test_api_chat_com_imagem_persiste_foto_no_historico(ambiente_critico) -> Non
     ]
     assert len(itens_usuario) == 1
     anexos = itens_usuario[0]["anexos"]
-    assert len(anexos) == 1
-    anexo = anexos[0]
-    assert anexo["categoria"] == "imagem"
-    assert anexo["eh_imagem"] is True
-    assert anexo["mime_type"] == "image/png"
-    assert anexo["url"].endswith(f"/app/api/laudo/{laudo_id}/mesa/anexos/{anexo['id']}")
+    assert len(anexos) == 2
+    for anexo in anexos:
+        assert anexo["categoria"] == "imagem"
+        assert anexo["eh_imagem"] is True
+        assert anexo["mime_type"] == "image/png"
+        assert anexo["url"].endswith(f"/app/api/laudo/{laudo_id}/mesa/anexos/{anexo['id']}")
 
-    download = client.get(anexo["url"])
-    assert download.status_code == 200
-    assert download.content == _imagem_png_bytes_teste()
+        download = client.get(anexo["url"])
+        assert download.status_code == 200
+        assert download.content == _imagem_png_bytes_teste()
 
     with SessionLocal() as banco:
-        anexo_db = banco.get(AnexoMesa, int(anexo["id"]))
-        assert anexo_db is not None
-        assert anexo_db.laudo_id == laudo_id
-        assert anexo_db.mensagem_id == int(itens_usuario[0]["id"])
-        assert Path(str(anexo_db.caminho_arquivo)).is_file()
+        for anexo in anexos:
+            anexo_db = banco.get(AnexoMesa, int(anexo["id"]))
+            assert anexo_db is not None
+            assert anexo_db.laudo_id == laudo_id
+            assert anexo_db.mensagem_id == int(itens_usuario[0]["id"])
+            assert Path(str(anexo_db.caminho_arquivo)).is_file()
 
 
 def test_api_chat_pedido_natural_de_relatorio_gera_pdf_com_fotos(ambiente_critico) -> None:

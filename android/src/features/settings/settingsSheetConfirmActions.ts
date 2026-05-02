@@ -26,6 +26,20 @@ type ComposerAttachment =
       mimeType: string;
     }
   | {
+      kind: "image_set";
+      label: string;
+      resumo: string;
+      imagens: Array<{
+        kind: "image";
+        label: string;
+        resumo: string;
+        dadosImagem: string;
+        previewUri: string;
+        fileUri: string;
+        mimeType: string;
+      }>;
+    }
+  | {
       kind: "document";
       label: string;
       nomeDocumento: string;
@@ -47,7 +61,7 @@ interface SupportQueueItem {
   status: string;
   attachmentLabel?: string;
   attachmentUri?: string;
-  attachmentKind?: "image" | "document";
+  attachmentKind?: "image" | "document" | "image_set";
 }
 
 interface SessionSnapshot {
@@ -689,14 +703,17 @@ export async function handleSettingsSheetConfirmDelegated({
         return "return";
       }
       const attachmentLabel = support.bugAttachmentDraft
-        ? support.bugAttachmentDraft.kind === "image"
+        ? support.bugAttachmentDraft.kind === "image" ||
+          support.bugAttachmentDraft.kind === "image_set"
           ? support.bugAttachmentDraft.label
           : support.bugAttachmentDraft.nomeDocumento
         : "";
       const attachmentUri = support.bugAttachmentDraft
         ? support.bugAttachmentDraft.kind === "image"
           ? support.bugAttachmentDraft.previewUri
-          : support.bugAttachmentDraft.fileUri
+          : support.bugAttachmentDraft.kind === "image_set"
+            ? support.bugAttachmentDraft.imagens[0]?.previewUri || ""
+            : support.bugAttachmentDraft.fileUri
         : "";
       const item: SupportQueueItem = {
         id: `support-${Date.now()}`,

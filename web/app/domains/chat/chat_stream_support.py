@@ -73,6 +73,7 @@ from app.domains.chat.report_pack_helpers import (
 from app.domains.chat.schemas import (
     GuidedInspectionEvidenceRefPayload,
     GuidedInspectionMesaHandoffPayload,
+    LIMITE_IMAGENS_CHAT,
 )
 from app.domains.chat.session_helpers import aplicar_contexto_laudo_selecionado
 from app.domains.chat.template_governance import (
@@ -110,6 +111,7 @@ class ChatPreparedRoute:
     mensagem_limpa: str
     preferencias_ia_mobile: str
     dados_imagem_validos: Any
+    dados_imagens_validas: list[str]
     texto_documento: str
     nome_documento: str
     laudo: Laudo
@@ -126,6 +128,7 @@ class ChatPersistedMessageContext:
     headers: dict[str, str]
     mensagem_para_ia: str
     dados_imagem_validos: Any
+    dados_imagens_validas: list[str]
     texto_documento: str
     nome_documento: str
     eh_whisper_para_mesa: bool
@@ -149,6 +152,7 @@ class FreeAssistantChatContext:
     historico_dict: list[dict[str, Any]]
     headers: dict[str, str]
     dados_imagem_validos: Any
+    dados_imagens_validas: list[str]
     texto_documento: str
     nome_documento: str
     empresa_id_atual: int
@@ -170,45 +174,67 @@ def _extrair_imagem_chat_data_uri(dados_imagem: str) -> tuple[str, bytes]:
     return mime_type, conteudo
 
 
-def _persistir_imagem_chat_como_anexo(
+def _validar_imagens_chat_payload(dados) -> list[str]:
+    imagens_brutas = list(getattr(dados, "dados_imagens", None) or [])
+    if not imagens_brutas and str(getattr(dados, "dados_imagem", "") or "").strip():
+        imagens_brutas = [str(getattr(dados, "dados_imagem", "") or "")]
+    if len(imagens_brutas) > LIMITE_IMAGENS_CHAT:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Selecione no máximo {LIMITE_IMAGENS_CHAT} fotos por envio.",
+        )
+
+    imagens_validas: list[str] = []
+    for dados_imagem in imagens_brutas:
+        imagem_valida = validar_imagem_base64(str(dados_imagem or ""))
+        if imagem_valida:
+            imagens_validas.append(imagem_valida)
+    return imagens_validas
+
+
+def _persistir_imagens_chat_como_anexos(
     *,
     banco: Session,
     usuario: Usuario,
     laudo: Laudo,
     mensagem: MensagemLaudo,
-    dados_imagem: str,
-) -> str | None:
-    if not str(dados_imagem or "").strip():
-        return None
+    dados_imagens: list[str],
+) -> list[str]:
+    caminhos_persistidos: list[str] = []
+    if not dados_imagens:
+        return caminhos_persistidos
 
-    mime_type, conteudo = _extrair_imagem_chat_data_uri(dados_imagem)
-    dados_arquivo = salvar_arquivo_anexo_mesa(
-        empresa_id=int(usuario.empresa_id),
-        laudo_id=int(laudo.id),
-        nome_original=f"imagem_chat_{int(mensagem.id)}",
-        mime_type=mime_type,
-        conteudo=conteudo,
-    )
-    caminho_arquivo = str(dados_arquivo["caminho_arquivo"])
     try:
-        anexo = AnexoMesa(
-            laudo_id=int(laudo.id),
-            mensagem_id=int(mensagem.id),
-            enviado_por_id=int(usuario.id),
-            nome_original=dados_arquivo["nome_original"],
-            nome_arquivo=dados_arquivo["nome_arquivo"],
-            mime_type=dados_arquivo["mime_type"],
-            categoria=dados_arquivo["categoria"],
-            tamanho_bytes=dados_arquivo["tamanho_bytes"],
-            caminho_arquivo=caminho_arquivo,
-        )
-        banco.add(anexo)
-        mensagem.anexos_mesa.append(anexo)
+        for indice, dados_imagem in enumerate(dados_imagens, start=1):
+            mime_type, conteudo = _extrair_imagem_chat_data_uri(dados_imagem)
+            dados_arquivo = salvar_arquivo_anexo_mesa(
+                empresa_id=int(usuario.empresa_id),
+                laudo_id=int(laudo.id),
+                nome_original=f"imagem_chat_{int(mensagem.id)}_{indice}",
+                mime_type=mime_type,
+                conteudo=conteudo,
+            )
+            caminho_arquivo = str(dados_arquivo["caminho_arquivo"])
+            caminhos_persistidos.append(caminho_arquivo)
+            anexo = AnexoMesa(
+                laudo_id=int(laudo.id),
+                mensagem_id=int(mensagem.id),
+                enviado_por_id=int(usuario.id),
+                nome_original=dados_arquivo["nome_original"],
+                nome_arquivo=dados_arquivo["nome_arquivo"],
+                mime_type=dados_arquivo["mime_type"],
+                categoria=dados_arquivo["categoria"],
+                tamanho_bytes=dados_arquivo["tamanho_bytes"],
+                caminho_arquivo=caminho_arquivo,
+            )
+            banco.add(anexo)
+            mensagem.anexos_mesa.append(anexo)
         banco.flush()
     except Exception:
-        remover_arquivo_anexo_mesa(caminho_arquivo)
+        for caminho in caminhos_persistidos:
+            remover_arquivo_anexo_mesa(caminho)
         raise
-    return caminho_arquivo
+    return caminhos_persistidos
 
 
 def _resolver_review_mode_guided_flow(
@@ -254,7 +280,8 @@ def prepare_free_assistant_chat_route(
         getattr(dados, "preferencias_ia_mobile", ""),
         preferencias_embutidas,
     )
-    dados_imagem_validos = validar_imagem_base64(dados.dados_imagem)
+    dados_imagens_validas = _validar_imagens_chat_payload(dados)
+    dados_imagem_validos = dados_imagens_validas[0] if dados_imagens_validas else ""
     texto_documento = (dados.texto_documento or "").strip()
     nome_documento = nome_documento_seguro(dados.nome_documento)
 
@@ -288,6 +315,7 @@ def prepare_free_assistant_chat_route(
             "Connection": "keep-alive",
         },
         dados_imagem_validos=dados_imagem_validos,
+        dados_imagens_validas=dados_imagens_validas,
         texto_documento=texto_documento,
         nome_documento=nome_documento,
         empresa_id_atual=int(usuario.empresa_id),
@@ -313,7 +341,8 @@ def prepare_chat_stream_route(
         preferencias_embutidas,
     )
     comando_rapido, argumento_comando_rapido = analisar_comando_rapido_chat(mensagem_limpa)
-    dados_imagem_validos = validar_imagem_base64(dados.dados_imagem)
+    dados_imagens_validas = _validar_imagens_chat_payload(dados)
+    dados_imagem_validos = dados_imagens_validas[0] if dados_imagens_validas else ""
     texto_documento = (dados.texto_documento or "").strip()
     nome_documento = nome_documento_seguro(dados.nome_documento)
 
@@ -522,6 +551,7 @@ def prepare_chat_stream_route(
         mensagem_limpa=mensagem_limpa,
         preferencias_ia_mobile=preferencias_ia_mobile,
         dados_imagem_validos=dados_imagem_validos,
+        dados_imagens_validas=dados_imagens_validas,
         texto_documento=texto_documento,
         nome_documento=nome_documento,
         laudo=laudo,
@@ -600,26 +630,31 @@ def persist_chat_user_message(
         prepared.laudo.primeira_mensagem = obter_preview_primeira_mensagem(
             prepared.mensagem_limpa,
             nome_documento=prepared.nome_documento,
-            tem_imagem=bool(prepared.dados_imagem_validos),
+            tem_imagem=bool(prepared.dados_imagens_validas),
         )
 
     contexto_correcao_visual_pendente = ""
     contexto_correcao_laudo_chat = ""
     if report_context_included and tipo_msg_usuario == TipoMensagem.USER.value and not eh_comando_finalizar:
-        aprendizado_visual_pendente = registrar_aprendizado_visual_automatico_chat(
-            banco,
-            empresa_id=usuario.empresa_id,
-            laudo_id=prepared.laudo.id,
-            criado_por_id=usuario.id,
-            setor_industrial=str(prepared.laudo.setor_industrial or "geral"),
-            mensagem_id=int(mensagem_usuario.id),
-            mensagem_chat=prepared.mensagem_limpa,
-            dados_imagem=prepared.dados_imagem_validos,
-            referencia_mensagem_id=int(dados.referencia_mensagem_id or 0) or None,
-        )
-        contexto_correcao_visual_pendente = construir_contexto_correcao_visual_pendente_para_ia(
-            aprendizado_visual_pendente
-        )
+        contextos_visuais: list[str] = []
+        for dados_imagem in prepared.dados_imagens_validas or [""]:
+            aprendizado_visual_pendente = registrar_aprendizado_visual_automatico_chat(
+                banco,
+                empresa_id=usuario.empresa_id,
+                laudo_id=prepared.laudo.id,
+                criado_por_id=usuario.id,
+                setor_industrial=str(prepared.laudo.setor_industrial or "geral"),
+                mensagem_id=int(mensagem_usuario.id),
+                mensagem_chat=prepared.mensagem_limpa,
+                dados_imagem=dados_imagem,
+                referencia_mensagem_id=int(dados.referencia_mensagem_id or 0) or None,
+            )
+            contexto_visual = construir_contexto_correcao_visual_pendente_para_ia(
+                aprendizado_visual_pendente
+            )
+            if contexto_visual:
+                contextos_visuais.append(contexto_visual)
+        contexto_correcao_visual_pendente = "\n\n".join(contextos_visuais)
         correcao_laudo_chat = registrar_correcao_estruturada_chat(
             laudo=prepared.laudo,
             usuario=usuario,
@@ -678,12 +713,12 @@ def persist_chat_user_message(
     ):
         prepared.laudo.guided_inspection_draft_json["mesa_handoff"] = None
 
-    caminho_imagem_chat_persistida = _persistir_imagem_chat_como_anexo(
+    caminhos_imagens_chat_persistidas = _persistir_imagens_chat_como_anexos(
         banco=banco,
         usuario=usuario,
         laudo=prepared.laudo,
         mensagem=mensagem_usuario,
-        dados_imagem=prepared.dados_imagem_validos,
+        dados_imagens=prepared.dados_imagens_validas,
     )
     try:
         commit_ou_rollback_operacional(
@@ -692,7 +727,8 @@ def persist_chat_user_message(
             mensagem_erro="Falha ao confirmar mensagem inicial do stream de chat.",
         )
     except Exception:
-        remover_arquivo_anexo_mesa(caminho_imagem_chat_persistida)
+        for caminho in caminhos_imagens_chat_persistidas:
+            remover_arquivo_anexo_mesa(caminho)
         raise
     aplicar_contexto_laudo_selecionado(request, banco, prepared.laudo, usuario)
 
@@ -760,7 +796,7 @@ def persist_chat_user_message(
         else:
             mensagem_base_para_ia = contexto_correcao_laudo_chat
     contexto_visual_chat = construir_contexto_analise_visual_chat_para_ia(
-        tem_imagem=bool(prepared.dados_imagem_validos)
+        tem_imagem=bool(prepared.dados_imagens_validas)
     )
     if contexto_visual_chat:
         if mensagem_base_para_ia:
@@ -779,6 +815,7 @@ def persist_chat_user_message(
         headers=headers,
         mensagem_para_ia=mensagem_para_ia,
         dados_imagem_validos=prepared.dados_imagem_validos,
+        dados_imagens_validas=prepared.dados_imagens_validas,
         texto_documento=prepared.texto_documento,
         nome_documento=prepared.nome_documento,
         eh_whisper_para_mesa=eh_whisper_para_mesa,

@@ -163,13 +163,17 @@ export function useOfflineQueueController<
       const clientMessageId = item.clientMessageId || `mesa-offline:${item.id}`;
 
       if (item.attachment) {
+        const anexoUpload =
+          item.attachment.kind === "image_set"
+            ? item.attachment.imagens[0]
+            : item.attachment;
         await enviarAnexoMesaMobile(accessToken, item.laudoId, {
-          uri: item.attachment.fileUri,
+          uri: anexoUpload?.fileUri || "",
           nome:
-            item.attachment.kind === "document"
-              ? item.attachment.nomeDocumento
-              : item.attachment.label,
-          mimeType: item.attachment.mimeType,
+            anexoUpload?.kind === "document"
+              ? anexoUpload.nomeDocumento
+              : anexoUpload?.label || "anexo",
+          mimeType: anexoUpload?.mimeType || "application/octet-stream",
           texto: item.text,
           referenciaMensagemId: item.referenceMessageId,
           clientMessageId,
@@ -188,11 +192,18 @@ export function useOfflineQueueController<
 
     const laudoIdAtual = item.laudoId ?? laudoSequencial;
     let dadosImagem = "";
+    let dadosImagens: string[] = [];
     let textoDocumento = "";
     let nomeDocumento = "";
 
     if (item.attachment?.kind === "image") {
       dadosImagem = item.attachment.dadosImagem;
+      dadosImagens = [item.attachment.dadosImagem];
+    } else if (item.attachment?.kind === "image_set") {
+      dadosImagens = item.attachment.imagens.map(
+        (imagem) => imagem.dadosImagem,
+      );
+      dadosImagem = dadosImagens[0] || "";
     } else if (item.attachment?.kind === "document") {
       if (item.attachment.textoDocumento) {
         textoDocumento = item.attachment.textoDocumento;
@@ -213,7 +224,7 @@ export function useOfflineQueueController<
       item.guidedInspectionDraft,
     );
     const attachmentKind =
-      item.attachment?.kind === "image"
+      item.attachment?.kind === "image" || item.attachment?.kind === "image_set"
         ? "image"
         : item.attachment?.kind === "document"
           ? "document"
@@ -222,6 +233,7 @@ export function useOfflineQueueController<
       mensagem: item.text,
       preferenciasIaMobile: item.aiMessagePrefix || "",
       dadosImagem,
+      dadosImagens,
       setor:
         conversaAtual?.laudoId && conversaAtual.laudoId === laudoIdAtual
           ? current.inferirSetorConversa(conversaAtual)

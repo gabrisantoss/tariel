@@ -37,7 +37,7 @@ function criarInput() {
       inferirExtensaoAnexo: jest.fn().mockReturnValue(".pdf"),
       montarAnexoDocumentoLocal: jest.fn(),
       montarAnexoDocumentoMesa: jest.fn(),
-      montarAnexoImagem: jest.fn(),
+      montarAnexoImagens: jest.fn(),
       nomeArquivoSeguro: jest.fn().mockReturnValue("arquivo"),
       onBuildAttachmentKey: jest.fn().mockReturnValue("anexo-1"),
       onShowAlert: jest.fn(),

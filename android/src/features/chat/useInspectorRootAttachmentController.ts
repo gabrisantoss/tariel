@@ -27,7 +27,7 @@ interface UseInspectorRootAttachmentControllerInput {
     | "inferirExtensaoAnexo"
     | "montarAnexoDocumentoLocal"
     | "montarAnexoDocumentoMesa"
-    | "montarAnexoImagem"
+    | "montarAnexoImagens"
     | "nomeArquivoSeguro"
     | "onBuildAttachmentKey"
     | "onShowAlert"
@@ -68,7 +68,7 @@ export function useInspectorRootAttachmentController({
     inferirExtensaoAnexo: builderState.inferirExtensaoAnexo,
     montarAnexoDocumentoLocal: builderState.montarAnexoDocumentoLocal,
     montarAnexoDocumentoMesa: builderState.montarAnexoDocumentoMesa,
-    montarAnexoImagem: builderState.montarAnexoImagem,
+    montarAnexoImagens: builderState.montarAnexoImagens,
     nomeArquivoSeguro: builderState.nomeArquivoSeguro,
     onBuildAttachmentKey: builderState.onBuildAttachmentKey,
     onShowAlert: builderState.onShowAlert,

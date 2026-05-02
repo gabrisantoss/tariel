@@ -5,7 +5,7 @@ import {
   inferirExtensaoAnexo,
   montarAnexoDocumentoLocal,
   montarAnexoDocumentoMesa,
-  montarAnexoImagem,
+  montarAnexoImagens,
   nomeArquivoSeguro,
 } from "./chat/attachmentFileHelpers";
 import {
@@ -228,7 +228,7 @@ export function useInspectorRootConversationControllers(
       inferirExtensaoAnexo,
       montarAnexoDocumentoLocal,
       montarAnexoDocumentoMesa,
-      montarAnexoImagem,
+      montarAnexoImagens,
       nomeArquivoSeguro,
       onBuildAttachmentKey: chaveAnexo,
       onShowAlert: Alert.alert,

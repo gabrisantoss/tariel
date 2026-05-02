@@ -3,6 +3,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Alert } from "react-native";
 
 import { uploadDocumentoChatMobile } from "../../config/api";
+import { LIMITE_FOTOS_SELECAO_CHAT } from "./attachmentFileHelpers";
 import type { ActiveThread, ComposerAttachment } from "./types";
 
 interface AttachmentDraftBaseParams {
@@ -18,8 +19,8 @@ interface AttachmentDraftBaseParams {
 
 interface SelectImageAttachmentDraftFlowParams extends AttachmentDraftBaseParams {
   arquivosPermitidos: boolean;
-  montarAnexoImagem: (
-    asset: ImagePicker.ImagePickerAsset,
+  montarAnexoImagens: (
+    assets: ImagePicker.ImagePickerAsset[],
     resumo: string,
   ) => ComposerAttachment;
 }
@@ -67,7 +68,7 @@ export async function selecionarImagemRascunhoFlow({
   uploadArquivosAtivo,
   imageQuality,
   arquivosPermitidos,
-  montarAnexoImagem,
+  montarAnexoImagens,
   onSetAnexoMesaRascunho,
   onSetAnexoRascunho,
   onSetErroConversa,
@@ -93,6 +94,8 @@ export async function selecionarImagemRascunhoFlow({
     const resultado = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: false,
+      allowsMultipleSelection: abaAtiva !== "mesa",
+      selectionLimit: abaAtiva === "mesa" ? 1 : LIMITE_FOTOS_SELECAO_CHAT,
       base64: true,
       quality: imageQuality,
     });
@@ -101,9 +104,16 @@ export async function selecionarImagemRascunhoFlow({
       return;
     }
 
-    const asset = resultado.assets[0];
-    const anexo = montarAnexoImagem(
-      asset,
+    const assets = resultado.assets.slice(0, LIMITE_FOTOS_SELECAO_CHAT);
+    if (resultado.assets.length > LIMITE_FOTOS_SELECAO_CHAT) {
+      Alert.alert(
+        "Galeria",
+        `Você pode anexar no máximo ${LIMITE_FOTOS_SELECAO_CHAT} fotos por envio. As primeiras ${LIMITE_FOTOS_SELECAO_CHAT} foram mantidas.`,
+      );
+    }
+
+    const anexo = montarAnexoImagens(
+      abaAtiva === "mesa" ? assets.slice(0, 1) : assets,
       abaAtiva === "mesa"
         ? "Imagem pronta para seguir direto para a mesa avaliadora."
         : "Imagem pronta para seguir com a mensagem do inspetor.",

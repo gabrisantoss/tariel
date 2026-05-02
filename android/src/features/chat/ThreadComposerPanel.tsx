@@ -29,6 +29,14 @@ type ComposerAttachmentDraft =
       previewUri: string;
     }
   | {
+      kind: "image_set";
+      label: string;
+      resumo: string;
+      imagens: Array<{
+        previewUri: string;
+      }>;
+    }
+  | {
       kind: "document";
       label: string;
       resumo: string;
@@ -109,9 +117,14 @@ function AttachmentDraftCard({
       testID={`${baseTestId}-card`}
     >
       <View style={styles.attachmentDraftHeader}>
-        {attachment.kind === "image" ? (
+        {attachment.kind !== "document" ? (
           <Image
-            source={{ uri: attachment.previewUri }}
+            source={{
+              uri:
+                attachment.kind === "image"
+                  ? attachment.previewUri
+                  : attachment.imagens[0]?.previewUri || "",
+            }}
             style={styles.attachmentDraftPreview}
             testID={`${baseTestId}-kind-image`}
           />

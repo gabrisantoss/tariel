@@ -34,6 +34,14 @@ type BugAttachmentDraft =
       resumo: string;
     }
   | {
+      kind: "image_set";
+      label: string;
+      resumo: string;
+      imagens: Array<{
+        previewUri: string;
+      }>;
+    }
+  | {
       kind: "document";
       nomeDocumento: string;
     }
@@ -230,10 +238,16 @@ export function SettingsBugSheetContent({
       </View>
       <View style={styles.settingsInfoCard}>
         <Text style={styles.settingsInfoTitle}>Anexo de screenshot</Text>
-        {bugAttachmentDraft?.kind === "image" ? (
+        {bugAttachmentDraft?.kind === "image" ||
+        bugAttachmentDraft?.kind === "image_set" ? (
           <View style={styles.securityProviderMain}>
             <Image
-              source={{ uri: bugAttachmentDraft.previewUri }}
+              source={{
+                uri:
+                  bugAttachmentDraft.kind === "image"
+                    ? bugAttachmentDraft.previewUri
+                    : bugAttachmentDraft.imagens[0]?.previewUri || "",
+              }}
               style={styles.settingsInlineHeroMark}
             />
             <View style={styles.securityProviderCopy}>

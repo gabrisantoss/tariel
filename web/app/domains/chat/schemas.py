@@ -16,6 +16,7 @@ from app.domains.chat.normalization import normalizar_setor
 LIMITE_MSG_CHARS = 8_000
 LIMITE_HISTORICO = 20
 LIMITE_IMG_BASE64 = 14_500_000
+LIMITE_IMAGENS_CHAT = 10
 LIMITE_DOC_CHARS = 40_000
 LIMITE_FEEDBACK = 500
 LIMITE_NOME_DOCUMENTO = 120
@@ -61,6 +62,7 @@ class DadosChat(BaseModel):
         max_length=LIMITE_PREFERENCIAS_IA_MOBILE,
     )
     dados_imagem: str = Field(default="", max_length=LIMITE_IMG_BASE64)
+    dados_imagens: list[str] = Field(default_factory=list, max_length=LIMITE_IMAGENS_CHAT)
     setor: str = Field(default="geral", max_length=50)
     historico: list[MensagemHistorico] = Field(default_factory=list, max_length=LIMITE_HISTORICO)
     modo: Literal["curto", "detalhado", "deep_research"] = Field(default="detalhado")

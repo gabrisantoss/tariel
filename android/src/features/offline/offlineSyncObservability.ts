@@ -95,7 +95,10 @@ interface BuildOfflineQueueObservabilityParams {
 function resolveItemKind(
   item: OfflinePendingMessage,
 ): AndroidOfflineSyncItemKindV1 {
-  if (item.attachment?.kind === "image") {
+  if (
+    item.attachment?.kind === "image" ||
+    item.attachment?.kind === "image_set"
+  ) {
     return "image";
   }
   if (item.attachment?.kind === "document") {

@@ -107,6 +107,31 @@ export function normalizarComposerAttachment(
     };
   }
 
+  if (registro.kind === "image_set") {
+    const imagens = Array.isArray(registro.imagens)
+      ? registro.imagens
+          .map((item) => normalizarComposerAttachment(item))
+          .filter(
+            (item): item is Extract<ComposerAttachment, { kind: "image" }> =>
+              item?.kind === "image",
+          )
+      : [];
+    const label =
+      typeof registro.label === "string"
+        ? registro.label
+        : `${imagens.length} fotos selecionadas`;
+    const resumo = typeof registro.resumo === "string" ? registro.resumo : "";
+    if (!imagens.length) {
+      return null;
+    }
+    return {
+      kind: "image_set",
+      label,
+      resumo,
+      imagens,
+    };
+  }
+
   if (registro.kind === "document") {
     const label = typeof registro.label === "string" ? registro.label : "";
     const resumo = typeof registro.resumo === "string" ? registro.resumo : "";
@@ -147,7 +172,13 @@ export function duplicarComposerAttachment(
   if (!anexo) {
     return null;
   }
-  return anexo.kind === "image" ? { ...anexo } : { ...anexo };
+  if (anexo.kind === "image_set") {
+    return {
+      ...anexo,
+      imagens: anexo.imagens.map((imagem) => ({ ...imagem })),
+    };
+  }
+  return { ...anexo };
 }
 
 export function textoFallbackAnexo(anexo: ComposerAttachment | null): string {
@@ -156,6 +187,9 @@ export function textoFallbackAnexo(anexo: ComposerAttachment | null): string {
   }
   if (anexo.kind === "image") {
     return "Imagem enviada";
+  }
+  if (anexo.kind === "image_set") {
+    return `${anexo.imagens.length} fotos enviadas`;
   }
   return `Documento: ${anexo.nomeDocumento}`;
 }

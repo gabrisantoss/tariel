@@ -3,7 +3,9 @@ import * as ImagePicker from "expo-image-picker";
 
 import type { MobileAttachment } from "../../types/mobile";
 import { nomeExibicaoAnexo } from "./attachmentUtils";
-import type { ComposerAttachment } from "./types";
+import type { ComposerAttachment, ComposerImageAttachment } from "./types";
+
+export const LIMITE_FOTOS_SELECAO_CHAT = 10;
 
 export function nomeArquivoSeguro(nome: string, fallback: string): string {
   const base = String(nome || "").trim();
@@ -71,7 +73,7 @@ export function chaveAnexo(anexo: MobileAttachment, fallback: string): string {
 export function montarAnexoImagem(
   asset: ImagePicker.ImagePickerAsset,
   resumo: string,
-): ComposerAttachment {
+): ComposerImageAttachment {
   if (!asset.base64) {
     throw new Error("Não foi possível preparar a imagem selecionada.");
   }
@@ -92,6 +94,30 @@ export function montarAnexoImagem(
     previewUri: asset.uri,
     fileUri: asset.uri,
     mimeType,
+  };
+}
+
+export function montarAnexoImagens(
+  assets: ImagePicker.ImagePickerAsset[],
+  resumo: string,
+): ComposerAttachment {
+  const imagens = assets
+    .slice(0, LIMITE_FOTOS_SELECAO_CHAT)
+    .map((asset) => montarAnexoImagem(asset, resumo));
+
+  if (!imagens.length) {
+    throw new Error("Não foi possível preparar a imagem selecionada.");
+  }
+
+  if (imagens.length <= 1) {
+    return imagens[0];
+  }
+
+  return {
+    kind: "image_set",
+    label: `${imagens.length} fotos selecionadas`,
+    resumo,
+    imagens,
   };
 }
 

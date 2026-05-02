@@ -144,6 +144,31 @@ export function criarClientMessageIdMesa(): string {
   return `mesa:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function resolverAnexoUploadUnico(anexo: ComposerAttachment) {
+  if (anexo.kind === "image_set") {
+    const primeiraImagem = anexo.imagens[0];
+    return primeiraImagem
+      ? {
+          fileUri: primeiraImagem.fileUri,
+          nome: primeiraImagem.label,
+          mimeType: primeiraImagem.mimeType,
+        }
+      : null;
+  }
+  if (anexo.kind === "image") {
+    return {
+      fileUri: anexo.fileUri,
+      nome: anexo.label,
+      mimeType: anexo.mimeType,
+    };
+  }
+  return {
+    fileUri: anexo.fileUri,
+    nome: anexo.nomeDocumento,
+    mimeType: anexo.mimeType,
+  };
+}
+
 function criarAnexoOtimista(
   anexo: ComposerAttachment | null,
 ): MobileAttachment[] | undefined {
@@ -164,6 +189,19 @@ function criarAnexoOtimista(
         local_uri: anexo.fileUri,
       },
     ];
+  }
+
+  if (anexo.kind === "image_set") {
+    return anexo.imagens.map((imagem) => ({
+      label: imagem.label,
+      nome: imagem.label,
+      nome_original: imagem.label,
+      mime_type: imagem.mimeType,
+      categoria: "imagem",
+      eh_imagem: true,
+      local_preview_uri: imagem.previewUri,
+      local_uri: imagem.fileUri,
+    }));
   }
 
   return [
@@ -241,11 +279,16 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
 
   try {
     let dadosImagem = "";
+    let dadosImagens: string[] = [];
     let textoDocumento = "";
     let nomeDocumento = "";
 
     if (anexoAtual?.kind === "image") {
       dadosImagem = anexoAtual.dadosImagem;
+      dadosImagens = [anexoAtual.dadosImagem];
+    } else if (anexoAtual?.kind === "image_set") {
+      dadosImagens = anexoAtual.imagens.map((imagem) => imagem.dadosImagem);
+      dadosImagem = dadosImagens[0] || "";
     } else if (anexoAtual?.kind === "document") {
       if (anexoAtual.textoDocumento) {
         textoDocumento = anexoAtual.textoDocumento;
@@ -262,7 +305,7 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
     }
 
     const attachmentKind =
-      anexoAtual?.kind === "image"
+      anexoAtual?.kind === "image" || anexoAtual?.kind === "image_set"
         ? "image"
         : anexoAtual?.kind === "document"
           ? "document"
@@ -272,6 +315,7 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
       mensagem: texto,
       preferenciasIaMobile: aiRequestConfig.messagePrefix,
       dadosImagem,
+      dadosImagens,
       setor: setorAtivo,
       textoDocumento,
       nomeDocumento,
@@ -293,7 +337,7 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
     const mensagemAssistenteServidor =
       criarMensagemAssistenteServidor(respostaChat);
     onApplyAssistantResponse(respostaChat, mensagemAssistenteServidor);
-    if (anexoAtual?.kind !== "image") {
+    if (anexoAtual?.kind !== "image" && anexoAtual?.kind !== "image_set") {
       const laudoIdParaRecarregar =
         respostaChat.laudoId ?? snapshotConversa?.laudoId ?? null;
       if (laudoIdParaRecarregar && carregarConversaPorLaudoId) {
@@ -417,14 +461,14 @@ export async function sendMesaMessageFlow<TOfflineItem>({
   onSetMensagensMesa((estadoAtual) => [...estadoAtual, mensagemOtimista]);
 
   try {
+    const anexoUpload = anexoAtual
+      ? resolverAnexoUploadUnico(anexoAtual)
+      : null;
     const resposta = anexoAtual
       ? await enviarAnexoMesaMobile(sessionAccessToken, conversa.laudoId, {
-          uri: anexoAtual.fileUri,
-          nome:
-            anexoAtual.kind === "document"
-              ? anexoAtual.nomeDocumento
-              : anexoAtual.label,
-          mimeType: anexoAtual.mimeType,
+          uri: anexoUpload?.fileUri || "",
+          nome: anexoUpload?.nome || "anexo",
+          mimeType: anexoUpload?.mimeType || "application/octet-stream",
           texto,
           referenciaMensagemId,
           clientMessageId: clientMessageIdAtivo,
@@ -445,7 +489,8 @@ export async function sendMesaMessageFlow<TOfflineItem>({
           item.client_message_id !== resposta.mensagem.client_message_id,
       );
       const mensagemResposta =
-        anexoAtual?.kind === "image" && !resposta.mensagem.anexos?.length
+        (anexoAtual?.kind === "image" || anexoAtual?.kind === "image_set") &&
+        !resposta.mensagem.anexos?.length
           ? { ...resposta.mensagem, anexos: anexosOtimistas }
           : resposta.mensagem;
       return [...semOtimista, mensagemResposta].sort((a, b) => a.id - b.id);

@@ -39,15 +39,23 @@ export type ChatCaseCreationState =
   | "queued_offline"
   | "error";
 
+export interface ComposerImageAttachment {
+  kind: "image";
+  label: string;
+  resumo: string;
+  dadosImagem: string;
+  previewUri: string;
+  fileUri: string;
+  mimeType: string;
+}
+
 export type ComposerAttachment =
+  | ComposerImageAttachment
   | {
-      kind: "image";
+      kind: "image_set";
       label: string;
       resumo: string;
-      dadosImagem: string;
-      previewUri: string;
-      fileUri: string;
-      mimeType: string;
+      imagens: ComposerImageAttachment[];
     }
   | {
       kind: "document";
@@ -137,7 +145,13 @@ export function duplicarComposerAttachment(
   if (!anexo) {
     return null;
   }
-  return anexo.kind === "image" ? { ...anexo } : { ...anexo };
+  if (anexo.kind === "image_set") {
+    return {
+      ...anexo,
+      imagens: anexo.imagens.map((imagem) => ({ ...imagem })),
+    };
+  }
+  return { ...anexo };
 }
 
 export function categoriaNotificacaoPorKind(
