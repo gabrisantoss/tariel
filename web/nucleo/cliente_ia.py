@@ -40,7 +40,9 @@ _MAX_HISTORICO_ENTRADAS = 20
 _MAX_TEXTO_HISTORICO = 8_000
 _MAX_MENSAGEM_CHARS = 4_000
 _MAX_OCR_CHARS = 2_000
+_MAX_OCR_MULTI_IMAGEM_CHARS = 600
 _MAX_DOCUMENTO_CHARS = 40_000
+_MAX_IMAGENS_PROMPT = 10
 
 _PREFIXOS_DATAURL_VALIDOS = frozenset(
     [
@@ -266,6 +268,100 @@ Diretrizes:
             logger.warning("Falha no OCR da imagem.", exc_info=True)
             return ""
 
+    @staticmethod
+    def _normalizar_lista_imagens(
+        dados_imagem: Optional[str] = None,
+        dados_imagens: Optional[list[str]] = None,
+    ) -> list[str]:
+        imagens_brutas = dados_imagens if isinstance(dados_imagens, list) else []
+        imagens = [
+            str(item or "").strip()
+            for item in imagens_brutas
+            if str(item or "").strip()
+        ][: _MAX_IMAGENS_PROMPT]
+
+        if imagens:
+            return imagens
+
+        imagem_unica = str(dados_imagem or "").strip()
+        return [imagem_unica] if imagem_unica else []
+
+    @staticmethod
+    def _instrucao_pacote_visual(total_imagens: int, contexto: str) -> str:
+        if contexto == "chat":
+            return (
+                f"[Pacote visual ordenado: {total_imagens} fotos]\n"
+                "Trate as fotos como evidencias separadas e cite Foto 1, Foto 2 etc. "
+                "Antes de responder, avalie se elas parecem do mesmo assunto. "
+                "Se forem aleatorias, duplicadas, ruins ou de temas diferentes e o usuario nao definiu foco, "
+                "nao gere laudo longo: responda curto pedindo foco ou agrupamento. "
+                "Quando houver tema comum, sintetize em no maximo 5 achados tecnicos e 3 recomendacoes. "
+                "Nao descreva foto por foto em paragrafo longo; use apenas o que sustenta conclusao tecnica."
+            )
+
+        return (
+            f"[Pacote visual ordenado: {total_imagens} fotos]\n"
+            "Use as fotos como evidencias separadas e cite Foto 1, Foto 2 etc. "
+            "Nao crie legendas longas nem repita descricao visual exaustiva. "
+            "Se houver fotos aleatorias, duplicadas ou insuficientes, ignore-as para conclusoes tecnicas "
+            "ou marque a evidencia como insuficiente no campo adequado."
+        )
+
+    def _montar_partes_imagens(
+        self,
+        dados_imagem: Optional[str] = None,
+        dados_imagens: Optional[list[str]] = None,
+        *,
+        contexto: str = "chat",
+    ) -> list[types.Part]:
+        imagens = self._normalizar_lista_imagens(
+            dados_imagem=dados_imagem,
+            dados_imagens=dados_imagens,
+        )
+        total_imagens = len(imagens)
+        partes: list[types.Part] = []
+
+        if total_imagens > 1:
+            partes.append(
+                types.Part.from_text(
+                    text=self._instrucao_pacote_visual(total_imagens, contexto)
+                )
+            )
+
+        for indice, dados_imagem_atual in enumerate(imagens, start=1):
+            bytes_img = self._validar_e_decodificar_imagem(dados_imagem_atual)
+            if not bytes_img:
+                logger.warning("Imagem inválida descartada no prompt.")
+                continue
+
+            if total_imagens > 1:
+                partes.append(
+                    types.Part.from_text(text=f"[Foto {indice} de {total_imagens}]")
+                )
+
+            partes.append(
+                types.Part.from_bytes(
+                    data=bytes_img,
+                    mime_type=self._detectar_mime(bytes_img),
+                )
+            )
+
+            texto_ocr = self._extrair_ocr_imagem(bytes_img)
+            if texto_ocr:
+                if total_imagens > 1:
+                    partes.append(
+                        types.Part.from_text(
+                            text=(
+                                f"[OCR da Foto {indice}]\n"
+                                f"{texto_ocr[:_MAX_OCR_MULTI_IMAGEM_CHARS]}"
+                            )
+                        )
+                    )
+                else:
+                    partes.append(types.Part.from_text(text=f"[OCR da imagem]\n{texto_ocr}"))
+
+        return partes
+
     # =========================================================================
     # HELPERS DE HISTÓRICO
     # =========================================================================
@@ -395,6 +491,7 @@ Diretrizes:
         dados_imagem: Optional[str] = None,
         texto_documento: Optional[str] = None,
         nome_documento: Optional[str] = None,
+        dados_imagens: Optional[list[str]] = None,
     ) -> list[types.Part]:
         partes: list[types.Part] = []
 
@@ -404,21 +501,13 @@ Diretrizes:
         texto_base = mensagem_truncada or "[Sem texto digitado pelo usuário]"
         partes.append(types.Part.from_text(text=f"[Setor: {setor_seguro.upper()}]\n\n{texto_base}"))
 
-        if dados_imagem:
-            bytes_img = self._validar_e_decodificar_imagem(dados_imagem)
-            if bytes_img:
-                partes.append(
-                    types.Part.from_bytes(
-                        data=bytes_img,
-                        mime_type=self._detectar_mime(bytes_img),
-                    )
-                )
-
-                texto_ocr = self._extrair_ocr_imagem(bytes_img)
-                if texto_ocr:
-                    partes.append(types.Part.from_text(text=f"[OCR da imagem]\n{texto_ocr}"))
-            else:
-                logger.warning("Imagem inválida descartada no prompt.")
+        partes.extend(
+            self._montar_partes_imagens(
+                dados_imagem=dados_imagem,
+                dados_imagens=dados_imagens,
+                contexto="chat",
+            )
+        )
 
         if texto_documento:
             cabecalho = f"Documento: {str(nome_documento).strip()[:120]}" if nome_documento else "Documento Anexo"
@@ -440,12 +529,14 @@ Diretrizes:
         catalog_family_key: Optional[str] = None,
         report_pack_draft: Optional[dict[str, Any]] = None,
         case_payload_context: Optional[dict[str, Any]] = None,
+        dados_imagens: Optional[list[str]] = None,
     ) -> dict[str, Any]:
         loop = asyncio.get_running_loop()
 
         def _executar() -> dict[str, Any]:
             historico_validado = self._validar_historico(historico or [])
             contents = self._construir_contents_historico(historico_validado)
+            imagens_prompt = self._normalizar_lista_imagens(dados_imagem, dados_imagens)
             nr35_prompt_contract = None
             try:
                 from app.domains.chat.nr35_linha_vida_prompt import (
@@ -464,15 +555,13 @@ Diretrizes:
 
             partes_extras: list[types.Part] = []
 
-            if dados_imagem:
-                bytes_img = self._validar_e_decodificar_imagem(dados_imagem)
-                if bytes_img:
-                    mime = self._detectar_mime(bytes_img)
-                    partes_extras.append(types.Part.from_bytes(data=bytes_img, mime_type=mime))
-
-                    texto_ocr = self._extrair_ocr_imagem(bytes_img)
-                    if texto_ocr:
-                        partes_extras.append(types.Part.from_text(text=f"Texto OCR da imagem:\n{texto_ocr}"))
+            partes_extras.extend(
+                self._montar_partes_imagens(
+                    dados_imagem=dados_imagem,
+                    dados_imagens=dados_imagens,
+                    contexto="estruturado",
+                )
+            )
 
             if texto_documento:
                 doc_truncado = str(texto_documento)[:_MAX_DOCUMENTO_CHARS]
@@ -501,7 +590,8 @@ Diretrizes:
                     detail={
                         "provider": "gemini",
                         "model": _MODELO_GEMINI,
-                        "has_image": bool(dados_imagem),
+                        "has_image": bool(imagens_prompt),
+                        "image_count": len(imagens_prompt),
                         "has_document": bool(texto_documento),
                         "historico_itens": len(historico_validado),
                         "template_key": template_key,
@@ -576,6 +666,7 @@ Diretrizes:
         modo: str = "detalhado",
         texto_documento: Optional[str] = None,
         nome_documento: Optional[str] = None,
+        dados_imagens: Optional[list[str]] = None,
     ) -> Generator[str, None, None]:
         texto_original = str(mensagem or "")
 
@@ -614,11 +705,12 @@ Diretrizes:
         modo_seguro = self._normalizar_modo(modo)
         setor_seguro = self._normalizar_setor(setor)
         historico_validado = self._validar_historico(historico or [])
+        imagens_prompt = self._normalizar_lista_imagens(dados_imagem, dados_imagens)
 
         if not any(
             [
                 self._texto_seguro(texto_original, _MAX_MENSAGEM_CHARS),
-                dados_imagem,
+                imagens_prompt,
                 texto_documento,
             ]
         ):
@@ -629,6 +721,7 @@ Diretrizes:
             mensagem=texto_original,
             setor=setor_seguro,
             dados_imagem=dados_imagem,
+            dados_imagens=dados_imagens,
             texto_documento=texto_documento,
             nome_documento=nome_documento,
         )
@@ -648,7 +741,8 @@ Diretrizes:
                     "provider": "gemini",
                     "model": _MODELO_GEMINI,
                     "modo": modo_seguro,
-                    "has_image": bool(dados_imagem),
+                    "has_image": bool(imagens_prompt),
+                    "image_count": len(imagens_prompt),
                     "has_document": bool(texto_documento),
                     "historico_itens": len(historico_validado),
                 },

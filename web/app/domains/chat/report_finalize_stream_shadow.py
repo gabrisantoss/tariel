@@ -169,15 +169,11 @@ async def processar_finalizacao_stream_documental(
         )
         try:
             cliente_ia_ativo = obter_cliente_ia_ativo()
-            dados_imagem_payload = (
-                "\n".join(dados_imagem_validos)
-                if dados_imagem_validos
-                else None
-            )
             dados_json = await cliente_ia_ativo.gerar_json_estruturado(
                 schema_pydantic=schema_pydantic,
                 historico=historico_dict,
-                dados_imagem=dados_imagem_payload,
+                dados_imagem=dados_imagem_validos[0] if dados_imagem_validos else None,
+                dados_imagens=dados_imagem_validos or None,
                 texto_documento=texto_documento,
                 template_key=tipo_template_efetivo,
                 catalog_family_key=getattr(laudo, "catalog_family_key", None),

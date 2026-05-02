@@ -29,6 +29,11 @@ def test_api_chat_com_imagens_persiste_fotos_no_historico(ambiente_critico) -> N
     SessionLocal = ambiente_critico["SessionLocal"]
     ids = ambiente_critico["ids"]
     csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    imagens_payload = [
+        _imagem_png_data_uri_teste(),
+        _imagem_png_data_uri_teste(),
+    ]
+    chamada_ia: dict[str, object] = {}
 
     with SessionLocal() as banco:
         laudo_id = _criar_laudo(
@@ -40,6 +45,8 @@ def test_api_chat_com_imagens_persiste_fotos_no_historico(ambiente_critico) -> N
 
     class ClienteIAStub:
         def gerar_resposta_stream(self, *args, **kwargs):  # noqa: ANN002, ANN003
+            chamada_ia["dados_imagem"] = args[1] if len(args) > 1 else None
+            chamada_ia["dados_imagens"] = kwargs.get("dados_imagens")
             yield "Imagem registrada no histórico."
 
     cliente_original = rotas_inspetor.cliente_ia
@@ -52,16 +59,15 @@ def test_api_chat_com_imagens_persiste_fotos_no_historico(ambiente_critico) -> N
                 "mensagem": "Analise esta foto do equipamento.",
                 "historico": [],
                 "laudo_id": laudo_id,
-                "dados_imagens": [
-                    _imagem_png_data_uri_teste(),
-                    _imagem_png_data_uri_teste(),
-                ],
+                "dados_imagens": imagens_payload,
             },
         )
     finally:
         rotas_inspetor.cliente_ia = cliente_original
 
     assert resposta.status_code == 200
+    assert chamada_ia["dados_imagem"] == imagens_payload[0]
+    assert chamada_ia["dados_imagens"] == imagens_payload
 
     historico = client.get(f"/app/api/laudo/{laudo_id}/mensagens")
     assert historico.status_code == 200

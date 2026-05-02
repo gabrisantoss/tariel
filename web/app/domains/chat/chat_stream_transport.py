@@ -88,6 +88,7 @@ def build_ai_stream_response(
                     modo=dados.modo,
                     texto_documento=stream_context.texto_documento or None,
                     nome_documento=stream_context.nome_documento or None,
+                    dados_imagens=stream_context.dados_imagens_validas or None,
                 )
 
                 for pedaco in gerador_stream:
@@ -201,6 +202,7 @@ def build_free_assistant_stream_response(
                     modo=dados.modo,
                     texto_documento=free_context.texto_documento or None,
                     nome_documento=free_context.nome_documento or None,
+                    dados_imagens=free_context.dados_imagens_validas or None,
                 )
 
                 for pedaco in gerador_stream:
