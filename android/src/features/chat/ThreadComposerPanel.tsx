@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -107,6 +108,7 @@ function AttachmentDraftCard({
 }) {
   const { t } = useAppTranslation();
   const baseTestId = `${scope}-attachment-draft`;
+  const showImageCarousel = attachment.kind === "image_set";
 
   return (
     <View
@@ -117,18 +119,15 @@ function AttachmentDraftCard({
       testID={`${baseTestId}-card`}
     >
       <View style={styles.attachmentDraftHeader}>
-        {attachment.kind !== "document" ? (
+        {attachment.kind === "image" ? (
           <Image
             source={{
-              uri:
-                attachment.kind === "image"
-                  ? attachment.previewUri
-                  : attachment.imagens[0]?.previewUri || "",
+              uri: attachment.previewUri,
             }}
             style={styles.attachmentDraftPreview}
             testID={`${baseTestId}-kind-image`}
           />
-        ) : (
+        ) : attachment.kind === "document" ? (
           <View
             style={[
               styles.attachmentDraftIcon,
@@ -142,7 +141,7 @@ function AttachmentDraftCard({
               color={darkMode ? "#AFC0D2" : colors.textSecondary}
             />
           </View>
-        )}
+        ) : null}
         <View style={styles.attachmentDraftCopy}>
           <Text
             style={[
@@ -178,6 +177,33 @@ function AttachmentDraftCard({
           />
         </Pressable>
       </View>
+      {showImageCarousel ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.attachmentDraftCarousel}
+          contentContainerStyle={styles.attachmentDraftCarouselContent}
+          testID={`${baseTestId}-image-carousel`}
+        >
+          {attachment.imagens.map((imagem, index) => (
+            <View
+              key={`${imagem.previewUri}-${index}`}
+              style={styles.attachmentDraftCarouselItem}
+            >
+              <Image
+                source={{ uri: imagem.previewUri }}
+                style={styles.attachmentDraftCarouselImage}
+                testID={`${baseTestId}-carousel-image-${index}`}
+              />
+              <View style={styles.attachmentDraftCarouselBadge}>
+                <Text style={styles.attachmentDraftCarouselBadgeText}>
+                  {index + 1}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      ) : null}
     </View>
   );
 }

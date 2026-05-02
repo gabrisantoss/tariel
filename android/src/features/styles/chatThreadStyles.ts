@@ -2104,6 +2104,43 @@ export const chatThreadStyles = {
   attachmentDraftDescriptionDark: {
     color: "#AFC0D2",
   },
+  attachmentDraftCarousel: {
+    marginTop: spacing.sm,
+    maxHeight: 78,
+  },
+  attachmentDraftCarouselContent: {
+    gap: spacing.sm,
+    paddingRight: spacing.xs,
+  },
+  attachmentDraftCarouselItem: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "#E8EDF2",
+    position: "relative",
+  },
+  attachmentDraftCarouselImage: {
+    width: "100%",
+    height: "100%",
+  },
+  attachmentDraftCarouselBadge: {
+    position: "absolute",
+    left: 6,
+    top: 6,
+    minWidth: 20,
+    height: 20,
+    borderRadius: radii.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(11, 26, 43, 0.72)",
+    paddingHorizontal: 6,
+  },
+  attachmentDraftCarouselBadgeText: {
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: "700",
+  },
   attachmentDraftRemove: {
     width: 30,
     height: 30,

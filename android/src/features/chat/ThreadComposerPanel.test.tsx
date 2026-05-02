@@ -128,6 +128,39 @@ describe("ThreadComposerPanel", () => {
     ).toBe("Imagem pronta para a conversa.");
   });
 
+  it("mostra carrossel de fotos selecionadas na ordem no chat", () => {
+    const { getByTestId } = render(
+      <ThreadComposerPanel
+        {...createProps({
+          anexoRascunho: {
+            kind: "image_set",
+            label: "3 fotos selecionadas",
+            resumo: "Imagens prontas para a conversa.",
+            imagens: [
+              { previewUri: "file:///tmp/foto-01.jpg" },
+              { previewUri: "file:///tmp/foto-02.jpg" },
+              { previewUri: "file:///tmp/foto-03.jpg" },
+            ],
+          },
+        })}
+      />,
+    );
+
+    expect(getByTestId("chat-attachment-draft-image-carousel")).toBeTruthy();
+    expect(
+      getByTestId("chat-attachment-draft-carousel-image-0").props.source.uri,
+    ).toBe("file:///tmp/foto-01.jpg");
+    expect(
+      getByTestId("chat-attachment-draft-carousel-image-1").props.source.uri,
+    ).toBe("file:///tmp/foto-02.jpg");
+    expect(
+      getByTestId("chat-attachment-draft-carousel-image-2").props.source.uri,
+    ).toBe("file:///tmp/foto-03.jpg");
+    expect(getByTestId("chat-attachment-draft-title").props.children).toBe(
+      "3 fotos selecionadas",
+    );
+  });
+
   it("mantém ids estáveis para documento na mesa e permite limpar o rascunho", () => {
     const onClearAnexoMesaRascunho = jest.fn();
     const { getByTestId, getByText } = render(
