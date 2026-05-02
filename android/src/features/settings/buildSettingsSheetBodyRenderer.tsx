@@ -3,6 +3,11 @@ import { Platform } from "react-native";
 import type { ApiHealthStatus } from "../../types/mobile";
 import type { ComposerAttachment } from "../chat/types";
 import type {
+  AI_MODEL_OPTIONS,
+  RESPONSE_LANGUAGE_OPTIONS,
+  RESPONSE_STYLE_OPTIONS,
+} from "../InspectorMobileApp.constants";
+import type {
   ConnectedProvider,
   ExternalIntegration,
   SessionDevice,
@@ -43,8 +48,12 @@ interface BuildSettingsSheetBodyRendererParams {
   handleAlternarArtigoAjuda: (articleId: string) => void;
   handleAlternarIntegracaoExterna: (integration: ExternalIntegration) => void;
   handleRemoverScreenshotBug: () => void;
-  handleSelecionarModeloIa: (
-    value: "rápido" | "equilibrado" | "avançado",
+  handleSelecionarModeloIa: (value: (typeof AI_MODEL_OPTIONS)[number]) => void;
+  handleSelecionarEstiloResposta: (
+    value: (typeof RESPONSE_STYLE_OPTIONS)[number],
+  ) => void;
+  handleSelecionarIdiomaResposta: (
+    value: (typeof RESPONSE_LANGUAGE_OPTIONS)[number],
   ) => void;
   handleSelecionarScreenshotBug: () => Promise<void>;
   handleSincronizarIntegracaoExterna: (
@@ -55,8 +64,9 @@ interface BuildSettingsSheetBodyRendererParams {
   integracoesConectadasTotal: number;
   integracoesDisponiveisTotal: number;
   integracoesExternas: readonly ExternalIntegration[];
-  modeloIa: "rápido" | "equilibrado" | "avançado";
-  nomeAutomaticoConversas: boolean;
+  modeloIa: (typeof AI_MODEL_OPTIONS)[number];
+  estiloResposta: (typeof RESPONSE_STYLE_OPTIONS)[number];
+  idiomaResposta: (typeof RESPONSE_LANGUAGE_OPTIONS)[number];
   nomeCompletoDraft: string;
   nomeExibicaoDraft: string;
   novaSenhaDraft: string;
@@ -66,7 +76,6 @@ interface BuildSettingsSheetBodyRendererParams {
   onSetBuscaAjuda: (value: string) => void;
   onSetConfirmarSenhaDraft: (value: string) => void;
   onSetFeedbackDraft: (value: string) => void;
-  onSetNomeAutomaticoConversas: (value: boolean) => void;
   onSetNomeCompletoDraft: (value: string) => void;
   onSetNomeExibicaoDraft: (value: string) => void;
   onSetNovaSenhaDraft: (value: string) => void;
@@ -127,6 +136,8 @@ export function buildSettingsSheetBodyRenderer({
   handleAlternarIntegracaoExterna,
   handleRemoverScreenshotBug,
   handleSelecionarModeloIa,
+  handleSelecionarEstiloResposta,
+  handleSelecionarIdiomaResposta,
   handleSelecionarScreenshotBug,
   handleSincronizarIntegracaoExterna,
   handleToggleUploadArquivos,
@@ -135,7 +146,8 @@ export function buildSettingsSheetBodyRenderer({
   integracoesDisponiveisTotal,
   integracoesExternas,
   modeloIa,
-  nomeAutomaticoConversas,
+  estiloResposta,
+  idiomaResposta,
   nomeCompletoDraft,
   nomeExibicaoDraft,
   novaSenhaDraft,
@@ -145,7 +157,6 @@ export function buildSettingsSheetBodyRenderer({
   onSetBuscaAjuda,
   onSetConfirmarSenhaDraft,
   onSetFeedbackDraft,
-  onSetNomeAutomaticoConversas,
   onSetNomeCompletoDraft,
   onSetNomeExibicaoDraft,
   onSetNovaSenhaDraft,
@@ -205,9 +216,10 @@ export function buildSettingsSheetBodyRenderer({
       integracoesDisponiveisTotal,
       integracoesExternas,
       modeloIa,
+      estiloResposta,
+      idiomaResposta,
       nomeCompletoDraft,
       nomeExibicaoDraft,
-      nomeAutomaticoConversas,
       novaSenhaDraft,
       novoEmailDraft,
       onAlternarArtigoAjuda: handleAlternarArtigoAjuda,
@@ -230,9 +242,10 @@ export function buildSettingsSheetBodyRenderer({
       },
       onTelefoneDraftChange: onSetTelefoneDraft,
       onToggleIntegracao: handleAlternarIntegracaoExterna,
-      onToggleNomeAutomaticoConversas: onSetNomeAutomaticoConversas,
       onToggleUploadArquivos: handleToggleUploadArquivos,
       onSelecionarModeloIa: handleSelecionarModeloIa,
+      onSelecionarEstiloResposta: handleSelecionarEstiloResposta,
+      onSelecionarIdiomaResposta: handleSelecionarIdiomaResposta,
       perfilFotoHint,
       perfilFotoUri,
       planoAtual,

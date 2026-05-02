@@ -62,6 +62,7 @@ function criarInput() {
         updateWith: jest.fn(),
       },
       settingsDocument: criarSettingsDocument(),
+      settingsPersistenceVersion: 1,
     },
     dataState: {
       cacheLeitura: {

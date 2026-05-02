@@ -107,43 +107,33 @@ describe("SettingsExperienceAiSection", () => {
   ) {
     return render(
       <SettingsExperienceAiSection
-        aprendizadoIa
-        entryModePreference="chat_first"
         estiloResposta="padrão"
         idiomaResposta="Português"
         memoriaIa
         modeloIa="equilibrado"
+        onAbrirMenuEstiloResposta={jest.fn()}
+        onAbrirMenuIdiomaResposta={jest.fn()}
         onAbrirMenuModeloIa={jest.fn()}
-        onSetAprendizadoIa={jest.fn()}
-        onSetEntryModePreference={jest.fn()}
-        onSetEstiloResposta={jest.fn()}
-        onSetIdiomaResposta={jest.fn()}
         onSetMemoriaIa={jest.fn()}
-        onSetRememberLastCaseMode={jest.fn()}
-        onSetTemperaturaIa={jest.fn()}
         onSetTomConversa={jest.fn()}
-        rememberLastCaseMode={false}
-        temperaturaIa={0.3}
         tomConversa="profissional"
         {...overrides}
       />,
     );
   }
 
-  it("resume a criação lazy do caso na seção de IA", () => {
-    const { getByText } = renderSection();
+  it("mostra os menus principais de IA sem controles de criação do caso", () => {
+    const { getByText, queryByText } = renderSection();
 
-    expect(getByText("Criação do caso")).toBeTruthy();
-    expect(getByText("Chat no 1º envio")).toBeTruthy();
-  });
-
-  it("resume quando o modo automático reaproveita o último caso", () => {
-    const { getByText } = renderSection({
-      entryModePreference: "auto_recommended",
-      rememberLastCaseMode: true,
-    });
-
-    expect(getByText("Auto recomendado")).toBeTruthy();
-    expect(getByText("Auto + último modo")).toBeTruthy();
+    expect(getByText("Modelo de IA")).toBeTruthy();
+    expect(getByText("Estilo de resposta")).toBeTruthy();
+    expect(getByText("Idioma do app e da IA")).toBeTruthy();
+    expect(queryByText("Modo inicial do caso")).toBeNull();
+    expect(queryByText("Criação do caso")).toBeNull();
+    expect(queryByText("Lembrar modo do último caso")).toBeNull();
+    expect(queryByText("Permitir aprendizado da IA")).toBeNull();
+    expect(queryByText("Permitir uso para melhoria da IA")).toBeNull();
+    expect(queryByText("Compartilhar dados para melhoria da IA")).toBeNull();
+    expect(queryByText("Temperatura da resposta")).toBeNull();
   });
 });

@@ -18,10 +18,13 @@ function createStoreState() {
 function createStoreValue() {
   return {
     hydrated: true,
+    persistenceScope: null,
+    persistenceVersion: 0,
     state: createStoreState(),
     actions: {
       replaceAll: jest.fn(),
       reset: jest.fn(),
+      setPersistenceScope: jest.fn(),
       updateAppearance: jest.fn(),
       updateAi: jest.fn(),
       updateNotifications: jest.fn(),
@@ -97,5 +100,49 @@ describe("useInspectorSettingsBindings", () => {
     expect(store.actions.updateAi).toHaveBeenCalledWith({
       rememberLastCaseMode: true,
     });
+  });
+
+  it("sincroniza idioma do app, IA e voz ao alterar idioma", () => {
+    const store = createStoreValue();
+    (useSettingsStore as jest.Mock).mockReturnValue(store);
+
+    const { result } = renderHook(() => useInspectorSettingsBindings());
+
+    act(() => {
+      result.current.ai.setIdiomaResposta("Inglês");
+    });
+
+    const syncFromResponse = store.actions.updateWith.mock.calls.at(-1)?.[0];
+    const nextFromResponse = syncFromResponse(createStoreState());
+    expect(nextFromResponse.ai.responseLanguage).toBe("Inglês");
+    expect(nextFromResponse.system.language).toBe("Inglês");
+    expect(nextFromResponse.speech.voiceLanguage).toBe("Inglês");
+
+    act(() => {
+      result.current.system.setIdiomaApp("Espanhol");
+    });
+
+    const syncFromApp = store.actions.updateWith.mock.calls.at(-1)?.[0];
+    const nextFromApp = syncFromApp(createStoreState());
+    expect(nextFromApp.ai.responseLanguage).toBe("Espanhol");
+    expect(nextFromApp.system.language).toBe("Espanhol");
+    expect(nextFromApp.speech.voiceLanguage).toBe("Espanhol");
+  });
+
+  it("mantem Auto detectar limitado ao idioma da IA", () => {
+    const store = createStoreValue();
+    (useSettingsStore as jest.Mock).mockReturnValue(store);
+
+    const { result } = renderHook(() => useInspectorSettingsBindings());
+
+    act(() => {
+      result.current.ai.setIdiomaResposta("Auto detectar");
+    });
+
+    const syncFromResponse = store.actions.updateWith.mock.calls.at(-1)?.[0];
+    const nextState = syncFromResponse(createStoreState());
+    expect(nextState.ai.responseLanguage).toBe("Auto detectar");
+    expect(nextState.system.language).toBe("Português");
+    expect(nextState.speech.voiceLanguage).toBe("Sistema");
   });
 });

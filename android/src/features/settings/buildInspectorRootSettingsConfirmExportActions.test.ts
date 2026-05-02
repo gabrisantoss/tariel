@@ -1,11 +1,15 @@
 const mockHandleConfirmarAcaoCritica = jest.fn();
 const mockHandleExportarDados = jest.fn();
 const mockHandleSelecionarModeloIa = jest.fn();
+const mockHandleSelecionarEstiloResposta = jest.fn();
+const mockHandleSelecionarIdiomaResposta = jest.fn();
 
 jest.mock("./buildSettingsConfirmAndExportActions", () => ({
   buildSettingsConfirmAndExportActions: jest.fn(() => ({
     handleConfirmarAcaoCritica: mockHandleConfirmarAcaoCritica,
     handleExportarDados: mockHandleExportarDados,
+    handleSelecionarEstiloResposta: mockHandleSelecionarEstiloResposta,
+    handleSelecionarIdiomaResposta: mockHandleSelecionarIdiomaResposta,
     handleSelecionarModeloIa: mockHandleSelecionarModeloIa,
   })),
 }));
@@ -84,6 +88,8 @@ function criarInput() {
       onSetLaudosDisponiveis: jest.fn(),
       onSetMensagem: jest.fn(),
       onSetMensagemMesa: jest.fn(),
+      onSetEstiloResposta: jest.fn(),
+      onSetIdiomaResposta: jest.fn(),
       onSetMensagensMesa: jest.fn(),
       onSetModeloIa: jest.fn(),
       onSetNotificacoes: jest.fn(),

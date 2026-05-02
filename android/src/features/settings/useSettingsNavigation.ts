@@ -16,13 +16,35 @@ interface SettingsNavigationState {
   section: SettingsDrawerSection;
 }
 
+const INITIAL_SETTINGS_NAVIGATION_STATE: SettingsNavigationState = {
+  page: "overview",
+  section: "all",
+};
+
+function normalizeSettingsNavigationState(
+  page: SettingsDrawerPage,
+  section: SettingsDrawerSection = "all",
+): SettingsNavigationState {
+  return {
+    page,
+    section: page === "overview" ? "all" : section,
+  };
+}
+
+function areSettingsNavigationStatesEqual(
+  first: SettingsNavigationState,
+  second: SettingsNavigationState,
+): boolean {
+  return first.page === second.page && first.section === second.section;
+}
+
 function pushSettingsNavigationState(
   historyRef: { current: SettingsNavigationState[] },
   state: SettingsNavigationState,
 ): void {
   const history = historyRef.current;
   const last = history[history.length - 1];
-  if (last && last.page === state.page && last.section === state.section) {
+  if (last && areSettingsNavigationStatesEqual(last, state)) {
     return;
   }
   history.push(state);
@@ -76,10 +98,18 @@ export function useSettingsNavigation(): {
   );
   const [confirmTextDraft, setConfirmTextDraft] = useState("");
   const settingsNavigationHistoryRef = useRef<SettingsNavigationState[]>([]);
+  const currentSettingsNavigationStateRef = useRef<SettingsNavigationState>(
+    INITIAL_SETTINGS_NAVIGATION_STATE,
+  );
+
+  function applySettingsNavigationState(state: SettingsNavigationState) {
+    currentSettingsNavigationStateRef.current = state;
+    setSettingsDrawerPage(state.page);
+    setSettingsDrawerSection(state.section);
+  }
 
   function resetSettingsNavigation() {
-    setSettingsDrawerPage("overview");
-    setSettingsDrawerSection("all");
+    applySettingsNavigationState(INITIAL_SETTINGS_NAVIGATION_STATE);
     settingsNavigationHistoryRef.current = [];
   }
 
@@ -106,38 +136,43 @@ export function useSettingsNavigation(): {
     page: SettingsDrawerPage,
     section: SettingsDrawerSection = "all",
   ) {
-    if (settingsDrawerPage === page && settingsDrawerSection === section) {
+    const currentState = currentSettingsNavigationStateRef.current;
+    const nextState = normalizeSettingsNavigationState(page, section);
+
+    if (areSettingsNavigationStatesEqual(currentState, nextState)) {
       return;
     }
-    pushSettingsNavigationState(settingsNavigationHistoryRef, {
-      page: settingsDrawerPage,
-      section: settingsDrawerSection,
-    });
-    setSettingsDrawerPage(page);
-    setSettingsDrawerSection(section);
+
+    pushSettingsNavigationState(settingsNavigationHistoryRef, currentState);
+    applySettingsNavigationState(nextState);
   }
 
   function handleAbrirSecaoConfiguracoes(section: SettingsSectionKey) {
-    if (settingsDrawerSection === section) {
+    const currentState = currentSettingsNavigationStateRef.current;
+    if (currentState.section === section) {
       return;
     }
-    pushSettingsNavigationState(settingsNavigationHistoryRef, {
-      page: settingsDrawerPage,
-      section: settingsDrawerSection,
+
+    pushSettingsNavigationState(settingsNavigationHistoryRef, currentState);
+    applySettingsNavigationState({
+      page: currentState.page,
+      section,
     });
-    setSettingsDrawerSection(section);
   }
 
   function handleVoltarResumoConfiguracoes() {
     const anterior = settingsNavigationHistoryRef.current.pop();
     if (anterior) {
-      setSettingsDrawerPage(anterior.page);
-      setSettingsDrawerSection(anterior.section);
+      applySettingsNavigationState(anterior);
       return;
     }
 
-    if (settingsDrawerSection !== "all") {
-      setSettingsDrawerSection("all");
+    const currentState = currentSettingsNavigationStateRef.current;
+    if (currentState.section !== "all") {
+      applySettingsNavigationState({
+        page: currentState.page,
+        section: "all",
+      });
       return;
     }
 

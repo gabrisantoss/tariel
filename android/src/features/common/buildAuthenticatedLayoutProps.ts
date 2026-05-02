@@ -18,6 +18,7 @@ export function buildAuthenticatedLayoutProps(
     animacoesAtivas: input.animacoesAtivas,
     appGradientColors: input.appGradientColors,
     chatKeyboardVerticalOffset: input.chatKeyboardVerticalOffset,
+    darkMode: input.settingsPrintDarkMode,
     drawerOverlayOpacity: input.drawerOverlayOpacity,
     erroConversa: input.erroConversa,
     erroLaudos: input.erroLaudos,

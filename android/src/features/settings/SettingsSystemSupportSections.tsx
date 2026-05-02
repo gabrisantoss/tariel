@@ -1,7 +1,6 @@
 import {
   APP_LANGUAGE_OPTIONS,
   BATTERY_OPTIONS,
-  REGION_OPTIONS,
   SPEECH_LANGUAGE_OPTIONS,
 } from "../InspectorMobileApp.constants";
 import {
@@ -12,7 +11,6 @@ import {
 } from "./SettingsPrimitives";
 
 type IdiomaApp = (typeof APP_LANGUAGE_OPTIONS)[number];
-type RegiaoApp = (typeof REGION_OPTIONS)[number];
 type UsoBateria = (typeof BATTERY_OPTIONS)[number];
 type SpeechLanguage = (typeof SPEECH_LANGUAGE_OPTIONS)[number];
 
@@ -38,7 +36,6 @@ interface SettingsAdvancedResourcesSectionProps {
 
 interface SettingsSystemSectionProps {
   idiomaApp: IdiomaApp;
-  regiaoApp: RegiaoApp;
   economiaDados: boolean;
   usoBateria: UsoBateria;
   resumoPermissoes: string;
@@ -51,7 +48,6 @@ interface SettingsSystemSectionProps {
   verificandoAtualizacoes: boolean;
   sincronizandoDados: boolean;
   onSetIdiomaApp: (value: IdiomaApp) => void;
-  onSetRegiaoApp: (value: RegiaoApp) => void;
   onSetEconomiaDados: (value: boolean) => void;
   onSetUsoBateria: (value: UsoBateria) => void;
   onPermissoes: () => void;
@@ -66,6 +62,7 @@ interface SettingsSystemSectionProps {
 interface SettingsSupportSectionProps {
   resumoSuporteApp: string;
   emailRetorno: string;
+  planoResumoConfiguracao: string;
   supportChannelLabel: string;
   resumoFilaSuporteLocal: string;
   ultimoTicketSuporte: {
@@ -205,7 +202,6 @@ export function SettingsAdvancedResourcesSection({
 
 export function SettingsSystemSection({
   idiomaApp,
-  regiaoApp,
   economiaDados,
   usoBateria,
   resumoPermissoes,
@@ -218,7 +214,6 @@ export function SettingsSystemSection({
   verificandoAtualizacoes,
   sincronizandoDados,
   onSetIdiomaApp,
-  onSetRegiaoApp,
   onSetEconomiaDados,
   onSetUsoBateria,
   onPermissoes,
@@ -237,7 +232,7 @@ export function SettingsSystemSection({
       title="Sistema"
     >
       <SettingsPressRow
-        description="Troca completa de idioma ainda depende da camada de i18n do app."
+        description="Sincroniza idioma geral, respostas da IA e voz."
         icon="translate"
         onPress={() =>
           onSetIdiomaApp(nextOptionValue(idiomaApp, APP_LANGUAGE_OPTIONS))
@@ -245,15 +240,6 @@ export function SettingsSystemSection({
         testID="settings-system-language-row"
         title="Idioma do aplicativo"
         value={idiomaApp}
-      />
-      <SettingsPressRow
-        icon="map-marker-radius-outline"
-        onPress={() =>
-          onSetRegiaoApp(nextOptionValue(regiaoApp, REGION_OPTIONS))
-        }
-        testID="settings-system-region-row"
-        title="Região"
-        value={regiaoApp}
       />
       <SettingsSwitchRow
         icon="signal-cellular-outline"
@@ -275,7 +261,7 @@ export function SettingsSystemSection({
         icon="shield-sync-outline"
         onPress={onPermissoes}
         testID="settings-system-permissions-center-row"
-        title="Central de permissões"
+        title="Permissões"
         value={resumoPermissoes}
       />
       <SettingsPressRow
@@ -340,6 +326,7 @@ export function SettingsSystemSection({
 export function SettingsSupportSection({
   resumoSuporteApp,
   emailRetorno,
+  planoResumoConfiguracao,
   supportChannelLabel,
   resumoFilaSuporteLocal,
   artigosAjudaCount,
@@ -364,6 +351,13 @@ export function SettingsSupportSection({
       testID="settings-section-suporte"
       title="Suporte"
     >
+      <SettingsPressRow
+        description="Plano atual e superfícies liberadas no mobile."
+        icon="star-circle-outline"
+        testID="settings-support-plan-row"
+        title="Plano e liberação"
+        value={planoResumoConfiguracao || "Plano não informado"}
+      />
       <SettingsPressRow
         icon="book-open-page-variant-outline"
         onPress={onCentralAjuda}

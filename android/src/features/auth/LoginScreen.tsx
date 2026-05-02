@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import { BrandLaunchOverlay } from "../common/BrandElements";
@@ -77,8 +78,11 @@ export function LoginScreen({
   onToggleMostrarSenha,
   onEsqueciSenha,
   onLogin,
+  onLoginSocial,
   onIntroDone,
 }: LoginScreenProps) {
+  const { t } = useAppTranslation();
+
   return (
     <LinearGradient colors={appGradientColors} style={styles.gradient}>
       <SafeAreaView style={styles.safeArea}>
@@ -134,7 +138,7 @@ export function LoginScreen({
                   <View style={styles.loadingState}>
                     <ActivityIndicator color={colors.accent} size="large" />
                     <Text style={styles.loadingText}>
-                      Preparando o app do inspetor...
+                      {t("Preparando o app do inspetor...")}
                     </Text>
                   </View>
                 ) : (
@@ -180,7 +184,7 @@ export function LoginScreen({
                             importantForAutofill="yes"
                             onChangeText={onSenhaChange}
                             onSubmitEditing={onSenhaSubmit}
-                            placeholder="Digite sua senha"
+                            placeholder={t("Digite sua senha")}
                             placeholderTextColor={colors.textMuted}
                             returnKeyType="done"
                             secureTextEntry={!mostrarSenha}
@@ -212,12 +216,12 @@ export function LoginScreen({
                     <View style={styles.loginMetaRow}>
                       <Pressable onPress={onEsqueciSenha}>
                         <Text style={styles.loginForgotLink}>
-                          Esqueceu a senha?
+                          {t("Esqueceu a senha?")}
                         </Text>
                       </Pressable>
                     </View>
 
-                    {!!erro && <Text style={styles.errorText}>{erro}</Text>}
+                    {!!erro && <Text style={styles.errorText}>{t(erro)}</Text>}
 
                     <Pressable
                       disabled={entrando}
@@ -236,10 +240,51 @@ export function LoginScreen({
                         <ActivityIndicator color={colors.white} />
                       ) : (
                         <Text style={styles.loginPrimaryButtonText}>
-                          Entrar
+                          {t("Entrar")}
                         </Text>
                       )}
                     </Pressable>
+
+                    <View style={styles.loginDividerRow}>
+                      <View style={styles.loginDividerLine} />
+                      <Text style={styles.loginDividerText}>{t("ou")}</Text>
+                      <View style={styles.loginDividerLine} />
+                    </View>
+
+                    <View style={styles.loginSocialStack}>
+                      <Pressable
+                        onPress={() => onLoginSocial("Google")}
+                        style={styles.loginSocialButton}
+                        testID="login-google-button"
+                      >
+                        <View style={styles.loginSocialIconShell}>
+                          <MaterialCommunityIcons
+                            color={colors.textPrimary}
+                            name="google"
+                            size={18}
+                          />
+                        </View>
+                        <Text style={styles.loginSocialButtonText}>
+                          {t("Entrar com Google")}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => onLoginSocial("Microsoft")}
+                        style={styles.loginSocialButton}
+                        testID="login-microsoft-button"
+                      >
+                        <View style={styles.loginSocialIconShell}>
+                          <MaterialCommunityIcons
+                            color={colors.textPrimary}
+                            name="microsoft"
+                            size={18}
+                          />
+                        </View>
+                        <Text style={styles.loginSocialButtonText}>
+                          {t("Entrar com Microsoft")}
+                        </Text>
+                      </Pressable>
+                    </View>
                   </>
                 )}
               </View>

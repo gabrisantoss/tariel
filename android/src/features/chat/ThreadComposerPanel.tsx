@@ -15,6 +15,7 @@ import type {
   ApiHealthStatus,
   MobileQualityGateResponse,
 } from "../../types/mobile";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import type { MessageReferenceState } from "./types";
@@ -35,6 +36,7 @@ type ComposerAttachmentDraft =
 
 export interface ThreadComposerPanelProps {
   visible: boolean;
+  darkMode?: boolean;
   keyboardVisible: boolean;
   canReopen: boolean;
   onReopen: () => void;
@@ -83,17 +85,26 @@ export interface ThreadComposerPanelProps {
 
 function AttachmentDraftCard({
   attachment,
+  darkMode = false,
   scope,
   onRemove,
 }: {
   attachment: ComposerAttachmentDraft;
+  darkMode?: boolean;
   scope: "chat" | "mesa";
   onRemove: () => void;
 }) {
+  const { t } = useAppTranslation();
   const baseTestId = `${scope}-attachment-draft`;
 
   return (
-    <View style={styles.attachmentDraftCard} testID={`${baseTestId}-card`}>
+    <View
+      style={[
+        styles.attachmentDraftCard,
+        darkMode ? styles.attachmentDraftCardDark : null,
+      ]}
+      testID={`${baseTestId}-card`}
+    >
       <View style={styles.attachmentDraftHeader}>
         {attachment.kind === "image" ? (
           <Image
@@ -115,27 +126,36 @@ function AttachmentDraftCard({
         )}
         <View style={styles.attachmentDraftCopy}>
           <Text
-            style={styles.attachmentDraftTitle}
+            style={[
+              styles.attachmentDraftTitle,
+              darkMode ? styles.attachmentDraftTitleDark : null,
+            ]}
             testID={`${baseTestId}-title`}
           >
-            {attachment.label}
+            {t(attachment.label)}
           </Text>
           <Text
-            style={styles.attachmentDraftDescription}
+            style={[
+              styles.attachmentDraftDescription,
+              darkMode ? styles.attachmentDraftDescriptionDark : null,
+            ]}
             testID={`${baseTestId}-description`}
           >
-            {attachment.resumo}
+            {t(attachment.resumo)}
           </Text>
         </View>
         <Pressable
           onPress={onRemove}
-          style={styles.attachmentDraftRemove}
+          style={[
+            styles.attachmentDraftRemove,
+            darkMode ? styles.attachmentDraftRemoveDark : null,
+          ]}
           testID={`${baseTestId}-remove`}
         >
           <MaterialCommunityIcons
             name="close"
             size={16}
-            color={colors.textSecondary}
+            color={darkMode ? "#AFC0D2" : colors.textSecondary}
           />
         </Pressable>
       </View>
@@ -145,6 +165,7 @@ function AttachmentDraftCard({
 
 export function ThreadComposerPanel({
   visible,
+  darkMode = false,
   keyboardVisible,
   canReopen,
   onReopen,
@@ -190,6 +211,8 @@ export function ThreadComposerPanel({
   dynamicComposerInputStyle,
   accentColor,
 }: ThreadComposerPanelProps) {
+  const { t } = useAppTranslation();
+
   if (!visible) {
     return null;
   }
@@ -198,12 +221,12 @@ export function ThreadComposerPanel({
     vendoMesa && (!podeUsarComposerMesa || Boolean(composerNotice));
   const showInlineComposerNotice = Boolean(!vendoMesa && composerNotice);
   const composerTitle = podeUsarComposerMesa
-    ? "Responder à mesa"
-    : "Mesa em leitura";
+    ? t("Responder à mesa")
+    : t("Mesa em leitura");
   const composerStatusLabel = vendoMesa
     ? podeUsarComposerMesa
-      ? "Resposta liberada"
-      : "Modo leitura"
+      ? t("Resposta liberada")
+      : t("Modo leitura")
     : "";
   const composerStatusStyle = vendoMesa
     ? podeUsarComposerMesa
@@ -227,9 +250,23 @@ export function ThreadComposerPanel({
       {showComposerHeader ? (
         <View style={styles.composerHeader}>
           <View style={styles.composerHeaderCopy}>
-            <Text style={styles.composerTitle}>{composerTitle}</Text>
+            <Text
+              style={[
+                styles.composerTitle,
+                darkMode ? styles.composerTitleDark : null,
+              ]}
+            >
+              {composerTitle}
+            </Text>
             {!!composerNotice ? (
-              <Text style={styles.composerSubtitle}>{composerNotice}</Text>
+              <Text
+                style={[
+                  styles.composerSubtitle,
+                  darkMode ? styles.composerSubtitleDark : null,
+                ]}
+              >
+                {t(composerNotice)}
+              </Text>
             ) : null}
           </View>
           <View style={[styles.composerStatusBadge, composerStatusStyle]}>
@@ -246,10 +283,13 @@ export function ThreadComposerPanel({
         <View style={styles.composerMiniActions}>
           {canReopen ? (
             <Pressable
-              accessibilityLabel="Reabrir laudo"
+              accessibilityLabel={t("Reabrir laudo")}
               hitSlop={8}
               onPress={onReopen}
-              style={styles.composerMiniAction}
+              style={[
+                styles.composerMiniAction,
+                darkMode ? styles.composerMiniActionDark : null,
+              ]}
               testID="chat-composer-reopen-icon"
             >
               <MaterialCommunityIcons
@@ -261,18 +301,21 @@ export function ThreadComposerPanel({
           ) : null}
           {showInlineComposerNotice ? (
             <Pressable
-              accessibilityLabel="Detalhes da configuração atual da IA"
+              accessibilityLabel={t("Detalhes da configuração atual da IA")}
               hitSlop={8}
               onPress={() => {
-                Alert.alert("Configuração atual da IA", composerNotice);
+                Alert.alert(t("Configuração atual da IA"), t(composerNotice));
               }}
-              style={styles.composerMiniAction}
+              style={[
+                styles.composerMiniAction,
+                darkMode ? styles.composerMiniActionDark : null,
+              ]}
               testID="chat-composer-ai-notice-icon"
             >
               <MaterialCommunityIcons
                 name="robot-outline"
                 size={14}
-                color={colors.textSecondary}
+                color={darkMode ? "#AFC0D2" : colors.textSecondary}
               />
             </Pressable>
           ) : null}
@@ -281,40 +324,56 @@ export function ThreadComposerPanel({
 
       {vendoMesa ? (
         <>
-          {!!erroMesa && <Text style={styles.errorText}>{erroMesa}</Text>}
+          {!!erroMesa && <Text style={styles.errorText}>{t(erroMesa)}</Text>}
 
           {mensagemMesaReferenciaAtiva ? (
-            <View style={styles.composerReferenceCard}>
+            <View
+              style={[
+                styles.composerReferenceCard,
+                darkMode ? styles.composerReferenceCardDark : null,
+              ]}
+            >
               <View style={styles.composerReferenceCopy}>
                 <Text style={styles.composerReferenceTitle}>
-                  Respondendo #{mensagemMesaReferenciaAtiva.id}
+                  {t("Respondendo")} #{mensagemMesaReferenciaAtiva.id}
                 </Text>
-                <Text style={styles.composerReferenceText}>
+                <Text
+                  style={[
+                    styles.composerReferenceText,
+                    darkMode ? styles.composerReferenceTextDark : null,
+                  ]}
+                >
                   {mensagemMesaReferenciaAtiva.texto}
                 </Text>
               </View>
               <Pressable
                 onPress={onLimparReferenciaMesaAtiva}
-                style={styles.composerReferenceRemove}
+                style={[
+                  styles.composerReferenceRemove,
+                  darkMode ? styles.composerReferenceRemoveDark : null,
+                ]}
               >
                 <MaterialCommunityIcons
                   name="close"
                   size={16}
-                  color={colors.textSecondary}
+                  color={darkMode ? "#AFC0D2" : colors.textSecondary}
                 />
               </Pressable>
             </View>
           ) : null}
 
           {anexoMesaRascunho ? (
-            <AttachmentDraftCard
-              attachment={anexoMesaRascunho}
-              scope="mesa"
+              <AttachmentDraftCard
+                attachment={anexoMesaRascunho}
+                darkMode={darkMode}
+                scope="mesa"
               onRemove={onClearAnexoMesaRascunho}
             />
           ) : null}
 
-          <View style={styles.composerRow}>
+          <View
+            style={[styles.composerRow, darkMode ? styles.composerRowDark : null]}
+          >
             <Pressable
               accessibilityState={{ disabled: !podeAbrirAnexosMesa }}
               onPress={() => {
@@ -332,7 +391,7 @@ export function ThreadComposerPanel({
               <MaterialCommunityIcons
                 name="plus"
                 size={18}
-                color={colors.textSecondary}
+                color={darkMode ? "#AFC0D2" : colors.textSecondary}
               />
             </Pressable>
             {showVoiceInputAction ? (
@@ -352,7 +411,7 @@ export function ThreadComposerPanel({
                     voiceInputEnabled ? "microphone-outline" : "microphone-off"
                   }
                   size={18}
-                  color={colors.textSecondary}
+                  color={darkMode ? "#AFC0D2" : colors.textSecondary}
                 />
               </Pressable>
             ) : null}
@@ -360,10 +419,11 @@ export function ThreadComposerPanel({
               editable={podeUsarComposerMesa}
               multiline
               onChangeText={onSetMensagemMesa}
-              placeholder={placeholderMesa}
-              placeholderTextColor={colors.textSecondary}
+              placeholder={t(placeholderMesa)}
+              placeholderTextColor={darkMode ? "#8999AB" : colors.textSecondary}
               style={[
                 styles.composerInput,
+                darkMode ? styles.composerInputDark : null,
                 dynamicComposerInputStyle,
                 !podeUsarComposerMesa ? styles.composerInputDisabled : null,
               ]}
@@ -403,12 +463,15 @@ export function ThreadComposerPanel({
           {anexoRascunho ? (
             <AttachmentDraftCard
               attachment={anexoRascunho}
+              darkMode={darkMode}
               scope="chat"
               onRemove={onClearAnexoRascunho}
             />
           ) : null}
 
-          <View style={styles.composerRow}>
+          <View
+            style={[styles.composerRow, darkMode ? styles.composerRowDark : null]}
+          >
             <Pressable
               accessibilityState={{ disabled: !podeAbrirAnexosChat }}
               onPress={() => {
@@ -426,7 +489,7 @@ export function ThreadComposerPanel({
               <MaterialCommunityIcons
                 name="plus"
                 size={18}
-                color={colors.textSecondary}
+                color={darkMode ? "#AFC0D2" : colors.textSecondary}
               />
             </Pressable>
             {showVoiceInputAction ? (
@@ -446,7 +509,7 @@ export function ThreadComposerPanel({
                     voiceInputEnabled ? "microphone-outline" : "microphone-off"
                   }
                   size={18}
-                  color={colors.textSecondary}
+                  color={darkMode ? "#AFC0D2" : colors.textSecondary}
                 />
               </Pressable>
             ) : null}
@@ -455,9 +518,10 @@ export function ThreadComposerPanel({
               multiline
               onChangeText={onSetMensagem}
               placeholder={placeholderChat}
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={darkMode ? "#8999AB" : colors.textSecondary}
               style={[
                 styles.composerInput,
+                darkMode ? styles.composerInputDark : null,
                 dynamicComposerInputStyle,
                 !podeAcionarComposer ? styles.composerInputDisabled : null,
               ]}

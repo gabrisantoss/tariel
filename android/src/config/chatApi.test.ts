@@ -170,11 +170,15 @@ describe("chatApi", () => {
       preferenciasIaMobile:
         "[preferencias_ia_mobile]\nuse tom técnico\n[/preferencias_ia_mobile]",
       laudoId: 12,
+      learningOptIn: true,
+      tone: "profissional",
     });
 
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body || "{}"));
     expect(body.mensagem).toBe("Texto visível");
     expect(body.preferencias_ia_mobile).toContain("[preferencias_ia_mobile]");
+    expect(body.learning_opt_in).toBe(true);
+    expect(body.tone).toBe("profissional");
   });
 
   it("salva o draft guiado canonico do laudo mobile", async () => {

@@ -84,6 +84,24 @@ describe("ThreadComposerPanel", () => {
     expect(getByTestId("chat-composer-input").props.placeholder).toBe("");
   });
 
+  it("usa a cor ativa no botão de enviar do chat", () => {
+    const { getByTestId } = render(
+      <ThreadComposerPanel
+        {...createProps({
+          accentColor: "#2F76D2",
+          mensagem: "teste",
+          podeEnviarComposer: true,
+        })}
+      />,
+    );
+
+    expect(getByTestId("chat-send-button").props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ backgroundColor: "#2F76D2" }),
+      ]),
+    );
+  });
+
   it("expõe markers estáveis para rascunho de imagem no chat", () => {
     const { getByTestId } = render(
       <ThreadComposerPanel

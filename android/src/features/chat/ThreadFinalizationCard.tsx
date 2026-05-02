@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import type {
@@ -29,6 +30,7 @@ export function ThreadFinalizationCard({
   actions,
   insights,
 }: ThreadFinalizationCardProps) {
+  const { t } = useAppTranslation();
   const primaryAction = actions[0] ?? null;
   const secondaryActions = actions.slice(1);
   const statusInsights = [
@@ -92,7 +94,7 @@ export function ThreadFinalizationCard({
                 : null,
         ]}
       >
-        {item.label}
+        {t(item.label)}
       </Text>
     </View>
   );
@@ -140,7 +142,7 @@ export function ThreadFinalizationCard({
                 : null,
         ]}
       >
-        {item.label}
+        {t(item.label)}
       </Text>
     </Pressable>
   );
@@ -176,10 +178,16 @@ export function ThreadFinalizationCard({
               name={item.icon}
               size={16}
             />
-            <Text style={styles.threadOperationalPlanLabel}>{item.label}</Text>
+            <Text style={styles.threadOperationalPlanLabel}>
+              {t(item.label)}
+            </Text>
           </View>
-          <Text style={styles.threadOperationalPlanValue}>{item.value}</Text>
-          <Text style={styles.threadOperationalPlanDetail}>{item.detail}</Text>
+          <Text style={styles.threadOperationalPlanValue}>
+            {t(item.value)}
+          </Text>
+          <Text style={styles.threadOperationalPlanDetail}>
+            {t(item.detail)}
+          </Text>
         </View>
       ))}
     </View>
@@ -204,11 +212,11 @@ export function ThreadFinalizationCard({
         <View style={styles.threadFinalizationHeroTop}>
           <View style={styles.threadHeaderCopy}>
             {eyebrow ? (
-              <Text style={styles.threadEyebrow}>{eyebrow}</Text>
+              <Text style={styles.threadEyebrow}>{t(eyebrow)}</Text>
             ) : null}
-            <Text style={styles.threadFinalizationTitle}>{title}</Text>
+            <Text style={styles.threadFinalizationTitle}>{t(title)}</Text>
             <Text style={styles.threadFinalizationDescription}>
-              {description}
+              {t(description)}
             </Text>
           </View>
           <View
@@ -248,7 +256,7 @@ export function ThreadFinalizationCard({
                       : null,
               ]}
             >
-              {spotlight.label}
+              {t(spotlight.label)}
             </Text>
           </View>
         </View>
@@ -263,7 +271,7 @@ export function ThreadFinalizationCard({
       {actions.length ? (
         <View style={styles.threadFinalizationSection}>
           <Text style={styles.threadFinalizationSectionLabel}>
-            Próxima ação
+            {t("Próxima ação")}
           </Text>
           {primaryAction ? (
             <View style={styles.threadActionRow}>
@@ -289,7 +297,7 @@ export function ThreadFinalizationCard({
                     numberOfLines={1}
                     style={styles.threadSecondaryActionText}
                   >
-                    {item.label}
+                    {t(item.label)}
                   </Text>
                 </Pressable>
               ))}
@@ -301,7 +309,7 @@ export function ThreadFinalizationCard({
       {fallbackStatusInsights.length ? (
         <View style={styles.threadFinalizationSection}>
           <Text style={styles.threadFinalizationSectionLabel}>
-            Status e pendências
+            {t("Status e pendências")}
           </Text>
           {renderOperationalPlan(fallbackStatusInsights)}
         </View>
@@ -310,7 +318,7 @@ export function ThreadFinalizationCard({
       {documentAuditInsights.length ? (
         <View style={styles.threadFinalizationSection}>
           <Text style={styles.threadFinalizationSectionLabel}>
-            Documento e auditoria
+            {t("Documento e auditoria")}
           </Text>
           {renderOperationalPlan(documentAuditInsights)}
         </View>

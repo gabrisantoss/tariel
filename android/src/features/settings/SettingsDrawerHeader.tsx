@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
 import { colors } from "../../theme/tokens";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { styles } from "../InspectorMobileApp.styles";
 
 interface SettingsDrawerHeaderProps {
@@ -19,12 +20,14 @@ export function SettingsDrawerHeader({
   settingsDrawerSubtitle,
   onCloseOrBackPress,
 }: SettingsDrawerHeaderProps) {
+  const { t } = useAppTranslation();
   const headerTitle = settingsDrawerInOverview
     ? "Configurações"
     : settingsDrawerTitle;
   const headerSubtitle = settingsDrawerInOverview
-    ? "Conta, app e operação em campo."
+    ? ""
     : settingsDrawerSubtitle;
+  const darkHeader = settingsPrintDarkMode;
 
   return (
     <View style={styles.sidePanelHeader}>
@@ -33,12 +36,10 @@ export function SettingsDrawerHeader({
           style={[
             styles.sidePanelTitle,
             settingsDrawerInOverview ? styles.sidePanelTitlePrint : null,
-            settingsDrawerInOverview && settingsPrintDarkMode
-              ? styles.sidePanelTitlePrintDark
-              : null,
+            darkHeader ? styles.sidePanelTitlePrintDark : null,
           ]}
         >
-          {headerTitle}
+          {t(headerTitle)}
         </Text>
         {headerSubtitle ? (
           <Text
@@ -47,12 +48,10 @@ export function SettingsDrawerHeader({
               settingsDrawerInOverview
                 ? styles.sidePanelDescriptionPrint
                 : null,
-              settingsDrawerInOverview && settingsPrintDarkMode
-                ? styles.sidePanelDescriptionPrintDark
-                : null,
+              darkHeader ? styles.sidePanelDescriptionPrintDark : null,
             ]}
           >
-            {headerSubtitle}
+            {t(headerSubtitle)}
           </Text>
         ) : null}
       </View>
@@ -61,9 +60,7 @@ export function SettingsDrawerHeader({
         style={[
           styles.sidePanelCloseButton,
           settingsDrawerInOverview ? styles.sidePanelCloseButtonPrint : null,
-          settingsDrawerInOverview && settingsPrintDarkMode
-            ? styles.sidePanelCloseButtonPrintDark
-            : null,
+          darkHeader ? styles.sidePanelCloseButtonPrintDark : null,
         ]}
         testID={
           settingsDrawerInOverview
@@ -74,7 +71,7 @@ export function SettingsDrawerHeader({
         <MaterialCommunityIcons
           name={settingsDrawerInOverview ? "close" : "chevron-left"}
           size={22}
-          color={colors.textPrimary}
+          color={darkHeader ? "#F0F4F8" : colors.textPrimary}
         />
       </Pressable>
     </View>

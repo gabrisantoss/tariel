@@ -61,6 +61,8 @@ function criarPendencia(
     aiMode: "detalhado",
     aiSummary: "Detalhado",
     aiMessagePrefix: "",
+    aiLearningOptIn: false,
+    aiTone: "profissional",
     ...overrides,
   };
 }
@@ -375,6 +377,7 @@ describe("useOfflineQueueController", () => {
     expect(enviarMensagemChatMobile).toHaveBeenCalledWith(
       "token-123",
       expect.objectContaining({
+        tone: "profissional",
         guidedInspectionDraft: item.guidedInspectionDraft,
         guidedInspectionContext: {
           template_key: "nr35_linha_vida",

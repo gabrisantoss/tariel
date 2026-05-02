@@ -16,6 +16,7 @@ import type {
   MobileReviewPackage,
   MobileSurfaceAction,
 } from "../../types/mobile";
+import type { AppSettings } from "../../settings";
 
 export type ActiveThread = "chat" | "mesa" | "finalizar";
 export type ActivityNotificationKind =
@@ -115,6 +116,8 @@ export interface OfflinePendingMessage {
   aiMode: MobileChatMode;
   aiSummary: string;
   aiMessagePrefix: string;
+  aiLearningOptIn?: boolean;
+  aiTone?: AppSettings["ai"]["tone"];
 }
 
 export interface MobileActivityNotification {

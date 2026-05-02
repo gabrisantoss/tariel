@@ -12,6 +12,7 @@ import type {
   ApiHealthStatus,
   MobileQualityGateResponse,
 } from "../../types/mobile";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { modalStyles } from "./QualityGateModal.styles";
 import {
@@ -62,6 +63,7 @@ export function QualityGateModal({
   onConfirm,
   onChangeReason,
 }: QualityGateModalProps) {
+  const { t } = useAppTranslation();
   const overrideAvailable = qualityGatePermiteOverride(payload);
   const approved = Boolean(payload?.aprovado);
   const reasonRequired = Boolean(
@@ -127,11 +129,13 @@ export function QualityGateModal({
           <View style={modalStyles.header}>
             <View style={modalStyles.headerCopy}>
               <Text style={modalStyles.eyebrow}>quality gate</Text>
-              <Text style={modalStyles.title}>{title}</Text>
+              <Text style={modalStyles.title}>{t(title)}</Text>
               <Text style={modalStyles.description}>
-                {notice.trim() ||
-                  payload?.mensagem ||
-                  "Valide a trilha do caso antes de concluir a emissão."}
+                {t(
+                  notice.trim() ||
+                    payload?.mensagem ||
+                    "Valide a trilha do caso antes de concluir a emissão.",
+                )}
               </Text>
             </View>
             <Pressable onPress={onClose} style={modalStyles.closeButton}>
@@ -147,7 +151,7 @@ export function QualityGateModal({
             <View style={modalStyles.loadingState}>
               <ActivityIndicator color={colors.accent} size="small" />
               <Text style={modalStyles.loadingText}>
-                Validando checklist e política do caso...
+                {t("Validando checklist e política do caso...")}
               </Text>
             </View>
           ) : payload ? (
@@ -187,14 +191,14 @@ export function QualityGateModal({
           ) : (
             <View style={modalStyles.emptyState}>
               <Text style={modalStyles.emptyText}>
-                Não foi possível carregar o quality gate deste caso agora.
+                {t("Não foi possível carregar o quality gate deste caso agora.")}
               </Text>
             </View>
           )}
 
           <View style={modalStyles.footer}>
             <Pressable onPress={onClose} style={modalStyles.secondaryButton}>
-              <Text style={modalStyles.secondaryButtonText}>Fechar</Text>
+              <Text style={modalStyles.secondaryButtonText}>{t("Fechar")}</Text>
             </Pressable>
             <Pressable
               accessibilityState={{ disabled: !canConfirm }}
@@ -213,7 +217,7 @@ export function QualityGateModal({
                 <ActivityIndicator color={colors.white} size="small" />
               ) : (
                 <Text style={modalStyles.primaryButtonText}>
-                  {primaryLabel}
+                  {t(primaryLabel)}
                 </Text>
               )}
             </Pressable>

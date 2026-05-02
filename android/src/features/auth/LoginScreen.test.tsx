@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 
 import { LoginScreen, type LoginScreenProps } from "./LoginScreen";
 
@@ -63,8 +63,8 @@ function createProps(
 }
 
 describe("LoginScreen", () => {
-  it("mantém o login enxuto e sem textos auxiliares ou login social", () => {
-    const { queryByText, queryByTestId } = render(
+  it("mantém o login enxuto e mostra login social", () => {
+    const { getByTestId, queryByText } = render(
       <LoginScreen {...createProps()} />,
     );
 
@@ -74,7 +74,20 @@ describe("LoginScreen", () => {
     expect(
       queryByText(/Use o email corporativo liberado pela operação/i),
     ).toBeNull();
-    expect(queryByTestId("login-google-button")).toBeNull();
-    expect(queryByTestId("login-microsoft-button")).toBeNull();
+    expect(getByTestId("login-google-button")).toBeTruthy();
+    expect(getByTestId("login-microsoft-button")).toBeTruthy();
+  });
+
+  it("aciona o provedor social selecionado", () => {
+    const onLoginSocial = jest.fn();
+    const { getByTestId } = render(
+      <LoginScreen {...createProps({ onLoginSocial })} />,
+    );
+
+    fireEvent.press(getByTestId("login-google-button"));
+    fireEvent.press(getByTestId("login-microsoft-button"));
+
+    expect(onLoginSocial).toHaveBeenNthCalledWith(1, "Google");
+    expect(onLoginSocial).toHaveBeenNthCalledWith(2, "Microsoft");
   });
 });

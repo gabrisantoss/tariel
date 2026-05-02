@@ -5,6 +5,7 @@ import type {
   ApiHealthStatus,
   MobileQualityGateResponse,
 } from "../../types/mobile";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import type { MobileReportPackDraftSummary } from "./reportPackHelpers";
 import { modalStyles } from "./QualityGateModal.styles";
@@ -50,6 +51,7 @@ export function QualityGateSummaryHero(props: {
   summaryChips: QualityGateSummaryChip[];
 }) {
   const { statusSummary, summaryChips } = props;
+  const { t } = useAppTranslation();
 
   return (
     <View style={[modalStyles.summaryHero, heroToneStyle(statusSummary.tone)]}>
@@ -68,17 +70,17 @@ export function QualityGateSummaryHero(props: {
         </View>
         <View style={modalStyles.summaryHeroCopy}>
           <Text style={modalStyles.summaryHeroLabel}>
-            {statusSummary.label}
+            {t(statusSummary.label)}
           </Text>
           <Text style={modalStyles.summaryHeroDescription}>
-            {statusSummary.description}
+            {t(statusSummary.description)}
           </Text>
         </View>
       </View>
       <View style={modalStyles.summaryChipRow}>
         {summaryChips.map((item) => (
           <View key={item.key} style={modalStyles.summaryChip}>
-            <Text style={modalStyles.summaryChipText}>{item.label}</Text>
+            <Text style={modalStyles.summaryChipText}>{t(item.label)}</Text>
           </View>
         ))}
       </View>
@@ -93,25 +95,26 @@ export function QualityGateMetricRow(props: {
   textCount: string | null;
 }) {
   const { evidenceCount, photoCount, reportPackSummary, textCount } = props;
+  const { t } = useAppTranslation();
 
   return (
     <View style={modalStyles.metricRow}>
       {textCount ? (
         <View style={modalStyles.metricCard}>
           <Text style={modalStyles.metricValue}>{textCount}</Text>
-          <Text style={modalStyles.metricLabel}>Registros</Text>
+          <Text style={modalStyles.metricLabel}>{t("Registros")}</Text>
         </View>
       ) : null}
       {evidenceCount ? (
         <View style={modalStyles.metricCard}>
           <Text style={modalStyles.metricValue}>{evidenceCount}</Text>
-          <Text style={modalStyles.metricLabel}>Evidências</Text>
+          <Text style={modalStyles.metricLabel}>{t("Evidências")}</Text>
         </View>
       ) : null}
       {photoCount ? (
         <View style={modalStyles.metricCard}>
           <Text style={modalStyles.metricValue}>{photoCount}</Text>
-          <Text style={modalStyles.metricLabel}>Fotos</Text>
+          <Text style={modalStyles.metricLabel}>{t("Fotos")}</Text>
         </View>
       ) : null}
       {reportPackSummary?.totalBlocks ? (
@@ -119,7 +122,7 @@ export function QualityGateMetricRow(props: {
           <Text style={modalStyles.metricValue}>
             {`${reportPackSummary.readyBlocks}/${reportPackSummary.totalBlocks}`}
           </Text>
-          <Text style={modalStyles.metricLabel}>Blocos</Text>
+          <Text style={modalStyles.metricLabel}>{t("Blocos")}</Text>
         </View>
       ) : null}
     </View>
@@ -131,34 +134,39 @@ export function QualityGateReportPackSection(props: {
   reportPackSummary: MobileReportPackDraftSummary | null;
 }) {
   const { blockingNarrative, reportPackSummary } = props;
+  const { t } = useAppTranslation();
   if (!reportPackSummary) {
     return null;
   }
 
   return (
     <View style={modalStyles.section} testID="quality-gate-report-pack-section">
-      <Text style={modalStyles.sectionTitle}>Prontidão do pré-laudo</Text>
+      <Text style={modalStyles.sectionTitle}>{t("Prontidão do pré-laudo")}</Text>
       <Text style={modalStyles.sectionDescription}>
-        {`${reportPackSummary.readinessLabel}. ${reportPackSummary.readinessDetail}`}
+        {t(
+          `${reportPackSummary.readinessLabel}. ${reportPackSummary.readinessDetail}`,
+        )}
       </Text>
       {blockingNarrative ? (
-        <Text style={modalStyles.issueMeta}>{blockingNarrative}</Text>
+        <Text style={modalStyles.issueMeta}>{t(blockingNarrative)}</Text>
       ) : null}
       <Text style={modalStyles.issueMeta}>
-        {`${reportPackSummary.templateLabel} • ${reportPackSummary.finalValidationModeLabel} • conflito ${reportPackSummary.maxConflictScore}`}
+        {t(
+          `${reportPackSummary.templateLabel} • ${reportPackSummary.finalValidationModeLabel} • conflito ${reportPackSummary.maxConflictScore}`,
+        )}
       </Text>
       {reportPackSummary.blockSummaries.map((item) => (
         <View key={item.key} style={modalStyles.issueCard}>
           <View style={modalStyles.issueHeader}>
-            <Text style={modalStyles.issueTitle}>{item.title}</Text>
-            <Text style={modalStyles.issueBadge}>{item.statusLabel}</Text>
+            <Text style={modalStyles.issueTitle}>{t(item.title)}</Text>
+            <Text style={modalStyles.issueBadge}>{t(item.statusLabel)}</Text>
           </View>
-          <Text style={modalStyles.issueText}>{item.summary}</Text>
+          <Text style={modalStyles.issueText}>{t(item.summary)}</Text>
         </View>
       ))}
       {reportPackSummary.missingEvidenceMessages.map((item) => (
         <Text key={item} style={modalStyles.sectionDescription}>
-          {item}
+          {t(item)}
         </Text>
       ))}
     </View>
@@ -169,6 +177,7 @@ export function QualityGateMissingItemsSection(props: {
   items: NonNullable<MobileQualityGateResponse["faltantes"]>;
 }) {
   const { items } = props;
+  const { t } = useAppTranslation();
   if (!items.length) {
     return null;
   }
@@ -176,20 +185,21 @@ export function QualityGateMissingItemsSection(props: {
   return (
     <View style={modalStyles.section}>
       <Text style={modalStyles.sectionTitle}>
-        Pendências que ainda bloqueiam o caso
+        {t("Pendências que ainda bloqueiam o caso")}
       </Text>
       {items.map((item) => (
         <View key={item.id} style={modalStyles.issueCard}>
           <View style={modalStyles.issueHeader}>
-            <Text style={modalStyles.issueTitle}>{item.titulo}</Text>
-            <Text style={modalStyles.issueBadge}>Faltante</Text>
+            <Text style={modalStyles.issueTitle}>{t(item.titulo)}</Text>
+            <Text style={modalStyles.issueBadge}>{t("Faltante")}</Text>
           </View>
           <Text style={modalStyles.issueMeta}>
-            {item.categoria || "coleta"} • atual {String(item.atual ?? "-")} •
-            mínimo {String(item.minimo ?? "-")}
+            {t(item.categoria || "coleta")} • {t("atual")}{" "}
+            {String(item.atual ?? "-")} • {t("mínimo")}{" "}
+            {String(item.minimo ?? "-")}
           </Text>
           {!!item.observacao && (
-            <Text style={modalStyles.issueText}>{item.observacao}</Text>
+            <Text style={modalStyles.issueText}>{t(item.observacao)}</Text>
           )}
         </View>
       ))}
@@ -200,6 +210,7 @@ export function QualityGateMissingItemsSection(props: {
 export function QualityGateGuideSection(props: {
   payload: MobileQualityGateResponse;
 }) {
+  const { t } = useAppTranslation();
   const guideItems = props.payload.roteiro_template?.itens || [];
   if (!guideItems.length) {
     return null;
@@ -208,11 +219,11 @@ export function QualityGateGuideSection(props: {
   return (
     <View style={modalStyles.section}>
       <Text style={modalStyles.sectionTitle}>
-        Roteiro obrigatório do template
+        {t("Roteiro obrigatório do template")}
       </Text>
       {!!props.payload.roteiro_template?.descricao && (
         <Text style={modalStyles.sectionDescription}>
-          {props.payload.roteiro_template.descricao}
+          {t(props.payload.roteiro_template.descricao)}
         </Text>
       )}
       {guideItems.map((item) => (
@@ -223,9 +234,11 @@ export function QualityGateGuideSection(props: {
             size={16}
           />
           <View style={modalStyles.guideCopy}>
-            <Text style={modalStyles.guideTitle}>{item.titulo}</Text>
+            <Text style={modalStyles.guideTitle}>{t(item.titulo)}</Text>
             {!!item.descricao && (
-              <Text style={modalStyles.guideDescription}>{item.descricao}</Text>
+              <Text style={modalStyles.guideDescription}>
+                {t(item.descricao)}
+              </Text>
             )}
           </View>
         </View>
@@ -241,40 +254,47 @@ export function QualityGateOverrideSection(props: {
   reasonRequired: boolean;
 }) {
   const { onChangeReason, payload, reason, reasonRequired } = props;
+  const { t } = useAppTranslation();
 
   return (
     <View style={modalStyles.section}>
-      <Text style={modalStyles.sectionTitle}>Exceção governada disponível</Text>
+      <Text style={modalStyles.sectionTitle}>
+        {t("Exceção governada disponível")}
+      </Text>
       <Text style={modalStyles.sectionDescription}>
-        {payload.human_override_policy?.message ||
-          "A divergência pode seguir com justificativa interna."}
+        {t(
+          payload.human_override_policy?.message ||
+            "A divergência pode seguir com justificativa interna.",
+        )}
       </Text>
       {payload.human_override_policy?.matched_override_case_labels?.length ? (
         <View style={modalStyles.caseLabelRow}>
           {payload.human_override_policy.matched_override_case_labels.map(
             (label) => (
               <View key={label} style={modalStyles.caseLabelChip}>
-                <Text style={modalStyles.caseLabelText}>{label}</Text>
+                <Text style={modalStyles.caseLabelText}>{t(label)}</Text>
               </View>
             ),
           )}
         </View>
       ) : null}
       <Text style={modalStyles.responsibilityText}>
-        {payload.human_override_policy?.responsibility_notice}
+        {t(payload.human_override_policy?.responsibility_notice || "")}
       </Text>
       <TextInput
         multiline
         onChangeText={onChangeReason}
-        placeholder="Explique internamente por que o caso seguirá mesmo assim."
+        placeholder={t("Explique internamente por que o caso seguirá mesmo assim.")}
         placeholderTextColor={colors.textSecondary}
         style={modalStyles.reasonInput}
         value={reason}
       />
       <Text style={modalStyles.reasonHint}>
         {reasonRequired
-          ? `Justificativa interna obrigatória com pelo menos ${QUALITY_GATE_OVERRIDE_MIN_REASON_LENGTH} caracteres.`
-          : "Justificativa interna opcional."}
+          ? t(
+              `Justificativa interna obrigatória com pelo menos ${QUALITY_GATE_OVERRIDE_MIN_REASON_LENGTH} caracteres.`,
+            )
+          : t("Justificativa interna opcional.")}
       </Text>
     </View>
   );
@@ -285,6 +305,7 @@ export function QualityGateCorrectionSection(props: {
   reviewModeLabel: string;
 }) {
   const { blockingNarrative, reviewModeLabel } = props;
+  const { t } = useAppTranslation();
   const nextAction =
     reviewModeLabel === "Mesa obrigatória"
       ? "Resolva os bloqueios no chat e então siga para a Mesa."
@@ -293,18 +314,19 @@ export function QualityGateCorrectionSection(props: {
   return (
     <View style={modalStyles.section}>
       <Text style={modalStyles.sectionTitle}>
-        Correção necessária antes de seguir
+        {t("Correção necessária antes de seguir")}
       </Text>
       <Text style={modalStyles.sectionDescription}>
         {blockingNarrative
-          ? `${blockingNarrative} ainda seguram o avanço. ${nextAction}`
-          : `Ajuste a coleta do caso antes de seguir. ${nextAction}`}
+          ? t(`${blockingNarrative} ainda seguram o avanço. ${nextAction}`)
+          : t(`Ajuste a coleta do caso antes de seguir. ${nextAction}`)}
       </Text>
     </View>
   );
 }
 
 export function QualityGateOfflineCard(props: { statusApi: ApiHealthStatus }) {
+  const { t } = useAppTranslation();
   if (props.statusApi !== "offline") {
     return null;
   }
@@ -313,8 +335,9 @@ export function QualityGateOfflineCard(props: { statusApi: ApiHealthStatus }) {
     <View style={modalStyles.offlineCard}>
       <MaterialCommunityIcons color={colors.accent} name="wifi-off" size={16} />
       <Text style={modalStyles.offlineText}>
-        Se a confirmação falhar por conexão, a finalização pode ficar guardada
-        na fila offline.
+        {t(
+          "Se a confirmação falhar por conexão, a finalização pode ficar guardada na fila offline.",
+        )}
       </Text>
     </View>
   );

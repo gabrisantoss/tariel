@@ -192,6 +192,8 @@ interface UseInspectorChatControllerParams<
     aiMode: MobileChatMode;
     aiSummary: string;
     aiMessagePrefix: string;
+    aiLearningOptIn?: boolean;
+    aiTone?: ChatAiRequestConfig["tone"];
   }) => TOfflineItem;
 }
 

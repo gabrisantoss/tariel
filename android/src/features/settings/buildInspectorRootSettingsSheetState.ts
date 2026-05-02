@@ -104,8 +104,8 @@ export function buildInspectorRootSettingsSheetState({
       integracoesExternas:
         settingsSupportState.presentationState.integracoesExternas,
       modeloIa: settingsBindings.ai.modeloIa,
-      nomeAutomaticoConversas:
-        settingsSupportState.presentationState.nomeAutomaticoConversas,
+      estiloResposta: settingsBindings.ai.estiloResposta,
+      idiomaResposta: settingsBindings.ai.idiomaResposta,
       nomeCompletoDraft:
         settingsSupportState.presentationState.nomeCompletoDraft,
       nomeExibicaoDraft:
@@ -142,8 +142,6 @@ export function buildInspectorRootSettingsSheetState({
         settingsSupportState.presentationActions.setFeedbackDraft,
       onSetFilaSuporteLocal:
         settingsSupportState.presentationActions.setFilaSuporteLocal,
-      onSetNomeAutomaticoConversas:
-        settingsSupportState.presentationActions.setNomeAutomaticoConversas,
       onSetNomeCompletoDraft:
         settingsSupportState.presentationActions.setNomeCompletoDraft,
       onSetNomeExibicaoDraft:

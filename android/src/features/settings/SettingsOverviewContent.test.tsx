@@ -22,6 +22,7 @@ function createProps() {
     corDestaqueResumoConfiguracao: "Laranja",
     detalheGovernancaConfiguracao:
       "PDF oficial divergente em 2 casos disponíveis no mobile.",
+    estiloRespostaResumoConfiguracao: "detalhado",
     iniciaisPerfilConfiguracao: "GT",
     nomeUsuarioExibicao: "Gabriel",
     onAbrirPaginaConfiguracoes: jest.fn(),
@@ -47,15 +48,10 @@ describe("SettingsOverviewContent", () => {
     );
 
     expect(getByTestId("settings-overview-summary-card")).toBeTruthy();
-    expect(getByTestId("settings-overview-signal-workspace")).toBeTruthy();
-    expect(getByTestId("settings-overview-signal-theme")).toBeTruthy();
-    expect(getByTestId("settings-overview-signal-contact")).toBeTruthy();
-    expect(getByTestId("settings-overview-signal-governance")).toBeTruthy();
     expect(getByTestId("settings-overview-account-card")).toBeTruthy();
-    expect(getByTestId("settings-overview-plan-card")).toBeTruthy();
-    expect(getByTestId("settings-overview-contact-card")).toBeTruthy();
-    expect(getByTestId("settings-overview-governance")).toBeTruthy();
+    expect(getByTestId("settings-print-plan-row")).toBeTruthy();
     expect(getAllByText("Plano Pro").length).toBeGreaterThan(0);
+    expect(getAllByText("Estilo da resposta: detalhado").length).toBe(1);
     expect(getAllByText("Tariel • Operador único").length).toBeGreaterThan(0);
     expect(
       getAllByText("2 casos com reemissão recomendada").length,
@@ -69,6 +65,18 @@ describe("SettingsOverviewContent", () => {
     fireEvent.press(getByTestId("settings-overview-security-card"));
 
     expect(props.onAbrirPaginaConfiguracoes).toHaveBeenCalledWith("seguranca");
+  });
+
+  it("mantém o plano como informação dentro de sistema e suporte", () => {
+    const props = createProps();
+    const { getByTestId } = render(<SettingsOverviewContent {...props} />);
+
+    fireEvent.press(getByTestId("settings-print-plan-row"));
+
+    expect(props.onAbrirPaginaConfiguracoes).not.toHaveBeenCalled();
+    expect(props.onAbrirPaginaConfiguracoes).not.toHaveBeenCalledWith(
+      "contaAcesso",
+    );
   });
 
   it("fecha o drawer e solicita logout ao sair", () => {

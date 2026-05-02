@@ -20,6 +20,10 @@ export const chatModalStyles = {
     padding: spacing.md,
     justifyContent: "flex-end",
   },
+  activityModalKeyboard: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
   appLockBackdrop: {
     flex: 1,
     backgroundColor: "rgba(6, 12, 20, 0.72)",
@@ -436,6 +440,10 @@ export const chatModalStyles = {
     paddingRight: 8,
     paddingVertical: 5,
   },
+  composerRowDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
+  },
   attachInsideButton: {
     width: 30,
     height: 30,
@@ -456,6 +464,9 @@ export const chatModalStyles = {
     paddingVertical: 7,
     color: colors.textPrimary,
     fontSize: 14,
+  },
+  composerInputDark: {
+    color: "#F0F4F8",
   },
   composerInputDisabled: {
     color: colors.textSecondary,

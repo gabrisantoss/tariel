@@ -1,13 +1,13 @@
 import { Text, View } from "react-native";
 
 import { ProfileAvatarPicker } from "../../settings/components";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { styles } from "../InspectorMobileApp.styles";
 import {
   SettingsOverviewCard,
   SettingsPrintRow,
   SettingsStatusPill,
 } from "./SettingsPrimitives";
-import { SettingsOverviewNowCard } from "./SettingsOverviewNowCard";
 import { SettingsOverviewQuickActionsSection } from "./SettingsOverviewQuickActionsSection";
 import { SettingsOverviewSystemSupportSection } from "./SettingsOverviewSystemSupportSection";
 import type {
@@ -29,6 +29,7 @@ interface SettingsOverviewContentProps {
   resumoGovernancaConfiguracao: string;
   temaResumoConfiguracao: string;
   corDestaqueResumoConfiguracao: string;
+  estiloRespostaResumoConfiguracao: string;
   onUploadFotoPerfil: () => void;
   onAbrirPaginaConfiguracoes: (
     page: SettingsDrawerPage,
@@ -47,18 +48,18 @@ export function SettingsOverviewContent({
   detalheGovernancaConfiguracao,
   workspaceResumoConfiguracao,
   planoResumoConfiguracao,
-  contaEmailLabel,
-  contaTelefoneLabel,
   reemissoesRecomendadasTotal,
   resumoGovernancaConfiguracao,
   temaResumoConfiguracao,
   corDestaqueResumoConfiguracao,
+  estiloRespostaResumoConfiguracao,
   onUploadFotoPerfil,
   onAbrirPaginaConfiguracoes,
   onReportarProblema,
   onFecharConfiguracoes,
   onLogout,
 }: SettingsOverviewContentProps) {
+  const { t } = useAppTranslation();
   return (
     <View style={styles.settingsPrintOverview}>
       <View
@@ -85,7 +86,7 @@ export function SettingsOverviewContent({
                   : null,
               ]}
             >
-              Perfil
+              {t("Perfil")}
             </Text>
             <Text
               style={[
@@ -107,59 +108,26 @@ export function SettingsOverviewContent({
         </View>
         <View style={styles.settingsSummaryChips}>
           <SettingsStatusPill
-            label={planoResumoConfiguracao || "Plano sob medida"}
+            label={planoResumoConfiguracao || "Plano não informado"}
             tone="accent"
           />
-          <SettingsStatusPill label={`Tema ${temaResumoConfiguracao}`} />
           <SettingsStatusPill
-            label={`Ênfase ${corDestaqueResumoConfiguracao}`}
+            label={`Estilo da resposta: ${estiloRespostaResumoConfiguracao}`}
           />
           <SettingsStatusPill
             label={
               reemissoesRecomendadasTotal
                 ? resumoGovernancaConfiguracao
-                : "Governança em dia"
+                : "Sem pendências"
             }
+            icon={
+              reemissoesRecomendadasTotal
+                ? "alert-outline"
+                : "check-circle-outline"
+            }
+            iconOnly
             tone={reemissoesRecomendadasTotal ? "danger" : "success"}
           />
-        </View>
-        <View style={styles.settingsHeroSignalGrid}>
-          <View
-            style={styles.settingsHeroSignalCard}
-            testID="settings-overview-signal-workspace"
-          >
-            <Text style={styles.settingsHeroSignalLabel}>Workspace</Text>
-            <Text style={styles.settingsHeroSignalValue}>
-              {workspaceResumoConfiguracao}
-            </Text>
-          </View>
-          <View
-            style={styles.settingsHeroSignalCard}
-            testID="settings-overview-signal-theme"
-          >
-            <Text style={styles.settingsHeroSignalLabel}>Ambiente</Text>
-            <Text style={styles.settingsHeroSignalValue}>
-              {`Tema ${temaResumoConfiguracao} · ${corDestaqueResumoConfiguracao}`}
-            </Text>
-          </View>
-          <View
-            style={styles.settingsHeroSignalCard}
-            testID="settings-overview-signal-contact"
-          >
-            <Text style={styles.settingsHeroSignalLabel}>Contato</Text>
-            <Text style={styles.settingsHeroSignalValue}>
-              {contaEmailLabel}
-            </Text>
-          </View>
-          <View
-            style={styles.settingsHeroSignalCard}
-            testID="settings-overview-signal-governance"
-          >
-            <Text style={styles.settingsHeroSignalLabel}>Governança</Text>
-            <Text style={styles.settingsHeroSignalValue}>
-              {resumoGovernancaConfiguracao}
-            </Text>
-          </View>
         </View>
       </View>
 
@@ -167,22 +135,12 @@ export function SettingsOverviewContent({
         <SettingsOverviewCard
           badge="Conta"
           darkMode={settingsPrintDarkMode}
-          description="Perfil, acesso e workspace atual."
-          icon="briefcase-outline"
+          description="Nome, contato e acesso principal."
+          icon="account-circle-outline"
           onPress={() => onAbrirPaginaConfiguracoes("contaAcesso")}
           testID="settings-overview-account-card"
-          title="Operação ativa"
+          title="Conta e acesso"
           tone="accent"
-        />
-        <SettingsOverviewCard
-          badge="Plano"
-          darkMode={settingsPrintDarkMode}
-          description="Plano atual e superfícies liberadas no mobile."
-          icon="star-circle-outline"
-          onPress={() => onAbrirPaginaConfiguracoes("contaAcesso")}
-          testID="settings-overview-plan-card"
-          title="Plano e liberação"
-          tone="success"
         />
         <SettingsOverviewCard
           badge="App"
@@ -191,7 +149,7 @@ export function SettingsOverviewContent({
           icon="tune-variant"
           onPress={() => onAbrirPaginaConfiguracoes("experiencia")}
           testID="settings-overview-experience-card"
-          title="Experiência mobile"
+          title="Preferências"
         />
         <SettingsOverviewCard
           badge="Revisar"
@@ -204,21 +162,10 @@ export function SettingsOverviewContent({
           icon="shield-outline"
           onPress={() => onAbrirPaginaConfiguracoes("seguranca")}
           testID="settings-overview-security-card"
-          title="Segurança e dados"
+          title="Segurança e privacidade"
           tone="danger"
         />
       </View>
-
-      <SettingsOverviewNowCard
-        contaEmailLabel={contaEmailLabel}
-        contaTelefoneLabel={contaTelefoneLabel}
-        detalheGovernancaConfiguracao={detalheGovernancaConfiguracao}
-        planoResumoConfiguracao={planoResumoConfiguracao}
-        reemissoesRecomendadasTotal={reemissoesRecomendadasTotal}
-        resumoGovernancaConfiguracao={resumoGovernancaConfiguracao}
-        temaResumoConfiguracao={temaResumoConfiguracao}
-        workspaceResumoConfiguracao={workspaceResumoConfiguracao}
-      />
 
       <SettingsOverviewQuickActionsSection
         corDestaqueResumoConfiguracao={corDestaqueResumoConfiguracao}
@@ -233,6 +180,7 @@ export function SettingsOverviewContent({
       <SettingsOverviewSystemSupportSection
         onAbrirPaginaConfiguracoes={onAbrirPaginaConfiguracoes}
         onReportarProblema={onReportarProblema}
+        planoResumoConfiguracao={planoResumoConfiguracao}
         settingsPrintDarkMode={settingsPrintDarkMode}
       />
 

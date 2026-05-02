@@ -70,6 +70,7 @@ local-mobile-api.error.log
 local-mobile-api.pid
 android/expo-mobile.log
 android/expo-mobile.pid
+android/expo-mobile-metro.pid
 android/assets/*preview*.png
 picker-*.png
 scripts/*keyboard-layout.png

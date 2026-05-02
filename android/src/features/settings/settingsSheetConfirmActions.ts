@@ -533,16 +533,14 @@ export async function handleSettingsSheetConfirmDelegated({
       return "continue";
     }
     case "plan": {
-      const proximoPlano = nextOptionValue(plan.current, PLAN_OPTIONS);
-      plan.onChange(proximoPlano);
       ui.onRegistrarEventoSegurancaLocal({
-        title: "Plano ajustado no app",
-        meta: `Plano selecionado: ${proximoPlano}`,
+        title: "Plano consultado no app",
+        meta: `Plano atual: ${plan.current || "não informado"}`,
         status: "Agora",
         type: "data",
       });
       ui.onNotificarConfiguracaoConcluida(
-        `Plano atualizado para ${proximoPlano}. O resumo da assinatura já reflete essa mudança neste dispositivo.`,
+        "Plano e liberações consultados. Alterações de assinatura seguem pelo canal comercial autorizado.",
       );
       return "continue";
     }

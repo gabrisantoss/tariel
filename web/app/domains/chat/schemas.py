@@ -64,10 +64,12 @@ class DadosChat(BaseModel):
     setor: str = Field(default="geral", max_length=50)
     historico: list[MensagemHistorico] = Field(default_factory=list, max_length=LIMITE_HISTORICO)
     modo: Literal["curto", "detalhado", "deep_research"] = Field(default="detalhado")
+    tone: Literal["profissional", "casual", "técnico", "amigável"] = Field(default="técnico")
     entry_mode_preference: Literal["chat_first", "evidence_first", "auto_recommended"] | None = Field(default=None)
     texto_documento: str = Field(default="", max_length=LIMITE_DOC_CHARS)
     nome_documento: str = Field(default="", max_length=LIMITE_NOME_DOCUMENTO)
     laudo_id: int | None = None
+    learning_opt_in: StrictBool = False
     iniciar_laudo: StrictBool = False
     coletar_para_laudo: StrictBool = True
     report_context_command: Literal["", "pause", "resume"] = ""

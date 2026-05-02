@@ -23,6 +23,7 @@ import { ThreadConversationMesaSurface } from "./ThreadConversationMesaSurface";
 
 export interface ThreadConversationPaneProps {
   vendoMesa: boolean;
+  darkMode?: boolean;
   carregandoMesa: boolean;
   mensagensMesa: MobileMesaMessage[];
   reportPackDraft?: MobileReportPackDraft | null;
@@ -53,10 +54,14 @@ export interface ThreadConversationPaneProps {
   onAbrirQualityGate?: () => void | Promise<void>;
   onUsarPerguntaPreLaudo?: (value: string) => void;
   sessionAccessToken: string | null;
+  threadFrameAccentColor?: string | null;
   onAbrirAnexo: (attachment: MobileAttachment) => void;
   anexoAbrindoChave: string;
   toAttachmentKey: (attachment: MobileAttachment, fallback: string) => string;
   conversaPermiteEdicao: boolean;
+  emptyStateImageAccessibilityLabel?: string;
+  emptyStateImageSource?: ImageSourcePropType | null;
+  emptyStateTitle?: string;
   onDefinirReferenciaMesaAtiva: (item: MobileMesaMessage) => void;
   accentColor: string;
   carregandoConversa: boolean;
@@ -75,6 +80,7 @@ export interface ThreadConversationPaneProps {
 
 export function ThreadConversationPane({
   vendoMesa,
+  darkMode = false,
   carregandoMesa,
   mensagensMesa,
   reportPackDraft,
@@ -105,6 +111,9 @@ export function ThreadConversationPane({
   anexoAbrindoChave,
   toAttachmentKey,
   conversaPermiteEdicao,
+  emptyStateImageAccessibilityLabel,
+  emptyStateImageSource,
+  emptyStateTitle,
   onDefinirReferenciaMesaAtiva,
   onExecutarComandoRevisaoMobile,
   accentColor,
@@ -129,6 +138,7 @@ export function ThreadConversationPane({
     return (
       <ThreadConversationMesaSurface
         accentColor={accentColor}
+        darkMode={darkMode}
         activeOwnerRole={activeOwnerRole}
         allowedLifecycleTransitions={allowedLifecycleTransitions}
         allowedNextLifecycleStatuses={allowedNextLifecycleStatuses}
@@ -170,8 +180,12 @@ export function ThreadConversationPane({
       carregandoConversa={carregandoConversa}
       caseLifecycleStatus={caseLifecycleStatus}
       conversaVazia={conversaVazia}
+      darkMode={darkMode}
       dynamicMessageBubbleStyle={dynamicMessageBubbleStyle}
       dynamicMessageTextStyle={dynamicMessageTextStyle}
+      emptyStateImageAccessibilityLabel={emptyStateImageAccessibilityLabel}
+      emptyStateImageSource={emptyStateImageSource}
+      emptyStateTitle={emptyStateTitle}
       enviandoMensagem={enviandoMensagem}
       fluxoFormalAtivo={fluxoFormalAtivo}
       keyboardVisible={keyboardVisible}

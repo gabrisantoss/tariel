@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { Platform, type ColorSchemeName } from "react-native";
 
 import {
   APP_BUILD_CHANNEL,
@@ -22,6 +22,10 @@ import {
   type SettingsDrawerPage,
   type SettingsSectionKey,
 } from "../settings/settingsNavigationMeta";
+import {
+  resolveMobileUserCommercialServicePackageLabel,
+  resolveMobileUserOperatingModelLabel,
+} from "./mobileUserAccess";
 import { buildSettingsSectionVisibility } from "../settings/settingsSectionVisibility";
 import {
   buildMobileAccessSummary,
@@ -45,6 +49,19 @@ import type {
 } from "./inspectorDerivedStateTypes";
 import type { SessionModalsStackFilter } from "./SessionModalsStack";
 import { colors, spacing } from "../../theme/tokens";
+
+export function resolveInspectorEffectiveTheme(
+  temaApp: string,
+  colorScheme: ColorSchemeName,
+): "claro" | "escuro" {
+  if (temaApp === "escuro") {
+    return "escuro";
+  }
+  if (temaApp === "automático" || temaApp === "sistema") {
+    return colorScheme === "dark" ? "escuro" : "claro";
+  }
+  return "claro";
+}
 
 export function buildInspectorConversationDerivedState(
   input: InspectorConversationDerivedStateInput,
@@ -189,12 +206,7 @@ export function buildInspectorConversationDerivedState(
         : corDestaque === "personalizado"
           ? "#008F7A"
           : colors.accent;
-  const temaEfetivo =
-    temaApp === "automático"
-      ? colorScheme === "dark"
-        ? "escuro"
-        : "claro"
-      : temaApp;
+  const temaEfetivo = resolveInspectorEffectiveTheme(temaApp, colorScheme);
   const appGradientColors: readonly [string, string, ...string[]] =
     temaEfetivo === "escuro"
       ? (["#0B141E", "#121F2D"] as const)
@@ -612,7 +624,11 @@ export function buildInspectorSettingsDerivedState(
     corDestaque === "laranja"
       ? "Padrão"
       : formatarTipoTemplateLaudo(corDestaque);
-  const planoResumoConfiguracao = planoAtual === "Pro" ? "Plus" : planoAtual;
+  const planoResumoConfiguracao =
+    resolveMobileUserCommercialServicePackageLabel(session?.bootstrap.usuario) ||
+    resolveMobileUserOperatingModelLabel(session?.bootstrap.usuario) ||
+    planoAtual ||
+    "Plano não informado";
   const workspaceResumoConfiguracao = buildMobileWorkspaceSummary(
     session?.bootstrap.usuario,
   );

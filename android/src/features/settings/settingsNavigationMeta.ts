@@ -160,7 +160,7 @@ export const SETTINGS_DRAWER_PAGE_META: Record<
     sections: ["conta"],
   },
   experiencia: {
-    title: "Experiência do app",
+    title: "Preferências",
     subtitle: "IA, aparência e notificações.",
     icon: "palette-outline",
     sections: ["preferenciasIa", "aparencia", "notificacoes"],

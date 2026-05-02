@@ -3,6 +3,8 @@ import {
   APP_BUILD_CHANNEL,
   APP_VERSION_LABEL,
   LICENSES_CATALOG,
+  RESPONSE_LANGUAGE_OPTIONS,
+  RESPONSE_STYLE_OPTIONS,
   TERMS_OF_USE_SECTIONS,
   UPDATE_CHANGELOG,
 } from "../InspectorMobileApp.constants";
@@ -18,7 +20,11 @@ import {
   SettingsProfileSheetContent,
   SettingsReauthSheetContent,
 } from "./SettingsSheetAccountContent";
-import { SettingsAiModelSheetContent } from "./SettingsSheetExperienceContent";
+import {
+  SettingsAiModelSheetContent,
+  SettingsResponseLanguageSheetContent,
+  SettingsResponseStyleSheetContent,
+} from "./SettingsSheetExperienceContent";
 import {
   SettingsBugSheetContent,
   SettingsFeedbackSheetContent,
@@ -86,6 +92,8 @@ export interface SettingsSheetBodyContentParams<
   }[];
   topicosAjudaResumo: string;
   modeloIa: (typeof AI_MODEL_OPTIONS)[number];
+  estiloResposta: (typeof RESPONSE_STYLE_OPTIONS)[number];
+  idiomaResposta: (typeof RESPONSE_LANGUAGE_OPTIONS)[number];
   salvarHistoricoConversas: boolean;
   retencaoDados: string;
   ultimaVerificacaoAtualizacaoLabel: string;
@@ -142,11 +150,15 @@ export interface SettingsSheetBodyContentParams<
   integracoesExternas: readonly TIntegration[];
   onSyncNow: (integration: TIntegration) => void;
   onToggleIntegracao: (integration: TIntegration) => void;
-  nomeAutomaticoConversas: boolean;
-  onToggleNomeAutomaticoConversas: (value: boolean) => void;
   onToggleUploadArquivos: (value: boolean) => void;
   uploadArquivosAtivo: boolean;
   onSelecionarModeloIa: (value: (typeof AI_MODEL_OPTIONS)[number]) => void;
+  onSelecionarEstiloResposta: (
+    value: (typeof RESPONSE_STYLE_OPTIONS)[number],
+  ) => void;
+  onSelecionarIdiomaResposta: (
+    value: (typeof RESPONSE_LANGUAGE_OPTIONS)[number],
+  ) => void;
   onAbrirPortalContinuation: (
     url: string,
     label: string,
@@ -178,7 +190,6 @@ export function renderSettingsSheetBodyContent<
   reautenticacaoExpiraEm,
   provedoresConectados,
   workspaceLabel,
-  perfilFotoHint,
   perfilFotoUri,
   nomeCompletoDraft,
   nomeExibicaoDraft,
@@ -224,12 +235,14 @@ export function renderSettingsSheetBodyContent<
   integracoesExternas,
   onSyncNow,
   onToggleIntegracao,
-  nomeAutomaticoConversas,
-  onToggleNomeAutomaticoConversas,
   onToggleUploadArquivos,
   uploadArquivosAtivo,
   onSelecionarModeloIa,
+  onSelecionarEstiloResposta,
+  onSelecionarIdiomaResposta,
   onAbrirPortalContinuation,
+  estiloResposta,
+  idiomaResposta,
 }: SettingsSheetBodyContentParams<TIntegration>) {
   if (!settingsSheet) {
     return null;
@@ -278,6 +291,20 @@ export function renderSettingsSheetBodyContent<
           onSelecionarModeloIa={onSelecionarModeloIa}
         />
       );
+    case "responseStyle":
+      return (
+        <SettingsResponseStyleSheetContent
+          estiloResposta={estiloResposta}
+          onSelecionarEstiloResposta={onSelecionarEstiloResposta}
+        />
+      );
+    case "responseLanguage":
+      return (
+        <SettingsResponseLanguageSheetContent
+          idiomaResposta={idiomaResposta}
+          onSelecionarIdiomaResposta={onSelecionarIdiomaResposta}
+        />
+      );
     case "reauth":
       return (
         <SettingsReauthSheetContent
@@ -290,7 +317,6 @@ export function renderSettingsSheetBodyContent<
     case "photo":
       return (
         <SettingsPhotoSheetContent
-          perfilFotoHint={perfilFotoHint}
           photoSource={perfilFotoUri ? { uri: perfilFotoUri } : null}
         />
       );
@@ -394,8 +420,6 @@ export function renderSettingsSheetBodyContent<
     case "plugins":
       return (
         <SettingsPluginsSheetContent
-          nomeAutomaticoConversas={nomeAutomaticoConversas}
-          onToggleNomeAutomaticoConversas={onToggleNomeAutomaticoConversas}
           onToggleUploadArquivos={onToggleUploadArquivos}
           uploadArquivosAtivo={uploadArquivosAtivo}
         />

@@ -56,7 +56,7 @@ describe("useSidePanelsController", () => {
     expect(params.setBuscaHistorico).not.toHaveBeenCalled();
   });
 
-  it("fecha o drawer de configuracoes quando o teclado sobe fora do historico", () => {
+  it("mantem o drawer de configuracoes aberto quando o teclado sobe em campos de configuracoes", () => {
     const params = createParams({
       configuracoesAberta: true,
       historicoAberto: false,
@@ -72,7 +72,7 @@ describe("useSidePanelsController", () => {
       keyboardHeight: 280,
     });
 
-    expect(params.setConfiguracoesAberta).toHaveBeenCalledWith(false);
-    expect(params.resetSettingsNavigation).toHaveBeenCalled();
+    expect(params.setConfiguracoesAberta).not.toHaveBeenCalledWith(false);
+    expect(params.resetSettingsNavigation).not.toHaveBeenCalled();
   });
 });

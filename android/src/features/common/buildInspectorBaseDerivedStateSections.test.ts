@@ -8,6 +8,7 @@ import {
   buildInspectorHistoryAndOfflineDerivedState,
   buildInspectorLayoutDerivedState,
   buildInspectorSettingsDerivedState,
+  resolveInspectorEffectiveTheme,
 } from "./buildInspectorBaseDerivedStateSections";
 
 function criarLaudoParcial(
@@ -31,6 +32,18 @@ function criarLaudoParcial(
     ...overrides,
   };
 }
+
+describe("resolveInspectorEffectiveTheme", () => {
+  it("usa o tema do sistema quando a opção está em automático", () => {
+    expect(resolveInspectorEffectiveTheme("automático", "dark")).toBe("escuro");
+    expect(resolveInspectorEffectiveTheme("automático", "light")).toBe("claro");
+    expect(resolveInspectorEffectiveTheme("sistema", "dark")).toBe("escuro");
+  });
+
+  it("mantém o tema escuro explícito mesmo com sistema claro", () => {
+    expect(resolveInspectorEffectiveTheme("escuro", "light")).toBe("escuro");
+  });
+});
 
 function criarPendenciaParcial(
   overrides: Partial<OfflinePendingMessage>,

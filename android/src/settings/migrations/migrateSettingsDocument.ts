@@ -335,10 +335,7 @@ function normalizeSettings(input: unknown): AppSettings {
         security.requireAuthOnOpen,
         fallback.security.requireAuthOnOpen,
       ),
-      hideInMultitask: normalizeBoolean(
-        security.hideInMultitask,
-        fallback.security.hideInMultitask,
-      ),
+      hideInMultitask: false,
       lockTimeout: normalizeOption(
         security.lockTimeout,
         LOCK_TIMEOUT_OPTIONS,
@@ -578,10 +575,7 @@ function migrateLegacySettings(input: Record<string, unknown>): AppSettings {
         input.requireAuthOnOpen,
         defaults.security.requireAuthOnOpen,
       ),
-      hideInMultitask: normalizeBoolean(
-        input.hideInMultitask,
-        defaults.security.hideInMultitask,
-      ),
+      hideInMultitask: false,
       lockTimeout: normalizeOption(
         input.lockTimeout,
         LOCK_TIMEOUT_OPTIONS,

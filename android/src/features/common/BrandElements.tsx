@@ -2,6 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Text, View } from "react-native";
 
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 
@@ -14,6 +15,8 @@ export function BrandIntroMark({
   title?: string;
   brandColor?: string;
 }) {
+  const { t } = useAppTranslation();
+
   return (
     <View
       style={compact ? styles.brandStageCompact : styles.threadEmptyBrandStage}
@@ -33,7 +36,9 @@ export function BrandIntroMark({
           opacity: 0.92,
         }}
       />
-      {title ? <Text style={styles.threadEmptyTitle}>{title}</Text> : null}
+      {title ? (
+        <Text style={styles.threadEmptyTitle}>{t(title)}</Text>
+      ) : null}
     </View>
   );
 }

@@ -91,6 +91,8 @@ describe("buildInspectorRootSettingsDrawerProps", () => {
         emailsAtivos: true,
         entradaPorVoz: true,
         estiloResposta: "objetivo",
+        handleAbrirEstiloResposta: jest.fn(),
+        handleAbrirIdiomaResposta: jest.fn(),
         handleAbrirAjudaDitado: jest.fn(),
         handleAbrirModeloIa: jest.fn(),
         handleToggleEntradaPorVoz: jest.fn(),
@@ -120,8 +122,6 @@ describe("buildInspectorRootSettingsDrawerProps", () => {
         setCriticalAlertsEnabled: jest.fn(),
         setDensidadeInterface: jest.fn(),
         setEmailsAtivos: jest.fn(),
-        setEstiloResposta: jest.fn(),
-        setIdiomaResposta: jest.fn(),
         setMemoriaIa: jest.fn(),
         setMesaCategoryEnabled: jest.fn(),
         setNotificaRespostas: jest.fn(),
@@ -130,7 +130,6 @@ describe("buildInspectorRootSettingsDrawerProps", () => {
         setSpeechRate: jest.fn(),
         setSystemCategoryEnabled: jest.fn(),
         setTamanhoFonte: jest.fn(),
-        setTemperaturaIa: jest.fn(),
         setTemaApp: jest.fn(),
         setTomConversa: jest.fn(),
         setVoiceLanguage: jest.fn(),
@@ -140,7 +139,6 @@ describe("buildInspectorRootSettingsDrawerProps", () => {
         sttSupported: true,
         systemCategoryEnabled: true,
         tamanhoFonte: "médio",
-        temperaturaIa: 0.4,
         temaApp: "claro",
         tomConversa: "formal",
         ttsSupported: true,
@@ -278,8 +276,12 @@ describe("buildInspectorRootSettingsDrawerProps", () => {
     expect(props.overviewContentProps.resumoGovernancaConfiguracao).toBe(
       "1 caso com reemissão recomendada",
     );
+    expect(props.overviewContentProps.estiloRespostaResumoConfiguracao).toBe(
+      "objetivo",
+    );
     expect(props.supportSectionProps.artigosAjudaCount).toBe(1);
     expect(props.supportSectionProps.emailRetorno).toBe("conta@tariel.test");
+    expect(props.supportSectionProps.planoResumoConfiguracao).toBe("Plano Pro");
     expect(props.experienceNotificationsSectionProps.showMesaCategory).toBe(
       true,
     );

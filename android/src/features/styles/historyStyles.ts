@@ -79,11 +79,18 @@ export const historyStyles = {
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfaceCanvas,
   },
+  historySearchShellDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   historySearchInput: {
     flex: 1,
     color: colors.textPrimary,
     fontSize: 14,
     paddingVertical: 10,
+  },
+  historySearchInputDark: {
+    color: "#F0F4F8",
   },
   historySummaryCard: {
     gap: spacing.sm,
@@ -92,6 +99,10 @@ export const historyStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfacePanelRaised,
+  },
+  historySummaryCardDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
   },
   historySummaryHeader: {
     flexDirection: "row",
@@ -112,6 +123,9 @@ export const historyStyles = {
     fontSize: 16,
     fontWeight: "800",
   },
+  historySummaryTitleDark: {
+    color: "#F0F4F8",
+  },
   historySummaryTopRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -122,6 +136,9 @@ export const historyStyles = {
     color: colors.textSecondary,
     fontSize: 12,
     fontWeight: "700",
+  },
+  historySummaryCountLabelDark: {
+    color: "#AFC0D2",
   },
   historySummaryMetricGrid: {
     flexDirection: "row",
@@ -138,10 +155,17 @@ export const historyStyles = {
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfaceCanvas,
   },
+  historySummaryMetricCardDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   historySummaryMetricValue: {
     color: colors.textPrimary,
     fontSize: 18,
     fontWeight: "800",
+  },
+  historySummaryMetricValueDark: {
+    color: "#F0F4F8",
   },
   historySummaryMetricLabel: {
     color: colors.textSecondary,
@@ -149,6 +173,9 @@ export const historyStyles = {
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.4,
+  },
+  historySummaryMetricLabelDark: {
+    color: "#AFC0D2",
   },
   historySummaryPills: {
     flexDirection: "row",
@@ -163,15 +190,25 @@ export const historyStyles = {
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfaceCanvas,
   },
+  historySummaryPillDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   historySummaryPillText: {
     color: colors.textSecondary,
     fontSize: 11,
     fontWeight: "700",
   },
+  historySummaryPillTextDark: {
+    color: "#C7D2DF",
+  },
   historySummaryText: {
     color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 17,
+  },
+  historySummaryTextDark: {
+    color: "#AFC0D2",
   },
   historyResumeCard: {
     gap: spacing.xs,
@@ -180,6 +217,10 @@ export const historyStyles = {
     borderWidth: 1,
     borderColor: colors.accentMuted,
     backgroundColor: colors.surfaceCanvas,
+  },
+  historyResumeCardDark: {
+    backgroundColor: "rgba(244,123,32,0.10)",
+    borderColor: "rgba(244,123,32,0.38)",
   },
   historyResumeHeader: {
     flexDirection: "row",
@@ -200,10 +241,16 @@ export const historyStyles = {
     fontSize: 14,
     fontWeight: "800",
   },
+  historyResumeTitleDark: {
+    color: "#F0F4F8",
+  },
   historyResumeDetail: {
     color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 18,
+  },
+  historyResumeDetailDark: {
+    color: "#AFC0D2",
   },
   historyResumeEmphasisPill: {
     paddingHorizontal: spacing.sm,
@@ -290,6 +337,9 @@ export const historyStyles = {
     textTransform: "uppercase",
     letterSpacing: 0.7,
   },
+  historySectionTitleDark: {
+    color: "#F0F4F8",
+  },
   historySectionCountBadge: {
     minWidth: 26,
     paddingHorizontal: 8,
@@ -299,10 +349,16 @@ export const historyStyles = {
     justifyContent: "center",
     backgroundColor: colors.surfaceSoft,
   },
+  historySectionCountBadgeDark: {
+    backgroundColor: "#172436",
+  },
   historySectionCountText: {
     color: colors.textSecondary,
     fontSize: 11,
     fontWeight: "800",
+  },
+  historySectionCountTextDark: {
+    color: "#AFC0D2",
   },
   historySectionItems: {
     gap: 0,
@@ -311,6 +367,10 @@ export const historyStyles = {
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfacePanelRaised,
     overflow: "hidden",
+  },
+  historySectionItemsDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
   },
   historyItemShell: {
     position: "relative",
@@ -355,6 +415,10 @@ export const historyStyles = {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
+  historyItemDark: {
+    backgroundColor: "#132231",
+    borderBottomColor: "#26384A",
+  },
   historyItemPrimary: {
     width: "100%",
   },
@@ -363,6 +427,9 @@ export const historyStyles = {
   },
   historyItemActive: {
     backgroundColor: colors.surfaceCanvas,
+  },
+  historyItemActiveDark: {
+    backgroundColor: "#1A2A3A",
   },
   historyItemLead: {
     flex: 1,
@@ -404,13 +471,22 @@ export const historyStyles = {
     fontSize: 15,
     fontWeight: "800",
   },
+  historyItemTitleDark: {
+    color: "#F0F4F8",
+  },
   historyItemTitleActive: {
     color: colors.textPrimary,
+  },
+  historyItemTitleActiveDark: {
+    color: "#F0F4F8",
   },
   historyItemPreview: {
     color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 18,
+  },
+  historyItemPreviewDark: {
+    color: "#AFC0D2",
   },
   historyItemPreviewActive: {
     color: colors.textSecondary,
@@ -429,6 +505,10 @@ export const historyStyles = {
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfaceSoft,
   },
+  historyItemBadgeDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   historyItemBadgeAccent: {
     backgroundColor: colors.accentWash,
     borderColor: colors.accentMuted,
@@ -445,14 +525,25 @@ export const historyStyles = {
     borderColor: colors.surfaceStrokeStrong,
     backgroundColor: colors.white,
   },
+  historyItemBadgeActiveDark: {
+    backgroundColor: "#243447",
+    borderColor: "#3B536C",
+  },
   historyItemBadgeMutedActive: {
     borderColor: colors.surfaceStrokeStrong,
     backgroundColor: colors.white,
+  },
+  historyItemBadgeMutedActiveDark: {
+    backgroundColor: "#243447",
+    borderColor: "#3B536C",
   },
   historyItemBadgeText: {
     color: colors.textSecondary,
     fontSize: 11,
     fontWeight: "700",
+  },
+  historyItemBadgeTextDark: {
+    color: "#C7D2DF",
   },
   historyItemBadgeTextAccent: {
     color: colors.accent,
@@ -480,9 +571,17 @@ export const historyStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  historyItemDetailPillDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   historyItemDetailPillActive: {
     backgroundColor: colors.white,
     borderColor: colors.surfaceStrokeStrong,
+  },
+  historyItemDetailPillActiveDark: {
+    backgroundColor: "#243447",
+    borderColor: "#3B536C",
   },
   historyItemDetailPillText: {
     color: colors.textSecondary,
@@ -490,6 +589,9 @@ export const historyStyles = {
     lineHeight: 15,
     fontWeight: "700",
     maxWidth: 220,
+  },
+  historyItemDetailPillTextDark: {
+    color: "#AFC0D2",
   },
   historyItemChevronBadge: {
     width: 30,
@@ -502,9 +604,17 @@ export const historyStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  historyItemChevronBadgeDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   historyItemChevronBadgeActive: {
     backgroundColor: colors.white,
     borderColor: colors.surfaceStrokeStrong,
+  },
+  historyItemChevronBadgeActiveDark: {
+    backgroundColor: "#243447",
+    borderColor: "#3B536C",
   },
   historyItemDetailPillTextActive: {
     color: colors.textPrimary,

@@ -68,10 +68,8 @@ export function SettingsReauthSheetContent({
 
 export function SettingsPhotoSheetContent({
   photoSource,
-  perfilFotoHint,
 }: {
   photoSource: ImageSourcePropType | null;
-  perfilFotoHint: string;
 }) {
   return (
     <View style={styles.settingsFlowStack}>
@@ -101,10 +99,6 @@ export function SettingsPhotoSheetContent({
             fluxos de suporte.
           </Text>
         </View>
-      </View>
-      <View style={styles.settingsInfoCard}>
-        <Text style={styles.settingsInfoTitle}>Status atual</Text>
-        <Text style={styles.settingsInfoText}>{perfilFotoHint}</Text>
       </View>
     </View>
   );
@@ -201,7 +195,7 @@ export function SettingsPlanSheetContent({
       ) : null}
       <View style={styles.settingsMiniList}>
         <View style={styles.settingsMiniListItem}>
-          <Text style={styles.settingsMiniListTitle}>Operação ativa</Text>
+          <Text style={styles.settingsMiniListTitle}>Liberações mobile</Text>
           <Text style={styles.settingsMiniListMeta}>{resumoOperacaoApp}</Text>
         </View>
         {links.map((item) => (
@@ -237,8 +231,8 @@ export function SettingsPlanSheetContent({
         <View style={styles.settingsMiniListItem}>
           <Text style={styles.settingsMiniListTitle}>Próximo passo</Text>
           <Text style={styles.settingsMiniListMeta}>
-            Ao confirmar, o app troca para a próxima opção de plano disponível
-            nesta conta.
+            Mudanças de plano devem ser feitas pelo canal comercial ou pelo
+            portal autorizado da conta.
           </Text>
         </View>
       </View>
@@ -436,14 +430,10 @@ export function SettingsIntegrationsSheetContent<
 
 export function SettingsPluginsSheetContent({
   uploadArquivosAtivo,
-  nomeAutomaticoConversas,
   onToggleUploadArquivos,
-  onToggleNomeAutomaticoConversas,
 }: {
   uploadArquivosAtivo: boolean;
-  nomeAutomaticoConversas: boolean;
   onToggleUploadArquivos: (value: boolean) => void;
-  onToggleNomeAutomaticoConversas: (value: boolean) => void;
 }) {
   return (
     <View style={styles.settingsFlowStack}>
@@ -452,12 +442,6 @@ export function SettingsPluginsSheetContent({
         onValueChange={onToggleUploadArquivos}
         title="Análise assistida de anexos"
         value={uploadArquivosAtivo}
-      />
-      <SettingsSwitchRow
-        icon="text-box-search-outline"
-        onValueChange={onToggleNomeAutomaticoConversas}
-        title="Títulos automáticos de conversa"
-        value={nomeAutomaticoConversas}
       />
     </View>
   );

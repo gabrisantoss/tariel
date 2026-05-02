@@ -47,8 +47,8 @@ describe("buildThreadContextState", () => {
 
     expect(state.mostrarContextoThread).toBe(true);
     expect(state.threadContextLayout).toBe("entry_chooser");
-    expect(state.laudoContextTitle).toBe("Por onde começar?");
-    expect(state.threadSpotlight.label).toBe("Chat livre como padrão");
+    expect(state.laudoContextTitle).toBe("Iniciar inspeção");
+    expect(state.threadSpotlight.label).toBe("Inspeção guiada");
     expect(state.threadInsights).toEqual([]);
     expect(state.chipsContextoThread).toEqual([]);
     expect(state.threadActions).toEqual(
@@ -75,7 +75,9 @@ describe("buildThreadContextState", () => {
         }),
       ]),
     );
-    expect(state.laudoContextDescription).toBe("Escolha um modo para iniciar.");
+    expect(state.laudoContextDescription).toBe(
+      "Laudo técnico com checklist, evidências e revisão quando exigida.",
+    );
 
     const nr35Action = state.threadActions.find(
       (item) => item.key === "guided-template-nr35_linha_vida",
@@ -135,10 +137,15 @@ describe("buildThreadContextState", () => {
     );
 
     expect(state.laudoContextTitle).toBe("Inspecao Geral");
-    expect(state.threadSpotlight.label).toBe("IA conduzindo coleta");
+    expect(state.threadSpotlight.label).toBe("Inspeção em coleta");
+    expect(state.laudoContextDescription).toContain("Coleta técnica flexível");
     expect(state.threadInsights[0]?.value).toBe("0/5");
     expect(state.chipsContextoThread).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          key: "template-family",
+          label: "Inspeção",
+        }),
         expect.objectContaining({
           key: "mesa-handoff",
           label: "Família exige Mesa",
@@ -159,6 +166,51 @@ describe("buildThreadContextState", () => {
       expect.objectContaining({ key: "guided-advance" }),
       expect.objectContaining({ key: "guided-stop" }),
     ]);
+  });
+
+  it("personaliza o chat guiado com a identidade visual da NR escolhida", () => {
+    const draft = createGuidedInspectionDraft("nr13");
+    const state = buildThreadContextState(
+      criarInput({
+        guidedInspectionDraft: draft,
+      }) as never,
+    );
+
+    expect(state.laudoContextTitle).toBe("NR13 Inspecoes e Integridade");
+    expect(state.laudoContextDescription).toContain(
+      "Pressão, integridade e documentação",
+    );
+    expect(state.threadSpotlight).toEqual(
+      expect.objectContaining({
+        label: "NR13 em coleta",
+        icon: "gauge",
+        tone: "accent",
+      }),
+    );
+    expect(state.chipsContextoThread).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "template-family",
+          label: "NR13",
+          icon: "gauge",
+        }),
+        expect.objectContaining({
+          key: "checklist",
+          label: "0/8 etapas",
+        }),
+      ]),
+    );
+    expect(state.threadInsights).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "familia",
+          label: "Família normativa",
+          value: "NR13",
+          detail: "Pressão, integridade e documentação",
+          icon: "gauge",
+        }),
+      ]),
+    );
   });
 
   it("expõe o estado de criação do caso enquanto o primeiro envio está em processamento", () => {
@@ -338,6 +390,7 @@ describe("buildThreadContextState", () => {
     );
 
     expect(state.threadSpotlight.label).toBe("Chat livre ativo");
+    expect(state.mostrarContextoThread).toBe(false);
     expect(state.chipsContextoThread).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -424,8 +477,8 @@ describe("buildThreadContextState", () => {
     );
 
     expect(state.threadContextLayout).toBe("entry_chooser");
-    expect(state.laudoContextTitle).toBe("Por onde começar?");
-    expect(state.threadSpotlight.label).toBe("IA recomenda guiado");
+    expect(state.laudoContextTitle).toBe("Iniciar inspeção");
+    expect(state.threadSpotlight.label).toBe("Guiado recomendado");
     expect(state.chipsContextoThread).toEqual([]);
     expect(state.threadActions).toEqual(
       expect.arrayContaining([

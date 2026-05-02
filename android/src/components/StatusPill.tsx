@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
+import { useAppTranslation } from "../i18n/appTranslation";
 import { colors, radii, spacing } from "../theme/tokens";
 import type { ApiHealthStatus } from "../types/mobile";
 
@@ -29,12 +30,13 @@ const statusCopy: Record<
 };
 
 export function StatusPill({ status }: StatusPillProps) {
+  const { t } = useAppTranslation();
   const current = statusCopy[status];
 
   return (
     <View style={[styles.container, { backgroundColor: current.tone }]}>
       <View style={[styles.dot, { backgroundColor: current.dot }]} />
-      <Text style={styles.label}>{current.label}</Text>
+      <Text style={styles.label}>{t(current.label)}</Text>
     </View>
   );
 }

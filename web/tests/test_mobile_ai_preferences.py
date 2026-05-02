@@ -5,6 +5,7 @@ from app.domains.chat.mobile_ai_preferences import (
     limpar_historico_visivel_chat,
     limpar_texto_visivel_chat,
 )
+from app.domains.chat.schemas import DadosChat
 
 
 def test_extrai_preferencias_embutidas_sem_poluir_texto_visivel() -> None:
@@ -24,6 +25,17 @@ def test_anexa_preferencias_so_no_contexto_interno() -> None:
 
     assert mensagem.startswith("[preferencias_ia_mobile]")
     assert mensagem.endswith("Registrar pressão do vaso.")
+
+
+def test_payload_mobile_aceita_consentimento_e_tom_da_ia() -> None:
+    dados = DadosChat(
+        mensagem="Registrar pressão.",
+        learning_opt_in=True,
+        tone="amigável",
+    )
+
+    assert dados.learning_opt_in is True
+    assert dados.tone == "amigável"
 
 
 def test_limpa_historico_visivel_e_aplica_fallback_para_evidencia() -> None:

@@ -10,6 +10,7 @@ import {
 import type { RefObject } from "react";
 
 import { EmptyState } from "../../components/EmptyState";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import type {
   MobileAttachment,
   MobileChatMessage,
@@ -27,6 +28,7 @@ import { renderizarReviewPackageMesa } from "./ThreadConversationReviewPackageCa
 
 interface ThreadConversationMesaSurfaceProps {
   carregandoMesa: boolean;
+  darkMode?: boolean;
   mensagensMesa: MobileMesaMessage[];
   reportPackDraft?: MobileReportPackDraft | null;
   reviewPackage?: MobileReviewPackage | null;
@@ -67,6 +69,7 @@ interface ThreadConversationMesaSurfaceProps {
 
 export function ThreadConversationMesaSurface({
   carregandoMesa,
+  darkMode = false,
   mensagensMesa,
   reportPackDraft,
   reviewPackage,
@@ -98,6 +101,8 @@ export function ThreadConversationMesaSurface({
   onExecutarComandoRevisaoMobile,
   reviewCommandBusy = false,
 }: ThreadConversationMesaSurfaceProps) {
+  const { t } = useAppTranslation();
+
   if (!mesaAcessoPermitido) {
     return (
       <View
@@ -110,11 +115,12 @@ export function ThreadConversationMesaSurface({
         <View testID="mesa-thread-blocked">
           <EmptyState
             compact
-            description={mesaIndisponivelDescricao}
-            eyebrow="Mesa"
+            darkMode={darkMode}
+            description={t(mesaIndisponivelDescricao)}
+            eyebrow={t("Mesa")}
             icon="shield-lock-outline"
             tone="default"
-            title={mesaIndisponivelTitulo}
+            title={t(mesaIndisponivelTitulo)}
           />
         </View>
       </View>
@@ -126,8 +132,10 @@ export function ThreadConversationMesaSurface({
       <View testID="mesa-thread-surface" style={styles.loadingState}>
         <View testID="mesa-thread-loading">
           <ActivityIndicator color={accentColor} size="large" />
-          <Text style={styles.loadingText}>
-            Abrindo a conversa com a mesa...
+          <Text
+            style={[styles.loadingText, darkMode ? styles.loadingTextDark : null]}
+          >
+            {t("Abrindo a conversa com a mesa...")}
           </Text>
         </View>
       </View>
@@ -146,11 +154,12 @@ export function ThreadConversationMesaSurface({
         <View testID="mesa-thread-unavailable">
           <EmptyState
             compact
-            description={mesaIndisponivelDescricao}
-            eyebrow="Mesa"
+            darkMode={darkMode}
+            description={t(mesaIndisponivelDescricao)}
+            eyebrow={t("Mesa")}
             icon="clipboard-clock-outline"
             tone="accent"
-            title={mesaIndisponivelTitulo}
+            title={t(mesaIndisponivelTitulo)}
           />
         </View>
       </View>

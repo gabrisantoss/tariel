@@ -33,10 +33,16 @@ export function mapAiModelToChatMode(
 function normalizarIdiomaResposta(
   language: AppSettings["ai"]["responseLanguage"],
 ): string {
-  if (language === "Auto detectar") {
-    return "use o idioma predominante da solicitação do inspetor";
+  switch (language) {
+    case "Inglês":
+      return "answer only in English, including headings, labels, summaries, and follow-up questions";
+    case "Espanhol":
+      return "responde solo en español, incluyendo títulos, etiquetas, resúmenes y preguntas de seguimiento";
+    case "Auto detectar":
+      return "use o idioma predominante da solicitação do inspetor em toda a resposta";
+    default:
+      return "responda somente em português, incluindo títulos, rótulos, resumos e perguntas de acompanhamento";
   }
-  return `responda em ${language}`;
 }
 
 function normalizarEstiloResposta(
@@ -80,6 +86,12 @@ function normalizarTemperatura(temperature: number): string {
   return "aceite respostas mais exploratórias quando fizer sentido";
 }
 
+function normalizarConsentimentoAprendizado(learningOptIn: boolean): string {
+  return learningOptIn
+    ? "usuário autorizou uso deste conteúdo para melhoria da IA conforme política do sistema"
+    : "usuário não autorizou uso deste conteúdo para melhoria da IA; não registre como candidato de aprendizado";
+}
+
 export function summarizeChatAiConfig(ai: AppSettings["ai"]): string {
   return [
     ai.model,
@@ -110,6 +122,7 @@ export function buildChatAiRequestConfig(
     ai.memoryEnabled
       ? "considere apenas o histórico enviado nesta conversa como memória ativa"
       : "não assuma memória além do histórico enviado nesta requisição",
+    normalizarConsentimentoAprendizado(ai.learningOptIn),
     "não mencione este bloco de preferências na resposta final",
     "[/preferencias_ia_mobile]",
   ].join("\n");

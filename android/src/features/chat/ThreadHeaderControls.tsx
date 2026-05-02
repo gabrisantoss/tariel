@@ -1,11 +1,13 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 
 export interface ThreadHeaderControlsProps {
   chatHasActiveCase: boolean;
+  darkMode?: boolean;
   finalizacaoDisponivel: boolean;
   headerSafeTopInset: number;
   keyboardVisible: boolean;
@@ -25,6 +27,7 @@ export interface ThreadHeaderControlsProps {
 
 export function ThreadHeaderControls({
   chatHasActiveCase,
+  darkMode = false,
   finalizacaoDisponivel,
   headerSafeTopInset,
   keyboardVisible,
@@ -41,6 +44,8 @@ export function ThreadHeaderControls({
   onOpenMesaTab,
   notificacoesMesaLaudoAtual,
 }: ThreadHeaderControlsProps) {
+  const { t } = useAppTranslation();
+
   type HeaderChip = {
     key: string;
     icon: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -50,31 +55,45 @@ export function ThreadHeaderControls({
 
   const totalBadge = notificacoesNaoLidas + filaOfflineTotal;
   const settingsAccessibilityLabel = totalBadge
-    ? `Abrir configuracoes, ${totalBadge} aviso${totalBadge === 1 ? "" : "s"} pendente${totalBadge === 1 ? "" : "s"}`
-    : "Abrir configuracoes";
+    ? `${t("Abrir configurações")}, ${t(
+        `${totalBadge} aviso${totalBadge === 1 ? "" : "s"} pendente${totalBadge === 1 ? "" : "s"}`,
+      )}`
+    : t("Abrir configurações");
   const blankChatEntry = !vendoMesa && !vendoFinalizacao && !chatHasActiveCase;
   const eyebrow = vendoFinalizacao
-    ? "Entrega técnica"
+    ? t("Entrega técnica")
     : vendoMesa
-      ? "Mesa avaliadora"
+      ? t("Mesa avaliadora")
       : blankChatEntry
-        ? "Nova inspeção"
-        : "Inspeção ativa";
-  const title = vendoFinalizacao ? "Finalizar" : vendoMesa ? "Mesa" : "Chat";
+        ? t("Nova inspeção")
+        : t("Inspeção ativa");
+  const title = vendoFinalizacao
+    ? t("Finalizar")
+    : vendoMesa
+      ? t("Mesa")
+      : t("Chat");
   const compactHeader = keyboardVisible;
+  const tabActiveIconColor = darkMode ? "#F0F4F8" : colors.textPrimary;
+  const tabIdleIconColor = darkMode ? "#AFC0D2" : colors.textSecondary;
   const showNewChatShortcut = !vendoMesa && !vendoFinalizacao;
   const subtitle = vendoFinalizacao
-    ? "Revise tudo do caso antes da conclusão."
+    ? t("Revise tudo do caso antes da conclusão.")
     : vendoMesa
       ? notificacoesMesaLaudoAtual
-        ? `${notificacoesMesaLaudoAtual} retorno${notificacoesMesaLaudoAtual === 1 ? "" : "s"} novo${notificacoesMesaLaudoAtual === 1 ? "" : "s"} da mesa.`
+        ? t(
+            `${notificacoesMesaLaudoAtual} retorno${notificacoesMesaLaudoAtual === 1 ? "" : "s"} novo${notificacoesMesaLaudoAtual === 1 ? "" : "s"} da mesa.`,
+          )
         : ""
       : blankChatEntry
-        ? "Envie fotos, documentos ou contexto para iniciar a inspeção."
+        ? t("Envie fotos, documentos ou contexto para iniciar a inspeção.")
         : filaOfflineTotal
-          ? `${filaOfflineTotal} pendência${filaOfflineTotal === 1 ? "" : "s"} na fila offline.`
+          ? t(
+              `${filaOfflineTotal} pendência${filaOfflineTotal === 1 ? "" : "s"} na fila offline.`,
+            )
           : chatHasActiveCase
-            ? "Fotos, contexto e anexos entram direto na análise e no laudo."
+            ? t(
+                "Fotos, contexto e anexos entram direto na análise e no laudo.",
+              )
             : "";
   const statusChips = (
     vendoFinalizacao
@@ -85,7 +104,9 @@ export function ThreadHeaderControls({
               ? {
                   key: "mesa-novas",
                   icon: "bell-ring-outline" as const,
-                  label: `${notificacoesMesaLaudoAtual} nova${notificacoesMesaLaudoAtual === 1 ? "" : "s"}`,
+                  label: t(
+                    `${notificacoesMesaLaudoAtual} nova${notificacoesMesaLaudoAtual === 1 ? "" : "s"}`,
+                  ),
                   accent: true,
                 }
               : null,
@@ -95,7 +116,7 @@ export function ThreadHeaderControls({
               ? {
                   key: "chat-offline",
                   icon: "cloud-upload-outline" as const,
-                  label: `${filaOfflineTotal} offline`,
+                  label: t(`${filaOfflineTotal} offline`),
                   accent: true,
                 }
               : null,
@@ -113,18 +134,19 @@ export function ThreadHeaderControls({
       >
         <View style={styles.cleanHeaderTopRow}>
           <Pressable
-            accessibilityLabel="Abrir historico de inspecoes"
+            accessibilityLabel={t("Abrir histórico de inspeções")}
             accessibilityRole="button"
             hitSlop={12}
             onPress={onOpenHistory}
             style={[
               styles.cleanNavButton,
+              darkMode ? styles.cleanNavButtonDark : null,
               compactHeader ? styles.cleanNavButtonCompact : null,
             ]}
             testID="open-history-button"
           >
             <MaterialCommunityIcons
-              color={colors.textPrimary}
+              color={darkMode ? "#E8EEF5" : colors.textPrimary}
               name="menu"
               size={22}
             />
@@ -140,18 +162,33 @@ export function ThreadHeaderControls({
               ]}
             >
               {!compactHeader ? (
-                <Text style={styles.cleanHeaderEyebrow}>{eyebrow}</Text>
+                <Text
+                  style={[
+                    styles.cleanHeaderEyebrow,
+                    darkMode ? styles.cleanHeaderEyebrowDark : null,
+                  ]}
+                >
+                  {eyebrow}
+                </Text>
               ) : null}
               <Text
                 style={[
                   styles.cleanHeaderTitle,
+                  darkMode ? styles.cleanHeaderTitleDark : null,
                   compactHeader ? styles.cleanHeaderTitleCompact : null,
                 ]}
               >
                 {title}
               </Text>
               {subtitle && !compactHeader ? (
-                <Text style={styles.cleanHeaderSubtitle}>{subtitle}</Text>
+                <Text
+                  style={[
+                    styles.cleanHeaderSubtitle,
+                    darkMode ? styles.cleanHeaderSubtitleDark : null,
+                  ]}
+                >
+                  {subtitle}
+                </Text>
               ) : null}
             </View>
           )}
@@ -159,18 +196,19 @@ export function ThreadHeaderControls({
           <View style={styles.cleanHeaderActions}>
             {showNewChatShortcut ? (
               <Pressable
-                accessibilityLabel="Iniciar nova inspecao"
+                accessibilityLabel={t("Iniciar nova inspeção")}
                 accessibilityRole="button"
                 hitSlop={12}
                 onPress={onOpenNewChat}
                 style={[
                   styles.cleanNavButton,
+                  darkMode ? styles.cleanNavButtonDark : null,
                   compactHeader ? styles.cleanNavButtonCompact : null,
                 ]}
                 testID="open-new-chat-button"
               >
                 <MaterialCommunityIcons
-                  color={colors.textPrimary}
+                  color={darkMode ? "#E8EEF5" : colors.textPrimary}
                   name="square-edit-outline"
                   size={20}
                 />
@@ -183,13 +221,14 @@ export function ThreadHeaderControls({
               onPress={onOpenSettings}
               style={[
                 styles.cleanNavButton,
+                darkMode ? styles.cleanNavButtonDark : null,
                 compactHeader ? styles.cleanNavButtonCompact : null,
               ]}
               testID="open-settings-button"
             >
               <MaterialCommunityIcons
-                color={colors.textPrimary}
-                name="dots-horizontal"
+                color={darkMode ? "#E8EEF5" : colors.textPrimary}
+                name="cog-outline"
                 size={20}
               />
               {totalBadge ? (
@@ -212,17 +251,28 @@ export function ThreadHeaderControls({
                   key={item.key}
                   style={[
                     styles.cleanHeaderChip,
+                    darkMode ? styles.cleanHeaderChipDark : null,
                     item.accent ? styles.cleanHeaderChipAccent : null,
+                    item.accent && darkMode
+                      ? styles.cleanHeaderChipAccentDark
+                      : null,
                   ]}
                 >
                   <MaterialCommunityIcons
-                    color={item.accent ? colors.accent : colors.textSecondary}
+                    color={
+                      item.accent
+                        ? colors.accent
+                        : darkMode
+                          ? "#AFC0D2"
+                          : colors.textSecondary
+                    }
                     name={item.icon}
                     size={14}
                   />
                   <Text
                     style={[
                       styles.cleanHeaderChipText,
+                      darkMode ? styles.cleanHeaderChipTextDark : null,
                       item.accent ? styles.cleanHeaderChipTextAccent : null,
                     ]}
                   >
@@ -239,17 +289,19 @@ export function ThreadHeaderControls({
         <View
           style={[
             styles.cleanTabShell,
+            darkMode ? styles.cleanTabShellDark : null,
             compactHeader ? styles.cleanTabShellCompact : null,
           ]}
         >
           <View
             style={[
               styles.threadTabs,
+              darkMode ? styles.threadTabsDark : null,
               compactHeader ? styles.threadTabsCompact : null,
             ]}
           >
             <Pressable
-              accessibilityLabel="Abrir aba Chat"
+              accessibilityLabel={t("Abrir aba Chat")}
               accessibilityRole="tab"
               accessibilityState={{
                 selected: !vendoMesa && !vendoFinalizacao,
@@ -257,16 +309,20 @@ export function ThreadHeaderControls({
               onPress={onOpenChatTab}
               style={[
                 styles.threadTab,
+                darkMode ? styles.threadTabDark : null,
                 compactHeader ? styles.threadTabCompact : null,
                 !vendoMesa && !vendoFinalizacao ? styles.threadTabActive : null,
+                !vendoMesa && !vendoFinalizacao && darkMode
+                  ? styles.threadTabActiveDark
+                  : null,
               ]}
               testID="chat-tab-button"
             >
               <MaterialCommunityIcons
                 color={
                   !vendoMesa && !vendoFinalizacao
-                    ? colors.textPrimary
-                    : colors.textSecondary
+                    ? tabActiveIconColor
+                    : tabIdleIconColor
                 }
                 name="message-processing-outline"
                 size={16}
@@ -274,9 +330,13 @@ export function ThreadHeaderControls({
               <Text
                 style={[
                   styles.threadTabText,
+                  darkMode ? styles.threadTabTextDark : null,
                   compactHeader ? styles.threadTabTextCompact : null,
                   !vendoMesa && !vendoFinalizacao
                     ? styles.threadTabTextActive
+                    : null,
+                  !vendoMesa && !vendoFinalizacao && darkMode
+                    ? styles.threadTabTextActiveDark
                     : null,
                 ]}
               >
@@ -287,32 +347,40 @@ export function ThreadHeaderControls({
               <Pressable
                 accessibilityLabel={
                   notificacoesMesaLaudoAtual
-                    ? `Abrir aba Mesa, ${notificacoesMesaLaudoAtual} retorno${notificacoesMesaLaudoAtual === 1 ? "" : "s"} novo${notificacoesMesaLaudoAtual === 1 ? "" : "s"}`
-                    : "Abrir aba Mesa"
+                    ? `${t("Abrir aba Mesa")}, ${t(
+                        `${notificacoesMesaLaudoAtual} retorno${notificacoesMesaLaudoAtual === 1 ? "" : "s"} novo${notificacoesMesaLaudoAtual === 1 ? "" : "s"}`,
+                      )}`
+                    : t("Abrir aba Mesa")
                 }
                 accessibilityRole="tab"
                 accessibilityState={{ selected: vendoMesa }}
                 onPress={onOpenMesaTab}
                 style={[
                   styles.threadTab,
+                  darkMode ? styles.threadTabDark : null,
                   compactHeader ? styles.threadTabCompact : null,
                   vendoMesa ? styles.threadTabActive : null,
+                  vendoMesa && darkMode ? styles.threadTabActiveDark : null,
                 ]}
                 testID="mesa-tab-button"
               >
                 <MaterialCommunityIcons
-                  color={vendoMesa ? colors.textPrimary : colors.textSecondary}
+                  color={
+                    vendoMesa ? tabActiveIconColor : tabIdleIconColor
+                  }
                   name="clipboard-text-outline"
                   size={16}
                 />
                 <Text
                   style={[
                     styles.threadTabText,
+                    darkMode ? styles.threadTabTextDark : null,
                     compactHeader ? styles.threadTabTextCompact : null,
                     vendoMesa ? styles.threadTabTextActive : null,
+                    vendoMesa && darkMode ? styles.threadTabTextActiveDark : null,
                   ]}
                 >
-                  Mesa
+                  {t("Mesa")}
                 </Text>
                 {notificacoesMesaLaudoAtual ? (
                   <View
@@ -337,20 +405,24 @@ export function ThreadHeaderControls({
             ) : null}
             {finalizacaoDisponivel ? (
               <Pressable
-                accessibilityLabel="Abrir aba Finalizar"
+                accessibilityLabel={t("Abrir aba Finalizar")}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: vendoFinalizacao }}
                 onPress={onOpenFinalizarTab}
                 style={[
                   styles.threadTab,
+                  darkMode ? styles.threadTabDark : null,
                   compactHeader ? styles.threadTabCompact : null,
                   vendoFinalizacao ? styles.threadTabActive : null,
+                  vendoFinalizacao && darkMode
+                    ? styles.threadTabActiveDark
+                    : null,
                 ]}
                 testID="finalizar-tab-button"
               >
                 <MaterialCommunityIcons
                   color={
-                    vendoFinalizacao ? colors.textPrimary : colors.textSecondary
+                    vendoFinalizacao ? tabActiveIconColor : tabIdleIconColor
                   }
                   name="check-decagram-outline"
                   size={16}
@@ -358,11 +430,15 @@ export function ThreadHeaderControls({
                 <Text
                   style={[
                     styles.threadTabText,
+                    darkMode ? styles.threadTabTextDark : null,
                     compactHeader ? styles.threadTabTextCompact : null,
                     vendoFinalizacao ? styles.threadTabTextActive : null,
+                    vendoFinalizacao && darkMode
+                      ? styles.threadTabTextActiveDark
+                      : null,
                   ]}
                 >
-                  Finalizar
+                  {t("Finalizar")}
                 </Text>
               </Pressable>
             ) : null}

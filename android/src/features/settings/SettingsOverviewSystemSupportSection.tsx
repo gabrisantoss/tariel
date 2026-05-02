@@ -13,12 +13,14 @@ interface SettingsOverviewSystemSupportSectionProps {
     section?: SettingsSectionKey | "all",
   ) => void;
   onReportarProblema: () => void;
+  planoResumoConfiguracao: string;
   settingsPrintDarkMode: boolean;
 }
 
 export function SettingsOverviewSystemSupportSection({
   onAbrirPaginaConfiguracoes,
   onReportarProblema,
+  planoResumoConfiguracao,
   settingsPrintDarkMode,
 }: SettingsOverviewSystemSupportSectionProps) {
   return (
@@ -37,6 +39,14 @@ export function SettingsOverviewSystemSupportSection({
           settingsPrintDarkMode ? styles.settingsPrintGroupCardDark : null,
         ]}
       >
+        <SettingsPrintRow
+          darkMode={settingsPrintDarkMode}
+          icon="star-circle-outline"
+          infoText={planoResumoConfiguracao || "Plano não informado"}
+          testID="settings-print-plan-row"
+          title="Plano e liberação"
+          trailingIcon={null}
+        />
         <SettingsPrintRow
           darkMode={settingsPrintDarkMode}
           icon="microphone-outline"

@@ -9,6 +9,7 @@ const mockEntryActions = {
   handleCentralAjuda: jest.fn(),
   handleEditarPerfil: jest.fn(),
   handleEnviarFeedback: jest.fn(),
+  handleGerenciarPlano: jest.fn(),
   handleLicencas: jest.fn(),
   handlePermissoes: jest.fn(),
   handlePoliticaPrivacidade: jest.fn(),

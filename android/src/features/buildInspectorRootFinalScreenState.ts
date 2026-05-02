@@ -132,6 +132,7 @@ export function buildInspectorRootFinalScreenState({
         chaveAnexo,
         definirReferenciaMesaAtiva:
           controllers.mesaController.actions.definirReferenciaMesaAtiva,
+        guidedInspectionDraft: localState.guidedInspectionDraft,
         handleAbrirAnexo: controllers.attachmentController.handleAbrirAnexo,
         handleAbrirConfiguracoes: shellSupport.handleAbrirConfiguracoes,
         handleAbrirNovoChat:

@@ -1,3 +1,5 @@
+import { useEffect, useMemo } from "react";
+
 import { useInspectorRootAppLockController } from "./security/useInspectorRootAppLockController";
 import { reautenticacaoAindaValida } from "./settings/reauth";
 import {
@@ -12,6 +14,7 @@ import { sanitizeReadCacheByMobileAccess } from "./common/mobileUserAccess";
 import { chaveCacheLaudo } from "./chat/conversationHelpers";
 import { obterTimeoutBloqueioMs } from "./common/appSupportHelpers";
 import { useInspectorRootPersistenceEffects } from "./common/useInspectorRootPersistenceEffects";
+import { setSecureDisplayEnabled } from "./system/secureDisplay";
 import { usePushRegistrationController } from "./system/usePushRegistrationController";
 import type { InspectorRootBootstrap } from "./useInspectorRootBootstrap";
 import type { InspectorRootConversationControllers } from "./useInspectorRootConversationControllers";
@@ -29,9 +32,27 @@ export function useInspectorRootSecurityAndPersistence({
   operationalControllers,
 }: UseInspectorRootSecurityAndPersistenceInput) {
   const sessionUser = bootstrap.sessionFlow.state.session?.bootstrap.usuario;
-  const persistenceScope = buildLocalPersistenceScopeFromBootstrap(
-    bootstrap.sessionFlow.state.session?.bootstrap,
+  const sessionBootstrap = bootstrap.sessionFlow.state.session?.bootstrap;
+  const persistenceScope = useMemo(
+    () => buildLocalPersistenceScopeFromBootstrap(sessionBootstrap),
+    [sessionBootstrap],
   );
+  const persistenceScopeKey = [
+    persistenceScope?.email || "",
+    persistenceScope?.userId ?? "",
+    persistenceScope?.empresaId ?? "",
+  ].join("|");
+
+  useEffect(() => {
+    bootstrap.settingsBindings.store.settingsActions.setPersistenceScope(
+      persistenceScope,
+    );
+  }, [bootstrap.settingsBindings.store.settingsActions, persistenceScopeKey]);
+
+  useEffect(() => {
+    setSecureDisplayEnabled(bootstrap.settingsBindings.security.hideInMultitask);
+  }, [bootstrap.settingsBindings.security.hideInMultitask]);
+
   const appLockController = useInspectorRootAppLockController({
     sessionState: {
       appLocked: bootstrap.localState.bloqueioAppAtivo,
@@ -116,6 +137,8 @@ export function useInspectorRootSecurityAndPersistence({
         bootstrap.settingsBindings.dataControls.salvarHistoricoConversas,
       settingsActions: bootstrap.settingsBindings.store.settingsActions,
       settingsDocument: bootstrap.settingsBindings.store.settingsState,
+      settingsPersistenceVersion:
+        bootstrap.settingsBindings.store.settingsPersistenceVersion,
     },
     dataState: {
       cacheLeitura: bootstrap.localState.cacheLeitura,

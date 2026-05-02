@@ -54,7 +54,9 @@ interface UseInspectorRootSettingsSurfaceInput {
       >;
       experienceState: Omit<
         InspectorRootSettingsUiInput["drawerState"]["experienceState"],
-        "handleAbrirModeloIa"
+        | "handleAbrirEstiloResposta"
+        | "handleAbrirIdiomaResposta"
+        | "handleAbrirModeloIa"
       >;
       securityState: Omit<
         InspectorRootSettingsUiInput["drawerState"]["securityState"],
@@ -138,6 +140,8 @@ export function useInspectorRootSettingsSurface({
       },
       experienceState: {
         ...uiState.drawerState.experienceState,
+        handleAbrirEstiloResposta: entryActions.handleAbrirEstiloResposta,
+        handleAbrirIdiomaResposta: entryActions.handleAbrirIdiomaResposta,
         handleAbrirModeloIa: entryActions.handleAbrirModeloIa,
       },
       securityState: {

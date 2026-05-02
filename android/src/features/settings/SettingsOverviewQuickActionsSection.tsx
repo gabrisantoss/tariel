@@ -51,7 +51,7 @@ export function SettingsOverviewQuickActionsSection({
           infoText="IA, aparência e comportamento operacional do app."
           onPress={() => onAbrirPaginaConfiguracoes("experiencia")}
           testID="settings-print-personalizacao-row"
-          title="Experiência"
+          title="Preferências"
         />
         <SettingsPrintRow
           darkMode={settingsPrintDarkMode}

@@ -42,7 +42,7 @@ describe("useSettingsEntryActions", () => {
     expect(setTelefoneDraft).toHaveBeenCalledWith("(11) 99999-0000");
     expect(abrirSheetConfiguracao).toHaveBeenCalledWith({
       kind: "profile",
-      title: "Editar perfil",
+      title: "Informações pessoais",
       subtitle:
         "Atualize nome, nome de exibição e telefone usados nesta conta.",
       actionLabel: "Salvar perfil",

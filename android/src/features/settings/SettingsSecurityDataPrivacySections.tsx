@@ -28,14 +28,13 @@ interface SettingsSecurityDataConversationsSectionProps {
   mediaCompression: MediaCompression;
   cacheStatusLabel: string;
   limpandoCache: boolean;
-  nomeAutomaticoConversas: boolean;
   fixarConversas: boolean;
   onSetSalvarHistoricoConversas: (value: boolean) => void;
   onSetCompartilharMelhoriaIa: (value: boolean) => void;
   onSetAnalyticsOptIn: (value: boolean) => void;
   onSetCrashReportsOptIn: (value: boolean) => void;
   onSetWifiOnlySync: (value: boolean) => void;
-  onExportarDados: (formato: "JSON" | "PDF") => void;
+  onExportarDados: (formato: "JSON") => void;
   onGerenciarConversasIndividuais: () => void;
   onSetRetencaoDados: (value: DataRetention) => void;
   onApagarHistoricoConfiguracoes: () => void;
@@ -45,7 +44,6 @@ interface SettingsSecurityDataConversationsSectionProps {
   onToggleAutoUploadAttachments: (value: boolean) => void;
   onSetMediaCompression: (value: MediaCompression) => void;
   onLimparCache: () => void;
-  onSetNomeAutomaticoConversas: (value: boolean) => void;
   onSetFixarConversas: (value: boolean) => void;
 }
 
@@ -112,7 +110,6 @@ export function SettingsSecurityDataConversationsSection({
   mediaCompression,
   cacheStatusLabel,
   limpandoCache,
-  nomeAutomaticoConversas,
   fixarConversas,
   onSetSalvarHistoricoConversas,
   onSetCompartilharMelhoriaIa,
@@ -129,7 +126,6 @@ export function SettingsSecurityDataConversationsSection({
   onToggleAutoUploadAttachments,
   onSetMediaCompression,
   onLimparCache,
-  onSetNomeAutomaticoConversas,
   onSetFixarConversas,
 }: SettingsSecurityDataConversationsSectionProps) {
   return (
@@ -147,11 +143,11 @@ export function SettingsSecurityDataConversationsSection({
         value={salvarHistoricoConversas}
       />
       <SettingsSwitchRow
-        description="Consentimento para melhoria da IA."
+        description="Autoriza usar suas interações para melhorar a IA do app."
         icon="share-variant-outline"
         onValueChange={onSetCompartilharMelhoriaIa}
         testID="settings-data-improve-toggle-row"
-        title="Permitir uso para melhoria da IA"
+        title="Compartilhar dados para melhoria da IA"
         value={compartilharMelhoriaIa}
       />
       <SettingsSwitchRow
@@ -185,13 +181,6 @@ export function SettingsSecurityDataConversationsSection({
         testID="settings-data-export-row"
         title="Exportar conversas"
         value="JSON"
-      />
-      <SettingsPressRow
-        description="A exportação exige reautenticação."
-        icon="file-pdf-box"
-        onPress={() => onExportarDados("PDF")}
-        title="Exportar conversas"
-        value="PDF"
       />
       <SettingsPressRow
         description="Abra o histórico lateral para fixar, retomar ou remover conversas específicas."
@@ -260,12 +249,6 @@ export function SettingsSecurityDataConversationsSection({
         onPress={onLimparCache}
         title="Limpar cache local"
         value={limpandoCache ? "Limpando..." : cacheStatusLabel}
-      />
-      <SettingsSwitchRow
-        icon="tag-text-outline"
-        onValueChange={onSetNomeAutomaticoConversas}
-        title="Nome automático de conversas"
-        value={nomeAutomaticoConversas}
       />
       <SettingsSwitchRow
         icon="pin-outline"

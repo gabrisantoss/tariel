@@ -14,6 +14,7 @@ import type {
   MobileQualityGateResponse,
   MobileLaudoStatusResponse,
 } from "../types/mobile";
+import type { AppSettings } from "../settings";
 import { normalizarQualityGateResponse } from "../features/chat/qualityGateHelpers";
 import {
   buildApiUrl,
@@ -269,6 +270,8 @@ export async function enviarMensagemChatMobile(
     nomeDocumento?: string;
     laudoId?: number | null;
     modo?: MobileChatMode | string;
+    learningOptIn?: boolean;
+    tone?: AppSettings["ai"]["tone"] | string;
     guidedInspectionDraft?: MobileGuidedInspectionDraftPayload | null;
     guidedInspectionContext?: MobileGuidedInspectionMessageContextPayload | null;
     historico?:
@@ -293,6 +296,8 @@ export async function enviarMensagemChatMobile(
         texto_documento: payload.textoDocumento || "",
         nome_documento: payload.nomeDocumento || "",
         laudo_id: payload.laudoId ?? undefined,
+        learning_opt_in: Boolean(payload.learningOptIn),
+        tone: String(payload.tone || "").trim() || undefined,
         guided_inspection_draft: payload.guidedInspectionDraft || undefined,
         guided_inspection_context: payload.guidedInspectionContext || undefined,
         modo,

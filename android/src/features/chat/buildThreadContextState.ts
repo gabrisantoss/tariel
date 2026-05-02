@@ -17,6 +17,7 @@ import {
 } from "../inspection/inspectionEntryMode";
 import { isOfficialIssueReissueRecommended } from "../common/officialIssueSummary";
 import { buildThreadContextActions } from "./buildThreadContextActions";
+import { resolveGuidedInspectionVisualIdentity } from "./guidedInspectionPresentation";
 import { buildReportPackDraftSummary } from "./reportPackHelpers";
 import {
   detalharReemissaoRecomendada,
@@ -61,6 +62,12 @@ export function buildThreadContextState(
   } = input;
   const guidedProgress = guidedInspectionDraft
     ? getGuidedInspectionProgress(guidedInspectionDraft)
+    : null;
+  const guidedVisualIdentity = guidedInspectionDraft
+    ? resolveGuidedInspectionVisualIdentity(
+        guidedInspectionDraft.templateKey,
+        guidedInspectionDraft.templateLabel,
+      )
     : null;
   const reemissoesRecomendadasTotal = laudosDisponiveis.filter((item) =>
     isOfficialIssueReissueRecommended(item.official_issue_summary),
@@ -217,11 +224,11 @@ export function buildThreadContextState(
                 ? "Caso aguardando sincronização"
                 : blankCaseCreationError
                   ? "Falha ao criar caso"
-                  : "Por onde começar?");
+                  : "Iniciar inspeção");
   const laudoContextDescription = modoGuiadoAtivo
     ? guidedProgress?.isComplete
-      ? "Checklist base concluido. Revise as evidencias e envie para a IA consolidar o rascunho do laudo."
-      : "A IA guia a coleta no chat enquanto voce confirma as evidencias obrigatorias do template."
+      ? `${guidedVisualIdentity?.focusLabel || "Coleta técnica flexível"}. Checklist base concluído; revise as evidências e envie para a IA consolidar o rascunho do laudo.`
+      : `${guidedVisualIdentity?.focusLabel || "Coleta técnica flexível"}. A IA guia a coleta no chat enquanto você confirma as evidências obrigatórias.`
     : vendoMesa
       ? !mesaDisponivel
         ? "A mesa fica disponível após o primeiro laudo."
@@ -251,7 +258,7 @@ export function buildThreadContextState(
             : blankCaseCreationError
               ? caseCreationError?.trim() ||
                 "O primeiro envio falhou antes de criar o caso. Revise a conexão e tente novamente."
-              : "Escolha um modo para iniciar.";
+              : "Laudo técnico com checklist, evidências e revisão quando exigida.";
   const laudoContextDescriptionFinal = vendoFinalizacao
     ? finalizationSummary?.description || laudoContextDescription
     : laudoContextDescription;
@@ -264,14 +271,16 @@ export function buildThreadContextState(
     : modoGuiadoAtivo
       ? guidedProgress?.isComplete
         ? {
-            label: "Checklist base concluido",
+            label: `Checklist ${guidedVisualIdentity?.familyLabel || "guiado"} concluído`,
             tone: "success" as const,
             icon: "check-decagram-outline" as const,
           }
         : {
-            label: "IA conduzindo coleta",
-            tone: "accent" as const,
-            icon: "robot-outline" as const,
+            label: `${guidedVisualIdentity?.familyLabel || "Guiado"} em coleta`,
+            tone: guidedVisualIdentity?.tone || ("accent" as const),
+            icon:
+              guidedVisualIdentity?.icon ||
+              ("clipboard-text-search-outline" as const),
           }
       : vendoMesa
         ? !mesaDisponivel
@@ -371,22 +380,19 @@ export function buildThreadContextState(
                   }
                 : {
                     label: blankEntryModeIsEvidence
-                      ? "IA recomenda guiado"
-                      : "Chat livre como padrão",
-                    tone: blankEntryModeIsEvidence
-                      ? ("accent" as const)
-                      : ("success" as const),
-                    icon: blankEntryModeIsEvidence
-                      ? ("robot-outline" as const)
-                      : ("message-processing-outline" as const),
+                      ? "Guiado recomendado"
+                      : "Inspeção guiada",
+                    tone: "accent" as const,
+                    icon: "clipboard-text-search-outline" as const,
                   };
   const mostrarContextoThread =
     vendoMesa ||
-    Boolean(conversaAtiva?.laudoId) ||
+    vendoFinalizacao ||
     Boolean(resumoFilaOffline) ||
     Boolean(modoGuiadoAtivo) ||
     blankCaseCreationActive ||
-    chatVazioInicial;
+    chatVazioInicial ||
+    (Boolean(conversaAtiva?.laudoId) && !activeCaseVisualFree);
   const mesaContextChips = [
     mesaDisponivel
       ? {
@@ -421,6 +427,14 @@ export function buildThreadContextState(
   ];
   const chatContextChips = modoGuiadoAtivo
     ? [
+        guidedVisualIdentity
+          ? {
+              key: "template-family",
+              label: guidedVisualIdentity.familyLabel,
+              tone: guidedVisualIdentity.tone,
+              icon: guidedVisualIdentity.icon,
+            }
+          : null,
         {
           key: "checklist",
           label: `${guidedProgress?.completedCount || 0}/${guidedProgress?.totalCount || 0} etapas`,
@@ -441,9 +455,9 @@ export function buildThreadContextState(
           : null,
         {
           key: "template",
-          label: guidedInspectionDraft?.templateLabel || "Template guiado",
+          label: guidedVisualIdentity?.focusLabel || "Template guiado",
           tone: "muted" as const,
-          icon: "shape-outline" as const,
+          icon: "target-variant" as const,
         },
         guidedProgress?.currentItem
           ? {
@@ -622,7 +636,7 @@ export function buildThreadContextState(
           : vendoMesa
             ? mesaContextChips
             : chatContextChips,
-      ).slice(0, vendoFinalizacao ? 3 : 2);
+      ).slice(0, vendoFinalizacao || modoGuiadoAtivo ? 3 : 2);
   const threadInsights = modoGuiadoAtivo
     ? [
         {
@@ -639,6 +653,16 @@ export function buildThreadContextState(
             ? ("check-decagram-outline" as const)
             : ("timeline-outline" as const),
         },
+        guidedVisualIdentity
+          ? {
+              key: "familia",
+              label: "Família normativa",
+              value: guidedVisualIdentity.familyLabel,
+              detail: guidedVisualIdentity.focusLabel,
+              tone: guidedVisualIdentity.tone,
+              icon: guidedVisualIdentity.icon,
+            }
+          : null,
         {
           key: "etapa-atual",
           label: guidedProgress?.isComplete ? "Pronto" : "Etapa atual",

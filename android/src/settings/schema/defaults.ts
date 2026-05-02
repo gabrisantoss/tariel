@@ -80,7 +80,7 @@ export function createDefaultAppSettings(): AppSettings {
       biometricsPermission: true,
       deviceBiometricsEnabled: false,
       requireAuthOnOpen: true,
-      hideInMultitask: true,
+      hideInMultitask: false,
       lockTimeout: "1 minuto",
     },
   };

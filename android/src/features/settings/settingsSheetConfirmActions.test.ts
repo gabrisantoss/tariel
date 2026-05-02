@@ -223,7 +223,7 @@ describe("handleSettingsSheetConfirmFlow", () => {
     ).toHaveBeenNthCalledWith(2, false);
   });
 
-  it("encaminha sheets comuns para a delegacao existente e fecha o loading", async () => {
+  it("consulta o plano sem alterar assinatura local e fecha o loading", async () => {
     const params = criarParams({
       settingsSheet: {
         kind: "plan",
@@ -235,10 +235,12 @@ describe("handleSettingsSheetConfirmFlow", () => {
 
     await handleSettingsSheetConfirmFlow(params);
 
-    expect(params.delegated.plan.onChange).toHaveBeenCalledTimes(1);
+    expect(params.delegated.plan.onChange).not.toHaveBeenCalled();
     expect(
       params.delegated.ui.onNotificarConfiguracaoConcluida,
-    ).toHaveBeenCalled();
+    ).toHaveBeenCalledWith(
+      "Plano e liberações consultados. Alterações de assinatura seguem pelo canal comercial autorizado.",
+    );
     expect(
       params.delegated.ui.onSetSettingsSheetLoading,
     ).toHaveBeenNthCalledWith(1, true);

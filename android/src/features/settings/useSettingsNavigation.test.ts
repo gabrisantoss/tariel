@@ -39,6 +39,47 @@ describe("useSettingsNavigation", () => {
     expect(result.current.state.settingsDrawerSection).toBe("all");
   });
 
+  it("mantem a pilha mesmo com navegacoes encadeadas antes do rerender", () => {
+    const { result } = renderHook(() => useSettingsNavigation());
+
+    act(() => {
+      result.current.actions.handleAbrirPaginaConfiguracoes("contaAcesso");
+      result.current.actions.handleAbrirPaginaConfiguracoes(
+        "seguranca",
+        "permissoes",
+      );
+      result.current.actions.handleAbrirSecaoConfiguracoes(
+        "privacidadeNotificacoes",
+      );
+    });
+
+    expect(result.current.state.settingsDrawerPage).toBe("seguranca");
+    expect(result.current.state.settingsDrawerSection).toBe(
+      "privacidadeNotificacoes",
+    );
+
+    act(() => {
+      result.current.actions.handleVoltarResumoConfiguracoes();
+    });
+
+    expect(result.current.state.settingsDrawerPage).toBe("seguranca");
+    expect(result.current.state.settingsDrawerSection).toBe("permissoes");
+
+    act(() => {
+      result.current.actions.handleVoltarResumoConfiguracoes();
+    });
+
+    expect(result.current.state.settingsDrawerPage).toBe("contaAcesso");
+    expect(result.current.state.settingsDrawerSection).toBe("all");
+
+    act(() => {
+      result.current.actions.handleVoltarResumoConfiguracoes();
+    });
+
+    expect(result.current.state.settingsDrawerPage).toBe("overview");
+    expect(result.current.state.settingsDrawerSection).toBe("all");
+  });
+
   it("reseta overlays e preserva somente a folha de reautenticacao quando bloqueado", () => {
     const { result } = renderHook(() => useSettingsNavigation());
 

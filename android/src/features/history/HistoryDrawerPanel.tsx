@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { EmptyState } from "../../components/EmptyState";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import { resolverCaseLifecycleStatus } from "../chat/caseLifecycle";
@@ -225,6 +226,7 @@ function buildHistorySummaryText(
 }
 
 export interface HistoryDrawerPanelProps<TItem extends HistoryDrawerPanelItem> {
+  darkMode?: boolean;
   historyDrawerPanResponder: PanResponderInstance;
   historicoDrawerX: Animated.Value;
   onCloseHistory: () => void;
@@ -242,6 +244,7 @@ export interface HistoryDrawerPanelProps<TItem extends HistoryDrawerPanelItem> {
 }
 
 export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
+  darkMode = false,
   historyDrawerPanResponder,
   historicoDrawerX,
   onCloseHistory,
@@ -256,6 +259,7 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
   historicoVazioTitulo,
   historicoVazioTexto,
 }: HistoryDrawerPanelProps<TItem>) {
+  const { t } = useAppTranslation();
   const itensVisiveis = historicoAgrupadoFinal.flatMap(
     (section) => section.items,
   );
@@ -282,43 +286,75 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
       style={[
         styles.sidePanelDrawer,
         styles.sidePanelDrawerLeft,
+        darkMode ? styles.sidePanelDrawerPrintDark : null,
         { transform: [{ translateX: historicoDrawerX }] },
       ]}
       testID="history-drawer"
     >
       <View style={styles.sidePanelHeader}>
         <View style={styles.sidePanelCopy}>
-          <Text style={styles.sidePanelTitle}>Histórico</Text>
-          <Text style={styles.sidePanelDescription}>Conversas recentes</Text>
+          <Text
+            style={[
+              styles.sidePanelTitle,
+              darkMode ? styles.sidePanelTitlePrintDark : null,
+            ]}
+          >
+            {t("Histórico")}
+          </Text>
+          <Text
+            style={[
+              styles.sidePanelDescription,
+              darkMode ? styles.sidePanelDescriptionPrintDark : null,
+            ]}
+          >
+            {t("Conversas recentes")}
+          </Text>
         </View>
         <Pressable
           onPress={onCloseHistory}
-          style={styles.sidePanelCloseButton}
+          style={[
+            styles.sidePanelCloseButton,
+            darkMode ? styles.sidePanelCloseButtonPrintDark : null,
+          ]}
           testID="close-history-drawer-button"
         >
           <MaterialCommunityIcons
             name="chevron-left"
             size={22}
-            color={colors.textPrimary}
+            color={darkMode ? "#F0F4F8" : colors.textPrimary}
           />
         </Pressable>
       </View>
 
       {exibirBusca ? (
-        <View style={styles.historySummaryCard} testID="history-summary-card">
-          <View style={styles.historySearchShell}>
+        <View
+          style={[
+            styles.historySummaryCard,
+            darkMode ? styles.historySummaryCardDark : null,
+          ]}
+          testID="history-summary-card"
+        >
+          <View
+            style={[
+              styles.historySearchShell,
+              darkMode ? styles.historySearchShellDark : null,
+            ]}
+          >
             <MaterialCommunityIcons
               name="magnify"
               size={20}
-              color={colors.textSecondary}
+              color={darkMode ? "#AFC0D2" : colors.textSecondary}
             />
             <TextInput
               onChangeText={onBuscaHistoricoChange}
               onBlur={() => onHistorySearchFocusChange(false)}
               onFocus={() => onHistorySearchFocusChange(true)}
-              placeholder="Buscar histórico"
-              placeholderTextColor={colors.textSecondary}
-              style={styles.historySearchInput}
+              placeholder={t("Buscar histórico")}
+              placeholderTextColor={darkMode ? "#8999AB" : colors.textSecondary}
+              style={[
+                styles.historySearchInput,
+                darkMode ? styles.historySearchInputDark : null,
+              ]}
               testID="history-search-input"
               value={buscaHistorico}
             />
@@ -326,111 +362,243 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
           <View style={styles.historySummaryHeader}>
             <View style={styles.historySummaryCopy}>
               <Text style={styles.historySummaryEyebrow}>
-                {buscaHistorico.trim() ? "Busca ativa" : "Retomada rapida"}
+                {buscaHistorico.trim() ? t("Busca ativa") : t("Retomada rapida")}
               </Text>
-              <Text style={styles.historySummaryTitle}>Radar da operação</Text>
+              <Text
+                style={[
+                  styles.historySummaryTitle,
+                  darkMode ? styles.historySummaryTitleDark : null,
+                ]}
+              >
+                {t("Radar da operação")}
+              </Text>
             </View>
-            <Text style={styles.historySummaryCountLabel}>
-              {pluralizeHistoryCases(totalVisiveis)}
+            <Text
+              style={[
+                styles.historySummaryCountLabel,
+                darkMode ? styles.historySummaryCountLabelDark : null,
+              ]}
+            >
+              {t(pluralizeHistoryCases(totalVisiveis))}
             </Text>
           </View>
           <View style={styles.historySummaryMetricGrid}>
-            <View style={styles.historySummaryMetricCard}>
-              <Text style={styles.historySummaryMetricValue}>
+            <View
+              style={[
+                styles.historySummaryMetricCard,
+                darkMode ? styles.historySummaryMetricCardDark : null,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.historySummaryMetricValue,
+                  darkMode ? styles.historySummaryMetricValueDark : null,
+                ]}
+              >
                 {totals.emAndamento}
               </Text>
-              <Text style={styles.historySummaryMetricLabel}>em andamento</Text>
+              <Text
+                style={[
+                  styles.historySummaryMetricLabel,
+                  darkMode ? styles.historySummaryMetricLabelDark : null,
+                ]}
+              >
+                {t("em andamento")}
+              </Text>
             </View>
-            <View style={styles.historySummaryMetricCard}>
-              <Text style={styles.historySummaryMetricValue}>
+            <View
+              style={[
+                styles.historySummaryMetricCard,
+                darkMode ? styles.historySummaryMetricCardDark : null,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.historySummaryMetricValue,
+                  darkMode ? styles.historySummaryMetricValueDark : null,
+                ]}
+              >
                 {totals.mesa}
               </Text>
-              <Text style={styles.historySummaryMetricLabel}>na mesa</Text>
+              <Text
+                style={[
+                  styles.historySummaryMetricLabel,
+                  darkMode ? styles.historySummaryMetricLabelDark : null,
+                ]}
+              >
+                {t("na mesa")}
+              </Text>
             </View>
-            <View style={styles.historySummaryMetricCard}>
-              <Text style={styles.historySummaryMetricValue}>
+            <View
+              style={[
+                styles.historySummaryMetricCard,
+                darkMode ? styles.historySummaryMetricCardDark : null,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.historySummaryMetricValue,
+                  darkMode ? styles.historySummaryMetricValueDark : null,
+                ]}
+              >
                 {totals.concluidos}
               </Text>
-              <Text style={styles.historySummaryMetricLabel}>concluidos</Text>
+              <Text
+                style={[
+                  styles.historySummaryMetricLabel,
+                  darkMode ? styles.historySummaryMetricLabelDark : null,
+                ]}
+              >
+                {t("concluidos")}
+              </Text>
             </View>
           </View>
           <View style={styles.historySummaryPills}>
-            <View style={styles.historySummaryPill}>
-              <Text style={styles.historySummaryPillText}>
-                {totalFixados} fixados
+            <View
+              style={[
+                styles.historySummaryPill,
+                darkMode ? styles.historySummaryPillDark : null,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.historySummaryPillText,
+                  darkMode ? styles.historySummaryPillTextDark : null,
+                ]}
+              >
+                {t(`${totalFixados} fixados`)}
               </Text>
             </View>
-            <View style={styles.historySummaryPill}>
-              <Text style={styles.historySummaryPillText}>
-                {conversasOcultasTotal} ocultos
+            <View
+              style={[
+                styles.historySummaryPill,
+                darkMode ? styles.historySummaryPillDark : null,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.historySummaryPillText,
+                  darkMode ? styles.historySummaryPillTextDark : null,
+                ]}
+              >
+                {t(`${conversasOcultasTotal} ocultos`)}
               </Text>
             </View>
             {signals.guided ? (
-              <View style={styles.historySummaryPill}>
+              <View
+                style={[
+                  styles.historySummaryPill,
+                  darkMode ? styles.historySummaryPillDark : null,
+                ]}
+              >
                 <Text
-                  style={styles.historySummaryPillText}
+                  style={[
+                    styles.historySummaryPillText,
+                    darkMode ? styles.historySummaryPillTextDark : null,
+                  ]}
                   testID="history-summary-guided-pill"
                 >
-                  {signals.guided} guiados
+                  {t(`${signals.guided} guiados`)}
                 </Text>
               </View>
             ) : null}
             {signals.reemissao ? (
-              <View style={styles.historySummaryPill}>
+              <View
+                style={[
+                  styles.historySummaryPill,
+                  darkMode ? styles.historySummaryPillDark : null,
+                ]}
+              >
                 <Text
-                  style={styles.historySummaryPillText}
+                  style={[
+                    styles.historySummaryPillText,
+                    darkMode ? styles.historySummaryPillTextDark : null,
+                  ]}
                   testID="history-summary-reissue-pill"
                 >
-                  {signals.reemissao} reemissão recomendada
-                  {signals.reemissao === 1 ? "" : "s"}
+                  {t(
+                    `${signals.reemissao} reemissão recomendada${signals.reemissao === 1 ? "" : "s"}`,
+                  )}
                 </Text>
               </View>
             ) : null}
             {signals.prontosParaValidar ? (
-              <View style={styles.historySummaryPill}>
+              <View
+                style={[
+                  styles.historySummaryPill,
+                  darkMode ? styles.historySummaryPillDark : null,
+                ]}
+              >
                 <Text
-                  style={styles.historySummaryPillText}
+                  style={[
+                    styles.historySummaryPillText,
+                    darkMode ? styles.historySummaryPillTextDark : null,
+                  ]}
                   testID="history-summary-validation-pill"
                 >
-                  {signals.prontosParaValidar} pronto
-                  {signals.prontosParaValidar === 1 ? "" : "s"} para validar
+                  {t(
+                    `${signals.prontosParaValidar} pronto${signals.prontosParaValidar === 1 ? "" : "s"} para validar`,
+                  )}
                 </Text>
               </View>
             ) : null}
           </View>
-          <Text style={styles.historySummaryText}>
-            {buildHistorySummaryText(itensVisiveis, buscaHistorico)}
+          <Text
+            style={[
+              styles.historySummaryText,
+              darkMode ? styles.historySummaryTextDark : null,
+            ]}
+          >
+            {t(buildHistorySummaryText(itensVisiveis, buscaHistorico))}
           </Text>
           {!buscaHistorico.trim() && signals.chatLivre ? (
             <Text
-              style={styles.historySummaryText}
+              style={[
+                styles.historySummaryText,
+                darkMode ? styles.historySummaryTextDark : null,
+              ]}
               testID="history-summary-entry-mode-text"
             >
-              {signals.guided} guiados · {signals.chatLivre} em chat livre
+              {t(
+                `${signals.guided} guiados · ${signals.chatLivre} em chat livre`,
+              )}
             </Text>
           ) : null}
           {resumeSuggestion ? (
             <View
-              style={styles.historyResumeCard}
+              style={[
+                styles.historyResumeCard,
+                darkMode ? styles.historyResumeCardDark : null,
+              ]}
               testID="history-resume-suggestion-card"
             >
               <View style={styles.historyResumeHeader}>
                 <View style={styles.historyResumeCopy}>
                   <Text style={styles.historyResumeEyebrow}>
-                    Retomada sugerida
+                    {t("Retomada sugerida")}
                   </Text>
-                  <Text style={styles.historyResumeTitle}>
-                    {resumeSuggestion.title}
+                  <Text
+                    style={[
+                      styles.historyResumeTitle,
+                      darkMode ? styles.historyResumeTitleDark : null,
+                    ]}
+                  >
+                    {t(resumeSuggestion.title)}
                   </Text>
                 </View>
                 <View style={styles.historyResumeEmphasisPill}>
                   <Text style={styles.historyResumeEmphasisText}>
-                    {resumeSuggestion.emphasis}
+                    {t(resumeSuggestion.emphasis)}
                   </Text>
                 </View>
               </View>
-              <Text style={styles.historyResumeDetail}>
-                {resumeSuggestion.detail}
+              <Text
+                style={[
+                  styles.historyResumeDetail,
+                  darkMode ? styles.historyResumeDetailDark : null,
+                ]}
+              >
+                {t(resumeSuggestion.detail)}
               </Text>
             </View>
           ) : null}
@@ -454,14 +622,36 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
               testID={`history-section-${section.key}`}
             >
               <View style={styles.historySectionHeader}>
-                <Text style={styles.historySectionTitle}>{section.title}</Text>
-                <View style={styles.historySectionCountBadge}>
-                  <Text style={styles.historySectionCountText}>
+                <Text
+                  style={[
+                    styles.historySectionTitle,
+                    darkMode ? styles.historySectionTitleDark : null,
+                  ]}
+                >
+                  {t(section.title)}
+                </Text>
+                <View
+                  style={[
+                    styles.historySectionCountBadge,
+                    darkMode ? styles.historySectionCountBadgeDark : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.historySectionCountText,
+                      darkMode ? styles.historySectionCountTextDark : null,
+                    ]}
+                  >
                     {section.items.length}
                   </Text>
                 </View>
               </View>
-              <View style={styles.historySectionItems}>
+              <View
+                style={[
+                  styles.historySectionItems,
+                  darkMode ? styles.historySectionItemsDark : null,
+                ]}
+              >
                 {section.items.map((item, itemIndex) => {
                   const ativo = item.id === laudoSelecionadoId;
                   const isFirstHistoryItem =
@@ -477,6 +667,7 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
                       }
                       isLastItem={itemIndex === section.items.length - 1}
                       item={item}
+                      darkMode={darkMode}
                       onExcluir={() => onExcluirConversaHistorico(item)}
                       onSelecionar={() => onSelecionarHistorico(item)}
                       testID={`history-item-${item.id}`}
@@ -516,9 +707,10 @@ export function HistoryDrawerPanel<TItem extends HistoryDrawerPanelItem>({
           <View style={styles.historyEmptyState} testID="history-empty-state">
             <EmptyState
               compact
-              description={historicoVazioTexto}
+              darkMode={darkMode}
+              description={t(historicoVazioTexto)}
               icon="history"
-              title={historicoVazioTitulo}
+              title={t(historicoVazioTitulo)}
             />
           </View>
         )}

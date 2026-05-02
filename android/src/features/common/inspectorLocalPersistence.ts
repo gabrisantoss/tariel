@@ -496,6 +496,16 @@ export async function lerFilaOfflineLocal(params: {
           aiMode: params.normalizarModoChat(registro.aiMode, "detalhado"),
           aiSummary: String(registro.aiSummary || "").trim(),
           aiMessagePrefix: String(registro.aiMessagePrefix || "").trim(),
+          ...(typeof registro.aiLearningOptIn === "boolean"
+            ? { aiLearningOptIn: registro.aiLearningOptIn }
+            : {}),
+          ...(registro.aiTone
+            ? {
+                aiTone: String(
+                  registro.aiTone,
+                ).trim() as AppSettings["ai"]["tone"],
+              }
+            : {}),
         };
       })
       .filter(

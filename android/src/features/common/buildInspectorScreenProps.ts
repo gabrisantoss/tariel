@@ -54,6 +54,7 @@ type InspectorAuthenticatedBaseState = Pick<
   | "podeEnviarComposer"
   | "podeEnviarMesa"
   | "podeUsarComposerMesa"
+  | "settingsPrintDarkMode"
   | "threadKeyboardPaddingBottom"
   | "vendoFinalizacao"
   | "vendoMesa"
@@ -154,6 +155,7 @@ interface BuildInspectorAuthenticatedLayoutScreenPropsInput {
     | "abrirReferenciaNoChat"
     | "chaveAnexo"
     | "definirReferenciaMesaAtiva"
+    | "guidedInspectionDraft"
     | "handleAbrirAnexo"
     | "handleAbrirConfiguracoes"
     | "handleAbrirNovoChat"
@@ -239,6 +241,7 @@ export function buildInspectorAuthenticatedLayoutScreenProps({
         keyboardVisible: baseState.keyboardVisible,
         onVoiceInputPress: shellState.onVoiceInputPress,
         sessionModalsStackProps: shellState.sessionModalsStackProps,
+        settingsPrintDarkMode: baseState.settingsPrintDarkMode,
         statusApi: shellState.statusApi,
         setIntroVisivel: shellState.setIntroVisivel,
         settingsDrawerPanelProps: shellState.settingsDrawerPanelProps,
@@ -275,6 +278,7 @@ export function buildInspectorAuthenticatedLayoutScreenProps({
         dynamicMessageBubbleStyle: baseState.dynamicMessageBubbleStyle,
         dynamicMessageTextStyle: baseState.dynamicMessageTextStyle,
         filaOfflineOrdenada: baseState.filaOfflineOrdenada,
+        guidedInspectionDraft: threadState.guidedInspectionDraft || null,
         handleAbrirAnexo: threadState.handleAbrirAnexo,
         handleAbrirConfiguracoes: threadState.handleAbrirConfiguracoes,
         handleAbrirNovoChat: threadState.handleAbrirNovoChat,

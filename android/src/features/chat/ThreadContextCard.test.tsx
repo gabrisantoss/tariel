@@ -23,12 +23,12 @@ describe("ThreadContextCard", () => {
         visible
         layout="entry_chooser"
         eyebrow=""
-        title="Por onde começar?"
-        description="Escolha um modo para iniciar."
+        title="Iniciar inspeção"
+        description="Laudo técnico com checklist, evidências e revisão quando exigida."
         spotlight={{
-          label: "Chat livre como padrão",
-          tone: "success",
-          icon: "message-processing-outline",
+          label: "Inspeção guiada",
+          tone: "accent",
+          icon: "clipboard-text-search-outline",
         }}
         chips={[]}
         actions={[
@@ -60,24 +60,37 @@ describe("ThreadContextCard", () => {
       />,
     );
 
-    expect(getByText("Por onde começar?")).toBeTruthy();
+    expect(getByText("Iniciar inspeção")).toBeTruthy();
+    expect(
+      getByText(
+        "Laudo técnico com checklist, evidências e revisão quando exigida.",
+      ),
+    ).toBeTruthy();
+    expect(getByText("Iniciar inspeção guiada")).toBeTruthy();
+    expect(getByText("Recomendado")).toBeTruthy();
+    expect(getByText("NR35")).toBeTruthy();
+    expect(getByText("NR13")).toBeTruthy();
     expect(getAllByText("Chat livre").length).toBeGreaterThan(0);
     expect(queryByText("Escolha um modo para iniciar.")).toBeNull();
-    expect(getByText("Fotos, contexto e análise flexível.")).toBeTruthy();
-    expect(getByText("Chat guiado")).toBeTruthy();
+    expect(
+      getByText("Envie fotos, dúvidas ou contexto sem modelo fixo."),
+    ).toBeTruthy();
+    expect(
+      getByText("Checklist técnico para laudo, evidências e Mesa."),
+    ).toBeTruthy();
     expect(queryByText("Laudo no 1º envio")).toBeNull();
     expect(queryByText("Chat do inspetor")).toBeNull();
   });
 
   it("abre a lista de templates guiados e dispara o template escolhido", () => {
     const onStartNr35 = jest.fn();
-    const { getByTestId, getByText, queryByText } = render(
+    const { getAllByText, getByTestId, getByText, queryByText } = render(
       <ThreadContextCard
         visible
         layout="entry_chooser"
         eyebrow=""
-        title="Por onde começar?"
-        description="Escolha um modo para iniciar."
+        title="Iniciar inspeção"
+        description="Laudo técnico com checklist, evidências e revisão quando exigida."
         spotlight={{
           label: "IA recomenda guiado",
           tone: "accent",
@@ -114,16 +127,16 @@ describe("ThreadContextCard", () => {
     );
 
     expect(queryByText("NR35 Linha de Vida")).toBeNull();
-    expect(getByText("Template técnico com coleta orientada.")).toBeTruthy();
+    expect(
+      getByText("Checklist técnico para laudo, evidências e Mesa."),
+    ).toBeTruthy();
 
     fireEvent.press(getByTestId("guided-entry-open-button"));
 
-    expect(getByText("Template do chat guiado")).toBeTruthy();
-    expect(
-      getByText("Selecione agora o template técnico desejado."),
-    ).toBeTruthy();
+    expect(getByText("Família normativa")).toBeTruthy();
+    expect(getByText("Escolha a família normativa para iniciar.")).toBeTruthy();
     expect(getByText("NR35 Linha de Vida")).toBeTruthy();
-    expect(getByText("NR13")).toBeTruthy();
+    expect(getAllByText("NR13").length).toBeGreaterThan(0);
 
     fireEvent.press(
       getByTestId("guided-inspection-template-nr35_linha_vida-button"),
@@ -140,8 +153,8 @@ describe("ThreadContextCard", () => {
         layout="entry_chooser"
         guidedTemplatesVisible
         eyebrow=""
-        title="Por onde começar?"
-        description="Escolha um modo para iniciar."
+        title="Iniciar inspeção"
+        description="Laudo técnico com checklist, evidências e revisão quando exigida."
         spotlight={{
           label: "IA recomenda guiado",
           tone: "accent",
@@ -170,7 +183,7 @@ describe("ThreadContextCard", () => {
       />,
     );
 
-    expect(getByText("Template do chat guiado")).toBeTruthy();
+    expect(getByText("Família normativa")).toBeTruthy();
 
     fireEvent.press(getByTestId("guided-entry-open-button"));
 
@@ -183,8 +196,8 @@ describe("ThreadContextCard", () => {
         visible
         layout="entry_chooser"
         eyebrow=""
-        title="Por onde começar?"
-        description="Escolha um modo para iniciar."
+        title="Iniciar inspeção"
+        description="Laudo técnico com checklist, evidências e revisão quando exigida."
         spotlight={{
           label: "Chat livre como padrão",
           tone: "success",

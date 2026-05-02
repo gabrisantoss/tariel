@@ -136,20 +136,14 @@ export function SettingsExperienceNotificationsSection({
   somNotificacao,
   vibracaoAtiva,
   emailsAtivos,
-  chatCategoryEnabled,
   mesaCategoryEnabled,
   showMesaCategory = true,
-  systemCategoryEnabled,
-  criticalAlertsEnabled,
   onSetNotificaRespostas,
   onToggleNotificaPush,
   onSetSomNotificacao,
   onToggleVibracao,
   onSetEmailsAtivos,
-  onSetChatCategoryEnabled,
   onSetMesaCategoryEnabled,
-  onSetSystemCategoryEnabled,
-  onSetCriticalAlertsEnabled,
   onAbrirPermissaoNotificacoes,
 }: SettingsExperienceNotificationsSectionProps) {
   return (
@@ -200,12 +194,6 @@ export function SettingsExperienceNotificationsSection({
         title="Emails"
         value={emailsAtivos}
       />
-      <SettingsSwitchRow
-        icon="message-processing-outline"
-        onValueChange={onSetChatCategoryEnabled}
-        title="Categoria Chat"
-        value={chatCategoryEnabled}
-      />
       {showMesaCategory ? (
         <SettingsSwitchRow
           icon="clipboard-text-outline"
@@ -214,18 +202,6 @@ export function SettingsExperienceNotificationsSection({
           value={mesaCategoryEnabled}
         />
       ) : null}
-      <SettingsSwitchRow
-        icon="cellphone-cog"
-        onValueChange={onSetSystemCategoryEnabled}
-        title="Categoria Sistema"
-        value={systemCategoryEnabled}
-      />
-      <SettingsSwitchRow
-        icon="alert-circle-outline"
-        onValueChange={onSetCriticalAlertsEnabled}
-        title="Alertas críticos"
-        value={criticalAlertsEnabled}
-      />
     </SettingsSection>
   );
 }

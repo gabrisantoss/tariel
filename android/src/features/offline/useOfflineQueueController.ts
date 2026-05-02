@@ -225,6 +225,8 @@ export function useOfflineQueueController<
       nomeDocumento,
       laudoId: laudoIdAtual,
       modo: current.normalizarModoChat(item.aiMode || conversaAtual?.modo),
+      learningOptIn: item.aiLearningOptIn === true,
+      tone: item.aiTone,
       guidedInspectionDraft: item.guidedInspectionDraft || undefined,
       guidedInspectionContext: buildGuidedInspectionMessageContext(
         guidedInspectionDraft,

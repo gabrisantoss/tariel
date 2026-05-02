@@ -10,6 +10,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAppTranslation } from "../i18n/appTranslation";
 import type { MobileLaudoCard } from "../types/mobile";
 import { styles } from "./InspectorMobileApp.styles";
 import { ThreadComposerPanel } from "./chat/ThreadComposerPanel";
@@ -33,6 +34,7 @@ interface InspectorAuthenticatedLayoutProps {
   animacoesAtivas: boolean;
   appGradientColors: readonly [string, string, ...string[]];
   chatKeyboardVerticalOffset: number;
+  darkMode?: boolean;
   drawerOverlayOpacity: Animated.Value;
   erroConversa: string;
   erroLaudos: string;
@@ -70,6 +72,7 @@ export function InspectorAuthenticatedLayout({
   animacoesAtivas,
   appGradientColors,
   chatKeyboardVerticalOffset,
+  darkMode = false,
   drawerOverlayOpacity,
   erroConversa,
   erroLaudos,
@@ -95,6 +98,7 @@ export function InspectorAuthenticatedLayout({
   settingsDrawerPanelProps,
   sessionModalsStackProps,
 }: InspectorAuthenticatedLayoutProps) {
+  const { t } = useAppTranslation();
   const entryChooserVisible =
     threadContextVisible && threadContextCardProps.layout === "entry_chooser";
   const mostrarPainelResumo =
@@ -102,6 +106,10 @@ export function InspectorAuthenticatedLayout({
     (vendoFinalizacao || threadContextCardProps.layout === "entry_chooser");
   const ocultarComposer =
     vendoFinalizacao || threadContextCardProps.layout === "entry_chooser";
+  const threadFrameAccentColor =
+    !entryChooserVisible && !vendoMesa
+      ? threadConversationPaneProps.threadFrameAccentColor
+      : null;
 
   return (
     <LinearGradient colors={appGradientColors} style={styles.gradient}>
@@ -121,18 +129,26 @@ export function InspectorAuthenticatedLayout({
               ]}
             >
               {!!erroLaudos && (
-                <Text style={styles.errorText}>{erroLaudos}</Text>
+                <Text style={styles.errorText}>{t(erroLaudos)}</Text>
               )}
               {!!erroConversa && (
-                <Text style={styles.errorText}>{erroConversa}</Text>
+                <Text style={styles.errorText}>{t(erroConversa)}</Text>
               )}
 
               <View
                 style={[
                   styles.threadBody,
+                  darkMode ? styles.threadBodyDark : null,
                   entryChooserVisible ? styles.threadBodyEntryChooser : null,
+                  threadFrameAccentColor
+                    ? {
+                        borderColor: threadFrameAccentColor,
+                        borderWidth: 1.5,
+                      }
+                    : null,
                   keyboardVisible ? styles.threadBodyKeyboardVisible : null,
                 ]}
+                testID="thread-body"
               >
                 {mostrarPainelResumo ? (
                   <ScrollView
@@ -167,6 +183,7 @@ export function InspectorAuthenticatedLayout({
 
               <ThreadComposerPanel
                 {...threadComposerPanelProps}
+                darkMode={darkMode}
                 vendoMesa={vendoMesa}
                 visible={!ocultarComposer && (!vendoMesa || mesaTemMensagens)}
               />

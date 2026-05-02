@@ -60,6 +60,8 @@ type QualityGateControllerCurrent<TOfflineItem extends OfflinePendingMessage> =
       aiMode: MobileChatMode;
       aiSummary: string;
       aiMessagePrefix: string;
+      aiLearningOptIn?: boolean;
+      aiTone?: ChatAiRequestConfig["tone"];
     }) => TOfflineItem;
     aiRequestConfig: ChatAiRequestConfig;
     setStatusApi: (value: "online" | "offline") => void;
@@ -299,6 +301,8 @@ export function createInspectorChatQualityGateController<
             aiMode: current.aiRequestConfig.mode,
             aiSummary: current.aiRequestConfig.summaryLabel,
             aiMessagePrefix: current.aiRequestConfig.messagePrefix,
+            aiLearningOptIn: current.aiRequestConfig.learningOptIn,
+            aiTone: current.aiRequestConfig.tone,
           }),
         ]);
         current.setStatusApi("offline");

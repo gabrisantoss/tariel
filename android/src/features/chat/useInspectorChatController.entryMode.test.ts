@@ -239,6 +239,8 @@ function criarParams(
           aiMode: params.aiMode,
           aiSummary: params.aiSummary,
           aiMessagePrefix: params.aiMessagePrefix,
+          aiLearningOptIn: params.aiLearningOptIn,
+          aiTone: params.aiTone,
         }) satisfies OfflinePendingMessage,
     ),
     ...overrides,
@@ -778,6 +780,8 @@ describe("useInspectorChatController entry mode", () => {
           aiMode: params.aiMode,
           aiSummary: params.aiSummary,
           aiMessagePrefix: params.aiMessagePrefix,
+          aiLearningOptIn: params.aiLearningOptIn,
+          aiTone: params.aiTone,
         }) satisfies OfflinePendingMessage,
     );
     const params = criarParams({

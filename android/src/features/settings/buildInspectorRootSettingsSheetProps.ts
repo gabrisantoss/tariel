@@ -52,6 +52,8 @@ interface BuildInspectorRootSettingsSheetPropsInput {
     | "handleAlternarIntegracaoExterna"
     | "onAbrirPortalContinuation"
     | "handleRemoverScreenshotBug"
+    | "handleSelecionarEstiloResposta"
+    | "handleSelecionarIdiomaResposta"
     | "handleSelecionarModeloIa"
     | "handleSelecionarScreenshotBug"
     | "handleSincronizarIntegracaoExterna"
@@ -89,10 +91,11 @@ interface BuildInspectorRootSettingsSheetPropsInput {
     | "buscaAjuda"
     | "confirmarSenhaDraft"
     | "feedbackDraft"
+    | "estiloResposta"
+    | "idiomaResposta"
     | "integracaoSincronizandoId"
     | "integracoesExternas"
     | "modeloIa"
-    | "nomeAutomaticoConversas"
     | "nomeCompletoDraft"
     | "nomeExibicaoDraft"
     | "novaSenhaDraft"
@@ -139,7 +142,7 @@ interface BuildInspectorRootSettingsSheetPropsInput {
   > &
     Pick<
       SettingsSheetBodyParams,
-      "onSetBuscaAjuda" | "onSetNomeAutomaticoConversas" | "onSetNovoEmailDraft"
+      "onSetBuscaAjuda" | "onSetNovoEmailDraft"
     >;
 }
 
@@ -252,6 +255,8 @@ export function buildInspectorRootSettingsSheetProps({
     handleAlternarIntegracaoExterna:
       actionsState.handleAlternarIntegracaoExterna,
     handleRemoverScreenshotBug: actionsState.handleRemoverScreenshotBug,
+    handleSelecionarEstiloResposta: actionsState.handleSelecionarEstiloResposta,
+    handleSelecionarIdiomaResposta: actionsState.handleSelecionarIdiomaResposta,
     handleSelecionarModeloIa: actionsState.handleSelecionarModeloIa,
     handleSelecionarScreenshotBug: actionsState.handleSelecionarScreenshotBug,
     handleSincronizarIntegracaoExterna:
@@ -262,7 +267,8 @@ export function buildInspectorRootSettingsSheetProps({
     integracoesDisponiveisTotal: baseState.integracoesDisponiveisTotal,
     integracoesExternas: draftState.integracoesExternas,
     modeloIa: draftState.modeloIa,
-    nomeAutomaticoConversas: draftState.nomeAutomaticoConversas,
+    estiloResposta: draftState.estiloResposta,
+    idiomaResposta: draftState.idiomaResposta,
     nomeCompletoDraft: draftState.nomeCompletoDraft,
     nomeExibicaoDraft: draftState.nomeExibicaoDraft,
     novaSenhaDraft: draftState.novaSenhaDraft,
@@ -272,7 +278,6 @@ export function buildInspectorRootSettingsSheetProps({
     onSetBuscaAjuda: settersState.onSetBuscaAjuda,
     onSetConfirmarSenhaDraft: settersState.onSetConfirmarSenhaDraft,
     onSetFeedbackDraft: settersState.onSetFeedbackDraft,
-    onSetNomeAutomaticoConversas: settersState.onSetNomeAutomaticoConversas,
     onSetNomeCompletoDraft: settersState.onSetNomeCompletoDraft,
     onSetNomeExibicaoDraft: settersState.onSetNomeExibicaoDraft,
     onSetNovaSenhaDraft: settersState.onSetNovaSenhaDraft,

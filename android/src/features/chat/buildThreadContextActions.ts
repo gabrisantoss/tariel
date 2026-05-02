@@ -5,34 +5,9 @@ import type {
 import {
   listGuidedInspectionTemplates,
   type GuidedInspectionProgress,
-  type GuidedInspectionTemplateKey,
 } from "../inspection/guidedInspection";
 import { buildReportPackDraftSummary } from "./reportPackHelpers";
-
-const GUIDED_ENTRY_ICONS: Record<
-  GuidedInspectionTemplateKey,
-  ThreadContextStateResult["threadActions"][number]["icon"]
-> = {
-  padrao: "clipboard-text-outline",
-  avcb: "fire-alert",
-  cbmgo: "fire-alert",
-  loto: "lock-outline",
-  nr11_movimentacao: "crane",
-  nr12maquinas: "cog-outline",
-  nr13: "gauge",
-  nr13_calibracao: "tune",
-  nr13_teste_hidrostatico: "test-tube",
-  nr13_ultrassom: "waveform",
-  nr20_instalacoes: "fire-circle",
-  nr33_espaco_confinado: "alert-octagon-outline",
-  nr35_linha_vida: "ladder",
-  nr35_montagem: "tools",
-  nr35_ponto_ancoragem: "anchor",
-  nr35_projeto: "file-document-outline",
-  pie: "flash-outline",
-  rti: "radio-tower",
-  spda: "weather-lightning",
-};
+import { guidedInspectionIconForTemplate } from "./guidedInspectionPresentation";
 
 function adicionarAcoesModoGuiado(
   threadActions: ThreadContextStateResult["threadActions"],
@@ -167,7 +142,7 @@ export function buildThreadContextActions(params: {
           key: `guided-template-${template.key}`,
           label: template.label,
           tone: "accent" as const,
-          icon: GUIDED_ENTRY_ICONS[template.key],
+          icon: guidedInspectionIconForTemplate(template.key),
           onPress: () => {
             params.onStartGuidedInspection(template.key);
           },

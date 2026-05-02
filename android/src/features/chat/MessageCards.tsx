@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
 
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import type { MobileAttachment } from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
@@ -26,13 +27,14 @@ export function MessageAttachmentCard({
   onPress,
   testID,
 }: MessageAttachmentCardProps) {
+  const { t } = useAppTranslation();
   const imageAttachment = ehImagemAnexo(attachment);
   const absoluteUrl = urlAnexoAbsoluta(attachment.url);
   const disabled = !absoluteUrl || !accessToken || opening;
   const tamanho = tamanhoHumanoAnexo(attachment.tamanho_bytes);
   const titulo = nomeExibicaoAnexo(
     attachment,
-    imageAttachment ? "Imagem" : "Documento",
+    imageAttachment ? t("Imagem") : t("Documento"),
   );
 
   return (
@@ -74,7 +76,7 @@ export function MessageAttachmentCard({
           {titulo}
         </Text>
         <Text style={styles.messageAttachmentCaption}>
-          {imageAttachment ? "Imagem" : "Documento"}
+          {imageAttachment ? t("Imagem") : t("Documento")}
           {tamanho ? ` • ${tamanho}` : ""}
         </Text>
       </View>
@@ -113,6 +115,7 @@ export function MessageReferenceCard({
   onPress,
   variant = "incoming",
 }: MessageReferenceCardProps) {
+  const { t } = useAppTranslation();
   const outgoing = variant === "outgoing";
 
   return (
@@ -142,7 +145,7 @@ export function MessageReferenceCard({
             outgoing ? styles.messageReferenceTitleOutgoing : null,
           ]}
         >
-          Referência #{messageId}
+          {t("Referência")} #{messageId}
         </Text>
         <Text
           numberOfLines={2}

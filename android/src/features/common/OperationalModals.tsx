@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 
+import { useAppTranslation } from "../../i18n/appTranslation";
 import type { ApiHealthStatus } from "../../types/mobile";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
@@ -46,6 +47,8 @@ export function AttachmentPickerModal({
   onClose: () => void;
   onChoose: (option: "camera" | "galeria" | "documento") => void;
 }) {
+  const { t } = useAppTranslation();
+
   return (
     <Modal
       animationType="fade"
@@ -57,11 +60,14 @@ export function AttachmentPickerModal({
         <View style={styles.activityModalCard}>
           <View style={styles.activityModalHeader}>
             <View style={styles.activityModalCopy}>
-              <Text style={styles.activityModalEyebrow}>anexar</Text>
-              <Text style={styles.activityModalTitle}>Escolha o anexo</Text>
+              <Text style={styles.activityModalEyebrow}>{t("anexar")}</Text>
+              <Text style={styles.activityModalTitle}>
+                {t("Escolha o anexo")}
+              </Text>
               <Text style={styles.activityModalDescription}>
-                Fotos entram direto no caso. Documentos seguem a politica do
-                fluxo ativo.
+                {t(
+                  "Fotos entram direto no caso. Documentos seguem a politica do fluxo ativo.",
+                )}
               </Text>
             </View>
             <Pressable onPress={onClose} style={styles.activityModalClose}>
@@ -97,9 +103,9 @@ export function AttachmentPickerModal({
                       !item.enabled ? styles.actionTextDisabled : null,
                     ]}
                   >
-                    {item.title}
+                    {t(item.title)}
                   </Text>
-                  <Text style={styles.actionItemDetail}>{item.detail}</Text>
+                  <Text style={styles.actionItemDetail}>{t(item.detail)}</Text>
                 </View>
               </Pressable>
             ))}
@@ -129,6 +135,7 @@ export function ActivityCenterModal({
   onAbrirNotificacao: (item: MobileActivityNotification) => void;
   formatarHorarioAtividade: (value: string) => string;
 }) {
+  const { t } = useAppTranslation();
   const automationMarkerIds = automationDiagnosticsEnabled
     ? buildActivityCenterAutomationMarkerIds(
         activityCenterAutomationDiagnostics,
@@ -225,14 +232,15 @@ export function ActivityCenterModal({
           <View style={styles.activityModalHeader}>
             <View style={styles.activityModalCopy}>
               <Text style={styles.activityModalEyebrow}>
-                Central do inspetor
+                {t("Central do inspetor")}
               </Text>
               <Text style={styles.activityModalTitle}>
-                Central de atividade
+                {t("Central de atividade")}
               </Text>
               <Text style={styles.activityModalDescription}>
-                Alertas recentes do caso ativo, pendências, documentos oficiais
-                e Mesa Avaliadora enquanto o app estiver em uso.
+                {t(
+                  "Alertas recentes do caso ativo, pendências, documentos oficiais e Mesa Avaliadora enquanto o app estiver em uso.",
+                )}
               </Text>
             </View>
             <Pressable
@@ -255,7 +263,7 @@ export function ActivityCenterModal({
             >
               <ActivityIndicator size="small" color={colors.accent} />
               <Text style={styles.activityModalLoadingText}>
-                Atualizando atividade...
+                {t("Atualizando atividade...")}
               </Text>
             </View>
           ) : null}
@@ -265,7 +273,7 @@ export function ActivityCenterModal({
               {summaryItems.map((item) => (
                 <View key={item.key} style={styles.activitySummaryChip}>
                   <Text style={styles.activitySummaryChipText}>
-                    {item.label}
+                    {t(item.label)}
                   </Text>
                 </View>
               ))}
@@ -307,7 +315,7 @@ export function ActivityCenterModal({
                   <View style={styles.activityItemBody}>
                     <View style={styles.activityItemTop}>
                       <Text style={styles.activityItemTitle}>
-                        {sanitizarTextoNotificacaoAtividade(item.title)}
+                        {t(sanitizarTextoNotificacaoAtividade(item.title))}
                       </Text>
                       <Text style={styles.activityItemTime}>
                         {formatarHorarioAtividade(item.createdAt)}
@@ -315,7 +323,7 @@ export function ActivityCenterModal({
                     </View>
                     <View style={styles.activityItemBadgeRow}>
                       <Text style={styles.activityItemHint}>
-                        {rotuloCategoriaNotificacaoAtividade(item)}
+                        {t(rotuloCategoriaNotificacaoAtividade(item))}
                       </Text>
                       <Text
                         style={[
@@ -323,11 +331,11 @@ export function ActivityCenterModal({
                           styles.activityItemHintAction,
                         ]}
                       >
-                        {hintDestinoNotificacaoAtividade(item)}
+                        {t(hintDestinoNotificacaoAtividade(item))}
                       </Text>
                     </View>
                     <Text numberOfLines={3} style={styles.activityItemText}>
-                      {sanitizarTextoNotificacaoAtividade(item.body)}
+                      {t(sanitizarTextoNotificacaoAtividade(item.body))}
                     </Text>
                   </View>
                 </Pressable>
@@ -343,11 +351,12 @@ export function ActivityCenterModal({
                   color={colors.textSecondary}
                 />
                 <Text style={styles.activityEmptyTitle}>
-                  Nenhuma atividade recente
+                  {t("Nenhuma atividade recente")}
                 </Text>
                 <Text style={styles.activityEmptyText}>
-                  Quando a Mesa Avaliadora responder ou um caso mudar de status,
-                  isso aparece aqui com a próxima ação.
+                  {t(
+                    "Quando a Mesa Avaliadora responder ou um caso mudar de status, isso aparece aqui com a próxima ação.",
+                  )}
                 </Text>
               </View>
             )}
@@ -409,6 +418,7 @@ export function OfflineQueueModal({
   detalheStatusPendenciaOffline: (item: OfflinePendingMessage) => string;
   pendenciaFilaProntaParaReenvio: (item: OfflinePendingMessage) => boolean;
 }) {
+  const { t } = useAppTranslation();
   const toolbarBlockingReason = !sincronizacaoDispositivos
     ? "Sincronização entre dispositivos está desativada nas configurações de dados."
     : statusApi !== "online"
@@ -428,11 +438,12 @@ export function OfflineQueueModal({
         <View style={styles.activityModalCard}>
           <View style={styles.activityModalHeader}>
             <View style={styles.activityModalCopy}>
-              <Text style={styles.activityModalEyebrow}>Fila local</Text>
-              <Text style={styles.activityModalTitle}>Fila offline</Text>
+              <Text style={styles.activityModalEyebrow}>{t("Fila local")}</Text>
+              <Text style={styles.activityModalTitle}>{t("Fila offline")}</Text>
               <Text style={styles.activityModalDescription}>
-                Envios guardados localmente para o inspetor retomar, revisar ou
-                reenviar quando a conexão voltar.
+                {t(
+                  "Envios guardados localmente para o inspetor retomar, revisar ou reenviar quando a conexão voltar.",
+                )}
               </Text>
             </View>
             <Pressable onPress={onClose} style={styles.activityModalClose}>
@@ -446,7 +457,7 @@ export function OfflineQueueModal({
 
           <View style={styles.offlineModalToolbar}>
             <Text style={styles.offlineModalToolbarText}>
-              {resumoFilaOfflineFiltrada}
+              {t(resumoFilaOfflineFiltrada)}
             </Text>
             {sincronizandoFilaOffline ? (
               <ActivityIndicator size="small" color={colors.accent} />
@@ -486,14 +497,14 @@ export function OfflineQueueModal({
                       : null,
                   ]}
                 >
-                  Sincronizar
+                  {t("Sincronizar")}
                 </Text>
               </Pressable>
             )}
           </View>
           {toolbarBlockingReason ? (
             <Text style={styles.offlineModalToolbarText}>
-              {toolbarBlockingReason}
+              {t(toolbarBlockingReason)}
             </Text>
           ) : null}
 
@@ -515,7 +526,7 @@ export function OfflineQueueModal({
                       ativo ? styles.offlineModalFilterTextActive : null,
                     ]}
                   >
-                    {filtro.label}
+                    {t(filtro.label)}
                   </Text>
                   <View
                     style={[
@@ -555,7 +566,7 @@ export function OfflineQueueModal({
                     <View style={styles.offlineModalItemCopy}>
                       <View style={styles.offlineModalItemHeading}>
                         <Text style={styles.offlineModalItemTitle}>
-                          {item.channel === "mesa" ? "Mesa" : "Chat"} •{" "}
+                          {item.channel === "mesa" ? t("Mesa") : t("Chat")} •{" "}
                           {item.title}
                         </Text>
                         <Text style={styles.offlineModalItemTime}>
@@ -563,10 +574,10 @@ export function OfflineQueueModal({
                         </Text>
                       </View>
                       <Text style={styles.offlineModalItemText}>
-                        {resumoPendenciaOffline(item)}
+                        {t(resumoPendenciaOffline(item))}
                       </Text>
                       <Text style={styles.offlineModalItemHint}>
-                        {legendaPendenciaOffline(item)}
+                        {t(legendaPendenciaOffline(item))}
                       </Text>
                       <View style={styles.offlineModalItemStatusRow}>
                         <View
@@ -596,11 +607,11 @@ export function OfflineQueueModal({
                                 : null,
                             ]}
                           >
-                            {rotuloStatusPendenciaOffline(item)}
+                            {t(rotuloStatusPendenciaOffline(item))}
                           </Text>
                         </View>
                         <Text style={styles.offlineModalItemStatusText}>
-                          {detalheStatusPendenciaOffline(item)}
+                          {t(detalheStatusPendenciaOffline(item))}
                         </Text>
                       </View>
                     </View>
@@ -650,8 +661,8 @@ export function OfflineQueueModal({
                         ]}
                       >
                         {pendenciaFilaProntaParaReenvio(item)
-                          ? "Enviar agora"
-                          : "Enviar sem esperar"}
+                          ? t("Enviar agora")
+                          : t("Enviar sem esperar")}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -664,7 +675,7 @@ export function OfflineQueueModal({
                         color={colors.white}
                       />
                       <Text style={styles.offlineModalActionPrimaryText}>
-                        Retomar
+                        {t("Retomar")}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -677,7 +688,7 @@ export function OfflineQueueModal({
                         color={colors.textSecondary}
                       />
                       <Text style={styles.offlineModalActionSecondaryText}>
-                        Remover
+                        {t("Remover")}
                       </Text>
                     </Pressable>
                   </View>
@@ -696,13 +707,17 @@ export function OfflineQueueModal({
                 />
                 <Text style={styles.activityEmptyTitle}>
                   {filaOfflineOrdenadaTotal
-                    ? "Nenhuma pendência neste filtro"
-                    : "Fila offline vazia"}
+                    ? t("Nenhuma pendência neste filtro")
+                    : t("Fila offline vazia")}
                 </Text>
                 <Text style={styles.activityEmptyText}>
                   {filaOfflineOrdenadaTotal
-                    ? "Troque entre Tudo, Chat e Mesa para localizar a pendência certa mais rápido."
-                    : "Quando o app guardar um envio local, ele aparece aqui para você retomar ou sincronizar depois."}
+                    ? t(
+                        "Troque entre Tudo, Chat e Mesa para localizar a pendência certa mais rápido.",
+                      )
+                    : t(
+                        "Quando o app guardar um envio local, ele aparece aqui para você retomar ou sincronizar depois.",
+                      )}
                 </Text>
               </View>
             )}
@@ -726,6 +741,8 @@ export function AttachmentPreviewModal({
   uri: string;
   accessToken: string;
 }) {
+  const { t } = useAppTranslation();
+
   return (
     <Modal
       animationType="fade"
@@ -737,7 +754,7 @@ export function AttachmentPreviewModal({
         <View style={styles.attachmentModalCard}>
           <View style={styles.attachmentModalHeader}>
             <Text numberOfLines={1} style={styles.attachmentModalTitle}>
-              {title || "Imagem anexada"}
+              {t(title || "Imagem anexada")}
             </Text>
             <Pressable onPress={onClose} style={styles.attachmentModalClose}>
               <MaterialCommunityIcons

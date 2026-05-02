@@ -32,6 +32,11 @@ export const settingsSecurityStyles = {
     borderRadius: radii.pill,
     backgroundColor: colors.surface,
   },
+  settingsPrintAvatarImageDark: {
+    backgroundColor: "#1D2B3A",
+    borderWidth: 1,
+    borderColor: "#32455D",
+  },
   settingsPrintAvatarFallback: {
     width: 86,
     height: 86,
@@ -40,11 +45,19 @@ export const settingsSecurityStyles = {
     justifyContent: "center",
     backgroundColor: colors.ink800,
   },
+  settingsPrintAvatarFallbackDark: {
+    backgroundColor: "#233447",
+    borderWidth: 1,
+    borderColor: "#3F5A74",
+  },
   settingsPrintAvatarInitials: {
     color: colors.white,
     fontSize: 30,
     fontWeight: "700",
     letterSpacing: 0.5,
+  },
+  settingsPrintAvatarInitialsDark: {
+    color: "#F0F4F8",
   },
   settingsPrintAvatarEditButton: {
     position: "absolute",
@@ -696,6 +709,9 @@ export const settingsSecurityStyles = {
     color: colors.textMuted,
     ...typography.eyebrow,
   },
+  settingsGroupEyebrowDark: {
+    color: "#AFC0D2",
+  },
   settingsGroupDescription: {
     color: colors.textSecondary,
     fontSize: 12,
@@ -719,6 +735,10 @@ export const settingsSecurityStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  settingsSectionIconDark: {
+    backgroundColor: "#1D2B3A",
+    borderColor: "#32455D",
+  },
   settingsSectionCopy: {
     flex: 1,
   },
@@ -726,6 +746,9 @@ export const settingsSecurityStyles = {
     color: colors.textPrimary,
     fontSize: 15,
     fontWeight: "800",
+  },
+  settingsSectionTitleDark: {
+    color: "#F0F4F8",
   },
   settingsSectionSubtitle: {
     color: colors.textSecondary,
@@ -739,6 +762,10 @@ export const settingsSecurityStyles = {
     borderColor: colors.surfaceStroke,
     overflow: "hidden",
   },
+  settingsCardDark: {
+    backgroundColor: "#0F1A26",
+    borderColor: "#2A3B4D",
+  },
   settingsRow: {
     minHeight: 64,
     flexDirection: "row",
@@ -749,8 +776,15 @@ export const settingsSecurityStyles = {
     borderBottomWidth: 1,
     borderBottomColor: colors.surfaceStroke,
   },
+  settingsRowDark: {
+    backgroundColor: "#0F1A26",
+    borderBottomColor: "#223144",
+  },
   settingsRowDanger: {
     backgroundColor: "#FFF9F8",
+  },
+  settingsRowDangerDark: {
+    backgroundColor: "rgba(248, 113, 113, 0.12)",
   },
   settingsBlockRow: {
     gap: spacing.sm,
@@ -758,6 +792,10 @@ export const settingsSecurityStyles = {
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.surfaceStroke,
+  },
+  settingsBlockRowDark: {
+    backgroundColor: "#0F1A26",
+    borderBottomColor: "#223144",
   },
   settingsBlockHeader: {
     flexDirection: "row",
@@ -774,9 +812,17 @@ export const settingsSecurityStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  settingsRowIconDark: {
+    backgroundColor: "#172436",
+    borderColor: "#2A3B4D",
+  },
   settingsRowIconDanger: {
     backgroundColor: colors.dangerWash,
     borderColor: colors.dangerSoft,
+  },
+  settingsRowIconDangerDark: {
+    backgroundColor: "rgba(248, 113, 113, 0.14)",
+    borderColor: "rgba(248, 113, 113, 0.34)",
   },
   settingsRowCopy: {
     flex: 1,
@@ -785,6 +831,9 @@ export const settingsSecurityStyles = {
     color: colors.textPrimary,
     fontSize: 13,
     fontWeight: "700",
+  },
+  settingsRowTitleDark: {
+    color: "#E8EEF5",
   },
   settingsRowTitleDanger: {
     color: colors.danger,
@@ -806,6 +855,9 @@ export const settingsSecurityStyles = {
     textAlign: "right",
     maxWidth: 96,
   },
+  settingsRowValueDark: {
+    color: "#AFC0D2",
+  },
   settingsSegmentedControl: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -821,6 +873,10 @@ export const settingsSecurityStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  settingsSegmentPillDark: {
+    backgroundColor: "#172436",
+    borderColor: "#2A3B4D",
+  },
   settingsSegmentPillActive: {
     backgroundColor: colors.ink800,
     borderColor: colors.ink800,
@@ -831,6 +887,9 @@ export const settingsSecurityStyles = {
     fontWeight: "700",
     textTransform: "capitalize",
   },
+  settingsSegmentTextDark: {
+    color: "#C7D2DF",
+  },
   settingsSegmentTextActive: {
     color: colors.textInverse,
   },
@@ -838,6 +897,9 @@ export const settingsSecurityStyles = {
     color: colors.ink700,
     fontSize: 13,
     fontWeight: "800",
+  },
+  settingsScaleValueDark: {
+    color: "#F0F4F8",
   },
   settingsScaleTrack: {
     flexDirection: "row",
@@ -852,6 +914,9 @@ export const settingsSecurityStyles = {
     justifyContent: "center",
     alignItems: "center",
   },
+  settingsScaleStepDark: {
+    backgroundColor: "#172436",
+  },
   settingsScaleStepActive: {
     backgroundColor: colors.surfaceStrokeStrong,
   },
@@ -860,6 +925,9 @@ export const settingsSecurityStyles = {
     height: 8,
     borderRadius: radii.pill,
     backgroundColor: "#CEB8A1",
+  },
+  settingsScaleDotDark: {
+    backgroundColor: "#5E7188",
   },
   settingsScaleDotActive: {
     width: 10,
@@ -876,12 +944,19 @@ export const settingsSecurityStyles = {
     fontSize: 11,
     fontWeight: "600",
   },
+  settingsScaleLabelDark: {
+    color: "#9BB0C5",
+  },
   settingsFieldBlock: {
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: "#F1E8DF",
+  },
+  settingsFieldBlockDark: {
+    backgroundColor: "#0F1A26",
+    borderBottomColor: "#223144",
   },
   settingsFieldBlockNoDivider: {
     gap: spacing.xs,
@@ -901,6 +976,11 @@ export const settingsSecurityStyles = {
     paddingHorizontal: spacing.md,
     fontSize: 15,
   },
+  settingsTextFieldDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+    color: "#F0F4F8",
+  },
   settingsTextArea: {
     minHeight: 124,
     borderRadius: 18,
@@ -918,23 +998,41 @@ export const settingsSecurityStyles = {
     paddingHorizontal: 10,
     maxWidth: "100%",
     borderRadius: radii.pill,
+    flexDirection: "row",
+    gap: 4,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  settingsStatusPillDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   settingsStatusPillSuccess: {
     backgroundColor: colors.successWash,
     borderColor: colors.successSoft,
+  },
+  settingsStatusPillSuccessDark: {
+    backgroundColor: "#0F2D22",
+    borderColor: "#22543D",
   },
   settingsStatusPillDanger: {
     backgroundColor: colors.dangerWash,
     borderColor: colors.dangerSoft,
   },
+  settingsStatusPillDangerDark: {
+    backgroundColor: "#351D22",
+    borderColor: "#66383C",
+  },
   settingsStatusPillAccent: {
     backgroundColor: colors.surfaceCanvas,
     borderColor: colors.surfaceStrokeStrong,
+  },
+  settingsStatusPillAccentDark: {
+    backgroundColor: "#182B40",
+    borderColor: "#365372",
   },
   settingsStatusPillText: {
     color: colors.textSecondary,
@@ -942,14 +1040,26 @@ export const settingsSecurityStyles = {
     fontWeight: "700",
     flexShrink: 1,
   },
+  settingsStatusPillTextDark: {
+    color: "#AFC0D2",
+  },
   settingsStatusPillTextSuccess: {
     color: colors.success,
+  },
+  settingsStatusPillTextSuccessDark: {
+    color: "#8DE0B5",
   },
   settingsStatusPillTextDanger: {
     color: colors.danger,
   },
+  settingsStatusPillTextDangerDark: {
+    color: "#F5A3A3",
+  },
   settingsStatusPillTextAccent: {
     color: colors.ink700,
+  },
+  settingsStatusPillTextAccentDark: {
+    color: "#D8E3EE",
   },
   securityStack: {
     gap: spacing.sm,

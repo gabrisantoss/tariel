@@ -58,6 +58,8 @@ type MessageControllerCurrent<TOfflineItem extends OfflinePendingMessage> = {
     aiMode: MobileChatMode;
     aiSummary: string;
     aiMessagePrefix: string;
+    aiLearningOptIn?: boolean;
+    aiTone?: ChatAiRequestConfig["tone"];
   }) => TOfflineItem;
   podeEditarConversaNoComposer: (
     conversa: ChatState | null | undefined,
@@ -250,6 +252,8 @@ export function createInspectorChatMessageController<
           aiMode: current.aiRequestConfig.mode,
           aiSummary: current.aiRequestConfig.summaryLabel,
           aiMessagePrefix: current.aiRequestConfig.messagePrefix,
+          aiLearningOptIn: current.aiRequestConfig.learningOptIn,
+          aiTone: current.aiRequestConfig.tone,
         }),
       ]);
       current.setMessage("");

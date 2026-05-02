@@ -8,6 +8,7 @@ import {
 } from "react-native";
 
 import { styles } from "../InspectorMobileApp.styles";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { SettingsAccountSectionContent } from "./SettingsAccountSectionContent";
 import { SettingsDrawerHeader } from "./SettingsDrawerHeader";
 import { SettingsExperienceAiSection } from "./SettingsExperienceAiSection";
@@ -162,6 +163,7 @@ export function SettingsDrawerPanel({
   systemSectionProps,
   supportSectionProps,
 }: SettingsDrawerPanelProps) {
+  const { t } = useAppTranslation();
   const hideInnerSectionHeaders =
     !settingsDrawerInOverview && !settingsDrawerSectionMenuAtiva;
   return (
@@ -171,9 +173,7 @@ export function SettingsDrawerPanel({
         styles.sidePanelDrawer,
         styles.sidePanelDrawerRight,
         settingsDrawerInOverview ? styles.sidePanelDrawerPrint : null,
-        settingsDrawerInOverview && settingsPrintDarkMode
-          ? styles.sidePanelDrawerPrintDark
-          : null,
+        settingsPrintDarkMode ? styles.sidePanelDrawerPrintDark : null,
         { transform: [{ translateX: configuracoesDrawerX }] },
       ]}
       testID="settings-drawer"
@@ -190,7 +190,10 @@ export function SettingsDrawerPanel({
         contentContainerStyle={styles.settingsDrawerContent}
         showsVerticalScrollIndicator={false}
       >
-        <SettingsSectionLayoutProvider hideHeader={hideInnerSectionHeaders}>
+        <SettingsSectionLayoutProvider
+          darkMode={settingsPrintDarkMode}
+          hideHeader={hideInnerSectionHeaders}
+        >
           {settingsDrawerInOverview ? (
             <SettingsOverviewContent {...overviewContentProps} />
           ) : null}
@@ -319,11 +322,12 @@ export function SettingsDrawerPanel({
           {!totalSecoesConfiguracaoVisiveis ? (
             <View style={styles.settingsInfoCard}>
               <Text style={styles.settingsInfoTitle}>
-                Nenhuma seção encontrada
+                {t("Nenhuma seção encontrada")}
               </Text>
               <Text style={styles.settingsInfoText}>
-                Ajuste a busca ou troque o filtro para localizar o bloco certo
-                mais rápido.
+                {t(
+                  "Ajuste a busca ou troque o filtro para localizar o bloco certo mais rápido.",
+                )}
               </Text>
             </View>
           ) : null}

@@ -20,6 +20,7 @@ import type { ThreadComposerPanelProps } from "../chat/ThreadComposerPanel";
 import type { ThreadConversationPaneProps } from "../chat/ThreadConversationPane";
 import type { ThreadContextCardProps } from "../chat/ThreadContextCard";
 import type { ThreadHeaderControlsProps } from "../chat/ThreadHeaderControls";
+import type { GuidedInspectionDraft } from "../inspection/guidedInspection";
 import type {
   HistoryDrawerPanelProps,
   HistoryDrawerSection,
@@ -49,6 +50,7 @@ export interface AuthenticatedLayoutShellInput {
   chatKeyboardVerticalOffset: number;
   composerNotice: string;
   configuracoesAberta: boolean;
+  settingsPrintDarkMode: boolean;
   drawerOverlayOpacity: Animated.Value;
   erroConversa: string;
   erroLaudos: string;
@@ -98,6 +100,7 @@ export interface AuthenticatedLayoutThreadInput {
   dynamicMessageBubbleStyle: ThreadConversationPaneProps["dynamicMessageBubbleStyle"];
   dynamicMessageTextStyle: ThreadConversationPaneProps["dynamicMessageTextStyle"];
   filaOfflineOrdenada: readonly OfflinePendingMessage[];
+  guidedInspectionDraft?: GuidedInspectionDraft | null;
   handleAbrirAnexo: ThreadConversationPaneProps["onAbrirAnexo"];
   handleAbrirConfiguracoes: () => void;
   handleAbrirNovoChat: () => Promise<void>;

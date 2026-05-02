@@ -146,10 +146,10 @@ describe("ThreadHeaderControls", () => {
       />,
     );
 
-    expect(getByLabelText("Abrir historico de inspecoes")).toBeTruthy();
-    expect(getByLabelText("Iniciar nova inspecao")).toBeTruthy();
+    expect(getByLabelText("Abrir histórico de inspeções")).toBeTruthy();
+    expect(getByLabelText("Iniciar nova inspeção")).toBeTruthy();
     expect(
-      getByLabelText("Abrir configuracoes, 3 avisos pendentes"),
+      getByLabelText("Abrir configurações, 3 avisos pendentes"),
     ).toBeTruthy();
     expect(getByLabelText("Abrir aba Chat")).toBeTruthy();
     expect(getByLabelText("Abrir aba Mesa, 3 retornos novos")).toBeTruthy();

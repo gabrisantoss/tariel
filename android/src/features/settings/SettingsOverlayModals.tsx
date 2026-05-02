@@ -2,7 +2,9 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { ReactNode } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -11,6 +13,7 @@ import {
 } from "react-native";
 
 import { colors } from "../../theme/tokens";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { styles } from "../InspectorMobileApp.styles";
 import type {
   ConfirmSheetState,
@@ -145,6 +148,7 @@ export function SettingsSheetModal({
   onClose,
   onConfirm,
 }: SettingsSheetModalProps) {
+  const { t } = useAppTranslation();
   const noticeTone = inferirTomNotice(settingsSheetNotice);
   return (
     <Modal
@@ -153,83 +157,98 @@ export function SettingsSheetModal({
       transparent
       visible={visible}
     >
-      <View style={styles.activityModalBackdrop} testID="settings-sheet-modal">
-        <View style={styles.activityModalCard}>
-          <View style={styles.activityModalHeader}>
-            <View style={styles.activityModalCopy}>
-              <Text style={styles.activityModalEyebrow}>Configurações</Text>
-              <Text style={styles.activityModalTitle}>
-                {settingsSheet?.title}
-              </Text>
-              <Text style={styles.activityModalDescription}>
-                {settingsSheet?.subtitle}
-              </Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              style={styles.activityModalClose}
-              testID="settings-sheet-close-button"
-            >
-              <MaterialCommunityIcons
-                name="close"
-                size={18}
-                color={colors.textPrimary}
-              />
-            </Pressable>
-          </View>
-
-          <ScrollView contentContainerStyle={styles.settingsSheetContent}>
-            {renderSettingsSheetBody()}
-            {settingsSheetNotice ? (
-              <View style={styles.settingsSheetNotice}>
-                <MaterialCommunityIcons
-                  name={noticeTone.icon}
-                  size={18}
-                  color={noticeTone.color}
-                />
-                <Text
-                  style={[
-                    styles.settingsSheetNoticeText,
-                    { color: noticeTone.color },
-                  ]}
-                >
-                  {settingsSheetNotice}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.activityModalKeyboard}
+      >
+        <View
+          style={styles.activityModalBackdrop}
+          testID="settings-sheet-modal"
+        >
+          <View style={styles.activityModalCard}>
+            <View style={styles.activityModalHeader}>
+              <View style={styles.activityModalCopy}>
+                <Text style={styles.activityModalEyebrow}>
+                  {t("Configurações")}
+                </Text>
+                <Text style={styles.activityModalTitle}>
+                  {settingsSheet?.title ? t(settingsSheet.title) : ""}
+                </Text>
+                <Text style={styles.activityModalDescription}>
+                  {settingsSheet?.subtitle ? t(settingsSheet.subtitle) : ""}
                 </Text>
               </View>
-            ) : null}
-          </ScrollView>
-
-          <View style={styles.settingsSheetFooter}>
-            <Pressable
-              onPress={onClose}
-              style={styles.settingsSheetGhostButton}
-              testID="settings-sheet-footer-close-button"
-            >
-              <Text style={styles.settingsSheetGhostButtonText}>Fechar</Text>
-            </Pressable>
-            {settingsSheet?.actionLabel ? (
               <Pressable
-                disabled={settingsSheetLoading}
-                onPress={onConfirm}
-                style={[
-                  styles.settingsSheetPrimaryButton,
-                  settingsSheetLoading
-                    ? styles.settingsSheetPrimaryButtonDisabled
-                    : null,
-                ]}
+                onPress={onClose}
+                style={styles.activityModalClose}
+                testID="settings-sheet-close-button"
               >
-                {settingsSheetLoading ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <Text style={styles.settingsSheetPrimaryButtonText}>
-                    {settingsSheet.actionLabel}
-                  </Text>
-                )}
+                <MaterialCommunityIcons
+                  name="close"
+                  size={18}
+                  color={colors.textPrimary}
+                />
               </Pressable>
-            ) : null}
+            </View>
+
+            <ScrollView
+              contentContainerStyle={styles.settingsSheetContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {renderSettingsSheetBody()}
+              {settingsSheetNotice ? (
+                <View style={styles.settingsSheetNotice}>
+                  <MaterialCommunityIcons
+                    name={noticeTone.icon}
+                    size={18}
+                    color={noticeTone.color}
+                  />
+                  <Text
+                    style={[
+                      styles.settingsSheetNoticeText,
+                      { color: noticeTone.color },
+                    ]}
+                  >
+                    {t(settingsSheetNotice)}
+                  </Text>
+                </View>
+              ) : null}
+            </ScrollView>
+
+            <View style={styles.settingsSheetFooter}>
+              <Pressable
+                onPress={onClose}
+                style={styles.settingsSheetGhostButton}
+                testID="settings-sheet-footer-close-button"
+              >
+                <Text style={styles.settingsSheetGhostButtonText}>
+                  {t("Fechar")}
+                </Text>
+              </Pressable>
+              {settingsSheet?.actionLabel ? (
+                <Pressable
+                  disabled={settingsSheetLoading}
+                  onPress={onConfirm}
+                  style={[
+                    styles.settingsSheetPrimaryButton,
+                    settingsSheetLoading
+                      ? styles.settingsSheetPrimaryButtonDisabled
+                      : null,
+                  ]}
+                >
+                  {settingsSheetLoading ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <Text style={styles.settingsSheetPrimaryButtonText}>
+                      {t(settingsSheet.actionLabel)}
+                    </Text>
+                  )}
+                </Pressable>
+              ) : null}
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

@@ -1,16 +1,41 @@
 import { useSettingsStore } from "../../settings/hooks/useSettings";
 import type { AppSettings } from "../../settings/schema/types";
 
+function sincronizarIdiomaApp(
+  current: AppSettings,
+  value: AppSettings["system"]["language"],
+): AppSettings {
+  return {
+    ...current,
+    ai: {
+      ...current.ai,
+      responseLanguage: value,
+    },
+    speech: {
+      ...current.speech,
+      voiceLanguage: value,
+    },
+    system: {
+      ...current.system,
+      language: value,
+    },
+  };
+}
+
 export function useInspectorSettingsBindings() {
   const {
     state: settingsState,
     hydrated: settingsHydrated,
+    persistenceScope,
+    persistenceVersion,
     actions: settingsActions,
   } = useSettingsStore();
   const biometriaLocalSuportada = false;
 
   return {
     store: {
+      settingsPersistenceScope: persistenceScope,
+      settingsPersistenceVersion: persistenceVersion,
       settingsActions,
       settingsHydrated,
       settingsState,
@@ -52,7 +77,17 @@ export function useInspectorSettingsBindings() {
       setEstiloResposta: (value: AppSettings["ai"]["responseStyle"]) =>
         settingsActions.updateAi({ responseStyle: value }),
       setIdiomaResposta: (value: AppSettings["ai"]["responseLanguage"]) =>
-        settingsActions.updateAi({ responseLanguage: value }),
+        settingsActions.updateWith((current) =>
+          value === "Auto detectar"
+            ? {
+                ...current,
+                ai: {
+                  ...current.ai,
+                  responseLanguage: value,
+                },
+              }
+            : sincronizarIdiomaApp(current, value),
+        ),
       setMemoriaIa: (value: boolean) =>
         settingsActions.updateAi({ memoryEnabled: value }),
       setModeloIa: (value: AppSettings["ai"]["model"]) =>
@@ -211,7 +246,9 @@ export function useInspectorSettingsBindings() {
       setEconomiaDados: (value: boolean) =>
         settingsActions.updateSystem({ dataSaver: value }),
       setIdiomaApp: (value: AppSettings["system"]["language"]) =>
-        settingsActions.updateSystem({ language: value }),
+        settingsActions.updateWith((current) =>
+          sincronizarIdiomaApp(current, value),
+        ),
       setRegiaoApp: (value: AppSettings["system"]["region"]) =>
         settingsActions.updateSystem({ region: value }),
       setUsoBateria: (value: AppSettings["system"]["batteryMode"]) =>

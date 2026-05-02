@@ -156,6 +156,7 @@ describe("settings governance surfaces", () => {
         onReportarProblema={jest.fn()}
         onSobreApp={jest.fn()}
         onTermosUso={jest.fn()}
+        planoResumoConfiguracao="Plano Pro"
         resumoFilaSuporteLocal="Nenhum relato local"
         resumoSuporteApp="Preview"
         supportChannelLabel="WhatsApp"

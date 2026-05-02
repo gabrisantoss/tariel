@@ -5,6 +5,7 @@ import {
   ScrollView,
   Text,
   View,
+  type ImageSourcePropType,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -15,6 +16,7 @@ import {
   AssistantMessageContent,
 } from "../../components/AssistantRichMessage";
 import { EmptyState } from "../../components/EmptyState";
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import type {
   MobileAttachment,
@@ -34,6 +36,10 @@ import { renderizarDocumentoEmitidoCard } from "./ThreadConversationIssuedDocume
 interface ThreadConversationChatSurfaceProps {
   carregandoConversa: boolean;
   conversaVazia: boolean;
+  darkMode?: boolean;
+  emptyStateImageAccessibilityLabel?: string;
+  emptyStateImageSource?: ImageSourcePropType | null;
+  emptyStateTitle?: string;
   keyboardVisible: boolean;
   threadKeyboardPaddingBottom: number;
   scrollRef: RefObject<ScrollView | null>;
@@ -88,6 +94,10 @@ function buildLatestAssistantDocumentAttachmentKey(
 export function ThreadConversationChatSurface({
   carregandoConversa,
   conversaVazia,
+  darkMode = false,
+  emptyStateImageAccessibilityLabel,
+  emptyStateImageSource,
+  emptyStateTitle,
   keyboardVisible,
   threadKeyboardPaddingBottom,
   scrollRef,
@@ -113,12 +123,15 @@ export function ThreadConversationChatSurface({
   dynamicMessageTextStyle,
   enviandoMensagem,
 }: ThreadConversationChatSurfaceProps) {
+  const { t } = useAppTranslation();
   const normalizarTextoRenderizado = (
     texto: string,
     options: { mensagemEhUsuario: boolean },
   ) =>
     stripEmbeddedChatAiPreferences(texto, {
-      fallbackHiddenOnly: options.mensagemEhUsuario ? "Evidência enviada" : "",
+      fallbackHiddenOnly: options.mensagemEhUsuario
+        ? t("Evidência enviada")
+        : "",
     });
 
   useEffect(() => {
@@ -140,8 +153,10 @@ export function ThreadConversationChatSurface({
     return (
       <View style={styles.loadingState}>
         <ActivityIndicator color={colors.accent} size="large" />
-        <Text style={styles.loadingText}>
-          Carregando a conversa do inspetor...
+        <Text
+          style={[styles.loadingText, darkMode ? styles.loadingTextDark : null]}
+        >
+          {t("Carregando a conversa do inspetor...")}
         </Text>
       </View>
     );
@@ -155,7 +170,14 @@ export function ThreadConversationChatSurface({
           keyboardVisible ? styles.threadEmptyStateKeyboardVisible : null,
         ]}
       >
-        <EmptyState compact icon="message-processing-outline" />
+        <EmptyState
+          compact
+          darkMode={darkMode}
+          icon="message-processing-outline"
+          imageAccessibilityLabel={emptyStateImageAccessibilityLabel}
+          imageSource={emptyStateImageSource}
+          title={emptyStateTitle ? t(emptyStateTitle) : undefined}
+        />
       </View>
     );
   }
@@ -201,7 +223,7 @@ export function ThreadConversationChatSurface({
         const textoRenderizado = normalizarTextoRenderizado(item.texto, {
           mensagemEhUsuario,
         });
-        const nomeAutor = mensagemEhEngenharia ? "Mesa" : "";
+        const nomeAutor = mensagemEhEngenharia ? t("Mesa") : "";
         const referenciaId = Number(item.referencia_mensagem_id || 0) || null;
         const referenciaPreview = obterResumoReferenciaMensagem(
           referenciaId,
@@ -249,7 +271,7 @@ export function ThreadConversationChatSurface({
                   ]}
                 >
                   {textoRenderizado === "[imagem]"
-                    ? "Imagem enviada"
+                    ? t("Imagem enviada")
                     : textoRenderizado}
                 </Text>
                 {item.anexos?.length ? (
@@ -277,8 +299,9 @@ export function ThreadConversationChatSurface({
                   <Text
                     style={[styles.messageMeta, styles.messageMetaOutgoing]}
                   >
-                    {item.citacoes.length} referência
-                    {item.citacoes.length > 1 ? "s" : ""} anexada
+                    {t(
+                      `${item.citacoes.length} referência${item.citacoes.length > 1 ? "s" : ""} anexada`,
+                    )}
                   </Text>
                 ) : null}
               </View>
@@ -315,6 +338,12 @@ export function ThreadConversationChatSurface({
                     mensagemEhEngenharia
                       ? styles.messageBubbleEngineering
                       : styles.messageBubbleIncoming,
+                    darkMode && mensagemEhEngenharia
+                      ? styles.messageBubbleEngineeringDark
+                      : null,
+                    darkMode && !mensagemEhEngenharia
+                      ? styles.messageBubbleIncomingDark
+                      : null,
                     mensagemDestacada ? styles.messageBubbleReferenced : null,
                     dynamicMessageBubbleStyle,
                   ]}
@@ -334,7 +363,7 @@ export function ThreadConversationChatSurface({
                             styles.messageStatusBadgeTextAccent,
                           ]}
                         >
-                          Mesa
+                          {t("Mesa")}
                         </Text>
                       </View>
                     </View>
@@ -350,15 +379,25 @@ export function ThreadConversationChatSurface({
                     <AssistantMessageContent
                       text={
                         textoRenderizado === "[imagem]"
-                          ? "Imagem enviada"
+                          ? t("Imagem enviada")
                           : textoRenderizado
                       }
-                      textStyle={[styles.messageText, dynamicMessageTextStyle]}
+                      textStyle={[
+                        styles.messageText,
+                        darkMode ? styles.messageTextDark : null,
+                        dynamicMessageTextStyle,
+                      ]}
                     />
                   ) : (
-                    <Text style={[styles.messageText, dynamicMessageTextStyle]}>
+                    <Text
+                      style={[
+                        styles.messageText,
+                        darkMode ? styles.messageTextDark : null,
+                        dynamicMessageTextStyle,
+                      ]}
+                    >
                       {textoRenderizado === "[imagem]"
-                        ? "Imagem enviada"
+                        ? t("Imagem enviada")
                         : textoRenderizado}
                     </Text>
                   )}
@@ -401,8 +440,9 @@ export function ThreadConversationChatSurface({
                     <AssistantCitationList citations={item.citacoes} />
                   ) : item.citacoes?.length ? (
                     <Text style={styles.messageMeta}>
-                      {item.citacoes.length} referência
-                      {item.citacoes.length > 1 ? "s" : ""} anexada
+                      {t(
+                        `${item.citacoes.length} referência${item.citacoes.length > 1 ? "s" : ""} anexada`,
+                      )}
                     </Text>
                   ) : null}
                 </View>
@@ -414,10 +454,17 @@ export function ThreadConversationChatSurface({
 
       {enviandoMensagem ? (
         <View style={styles.typingRow} testID="chat-thread-typing">
-          <View style={styles.typingBubble}>
+          <View
+            style={[
+              styles.typingBubble,
+              darkMode ? styles.typingBubbleDark : null,
+            ]}
+          >
             <ActivityIndicator color={colors.accent} size="small" />
-            <Text style={styles.typingText}>
-              Assistente está respondendo...
+            <Text
+              style={[styles.typingText, darkMode ? styles.typingTextDark : null]}
+            >
+              {t("Assistente está respondendo...")}
             </Text>
           </View>
         </View>

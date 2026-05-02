@@ -73,7 +73,7 @@ export function useSettingsEntryActions({
     setTelefoneDraft(contaTelefone);
     abrirSheetConfiguracao({
       kind: "profile",
-      title: "Editar perfil",
+      title: "Informações pessoais",
       subtitle:
         "Atualize nome, nome de exibição e telefone usados nesta conta.",
       actionLabel: "Salvar perfil",
@@ -96,7 +96,7 @@ export function useSettingsEntryActions({
     setConfirmarSenhaDraft("");
     abrirSheetConfiguracao({
       kind: "password",
-      title: "Alterar senha",
+      title: "Alterar Senha",
       subtitle:
         "Confirme sua senha atual e defina uma nova credencial para o aplicativo.",
       actionLabel: "Salvar nova senha",
@@ -106,10 +106,9 @@ export function useSettingsEntryActions({
   function handleGerenciarPlano() {
     abrirSheetConfiguracao({
       kind: "plan",
-      title: "Plano e assinatura",
+      title: "Plano e liberação",
       subtitle:
-        "Revise benefícios do plano atual e prepare a próxima mudança de assinatura do inspetor.",
-      actionLabel: "Trocar plano",
+        "Consulte o pacote contratado, o acesso governado e as liberações disponíveis no mobile.",
     });
   }
 
@@ -138,6 +137,22 @@ export function useSettingsEntryActions({
       title: "Modelo de IA",
       subtitle:
         "Escolha o perfil padrão para equilibrar velocidade, custo e profundidade das respostas.",
+    });
+  }
+
+  function handleAbrirEstiloResposta() {
+    abrirSheetConfiguracao({
+      kind: "responseStyle",
+      title: "Estilo de resposta",
+      subtitle: "Escolha o formato padrão das respostas da IA nas conversas.",
+    });
+  }
+
+  function handleAbrirIdiomaResposta() {
+    abrirSheetConfiguracao({
+      kind: "responseLanguage",
+      title: "Idioma do app e da IA",
+      subtitle: "Escolha o idioma usado pela interface, respostas da IA e voz.",
     });
   }
 
@@ -251,6 +266,8 @@ export function useSettingsEntryActions({
     handleHistoricoPagamentos,
     handleGerenciarPagamento,
     handleAbrirModeloIa,
+    handleAbrirEstiloResposta,
+    handleAbrirIdiomaResposta,
     handleIntegracoesExternas,
     handlePluginsIa,
     handlePermissoes,

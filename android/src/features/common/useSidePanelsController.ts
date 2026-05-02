@@ -261,6 +261,10 @@ export function useSidePanelsController({
       return;
     }
 
+    if (configuracoesAbertaRef.current) {
+      return;
+    }
+
     fecharPaineisLaterais();
   }, [keyboardHeight]);
 

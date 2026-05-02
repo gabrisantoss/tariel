@@ -36,14 +36,12 @@ export function buildInspectorRootSettingsDrawerState({
     },
     baseState: derivedState.inspectorBaseDerivedState,
     experienceState: {
-      aprendizadoIa: settingsBindings.ai.aprendizadoIa,
       animacoesAtivas: settingsBindings.appearance.animacoesAtivas,
       chatCategoryEnabled: settingsBindings.notifications.chatCategoryEnabled,
       corDestaque: settingsBindings.appearance.corDestaque,
       criticalAlertsEnabled:
         settingsBindings.notifications.criticalAlertsEnabled,
       densidadeInterface: settingsBindings.appearance.densidadeInterface,
-      entryModePreference: settingsBindings.ai.entryModePreference,
       emailsAtivos: settingsBindings.notifications.emailsAtivos,
       entradaPorVoz: settingsBindings.speech.entradaPorVoz,
       estiloResposta: settingsBindings.ai.estiloResposta,
@@ -56,8 +54,6 @@ export function buildInspectorRootSettingsDrawerState({
       mostrarCategoriaMesa,
       microfonePermitido: settingsBindings.security.microfonePermitido,
       modeloIa: settingsBindings.ai.modeloIa,
-      nomeAutomaticoConversas:
-        settingsSupportState.presentationState.nomeAutomaticoConversas,
       notificaPush: settingsBindings.notifications.notificaPush,
       notificaRespostas: settingsBindings.notifications.notificaRespostas,
       notificacoesPermitidas:
@@ -67,31 +63,24 @@ export function buildInspectorRootSettingsDrawerState({
       onCyclePreferredVoice:
         controllers.voiceInputController.onCyclePreferredVoice,
       preferredVoiceLabel: controllers.operationalState.preferredVoiceLabel,
-      rememberLastCaseMode: settingsBindings.ai.rememberLastCaseMode,
       respostaPorVoz: settingsBindings.speech.respostaPorVoz,
       setAnimacoesAtivas: settingsBindings.appearance.setAnimacoesAtivas,
-      setAprendizadoIa: settingsBindings.ai.setAprendizadoIa,
       setChatCategoryEnabled:
         settingsBindings.notifications.setChatCategoryEnabled,
       setCorDestaque: settingsBindings.appearance.setCorDestaque,
       setCriticalAlertsEnabled:
         settingsBindings.notifications.setCriticalAlertsEnabled,
       setDensidadeInterface: settingsBindings.appearance.setDensidadeInterface,
-      setEntryModePreference: settingsBindings.ai.setEntryModePreference,
       setEmailsAtivos: settingsBindings.notifications.setEmailsAtivos,
-      setEstiloResposta: settingsBindings.ai.setEstiloResposta,
-      setIdiomaResposta: settingsBindings.ai.setIdiomaResposta,
       setMemoriaIa: settingsBindings.ai.setMemoriaIa,
       setMesaCategoryEnabled:
         settingsBindings.notifications.setMesaCategoryEnabled,
       setNotificaRespostas: settingsBindings.notifications.setNotificaRespostas,
-      setRememberLastCaseMode: settingsBindings.ai.setRememberLastCaseMode,
       setSomNotificacao: settingsBindings.notifications.setSomNotificacao,
       setSpeechRate: settingsBindings.speech.setSpeechRate,
       setSystemCategoryEnabled:
         settingsBindings.notifications.setSystemCategoryEnabled,
       setTamanhoFonte: settingsBindings.appearance.setTamanhoFonte,
-      setTemperaturaIa: settingsBindings.ai.setTemperaturaIa,
       setTemaApp: settingsBindings.appearance.setTemaApp,
       setTomConversa: settingsBindings.ai.setTomConversa,
       setVoiceLanguage: settingsBindings.speech.setVoiceLanguage,
@@ -102,7 +91,6 @@ export function buildInspectorRootSettingsDrawerState({
       systemCategoryEnabled:
         settingsBindings.notifications.systemCategoryEnabled,
       tamanhoFonte: settingsBindings.appearance.tamanhoFonte,
-      temperaturaIa: settingsBindings.ai.temperaturaIa,
       temaApp: settingsBindings.appearance.temaApp,
       tomConversa: settingsBindings.ai.tomConversa,
       ttsSupported: runtimeController.voiceRuntimeState.ttsSupported,
@@ -158,8 +146,6 @@ export function buildInspectorRootSettingsDrawerState({
         settingsBindings.notifications.mostrarConteudoNotificacao,
       mostrarSomenteNovaMensagem:
         settingsBindings.notifications.mostrarSomenteNovaMensagem,
-      nomeAutomaticoConversas:
-        settingsSupportState.presentationState.nomeAutomaticoConversas,
       ocultarConteudoBloqueado:
         settingsBindings.notifications.ocultarConteudoBloqueado,
       provedoresConectados:
@@ -186,8 +172,6 @@ export function buildInspectorRootSettingsDrawerState({
       setHideInMultitask: settingsBindings.security.setHideInMultitask,
       setLockTimeout: settingsBindings.security.setLockTimeout,
       setMediaCompression: settingsBindings.dataControls.setMediaCompression,
-      setNomeAutomaticoConversas:
-        settingsSupportState.presentationActions.setNomeAutomaticoConversas,
       setRecoveryCodesEnabled:
         settingsSupportState.presentationActions.setRecoveryCodesEnabled,
       setRequireAuthOnOpen: settingsBindings.security.setRequireAuthOnOpen,
@@ -210,13 +194,11 @@ export function buildInspectorRootSettingsDrawerState({
           .handleAbrirCentralAtividade,
       handleRefresh: controllers.operationalState.handleRefresh,
       idiomaApp: settingsBindings.system.idiomaApp,
-      regiaoApp: settingsBindings.system.regiaoApp,
       resumoCache: controllers.operationalState.resumoCache,
       resumoCentralAtividade:
         controllers.operationalState.resumoCentralAtividade,
       setEconomiaDados: settingsBindings.system.setEconomiaDados,
       setIdiomaApp: settingsBindings.system.setIdiomaApp,
-      setRegiaoApp: settingsBindings.system.setRegiaoApp,
       setUsoBateria: settingsBindings.system.setUsoBateria,
       sincronizandoDados: controllers.operationalState.sincronizandoDados,
       supportChannelLabel: controllers.operationalState.canalSuporteLabel,

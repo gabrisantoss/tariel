@@ -11,6 +11,8 @@ import {
   hasCaseSurfaceAction,
   hasFormalCaseWorkflow,
 } from "../chat/caseLifecycle";
+import { guidedInspectionEmptyStateImageSource } from "../chat/guidedInspectionEmptyStateAssets";
+import { guidedInspectionAccentColorForTemplate } from "../chat/guidedInspectionPresentation";
 
 export function buildHistoryDrawerPanelProps(
   input: AuthenticatedLayoutInput,
@@ -19,6 +21,7 @@ export function buildHistoryDrawerPanelProps(
     brandMarkSource: TARIEL_APP_MARK,
     buscaHistorico: input.buscaHistorico,
     conversasOcultasTotal: input.conversasOcultasTotal,
+    darkMode: input.settingsPrintDarkMode,
     historicoAgrupadoFinal: input.historicoAgrupadoFinal,
     historicoDrawerX: input.historicoDrawerX,
     historicoVazioTexto: input.historicoVazioTexto,
@@ -43,12 +46,19 @@ export function buildThreadComposerPanelProps(
     conversation: input.conversaAtiva,
     action: "chat_reopen",
   });
+  const guidedAccentColor =
+    !input.vendoMesa && input.guidedInspectionDraft
+      ? guidedInspectionAccentColorForTemplate(
+          input.guidedInspectionDraft.templateKey,
+        )
+      : null;
 
   return {
-    accentColor: input.accentColor,
+    accentColor: guidedAccentColor || input.accentColor,
     anexoMesaRascunho: input.anexoMesaRascunho,
     anexoRascunho: input.anexoRascunho,
     canReopen,
+    darkMode: input.settingsPrintDarkMode,
     dynamicComposerInputStyle: input.dynamicComposerInputStyle,
     enviandoMensagem: input.enviandoMensagem,
     enviandoMesa: input.enviandoMesa,
@@ -104,6 +114,7 @@ export function buildThreadContextCardProps(
   return {
     actions: input.threadActions,
     chips: input.chipsContextoThread,
+    darkMode: input.settingsPrintDarkMode,
     description: input.laudoContextDescription,
     defaultExpanded: input.vendoFinalizacao,
     guidedTemplatesVisible: input.guidedTemplatesVisible,
@@ -126,6 +137,13 @@ export function buildThreadContextCardProps(
 export function buildThreadConversationPaneProps(
   input: AuthenticatedLayoutInput,
 ): ThreadConversationPaneProps {
+  const guidedAccentColor =
+    !input.vendoMesa && input.guidedInspectionDraft
+      ? guidedInspectionAccentColorForTemplate(
+          input.guidedInspectionDraft.templateKey,
+        )
+      : null;
+
   return {
     accentColor: input.accentColor,
     anexoAbrindoChave: input.anexoAbrindoChave,
@@ -146,8 +164,18 @@ export function buildThreadConversationPaneProps(
     mesaAcessoPermitido: input.mesaAcessoPermitido,
     conversaPermiteEdicao: Boolean(input.conversaAtiva?.permiteEdicao),
     conversaVazia: input.conversaVazia,
+    darkMode: input.settingsPrintDarkMode,
     dynamicMessageBubbleStyle: input.dynamicMessageBubbleStyle,
     dynamicMessageTextStyle: input.dynamicMessageTextStyle,
+    emptyStateImageAccessibilityLabel: input.guidedInspectionDraft
+      ? `Ícone ${input.guidedInspectionDraft.templateLabel}`
+      : undefined,
+    emptyStateImageSource: guidedInspectionEmptyStateImageSource(
+      input.guidedInspectionDraft?.templateKey,
+    ),
+    emptyStateTitle:
+      input.guidedInspectionDraft?.templateLabel ||
+      "Olá, sou Tariel, como posso te ajudar?",
     enviandoMensagem: input.enviandoMensagem,
     keyboardVisible: input.keyboardVisible,
     mesaDisponivel: input.mesaDisponivel,
@@ -174,6 +202,7 @@ export function buildThreadConversationPaneProps(
     reviewCommandBusy: input.enviandoMesa,
     scrollRef: input.scrollRef,
     sessionAccessToken: input.sessionAccessToken,
+    threadFrameAccentColor: guidedAccentColor,
     threadKeyboardPaddingBottom: input.threadKeyboardPaddingBottom,
     toAttachmentKey: input.chaveAnexo,
     vendoMesa: input.vendoMesa,
@@ -198,6 +227,7 @@ export function buildThreadHeaderControlsProps(
 
   return {
     chatHasActiveCase: Boolean(input.conversaAtiva?.laudoId),
+    darkMode: input.settingsPrintDarkMode,
     finalizacaoDisponivel,
     filaOfflineTotal: input.filaOfflineOrdenada.length,
     headerSafeTopInset: input.headerSafeTopInset,

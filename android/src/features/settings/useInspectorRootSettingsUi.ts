@@ -60,7 +60,10 @@ interface UseInspectorRootSettingsUiInput {
   sheetState: Omit<InspectorRootSettingsSheetInput, "actionsState"> & {
     actionsState: Omit<
       InspectorRootSettingsSheetInput["actionsState"],
-      "handleSelecionarModeloIa" | "handleToggleUploadArquivos"
+      | "handleSelecionarEstiloResposta"
+      | "handleSelecionarIdiomaResposta"
+      | "handleSelecionarModeloIa"
+      | "handleToggleUploadArquivos"
     >;
   };
   toggleState: Omit<InspectorRootSettingsToggleInput, "actionState"> & {
@@ -83,6 +86,8 @@ export function useInspectorRootSettingsUi({
   const {
     handleConfirmarAcaoCritica,
     handleExportarDados,
+    handleSelecionarEstiloResposta,
+    handleSelecionarIdiomaResposta,
     handleSelecionarModeloIa,
   } = buildInspectorRootSettingsConfirmExportActions({
     ...confirmExportState,
@@ -103,6 +108,8 @@ export function useInspectorRootSettingsUi({
       ...sheetState,
       actionsState: {
         ...sheetState.actionsState,
+        handleSelecionarEstiloResposta,
+        handleSelecionarIdiomaResposta,
         handleSelecionarModeloIa,
         handleToggleUploadArquivos: toggleActions.handleToggleUploadArquivos,
       },
@@ -145,6 +152,8 @@ export function useInspectorRootSettingsUi({
     handleConfirmarAcaoCritica,
     handleConfirmarSettingsSheet,
     handleExportarDados,
+    handleSelecionarEstiloResposta,
+    handleSelecionarIdiomaResposta,
     handleSelecionarModeloIa,
     renderSettingsSheetBody,
     settingsDrawerPanelProps,

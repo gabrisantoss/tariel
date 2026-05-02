@@ -172,6 +172,9 @@ export const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 14,
   },
+  loadingTextDark: {
+    color: "#AFC0D2",
+  },
   dashboardState: {
     gap: spacing.md,
   },

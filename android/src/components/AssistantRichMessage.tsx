@@ -10,6 +10,7 @@ import {
   type ViewStyle,
 } from "react-native";
 
+import { useAppTranslation } from "../i18n/appTranslation";
 import { colors, radii, spacing } from "../theme/tokens";
 
 type AssistantContentBlock =
@@ -334,6 +335,7 @@ export function AssistantMessageContent({
 export function AssistantCitationList({
   citations = [],
 }: AssistantCitationListProps) {
+  const { t } = useAppTranslation();
   const normalized = citations
     .map((entry, index) => normalizeCitationEntry(entry, index))
     .filter((entry): entry is CitationItem => Boolean(entry));
@@ -353,9 +355,9 @@ export function AssistantCitationList({
           />
         </View>
         <View style={styles.citationsHeaderCopy}>
-          <Text style={styles.citationsTitle}>Referências normativas</Text>
+          <Text style={styles.citationsTitle}>{t("Referências normativas")}</Text>
           <Text style={styles.citationsSubtitle}>
-            Base usada para sustentar a análise técnica do relatório.
+            {t("Base usada para sustentar a análise técnica do relatório.")}
           </Text>
         </View>
       </View>
@@ -364,7 +366,7 @@ export function AssistantCitationList({
         {normalized.map((citation, index) => {
           const label = citation.norma
             ? `${citation.norma}${citation.artigo ? ` — ${citation.artigo}` : ""}`
-            : `Referência ${index + 1}`;
+            : `${t("Referência")} ${index + 1}`;
 
           return (
             <Pressable
@@ -387,7 +389,9 @@ export function AssistantCitationList({
                 ) : null}
                 {citation.url ? (
                   <View style={styles.citationLinkRow}>
-                    <Text style={styles.citationLinkText}>Abrir fonte</Text>
+                    <Text style={styles.citationLinkText}>
+                      {t("Abrir fonte")}
+                    </Text>
                     <MaterialCommunityIcons
                       name="arrow-top-right"
                       size={14}

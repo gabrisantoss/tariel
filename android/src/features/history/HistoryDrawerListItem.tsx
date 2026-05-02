@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Animated, PanResponder, Pressable, Text, View } from "react-native";
 
+import { useAppTranslation, type AppLocale } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import {
@@ -23,19 +24,29 @@ const HISTORY_DELETE_SWIPE_DISMISS = 420;
 
 type HistoryBadgeTone = "neutral" | "accent" | "success" | "danger";
 
-function formatarResumoDataHistorico(dataIso: string) {
+function historyDateLocale(locale: AppLocale): string {
+  if (locale === "en") {
+    return "en-US";
+  }
+  if (locale === "es") {
+    return "es-ES";
+  }
+  return "pt-BR";
+}
+
+function formatarResumoDataHistorico(dataIso: string, locale: AppLocale) {
   const data = new Date(dataIso);
   if (Number.isNaN(data.getTime())) {
     return "Sem data";
   }
 
   try {
-    return new Intl.DateTimeFormat("pt-BR", {
+    return new Intl.DateTimeFormat(historyDateLocale(locale), {
       day: "2-digit",
       month: "short",
     }).format(data);
   } catch {
-    return data.toLocaleDateString("pt-BR");
+    return data.toLocaleDateString(historyDateLocale(locale));
   }
 }
 
@@ -133,6 +144,7 @@ function resumirRotaSugeridaHistorico(params: {
 export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
   ativo,
   containerTestID,
+  darkMode = false,
   item,
   isLastItem = false,
   onExcluir,
@@ -141,12 +153,14 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
 }: {
   ativo: boolean;
   containerTestID?: string;
+  darkMode?: boolean;
   item: TItem;
   isLastItem?: boolean;
   onExcluir: () => void;
   onSelecionar: () => void;
   testID: string;
 }) {
+  const { locale, t } = useAppTranslation();
   const translateX = useRef(new Animated.Value(0)).current;
   const animandoExclusaoRef = useRef(false);
   const swipeProgress = translateX.interpolate({
@@ -305,7 +319,7 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
     : lifecycleStatus === "analise_livre"
       ? "Chat livre"
       : "Sem template";
-  const badgeDateLabel = formatarResumoDataHistorico(item.data_iso);
+  const badgeDateLabel = formatarResumoDataHistorico(item.data_iso, locale);
   const accentBarStyle =
     badgeStatusTone === "accent"
       ? styles.historyItemAccentBarAccent
@@ -341,7 +355,7 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
             size={18}
             color={colors.danger}
           />
-          <Text style={styles.historyItemDeleteRailText}>Excluir</Text>
+          <Text style={styles.historyItemDeleteRailText}>{t("Excluir")}</Text>
         </Animated.View>
       </Animated.View>
 
@@ -350,15 +364,17 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
         style={{ transform: [{ translateX }] }}
       >
         <Pressable
-          accessibilityHint="Abrir laudo do histórico"
-          accessibilityLabel={`Histórico do laudo ${item.id}`}
+          accessibilityHint={t("Abrir laudo do histórico")}
+          accessibilityLabel={`${t("Histórico do laudo")} ${item.id}`}
           accessibilityState={{ selected: ativo }}
           onPress={onSelecionar}
           style={[
             styles.historyItem,
             styles.historyItemPrimary,
+            darkMode ? styles.historyItemDark : null,
             isLastItem ? styles.historyItemLast : null,
             ativo ? styles.historyItemActive : null,
+            ativo && darkMode ? styles.historyItemActiveDark : null,
           ]}
           testID={testID}
         >
@@ -376,7 +392,9 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                   numberOfLines={1}
                   style={[
                     styles.historyItemTitle,
+                    darkMode ? styles.historyItemTitleDark : null,
                     ativo ? styles.historyItemTitleActive : null,
+                    ativo && darkMode ? styles.historyItemTitleActiveDark : null,
                   ]}
                 >
                   {item.titulo}
@@ -393,10 +411,11 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                 numberOfLines={2}
                 style={[
                   styles.historyItemPreview,
+                  darkMode ? styles.historyItemPreviewDark : null,
                   ativo ? styles.historyItemPreviewActive : null,
                 ]}
               >
-                {item.preview || "Sem atualização recente"}
+                {t(item.preview || "Sem atualização recente")}
               </Text>
               <View style={styles.historyItemBadgeRow}>
                 <View
@@ -409,12 +428,15 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                         : badgeStatusTone === "danger"
                           ? styles.historyItemBadgeDanger
                           : null,
+                    darkMode ? styles.historyItemBadgeDark : null,
                     ativo ? styles.historyItemBadgeActive : null,
+                    ativo && darkMode ? styles.historyItemBadgeActiveDark : null,
                   ]}
                 >
                   <Text
                     style={[
                       styles.historyItemBadgeText,
+                      darkMode ? styles.historyItemBadgeTextDark : null,
                       badgeStatusTone === "accent"
                         ? styles.historyItemBadgeTextAccent
                         : badgeStatusTone === "success"
@@ -425,17 +447,21 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                       ativo ? styles.historyItemBadgeTextActive : null,
                     ]}
                   >
-                    {badgeStatusLabel}
+                    {t(badgeStatusLabel)}
                   </Text>
                 </View>
                 <View
                   style={[
                     styles.historyItemBadge,
                     prontoParaValidar ? styles.historyItemBadgeSuccess : null,
+                    darkMode ? styles.historyItemBadgeDark : null,
                     ativo && prontoParaValidar
                       ? styles.historyItemBadgeMutedActive
                       : null,
                     ativo ? styles.historyItemBadgeMutedActive : null,
+                    ativo && darkMode
+                      ? styles.historyItemBadgeMutedActiveDark
+                      : null,
                   ]}
                   testID={
                     prontoParaValidar
@@ -446,6 +472,7 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                   <Text
                     style={[
                       styles.historyItemBadgeText,
+                      darkMode ? styles.historyItemBadgeTextDark : null,
                       prontoParaValidar
                         ? styles.historyItemBadgeTextSuccess
                         : null,
@@ -453,40 +480,50 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                     ]}
                   >
                     {prontoParaValidar
-                      ? "Pronto para validar"
-                      : badgeTemplateLabel}
+                      ? t("Pronto para validar")
+                      : t(badgeTemplateLabel)}
                   </Text>
                 </View>
                 {!prontoParaValidar ? null : (
                   <View
                     style={[
                       styles.historyItemBadge,
+                      darkMode ? styles.historyItemBadgeDark : null,
                       ativo ? styles.historyItemBadgeMutedActive : null,
+                      ativo && darkMode
+                        ? styles.historyItemBadgeMutedActiveDark
+                        : null,
                     ]}
                   >
                     <Text
                       style={[
                         styles.historyItemBadgeText,
+                        darkMode ? styles.historyItemBadgeTextDark : null,
                         ativo ? styles.historyItemBadgeTextActive : null,
                       ]}
                     >
-                      {badgeTemplateLabel}
+                      {t(badgeTemplateLabel)}
                     </Text>
                   </View>
                 )}
                 <View
                   style={[
                     styles.historyItemBadge,
+                    darkMode ? styles.historyItemBadgeDark : null,
                     ativo ? styles.historyItemBadgeMutedActive : null,
+                    ativo && darkMode
+                      ? styles.historyItemBadgeMutedActiveDark
+                      : null,
                   ]}
                 >
                   <Text
                     style={[
                       styles.historyItemBadgeText,
+                      darkMode ? styles.historyItemBadgeTextDark : null,
                       ativo ? styles.historyItemBadgeTextActive : null,
                     ]}
                   >
-                    {badgeDateLabel}
+                    {t(badgeDateLabel)}
                   </Text>
                 </View>
               </View>
@@ -497,18 +534,23 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                       key={detail.key}
                       style={[
                         styles.historyItemDetailPill,
+                        darkMode ? styles.historyItemDetailPillDark : null,
                         ativo ? styles.historyItemDetailPillActive : null,
+                        ativo && darkMode
+                          ? styles.historyItemDetailPillActiveDark
+                          : null,
                       ]}
                     >
                       <Text
                         numberOfLines={2}
                         style={[
                           styles.historyItemDetailPillText,
+                          darkMode ? styles.historyItemDetailPillTextDark : null,
                           ativo ? styles.historyItemDetailPillTextActive : null,
                         ]}
                         testID={detail.testID}
                       >
-                        {detail.label}
+                        {t(detail.label)}
                       </Text>
                     </View>
                   ))}
@@ -519,13 +561,17 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
           <View
             style={[
               styles.historyItemChevronBadge,
+              darkMode ? styles.historyItemChevronBadgeDark : null,
               ativo ? styles.historyItemChevronBadgeActive : null,
+              ativo && darkMode ? styles.historyItemChevronBadgeActiveDark : null,
             ]}
           >
             <MaterialCommunityIcons
               name="chevron-right"
               size={18}
-              color={ativo ? "rgba(255,255,255,0.78)" : colors.textSecondary}
+              color={
+                ativo || darkMode ? "rgba(255,255,255,0.78)" : colors.textSecondary
+              }
             />
           </View>
         </Pressable>

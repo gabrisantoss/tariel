@@ -45,6 +45,7 @@ interface UseInspectorRootPersistenceEffectsInput {
     salvarHistoricoConversas: boolean;
     settingsActions: SettingsActionsLike;
     settingsDocument: AppSettings;
+    settingsPersistenceVersion: number;
   };
   dataState: {
     cacheLeitura: MobileReadCache;
@@ -127,7 +128,7 @@ export function useInspectorRootPersistenceEffects({
       });
       return houveMudanca ? proximoEstado : estadoAtual;
     });
-  }, [sessionState.session]);
+  }, [sessionState.session, settingsState.settingsPersistenceVersion]);
 
   useCriticalSettingsSync({
     accessToken: sessionState.session?.accessToken,

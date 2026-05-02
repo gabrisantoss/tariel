@@ -89,16 +89,17 @@ function criarProps() {
     threadContextCardProps: {
       actions: [],
       chips: [],
-      description: "Escolha um modo para iniciar.",
+      description:
+        "Laudo técnico com checklist, evidências e revisão quando exigida.",
       eyebrow: "",
       insights: [],
       layout: "entry_chooser" as "default" | "entry_chooser" | "finalization",
       spotlight: {
-        icon: "message-processing-outline" as const,
-        label: "Chat livre",
-        tone: "success" as const,
+        icon: "clipboard-text-search-outline" as const,
+        label: "Inspeção guiada",
+        tone: "accent" as const,
       },
-      title: "Por onde começar?",
+      title: "Iniciar inspeção",
     },
     threadConversationPaneProps: {
       threadKeyboardPaddingBottom: 44,
@@ -131,5 +132,28 @@ describe("InspectorAuthenticatedLayout", () => {
 
     expect(getByTestId("thread-conversation-pane")).toBeTruthy();
     expect(getByTestId("thread-composer-panel")).toBeTruthy();
+  });
+
+  it("aplica a cor da inspeção guiada na borda do chat", () => {
+    const props = criarProps();
+    props.threadContextCardProps = {
+      ...props.threadContextCardProps,
+      layout: "default" as "default" | "entry_chooser" | "finalization",
+    };
+    props.threadConversationPaneProps = {
+      threadKeyboardPaddingBottom: 44,
+      threadFrameAccentColor: "#2F76D2",
+    } as never;
+
+    const { getByTestId } = render(<InspectorAuthenticatedLayout {...props} />);
+
+    expect(getByTestId("thread-body").props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          borderColor: "#2F76D2",
+          borderWidth: 1.5,
+        }),
+      ]),
+    );
   });
 });

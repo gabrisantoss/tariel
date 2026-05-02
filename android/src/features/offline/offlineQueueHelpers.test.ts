@@ -52,6 +52,8 @@ describe("offlineQueueHelpers", () => {
       text: "  Mensagem  ",
       title: "  Pendencia  ",
       aiMode: "curto",
+      aiLearningOptIn: true,
+      aiTone: "amigável",
     });
 
     expect(item.id).toBe("mesa-1774864800000-8");
@@ -59,6 +61,8 @@ describe("offlineQueueHelpers", () => {
     expect(item.text).toBe("Mensagem");
     expect(item.title).toBe("Pendencia");
     expect(item.aiMode).toBe("curto");
+    expect(item.aiLearningOptIn).toBe(true);
+    expect(item.aiTone).toBe("amigável");
   });
 
   it("preserva o snapshot do draft guiado na pendencia offline", () => {

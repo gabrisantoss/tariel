@@ -91,7 +91,7 @@ export function buildLoginScreenProps(
   const loginAutomationMarkerIds = automationDiagnosticsEnabled
     ? [
         `login-stage-${sanitizeProbeValue(loginStage, "idle")}`,
-        entrando ? "login-stage-entrando" : "login-stage-idle",
+        entrando ? "login-stage-entrando" : "login-submit-idle",
         erro.trim() ? "login-error-visible" : "login-error-hidden",
       ]
     : [];

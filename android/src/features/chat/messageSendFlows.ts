@@ -79,6 +79,8 @@ interface SendInspectorMessageFlowParams<TOfflineItem> {
     aiMode: MobileChatMode;
     aiSummary: string;
     aiMessagePrefix: string;
+    aiLearningOptIn?: boolean;
+    aiTone?: ChatAiRequestConfig["tone"];
   }) => TOfflineItem;
   onSetMensagem: (value: string) => void;
   onSetAnexoRascunho: (value: ComposerAttachment | null) => void;
@@ -239,6 +241,8 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
       nomeDocumento,
       laudoId: snapshotConversa?.laudoId ?? null,
       modo: modoAtivo,
+      learningOptIn: aiRequestConfig.learningOptIn,
+      tone: aiRequestConfig.tone,
       guidedInspectionDraft: guidedInspectionDraft
         ? guidedInspectionDraftToMobilePayload(guidedInspectionDraft)
         : null,
@@ -281,6 +285,8 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
         aiMode: modoAtivo,
         aiSummary: aiRequestConfig.summaryLabel,
         aiMessagePrefix: aiRequestConfig.messagePrefix,
+        aiLearningOptIn: aiRequestConfig.learningOptIn,
+        aiTone: aiRequestConfig.tone,
       });
       onQueueOfflineItem(itemFila);
       void registrarEventoObservabilidade({

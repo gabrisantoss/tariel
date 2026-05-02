@@ -85,16 +85,16 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
   baseState: InspectorSettingsDrawerBaseState;
   experienceState: Pick<
     InspectorSettingsDrawerPanelBuilderInput,
-    | "aprendizadoIa"
     | "animacoesAtivas"
     | "chatCategoryEnabled"
     | "corDestaque"
     | "criticalAlertsEnabled"
     | "densidadeInterface"
-    | "entryModePreference"
     | "emailsAtivos"
     | "entradaPorVoz"
     | "estiloResposta"
+    | "handleAbrirEstiloResposta"
+    | "handleAbrirIdiomaResposta"
     | "handleAbrirAjudaDitado"
     | "handleAbrirModeloIa"
     | "handleToggleEntradaPorVoz"
@@ -109,34 +109,26 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "mostrarCategoriaMesa"
     | "microfonePermitido"
     | "modeloIa"
-    | "nomeAutomaticoConversas"
     | "notificaPush"
     | "notificaRespostas"
     | "notificacoesPermitidas"
     | "onAbrirPermissaoNotificacoes"
     | "onCyclePreferredVoice"
     | "preferredVoiceLabel"
-    | "rememberLastCaseMode"
     | "respostaPorVoz"
     | "setAnimacoesAtivas"
-    | "setAprendizadoIa"
     | "setChatCategoryEnabled"
     | "setCorDestaque"
     | "setCriticalAlertsEnabled"
     | "setDensidadeInterface"
-    | "setEntryModePreference"
     | "setEmailsAtivos"
-    | "setEstiloResposta"
-    | "setIdiomaResposta"
     | "setMemoriaIa"
     | "setMesaCategoryEnabled"
     | "setNotificaRespostas"
-    | "setRememberLastCaseMode"
     | "setSomNotificacao"
     | "setSpeechRate"
     | "setSystemCategoryEnabled"
     | "setTamanhoFonte"
-    | "setTemperaturaIa"
     | "setTemaApp"
     | "setTomConversa"
     | "setVoiceLanguage"
@@ -146,7 +138,6 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "sttSupported"
     | "systemCategoryEnabled"
     | "tamanhoFonte"
-    | "temperaturaIa"
     | "temaApp"
     | "tomConversa"
     | "ttsSupported"
@@ -217,7 +208,6 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "mediaCompression"
     | "mostrarConteudoNotificacao"
     | "mostrarSomenteNovaMensagem"
-    | "nomeAutomaticoConversas"
     | "ocultarConteudoBloqueado"
     | "provedoresConectados"
     | "reautenticacaoStatus"
@@ -236,7 +226,6 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "setHideInMultitask"
     | "setLockTimeout"
     | "setMediaCompression"
-    | "setNomeAutomaticoConversas"
     | "setRecoveryCodesEnabled"
     | "setRequireAuthOnOpen"
     | "setRetencaoDados"
@@ -269,12 +258,10 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "handleTermosUso"
     | "handleVerificarAtualizacoes"
     | "idiomaApp"
-    | "regiaoApp"
     | "resumoCache"
     | "resumoCentralAtividade"
     | "setEconomiaDados"
     | "setIdiomaApp"
-    | "setRegiaoApp"
     | "setUsoBateria"
     | "sincronizandoDados"
     | "supportChannelLabel"
@@ -319,20 +306,21 @@ export function buildInspectorRootSettingsDrawerProps({
         resumoMetodosConta: baseState.resumoMetodosConta,
         workspaceResumoConfiguracao: baseState.workspaceResumoConfiguracao,
         detalheGovernancaConfiguracao: baseState.detalheGovernancaConfiguracao,
+        estiloRespostaResumoConfiguracao: experienceState.estiloResposta,
       },
       experience: {
-        aprendizadoIa: experienceState.aprendizadoIa,
         animacoesAtivas: experienceState.animacoesAtivas,
         artigosAjudaFiltrados: baseState.artigosAjudaFiltrados,
         chatCategoryEnabled: experienceState.chatCategoryEnabled,
         corDestaque: experienceState.corDestaque,
         criticalAlertsEnabled: experienceState.criticalAlertsEnabled,
         densidadeInterface: experienceState.densidadeInterface,
-        entryModePreference: experienceState.entryModePreference,
         emailsAtivos: experienceState.emailsAtivos,
         entradaPorVoz: experienceState.entradaPorVoz,
         estiloResposta: experienceState.estiloResposta,
         handleAbrirAjudaDitado: experienceState.handleAbrirAjudaDitado,
+        handleAbrirEstiloResposta: experienceState.handleAbrirEstiloResposta,
+        handleAbrirIdiomaResposta: experienceState.handleAbrirIdiomaResposta,
         handleAbrirModeloIa: experienceState.handleAbrirModeloIa,
         handleToggleEntradaPorVoz: experienceState.handleToggleEntradaPorVoz,
         handleToggleNotificaPush: experienceState.handleToggleNotificaPush,
@@ -346,7 +334,6 @@ export function buildInspectorRootSettingsDrawerProps({
         mostrarCategoriaMesa: experienceState.mostrarCategoriaMesa,
         microfonePermitido: experienceState.microfonePermitido,
         modeloIa: experienceState.modeloIa,
-        nomeAutomaticoConversas: experienceState.nomeAutomaticoConversas,
         notificaPush: experienceState.notificaPush,
         notificaRespostas: experienceState.notificaRespostas,
         notificacoesPermitidas: experienceState.notificacoesPermitidas,
@@ -354,27 +341,20 @@ export function buildInspectorRootSettingsDrawerProps({
           experienceState.onAbrirPermissaoNotificacoes,
         onCyclePreferredVoice: experienceState.onCyclePreferredVoice,
         preferredVoiceLabel: experienceState.preferredVoiceLabel,
-        rememberLastCaseMode: experienceState.rememberLastCaseMode,
         respostaPorVoz: experienceState.respostaPorVoz,
         setAnimacoesAtivas: experienceState.setAnimacoesAtivas,
-        setAprendizadoIa: experienceState.setAprendizadoIa,
         setChatCategoryEnabled: experienceState.setChatCategoryEnabled,
         setCorDestaque: experienceState.setCorDestaque,
         setCriticalAlertsEnabled: experienceState.setCriticalAlertsEnabled,
         setDensidadeInterface: experienceState.setDensidadeInterface,
-        setEntryModePreference: experienceState.setEntryModePreference,
         setEmailsAtivos: experienceState.setEmailsAtivos,
-        setEstiloResposta: experienceState.setEstiloResposta,
-        setIdiomaResposta: experienceState.setIdiomaResposta,
         setMemoriaIa: experienceState.setMemoriaIa,
         setMesaCategoryEnabled: experienceState.setMesaCategoryEnabled,
         setNotificaRespostas: experienceState.setNotificaRespostas,
-        setRememberLastCaseMode: experienceState.setRememberLastCaseMode,
         setSomNotificacao: experienceState.setSomNotificacao,
         setSpeechRate: experienceState.setSpeechRate,
         setSystemCategoryEnabled: experienceState.setSystemCategoryEnabled,
         setTamanhoFonte: experienceState.setTamanhoFonte,
-        setTemperaturaIa: experienceState.setTemperaturaIa,
         setTemaApp: experienceState.setTemaApp,
         setTomConversa: experienceState.setTomConversa,
         setVoiceLanguage: experienceState.setVoiceLanguage,
@@ -384,7 +364,6 @@ export function buildInspectorRootSettingsDrawerProps({
         sttSupported: experienceState.sttSupported,
         systemCategoryEnabled: experienceState.systemCategoryEnabled,
         tamanhoFonte: experienceState.tamanhoFonte,
-        temperaturaIa: experienceState.temperaturaIa,
         temaApp: experienceState.temaApp,
         tomConversa: experienceState.tomConversa,
         ttsSupported: experienceState.ttsSupported,
@@ -494,7 +473,6 @@ export function buildInspectorRootSettingsDrawerProps({
         mediaCompression: securityState.mediaCompression,
         mostrarConteudoNotificacao: securityState.mostrarConteudoNotificacao,
         mostrarSomenteNovaMensagem: securityState.mostrarSomenteNovaMensagem,
-        nomeAutomaticoConversas: securityState.nomeAutomaticoConversas,
         outrasSessoesAtivas: baseState.outrasSessoesAtivas,
         ocultarConteudoBloqueado: securityState.ocultarConteudoBloqueado,
         permissoesNegadasTotal: baseState.permissoesNegadasTotal,
@@ -529,7 +507,6 @@ export function buildInspectorRootSettingsDrawerProps({
         setHideInMultitask: securityState.setHideInMultitask,
         setLockTimeout: securityState.setLockTimeout,
         setMediaCompression: securityState.setMediaCompression,
-        setNomeAutomaticoConversas: securityState.setNomeAutomaticoConversas,
         setRecoveryCodesEnabled: securityState.setRecoveryCodesEnabled,
         setRequireAuthOnOpen: securityState.setRequireAuthOnOpen,
         setRetencaoDados: securityState.setRetencaoDados,
@@ -577,7 +554,7 @@ export function buildInspectorRootSettingsDrawerProps({
         idiomaApp: supportAndSystemState.idiomaApp,
         integracoesConectadasTotal: baseState.integracoesConectadasTotal,
         integracoesDisponiveisTotal: baseState.integracoesDisponiveisTotal,
-        regiaoApp: supportAndSystemState.regiaoApp,
+        planoResumoConfiguracao: baseState.planoResumoConfiguracao,
         resumoCache: supportAndSystemState.resumoCache,
         resumoCentralAtividade: supportAndSystemState.resumoCentralAtividade,
         resumoFilaOffline: baseState.resumoFilaOffline,
@@ -586,7 +563,6 @@ export function buildInspectorRootSettingsDrawerProps({
         resumoSuporteApp: baseState.resumoSuporteApp,
         setEconomiaDados: supportAndSystemState.setEconomiaDados,
         setIdiomaApp: supportAndSystemState.setIdiomaApp,
-        setRegiaoApp: supportAndSystemState.setRegiaoApp,
         setUsoBateria: supportAndSystemState.setUsoBateria,
         sincronizandoDados: supportAndSystemState.sincronizandoDados,
         supportChannelLabel: supportAndSystemState.supportChannelLabel,

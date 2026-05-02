@@ -43,6 +43,10 @@ export const chatThreadStyles = {
     borderColor: colors.surfaceStroke,
     position: "relative",
   },
+  cleanNavButtonDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   cleanNavButtonCompact: {
     width: 34,
     height: 34,
@@ -104,11 +108,17 @@ export const chatThreadStyles = {
     color: colors.textMuted,
     ...typography.eyebrow,
   },
+  cleanHeaderEyebrowDark: {
+    color: "#AFC0D2",
+  },
   cleanHeaderTitle: {
     color: colors.textPrimary,
     fontSize: 17,
     lineHeight: 20,
     fontWeight: "800",
+  },
+  cleanHeaderTitleDark: {
+    color: "#F0F4F8",
   },
   cleanHeaderTitleCompact: {
     fontSize: 16,
@@ -120,6 +130,9 @@ export const chatThreadStyles = {
     lineHeight: 15,
     textAlign: "center",
     maxWidth: 236,
+  },
+  cleanHeaderSubtitleDark: {
+    color: "#AFC0D2",
   },
   cleanHeaderActions: {
     flexDirection: "row",
@@ -183,6 +196,10 @@ export const chatThreadStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  composerMiniActionDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   cleanHeaderChipRail: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -200,15 +217,26 @@ export const chatThreadStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStrokeStrong,
   },
+  cleanHeaderChipDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   cleanHeaderChipAccent: {
     backgroundColor: colors.accentWash,
     borderColor: colors.accentMuted,
+  },
+  cleanHeaderChipAccentDark: {
+    backgroundColor: "rgba(244,123,32,0.14)",
+    borderColor: "rgba(244,123,32,0.42)",
   },
   cleanHeaderChipText: {
     color: colors.textPrimary,
     fontSize: 12,
     fontWeight: "700",
     maxWidth: 220,
+  },
+  cleanHeaderChipTextDark: {
+    color: "#D8E3EE",
   },
   cleanHeaderChipTextAccent: {
     color: colors.accent,
@@ -345,8 +373,14 @@ export const chatThreadStyles = {
     borderColor: colors.surfaceStrokeStrong,
     gap: 10,
   },
+  threadHeaderCardDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   threadHeaderChooserCard: {
-    gap: spacing.xl,
+    gap: spacing.lg,
     width: "100%",
     maxWidth: 560,
     alignSelf: "center",
@@ -394,6 +428,10 @@ export const chatThreadStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStrokeStrong,
   },
+  threadSpotlightBadgeDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   threadSpotlightBadgeCompact: {
     gap: 4,
     paddingHorizontal: 8,
@@ -418,6 +456,9 @@ export const chatThreadStyles = {
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
+  threadSpotlightTextDark: {
+    color: "#D8E3EE",
+  },
   threadSpotlightTextCompact: {
     maxWidth: 112,
   },
@@ -434,28 +475,43 @@ export const chatThreadStyles = {
     color: colors.textMuted,
     ...typography.eyebrow,
   },
+  threadEyebrowDark: {
+    color: "#AFC0D2",
+  },
   threadTitle: {
     color: colors.textPrimary,
     fontSize: 17,
     lineHeight: 21,
     fontWeight: "800",
   },
+  threadTitleDark: {
+    color: "#F0F4F8",
+  },
   threadChooserTitle: {
-    maxWidth: 320,
-    fontSize: 20,
-    lineHeight: 25,
+    maxWidth: 360,
+    fontSize: 24,
+    lineHeight: 30,
     textAlign: "left",
+  },
+  threadChooserTitleDark: {
+    color: "#F0F4F8",
   },
   threadDescription: {
     color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 16,
   },
+  threadDescriptionDark: {
+    color: "#AFC0D2",
+  },
   threadChooserDescription: {
-    maxWidth: 300,
+    maxWidth: 360,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     textAlign: "left",
+  },
+  threadChooserDescriptionDark: {
+    color: "#D8E3EE",
   },
   threadCollapsedSummaryRow: {
     flexDirection: "row",
@@ -479,6 +535,10 @@ export const chatThreadStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStrokeStrong,
   },
+  threadContextChipDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   threadContextChipCompact: {
     paddingHorizontal: 9,
     paddingVertical: 6,
@@ -500,6 +560,9 @@ export const chatThreadStyles = {
     fontSize: 12,
     fontWeight: "700",
     maxWidth: 220,
+  },
+  threadContextChipTextDark: {
+    color: "#D8E3EE",
   },
   threadContextChipTextCompact: {
     maxWidth: 132,
@@ -529,6 +592,9 @@ export const chatThreadStyles = {
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
+  threadSectionLabelDark: {
+    color: "#AFC0D2",
+  },
   threadSecondaryActionRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -545,16 +611,26 @@ export const chatThreadStyles = {
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfaceSoft,
   },
+  threadSecondaryActionButtonDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   threadSecondaryActionText: {
     color: colors.textSecondary,
     fontSize: 12,
     fontWeight: "700",
     maxWidth: 180,
   },
+  threadSecondaryActionTextDark: {
+    color: "#D8E3EE",
+  },
   threadMoreSignalsHint: {
     color: colors.textMuted,
     fontSize: 11,
     lineHeight: 16,
+  },
+  threadMoreSignalsHintDark: {
+    color: "#AFC0D2",
   },
   threadActionButton: {
     flexDirection: "row",
@@ -566,6 +642,10 @@ export const chatThreadStyles = {
     backgroundColor: colors.surfaceCanvas,
     borderWidth: 1,
     borderColor: colors.surfaceStrokeStrong,
+  },
+  threadActionButtonDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
   },
   threadActionButtonCompact: {
     paddingHorizontal: 10,
@@ -587,6 +667,9 @@ export const chatThreadStyles = {
     color: colors.textSecondary,
     fontSize: 12,
     fontWeight: "800",
+  },
+  threadActionButtonTextDark: {
+    color: "#D8E3EE",
   },
   threadActionButtonTextCompact: {
     maxWidth: 132,
@@ -618,6 +701,10 @@ export const chatThreadStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  threadInsightCardDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   threadInsightCardAccent: {
     backgroundColor: colors.accentWash,
     borderColor: colors.accentMuted,
@@ -637,6 +724,9 @@ export const chatThreadStyles = {
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surfacePanelRaised,
+  },
+  threadInsightIconDark: {
+    backgroundColor: "#223247",
   },
   threadInsightIconAccent: {
     backgroundColor: colors.accentMuted,
@@ -658,15 +748,24 @@ export const chatThreadStyles = {
     textTransform: "uppercase",
     letterSpacing: 0.6,
   },
+  threadInsightLabelDark: {
+    color: "#AFC0D2",
+  },
   threadInsightValue: {
     color: colors.textPrimary,
     fontSize: 15,
     fontWeight: "800",
   },
+  threadInsightValueDark: {
+    color: "#F0F4F8",
+  },
   threadInsightDetail: {
     color: colors.textSecondary,
     fontSize: 11,
     lineHeight: 16,
+  },
+  threadInsightDetailDark: {
+    color: "#AFC0D2",
   },
   threadInsightSummaryRow: {
     flexDirection: "row",
@@ -713,23 +812,37 @@ export const chatThreadStyles = {
     fontSize: 12,
     fontWeight: "700",
   },
+  threadToggleButtonTextDark: {
+    color: "#AFC0D2",
+  },
   threadChooserActionStack: {
-    gap: 14,
+    gap: 12,
     width: "100%",
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
   },
   threadChooserActionCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.lg,
-    minHeight: 86,
-    borderRadius: 24,
+    paddingVertical: spacing.md,
+    minHeight: 96,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfacePanelRaised,
     ...shadows.soft,
+  },
+  threadChooserActionCardDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  threadChooserActionCardPrimary: {
+    minHeight: 112,
+    borderWidth: 2,
+    ...shadows.panel,
   },
   threadChooserActionCardAccent: {
     backgroundColor: colors.surfacePanelRaised,
@@ -749,6 +862,10 @@ export const chatThreadStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  threadChooserActionIconDark: {
+    backgroundColor: "#1B2D3F",
+    borderColor: "#32455D",
+  },
   threadChooserActionIconAccent: {
     backgroundColor: colors.accentMuted,
   },
@@ -757,17 +874,58 @@ export const chatThreadStyles = {
   },
   threadChooserActionCopy: {
     flex: 1,
-    gap: 2,
+    gap: 6,
+  },
+  threadChooserActionTitleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
   },
   threadChooserActionTitle: {
     color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "800",
   },
+  threadChooserActionTitleDark: {
+    color: "#F0F4F8",
+  },
+  threadChooserActionBadge: {
+    alignSelf: "flex-start",
+    borderRadius: radii.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: colors.accentWash,
+    color: colors.accent,
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
   threadChooserActionDetail: {
     color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 18,
+  },
+  threadChooserActionDetailDark: {
+    color: "#AFC0D2",
+  },
+  threadChooserActionMetaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  threadChooserActionMetaChip: {
+    borderRadius: radii.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: colors.surfaceMuted,
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  threadChooserActionMetaChipDark: {
+    backgroundColor: "#243447",
+    color: "#C7D2DF",
   },
   threadChooserTemplateSection: {
     gap: spacing.sm,
@@ -781,6 +939,9 @@ export const chatThreadStyles = {
     letterSpacing: 0.4,
     textAlign: "center",
     textTransform: "uppercase",
+  },
+  threadChooserTemplateLabelDark: {
+    color: "#AFC0D2",
   },
   threadChooserTemplateGrid: {
     flexDirection: "row",
@@ -796,17 +957,27 @@ export const chatThreadStyles = {
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    minHeight: 48,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfacePanelRaised,
     ...shadows.soft,
   },
+  threadChooserTemplateButtonDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   threadChooserTemplateButtonText: {
     flex: 1,
     color: colors.textPrimary,
     fontSize: 12,
     fontWeight: "700",
+  },
+  threadChooserTemplateButtonTextDark: {
+    color: "#F0F4F8",
   },
   threadFinalizationHero: {
     gap: spacing.md,
@@ -904,6 +1075,9 @@ export const chatThreadStyles = {
     flexDirection: "row",
     gap: spacing.xs,
   },
+  threadTabsDark: {
+    backgroundColor: "transparent",
+  },
   threadTabsCompact: {
     gap: 6,
   },
@@ -911,6 +1085,9 @@ export const chatThreadStyles = {
     borderRadius: 16,
     backgroundColor: "transparent",
     padding: 0,
+  },
+  cleanTabShellDark: {
+    backgroundColor: "transparent",
   },
   cleanTabShellCompact: {
     padding: 0,
@@ -933,6 +1110,9 @@ export const chatThreadStyles = {
     paddingVertical: 9,
     paddingHorizontal: spacing.sm,
   },
+  threadTabDark: {
+    backgroundColor: "transparent",
+  },
   threadTabCompact: {
     paddingVertical: 8,
     paddingHorizontal: spacing.sm,
@@ -945,10 +1125,17 @@ export const chatThreadStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  threadTabActiveDark: {
+    backgroundColor: "#172436",
+    borderColor: "#32455D",
+  },
   threadTabText: {
     color: colors.textSecondary,
     fontSize: 14,
     fontWeight: "700",
+  },
+  threadTabTextDark: {
+    color: "#AFC0D2",
   },
   threadTabTextCompact: {
     fontSize: 13,
@@ -958,6 +1145,9 @@ export const chatThreadStyles = {
   },
   threadTabTextActive: {
     color: colors.textPrimary,
+  },
+  threadTabTextActiveDark: {
+    color: "#F0F4F8",
   },
   threadTabBadge: {
     minWidth: 18,
@@ -1564,6 +1754,12 @@ export const chatThreadStyles = {
     paddingBottom: spacing.xs,
     ...shadows.soft,
   },
+  threadBodyDark: {
+    backgroundColor: "#0F1A26",
+    borderColor: "#26384A",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   threadBodyEntryChooser: {
     backgroundColor: "transparent",
     borderRadius: 0,
@@ -1619,10 +1815,16 @@ export const chatThreadStyles = {
     lineHeight: 18,
     fontWeight: "800",
   },
+  composerTitleDark: {
+    color: "#F0F4F8",
+  },
   composerSubtitle: {
     color: colors.textSecondary,
     fontSize: 11,
     lineHeight: 16,
+  },
+  composerSubtitleDark: {
+    color: "#AFC0D2",
   },
   composerStatusBadge: {
     paddingHorizontal: spacing.sm,
@@ -1697,6 +1899,12 @@ export const chatThreadStyles = {
     padding: spacing.md,
     ...shadows.soft,
   },
+  attachmentDraftCardDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   attachmentDraftHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -1725,10 +1933,16 @@ export const chatThreadStyles = {
     fontSize: 14,
     fontWeight: "700",
   },
+  attachmentDraftTitleDark: {
+    color: "#F0F4F8",
+  },
   attachmentDraftDescription: {
     color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 18,
+  },
+  attachmentDraftDescriptionDark: {
+    color: "#AFC0D2",
   },
   attachmentDraftRemove: {
     width: 30,
@@ -1737,6 +1951,9 @@ export const chatThreadStyles = {
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surfaceSoft,
+  },
+  attachmentDraftRemoveDark: {
+    backgroundColor: "#1B2D3F",
   },
   composerReferenceCard: {
     flexDirection: "row",
@@ -1749,6 +1966,12 @@ export const chatThreadStyles = {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     ...shadows.soft,
+  },
+  composerReferenceCardDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
+    shadowOpacity: 0,
+    elevation: 0,
   },
   composerReferenceCopy: {
     flex: 1,
@@ -1766,6 +1989,9 @@ export const chatThreadStyles = {
     fontSize: 12,
     lineHeight: 17,
   },
+  composerReferenceTextDark: {
+    color: "#AFC0D2",
+  },
   composerReferenceRemove: {
     width: 28,
     height: 28,
@@ -1773,5 +1999,8 @@ export const chatThreadStyles = {
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surfaceSoft,
+  },
+  composerReferenceRemoveDark: {
+    backgroundColor: "#1B2D3F",
   },
 } as const;

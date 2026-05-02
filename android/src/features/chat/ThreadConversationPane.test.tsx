@@ -65,6 +65,24 @@ function coletarTextosRenderizados(node: unknown): string[] {
 }
 
 describe("ThreadConversationPane", () => {
+  it("troca o ícone vazio do chat pelo emoji da inspeção guiada", () => {
+    const imageSource = { uri: "test://nr13" };
+    const { getByTestId, getByText, queryByText } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        conversaVazia
+        emptyStateImageAccessibilityLabel="Ícone NR13 Inspecoes e Integridade"
+        emptyStateImageSource={imageSource}
+        emptyStateTitle="NR13 Inspecoes e Integridade"
+        vendoMesa={false}
+      />,
+    );
+
+    expect(getByTestId("empty-state-image").props.source).toEqual(imageSource);
+    expect(getByText("NR13 Inspecoes e Integridade")).toBeTruthy();
+    expect(queryByText("message-processing-outline")).toBeNull();
+  });
+
   it("expõe marker estável quando a conta não tem acesso à mesa", () => {
     const { getByTestId, getByText } = render(
       <ThreadConversationPane

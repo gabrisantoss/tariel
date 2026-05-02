@@ -272,6 +272,8 @@ export function criarItemFilaOffline(params: {
   aiMode?: MobileChatMode;
   aiSummary?: string;
   aiMessagePrefix?: string;
+  aiLearningOptIn?: boolean;
+  aiTone?: OfflinePendingMessage["aiTone"];
 }): OfflinePendingMessage {
   return {
     id: `${params.channel}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
@@ -308,5 +310,9 @@ export function criarItemFilaOffline(params: {
     aiMode: normalizarModoChat(params.aiMode, "detalhado"),
     aiSummary: String(params.aiSummary || "").trim(),
     aiMessagePrefix: String(params.aiMessagePrefix || "").trim(),
+    ...(typeof params.aiLearningOptIn === "boolean"
+      ? { aiLearningOptIn: params.aiLearningOptIn }
+      : {}),
+    ...(params.aiTone ? { aiTone: params.aiTone } : {}),
   };
 }

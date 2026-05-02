@@ -55,11 +55,9 @@ export function SettingsSecurityDeviceProtectionSection({
   deviceBiometricsEnabled,
   requireAuthOnOpen,
   lockTimeout,
-  hideInMultitask,
   onToggleBiometriaNoDispositivo,
   onSetRequireAuthOnOpen,
   onSetLockTimeout,
-  onSetHideInMultitask,
 }: SettingsSecurityDeviceProtectionSectionProps) {
   return (
     <SettingsSection
@@ -94,14 +92,6 @@ export function SettingsSecurityDeviceProtectionSection({
         testID="settings-device-lock-timeout-row"
         title="Bloquear após inatividade"
         value={lockTimeout}
-      />
-      <SettingsSwitchRow
-        description="Oculta informações sensíveis na multitarefa."
-        icon="eye-off-outline"
-        onValueChange={onSetHideInMultitask}
-        testID="settings-device-hide-multitask-row"
-        title="Ocultar conteúdo na multitarefa"
-        value={hideInMultitask}
       />
     </SettingsSection>
   );

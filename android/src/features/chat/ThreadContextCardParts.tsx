@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
+import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import type {
@@ -151,9 +152,11 @@ function spotlightTextStyleForTone(tone: ThreadTone) {
 
 export function ThreadContextChipView(props: {
   compact?: boolean;
+  darkMode?: boolean;
   item: ThreadChip;
 }) {
-  const { compact = false, item } = props;
+  const { compact = false, darkMode = false, item } = props;
+  const { t } = useAppTranslation();
 
   return (
     <View
@@ -161,6 +164,7 @@ export function ThreadContextChipView(props: {
         styles.threadContextChip,
         compact ? styles.threadContextChipCompact : null,
         chipContainerStyleForTone(item.tone),
+        darkMode ? styles.threadContextChipDark : null,
       ]}
     >
       <MaterialCommunityIcons
@@ -172,11 +176,12 @@ export function ThreadContextChipView(props: {
         numberOfLines={1}
         style={[
           styles.threadContextChipText,
+          darkMode ? styles.threadContextChipTextDark : null,
           compact ? styles.threadContextChipTextCompact : null,
           chipTextStyleForTone(item.tone),
         ]}
       >
-        {item.label}
+        {t(item.label)}
       </Text>
     </View>
   );
@@ -184,9 +189,11 @@ export function ThreadContextChipView(props: {
 
 export function ThreadContextActionButton(props: {
   compact?: boolean;
+  darkMode?: boolean;
   item: ThreadAction;
 }) {
-  const { compact = false, item } = props;
+  const { compact = false, darkMode = false, item } = props;
+  const { t } = useAppTranslation();
 
   return (
     <Pressable
@@ -195,6 +202,7 @@ export function ThreadContextActionButton(props: {
         styles.threadActionButton,
         compact ? styles.threadActionButtonCompact : null,
         actionContainerStyleForTone(item.tone),
+        darkMode ? styles.threadActionButtonDark : null,
       ]}
       testID={item.testID}
     >
@@ -207,28 +215,40 @@ export function ThreadContextActionButton(props: {
         numberOfLines={1}
         style={[
           styles.threadActionButtonText,
+          darkMode ? styles.threadActionButtonTextDark : null,
           compact ? styles.threadActionButtonTextCompact : null,
           actionTextStyleForTone(item.tone),
         ]}
       >
-        {item.label}
+        {t(item.label)}
       </Text>
     </Pressable>
   );
 }
 
-export function ThreadContextInsightsGrid(props: { items: ThreadInsight[] }) {
+export function ThreadContextInsightsGrid(props: {
+  darkMode?: boolean;
+  items: ThreadInsight[];
+}) {
+  const { t } = useAppTranslation();
+  const { darkMode = false } = props;
+
   return (
     <View style={styles.threadInsightGrid}>
       {props.items.map((item) => (
         <View
           key={item.key}
-          style={[styles.threadInsightCard, insightCardStyleForTone(item.tone)]}
+          style={[
+            styles.threadInsightCard,
+            insightCardStyleForTone(item.tone),
+            darkMode ? styles.threadInsightCardDark : null,
+          ]}
         >
           <View
             style={[
               styles.threadInsightIcon,
               insightIconStyleForTone(item.tone),
+              darkMode ? styles.threadInsightIconDark : null,
             ]}
           >
             <MaterialCommunityIcons
@@ -238,9 +258,30 @@ export function ThreadContextInsightsGrid(props: { items: ThreadInsight[] }) {
             />
           </View>
           <View style={styles.threadInsightCopy}>
-            <Text style={styles.threadInsightLabel}>{item.label}</Text>
-            <Text style={styles.threadInsightValue}>{item.value}</Text>
-            <Text style={styles.threadInsightDetail}>{item.detail}</Text>
+            <Text
+              style={[
+                styles.threadInsightLabel,
+                darkMode ? styles.threadInsightLabelDark : null,
+              ]}
+            >
+              {t(item.label)}
+            </Text>
+            <Text
+              style={[
+                styles.threadInsightValue,
+                darkMode ? styles.threadInsightValueDark : null,
+              ]}
+            >
+              {t(item.value)}
+            </Text>
+            <Text
+              style={[
+                styles.threadInsightDetail,
+                darkMode ? styles.threadInsightDetailDark : null,
+              ]}
+            >
+              {t(item.detail)}
+            </Text>
           </View>
         </View>
       ))}
@@ -249,24 +290,52 @@ export function ThreadContextInsightsGrid(props: { items: ThreadInsight[] }) {
 }
 
 export function ThreadContextChooserActionCard(props: {
+  badgeLabel?: string;
+  darkMode?: boolean;
   detail: string;
+  emphasis?: "primary" | "secondary";
   icon: IconName;
   label: string;
+  metaItems?: string[];
   onPress: () => void;
   testID?: string;
   tone: ThreadTone;
   trailingIcon?: IconName;
 }) {
-  const { detail, icon, label, onPress, testID, tone, trailingIcon } = props;
+  const {
+    badgeLabel,
+    darkMode = false,
+    detail,
+    emphasis = "secondary",
+    icon,
+    label,
+    metaItems = [],
+    onPress,
+    testID,
+    tone,
+    trailingIcon,
+  } = props;
+  const { t } = useAppTranslation();
 
   return (
     <Pressable
+      accessibilityLabel={t(label)}
+      accessibilityRole="button"
       onPress={onPress}
-      style={[styles.threadChooserActionCard, chooserCardStyleForTone(tone)]}
+      style={[
+        styles.threadChooserActionCard,
+        emphasis === "primary" ? styles.threadChooserActionCardPrimary : null,
+        chooserCardStyleForTone(tone),
+        darkMode ? styles.threadChooserActionCardDark : null,
+      ]}
       testID={testID}
     >
       <View
-        style={[styles.threadChooserActionIcon, chooserIconStyleForTone(tone)]}
+        style={[
+          styles.threadChooserActionIcon,
+          chooserIconStyleForTone(tone),
+          darkMode ? styles.threadChooserActionIconDark : null,
+        ]}
       >
         <MaterialCommunityIcons
           color={colorForTone(tone)}
@@ -275,11 +344,47 @@ export function ThreadContextChooserActionCard(props: {
         />
       </View>
       <View style={styles.threadChooserActionCopy}>
-        <Text style={styles.threadChooserActionTitle}>{label}</Text>
-        <Text style={styles.threadChooserActionDetail}>{detail}</Text>
+        <View style={styles.threadChooserActionTitleRow}>
+          <Text
+            style={[
+              styles.threadChooserActionTitle,
+              darkMode ? styles.threadChooserActionTitleDark : null,
+            ]}
+          >
+            {t(label)}
+          </Text>
+          {badgeLabel ? (
+            <Text style={styles.threadChooserActionBadge}>
+              {t(badgeLabel)}
+            </Text>
+          ) : null}
+        </View>
+        <Text
+          style={[
+            styles.threadChooserActionDetail,
+            darkMode ? styles.threadChooserActionDetailDark : null,
+          ]}
+        >
+          {t(detail)}
+        </Text>
+        {metaItems.length ? (
+          <View style={styles.threadChooserActionMetaRow}>
+            {metaItems.map((item) => (
+              <Text
+                key={item}
+                style={[
+                  styles.threadChooserActionMetaChip,
+                  darkMode ? styles.threadChooserActionMetaChipDark : null,
+                ]}
+              >
+                {t(item)}
+              </Text>
+            ))}
+          </View>
+        ) : null}
       </View>
       <MaterialCommunityIcons
-        color={colors.textSecondary}
+        color={darkMode ? "#AFC0D2" : colors.textSecondary}
         name={trailingIcon || "chevron-right"}
         size={18}
       />
@@ -289,9 +394,11 @@ export function ThreadContextChooserActionCard(props: {
 
 export function ThreadContextSpotlightBadge(props: {
   compact?: boolean;
+  darkMode?: boolean;
   spotlight: ThreadSpotlight;
 }) {
-  const { compact = false, spotlight } = props;
+  const { compact = false, darkMode = false, spotlight } = props;
+  const { t } = useAppTranslation();
 
   return (
     <View
@@ -299,6 +406,7 @@ export function ThreadContextSpotlightBadge(props: {
         styles.threadSpotlightBadge,
         compact ? styles.threadSpotlightBadgeCompact : null,
         spotlightBadgeStyleForTone(spotlight.tone),
+        darkMode ? styles.threadSpotlightBadgeDark : null,
       ]}
     >
       <MaterialCommunityIcons
@@ -309,11 +417,12 @@ export function ThreadContextSpotlightBadge(props: {
       <Text
         style={[
           styles.threadSpotlightText,
+          darkMode ? styles.threadSpotlightTextDark : null,
           compact ? styles.threadSpotlightTextCompact : null,
           spotlightTextStyleForTone(spotlight.tone),
         ]}
       >
-        {spotlight.label}
+        {t(spotlight.label)}
       </Text>
     </View>
   );

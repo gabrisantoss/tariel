@@ -26,8 +26,9 @@ describe("chat preferences", () => {
     });
 
     expect(config.messagePrefix).toContain("[preferencias_ia_mobile]");
-    expect(config.messagePrefix).toContain("responda em Português");
+    expect(config.messagePrefix).toContain("responda somente em português");
     expect(config.messagePrefix).toContain("use tom técnico");
+    expect(config.messagePrefix).toContain("usuário não autorizou uso");
     expect(
       stripEmbeddedChatAiPreferences(
         `${config.messagePrefix}\n\nVerifique a ancoragem.`,
@@ -39,6 +40,18 @@ describe("chat preferences", () => {
       }),
     ).toBe("Evidência enviada");
     expect(config.mode).toBe("deep_research");
+  });
+
+  it("registra consentimento de melhoria da IA no contexto interno", () => {
+    const settings = createDefaultAppSettings();
+    const config = buildChatAiRequestConfig({
+      ...settings.ai,
+      learningOptIn: true,
+    });
+
+    expect(config.learningOptIn).toBe(true);
+    expect(config.messagePrefix).toContain("usuário autorizou uso");
+    expect(config.messagePrefix).toContain("melhoria da IA");
   });
 
   it("summarizes behavior changes only when the summary changes", () => {

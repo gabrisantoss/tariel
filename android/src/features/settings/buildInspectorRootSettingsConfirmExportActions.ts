@@ -77,6 +77,8 @@ interface BuildInspectorRootSettingsConfirmExportActionsInput {
     | "onSetMensagemMesa"
     | "onSetMensagensMesa"
     | "onSetModeloIa"
+    | "onSetEstiloResposta"
+    | "onSetIdiomaResposta"
     | "onSetNotificacoes"
     | "onSetPreviewAnexoImagem"
   >;
@@ -134,6 +136,8 @@ export function buildInspectorRootSettingsConfirmExportActions({
     onSetMensagemMesa: settersState.onSetMensagemMesa,
     onSetMensagensMesa: settersState.onSetMensagensMesa,
     onSetModeloIa: settersState.onSetModeloIa,
+    onSetEstiloResposta: settersState.onSetEstiloResposta,
+    onSetIdiomaResposta: settersState.onSetIdiomaResposta,
     onSetNotificacoes: settersState.onSetNotificacoes,
     onSetPreviewAnexoImagem: settersState.onSetPreviewAnexoImagem,
     perfilExibicao: accountState.perfilExibicao,

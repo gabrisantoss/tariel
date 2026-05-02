@@ -24,11 +24,24 @@ export function ProfileAvatarPicker({
       {photoUri ? (
         <Image
           source={{ uri: photoUri }}
-          style={styles.settingsPrintAvatarImage}
+          style={[
+            styles.settingsPrintAvatarImage,
+            darkMode ? styles.settingsPrintAvatarImageDark : null,
+          ]}
         />
       ) : (
-        <View style={styles.settingsPrintAvatarFallback}>
-          <Text style={styles.settingsPrintAvatarInitials}>
+        <View
+          style={[
+            styles.settingsPrintAvatarFallback,
+            darkMode ? styles.settingsPrintAvatarFallbackDark : null,
+          ]}
+        >
+          <Text
+            style={[
+              styles.settingsPrintAvatarInitials,
+              darkMode ? styles.settingsPrintAvatarInitialsDark : null,
+            ]}
+          >
             {fallbackLabel}
           </Text>
         </View>
@@ -41,7 +54,11 @@ export function ProfileAvatarPicker({
         ]}
         testID={testID}
       >
-        <MaterialCommunityIcons color={colors.ink700} name="pencil" size={12} />
+        <MaterialCommunityIcons
+          color={darkMode ? "#D8E3EE" : colors.ink700}
+          name="pencil"
+          size={12}
+        />
       </Pressable>
     </View>
   );

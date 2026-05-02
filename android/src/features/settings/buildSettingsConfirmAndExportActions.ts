@@ -1,7 +1,11 @@
 import type { Dispatch, SetStateAction } from "react";
 
 import type { MobileLaudoCard, MobileMesaMessage } from "../../types/mobile";
-import { AI_MODEL_OPTIONS } from "../InspectorMobileApp.constants";
+import {
+  AI_MODEL_OPTIONS,
+  RESPONSE_LANGUAGE_OPTIONS,
+  RESPONSE_STYLE_OPTIONS,
+} from "../InspectorMobileApp.constants";
 import type {
   ChatState,
   ComposerAttachment,
@@ -66,6 +70,10 @@ interface BuildSettingsConfirmAndExportActionsParams {
   onSetMensagemMesa: Dispatch<SetStateAction<string>>;
   onSetMensagensMesa: Dispatch<SetStateAction<MobileMesaMessage[]>>;
   onSetModeloIa: (value: (typeof AI_MODEL_OPTIONS)[number]) => void;
+  onSetEstiloResposta: (value: (typeof RESPONSE_STYLE_OPTIONS)[number]) => void;
+  onSetIdiomaResposta: (
+    value: (typeof RESPONSE_LANGUAGE_OPTIONS)[number],
+  ) => void;
   onSetNotificacoes: Dispatch<SetStateAction<MobileActivityNotification[]>>;
   onSetPreviewAnexoImagem: Dispatch<
     SetStateAction<AttachmentPreviewState | null>
@@ -135,6 +143,8 @@ export function buildSettingsConfirmAndExportActions({
   onSetMensagemMesa,
   onSetMensagensMesa,
   onSetModeloIa,
+  onSetEstiloResposta,
+  onSetIdiomaResposta,
   onSetNotificacoes,
   onSetPreviewAnexoImagem,
   perfilExibicao,
@@ -202,6 +212,26 @@ export function buildSettingsConfirmAndExportActions({
     fecharSheetConfiguracao();
   }
 
+  function handleSelecionarEstiloResposta(
+    value: (typeof RESPONSE_STYLE_OPTIONS)[number],
+  ) {
+    if (!RESPONSE_STYLE_OPTIONS.includes(value)) {
+      return;
+    }
+    onSetEstiloResposta(value);
+    fecharSheetConfiguracao();
+  }
+
+  function handleSelecionarIdiomaResposta(
+    value: (typeof RESPONSE_LANGUAGE_OPTIONS)[number],
+  ) {
+    if (!RESPONSE_LANGUAGE_OPTIONS.includes(value)) {
+      return;
+    }
+    onSetIdiomaResposta(value);
+    fecharSheetConfiguracao();
+  }
+
   async function handleExportarDados(formato: "JSON" | "PDF" | "TXT") {
     await runExportDataFlow({
       formato,
@@ -252,6 +282,8 @@ export function buildSettingsConfirmAndExportActions({
   return {
     handleConfirmarAcaoCritica,
     handleExportarDados,
+    handleSelecionarEstiloResposta,
+    handleSelecionarIdiomaResposta,
     handleSelecionarModeloIa,
   };
 }

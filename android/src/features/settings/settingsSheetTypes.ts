@@ -1,5 +1,7 @@
 export type SettingsSheetKind =
   | "aiModel"
+  | "responseStyle"
+  | "responseLanguage"
   | "profile"
   | "photo"
   | "email"

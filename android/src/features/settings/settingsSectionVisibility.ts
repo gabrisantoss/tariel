@@ -96,7 +96,7 @@ export function buildSettingsSectionVisibility(
       key: "preferenciasIa",
       group: "experiencia",
       terms: [
-        `preferencias ia modelo estilo resposta idioma memoria aprendizado tom temperatura ${input.modeloIa} ${input.estiloResposta} ${input.idiomaResposta}`,
+        `preferencias ia modelo estilo resposta idioma memoria tom ${input.modeloIa} ${input.estiloResposta} ${input.idiomaResposta}`,
       ],
     },
     {
@@ -124,7 +124,7 @@ export function buildSettingsSectionVisibility(
       key: "dadosConversas",
       group: "seguranca",
       terms: [
-        `dados e conversas historico exportar apagar retencao backup sincronizacao ${input.resumoDadosConversas}`,
+        `dados e conversas historico exportar apagar retencao backup sincronizacao compartilhar melhoria ia consentimento ${input.resumoDadosConversas}`,
       ],
     },
     {

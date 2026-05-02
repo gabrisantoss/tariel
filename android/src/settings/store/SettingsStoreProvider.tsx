@@ -12,14 +12,17 @@ import {
 import { createDefaultAppSettings } from "../schema/defaults";
 import type { AppSettings } from "../schema/types";
 import {
+  getSettingsPersistenceScopeKey,
   loadSettingsDocument,
   resetSettingsDocument,
   saveSettingsDocument,
+  type SettingsPersistenceScope,
 } from "../repository/settingsRepository";
 
 interface SettingsStoreActions {
   replaceAll: (settings: AppSettings) => void;
   reset: () => Promise<void>;
+  setPersistenceScope: (scope?: SettingsPersistenceScope | null) => void;
   updateAppearance: (patch: Partial<AppSettings["appearance"]>) => void;
   updateAi: (patch: Partial<AppSettings["ai"]>) => void;
   updateNotifications: (patch: Partial<AppSettings["notifications"]>) => void;
@@ -34,6 +37,8 @@ interface SettingsStoreActions {
 
 interface SettingsStoreContextValue {
   hydrated: boolean;
+  persistenceScope: SettingsPersistenceScope | null;
+  persistenceVersion: number;
   state: AppSettings;
   actions: SettingsStoreActions;
 }
@@ -47,7 +52,16 @@ export function SettingsStoreProvider({ children }: { children: ReactNode }) {
     createDefaultAppSettings(),
   );
   const [hydrated, setHydrated] = useState(false);
+  const [persistenceScope, setPersistenceScopeState] =
+    useState<SettingsPersistenceScope | null>(null);
+  const [persistenceVersion, setPersistenceVersion] = useState(0);
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadedScopeKeyRef = useRef<string | null>(null);
+  const persistenceScopeRef = useRef<SettingsPersistenceScope | null>(null);
+  const scopeLoadingRef = useRef(false);
+  const stateRef = useRef(state);
+
+  const persistenceScopeKey = getSettingsPersistenceScopeKey(persistenceScope);
 
   useEffect(() => {
     let active = true;
@@ -57,6 +71,8 @@ export function SettingsStoreProvider({ children }: { children: ReactNode }) {
         return;
       }
       setState(document.settings);
+      loadedScopeKeyRef.current = getSettingsPersistenceScopeKey(null);
+      setPersistenceVersion((current) => current + 1);
       setHydrated(true);
     })();
 
@@ -70,14 +86,46 @@ export function SettingsStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) {
+    persistenceScopeRef.current = persistenceScope;
+  }, [persistenceScope]);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    if (!hydrated || loadedScopeKeyRef.current === persistenceScopeKey) {
+      return;
+    }
+
+    let active = true;
+    scopeLoadingRef.current = true;
+    void (async () => {
+      const document = await loadSettingsDocument(persistenceScope);
+      if (!active) {
+        return;
+      }
+      loadedScopeKeyRef.current = persistenceScopeKey;
+      setState(document.settings);
+      setPersistenceVersion((current) => current + 1);
+      scopeLoadingRef.current = false;
+    })();
+
+    return () => {
+      active = false;
+      scopeLoadingRef.current = false;
+    };
+  }, [hydrated, persistenceScope, persistenceScopeKey]);
+
+  useEffect(() => {
+    if (!hydrated || scopeLoadingRef.current) {
       return;
     }
     if (persistTimerRef.current) {
       clearTimeout(persistTimerRef.current);
     }
     persistTimerRef.current = setTimeout(() => {
-      void saveSettingsDocument(state);
+      void saveSettingsDocument(state, persistenceScopeRef.current);
       persistTimerRef.current = null;
     }, 250);
   }, [hydrated, state]);
@@ -93,10 +141,35 @@ export function SettingsStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       replaceAll: (settings) => {
         setState(settings);
+        setPersistenceVersion((current) => current + 1);
       },
       reset: async () => {
-        const document = await resetSettingsDocument();
+        const document = await resetSettingsDocument(
+          persistenceScopeRef.current,
+        );
         setState(document.settings);
+        setPersistenceVersion((current) => current + 1);
+      },
+      setPersistenceScope: (scope) => {
+        const nextScopeKey = getSettingsPersistenceScopeKey(scope);
+        if (
+          getSettingsPersistenceScopeKey(persistenceScopeRef.current) !==
+          nextScopeKey
+        ) {
+          if (persistTimerRef.current) {
+            clearTimeout(persistTimerRef.current);
+            persistTimerRef.current = null;
+          }
+          void saveSettingsDocument(
+            stateRef.current,
+            persistenceScopeRef.current,
+          );
+        }
+        setPersistenceScopeState((current) =>
+          getSettingsPersistenceScopeKey(current) === nextScopeKey
+            ? current
+            : (scope ?? null),
+        );
       },
       updateAppearance: (patch) => {
         updateWith((current) => ({
@@ -160,10 +233,12 @@ export function SettingsStoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       hydrated,
+      persistenceScope,
+      persistenceVersion,
       state,
       actions,
     }),
-    [actions, hydrated, state],
+    [actions, hydrated, persistenceScope, persistenceVersion, state],
   );
 
   return (
@@ -181,4 +256,8 @@ export function useSettingsStoreContext(): SettingsStoreContextValue {
     );
   }
   return context;
+}
+
+export function useOptionalSettingsStoreContext(): SettingsStoreContextValue | null {
+  return useContext(SettingsStoreContext);
 }

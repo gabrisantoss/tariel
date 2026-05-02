@@ -112,6 +112,8 @@ export function buildInspectorRootSettingsConfirmExportState({
       onSetMensagemMesa: localState.setMensagemMesa,
       onSetMensagensMesa: localState.setMensagensMesa,
       onSetModeloIa: settingsBindings.ai.setModeloIa,
+      onSetEstiloResposta: settingsBindings.ai.setEstiloResposta,
+      onSetIdiomaResposta: settingsBindings.ai.setIdiomaResposta,
       onSetNotificacoes: localState.setNotificacoes,
       onSetPreviewAnexoImagem: shellSupport.setPreviewAnexoImagem,
     },

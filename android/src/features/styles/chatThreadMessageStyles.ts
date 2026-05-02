@@ -67,6 +67,10 @@ export const chatThreadMessageStyles = {
     borderTopLeftRadius: 18,
     borderBottomLeftRadius: 14,
   },
+  messageBubbleIncomingDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
+  },
   messageBubbleOutgoing: {
     backgroundColor: colors.ink800,
     borderWidth: 1,
@@ -80,6 +84,10 @@ export const chatThreadMessageStyles = {
     borderColor: colors.accentMuted,
     borderTopLeftRadius: 18,
     borderBottomLeftRadius: 14,
+  },
+  messageBubbleEngineeringDark: {
+    backgroundColor: "rgba(244,123,32,0.12)",
+    borderColor: "rgba(244,123,32,0.38)",
   },
   messageBubbleReferenced: {
     borderColor: colors.accentMuted,
@@ -131,6 +139,9 @@ export const chatThreadMessageStyles = {
     color: colors.textPrimary,
     fontSize: 14,
     lineHeight: 22,
+  },
+  messageTextDark: {
+    color: "#E8EEF5",
   },
   messageTextOutgoing: {
     color: colors.white,
@@ -324,9 +335,16 @@ export const chatThreadMessageStyles = {
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
+  typingBubbleDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
+  },
   typingText: {
     color: colors.textSecondary,
     fontSize: 13,
     fontWeight: "600",
+  },
+  typingTextDark: {
+    color: "#AFC0D2",
   },
 } as const;

@@ -9,7 +9,7 @@
     "scheme": "tarielinspetor",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "androidStatusBar": {
       "hidden": true,
       "barStyle": "light-content"
@@ -53,7 +53,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
+          "icon": "./assets/android-icon-monochrome.png",
           "color": "#091019",
           "defaultChannel": "tariel-chat"
         }
