@@ -39,7 +39,6 @@ type InspectorSettingsDrawerBaseState = Pick<
   | "resumoContaAcesso"
   | "resumoDadosConversas"
   | "resumoExcluirConta"
-  | "resumoFilaOffline"
   | "resumoFilaSuporteLocal"
   | "resumoGovernancaConfiguracao"
   | "resumoMetodosConta"
@@ -67,7 +66,8 @@ type InspectorSettingsDrawerBaseState = Pick<
   | "ultimoEventoSessao"
   | "ultimoTicketSuporteResumo"
   | "workspaceResumoConfiguracao"
->;
+> &
+  Partial<Pick<InspectorBaseDerivedState, "densityScale" | "fontScale">>;
 
 interface BuildInspectorRootSettingsDrawerPropsInput {
   accountState: Pick<
@@ -90,12 +90,13 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "corDestaque"
     | "criticalAlertsEnabled"
     | "densidadeInterface"
+    | "economiaDados"
     | "emailsAtivos"
     | "entradaPorVoz"
     | "estiloResposta"
     | "handleAbrirEstiloResposta"
     | "handleAbrirIdiomaResposta"
-    | "handleAbrirAjudaDitado"
+    | "handleAbrirMenuIdiomaVoz"
     | "handleAbrirModeloIa"
     | "handleToggleEntradaPorVoz"
     | "handleToggleNotificaPush"
@@ -107,7 +108,6 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "memoriaIa"
     | "mesaCategoryEnabled"
     | "mostrarCategoriaMesa"
-    | "microfonePermitido"
     | "modeloIa"
     | "notificaPush"
     | "notificaRespostas"
@@ -121,6 +121,7 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "setCorDestaque"
     | "setCriticalAlertsEnabled"
     | "setDensidadeInterface"
+    | "setEconomiaDados"
     | "setEmailsAtivos"
     | "setMemoriaIa"
     | "setMesaCategoryEnabled"
@@ -131,16 +132,16 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "setTamanhoFonte"
     | "setTemaApp"
     | "setTomConversa"
-    | "setVoiceLanguage"
+    | "setUsoBateria"
     | "somNotificacao"
     | "speechEnabled"
     | "speechRate"
-    | "sttSupported"
     | "systemCategoryEnabled"
     | "tamanhoFonte"
     | "temaApp"
     | "tomConversa"
     | "ttsSupported"
+    | "usoBateria"
     | "vibracaoAtiva"
     | "voiceLanguage"
   >;
@@ -150,10 +151,10 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "appVersionLabel"
     | "configuracoesDrawerX"
     | "fecharConfiguracoes"
+    | "handleAbrirCentralAtividade"
     | "handleAbrirPaginaConfiguracoes"
     | "handleAbrirSecaoConfiguracoes"
     | "handleVoltarResumoConfiguracoes"
-    | "onAbrirFilaOffline"
     | "settingsDrawerPage"
     | "settingsDrawerPanResponder"
   >;
@@ -171,7 +172,9 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "crashReportsOptIn"
     | "deviceBiometricsEnabled"
     | "filtroEventosSeguranca"
-    | "fixarConversas"
+    | "handleAbrirAjustesDoSistema"
+    | "handleAbrirMenuRetencaoDados"
+    | "handleAbrirMenuSincronizacaoWifi"
     | "handleApagarHistoricoConfiguracoes"
     | "handleCompartilharCodigosRecuperacao"
     | "handleConfirmarCodigo2FA"
@@ -184,7 +187,6 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "handleExportarAntesDeExcluirConta"
     | "handleExportarDados"
     | "handleGerarCodigosRecuperacao"
-    | "handleGerenciarConversasIndividuais"
     | "handleLogout"
     | "handleGerenciarPermissao"
     | "handleLimparCache"
@@ -197,18 +199,13 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "handleToggle2FA"
     | "handleToggleBackupAutomatico"
     | "handleToggleBiometriaNoDispositivo"
-    | "handleToggleMostrarConteudoNotificacao"
-    | "handleToggleMostrarSomenteNovaMensagem"
-    | "handleToggleOcultarConteudoBloqueado"
     | "handleToggleProviderConnection"
     | "handleToggleSincronizacaoDispositivos"
     | "hideInMultitask"
     | "limpandoCache"
     | "lockTimeout"
     | "mediaCompression"
-    | "mostrarConteudoNotificacao"
-    | "mostrarSomenteNovaMensagem"
-    | "ocultarConteudoBloqueado"
+    | "microfonePermitido"
     | "provedoresConectados"
     | "reautenticacaoStatus"
     | "recoveryCodesEnabled"
@@ -222,7 +219,6 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
     | "setCompartilharMelhoriaIa"
     | "setCrashReportsOptIn"
     | "setFiltroEventosSeguranca"
-    | "setFixarConversas"
     | "setHideInMultitask"
     | "setLockTimeout"
     | "setMediaCompression"
@@ -239,34 +235,20 @@ interface BuildInspectorRootSettingsDrawerPropsInput {
   >;
   supportAndSystemState: Pick<
     InspectorSettingsDrawerPanelBuilderInput,
-    | "economiaDados"
     | "filaSuporteLocal"
-    | "handleAbrirAjustesDoSistema"
     | "handleAbrirCanalSuporte"
-    | "handleAbrirCentralAtividade"
     | "handleAbrirSobreApp"
     | "handleCentralAjuda"
     | "handleEnviarFeedback"
     | "handleExportarDiagnosticoApp"
     | "handleLicencas"
-    | "handleLimparCache"
     | "handleLimparFilaSuporteLocal"
     | "handlePermissoes"
     | "handlePoliticaPrivacidade"
-    | "handleRefresh"
     | "handleReportarProblema"
     | "handleTermosUso"
     | "handleVerificarAtualizacoes"
-    | "idiomaApp"
-    | "resumoCache"
-    | "resumoCentralAtividade"
-    | "setEconomiaDados"
-    | "setIdiomaApp"
-    | "setUsoBateria"
-    | "sincronizandoDados"
     | "supportChannelLabel"
-    | "usoBateria"
-    | "verificandoAtualizacoes"
   >;
 }
 
@@ -315,10 +297,11 @@ export function buildInspectorRootSettingsDrawerProps({
         corDestaque: experienceState.corDestaque,
         criticalAlertsEnabled: experienceState.criticalAlertsEnabled,
         densidadeInterface: experienceState.densidadeInterface,
+        economiaDados: experienceState.economiaDados,
         emailsAtivos: experienceState.emailsAtivos,
         entradaPorVoz: experienceState.entradaPorVoz,
         estiloResposta: experienceState.estiloResposta,
-        handleAbrirAjudaDitado: experienceState.handleAbrirAjudaDitado,
+        handleAbrirMenuIdiomaVoz: experienceState.handleAbrirMenuIdiomaVoz,
         handleAbrirEstiloResposta: experienceState.handleAbrirEstiloResposta,
         handleAbrirIdiomaResposta: experienceState.handleAbrirIdiomaResposta,
         handleAbrirModeloIa: experienceState.handleAbrirModeloIa,
@@ -332,7 +315,6 @@ export function buildInspectorRootSettingsDrawerProps({
         memoriaIa: experienceState.memoriaIa,
         mesaCategoryEnabled: experienceState.mesaCategoryEnabled,
         mostrarCategoriaMesa: experienceState.mostrarCategoriaMesa,
-        microfonePermitido: experienceState.microfonePermitido,
         modeloIa: experienceState.modeloIa,
         notificaPush: experienceState.notificaPush,
         notificaRespostas: experienceState.notificaRespostas,
@@ -347,6 +329,7 @@ export function buildInspectorRootSettingsDrawerProps({
         setCorDestaque: experienceState.setCorDestaque,
         setCriticalAlertsEnabled: experienceState.setCriticalAlertsEnabled,
         setDensidadeInterface: experienceState.setDensidadeInterface,
+        setEconomiaDados: experienceState.setEconomiaDados,
         setEmailsAtivos: experienceState.setEmailsAtivos,
         setMemoriaIa: experienceState.setMemoriaIa,
         setMesaCategoryEnabled: experienceState.setMesaCategoryEnabled,
@@ -357,16 +340,16 @@ export function buildInspectorRootSettingsDrawerProps({
         setTamanhoFonte: experienceState.setTamanhoFonte,
         setTemaApp: experienceState.setTemaApp,
         setTomConversa: experienceState.setTomConversa,
-        setVoiceLanguage: experienceState.setVoiceLanguage,
+        setUsoBateria: experienceState.setUsoBateria,
         somNotificacao: experienceState.somNotificacao,
         speechEnabled: experienceState.speechEnabled,
         speechRate: experienceState.speechRate,
-        sttSupported: experienceState.sttSupported,
         systemCategoryEnabled: experienceState.systemCategoryEnabled,
         tamanhoFonte: experienceState.tamanhoFonte,
         temaApp: experienceState.temaApp,
         tomConversa: experienceState.tomConversa,
         ttsSupported: experienceState.ttsSupported,
+        usoBateria: experienceState.usoBateria,
         vibracaoAtiva: experienceState.vibracaoAtiva,
         voiceLanguage: experienceState.voiceLanguage,
       },
@@ -374,7 +357,11 @@ export function buildInspectorRootSettingsDrawerProps({
         appBuildChannel: navigationState.appBuildChannel,
         appVersionLabel: navigationState.appVersionLabel,
         configuracoesDrawerX: navigationState.configuracoesDrawerX,
+        densityScale: baseState.densityScale,
         fecharConfiguracoes: navigationState.fecharConfiguracoes,
+        handleAbrirCentralAtividade:
+          navigationState.handleAbrirCentralAtividade,
+        fontScale: baseState.fontScale,
         handleAbrirPaginaConfiguracoes:
           navigationState.handleAbrirPaginaConfiguracoes,
         handleAbrirSecaoConfiguracoes:
@@ -385,7 +372,6 @@ export function buildInspectorRootSettingsDrawerProps({
         mostrarGrupoExperiencia: baseState.mostrarGrupoExperiencia,
         mostrarGrupoSeguranca: baseState.mostrarGrupoSeguranca,
         mostrarGrupoSistema: baseState.mostrarGrupoSistema,
-        onAbrirFilaOffline: navigationState.onAbrirFilaOffline,
         settingsDrawerInOverview: baseState.settingsDrawerInOverview,
         settingsDrawerMatchesPage: baseState.settingsDrawerMatchesPage,
         settingsDrawerMatchesSection: baseState.settingsDrawerMatchesSection,
@@ -413,12 +399,15 @@ export function buildInspectorRootSettingsDrawerProps({
         codigosRecuperacao: securityState.codigosRecuperacao,
         compartilharMelhoriaIa: securityState.compartilharMelhoriaIa,
         conversasOcultasTotal: baseState.conversasOcultasTotal,
-        conversasVisiveisTotal: baseState.conversasVisiveisTotal,
         crashReportsOptIn: securityState.crashReportsOptIn,
         deviceBiometricsEnabled: securityState.deviceBiometricsEnabled,
         eventosSegurancaFiltrados: baseState.eventosSegurancaFiltrados,
         filtroEventosSeguranca: securityState.filtroEventosSeguranca,
-        fixarConversas: securityState.fixarConversas,
+        handleAbrirAjustesDoSistema: securityState.handleAbrirAjustesDoSistema,
+        handleAbrirMenuRetencaoDados:
+          securityState.handleAbrirMenuRetencaoDados,
+        handleAbrirMenuSincronizacaoWifi:
+          securityState.handleAbrirMenuSincronizacaoWifi,
         handleApagarHistoricoConfiguracoes:
           securityState.handleApagarHistoricoConfiguracoes,
         handleCompartilharCodigosRecuperacao:
@@ -437,8 +426,6 @@ export function buildInspectorRootSettingsDrawerProps({
         handleExportarDados: securityState.handleExportarDados,
         handleGerarCodigosRecuperacao:
           securityState.handleGerarCodigosRecuperacao,
-        handleGerenciarConversasIndividuais:
-          securityState.handleGerenciarConversasIndividuais,
         handleLogout: securityState.handleLogout,
         handleGerenciarPermissao: securityState.handleGerenciarPermissao,
         handleLimparCache: securityState.handleLimparCache,
@@ -457,12 +444,6 @@ export function buildInspectorRootSettingsDrawerProps({
           securityState.handleToggleBackupAutomatico,
         handleToggleBiometriaNoDispositivo:
           securityState.handleToggleBiometriaNoDispositivo,
-        handleToggleMostrarConteudoNotificacao:
-          securityState.handleToggleMostrarConteudoNotificacao,
-        handleToggleMostrarSomenteNovaMensagem:
-          securityState.handleToggleMostrarSomenteNovaMensagem,
-        handleToggleOcultarConteudoBloqueado:
-          securityState.handleToggleOcultarConteudoBloqueado,
         handleToggleProviderConnection:
           securityState.handleToggleProviderConnection,
         handleToggleSincronizacaoDispositivos:
@@ -471,12 +452,9 @@ export function buildInspectorRootSettingsDrawerProps({
         limpandoCache: securityState.limpandoCache,
         lockTimeout: securityState.lockTimeout,
         mediaCompression: securityState.mediaCompression,
-        mostrarConteudoNotificacao: securityState.mostrarConteudoNotificacao,
-        mostrarSomenteNovaMensagem: securityState.mostrarSomenteNovaMensagem,
+        microfonePermitido: securityState.microfonePermitido,
         outrasSessoesAtivas: baseState.outrasSessoesAtivas,
-        ocultarConteudoBloqueado: securityState.ocultarConteudoBloqueado,
         permissoesNegadasTotal: baseState.permissoesNegadasTotal,
-        previewPrivacidadeNotificacao: baseState.previewPrivacidadeNotificacao,
         provedoresConectados: securityState.provedoresConectados,
         provedoresConectadosTotal: baseState.provedoresConectadosTotal,
         provedorPrimario: baseState.provedorPrimario,
@@ -493,7 +471,6 @@ export function buildInspectorRootSettingsDrawerProps({
         resumoExcluirConta: baseState.resumoExcluirConta,
         resumoPermissoes: baseState.resumoPermissoes,
         resumoPermissoesCriticas: baseState.resumoPermissoesCriticas,
-        resumoPrivacidadeNotificacoes: baseState.resumoPrivacidadeNotificacoes,
         resumoSessaoAtual: baseState.resumoSessaoAtual,
         retencaoDados: securityState.retencaoDados,
         salvarHistoricoConversas: securityState.salvarHistoricoConversas,
@@ -503,7 +480,6 @@ export function buildInspectorRootSettingsDrawerProps({
         setCompartilharMelhoriaIa: securityState.setCompartilharMelhoriaIa,
         setCrashReportsOptIn: securityState.setCrashReportsOptIn,
         setFiltroEventosSeguranca: securityState.setFiltroEventosSeguranca,
-        setFixarConversas: securityState.setFixarConversas,
         setHideInMultitask: securityState.setHideInMultitask,
         setLockTimeout: securityState.setLockTimeout,
         setMediaCompression: securityState.setMediaCompression,
@@ -525,54 +501,37 @@ export function buildInspectorRootSettingsDrawerProps({
         contaEmailLabel: baseState.contaEmailLabel,
         contaTelefoneLabel: baseState.contaTelefoneLabel,
         corDestaqueResumoConfiguracao: baseState.corDestaqueResumoConfiguracao,
-        economiaDados: supportAndSystemState.economiaDados,
         existeProvedorDisponivel: baseState.existeProvedorDisponivel,
         fecharConfiguracoes: navigationState.fecharConfiguracoes,
         filaSuporteLocal: supportAndSystemState.filaSuporteLocal,
-        handleAbrirAjustesDoSistema:
-          supportAndSystemState.handleAbrirAjustesDoSistema,
         handleAbrirCanalSuporte: supportAndSystemState.handleAbrirCanalSuporte,
-        handleAbrirCentralAtividade:
-          supportAndSystemState.handleAbrirCentralAtividade,
         handleAbrirSobreApp: supportAndSystemState.handleAbrirSobreApp,
         handleCentralAjuda: supportAndSystemState.handleCentralAjuda,
         handleEnviarFeedback: supportAndSystemState.handleEnviarFeedback,
         handleExportarDiagnosticoApp:
           supportAndSystemState.handleExportarDiagnosticoApp,
         handleLicencas: supportAndSystemState.handleLicencas,
-        handleLimparCache: supportAndSystemState.handleLimparCache,
         handleLimparFilaSuporteLocal:
           supportAndSystemState.handleLimparFilaSuporteLocal,
         handlePermissoes: supportAndSystemState.handlePermissoes,
         handlePoliticaPrivacidade:
           supportAndSystemState.handlePoliticaPrivacidade,
-        handleRefresh: supportAndSystemState.handleRefresh,
         handleReportarProblema: supportAndSystemState.handleReportarProblema,
         handleTermosUso: supportAndSystemState.handleTermosUso,
         handleVerificarAtualizacoes:
           supportAndSystemState.handleVerificarAtualizacoes,
-        idiomaApp: supportAndSystemState.idiomaApp,
         integracoesConectadasTotal: baseState.integracoesConectadasTotal,
         integracoesDisponiveisTotal: baseState.integracoesDisponiveisTotal,
         planoResumoConfiguracao: baseState.planoResumoConfiguracao,
-        resumoCache: supportAndSystemState.resumoCache,
-        resumoCentralAtividade: supportAndSystemState.resumoCentralAtividade,
-        resumoFilaOffline: baseState.resumoFilaOffline,
         resumoFilaSuporteLocal: baseState.resumoFilaSuporteLocal,
         resumoPermissoes: baseState.resumoPermissoes,
         resumoSuporteApp: baseState.resumoSuporteApp,
-        setEconomiaDados: supportAndSystemState.setEconomiaDados,
-        setIdiomaApp: supportAndSystemState.setIdiomaApp,
-        setUsoBateria: supportAndSystemState.setUsoBateria,
-        sincronizandoDados: supportAndSystemState.sincronizandoDados,
         supportChannelLabel: supportAndSystemState.supportChannelLabel,
         ticketsBugTotal: baseState.ticketsBugTotal,
         ticketsFeedbackTotal: baseState.ticketsFeedbackTotal,
         ultimaVerificacaoAtualizacaoLabel:
           baseState.ultimaVerificacaoAtualizacaoLabel,
         ultimoTicketSuporteResumo: baseState.ultimoTicketSuporteResumo,
-        usoBateria: supportAndSystemState.usoBateria,
-        verificandoAtualizacoes: supportAndSystemState.verificandoAtualizacoes,
       },
     }),
   );

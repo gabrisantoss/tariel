@@ -2,11 +2,13 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
 
 import { useAppTranslation } from "../../i18n/appTranslation";
+import { colorWithAlpha } from "../../theme/colorUtils";
 import { colors } from "../../theme/tokens";
 import type { MobileAttachment } from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
 import {
   ehImagemAnexo,
+  localPreviewUriAnexo,
   nomeExibicaoAnexo,
   tamanhoHumanoAnexo,
   urlAnexoAbsoluta,
@@ -15,6 +17,7 @@ import {
 interface MessageAttachmentCardProps {
   attachment: MobileAttachment;
   accessToken: string | null;
+  accentColor?: string;
   opening: boolean;
   onPress: (attachment: MobileAttachment) => void;
   testID?: string;
@@ -30,7 +33,21 @@ export function MessageAttachmentCard({
   const { t } = useAppTranslation();
   const imageAttachment = ehImagemAnexo(attachment);
   const absoluteUrl = urlAnexoAbsoluta(attachment.url);
-  const disabled = !absoluteUrl || !accessToken || opening;
+  const localImageUri = imageAttachment ? localPreviewUriAnexo(attachment) : "";
+  const remoteImageAvailable = Boolean(absoluteUrl && accessToken);
+  const imagePreviewSource = localImageUri
+    ? { uri: localImageUri }
+    : remoteImageAvailable && absoluteUrl
+      ? {
+          uri: absoluteUrl,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      : null;
+  const disabled =
+    opening ||
+    (imageAttachment ? !imagePreviewSource : !absoluteUrl || !accessToken);
   const tamanho = tamanhoHumanoAnexo(attachment.tamanho_bytes);
   const titulo = nomeExibicaoAnexo(
     attachment,
@@ -48,15 +65,10 @@ export function MessageAttachmentCard({
       ]}
       testID={testID}
     >
-      {imageAttachment && absoluteUrl && accessToken ? (
+      {imageAttachment && imagePreviewSource ? (
         <View style={styles.messageAttachmentImageFrame}>
           <Image
-            source={{
-              uri: absoluteUrl,
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }}
+            source={imagePreviewSource}
             resizeMode="contain"
             style={styles.messageAttachmentImagePreview}
           />
@@ -66,7 +78,7 @@ export function MessageAttachmentCard({
           <MaterialCommunityIcons
             name={imageAttachment ? "image-outline" : "file-document-outline"}
             size={18}
-            color={colors.accent}
+            color={colors.textSecondary}
           />
         </View>
       )}
@@ -83,7 +95,7 @@ export function MessageAttachmentCard({
 
       <View style={styles.messageAttachmentAction}>
         {opening ? (
-          <ActivityIndicator size="small" color={colors.accent} />
+          <ActivityIndicator size="small" color={colors.textSecondary} />
         ) : (
           <MaterialCommunityIcons
             name={
@@ -94,7 +106,7 @@ export function MessageAttachmentCard({
                   : "download-outline"
             }
             size={18}
-            color={disabled ? colors.textSecondary : colors.accent}
+            color={colors.textSecondary}
           />
         )}
       </View>
@@ -106,6 +118,7 @@ interface MessageReferenceCardProps {
   messageId: number;
   preview: string;
   onPress: () => void;
+  accentColor?: string;
   variant?: "incoming" | "outgoing";
 }
 
@@ -113,6 +126,7 @@ export function MessageReferenceCard({
   messageId,
   preview,
   onPress,
+  accentColor = colors.accent,
   variant = "incoming",
 }: MessageReferenceCardProps) {
   const { t } = useAppTranslation();
@@ -130,12 +144,15 @@ export function MessageReferenceCard({
         style={[
           styles.messageReferenceIcon,
           outgoing ? styles.messageReferenceIconOutgoing : null,
+          !outgoing
+            ? { backgroundColor: colorWithAlpha(accentColor, "18") }
+            : null,
         ]}
       >
         <MaterialCommunityIcons
           name="reply-outline"
           size={14}
-          color={outgoing ? colors.white : colors.accent}
+          color={outgoing ? colors.white : accentColor}
         />
       </View>
       <View style={styles.messageReferenceCopy}>
@@ -160,7 +177,7 @@ export function MessageReferenceCard({
       <MaterialCommunityIcons
         name="arrow-top-right"
         size={16}
-        color={outgoing ? "rgba(255,255,255,0.78)" : colors.accent}
+        color={outgoing ? "rgba(255,255,255,0.78)" : accentColor}
       />
     </Pressable>
   );

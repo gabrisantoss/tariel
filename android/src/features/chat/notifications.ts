@@ -6,6 +6,7 @@ import type { MobileActivityNotification } from "./types";
 import { categoriaNotificacaoPorKind } from "./types";
 
 let initialized = false;
+let foregroundSoundEnabled = true;
 
 function resolveAndroidChannelSound(
   soundEnabled: boolean,
@@ -49,7 +50,7 @@ export function initializeNotificationsRuntime(): void {
     handleNotification: async () => ({
       shouldShowBanner: true,
       shouldShowList: true,
-      shouldPlaySound: true,
+      shouldPlaySound: foregroundSoundEnabled,
       shouldSetBadge: false,
     }),
   });
@@ -58,6 +59,8 @@ export function initializeNotificationsRuntime(): void {
 export async function syncNotificationChannels(
   settings: AppSettings["notifications"],
 ): Promise<void> {
+  foregroundSoundEnabled = settings.soundEnabled;
+
   if (Platform.OS !== "android") {
     return;
   }

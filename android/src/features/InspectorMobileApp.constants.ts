@@ -67,7 +67,7 @@ export const SETTINGS_DRAWER_FILTERS = [
   { key: "acesso", label: "Conta" },
   { key: "experiencia", label: "App" },
   { key: "seguranca", label: "Segurança" },
-  { key: "sistema", label: "Sistema" },
+  { key: "sistema", label: "Ajuda" },
 ] as const;
 export const HISTORY_DRAWER_FILTERS = [
   { key: "todos", label: "Tudo" },
@@ -160,24 +160,162 @@ export const EXTERNAL_INTEGRATION_OPTIONS = [
 
 export const TERMS_OF_USE_SECTIONS = [
   {
-    id: "escopo",
-    title: "Escopo de uso",
-    body: "O aplicativo é destinado ao registro técnico de inspeções e apoio aos fluxos de revisão e validação humana previstos para este acesso.",
+    id: "aceite",
+    title: "1. Aceite dos termos",
+    body: "Ao acessar ou usar o Tariel Inspetor, você confirma que leu e aceitou estes termos. Se estiver usando o app em nome de uma empresa, entende que também deve respeitar as regras internas dessa empresa e as permissões concedidas à sua conta.",
   },
   {
-    id: "responsabilidade",
-    title: "Responsabilidade do usuário",
-    body: "As evidências enviadas devem ser verdadeiras, completas e respeitar as políticas de segurança da organização.",
+    id: "finalidade",
+    title: "2. Finalidade do aplicativo",
+    body: "O app foi criado para apoiar inspeções, registros técnicos, análise de evidências, conversas operacionais, fila offline, revisão humana e preparação de informações para laudos. Ele não substitui a responsabilidade profissional do usuário, da empresa, do responsável técnico ou da mesa avaliadora.",
   },
   {
-    id: "dados",
-    title: "Tratamento de dados",
-    body: "Dados de sessão, histórico e segurança podem ser armazenados conforme as preferências locais e a política do sistema.",
+    id: "conta",
+    title: "3. Conta, acesso e permissões",
+    body: "Cada usuário deve acessar o app com credenciais próprias e manter seus dados de contato atualizados. A conta pode ter permissões diferentes conforme perfil, empresa, plano, ambiente, função operacional e liberações feitas pelo administrador.",
+  },
+  {
+    id: "uso-permitido",
+    title: "4. Uso permitido",
+    body: "Você pode usar o app para registrar informações de inspeção, anexar evidências permitidas, conversar com a IA, responder solicitações da mesa, consultar histórico autorizado, exportar dados disponíveis e acionar suporte quando necessário.",
+  },
+  {
+    id: "responsabilidades",
+    title: "5. Responsabilidades do usuário",
+    body: "Você é responsável por informar dados verdadeiros, revisar respostas antes de usar em documentos, conferir evidências, evitar exposição indevida de terceiros e seguir normas técnicas, políticas internas, requisitos legais e orientações da sua empresa.",
+  },
+  {
+    id: "ia",
+    title: "6. Uso da IA e revisão humana",
+    body: "As respostas geradas pela IA são apoio operacional. Elas podem conter erros, omissões ou interpretações incompletas. Antes de enviar, emitir, aprovar ou usar qualquer conteúdo em laudo, você deve revisar o resultado e validar com os responsáveis quando o processo exigir.",
+  },
+  {
+    id: "evidencias",
+    title: "7. Evidências, anexos e conversas",
+    body: "Fotos, documentos, mensagens e demais anexos devem ter relação com a inspeção ou atendimento. Não envie conteúdo ilegal, ofensivo, sigiloso sem autorização, dados de terceiros sem necessidade ou arquivos que violem direitos de outra pessoa ou organização.",
   },
   {
     id: "restricoes",
-    title: "Restrições",
-    body: "É proibido usar o app para conteúdo ilícito, tentativa de fraude, bypass de autenticação ou acesso não autorizado.",
+    title: "8. Condutas proibidas",
+    body: "É proibido tentar burlar autenticação, acessar dados sem permissão, interferir no funcionamento do app, enviar malware, manipular evidências, simular identidade, usar o app para fraude ou utilizar qualquer recurso para finalidade ilícita ou incompatível com a operação contratada.",
+  },
+  {
+    id: "offline",
+    title: "9. Modo offline e sincronização",
+    body: "Quando houver falha de conexão, o app pode manter itens em fila local para tentar envio posterior. Cabe ao usuário conferir se mensagens, anexos e atualizações foram sincronizados antes de considerar uma atividade concluída.",
+  },
+  {
+    id: "suporte",
+    title: "10. Suporte, feedback e diagnóstico",
+    body: "Ao informar bug, enviar feedback ou exportar diagnóstico, você autoriza o uso das informações enviadas para análise, correção, melhoria e atendimento. O diagnóstico pode conter dados técnicos do app, estado da fila, ambiente, versão e contexto necessário para investigação.",
+  },
+  {
+    id: "propriedade",
+    title: "11. Propriedade intelectual",
+    body: "O app, sua interface, marca, fluxos, textos, componentes, integrações e recursos pertencem aos seus respectivos titulares. O uso do app não transfere propriedade intelectual ao usuário, apenas concede acesso conforme permissões e condições aplicáveis.",
+  },
+  {
+    id: "disponibilidade",
+    title: "12. Disponibilidade e alterações",
+    body: "O app pode passar por manutenção, atualização, mudança de recurso, ajuste de segurança ou indisponibilidade temporária. Alguns recursos dependem de internet, backend, permissões do aparelho, plano contratado ou liberação do ambiente.",
+  },
+  {
+    id: "encerramento",
+    title: "13. Suspensão ou encerramento de acesso",
+    body: "O acesso pode ser limitado, suspenso ou encerrado quando houver risco de segurança, violação destes termos, solicitação administrativa, fim de contrato, troca de perfil, comportamento indevido ou necessidade de proteger dados e operação.",
+  },
+  {
+    id: "limitacao",
+    title: "14. Limites de responsabilidade",
+    body: "O app é uma ferramenta de apoio. Decisões técnicas, emissão de laudos, validações formais, cumprimento de normas, guarda documental e consequências operacionais dependem da análise humana, das regras da empresa e dos profissionais responsáveis.",
+  },
+  {
+    id: "alteracoes",
+    title: "15. Atualizações destes termos",
+    body: "Estes termos podem ser atualizados para refletir mudanças no app, na operação, em exigências legais ou em políticas internas. Quando houver alteração relevante, a nova versão poderá ser disponibilizada no próprio aplicativo.",
+  },
+  {
+    id: "contato",
+    title: "16. Contato",
+    body: "Dúvidas sobre estes termos devem ser encaminhadas pelo canal de suporte disponível no app ou pelo contato indicado pela empresa responsável pela conta.",
+  },
+] as const;
+
+export const PRIVACY_POLICY_SECTIONS = [
+  {
+    id: "escopo",
+    title: "1. Escopo da política",
+    body: "Esta política explica, em linguagem simples, como o Tariel Inspetor trata dados pessoais e dados de uso dentro do aplicativo móvel, incluindo conta, conversas, anexos, histórico, preferências, fila offline, suporte e diagnóstico.",
+  },
+  {
+    id: "dados-coletados",
+    title: "2. Dados que podem ser tratados",
+    body: "O app pode tratar dados de identificação e contato, como nome, e-mail, telefone, empresa, perfil de acesso e sessão; dados operacionais, como conversas, anexos, evidências, histórico, preferências, eventos de segurança e fila offline; e dados técnicos, como versão do app, ambiente, status de rede, permissões e registros de erro.",
+  },
+  {
+    id: "finalidades",
+    title: "3. Como usamos os dados",
+    body: "Os dados são usados para permitir login, manter sessão, carregar a experiência do usuário, registrar inspeções, anexar evidências, responder conversas, sincronizar informações, acionar suporte, proteger a conta, investigar falhas, melhorar estabilidade e cumprir obrigações operacionais do serviço.",
+  },
+  {
+    id: "conversas",
+    title: "4. Conversas, IA e evidências",
+    body: "Mensagens, fotos, documentos e respostas da IA podem ser usados para compor o histórico da inspeção, apoiar revisão humana, gerar contexto de atendimento e permitir retomada de trabalho. O usuário deve evitar inserir dados desnecessários, sensíveis ou de terceiros quando isso não for relevante para a inspeção.",
+  },
+  {
+    id: "armazenamento-local",
+    title: "5. Dados no dispositivo",
+    body: "Algumas informações podem ficar armazenadas no próprio aparelho para manter sessão, preferências, histórico autorizado, fila offline, notificações locais e cache operacional. Esses dados ajudam o app a funcionar mesmo com internet instável, mas podem ser afetados por limpeza do sistema, troca de aparelho ou remoção do app.",
+  },
+  {
+    id: "sincronizacao",
+    title: "6. Sincronização e backup",
+    body: "Quando a sincronização estiver ativa, dados necessários podem ser enviados ao backend para manter continuidade entre sessões, dispositivos e fluxos de revisão. Algumas opções permitem limitar sincronização, backup e upload automático conforme a configuração disponível no app.",
+  },
+  {
+    id: "compartilhamento",
+    title: "7. Compartilhamento de dados",
+    body: "Dados podem ser compartilhados com sistemas internos, backend do serviço, equipe de suporte, mesa avaliadora, integrações autorizadas e prestadores necessários para operar o app. O compartilhamento deve respeitar permissões da conta, finalidade operacional e controles de segurança.",
+  },
+  {
+    id: "diagnostico",
+    title: "8. Diagnóstico e suporte",
+    body: "Quando você informa um bug, envia feedback ou exporta diagnóstico, o app pode reunir informações técnicas e operacionais para investigação, como versão, ambiente, status de fila, permissões e descrição enviada. Esses dados são usados para atendimento, correção e melhoria do aplicativo.",
+  },
+  {
+    id: "seguranca",
+    title: "9. Segurança",
+    body: "O app usa controles como sessão autenticada, permissões do dispositivo, reautenticação para ações sensíveis e registros de segurança. Nenhum sistema é totalmente livre de risco, por isso o usuário também deve proteger o aparelho, não compartilhar credenciais e manter o app atualizado.",
+  },
+  {
+    id: "retencao",
+    title: "10. Retenção e exclusão",
+    body: "O tempo de guarda pode variar conforme configuração da conta, preferências locais, regras da empresa, necessidade operacional, obrigação legal ou segurança. Quando uma opção de exclusão estiver disponível, ela pode remover dados locais ou solicitar remoção conforme o tipo de dado e a permissão do usuário.",
+  },
+  {
+    id: "direitos",
+    title: "11. Direitos e solicitações",
+    body: "Quando aplicável, o usuário pode solicitar informações sobre tratamento de dados, correção, acesso, exportação, revisão ou exclusão pelos canais disponíveis. Algumas solicitações podem depender de confirmação de identidade, permissão administrativa, regra contratual ou obrigação de retenção.",
+  },
+  {
+    id: "minimizacao",
+    title: "12. Boas práticas do usuário",
+    body: "Envie apenas dados necessários para a finalidade da inspeção. Evite anexar documentos pessoais, dados sensíveis, imagens de terceiros ou informações sigilosas sem autorização. Revise mensagens e anexos antes de enviar.",
+  },
+  {
+    id: "criancas",
+    title: "13. Uso por menores",
+    body: "O app é destinado a uso profissional e operacional. Ele não foi criado para uso por crianças ou adolescentes sem autorização e supervisão adequadas da organização responsável.",
+  },
+  {
+    id: "alteracoes",
+    title: "14. Alterações desta política",
+    body: "Esta política pode ser atualizada quando houver mudança no aplicativo, no tratamento de dados, em integrações, em exigências legais ou em regras operacionais. A versão vigente pode ser consultada dentro do app.",
+  },
+  {
+    id: "contato",
+    title: "15. Contato sobre privacidade",
+    body: "Dúvidas ou solicitações sobre privacidade devem ser encaminhadas pelo canal de suporte disponível no app ou pelo contato indicado pela empresa responsável pela conta.",
   },
 ] as const;
 

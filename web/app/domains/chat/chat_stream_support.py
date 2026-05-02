@@ -389,14 +389,19 @@ def prepare_chat_stream_route(
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        setor_laudo = dados.setor
+        if guided_template_key and str(dados.setor or "").strip().lower() == "geral":
+            setor_laudo = nome_template_humano(guided_template_key)
+        elif (
+            not guided_template_key
+            and getattr(dados, "iniciar_laudo", False)
+            and str(dados.setor or "").strip().lower() == "geral"
+        ):
+            setor_laudo = "Chat livre"
         laudo = Laudo(
             empresa_id=usuario.empresa_id,
             usuario_id=usuario.id,
-            setor_industrial=(
-                nome_template_humano(guided_template_key)
-                if guided_template_key and str(dados.setor or "").strip().lower() == "geral"
-                else dados.setor
-            ),
+            setor_industrial=setor_laudo,
             tipo_template=guided_template_key or "padrao",
             catalog_selection_token=(
                 str((guided_template_resolution or {}).get("selection_token") or "").strip() or None

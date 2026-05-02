@@ -28,8 +28,6 @@ import {
 import {
   SettingsSecurityDataConversationsSection,
   SettingsSecurityDeleteAccountSection,
-  SettingsSecurityFileUploadSection,
-  SettingsSecurityNotificationPrivacySection,
   SettingsSecurityPermissionsSection,
 } from "./SettingsSecurityDataPrivacySections";
 import {
@@ -52,6 +50,8 @@ export interface SettingsDrawerPanelProps {
   configuracoesDrawerX: Animated.Value;
   settingsDrawerInOverview: boolean;
   settingsPrintDarkMode: boolean;
+  densityScale?: number;
+  fontScale?: number;
   settingsDrawerTitle: string;
   settingsDrawerSubtitle: string;
   onCloseOrBackPress: () => void;
@@ -112,12 +112,6 @@ export interface SettingsDrawerPanelProps {
   securityPermissionsSectionProps: ComponentProps<
     typeof SettingsSecurityPermissionsSection
   >;
-  securityFileUploadSectionProps: ComponentProps<
-    typeof SettingsSecurityFileUploadSection
-  >;
-  securityNotificationPrivacySectionProps: ComponentProps<
-    typeof SettingsSecurityNotificationPrivacySection
-  >;
   securityDeleteAccountSectionProps: ComponentProps<
     typeof SettingsSecurityDeleteAccountSection
   >;
@@ -133,6 +127,8 @@ export function SettingsDrawerPanel({
   configuracoesDrawerX,
   settingsDrawerInOverview,
   settingsPrintDarkMode,
+  densityScale = 1,
+  fontScale = 1,
   settingsDrawerTitle,
   settingsDrawerSubtitle,
   onCloseOrBackPress,
@@ -156,8 +152,6 @@ export function SettingsDrawerPanel({
   securityActivitySectionProps,
   securityDataConversationsSectionProps,
   securityPermissionsSectionProps,
-  securityFileUploadSectionProps,
-  securityNotificationPrivacySectionProps,
   securityDeleteAccountSectionProps,
   advancedResourcesSectionProps,
   systemSectionProps,
@@ -192,6 +186,8 @@ export function SettingsDrawerPanel({
       >
         <SettingsSectionLayoutProvider
           darkMode={settingsPrintDarkMode}
+          densityScale={densityScale}
+          fontScale={fontScale}
           hideHeader={hideInnerSectionHeaders}
         >
           {settingsDrawerInOverview ? (
@@ -281,31 +277,13 @@ export function SettingsDrawerPanel({
             />
           ) : null}
 
-          {settingsDrawerMatchesSection("seguranca", "segurancaArquivos") ? (
-            <SettingsSecurityFileUploadSection
-              {...securityFileUploadSectionProps}
-            />
-          ) : null}
-
-          {settingsDrawerMatchesSection(
-            "seguranca",
-            "privacidadeNotificacoes",
-          ) ? (
-            <SettingsSecurityNotificationPrivacySection
-              {...securityNotificationPrivacySectionProps}
-            />
-          ) : null}
-
           {settingsDrawerMatchesSection("seguranca", "excluirConta") ? (
             <SettingsSecurityDeleteAccountSection
               {...securityDeleteAccountSectionProps}
             />
           ) : null}
 
-          {settingsDrawerMatchesSection(
-            "sistemaSuporte",
-            "recursosAvancados",
-          ) ? (
+          {settingsDrawerMatchesSection("experiencia", "recursosAvancados") ? (
             <SettingsAdvancedResourcesSection
               {...advancedResourcesSectionProps}
             />

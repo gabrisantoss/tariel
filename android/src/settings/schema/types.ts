@@ -17,7 +17,7 @@ import type {
   THEME_OPTIONS,
 } from "./options";
 
-export const SETTINGS_SCHEMA_VERSION = 2 as const;
+export const SETTINGS_SCHEMA_VERSION = 3 as const;
 
 export type SettingsTheme = (typeof THEME_OPTIONS)[number];
 export type SettingsDensity = (typeof DENSITY_OPTIONS)[number];

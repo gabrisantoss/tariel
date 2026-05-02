@@ -8,6 +8,7 @@ export interface HistorySection {
 }
 
 const historySectionOrder = ["today", "yesterday", "week", "older"] as const;
+const HISTORY_DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 export function filtrarThreadContextChips<T>(items: Array<T | null>): T[] {
   return items.filter((item): item is T => item !== null);
@@ -19,11 +20,21 @@ function startOfDay(date: Date): number {
   return clone.getTime();
 }
 
+function parseHistoryDate(dataIso: string): Date {
+  const dateOnlyMatch = dataIso.match(HISTORY_DATE_ONLY_PATTERN);
+  if (dateOnlyMatch) {
+    const [, rawYear, rawMonth, rawDay] = dateOnlyMatch;
+    return new Date(Number(rawYear), Number(rawMonth) - 1, Number(rawDay));
+  }
+
+  return new Date(dataIso);
+}
+
 function getHistorySectionKey(
   dataIso: string,
   referencia = new Date(),
 ): (typeof historySectionOrder)[number] {
-  const alvo = new Date(dataIso);
+  const alvo = parseHistoryDate(dataIso);
   if (Number.isNaN(alvo.getTime())) {
     return "older";
   }

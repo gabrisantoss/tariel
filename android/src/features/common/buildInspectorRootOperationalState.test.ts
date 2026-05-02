@@ -6,6 +6,7 @@ describe("buildInspectorRootOperationalState", () => {
       refreshState: {
         abaAtiva: "mesa",
         carregarConversaAtual: jest.fn(),
+        carregarConversaPorLaudoId: jest.fn(),
         carregarListaLaudos: jest.fn(),
         carregarMesaAtual: jest.fn(),
         conversa: { laudoId: 9 },

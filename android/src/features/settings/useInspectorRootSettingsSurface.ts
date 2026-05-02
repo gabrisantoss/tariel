@@ -35,6 +35,9 @@ interface UseInspectorRootSettingsSurfaceInput {
         | "handleRemoverScreenshotBug"
         | "handleSelecionarScreenshotBug"
         | "handleSincronizarIntegracaoExterna"
+        | "onLicencas"
+        | "onPoliticaPrivacidade"
+        | "onTermosUso"
       >;
     };
     drawerState: Omit<
@@ -60,6 +63,7 @@ interface UseInspectorRootSettingsSurfaceInput {
       >;
       securityState: Omit<
         InspectorRootSettingsUiInput["drawerState"]["securityState"],
+        | "handleAbrirAjustesDoSistema"
         | "handleCompartilharCodigosRecuperacao"
         | "handleConfirmarCodigo2FA"
         | "handleDetalhesSegurancaArquivos"
@@ -80,14 +84,12 @@ interface UseInspectorRootSettingsSurfaceInput {
       >;
       supportAndSystemState: Omit<
         InspectorRootSettingsUiInput["drawerState"]["supportAndSystemState"],
-        | "handleAbrirAjustesDoSistema"
         | "handleAbrirCanalSuporte"
         | "handleAbrirSobreApp"
         | "handleCentralAjuda"
         | "handleEnviarFeedback"
         | "handleExportarDiagnosticoApp"
         | "handleLicencas"
-        | "handleLimparCache"
         | "handleLimparFilaSuporteLocal"
         | "handlePermissoes"
         | "handlePoliticaPrivacidade"
@@ -126,6 +128,9 @@ export function useInspectorRootSettingsSurface({
           operationsActions.handleSelecionarScreenshotBug,
         handleSincronizarIntegracaoExterna:
           operationsActions.handleSincronizarIntegracaoExterna,
+        onLicencas: entryActions.handleLicencas,
+        onPoliticaPrivacidade: entryActions.handlePoliticaPrivacidade,
+        onTermosUso: entryActions.handleTermosUso,
       },
     },
     drawerState: {
@@ -146,6 +151,8 @@ export function useInspectorRootSettingsSurface({
       },
       securityState: {
         ...uiState.drawerState.securityState,
+        handleAbrirAjustesDoSistema:
+          securityActions.handleAbrirAjustesDoSistema,
         handleCompartilharCodigosRecuperacao:
           securityActions.handleCompartilharCodigosRecuperacao,
         handleConfirmarCodigo2FA: securityActions.handleConfirmarCodigo2FA,
@@ -176,8 +183,6 @@ export function useInspectorRootSettingsSurface({
       },
       supportAndSystemState: {
         ...uiState.drawerState.supportAndSystemState,
-        handleAbrirAjustesDoSistema:
-          securityActions.handleAbrirAjustesDoSistema,
         handleAbrirCanalSuporte: operationsActions.handleAbrirCanalSuporte,
         handleAbrirSobreApp: entryActions.handleAbrirSobreApp,
         handleCentralAjuda: entryActions.handleCentralAjuda,
@@ -185,7 +190,6 @@ export function useInspectorRootSettingsSurface({
         handleExportarDiagnosticoApp:
           operationsActions.handleExportarDiagnosticoApp,
         handleLicencas: entryActions.handleLicencas,
-        handleLimparCache: operationsActions.handleLimparCache,
         handleLimparFilaSuporteLocal:
           operationsActions.handleLimparFilaSuporteLocal,
         handlePermissoes: entryActions.handlePermissoes,

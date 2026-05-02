@@ -1,8 +1,4 @@
-import {
-  APP_LANGUAGE_OPTIONS,
-  BATTERY_OPTIONS,
-  SPEECH_LANGUAGE_OPTIONS,
-} from "../InspectorMobileApp.constants";
+import { SPEECH_LANGUAGE_OPTIONS } from "../InspectorMobileApp.constants";
 import {
   SettingsPressRow,
   SettingsScaleRow,
@@ -10,74 +6,51 @@ import {
   SettingsSwitchRow,
 } from "./SettingsPrimitives";
 
-type IdiomaApp = (typeof APP_LANGUAGE_OPTIONS)[number];
-type UsoBateria = (typeof BATTERY_OPTIONS)[number];
 type SpeechLanguage = (typeof SPEECH_LANGUAGE_OPTIONS)[number];
 
 interface SettingsAdvancedResourcesSectionProps {
   speechEnabled: boolean;
   entradaPorVoz: boolean;
   respostaPorVoz: boolean;
-  microfonePermitido: boolean;
   voiceLanguage: SpeechLanguage;
   speechRate: number;
   preferredVoiceLabel: string;
-  sttSupported: boolean;
   ttsSupported: boolean;
   onToggleSpeechEnabled: (value: boolean) => void;
   onToggleEntradaPorVoz: (value: boolean) => void;
   onToggleRespostaPorVoz: (value: boolean) => void;
-  onSetVoiceLanguage: (value: SpeechLanguage) => void;
   onSetSpeechRate: (value: number) => void;
   onCyclePreferredVoice: () => void;
-  onAbrirAjudaDitado: () => void;
-  onAbrirAjustesDoSistema: () => void;
+  onAbrirMenuIdiomaVoz: () => void;
 }
 
 interface SettingsSystemSectionProps {
-  idiomaApp: IdiomaApp;
-  economiaDados: boolean;
-  usoBateria: UsoBateria;
   resumoPermissoes: string;
   appBuildChannel: string;
   appVersionLabel: string;
-  ultimaVerificacaoAtualizacaoLabel: string;
-  resumoCentralAtividade: string;
-  resumoFilaOffline: string;
-  resumoCache: string;
-  verificandoAtualizacoes: boolean;
-  sincronizandoDados: boolean;
-  onSetIdiomaApp: (value: IdiomaApp) => void;
-  onSetEconomiaDados: (value: boolean) => void;
-  onSetUsoBateria: (value: UsoBateria) => void;
   onPermissoes: () => void;
-  onVerificarAtualizacoes: () => void;
-  onFecharConfiguracoes: () => void;
-  onAbrirCentralAtividade: () => void;
-  onAbrirFilaOffline: () => void;
-  onRefreshData: () => void | Promise<void>;
-  onLimparCache: () => void;
+  onSobreApp: () => void;
 }
 
 interface SettingsSupportSectionProps {
   resumoSuporteApp: string;
   emailRetorno: string;
-  planoResumoConfiguracao: string;
   supportChannelLabel: string;
   resumoFilaSuporteLocal: string;
+  planoResumoConfiguracao?: string;
   ultimoTicketSuporte: {
     kind: "bug" | "feedback";
     createdAtLabel: string;
   } | null;
-  artigosAjudaCount: number;
+  artigosAjudaCount?: number;
   ticketsBugTotal: number;
   ticketsFeedbackTotal: number;
   filaSuporteCount: number;
-  onCentralAjuda: () => void;
+  onCentralAjuda?: () => void;
   onCanalSuporte?: () => void;
   onReportarProblema: () => void;
   onEnviarFeedback: () => void;
-  onSobreApp: () => void;
+  onSobreApp?: () => void;
   onExportarDiagnosticoApp: () => void | Promise<void>;
   onTermosUso: () => void;
   onPoliticaPrivacidade: () => void;
@@ -85,46 +58,31 @@ interface SettingsSupportSectionProps {
   onLimparFilaSuporteLocal: () => void;
 }
 
-function nextOptionValue<T extends string>(
-  current: T,
-  options: readonly T[],
-): T {
-  const currentIndex = options.indexOf(current);
-  if (currentIndex === -1) {
-    return options[0];
-  }
-  return options[(currentIndex + 1) % options.length];
-}
-
 export function SettingsAdvancedResourcesSection({
   speechEnabled,
   entradaPorVoz,
   respostaPorVoz,
-  microfonePermitido,
   voiceLanguage,
   speechRate,
   preferredVoiceLabel,
-  sttSupported,
   ttsSupported,
   onToggleSpeechEnabled,
   onToggleEntradaPorVoz,
   onToggleRespostaPorVoz,
-  onSetVoiceLanguage,
   onSetSpeechRate,
   onCyclePreferredVoice,
-  onAbrirAjudaDitado,
-  onAbrirAjustesDoSistema,
+  onAbrirMenuIdiomaVoz,
 }: SettingsAdvancedResourcesSectionProps) {
   return (
     <SettingsSection
-      icon="microphone-message"
-      subtitle="Preferências locais para transcrição e leitura assistida."
+      icon="account-voice"
+      subtitle="Voz, leitura em voz alta e acessibilidade."
       testID="settings-section-recursos-avancados"
-      title="Fala"
+      title="Voz e acessibilidade"
     >
       <SettingsSwitchRow
         description="Habilita o conjunto de preferências de fala neste dispositivo."
-        icon="record-rec"
+        icon="account-voice"
         onValueChange={onToggleSpeechEnabled}
         testID="settings-speech-enabled-row"
         title="Ativar fala"
@@ -141,11 +99,7 @@ export function SettingsAdvancedResourcesSection({
       <SettingsPressRow
         description="Idioma preferido para voz, leitura e fallback de ditado."
         icon="translate"
-        onPress={() =>
-          onSetVoiceLanguage(
-            nextOptionValue(voiceLanguage, SPEECH_LANGUAGE_OPTIONS),
-          )
-        }
+        onPress={onAbrirMenuIdiomaVoz}
         title="Idioma de voz"
         value={voiceLanguage}
       />
@@ -176,87 +130,23 @@ export function SettingsAdvancedResourcesSection({
         title="Ler respostas automaticamente"
         value={respostaPorVoz}
       />
-      <SettingsPressRow
-        description={
-          sttSupported
-            ? "Ditado nativo disponível para o composer."
-            : microfonePermitido
-              ? "Nesta build o fallback é o teclado por voz do sistema."
-              : "Permita o microfone para usar os atalhos de voz."
-        }
-        icon="microphone-message"
-        onPress={onAbrirAjudaDitado}
-        title="Ditado no composer"
-        value={sttSupported ? "Nativo" : "Teclado do sistema"}
-      />
-      <SettingsPressRow
-        description="Abre os ajustes do sistema para revisar acessibilidade, som e permissões relacionadas."
-        icon="cog-outline"
-        onPress={onAbrirAjustesDoSistema}
-        testID="settings-advanced-system-voice-row"
-        title="Ajustes de voz do sistema"
-      />
     </SettingsSection>
   );
 }
 
 export function SettingsSystemSection({
-  idiomaApp,
-  economiaDados,
-  usoBateria,
   resumoPermissoes,
-  appBuildChannel,
   appVersionLabel,
-  ultimaVerificacaoAtualizacaoLabel,
-  resumoCentralAtividade,
-  resumoFilaOffline,
-  resumoCache,
-  verificandoAtualizacoes,
-  sincronizandoDados,
-  onSetIdiomaApp,
-  onSetEconomiaDados,
-  onSetUsoBateria,
   onPermissoes,
-  onVerificarAtualizacoes,
-  onFecharConfiguracoes,
-  onAbrirCentralAtividade,
-  onAbrirFilaOffline,
-  onRefreshData,
-  onLimparCache,
+  onSobreApp,
 }: SettingsSystemSectionProps) {
   return (
     <SettingsSection
       icon="cellphone-cog"
-      subtitle="Idioma, região, bateria e informações técnicas do app."
+      subtitle="Permissões e informações básicas do aplicativo."
       testID="settings-section-sistema"
       title="Sistema"
     >
-      <SettingsPressRow
-        description="Sincroniza idioma geral, respostas da IA e voz."
-        icon="translate"
-        onPress={() =>
-          onSetIdiomaApp(nextOptionValue(idiomaApp, APP_LANGUAGE_OPTIONS))
-        }
-        testID="settings-system-language-row"
-        title="Idioma do aplicativo"
-        value={idiomaApp}
-      />
-      <SettingsSwitchRow
-        icon="signal-cellular-outline"
-        onValueChange={onSetEconomiaDados}
-        testID="settings-system-data-saver-row"
-        title="Economia de dados"
-        value={economiaDados}
-      />
-      <SettingsPressRow
-        icon="battery-heart-variant"
-        onPress={() =>
-          onSetUsoBateria(nextOptionValue(usoBateria, BATTERY_OPTIONS))
-        }
-        testID="settings-system-battery-row"
-        title="Uso de bateria"
-        value={usoBateria}
-      />
       <SettingsPressRow
         icon="shield-sync-outline"
         onPress={onPermissoes}
@@ -265,59 +155,12 @@ export function SettingsSystemSection({
         value={resumoPermissoes}
       />
       <SettingsPressRow
-        description={appBuildChannel}
+        description="Versão, termos, privacidade e licenças."
         icon="information-outline"
-        onPress={onVerificarAtualizacoes}
-        title="Versão do aplicativo"
+        onPress={onSobreApp}
+        testID="settings-system-about-row"
+        title="Sobre"
         value={appVersionLabel}
-      />
-      <SettingsPressRow
-        icon="refresh-circle"
-        onPress={onVerificarAtualizacoes}
-        testID="settings-system-check-updates-row"
-        title="Verificar atualizações"
-        value={
-          verificandoAtualizacoes
-            ? "Verificando..."
-            : ultimaVerificacaoAtualizacaoLabel
-        }
-      />
-      <SettingsPressRow
-        icon="bell-badge-outline"
-        onPress={() => {
-          onFecharConfiguracoes();
-          onAbrirCentralAtividade();
-        }}
-        testID="settings-system-activity-center-row"
-        title="Central de atividade"
-        value={resumoCentralAtividade}
-      />
-      <SettingsPressRow
-        icon="cloud-upload-outline"
-        onPress={() => {
-          onFecharConfiguracoes();
-          onAbrirFilaOffline();
-        }}
-        testID="settings-system-offline-queue-row"
-        title="Fila offline"
-        value={resumoFilaOffline}
-      />
-      <SettingsPressRow
-        icon="refresh"
-        onPress={() => {
-          onFecharConfiguracoes();
-          void onRefreshData();
-        }}
-        testID="settings-system-refresh-row"
-        title="Sincronizar agora"
-        value={sincronizandoDados ? "Sincronizando..." : "Executar"}
-      />
-      <SettingsPressRow
-        icon="broom"
-        onPress={onLimparCache}
-        testID="settings-system-clear-cache-row"
-        title="Limpar cache"
-        value={resumoCache}
       />
     </SettingsSection>
   );
@@ -326,65 +169,44 @@ export function SettingsSystemSection({
 export function SettingsSupportSection({
   resumoSuporteApp,
   emailRetorno,
-  planoResumoConfiguracao,
   supportChannelLabel,
   resumoFilaSuporteLocal,
-  artigosAjudaCount,
   ticketsBugTotal,
   ticketsFeedbackTotal,
   filaSuporteCount,
-  onCentralAjuda,
   onCanalSuporte,
   onReportarProblema,
   onEnviarFeedback,
-  onSobreApp,
   onExportarDiagnosticoApp,
-  onTermosUso,
-  onPoliticaPrivacidade,
-  onLicencas,
   onLimparFilaSuporteLocal,
 }: SettingsSupportSectionProps) {
   return (
     <SettingsSection
       icon="lifebuoy"
-      subtitle="Ajuda, feedback e documentos do aplicativo."
+      subtitle="Bug, suporte, feedback e diagnóstico."
       testID="settings-section-suporte"
-      title="Suporte"
+      title="Falar com o suporte"
     >
-      <SettingsPressRow
-        description="Plano atual e superfícies liberadas no mobile."
-        icon="star-circle-outline"
-        testID="settings-support-plan-row"
-        title="Plano e liberação"
-        value={planoResumoConfiguracao || "Plano não informado"}
-      />
-      <SettingsPressRow
-        icon="book-open-page-variant-outline"
-        onPress={onCentralAjuda}
-        testID="settings-support-help-center-row"
-        title="Central de ajuda"
-        value={`${artigosAjudaCount} guia(s)`}
-      />
-      {onCanalSuporte ? (
-        <SettingsPressRow
-          description="Canal operacional do backend mobile para falar com a equipe de suporte."
-          icon="whatsapp"
-          onPress={onCanalSuporte}
-          testID="settings-support-channel-row"
-          title="Falar com suporte"
-          value={supportChannelLabel}
-        />
-      ) : null}
       <SettingsPressRow
         description={resumoSuporteApp}
         icon="bug-outline"
         onPress={onReportarProblema}
         testID="settings-support-report-bug-row"
-        title="Reportar problema"
+        title="Informar bug"
         value={
           ticketsBugTotal ? `${ticketsBugTotal} na fila` : "Abrir formulário"
         }
       />
+      {onCanalSuporte ? (
+        <SettingsPressRow
+          description="Abre o canal disponível para conversar com a equipe de suporte."
+          icon="headset"
+          onPress={onCanalSuporte}
+          testID="settings-support-channel-row"
+          title="Falar com o suporte"
+          value={supportChannelLabel}
+        />
+      ) : null}
       <SettingsPressRow
         description={emailRetorno}
         icon="message-draw"
@@ -406,34 +228,6 @@ export function SettingsSupportSection({
         testID="settings-support-export-diagnostic-row"
         title="Exportar diagnóstico"
         value="TXT"
-      />
-      <SettingsPressRow
-        description="Versão, build, ambiente e documentos disponíveis nesta instalação."
-        icon="information-outline"
-        onPress={onSobreApp}
-        testID="settings-support-about-row"
-        title="Sobre o app"
-      />
-      <SettingsPressRow
-        description="Resumo operacional das regras de uso aplicadas ao app móvel do inspetor."
-        icon="file-document-check-outline"
-        onPress={onTermosUso}
-        testID="settings-support-terms-row"
-        title="Termos de uso"
-      />
-      <SettingsPressRow
-        description="Tratamento de dados, retenção e controles de privacidade desta build."
-        icon="shield-account-outline"
-        onPress={onPoliticaPrivacidade}
-        testID="settings-support-privacy-row"
-        title="Política de privacidade"
-      />
-      <SettingsPressRow
-        description="Dependências de terceiros e respectivas licenças incluídas na build."
-        icon="scale-balance"
-        onPress={onLicencas}
-        testID="settings-support-licenses-row"
-        title="Licenças"
       />
       {filaSuporteCount ? (
         <SettingsPressRow

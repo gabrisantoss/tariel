@@ -11,6 +11,7 @@ import type { RefObject } from "react";
 
 import { EmptyState } from "../../components/EmptyState";
 import { useAppTranslation } from "../../i18n/appTranslation";
+import { resolveAccentColorForMode } from "../../theme/colorUtils";
 import type {
   MobileAttachment,
   MobileChatMessage,
@@ -67,6 +68,67 @@ interface ThreadConversationMesaSurfaceProps {
   reviewCommandBusy?: boolean;
 }
 
+function buildReviewStage(params: {
+  activeOwnerRole?: string;
+  caseLifecycleStatus?: string;
+  hasReviewSummary: boolean;
+  messagesCount: number;
+}): { label: string; title: string; description: string } {
+  const {
+    activeOwnerRole,
+    caseLifecycleStatus,
+    hasReviewSummary,
+    messagesCount,
+  } = params;
+
+  if (caseLifecycleStatus === "aprovado" || caseLifecycleStatus === "emitido") {
+    return {
+      label: "Status da revisão",
+      title: "Caso aprovado",
+      description:
+        "A revisão não tem pendências abertas. Siga para a finalização quando o documento estiver pronto.",
+    };
+  }
+
+  if (caseLifecycleStatus === "devolvido_para_correcao") {
+    return {
+      label: "Status da revisão",
+      title: "Correção solicitada",
+      description:
+        "Revise os pedidos abaixo, ajuste pelo chat e responda a pendência quando precisar avisar que corrigiu.",
+    };
+  }
+
+  if (
+    activeOwnerRole === "mesa" ||
+    caseLifecycleStatus === "aguardando_mesa" ||
+    caseLifecycleStatus === "em_revisao_mesa"
+  ) {
+    return {
+      label: "Status da revisão",
+      title: messagesCount ? "Revisão em andamento" : "Aguardando revisão",
+      description:
+        "Esta etapa reúne comentários humanos, pedidos de correção e aprovação do caso.",
+    };
+  }
+
+  if (hasReviewSummary) {
+    return {
+      label: "Status da revisão",
+      title: "Caso preparado para revisão",
+      description:
+        "Confira a prévia do caso. Quando ele for enviado para revisão, os retornos aparecem aqui.",
+    };
+  }
+
+  return {
+    label: "Status da revisão",
+    title: "Revisão ainda não iniciada",
+    description:
+      "Monte o caso no chat primeiro. Depois, esta tela mostra pedidos de ajuste, aprovação e retorno humano.",
+  };
+}
+
 export function ThreadConversationMesaSurface({
   carregandoMesa,
   darkMode = false,
@@ -102,6 +164,31 @@ export function ThreadConversationMesaSurface({
   reviewCommandBusy = false,
 }: ThreadConversationMesaSurfaceProps) {
   const { t } = useAppTranslation();
+  const visibleAccentColor = resolveAccentColorForMode(accentColor, darkMode);
+  const reviewSummary =
+    renderizarReviewPackageMesa(
+      reviewPackage,
+      {
+        caseLifecycleStatus,
+        activeOwnerRole,
+        allowedNextLifecycleStatuses,
+        allowedLifecycleTransitions,
+        allowedSurfaceActions,
+      },
+      onExecutarComandoRevisaoMobile,
+      reviewCommandBusy,
+      onAbrirAnexo,
+    ) ||
+    renderizarReportPackDraftCard(reportPackDraft, {
+      mode: "mesa",
+      testID: "mesa-report-pack-card",
+    });
+  const reviewStage = buildReviewStage({
+    activeOwnerRole,
+    caseLifecycleStatus,
+    hasReviewSummary: Boolean(reviewSummary),
+    messagesCount: mensagensMesa.length,
+  });
 
   if (!mesaAcessoPermitido) {
     return (
@@ -117,7 +204,7 @@ export function ThreadConversationMesaSurface({
             compact
             darkMode={darkMode}
             description={t(mesaIndisponivelDescricao)}
-            eyebrow={t("Mesa")}
+            eyebrow={t("Revisão")}
             icon="shield-lock-outline"
             tone="default"
             title={t(mesaIndisponivelTitulo)}
@@ -131,11 +218,14 @@ export function ThreadConversationMesaSurface({
     return (
       <View testID="mesa-thread-surface" style={styles.loadingState}>
         <View testID="mesa-thread-loading">
-          <ActivityIndicator color={accentColor} size="large" />
+          <ActivityIndicator color={visibleAccentColor} size="large" />
           <Text
-            style={[styles.loadingText, darkMode ? styles.loadingTextDark : null]}
+            style={[
+              styles.loadingText,
+              darkMode ? styles.loadingTextDark : null,
+            ]}
           >
-            {t("Abrindo a conversa com a mesa...")}
+            {t("Abrindo a revisão do caso...")}
           </Text>
         </View>
       </View>
@@ -156,7 +246,7 @@ export function ThreadConversationMesaSurface({
             compact
             darkMode={darkMode}
             description={t(mesaIndisponivelDescricao)}
-            eyebrow={t("Mesa")}
+            eyebrow={t("Revisão")}
             icon="clipboard-clock-outline"
             tone="accent"
             title={t(mesaIndisponivelTitulo)}
@@ -179,29 +269,42 @@ export function ThreadConversationMesaSurface({
       showsVerticalScrollIndicator={false}
       testID="mesa-thread-surface"
     >
-      {renderizarReviewPackageMesa(
-        reviewPackage,
-        {
-          caseLifecycleStatus,
-          activeOwnerRole,
-          allowedNextLifecycleStatuses,
-          allowedLifecycleTransitions,
-          allowedSurfaceActions,
-        },
-        onExecutarComandoRevisaoMobile,
-        reviewCommandBusy,
-        onAbrirAnexo,
-      ) ||
-        renderizarReportPackDraftCard(reportPackDraft, {
-          mode: "mesa",
-          testID: "mesa-report-pack-card",
-        })}
+      <View style={styles.threadSection} testID="review-state-summary">
+        <Text
+          style={[
+            styles.threadSectionLabel,
+            darkMode ? styles.threadSectionLabelDark : null,
+          ]}
+        >
+          {t(reviewStage.label)}
+        </Text>
+        <Text
+          style={[
+            styles.messageOperationalTitle,
+            darkMode ? styles.messageTextDark : null,
+          ]}
+        >
+          {t(reviewStage.title)}
+        </Text>
+        <Text
+          style={[
+            styles.messageOperationalText,
+            darkMode ? styles.messageTextDark : null,
+          ]}
+        >
+          {t(reviewStage.description)}
+        </Text>
+      </View>
+      {reviewSummary}
       <ThreadConversationMesaMessageList
-        accentColor={accentColor}
+        accentColor={visibleAccentColor}
+        activeOwnerRole={activeOwnerRole}
         anexoAbrindoChave={anexoAbrindoChave}
+        caseLifecycleStatus={caseLifecycleStatus}
         conversaPermiteEdicao={conversaPermiteEdicao}
         dynamicMessageBubbleStyle={dynamicMessageBubbleStyle}
         dynamicMessageTextStyle={dynamicMessageTextStyle}
+        hasReviewSummary={Boolean(reviewSummary)}
         keyboardVisible={keyboardVisible}
         mensagensMesa={mensagensMesa}
         mensagensVisiveis={mensagensVisiveis}

@@ -200,6 +200,13 @@ export const chatThreadStyles = {
     backgroundColor: "#172436",
     borderColor: "#32455D",
   },
+  composerMiniActionDisabled: {
+    opacity: 0.55,
+  },
+  composerMiniActionEmoji: {
+    fontSize: 12,
+    lineHeight: 14,
+  },
   cleanHeaderChipRail: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -399,6 +406,17 @@ export const chatThreadStyles = {
     alignItems: "flex-start",
     alignSelf: "center",
     gap: spacing.xs,
+  },
+  threadChooserBrandSignature: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  threadChooserBrandLogo: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
   },
   threadHeaderFinalizationCard: {
     gap: spacing.md,
@@ -827,11 +845,14 @@ export const chatThreadStyles = {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     minHeight: 96,
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfacePanelRaised,
-    ...shadows.soft,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
   },
   threadChooserActionCardDark: {
     backgroundColor: "#132231",
@@ -840,9 +861,9 @@ export const chatThreadStyles = {
     elevation: 0,
   },
   threadChooserActionCardPrimary: {
-    minHeight: 112,
-    borderWidth: 2,
-    ...shadows.panel,
+    minHeight: 104,
+    borderWidth: 1,
+    borderColor: colors.surfaceStrokeStrong,
   },
   threadChooserActionCardAccent: {
     backgroundColor: colors.surfacePanelRaised,
@@ -855,10 +876,10 @@ export const chatThreadStyles = {
   threadChooserActionIcon: {
     width: 44,
     height: 44,
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surfacePanelRaised,
+    backgroundColor: colors.surfaceSoft,
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
   },
@@ -874,7 +895,7 @@ export const chatThreadStyles = {
   },
   threadChooserActionCopy: {
     flex: 1,
-    gap: 6,
+    gap: 5,
   },
   threadChooserActionTitleRow: {
     flexDirection: "row",
@@ -884,7 +905,7 @@ export const chatThreadStyles = {
   },
   threadChooserActionTitle: {
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "800",
   },
   threadChooserActionTitleDark: {
@@ -892,14 +913,21 @@ export const chatThreadStyles = {
   },
   threadChooserActionBadge: {
     alignSelf: "flex-start",
-    borderRadius: radii.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: colors.accentWash,
+    borderRadius: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    backgroundColor: "transparent",
     color: colors.accent,
     fontSize: 10,
     fontWeight: "800",
     textTransform: "uppercase",
+  },
+  threadChooserActionBadgeDark: {
+    borderRadius: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    backgroundColor: "transparent",
+    color: colors.accentSoft,
   },
   threadChooserActionDetail: {
     color: colors.textSecondary,
@@ -978,6 +1006,135 @@ export const chatThreadStyles = {
   },
   threadChooserTemplateButtonTextDark: {
     color: "#F0F4F8",
+  },
+  threadGuidedMenuBackdrop: {
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
+    backgroundColor: colors.overlayStrong,
+  },
+  threadGuidedMenuDismissLayer: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  threadGuidedMenuSheet: {
+    width: "100%",
+    maxWidth: 560,
+    maxHeight: "72%",
+    alignSelf: "center",
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.surfaceStrokeStrong,
+    backgroundColor: colors.surfacePanelRaised,
+    ...shadows.floating,
+  },
+  threadGuidedMenuSheetDark: {
+    backgroundColor: "#132231",
+    borderColor: "#2C4055",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  threadGuidedMenuHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  threadGuidedMenuHeaderCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  threadGuidedMenuEyebrow: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  threadGuidedMenuEyebrowDark: {
+    color: "#AFC0D2",
+  },
+  threadGuidedMenuTitle: {
+    color: colors.textPrimary,
+    fontSize: 20,
+    fontWeight: "800",
+  },
+  threadGuidedMenuTitleDark: {
+    color: "#F0F4F8",
+  },
+  threadGuidedMenuClose: {
+    width: 38,
+    height: 38,
+    borderRadius: radii.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surfaceCanvas,
+    borderWidth: 1,
+    borderColor: colors.surfaceStroke,
+  },
+  threadGuidedMenuCloseDark: {
+    backgroundColor: "#1B2D3F",
+    borderColor: "#32455D",
+  },
+  threadGuidedMenuList: {
+    width: "100%",
+  },
+  threadGuidedMenuListContent: {
+    gap: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  threadGuidedMenuRow: {
+    minHeight: 62,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.surfaceStroke,
+    backgroundColor: colors.surfaceCanvas,
+  },
+  threadGuidedMenuRowDark: {
+    backgroundColor: "#1B2D3F",
+    borderColor: "#32455D",
+  },
+  threadGuidedMenuRowIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.surfaceStroke,
+  },
+  threadGuidedMenuRowIconDark: {
+    backgroundColor: "#243447",
+    borderColor: "#40556B",
+  },
+  threadGuidedMenuRowCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  threadGuidedMenuRowTitle: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  threadGuidedMenuRowTitleDark: {
+    color: "#F0F4F8",
+  },
+  threadGuidedMenuRowDetail: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  threadGuidedMenuRowDetailDark: {
+    color: "#AFC0D2",
   },
   threadFinalizationHero: {
     gap: spacing.md,
@@ -1916,7 +2073,10 @@ export const chatThreadStyles = {
     borderRadius: radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.accentWash,
+    backgroundColor: colors.surfaceMuted,
+  },
+  attachmentDraftIconDark: {
+    backgroundColor: "#1B2D3F",
   },
   attachmentDraftPreview: {
     width: 52,

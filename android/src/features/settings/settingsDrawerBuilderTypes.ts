@@ -29,12 +29,8 @@ type SecurityDeleteAccountSectionProps =
   SettingsDrawerPanelProps["securityDeleteAccountSectionProps"];
 type SecurityDeviceProtectionSectionProps =
   SettingsDrawerPanelProps["securityDeviceProtectionSectionProps"];
-type SecurityFileUploadSectionProps =
-  SettingsDrawerPanelProps["securityFileUploadSectionProps"];
 type SecurityIdentityVerificationSectionProps =
   SettingsDrawerPanelProps["securityIdentityVerificationSectionProps"];
-type SecurityNotificationPrivacySectionProps =
-  SettingsDrawerPanelProps["securityNotificationPrivacySectionProps"];
 type SecurityPermissionsSectionProps =
   SettingsDrawerPanelProps["securityPermissionsSectionProps"];
 type SecuritySessionsSectionProps =
@@ -49,7 +45,7 @@ type SupportSectionBaseProps = Omit<
 >;
 type SystemSectionBaseProps = Omit<
   SystemSectionProps,
-  "appBuildChannel" | "appVersionLabel" | "onAbrirFilaOffline"
+  "appBuildChannel" | "appVersionLabel"
 > &
   Partial<Pick<SystemSectionProps, "appBuildChannel" | "appVersionLabel">>;
 
@@ -68,20 +64,16 @@ export interface InspectorSettingsAccountSectionInput {
 export interface InspectorSettingsAdvancedResourcesSectionInput {
   advancedResourcesSectionProps?: AdvancedResourcesSectionProps;
   entradaPorVoz: AdvancedResourcesSectionProps["entradaPorVoz"];
-  handleAbrirAjudaDitado: AdvancedResourcesSectionProps["onAbrirAjudaDitado"];
-  handleAbrirAjustesDoSistema: (contexto: string) => void;
+  handleAbrirMenuIdiomaVoz: AdvancedResourcesSectionProps["onAbrirMenuIdiomaVoz"];
   handleToggleEntradaPorVoz: AdvancedResourcesSectionProps["onToggleEntradaPorVoz"];
   handleToggleRespostaPorVoz: AdvancedResourcesSectionProps["onToggleRespostaPorVoz"];
   handleToggleSpeechEnabled: AdvancedResourcesSectionProps["onToggleSpeechEnabled"];
-  microfonePermitido: AdvancedResourcesSectionProps["microfonePermitido"];
   onCyclePreferredVoice: AdvancedResourcesSectionProps["onCyclePreferredVoice"];
   preferredVoiceLabel: AdvancedResourcesSectionProps["preferredVoiceLabel"];
   respostaPorVoz: AdvancedResourcesSectionProps["respostaPorVoz"];
   setSpeechRate: AdvancedResourcesSectionProps["onSetSpeechRate"];
-  setVoiceLanguage: AdvancedResourcesSectionProps["onSetVoiceLanguage"];
   speechEnabled: AdvancedResourcesSectionProps["speechEnabled"];
   speechRate: AdvancedResourcesSectionProps["speechRate"];
-  sttSupported: AdvancedResourcesSectionProps["sttSupported"];
   ttsSupported: AdvancedResourcesSectionProps["ttsSupported"];
   voiceLanguage: AdvancedResourcesSectionProps["voiceLanguage"];
 }
@@ -92,6 +84,7 @@ export interface InspectorSettingsExperienceSectionInput {
   corDestaque: ExperienceAppearanceSectionProps["corDestaque"];
   criticalAlertsEnabled: ExperienceNotificationsSectionProps["criticalAlertsEnabled"];
   densidadeInterface: ExperienceAppearanceSectionProps["densidadeInterface"];
+  economiaDados: ExperienceAppearanceSectionProps["economiaDados"];
   emailsAtivos: ExperienceNotificationsSectionProps["emailsAtivos"];
   estiloResposta: ExperienceAiSectionProps["estiloResposta"];
   experienceNotificationsSectionProps?: ExperienceNotificationsSectionProps;
@@ -114,6 +107,7 @@ export interface InspectorSettingsExperienceSectionInput {
   setCorDestaque: ExperienceAppearanceSectionProps["onSetCorDestaque"];
   setCriticalAlertsEnabled: ExperienceNotificationsSectionProps["onSetCriticalAlertsEnabled"];
   setDensidadeInterface: ExperienceAppearanceSectionProps["onSetDensidadeInterface"];
+  setEconomiaDados: ExperienceAppearanceSectionProps["onSetEconomiaDados"];
   setEmailsAtivos: ExperienceNotificationsSectionProps["onSetEmailsAtivos"];
   setMemoriaIa: ExperienceAiSectionProps["onSetMemoriaIa"];
   setMesaCategoryEnabled: ExperienceNotificationsSectionProps["onSetMesaCategoryEnabled"];
@@ -123,11 +117,13 @@ export interface InspectorSettingsExperienceSectionInput {
   setTamanhoFonte: ExperienceAppearanceSectionProps["onSetTamanhoFonte"];
   setTemaApp: ExperienceAppearanceSectionProps["onSetTemaApp"];
   setTomConversa: ExperienceAiSectionProps["onSetTomConversa"];
+  setUsoBateria: ExperienceAppearanceSectionProps["onSetUsoBateria"];
   somNotificacao: ExperienceNotificationsSectionProps["somNotificacao"];
   systemCategoryEnabled: ExperienceNotificationsSectionProps["systemCategoryEnabled"];
   tamanhoFonte: ExperienceAppearanceSectionProps["tamanhoFonte"];
   temaApp: ExperienceAppearanceSectionProps["temaApp"];
   tomConversa: ExperienceAiSectionProps["tomConversa"];
+  usoBateria: ExperienceAppearanceSectionProps["usoBateria"];
   vibracaoAtiva: ExperienceNotificationsSectionProps["vibracaoAtiva"];
 }
 
@@ -138,6 +134,7 @@ export interface InspectorSettingsOverviewSectionInput {
   detalheGovernancaConfiguracao: OverviewContentProps["detalheGovernancaConfiguracao"];
   estiloRespostaResumoConfiguracao: OverviewContentProps["estiloRespostaResumoConfiguracao"];
   fecharConfiguracoes: OverviewContentProps["onFecharConfiguracoes"];
+  handleAbrirCentralAtividade: OverviewContentProps["onAbrirCentralAtividade"];
   handleAbrirPaginaConfiguracoes: OverviewContentProps["onAbrirPaginaConfiguracoes"];
   handleAbrirSecaoConfiguracoes: SectionMenuContentProps["onAbrirSecaoConfiguracoes"];
   handleReportarProblema: OverviewContentProps["onReportarProblema"];
@@ -170,18 +167,20 @@ export interface InspectorSettingsSecuritySectionInput {
   codigosRecuperacao: SecurityTwoFactorSectionProps["codigosRecuperacao"];
   compartilharMelhoriaIa: SecurityDataConversationsSectionProps["compartilharMelhoriaIa"];
   conversasOcultasTotal: SecurityDataConversationsSectionProps["conversasOcultasTotal"];
-  conversasVisiveisTotal: SecurityDataConversationsSectionProps["conversasVisiveisTotal"];
   crashReportsOptIn: SecurityDataConversationsSectionProps["crashReportsOptIn"];
   deviceBiometricsEnabled: SecurityDeviceProtectionSectionProps["deviceBiometricsEnabled"];
   eventosSegurancaFiltrados: SecurityActivitySectionProps["eventosSegurancaFiltrados"];
   fecharConfiguracoes: () => void;
   filtroEventosSeguranca: SecurityActivitySectionProps["filtroEventosSeguranca"];
-  fixarConversas: SecurityDataConversationsSectionProps["fixarConversas"];
+  handleAbrirMenuRetencaoDados: SecurityDataConversationsSectionProps["onAbrirMenuRetencaoDados"];
+  handleAbrirMenuSincronizacaoWifi: SecurityDataConversationsSectionProps["onAbrirMenuSincronizacaoWifi"];
   handleApagarHistoricoConfiguracoes: SecurityDataConversationsSectionProps["onApagarHistoricoConfiguracoes"];
   handleAbrirAjustesDoSistema: SecurityPermissionsSectionProps["onAbrirAjustesDoSistema"];
   handleCompartilharCodigosRecuperacao: SecurityTwoFactorSectionProps["onCompartilharCodigosRecuperacao"];
   handleConfirmarCodigo2FA: SecurityTwoFactorSectionProps["onConfirmarCodigo2FA"];
-  handleDetalhesSegurancaArquivos: SecurityFileUploadSectionProps["onDetalhesSegurancaArquivos"];
+  handleDetalhesSegurancaArquivos: (
+    topico: "validacao" | "urls" | "bloqueios",
+  ) => void;
   handleEncerrarOutrasSessoes: SecuritySessionsSectionProps["onEncerrarOutrasSessoes"];
   handleEncerrarSessao: SecuritySessionsSectionProps["onEncerrarSessao"];
   handleEncerrarSessaoAtual: SecuritySessionsSectionProps["onEncerrarSessaoAtual"];
@@ -190,7 +189,6 @@ export interface InspectorSettingsSecuritySectionInput {
   handleExportarAntesDeExcluirConta: SecurityDeleteAccountSectionProps["onExportarAntesDeExcluirConta"];
   handleExportarDados: SecurityDataConversationsSectionProps["onExportarDados"];
   handleGerarCodigosRecuperacao: SecurityTwoFactorSectionProps["onGerarCodigosRecuperacao"];
-  handleGerenciarConversasIndividuais: SecurityDataConversationsSectionProps["onGerenciarConversasIndividuais"];
   handleGerenciarPermissao: SecurityPermissionsSectionProps["onGerenciarPermissao"];
   handleLimparCache: SecurityDataConversationsSectionProps["onLimparCache"];
   handleLimparTodasConversasConfig: SecurityDataConversationsSectionProps["onLimparTodasConversasConfig"];
@@ -203,9 +201,6 @@ export interface InspectorSettingsSecuritySectionInput {
   handleToggle2FA: SecurityTwoFactorSectionProps["onToggle2FA"];
   handleToggleBackupAutomatico: SecurityDataConversationsSectionProps["onToggleBackupAutomatico"];
   handleToggleBiometriaNoDispositivo: SecurityDeviceProtectionSectionProps["onToggleBiometriaNoDispositivo"];
-  handleToggleMostrarConteudoNotificacao: SecurityNotificationPrivacySectionProps["onToggleMostrarConteudoNotificacao"];
-  handleToggleMostrarSomenteNovaMensagem: SecurityNotificationPrivacySectionProps["onToggleMostrarSomenteNovaMensagem"];
-  handleToggleOcultarConteudoBloqueado: SecurityNotificationPrivacySectionProps["onToggleOcultarConteudoBloqueado"];
   handleToggleProviderConnection: SecurityConnectedAccountsSectionProps["onToggleProviderConnection"];
   handleToggleSincronizacaoDispositivos: SecurityDataConversationsSectionProps["onToggleSincronizacaoDispositivos"];
   hideInMultitask: SecurityDeviceProtectionSectionProps["hideInMultitask"];
@@ -213,13 +208,9 @@ export interface InspectorSettingsSecuritySectionInput {
   lockTimeout: SecurityDeviceProtectionSectionProps["lockTimeout"];
   mediaCompression: SecurityDataConversationsSectionProps["mediaCompression"];
   microfonePermitido: SecurityPermissionsSectionProps["microfonePermitido"];
-  mostrarConteudoNotificacao: SecurityNotificationPrivacySectionProps["mostrarConteudoNotificacao"];
-  mostrarSomenteNovaMensagem: SecurityNotificationPrivacySectionProps["mostrarSomenteNovaMensagem"];
   outrasSessoesAtivas: SecuritySessionsSectionProps["outrasSessoesAtivas"];
-  ocultarConteudoBloqueado: SecurityNotificationPrivacySectionProps["ocultarConteudoBloqueado"];
   notificacoesPermitidas: SecurityPermissionsSectionProps["notificacoesPermitidas"];
   permissoesNegadasTotal: SecurityPermissionsSectionProps["permissoesNegadasTotal"];
-  previewPrivacidadeNotificacao: SecurityNotificationPrivacySectionProps["previewPrivacidadeNotificacao"];
   provedoresConectados: SecurityConnectedAccountsSectionProps["provedoresConectados"];
   provedoresConectadosTotal: SecurityConnectedAccountsSectionProps["provedoresConectadosTotal"];
   provedorPrimario: SecurityConnectedAccountsSectionProps["provedorPrimario"];
@@ -236,7 +227,6 @@ export interface InspectorSettingsSecuritySectionInput {
   resumoExcluirConta: SecurityDeleteAccountSectionProps["resumoExcluirConta"];
   resumoPermissoes: SecurityPermissionsSectionProps["resumoPermissoes"];
   resumoPermissoesCriticas: SecurityPermissionsSectionProps["resumoPermissoesCriticas"];
-  resumoPrivacidadeNotificacoes: SecurityNotificationPrivacySectionProps["resumoPrivacidadeNotificacoes"];
   resumoSessaoAtual: SecuritySessionsSectionProps["resumoSessaoAtual"];
   retencaoDados: SecurityDataConversationsSectionProps["retencaoDados"];
   salvarHistoricoConversas: SecurityDataConversationsSectionProps["salvarHistoricoConversas"];
@@ -246,7 +236,6 @@ export interface InspectorSettingsSecuritySectionInput {
   setCompartilharMelhoriaIa: SecurityDataConversationsSectionProps["onSetCompartilharMelhoriaIa"];
   setCrashReportsOptIn: SecurityDataConversationsSectionProps["onSetCrashReportsOptIn"];
   setFiltroEventosSeguranca: SecurityActivitySectionProps["onSetFiltroEventosSeguranca"];
-  setFixarConversas: SecurityDataConversationsSectionProps["onSetFixarConversas"];
   setHideInMultitask: SecurityDeviceProtectionSectionProps["onSetHideInMultitask"];
   setLockTimeout: SecurityDeviceProtectionSectionProps["onSetLockTimeout"];
   setMediaCompression: SecurityDataConversationsSectionProps["onSetMediaCompression"];
@@ -271,45 +260,28 @@ export interface InspectorSettingsSupportAndSystemSectionInput {
   contaEmailLabel: OverviewContentProps["contaEmailLabel"];
   contaTelefoneLabel: OverviewContentProps["contaTelefoneLabel"];
   corDestaqueResumoConfiguracao: OverviewContentProps["corDestaqueResumoConfiguracao"];
-  economiaDados: SystemSectionBaseProps["economiaDados"];
   fecharConfiguracoes: () => void;
   filaSuporteLocal: readonly SupportQueueItem[];
-  handleAbrirCentralAtividade: SystemSectionBaseProps["onAbrirCentralAtividade"];
   handleAbrirCanalSuporte: NonNullable<
     SupportSectionBaseProps["onCanalSuporte"]
   >;
-  handleAbrirSobreApp: SupportSectionBaseProps["onSobreApp"];
+  handleAbrirSobreApp: SystemSectionBaseProps["onSobreApp"];
   handleCentralAjuda: SupportSectionBaseProps["onCentralAjuda"];
   handleEnviarFeedback: SupportSectionBaseProps["onEnviarFeedback"];
   handleExportarDiagnosticoApp: SupportSectionBaseProps["onExportarDiagnosticoApp"];
   handleLicencas: SupportSectionBaseProps["onLicencas"];
-  handleLimparCache: SystemSectionBaseProps["onLimparCache"];
   handleLimparFilaSuporteLocal: SupportSectionBaseProps["onLimparFilaSuporteLocal"];
   handlePermissoes: SystemSectionBaseProps["onPermissoes"];
   handlePoliticaPrivacidade: SupportSectionBaseProps["onPoliticaPrivacidade"];
-  handleRefresh: SystemSectionBaseProps["onRefreshData"];
   handleReportarProblema: SupportSectionBaseProps["onReportarProblema"];
   handleTermosUso: SupportSectionBaseProps["onTermosUso"];
-  handleVerificarAtualizacoes: SystemSectionBaseProps["onVerificarAtualizacoes"];
-  idiomaApp: SystemSectionBaseProps["idiomaApp"];
-  planoResumoConfiguracao: SupportSectionBaseProps["planoResumoConfiguracao"];
-  resumoCache: SystemSectionBaseProps["resumoCache"];
-  resumoCentralAtividade: SystemSectionBaseProps["resumoCentralAtividade"];
-  resumoFilaOffline: SystemSectionBaseProps["resumoFilaOffline"];
   resumoFilaSuporteLocal: SupportSectionBaseProps["resumoFilaSuporteLocal"];
   resumoPermissoes: SystemSectionBaseProps["resumoPermissoes"];
   resumoSuporteApp: SupportSectionBaseProps["resumoSuporteApp"];
-  setEconomiaDados: SystemSectionBaseProps["onSetEconomiaDados"];
-  setIdiomaApp: SystemSectionBaseProps["onSetIdiomaApp"];
-  setUsoBateria: SystemSectionBaseProps["onSetUsoBateria"];
-  sincronizandoDados: SystemSectionBaseProps["sincronizandoDados"];
   supportChannelLabel: SupportSectionBaseProps["supportChannelLabel"];
   ticketsBugTotal: SupportSectionBaseProps["ticketsBugTotal"];
   ticketsFeedbackTotal: SupportSectionBaseProps["ticketsFeedbackTotal"];
-  ultimaVerificacaoAtualizacaoLabel: SystemSectionBaseProps["ultimaVerificacaoAtualizacaoLabel"];
   ultimoTicketSuporteResumo: SupportSectionBaseProps["ultimoTicketSuporte"];
-  usoBateria: SystemSectionBaseProps["usoBateria"];
-  verificandoAtualizacoes: SystemSectionBaseProps["verificandoAtualizacoes"];
 }
 
 export interface InspectorSettingsDrawerPanelBuilderInput
@@ -322,14 +294,15 @@ export interface InspectorSettingsDrawerPanelBuilderInput
     InspectorSettingsSupportAndSystemSectionInput {
   artigosAjudaFiltrados: readonly HelpArticleItem[];
   configuracoesDrawerX: SettingsDrawerPanelProps["configuracoesDrawerX"];
+  densityScale?: SettingsDrawerPanelProps["densityScale"];
   email: string;
   emailAtualConta: string;
+  fontScale?: SettingsDrawerPanelProps["fontScale"];
   handleVoltarResumoConfiguracoes: () => void;
   mostrarGrupoContaAcesso: SettingsDrawerPanelProps["mostrarGrupoContaAcesso"];
   mostrarGrupoExperiencia: SettingsDrawerPanelProps["mostrarGrupoExperiencia"];
   mostrarGrupoSeguranca: SettingsDrawerPanelProps["mostrarGrupoSeguranca"];
   mostrarGrupoSistema: SettingsDrawerPanelProps["mostrarGrupoSistema"];
-  onAbrirFilaOffline: () => void;
   perfilFotoHint: string;
   settingsDrawerInOverview: SettingsDrawerPanelProps["settingsDrawerInOverview"];
   settingsDrawerMatchesPage: SettingsDrawerPanelProps["settingsDrawerMatchesPage"];
@@ -354,14 +327,13 @@ export interface SettingsDrawerPanelBuilderInput extends Omit<
   fecharConfiguracoes: () => void;
   filaSuporteCount: number;
   handleVoltarResumoConfiguracoes: () => void;
-  onAbrirFilaOffline: NonNullable<SystemSectionProps["onAbrirFilaOffline"]>;
   supportSectionProps: Omit<
     SupportSectionProps,
     "artigosAjudaCount" | "emailRetorno" | "filaSuporteCount"
   >;
   systemSectionProps: Omit<
     SystemSectionProps,
-    "appBuildChannel" | "appVersionLabel" | "onAbrirFilaOffline"
+    "appBuildChannel" | "appVersionLabel"
   > &
     Partial<Pick<SystemSectionProps, "appBuildChannel" | "appVersionLabel">>;
 }

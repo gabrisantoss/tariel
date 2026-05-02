@@ -94,7 +94,7 @@ export function AttachmentPickerModal({
                 <MaterialCommunityIcons
                   name={item.icon}
                   size={20}
-                  color={item.enabled ? colors.accent : colors.textMuted}
+                  color={item.enabled ? colors.textSecondary : colors.textMuted}
                 />
                 <View style={styles.actionItemCopy}>
                   <Text

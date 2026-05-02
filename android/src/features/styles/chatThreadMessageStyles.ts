@@ -280,7 +280,7 @@ export const chatThreadMessageStyles = {
     borderRadius: radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.accentWash,
+    backgroundColor: colors.surfaceMuted,
   },
   messageAttachmentImageFrame: {
     width: 76,

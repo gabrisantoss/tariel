@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 
 import type { MobileLaudoCard, MobileMesaMessage } from "../../types/mobile";
+import type { AppSettings } from "../../settings";
 import {
   AI_MODEL_OPTIONS,
   RESPONSE_LANGUAGE_OPTIONS,
@@ -10,6 +11,7 @@ import type {
   ChatState,
   ComposerAttachment,
   MobileActivityNotification,
+  OfflinePendingMessage,
 } from "../chat/types";
 import type { MobileReadCache } from "../common/readCacheTypes";
 import type { AttachmentPreviewState } from "../common/inspectorUiBuilderTypes";
@@ -23,6 +25,7 @@ import type { SettingsSecurityEventPayload } from "./settingsConfirmActions";
 import type {
   ExternalIntegration,
   SecurityEventItem,
+  SupportQueueItem,
 } from "./useSettingsPresentation";
 
 interface BuildSettingsConfirmAndExportActionsParams {
@@ -52,6 +55,15 @@ interface BuildSettingsConfirmAndExportActionsParams {
   memoriaIa: boolean;
   modeloIa: (typeof AI_MODEL_OPTIONS)[number];
   notificacoes: MobileActivityNotification[];
+  cacheLeitura: MobileReadCache;
+  conversaAtual: ChatState | null;
+  mensagensMesa: MobileMesaMessage[];
+  mensagemRascunho: string;
+  mensagemMesaRascunho: string;
+  filaOffline: OfflinePendingMessage[];
+  filaSuporteLocal: SupportQueueItem[];
+  laudosFixadosIds: number[];
+  historicoOcultoIds: number[];
   notificaPush: boolean;
   notificaRespostas: boolean;
   ocultarConteudoBloqueado: boolean;
@@ -96,6 +108,7 @@ interface BuildSettingsConfirmAndExportActionsParams {
   corDestaque: string;
   mostrarConteudoNotificacao: boolean;
   mostrarSomenteNovaMensagem: boolean;
+  settingsDocument: AppSettings;
   workspaceResumoConfiguracao: string;
   limparCachePorPrivacidade: (cache: MobileReadCache) => MobileReadCache;
 }
@@ -126,7 +139,17 @@ export function buildSettingsConfirmAndExportActions({
   modeloIa,
   mostrarConteudoNotificacao,
   mostrarSomenteNovaMensagem,
+  settingsDocument,
   notificacoes,
+  cacheLeitura,
+  conversaAtual,
+  mensagensMesa,
+  mensagemRascunho,
+  mensagemMesaRascunho,
+  filaOffline,
+  filaSuporteLocal,
+  laudosFixadosIds,
+  historicoOcultoIds,
   notificaPush,
   notificaRespostas,
   ocultarConteudoBloqueado,
@@ -266,10 +289,20 @@ export function buildSettingsConfirmAndExportActions({
       vibracaoAtiva,
       mostrarConteudoNotificacao,
       mostrarSomenteNovaMensagem,
+      settingsDocument,
       salvarHistoricoConversas,
       compartilharMelhoriaIa,
       retencaoDados,
       ocultarConteudoBloqueado,
+      cacheLeitura,
+      conversaAtual,
+      mensagensMesa,
+      mensagemRascunho,
+      mensagemMesaRascunho,
+      filaOffline,
+      filaSuporteLocal,
+      laudosFixadosIds,
+      historicoOcultoIds,
       integracoesExternas,
       laudosDisponiveis,
       notificacoes,

@@ -32,6 +32,7 @@ type InspectorSessionModalStateInput = Pick<
   | "rotuloStatusPendenciaOffline"
   | "session"
   | "settingsSheet"
+  | "settingsSheetCanGoBack"
   | "settingsSheetLoading"
   | "settingsSheetNotice"
   | "sincronizacaoDispositivos"
@@ -91,7 +92,6 @@ export function buildInspectorSessionModalState(
     automationDiagnosticsEnabled,
     anexosAberto,
     attachmentPickerOptions,
-    bloqueioAppAtivo,
     centralAtividadeAberta,
     confirmSheet,
     confirmTextDraft,
@@ -116,6 +116,7 @@ export function buildInspectorSessionModalState(
     rotuloStatusPendenciaOffline,
     session,
     settingsSheet,
+    settingsSheetCanGoBack,
     settingsSheetLoading,
     settingsSheetNotice,
     sincronizacaoDispositivos,
@@ -127,7 +128,7 @@ export function buildInspectorSessionModalState(
   return {
     activityCenterAutomationDiagnostics,
     activityCenterVisible: centralAtividadeAberta,
-    appLockVisible: bloqueioAppAtivo && Boolean(session),
+    appLockVisible: false,
     automationDiagnosticsEnabled,
     attachmentPickerOptions,
     attachmentPickerVisible: anexosAberto,
@@ -157,6 +158,7 @@ export function buildInspectorSessionModalState(
     rotuloStatusPendenciaOffline,
     settingsConfirmationVisible: Boolean(confirmSheet),
     settingsSheet,
+    settingsSheetCanGoBack,
     settingsSheetLoading,
     settingsSheetNotice,
     settingsSheetVisible: Boolean(settingsSheet),

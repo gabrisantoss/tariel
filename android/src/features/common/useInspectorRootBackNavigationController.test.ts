@@ -1,11 +1,12 @@
 import { renderHook } from "@testing-library/react-native";
-import { BackHandler } from "react-native";
+import { Alert, BackHandler } from "react-native";
 
 import { useInspectorRootBackNavigationController } from "./useInspectorRootBackNavigationController";
 import type { ThreadRouteSnapshot } from "./threadRouteHistory";
 
 const mockAddEventListener = jest.fn();
 const mockKeyboardDismiss = jest.fn();
+const mockExitApp = jest.fn();
 let capturedBackHandler: null | (() => boolean) = null;
 
 function criarInput(overrides?: {
@@ -116,6 +117,8 @@ describe("useInspectorRootBackNavigationController", () => {
             handler as () => boolean,
           ) as ReturnType<typeof BackHandler.addEventListener>,
       );
+    jest.spyOn(BackHandler, "exitApp").mockImplementation(mockExitApp);
+    jest.spyOn(Alert, "alert").mockImplementation(jest.fn());
     jest
       .spyOn(require("react-native").Keyboard, "dismiss")
       .mockImplementation(() => {
@@ -222,12 +225,56 @@ describe("useInspectorRootBackNavigationController", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("permite o comportamento padrão do Android quando já está na home", () => {
+  it("volta do submenu de suporte para as configuracoes sem fechar o drawer", () => {
+    const input = criarInput({
+      shellSupport: {
+        configuracoesAberta: true,
+      },
+      settingsSupportState: {
+        navigationActions: {
+          fecharConfirmacaoConfiguracao: jest.fn(),
+          fecharSheetConfiguracao: jest.fn(),
+          handleVoltarResumoConfiguracoes: jest.fn(),
+        },
+        navigationState: {
+          confirmSheet: null,
+          settingsDrawerPage: "sistemaSuporte",
+          settingsDrawerSection: "suporte",
+          settingsSheet: null,
+        },
+      },
+    });
+
+    renderHook(() => useInspectorRootBackNavigationController(input));
+
+    expect(capturedBackHandler?.()).toBe(true);
+    expect(
+      input.bootstrap.settingsSupportState.navigationActions
+        .handleVoltarResumoConfiguracoes,
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      input.bootstrap.shellSupport.fecharConfiguracoes,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("pede confirmacao antes de fechar o app quando ja esta na home", () => {
     const input = criarInput();
 
     renderHook(() => useInspectorRootBackNavigationController(input));
 
-    expect(capturedBackHandler?.()).toBe(false);
+    expect(capturedBackHandler?.()).toBe(true);
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Deseja sair?",
+      "Você está na tela inicial. Confirme para fechar o app.",
+      expect.any(Array),
+      expect.objectContaining({ cancelable: true }),
+    );
+    const buttons = (Alert.alert as jest.Mock).mock.calls[0]?.[2] as Array<{
+      text: string;
+      onPress?: () => void;
+    }>;
+    buttons.find((button) => button.text === "Sair")?.onPress?.();
+    expect(mockExitApp).toHaveBeenCalledTimes(1);
     expect(BackHandler.addEventListener).toHaveBeenCalled();
   });
 });

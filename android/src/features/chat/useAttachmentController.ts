@@ -13,6 +13,7 @@ import {
 } from "./attachmentDraftFlows";
 import {
   ehImagemAnexo,
+  localPreviewUriAnexo,
   nomeExibicaoAnexo,
   urlAnexoAbsoluta,
 } from "./attachmentUtils";
@@ -324,6 +325,17 @@ export function useAttachmentController({
   }
 
   async function handleAbrirAnexo(anexo: MobileAttachment) {
+    const localImageUri = ehImagemAnexo(anexo)
+      ? localPreviewUriAnexo(anexo)
+      : "";
+    if (localImageUri) {
+      setPreviewAnexoImagem({
+        titulo: nomeExibicaoAnexo(anexo, "Imagem"),
+        uri: localImageUri,
+      });
+      return;
+    }
+
     if (!sessionAccessToken) {
       return;
     }

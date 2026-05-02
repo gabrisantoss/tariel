@@ -1,10 +1,12 @@
 import {
   ACCENT_OPTIONS,
+  BATTERY_OPTIONS,
   DENSITY_OPTIONS,
   FONT_SIZE_OPTIONS,
   NOTIFICATION_SOUND_OPTIONS,
   THEME_OPTIONS,
 } from "../InspectorMobileApp.constants";
+import { colors } from "../../theme/tokens";
 import {
   SettingsPressRow,
   SettingsSection,
@@ -17,6 +19,7 @@ type TamanhoFonte = (typeof FONT_SIZE_OPTIONS)[number];
 type DensidadeInterface = (typeof DENSITY_OPTIONS)[number];
 type CorDestaque = (typeof ACCENT_OPTIONS)[number];
 type SomNotificacao = (typeof NOTIFICATION_SOUND_OPTIONS)[number];
+type UsoBateria = (typeof BATTERY_OPTIONS)[number];
 
 interface SettingsExperienceAppearanceSectionProps {
   temaApp: TemaApp;
@@ -24,11 +27,15 @@ interface SettingsExperienceAppearanceSectionProps {
   densidadeInterface: DensidadeInterface;
   corDestaque: CorDestaque;
   animacoesAtivas: boolean;
+  economiaDados: boolean;
+  usoBateria: UsoBateria;
   onSetTemaApp: (value: TemaApp) => void;
   onSetTamanhoFonte: (value: TamanhoFonte) => void;
   onSetDensidadeInterface: (value: DensidadeInterface) => void;
   onSetCorDestaque: (value: CorDestaque) => void;
   onSetAnimacoesAtivas: (value: boolean) => void;
+  onSetEconomiaDados: (value: boolean) => void;
+  onSetUsoBateria: (value: UsoBateria) => void;
 }
 
 interface SettingsExperienceNotificationsSectionProps {
@@ -55,6 +62,23 @@ interface SettingsExperienceNotificationsSectionProps {
   onAbrirPermissaoNotificacoes: () => void;
 }
 
+function accentOptionLabel(option: CorDestaque): string {
+  return option === "padrão" ? "Padrão" : option;
+}
+
+function accentOptionColor(option: CorDestaque): string {
+  if (option === "azul") {
+    return "#3366FF";
+  }
+  if (option === "laranja") {
+    return colors.accent;
+  }
+  if (option === "roxo") {
+    return "#7C4DFF";
+  }
+  return colors.ink900;
+}
+
 function nextOptionValue<T extends string>(
   current: T,
   options: readonly T[],
@@ -72,16 +96,20 @@ export function SettingsExperienceAppearanceSection({
   densidadeInterface,
   corDestaque,
   animacoesAtivas,
+  economiaDados,
+  usoBateria,
   onSetTemaApp,
   onSetTamanhoFonte,
   onSetDensidadeInterface,
   onSetCorDestaque,
   onSetAnimacoesAtivas,
+  onSetEconomiaDados,
+  onSetUsoBateria,
 }: SettingsExperienceAppearanceSectionProps) {
   return (
     <SettingsSection
       icon="palette-outline"
-      subtitle="Visual, densidade e comportamento da interface."
+      subtitle="Visual, densidade, internet e bateria."
       testID="settings-section-aparencia"
       title="Aparência"
     >
@@ -110,7 +138,9 @@ export function SettingsExperienceAppearanceSection({
         value={densidadeInterface}
       />
       <SettingsSegmentedRow
-        description="Cor principal usada nos detalhes do app."
+        activeColor={accentOptionColor(corDestaque)}
+        description="Padrão usa o neutro preto e branco atual; as outras cores são personalização visual do layout."
+        getOptionLabel={accentOptionLabel}
         icon="eyedropper-variant"
         onChange={onSetCorDestaque}
         options={ACCENT_OPTIONS}
@@ -125,6 +155,24 @@ export function SettingsExperienceAppearanceSection({
         title="Animações"
         value={animacoesAtivas}
       />
+      <SettingsSwitchRow
+        description="Reduz uso de internet quando possível, principalmente fora do Wi-Fi."
+        icon="signal-cellular-outline"
+        onValueChange={onSetEconomiaDados}
+        testID="settings-preferences-data-saver-row"
+        title="Economia de dados"
+        value={economiaDados}
+      />
+      <SettingsPressRow
+        description="Ajusta como o app equilibra funcionamento em segundo plano e consumo de bateria."
+        icon="battery-heart-variant"
+        onPress={() =>
+          onSetUsoBateria(nextOptionValue(usoBateria, BATTERY_OPTIONS))
+        }
+        testID="settings-preferences-battery-row"
+        title="Uso de bateria"
+        value={usoBateria}
+      />
     </SettingsSection>
   );
 }
@@ -132,19 +180,25 @@ export function SettingsExperienceAppearanceSection({
 export function SettingsExperienceNotificationsSection({
   notificaRespostas,
   notificaPush,
-  notificacoesPermitidas,
-  somNotificacao,
-  vibracaoAtiva,
-  emailsAtivos,
+  notificacoesPermitidas: _notificacoesPermitidas,
+  somNotificacao: _somNotificacao,
+  vibracaoAtiva: _vibracaoAtiva,
+  emailsAtivos: _emailsAtivos,
+  chatCategoryEnabled,
   mesaCategoryEnabled,
   showMesaCategory = true,
+  systemCategoryEnabled,
+  criticalAlertsEnabled,
   onSetNotificaRespostas,
   onToggleNotificaPush,
-  onSetSomNotificacao,
-  onToggleVibracao,
-  onSetEmailsAtivos,
+  onSetSomNotificacao: _onSetSomNotificacao,
+  onToggleVibracao: _onToggleVibracao,
+  onSetEmailsAtivos: _onSetEmailsAtivos,
+  onSetChatCategoryEnabled,
   onSetMesaCategoryEnabled,
-  onAbrirPermissaoNotificacoes,
+  onSetSystemCategoryEnabled,
+  onSetCriticalAlertsEnabled,
+  onAbrirPermissaoNotificacoes: _onAbrirPermissaoNotificacoes,
 }: SettingsExperienceNotificationsSectionProps) {
   return (
     <SettingsSection
@@ -164,35 +218,11 @@ export function SettingsExperienceNotificationsSection({
         title="Notificações push"
         value={notificaPush}
       />
-      <SettingsPressRow
-        description="Mostra o estado real da permissão nativa do sistema."
-        icon="cellphone-cog"
-        onPress={onAbrirPermissaoNotificacoes}
-        title="Permissão do sistema"
-        value={notificacoesPermitidas ? "Permitida" : "Negada"}
-      />
-      <SettingsPressRow
-        icon="music-note-outline"
-        onPress={() =>
-          onSetSomNotificacao(
-            nextOptionValue(somNotificacao, NOTIFICATION_SOUND_OPTIONS),
-          )
-        }
-        title="Som de notificação"
-        value={somNotificacao}
-      />
       <SettingsSwitchRow
-        icon="vibrate"
-        onValueChange={onToggleVibracao}
-        title="Vibração"
-        value={vibracaoAtiva}
-      />
-      <SettingsSwitchRow
-        description="Novidades, atualizações e avisos por email."
-        icon="email-fast-outline"
-        onValueChange={onSetEmailsAtivos}
-        title="Emails"
-        value={emailsAtivos}
+        icon="chat-processing-outline"
+        onValueChange={onSetChatCategoryEnabled}
+        title="Categoria Chat"
+        value={chatCategoryEnabled}
       />
       {showMesaCategory ? (
         <SettingsSwitchRow
@@ -202,6 +232,18 @@ export function SettingsExperienceNotificationsSection({
           value={mesaCategoryEnabled}
         />
       ) : null}
+      <SettingsSwitchRow
+        icon="application-cog-outline"
+        onValueChange={onSetSystemCategoryEnabled}
+        title="Categoria Sistema"
+        value={systemCategoryEnabled}
+      />
+      <SettingsSwitchRow
+        icon="alert-decagram-outline"
+        onValueChange={onSetCriticalAlertsEnabled}
+        title="Alertas críticos"
+        value={criticalAlertsEnabled}
+      />
     </SettingsSection>
   );
 }

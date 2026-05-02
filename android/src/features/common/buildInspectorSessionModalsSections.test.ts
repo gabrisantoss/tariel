@@ -118,6 +118,7 @@ describe("buildInspectorSessionModalsSections", () => {
         title: "Perfil",
         subtitle: "Atualize seus dados",
       },
+      settingsSheetCanGoBack: true,
       settingsSheetLoading: false,
       settingsSheetNotice: "",
       sincronizacaoDispositivos: true,
@@ -126,7 +127,7 @@ describe("buildInspectorSessionModalsSections", () => {
       statusApi: "online",
     });
 
-    expect(state.appLockVisible).toBe(true);
+    expect(state.appLockVisible).toBe(false);
     expect(state.activityCenterVisible).toBe(true);
     expect(state.activityCenterAutomationDiagnostics.skipReason).toBe(
       "no_target",
@@ -136,6 +137,7 @@ describe("buildInspectorSessionModalsSections", () => {
     expect(state.attachmentPreviewTitle).toBe("evidencia");
     expect(state.filaOfflineOrdenadaTotal).toBe(2);
     expect(state.settingsSheetVisible).toBe(true);
+    expect(state.settingsSheetCanGoBack).toBe(true);
   });
 
   it("wiring dos callbacks usa o token da sessao ao sincronizar a fila", () => {

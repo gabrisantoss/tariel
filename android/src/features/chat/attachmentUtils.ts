@@ -70,6 +70,14 @@ export function urlAnexoAbsoluta(url: string | undefined): string | null {
   return `${API_BASE_URL}${valor.startsWith("/") ? "" : "/"}${valor}`;
 }
 
+export function localPreviewUriAnexo(anexo: MobileAttachment): string {
+  const previewUri = String(anexo.local_preview_uri || "").trim();
+  if (previewUri) {
+    return previewUri;
+  }
+  return String(anexo.local_uri || "").trim();
+}
+
 export function ehImagemAnexo(anexo: MobileAttachment): boolean {
   if (typeof anexo.eh_imagem === "boolean") {
     return anexo.eh_imagem;

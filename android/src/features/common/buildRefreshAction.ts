@@ -12,6 +12,11 @@ interface BuildRefreshActionParams {
     accessToken: string,
     silencioso?: boolean,
   ) => Promise<{ laudoId: number | null } | null>;
+  carregarConversaPorLaudoId: (
+    accessToken: string,
+    laudoId: number,
+    silencioso?: boolean,
+  ) => Promise<{ laudoId: number | null } | null>;
   carregarListaLaudos: (
     accessToken: string,
     silencioso?: boolean,
@@ -48,7 +53,7 @@ interface BuildRefreshActionParams {
 
 export function buildRefreshAction({
   abaAtiva,
-  carregarConversaAtual,
+  carregarConversaPorLaudoId,
   carregarListaLaudos,
   carregarMesaAtual,
   conversa,
@@ -97,12 +102,14 @@ export function buildRefreshAction({
         }
         invalidateMobileV2CapabilitiesCache(session.accessToken);
         await carregarListaLaudos(session.accessToken, true);
-        const proximaConversa = await carregarConversaAtual(
-          session.accessToken,
-          true,
-        );
-        const laudoAtual =
-          proximaConversa?.laudoId ?? conversa?.laudoId ?? null;
+        const laudoAtual = conversa?.laudoId ?? null;
+        if (laudoAtual) {
+          await carregarConversaPorLaudoId(
+            session.accessToken,
+            laudoAtual,
+            true,
+          );
+        }
         if (abaAtiva === "mesa" && laudoAtual) {
           await carregarMesaAtual(session.accessToken, laudoAtual, true);
         }

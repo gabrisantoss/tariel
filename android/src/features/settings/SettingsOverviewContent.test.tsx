@@ -25,6 +25,7 @@ function createProps() {
     estiloRespostaResumoConfiguracao: "detalhado",
     iniciaisPerfilConfiguracao: "GT",
     nomeUsuarioExibicao: "Gabriel",
+    onAbrirCentralAtividade: jest.fn(),
     onAbrirPaginaConfiguracoes: jest.fn(),
     onFecharConfiguracoes: jest.fn(),
     onLogout: jest.fn(),
@@ -43,13 +44,14 @@ function createProps() {
 describe("SettingsOverviewContent", () => {
   it("resume conta e atalhos do mobile no overview", () => {
     const props = createProps();
-    const { getAllByText, getByTestId } = render(
+    const { getAllByText, getByTestId, queryByTestId } = render(
       <SettingsOverviewContent {...props} />,
     );
 
     expect(getByTestId("settings-overview-summary-card")).toBeTruthy();
+    expect(getByTestId("settings-overview-activity-button")).toBeTruthy();
     expect(getByTestId("settings-overview-account-card")).toBeTruthy();
-    expect(getByTestId("settings-print-plan-row")).toBeTruthy();
+    expect(queryByTestId("settings-print-plan-row")).toBeNull();
     expect(getAllByText("Plano Pro").length).toBeGreaterThan(0);
     expect(getAllByText("Estilo da resposta: detalhado").length).toBe(1);
     expect(getAllByText("Tariel • Operador único").length).toBeGreaterThan(0);
@@ -67,16 +69,14 @@ describe("SettingsOverviewContent", () => {
     expect(props.onAbrirPaginaConfiguracoes).toHaveBeenCalledWith("seguranca");
   });
 
-  it("mantém o plano como informação dentro de sistema e suporte", () => {
+  it("abre a central de atividade pelo sino do perfil", () => {
     const props = createProps();
     const { getByTestId } = render(<SettingsOverviewContent {...props} />);
 
-    fireEvent.press(getByTestId("settings-print-plan-row"));
+    fireEvent.press(getByTestId("settings-overview-activity-button"));
 
-    expect(props.onAbrirPaginaConfiguracoes).not.toHaveBeenCalled();
-    expect(props.onAbrirPaginaConfiguracoes).not.toHaveBeenCalledWith(
-      "contaAcesso",
-    );
+    expect(props.onFecharConfiguracoes).toHaveBeenCalled();
+    expect(props.onAbrirCentralAtividade).toHaveBeenCalled();
   });
 
   it("fecha o drawer e solicita logout ao sair", () => {

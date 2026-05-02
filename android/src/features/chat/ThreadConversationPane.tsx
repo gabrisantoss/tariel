@@ -103,9 +103,6 @@ export function ThreadConversationPane({
   mensagensVisiveis,
   obterResumoReferenciaMensagem,
   onAbrirReferenciaNoChat,
-  onAbrirMesaTab,
-  onAbrirQualityGate,
-  onUsarPerguntaPreLaudo,
   sessionAccessToken,
   onAbrirAnexo,
   anexoAbrindoChave,
@@ -175,7 +172,7 @@ export function ThreadConversationPane({
 
   return (
     <ThreadConversationChatSurface
-      allowedSurfaceActions={allowedSurfaceActions}
+      accentColor={accentColor}
       anexoAbrindoChave={anexoAbrindoChave}
       carregandoConversa={carregandoConversa}
       caseLifecycleStatus={caseLifecycleStatus}
@@ -194,12 +191,8 @@ export function ThreadConversationPane({
       mensagensVisiveis={mensagensVisiveis}
       obterResumoReferenciaMensagem={obterResumoReferenciaMensagem}
       onAbrirAnexo={onAbrirAnexo}
-      onAbrirMesaTab={onAbrirMesaTab}
-      onAbrirQualityGate={onAbrirQualityGate}
       onAbrirReferenciaNoChat={onAbrirReferenciaNoChat}
       onRegistrarLayoutMensagemChat={onRegistrarLayoutMensagemChat}
-      onUsarPerguntaPreLaudo={onUsarPerguntaPreLaudo}
-      reportPackDraft={reportPackDraft}
       reviewPackage={reviewPackage}
       scrollRef={scrollRef}
       sessionAccessToken={sessionAccessToken}

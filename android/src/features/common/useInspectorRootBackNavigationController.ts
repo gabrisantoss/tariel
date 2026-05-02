@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { BackHandler, Keyboard } from "react-native";
+import { Alert, BackHandler, Keyboard } from "react-native";
 
 import type { InspectorRootBootstrap } from "../useInspectorRootBootstrap";
 import type { InspectorRootControllers } from "../useInspectorRootControllers";
@@ -21,6 +21,7 @@ export function useInspectorRootBackNavigationController({
   const { localState, sessionFlow, settingsSupportState, shellSupport } =
     bootstrap;
   const historyWasOpenRef = useRef(false);
+  const exitPromptVisibleRef = useRef(false);
   const currentThreadRoute = useMemo(
     () =>
       buildThreadRouteSnapshot({
@@ -65,6 +66,40 @@ export function useInspectorRootBackNavigationController({
   ]);
 
   useEffect(() => {
+    function confirmarSaidaApp() {
+      if (exitPromptVisibleRef.current) {
+        return;
+      }
+      exitPromptVisibleRef.current = true;
+      Alert.alert(
+        "Deseja sair?",
+        "Você está na tela inicial. Confirme para fechar o app.",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel",
+            onPress: () => {
+              exitPromptVisibleRef.current = false;
+            },
+          },
+          {
+            text: "Sair",
+            style: "destructive",
+            onPress: () => {
+              exitPromptVisibleRef.current = false;
+              BackHandler.exitApp();
+            },
+          },
+        ],
+        {
+          cancelable: true,
+          onDismiss: () => {
+            exitPromptVisibleRef.current = false;
+          },
+        },
+      );
+    }
+
     const restoreThreadRouteSnapshot = async (
       snapshot: ThreadRouteSnapshot,
     ): Promise<void> => {
@@ -215,7 +250,8 @@ export function useInspectorRootBackNavigationController({
           return true;
         }
 
-        return false;
+        confirmarSaidaApp();
+        return true;
       },
     );
 

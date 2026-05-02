@@ -191,7 +191,9 @@ export function QualityGateModal({
           ) : (
             <View style={modalStyles.emptyState}>
               <Text style={modalStyles.emptyText}>
-                {t("Não foi possível carregar o quality gate deste caso agora.")}
+                {t(
+                  "Não foi possível carregar o quality gate deste caso agora.",
+                )}
               </Text>
             </View>
           )}

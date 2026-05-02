@@ -50,11 +50,13 @@ export interface AuthenticatedLayoutShellInput {
   chatKeyboardVerticalOffset: number;
   composerNotice: string;
   configuracoesAberta: boolean;
+  densityScale?: number;
   settingsPrintDarkMode: boolean;
   drawerOverlayOpacity: Animated.Value;
   erroConversa: string;
   erroLaudos: string;
   fecharPaineisLaterais: () => void;
+  fontScale?: number;
   introVisivel: boolean;
   keyboardAvoidingBehavior: "padding" | "height" | undefined;
   keyboardVisible: boolean;
@@ -152,6 +154,7 @@ export interface AuthenticatedLayoutComposerInput {
   handleEnviarMensagemMesa: () => Promise<void>;
   handleFecharQualityGate: () => void;
   handleReabrir: () => Promise<void>;
+  onSincronizarFilaOffline?: ThreadComposerPanelProps["onSincronizarFilaOffline"];
   limparReferenciaMesaAtiva: () => void;
   mensagem: string;
   mensagemMesa: string;
@@ -176,6 +179,7 @@ export interface AuthenticatedLayoutComposerInput {
   setMensagemMesa: Dispatch<SetStateAction<string>>;
   setQualityGateReason: Dispatch<SetStateAction<string>>;
   showVoiceInputAction: boolean;
+  sincronizandoFilaOffline?: ThreadComposerPanelProps["sincronizandoFilaOffline"];
   voiceInputEnabled: boolean;
 }
 
@@ -264,6 +268,7 @@ export interface InspectorSessionModalsSettingsInput {
   renderSettingsSheetBody: () => ReactNode;
   setConfirmTextDraft: Dispatch<SetStateAction<string>>;
   settingsSheet: SettingsSheetState | null;
+  settingsSheetCanGoBack: boolean;
   settingsSheetLoading: boolean;
   settingsSheetNotice: string;
 }

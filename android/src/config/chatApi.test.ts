@@ -64,6 +64,29 @@ describe("chatApi", () => {
     });
   });
 
+  it("envia sinal explicito para criar laudo no primeiro envio do chat novo", async () => {
+    fetchMock.mockResolvedValue(
+      criarResposta(
+        JSON.stringify({
+          laudo_id: 144,
+          texto: "Caso criado",
+          modo: "detalhado",
+        }),
+      ),
+    );
+
+    await enviarMensagemChatMobile("token-123", {
+      mensagem: "começar chat limpo",
+      laudoId: null,
+      iniciarLaudo: true,
+      modo: "detalhado",
+    });
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body || "{}"));
+    expect(body.laudo_id).toBeUndefined();
+    expect(body.iniciar_laudo).toBe(true);
+  });
+
   it("agrega eventos SSE do chat em uma resposta final", async () => {
     fetchMock.mockResolvedValue(
       criarResposta(

@@ -18,6 +18,7 @@ import {
 } from "../InspectorMobileApp.constants";
 
 interface UseSidePanelsControllerParams {
+  animationsEnabled?: boolean;
   configuracoesAberta: boolean;
   historicoAberto: boolean;
   keyboardHeight: number;
@@ -52,6 +53,7 @@ interface UseSidePanelsControllerResult {
 }
 
 export function useSidePanelsController({
+  animationsEnabled = true,
   configuracoesAberta,
   historicoAberto,
   keyboardHeight,
@@ -78,6 +80,12 @@ export function useSidePanelsController({
     toValue: number,
     onEnd?: () => void,
   ) {
+    if (!animationsEnabled) {
+      valor.setValue(toValue);
+      onEnd?.();
+      return;
+    }
+
     Animated.timing(valor, {
       toValue,
       duration: PANEL_ANIMATION_DURATION,
@@ -88,6 +96,20 @@ export function useSidePanelsController({
         onEnd();
       }
     });
+  }
+
+  function animarOverlay(toValue: number) {
+    if (!animationsEnabled) {
+      drawerOverlayOpacity.setValue(toValue);
+      return;
+    }
+
+    Animated.timing(drawerOverlayOpacity, {
+      toValue,
+      duration: PANEL_ANIMATION_DURATION,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
   }
 
   function fecharHistorico(options?: {
@@ -119,12 +141,7 @@ export function useSidePanelsController({
     });
 
     if (!options?.manterOverlay && !configuracoesAbertaRef.current) {
-      Animated.timing(drawerOverlayOpacity, {
-        toValue: 0,
-        duration: PANEL_ANIMATION_DURATION,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
+      animarOverlay(0);
     }
   }
 
@@ -146,12 +163,7 @@ export function useSidePanelsController({
     });
 
     if (!options?.manterOverlay && !historicoAbertoRef.current) {
-      Animated.timing(drawerOverlayOpacity, {
-        toValue: 0,
-        duration: PANEL_ANIMATION_DURATION,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
+      animarOverlay(0);
     }
   }
 
@@ -175,6 +187,12 @@ export function useSidePanelsController({
     }
     historicoAbertoRef.current = true;
     setHistoricoAberto(true);
+    if (!animationsEnabled) {
+      drawerOverlayOpacity.setValue(1);
+      historicoDrawerX.setValue(0);
+      return;
+    }
+
     Animated.parallel([
       Animated.timing(drawerOverlayOpacity, {
         toValue: 1,
@@ -200,6 +218,12 @@ export function useSidePanelsController({
     resetSettingsNavigation();
     configuracoesAbertaRef.current = true;
     setConfiguracoesAberta(true);
+    if (!animationsEnabled) {
+      drawerOverlayOpacity.setValue(1);
+      configuracoesDrawerX.setValue(0);
+      return;
+    }
+
     Animated.parallel([
       Animated.timing(drawerOverlayOpacity, {
         toValue: 1,

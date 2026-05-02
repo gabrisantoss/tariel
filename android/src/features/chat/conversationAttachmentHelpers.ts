@@ -37,6 +37,12 @@ export function normalizarAnexoMensagem(
       typeof registro.url === "string"
         ? normalizarUrlAnexo(registro.url)
         : undefined,
+    local_preview_uri:
+      typeof registro.local_preview_uri === "string"
+        ? registro.local_preview_uri
+        : undefined,
+    local_uri:
+      typeof registro.local_uri === "string" ? registro.local_uri : undefined,
   };
 
   if (
@@ -44,7 +50,9 @@ export function normalizarAnexoMensagem(
     !attachment.nome &&
     !attachment.nome_original &&
     !attachment.label &&
-    !attachment.url
+    !attachment.url &&
+    !attachment.local_preview_uri &&
+    !attachment.local_uri
   ) {
     return null;
   }

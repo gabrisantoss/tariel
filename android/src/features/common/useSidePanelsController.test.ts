@@ -75,4 +75,24 @@ describe("useSidePanelsController", () => {
     expect(params.setConfiguracoesAberta).not.toHaveBeenCalledWith(false);
     expect(params.resetSettingsNavigation).not.toHaveBeenCalled();
   });
+
+  it("abre paineis sem Animated quando animacoes estao desativadas", () => {
+    const params = createParams({
+      animationsEnabled: false,
+      historicoAberto: false,
+    });
+    const { result } = renderHook(
+      (currentParams: Parameters<typeof useSidePanelsController>[0]) =>
+        useSidePanelsController(currentParams),
+      { initialProps: params },
+    );
+
+    act(() => {
+      result.current.abrirHistorico();
+    });
+
+    expect(params.setHistoricoAberto).toHaveBeenCalledWith(true);
+    expect(Animated.parallel).not.toHaveBeenCalled();
+    expect(Animated.timing).not.toHaveBeenCalled();
+  });
 });

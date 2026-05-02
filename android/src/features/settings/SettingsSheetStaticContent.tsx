@@ -1,6 +1,7 @@
 import { Text, View } from "react-native";
 
 import { styles } from "../InspectorMobileApp.styles";
+import { SettingsPressRow } from "./SettingsPrimitives";
 
 type StaticSheetKind =
   | "privacy"
@@ -47,7 +48,11 @@ interface RenderStaticSettingsSheetParams {
   resumoAtualizacaoApp: string;
   updateChangelog: readonly UpdateChangelogItem[];
   termsSections: readonly TermsSectionItem[];
+  privacySections: readonly TermsSectionItem[];
   licensesCatalog: readonly LicenseCatalogItem[];
+  onTermosUso?: () => void;
+  onPoliticaPrivacidade?: () => void;
+  onLicencas?: () => void;
 }
 
 export function renderStaticSettingsSheetBody({
@@ -68,7 +73,11 @@ export function renderStaticSettingsSheetBody({
   resumoAtualizacaoApp,
   updateChangelog,
   termsSections,
+  privacySections,
   licensesCatalog,
+  onTermosUso,
+  onPoliticaPrivacidade,
+  onLicencas,
 }: RenderStaticSettingsSheetParams) {
   if (!isStaticSheetKind(kind)) {
     return null;
@@ -122,6 +131,35 @@ export function renderStaticSettingsSheetBody({
             </Text>
           </View>
         </View>
+        <View style={styles.settingsInfoCard}>
+          <Text style={styles.settingsInfoTitle}>Documentos do app</Text>
+          <Text style={styles.settingsInfoText}>
+            Consulte os documentos completos desta instalação.
+          </Text>
+        </View>
+        <View style={styles.settingsMiniList}>
+          <SettingsPressRow
+            description="Abre os termos completos de uso do aplicativo."
+            icon="file-document-check-outline"
+            onPress={onTermosUso}
+            testID="settings-about-terms-row"
+            title="Termos de uso"
+          />
+          <SettingsPressRow
+            description="Abre a política completa sobre dados e privacidade."
+            icon="shield-account-outline"
+            onPress={onPoliticaPrivacidade}
+            testID="settings-about-privacy-row"
+            title="Política de privacidade"
+          />
+          <SettingsPressRow
+            description="Mostra bibliotecas e licenças de terceiros usadas no app."
+            icon="scale-balance"
+            onPress={onLicencas}
+            testID="settings-about-licenses-row"
+            title="Licenças"
+          />
+        </View>
       </View>
     );
   }
@@ -130,12 +168,10 @@ export function renderStaticSettingsSheetBody({
     return (
       <View style={styles.settingsFlowStack}>
         <View style={styles.settingsInfoCard}>
-          <Text style={styles.settingsInfoTitle}>Resumo</Text>
+          <Text style={styles.settingsInfoTitle}>Política de privacidade</Text>
           <Text style={styles.settingsInfoText}>
-            O app guarda apenas os dados necessários para sessão, histórico,
-            fila offline e operação do inspetor. Preferências sensíveis exigem
-            confirmação e podem ser exportadas ou removidas conforme a política
-            do sistema.
+            Texto completo sobre como o app trata dados, histórico, anexos, fila
+            offline, suporte e diagnóstico.
           </Text>
         </View>
         <View style={styles.settingsInfoGrid}>
@@ -151,6 +187,14 @@ export function renderStaticSettingsSheetBody({
             <Text style={styles.settingsInfoTitle}>Retenção</Text>
             <Text style={styles.settingsInfoText}>{retencaoDados}</Text>
           </View>
+        </View>
+        <View style={styles.settingsMiniList}>
+          {privacySections.map((item) => (
+            <View key={item.id} style={styles.settingsMiniListItem}>
+              <Text style={styles.settingsMiniListTitle}>{item.title}</Text>
+              <Text style={styles.settingsMiniListMeta}>{item.body}</Text>
+            </View>
+          ))}
         </View>
       </View>
     );
@@ -197,7 +241,7 @@ export function renderStaticSettingsSheetBody({
         <View style={styles.settingsInfoCard}>
           <Text style={styles.settingsInfoTitle}>Termos de uso</Text>
           <Text style={styles.settingsInfoText}>
-            Resumo operacional das regras de uso aplicadas à versão móvel do
+            Texto completo das regras de uso aplicadas à versão móvel do
             inspetor.
           </Text>
         </View>
@@ -241,8 +285,8 @@ export function renderStaticSettingsSheetBody({
       <View style={styles.settingsInfoCard}>
         <Text style={styles.settingsInfoTitle}>{title}</Text>
         <Text style={styles.settingsInfoText}>
-          Documento legal disponível nesta build para consulta rápida dentro do
-          painel de suporte.
+          Documento legal disponível nesta build para consulta rápida dentro de
+          Sobre.
         </Text>
       </View>
       <View style={styles.settingsMiniList}>

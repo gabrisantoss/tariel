@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import type { RefObject } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -15,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
+import { TARIEL_APP_MARK } from "../InspectorMobileApp.constants";
 import { styles } from "../InspectorMobileApp.styles";
 import { BrandLaunchOverlay } from "../common/BrandElements";
 
@@ -136,7 +138,11 @@ export function LoginScreen({
               <View style={styles.loginCard}>
                 {carregando ? (
                   <View style={styles.loadingState}>
-                    <ActivityIndicator color={colors.accent} size="large" />
+                    <Image
+                      resizeMode="cover"
+                      source={TARIEL_APP_MARK}
+                      style={styles.loadingLogo}
+                    />
                     <Text style={styles.loadingText}>
                       {t("Preparando o app do inspetor...")}
                     </Text>
@@ -145,7 +151,11 @@ export function LoginScreen({
                   <>
                     <View style={styles.loginHero}>
                       <View style={styles.loginIdentityMark}>
-                        <View style={styles.loginIdentityCore} />
+                        <Image
+                          resizeMode="cover"
+                          source={TARIEL_APP_MARK}
+                          style={styles.loginIdentityLogo}
+                        />
                       </View>
                     </View>
 

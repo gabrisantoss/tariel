@@ -141,7 +141,9 @@ export function QualityGateReportPackSection(props: {
 
   return (
     <View style={modalStyles.section} testID="quality-gate-report-pack-section">
-      <Text style={modalStyles.sectionTitle}>{t("Prontidão do pré-laudo")}</Text>
+      <Text style={modalStyles.sectionTitle}>
+        {t("Prontidão do pré-laudo")}
+      </Text>
       <Text style={modalStyles.sectionDescription}>
         {t(
           `${reportPackSummary.readinessLabel}. ${reportPackSummary.readinessDetail}`,
@@ -284,7 +286,9 @@ export function QualityGateOverrideSection(props: {
       <TextInput
         multiline
         onChangeText={onChangeReason}
-        placeholder={t("Explique internamente por que o caso seguirá mesmo assim.")}
+        placeholder={t(
+          "Explique internamente por que o caso seguirá mesmo assim.",
+        )}
         placeholderTextColor={colors.textSecondary}
         style={modalStyles.reasonInput}
         value={reason}

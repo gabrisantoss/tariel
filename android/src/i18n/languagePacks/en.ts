@@ -11,12 +11,15 @@ export const enLanguagePack: TranslationTable = {
   Aparência: "Appearance",
   "Tema, densidade e destaque.": "Theme, density, and accent.",
   Notificações: "Notifications",
-  "Alertas, push e vibração.": "Alerts, push, and vibration.",
+  "Alertas, push e categorias.": "Alerts, push, and categories.",
   "Proteção no dispositivo": "Device protection",
   "Biometria e bloqueio local.": "Biometrics and local lock.",
   Permissões: "Permissions",
+  "Câmera, arquivos e microfone.": "Camera, files, and microphone.",
   "Câmera, arquivos, microfone e notificações.":
     "Camera, files, microphone, and notifications.",
+  "Status atual de acesso ao microfone, câmera e arquivos.":
+    "Current access status for microphone, camera, and files.",
   "Controles de dados": "Data controls",
   "Histórico, retenção e sincronização.": "History, retention, and sync.",
   "Segurança de arquivos enviados": "Uploaded file security",
@@ -154,6 +157,8 @@ export const enLanguagePack: TranslationTable = {
   "Visual, densidade e comportamento da interface.":
     "Visuals, density, and interface behavior.",
   "Cor principal usada nos detalhes do app.": "Main color used in app details.",
+  "Padrão usa o neutro preto e branco atual; as outras cores são personalização visual do layout.":
+    "Default uses the current neutral black and white; the other colors are visual layout customization.",
   claro: "light",
   escuro: "dark",
   automático: "system",
@@ -165,7 +170,6 @@ export const enLanguagePack: TranslationTable = {
   azul: "blue",
   laranja: "orange",
   roxo: "purple",
-  personalizado: "custom",
   Claro: "Light",
   Escuro: "Dark",
   Padrão: "Default",
@@ -365,10 +369,13 @@ export const enLanguagePack: TranslationTable = {
     "Photos, context, and attachments go straight into the analysis and report.",
   "Abrir aba Chat": "Open Chat tab",
   "Abrir aba Mesa": "Open Review tab",
+  "Abrir aba Revisão": "Open Review tab",
   "Abrir aba Finalizar": "Open Finalize tab",
 
   "Responder à mesa": "Reply to review desk",
+  "Responder à revisão": "Reply to review",
   "Mesa em leitura": "Review desk read-only",
+  "Revisão em leitura": "Review read-only",
   "Resposta liberada": "Reply enabled",
   "Modo leitura": "Read-only",
   "Reabrir laudo": "Reopen report",
@@ -379,13 +386,21 @@ export const enLanguagePack: TranslationTable = {
   "Evidência enviada": "Evidence sent",
   "Carregando a conversa do inspetor...": "Loading inspector conversation...",
   "Abrindo a conversa com a mesa...": "Opening the review conversation...",
-  "Assistente está respondendo...": "Assistant is replying...",
+  "Abrindo a revisão do caso...": "Opening case review...",
+  "Tariel está respondendo": "Tariel is replying",
 
   Recomendado: "Recommended",
+  "Olá, sou Tariel. Como posso te ajudar?": "Hi, I'm Tariel. How can I help?",
+  "Escolha uma NR para iniciar.": "Choose an NR to start.",
+  "Escolha uma NR para seguir passo a passo.":
+    "Choose an NR to follow step by step.",
+  "Roteiro guiado": "Guided flow",
   "Escolha a família normativa para iniciar.":
     "Choose the regulatory family to start.",
   "Checklist técnico para laudo, evidências e Mesa.":
     "Technical checklist for report, evidence, and review desk.",
+  "Checklist técnico para laudo, evidências e revisão.":
+    "Technical checklist for report, evidence, and review.",
   "Iniciar inspeção guiada": "Start guided inspection",
   "Envie fotos, dúvidas ou contexto sem modelo fixo.":
     "Send photos, questions, or context without a fixed template.",

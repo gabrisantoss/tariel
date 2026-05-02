@@ -82,12 +82,13 @@ function createProps(
 describe("HistoryDrawerPanel", () => {
   it("expõe markers estáveis para resultados e alvo do histórico", () => {
     const props = createProps({ laudoSelecionadoId: 80 });
-    const { getByTestId, getByText } = render(
+    const { getByTestId, queryByText } = render(
       <HistoryDrawerPanel {...props} />,
     );
 
     expect(getByTestId("history-summary-card")).toBeTruthy();
-    expect(getByText("Retomada rapida")).toBeTruthy();
+    expect(queryByText("Retomada rapida")).toBeNull();
+    expect(queryByText("Radar da operação")).toBeNull();
     expect(getByTestId("history-results-loaded")).toBeTruthy();
     expect(getByTestId("history-section-hoje")).toBeTruthy();
     expect(getByTestId("history-first-item-button")).toBeTruthy();
@@ -97,7 +98,7 @@ describe("HistoryDrawerPanel", () => {
     expect(getByTestId("history-item-selected-80")).toBeTruthy();
   });
 
-  it("resume sinais operacionais de entrada guiada e reemissão no radar do histórico", () => {
+  it("nao exibe mais o bloco de retomada rapida no historico", () => {
     const props = createProps({
       historicoAgrupadoFinal: [
         {
@@ -129,15 +130,18 @@ describe("HistoryDrawerPanel", () => {
         },
       ],
     });
-    const { getByText } = render(<HistoryDrawerPanel {...props} />);
+    const { queryByText, queryByTestId } = render(
+      <HistoryDrawerPanel {...props} />,
+    );
 
-    expect(getByText("1 guiados")).toBeTruthy();
-    expect(getByText("1 pronto para validar")).toBeTruthy();
-    expect(getByText("1 reemissão recomendada")).toBeTruthy();
-    expect(getByText("1 guiados · 1 em chat livre")).toBeTruthy();
-    expect(getByText("0 em andamento · 2 na mesa · 0 concluidos")).toBeTruthy();
-    expect(getByText("Retomada sugerida")).toBeTruthy();
-    expect(getByText("Reemitir documento")).toBeTruthy();
+    expect(queryByText("Retomada rapida")).toBeNull();
+    expect(queryByText("Radar da operação")).toBeNull();
+    expect(queryByText("Retomada sugerida")).toBeNull();
+    expect(queryByText("Reemitir documento")).toBeNull();
+    expect(queryByTestId("history-resume-suggestion-card")).toBeNull();
+    expect(queryByTestId("history-summary-guided-pill")).toBeNull();
+    expect(queryByTestId("history-summary-reissue-pill")).toBeNull();
+    expect(queryByTestId("history-summary-validation-pill")).toBeNull();
   });
 
   it("enriquece a busca com sinais operacionais quando houver match guiado ou com reemissão", () => {
@@ -167,13 +171,13 @@ describe("HistoryDrawerPanel", () => {
         },
       ],
     });
-    const { getByText } = render(<HistoryDrawerPanel {...props} />);
+    const { queryByText } = render(<HistoryDrawerPanel {...props} />);
 
     expect(
-      getByText(
+      queryByText(
         "1 caso encontrado. 1 guiados · 1 prontos para validar · 1 com reemissao.",
       ),
-    ).toBeTruthy();
+    ).toBeNull();
   });
 
   it("propaga foco da busca do histórico para o controlador lateral", () => {
@@ -262,29 +266,21 @@ describe("HistoryDrawerPanel", () => {
         },
       ],
     });
-    const { getByTestId } = render(<HistoryDrawerPanel {...props} />);
+    const { getByTestId, getByText, queryByTestId, queryByText } = render(
+      <HistoryDrawerPanel {...props} />,
+    );
 
-    expect(getByTestId("history-item-meta-80").props.children).toBe(
-      "Operacao · Mesa avaliadora · Aprovar internamente",
-    );
-    expect(getByTestId("history-item-owner-80").props.children).toBe(
-      "Responsável · Mesa avaliadora",
-    );
-    expect(getByTestId("history-item-route-80").props.children).toBe(
-      "Rota · Tratar na mesa",
-    );
-    expect(getByTestId("history-item-validation-badge-80")).toBeTruthy();
-    expect(getByTestId("history-item-entry-mode-80").props.children).toBe(
-      "Entrada · Coleta guiada · Preferencia do inspetor",
-    );
-    expect(getByTestId("history-item-report-pack-80").props.children).toBe(
-      "Pacote · Pronto para validar · 3 bloqueios",
-    );
-    expect(getByTestId("history-item-governance-80").props.children).toBe(
-      "Governanca · Reemissão recomendada · PDF emitido divergente · Emitido v0003 · Atual v0004",
-    );
-    expect(getByTestId("history-item-context-80").props.children).toBe(
-      "Contexto · Linha de vida cobertura A · Bloco 2",
-    );
+    expect(getByTestId("history-item-80")).toBeTruthy();
+    expect(getByText("Laudo 80")).toBeTruthy();
+    expect(queryByTestId("history-item-meta-80")).toBeNull();
+    expect(queryByTestId("history-item-owner-80")).toBeNull();
+    expect(queryByTestId("history-item-route-80")).toBeNull();
+    expect(queryByTestId("history-item-validation-badge-80")).toBeNull();
+    expect(queryByTestId("history-item-entry-mode-80")).toBeNull();
+    expect(queryByTestId("history-item-report-pack-80")).toBeNull();
+    expect(queryByTestId("history-item-governance-80")).toBeNull();
+    expect(queryByTestId("history-item-context-80")).toBeNull();
+    expect(queryByText(/PDF emitido divergente/)).toBeNull();
+    expect(queryByText(/Linha de vida cobertura A/)).toBeNull();
   });
 });

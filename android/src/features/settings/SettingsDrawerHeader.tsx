@@ -24,9 +24,7 @@ export function SettingsDrawerHeader({
   const headerTitle = settingsDrawerInOverview
     ? "Configurações"
     : settingsDrawerTitle;
-  const headerSubtitle = settingsDrawerInOverview
-    ? ""
-    : settingsDrawerSubtitle;
+  const headerSubtitle = settingsDrawerInOverview ? "" : settingsDrawerSubtitle;
   const darkHeader = settingsPrintDarkMode;
 
   return (

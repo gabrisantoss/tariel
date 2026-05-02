@@ -380,6 +380,63 @@ export function createInspectorChatCaseController<
     }
   }
 
+  async function carregarConversaPorLaudoId(
+    accessToken: string,
+    laudoId: number,
+    silencioso = true,
+  ): Promise<ChatState | null> {
+    const current = paramsRef.current;
+    current.setErrorConversation("");
+    current.setErroMesa("");
+    if (silencioso) {
+      current.setSyncConversation(true);
+    } else {
+      current.setLoadingConversation(true);
+    }
+
+    try {
+      const historico = await carregarMensagensLaudo(accessToken, laudoId);
+      const draftServidor = guidedInspectionDraftFromMobilePayload(
+        historico.guided_inspection_draft,
+      );
+      const proximaConversa = current.normalizarConversa(historico);
+      current.setThreadHomeVisible(false);
+      current.setConversation(proximaConversa);
+      current.setUsandoCacheOffline(false);
+      current.setCacheLeitura((estadoAtual) => ({
+        ...estadoAtual,
+        conversaAtual: proximaConversa,
+        conversasPorLaudo: {
+          ...estadoAtual.conversasPorLaudo,
+          [current.chaveCacheLaudo(laudoId)]: proximaConversa,
+        },
+        updatedAt: new Date().toISOString(),
+      }));
+      if (proximaConversa.laudoId !== current.laudoMesaCarregado) {
+        current.setMensagensMesa([]);
+        current.setErroMesa("");
+        current.setMensagemMesa("");
+        current.setLaudoMesaCarregado(null);
+      }
+      restaurarContextoGuiadoDoCaso(
+        proximaConversa.laudoId,
+        proximaConversa.laudoCard,
+        draftServidor,
+      );
+      return proximaConversa;
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel abrir a conversa criada.";
+      current.setErrorConversation(message);
+      return null;
+    } finally {
+      current.setLoadingConversation(false);
+      current.setSyncConversation(false);
+    }
+  }
+
   async function handleSelecionarLaudo(card: MobileLaudoCard | null) {
     const current = paramsRef.current;
     if (!current.session) {
@@ -420,6 +477,7 @@ export function createInspectorChatCaseController<
   return {
     abrirLaudoPorId,
     carregarConversaAtual,
+    carregarConversaPorLaudoId,
     carregarListaLaudos,
     handleAbrirNovoChat,
     handleIniciarChatLivre,

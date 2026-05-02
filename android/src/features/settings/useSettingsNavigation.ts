@@ -50,10 +50,23 @@ function pushSettingsNavigationState(
   history.push(state);
 }
 
+function areSettingsSheetStatesEqual(
+  first: SettingsSheetState | null,
+  second: SettingsSheetState | null,
+): boolean {
+  return (
+    first?.kind === second?.kind &&
+    first?.title === second?.title &&
+    first?.subtitle === second?.subtitle &&
+    first?.actionLabel === second?.actionLabel
+  );
+}
+
 interface UseSettingsNavigationState {
   settingsDrawerPage: SettingsDrawerPage;
   settingsDrawerSection: SettingsDrawerSection;
   settingsSheet: SettingsSheetState | null;
+  settingsSheetCanGoBack: boolean;
   settingsSheetLoading: boolean;
   settingsSheetNotice: string;
   confirmSheet: ConfirmSheetState | null;
@@ -98,14 +111,27 @@ export function useSettingsNavigation(): {
   );
   const [confirmTextDraft, setConfirmTextDraft] = useState("");
   const settingsNavigationHistoryRef = useRef<SettingsNavigationState[]>([]);
+  const settingsSheetHistoryRef = useRef<SettingsSheetState[]>([]);
   const currentSettingsNavigationStateRef = useRef<SettingsNavigationState>(
     INITIAL_SETTINGS_NAVIGATION_STATE,
   );
+  const currentSettingsSheetRef = useRef<SettingsSheetState | null>(null);
+  const [settingsSheetHistoryCount, setSettingsSheetHistoryCount] = useState(0);
 
   function applySettingsNavigationState(state: SettingsNavigationState) {
     currentSettingsNavigationStateRef.current = state;
     setSettingsDrawerPage(state.page);
     setSettingsDrawerSection(state.section);
+  }
+
+  function applySettingsSheetState(state: SettingsSheetState | null) {
+    currentSettingsSheetRef.current = state;
+    setSettingsSheet(state);
+  }
+
+  function applySettingsSheetHistory(history: SettingsSheetState[]) {
+    settingsSheetHistoryRef.current = history;
+    setSettingsSheetHistoryCount(history.length);
   }
 
   function resetSettingsNavigation() {
@@ -115,7 +141,8 @@ export function useSettingsNavigation(): {
 
   function resetSettingsUi() {
     resetSettingsNavigation();
-    setSettingsSheet(null);
+    applySettingsSheetState(null);
+    applySettingsSheetHistory([]);
     setSettingsSheetLoading(false);
     setSettingsSheetNotice("");
     setConfirmSheet(null);
@@ -125,9 +152,12 @@ export function useSettingsNavigation(): {
   function clearTransientSettingsUiPreservingReauth() {
     setConfirmSheet(null);
     setConfirmTextDraft("");
-    setSettingsSheet((estadoAtual) =>
-      estadoAtual?.kind === "reauth" ? estadoAtual : null,
+    applySettingsSheetState(
+      currentSettingsSheetRef.current?.kind === "reauth"
+        ? currentSettingsSheetRef.current
+        : null,
     );
+    applySettingsSheetHistory([]);
     setSettingsSheetLoading(false);
     setSettingsSheetNotice("");
   }
@@ -182,11 +212,27 @@ export function useSettingsNavigation(): {
   function abrirSheetConfiguracao(config: SettingsSheetState) {
     setSettingsSheetNotice("");
     setSettingsSheetLoading(false);
-    setSettingsSheet(config);
+    const currentSheet = currentSettingsSheetRef.current;
+    if (currentSheet && !areSettingsSheetStatesEqual(currentSheet, config)) {
+      applySettingsSheetHistory([
+        ...settingsSheetHistoryRef.current,
+        currentSheet,
+      ]);
+    }
+    applySettingsSheetState(config);
   }
 
   function fecharSheetConfiguracao() {
-    setSettingsSheet(null);
+    const previousSheet =
+      settingsSheetHistoryRef.current[
+        settingsSheetHistoryRef.current.length - 1
+      ];
+    if (previousSheet) {
+      applySettingsSheetHistory(settingsSheetHistoryRef.current.slice(0, -1));
+      applySettingsSheetState(previousSheet);
+    } else {
+      applySettingsSheetState(null);
+    }
     setSettingsSheetLoading(false);
     setSettingsSheetNotice("");
   }
@@ -210,6 +256,7 @@ export function useSettingsNavigation(): {
       settingsDrawerPage,
       settingsDrawerSection,
       settingsSheet,
+      settingsSheetCanGoBack: settingsSheetHistoryCount > 0,
       settingsSheetLoading,
       settingsSheetNotice,
       confirmSheet,

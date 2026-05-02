@@ -71,6 +71,36 @@ describe("ThreadHeaderControls", () => {
     expect(onOpenFinalizarTab).toHaveBeenCalled();
   });
 
+  it("mantém o topo do chat ativo sem eyebrow e sem subtítulo explicativo", () => {
+    const { queryByText } = render(
+      <ThreadHeaderControls
+        chatHasActiveCase
+        finalizacaoDisponivel={false}
+        filaOfflineTotal={0}
+        headerSafeTopInset={0}
+        keyboardVisible={false}
+        mesaAcessoPermitido
+        notificacoesMesaLaudoAtual={0}
+        notificacoesNaoLidas={0}
+        onOpenChatTab={jest.fn()}
+        onOpenFinalizarTab={jest.fn()}
+        onOpenHistory={jest.fn()}
+        onOpenMesaTab={jest.fn()}
+        onOpenNewChat={jest.fn()}
+        onOpenSettings={jest.fn()}
+        vendoFinalizacao={false}
+        vendoMesa={false}
+      />,
+    );
+
+    expect(queryByText("Inspeção ativa")).toBeNull();
+    expect(
+      queryByText(
+        "Fotos, contexto e anexos entram direto na análise e no laudo.",
+      ),
+    ).toBeNull();
+  });
+
   it("mantém o topo inicial limpo quando o chat ainda não abriu um caso", () => {
     const { getByTestId, queryByText } = render(
       <ThreadHeaderControls
@@ -152,7 +182,7 @@ describe("ThreadHeaderControls", () => {
       getByLabelText("Abrir configurações, 3 avisos pendentes"),
     ).toBeTruthy();
     expect(getByLabelText("Abrir aba Chat")).toBeTruthy();
-    expect(getByLabelText("Abrir aba Mesa, 3 retornos novos")).toBeTruthy();
+    expect(getByLabelText("Abrir aba Revisão, 3 retornos novos")).toBeTruthy();
     expect(getByLabelText("Abrir aba Finalizar")).toBeTruthy();
     expect(getByTestId("mesa-tab-button").props.accessibilityState).toEqual({
       selected: false,

@@ -67,7 +67,13 @@ export const loginStyles = {
     backgroundColor: colors.ink900,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
     ...shadows.card,
+  },
+  loginIdentityLogo: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 16,
   },
   loginIdentityCore: {
     width: 14,

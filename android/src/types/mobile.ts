@@ -314,6 +314,8 @@ export interface MobileAttachment {
   tamanho_bytes?: number;
   eh_imagem?: boolean;
   url?: string;
+  local_preview_uri?: string;
+  local_uri?: string;
 }
 
 export interface MobileAttachmentPolicy {

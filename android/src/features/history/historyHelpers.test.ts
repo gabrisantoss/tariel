@@ -47,4 +47,17 @@ describe("historyHelpers", () => {
     ]);
     jest.useRealTimers();
   });
+
+  it("trata datas YYYY-MM-DD do contrato mobile como data local", () => {
+    const agora = new Date("2026-03-30T10:00:00.000Z");
+    jest.useFakeTimers();
+    jest.setSystemTime(agora);
+
+    const secoes = buildHistorySections([
+      { id: 10, pinado: false, data_iso: "2026-03-30" },
+    ] as any);
+
+    expect(secoes.map((item) => item.key)).toEqual(["today"]);
+    jest.useRealTimers();
+  });
 });

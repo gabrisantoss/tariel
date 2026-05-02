@@ -204,7 +204,7 @@ export function useSettingsEntryActions({
     setBugAttachmentDraft(null);
     abrirSheetConfiguracao({
       kind: "bug",
-      title: "Reportar problema",
+      title: "Informar bug",
       subtitle:
         "Descreva o bug encontrado e envie o contexto para a equipe do produto.",
       actionLabel: "Enviar relato",
@@ -242,7 +242,7 @@ export function useSettingsEntryActions({
       kind: "terms",
       title: "Termos de uso",
       subtitle:
-        "Resumo das condições de uso do app do inspetor e das responsabilidades do usuário.",
+        "Condições completas de uso do app do inspetor e responsabilidades do usuário.",
       actionLabel: "Exportar TXT",
     });
   }

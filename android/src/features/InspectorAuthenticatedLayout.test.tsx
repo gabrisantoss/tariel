@@ -89,8 +89,7 @@ function criarProps() {
     threadContextCardProps: {
       actions: [],
       chips: [],
-      description:
-        "Laudo técnico com checklist, evidências e revisão quando exigida.",
+      description: "",
       eyebrow: "",
       insights: [],
       layout: "entry_chooser" as "default" | "entry_chooser" | "finalization",
@@ -99,7 +98,7 @@ function criarProps() {
         label: "Inspeção guiada",
         tone: "accent" as const,
       },
-      title: "Iniciar inspeção",
+      title: "Olá, sou Tariel. Como posso te ajudar?",
     },
     threadConversationPaneProps: {
       threadKeyboardPaddingBottom: 44,

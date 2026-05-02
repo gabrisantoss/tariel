@@ -4,8 +4,10 @@ import type { ApiHealthStatus } from "../../types/mobile";
 import type { ComposerAttachment } from "../chat/types";
 import type {
   AI_MODEL_OPTIONS,
+  DATA_RETENTION_OPTIONS,
   RESPONSE_LANGUAGE_OPTIONS,
   RESPONSE_STYLE_OPTIONS,
+  SPEECH_LANGUAGE_OPTIONS,
 } from "../InspectorMobileApp.constants";
 import type {
   ConnectedProvider,
@@ -55,18 +57,29 @@ interface BuildSettingsSheetBodyRendererParams {
   handleSelecionarIdiomaResposta: (
     value: (typeof RESPONSE_LANGUAGE_OPTIONS)[number],
   ) => void;
+  handleSelecionarVoiceLanguage: (
+    value: (typeof SPEECH_LANGUAGE_OPTIONS)[number],
+  ) => void;
+  handleSelecionarRetencaoDados: (
+    value: (typeof DATA_RETENTION_OPTIONS)[number],
+  ) => void;
   handleSelecionarScreenshotBug: () => Promise<void>;
   handleSincronizarIntegracaoExterna: (
     integration: ExternalIntegration,
   ) => Promise<void>;
+  handleToggleBackupAutomatico: (value: boolean) => void;
+  handleToggleSincronizacaoDispositivos: (value: boolean) => void;
   handleToggleUploadArquivos: (value: boolean) => void;
   integracaoSincronizandoId: string;
   integracoesConectadasTotal: number;
   integracoesDisponiveisTotal: number;
   integracoesExternas: readonly ExternalIntegration[];
+  autoUploadAttachments: boolean;
+  backupAutomatico: boolean;
   modeloIa: (typeof AI_MODEL_OPTIONS)[number];
   estiloResposta: (typeof RESPONSE_STYLE_OPTIONS)[number];
   idiomaResposta: (typeof RESPONSE_LANGUAGE_OPTIONS)[number];
+  voiceLanguage: (typeof SPEECH_LANGUAGE_OPTIONS)[number];
   nomeCompletoDraft: string;
   nomeExibicaoDraft: string;
   novaSenhaDraft: string;
@@ -82,6 +95,7 @@ interface BuildSettingsSheetBodyRendererParams {
   onSetNovoEmailDraft: (value: string) => void;
   onSetSenhaAtualDraft: (value: string) => void;
   onSetTelefoneDraft: (value: string) => void;
+  onSetWifiOnlySync: (value: boolean) => void;
   perfilFotoHint: string;
   perfilFotoUri: string;
   planoAtual: string;
@@ -91,7 +105,7 @@ interface BuildSettingsSheetBodyRendererParams {
   resumoAtualizacaoApp: string;
   resumoFilaSuporteLocal: string;
   resumoSuporteApp: string;
-  retencaoDados: string;
+  retencaoDados: (typeof DATA_RETENTION_OPTIONS)[number];
   salvarHistoricoConversas: boolean;
   senhaAtualDraft: string;
   sessaoAtual: SessionDevice | null;
@@ -99,11 +113,17 @@ interface BuildSettingsSheetBodyRendererParams {
   statusApi: ApiHealthStatus;
   statusAtualizacaoApp: string;
   supportChannelLabel: string;
+  sincronizacaoDispositivos: boolean;
   telefoneDraft: string;
   ultimaVerificacaoAtualizacaoLabel: string;
   ultimoTicketSuporte: SupportQueueItem | null;
   uploadArquivosAtivo: boolean;
+  wifiOnlySync: boolean;
   workspaceLabel: string;
+  onSetAutoUploadAttachments: (value: boolean) => void;
+  onTermosUso?: () => void;
+  onPoliticaPrivacidade?: () => void;
+  onLicencas?: () => void;
   onAbrirPortalContinuation: (
     url: string,
     label: string,
@@ -138,16 +158,23 @@ export function buildSettingsSheetBodyRenderer({
   handleSelecionarModeloIa,
   handleSelecionarEstiloResposta,
   handleSelecionarIdiomaResposta,
+  handleSelecionarVoiceLanguage,
+  handleSelecionarRetencaoDados,
   handleSelecionarScreenshotBug,
   handleSincronizarIntegracaoExterna,
+  handleToggleBackupAutomatico,
+  handleToggleSincronizacaoDispositivos,
   handleToggleUploadArquivos,
   integracaoSincronizandoId,
   integracoesConectadasTotal,
   integracoesDisponiveisTotal,
   integracoesExternas,
+  autoUploadAttachments,
+  backupAutomatico,
   modeloIa,
   estiloResposta,
   idiomaResposta,
+  voiceLanguage,
   nomeCompletoDraft,
   nomeExibicaoDraft,
   novaSenhaDraft,
@@ -163,6 +190,7 @@ export function buildSettingsSheetBodyRenderer({
   onSetNovoEmailDraft,
   onSetSenhaAtualDraft,
   onSetTelefoneDraft,
+  onSetWifiOnlySync,
   perfilFotoHint,
   perfilFotoUri,
   planoAtual,
@@ -180,11 +208,17 @@ export function buildSettingsSheetBodyRenderer({
   statusApi,
   statusAtualizacaoApp,
   supportChannelLabel,
+  sincronizacaoDispositivos,
   telefoneDraft,
   ultimaVerificacaoAtualizacaoLabel,
   ultimoTicketSuporte,
   uploadArquivosAtivo,
+  wifiOnlySync,
   workspaceLabel,
+  onSetAutoUploadAttachments,
+  onTermosUso,
+  onPoliticaPrivacidade,
+  onLicencas,
   onAbrirPortalContinuation,
 }: BuildSettingsSheetBodyRendererParams) {
   return function renderSettingsSheetBody() {
@@ -215,9 +249,12 @@ export function buildSettingsSheetBodyRenderer({
       integracoesConectadasTotal,
       integracoesDisponiveisTotal,
       integracoesExternas,
+      autoUploadAttachments,
+      backupAutomatico,
       modeloIa,
       estiloResposta,
       idiomaResposta,
+      voiceLanguage,
       nomeCompletoDraft,
       nomeExibicaoDraft,
       novaSenhaDraft,
@@ -246,6 +283,12 @@ export function buildSettingsSheetBodyRenderer({
       onSelecionarModeloIa: handleSelecionarModeloIa,
       onSelecionarEstiloResposta: handleSelecionarEstiloResposta,
       onSelecionarIdiomaResposta: handleSelecionarIdiomaResposta,
+      onSelecionarVoiceLanguage: handleSelecionarVoiceLanguage,
+      onSelecionarRetencaoDados: handleSelecionarRetencaoDados,
+      onSetWifiOnlySync,
+      onToggleAutoUploadAttachments: onSetAutoUploadAttachments,
+      onToggleBackupAutomatico: handleToggleBackupAutomatico,
+      onToggleSincronizacaoDispositivos: handleToggleSincronizacaoDispositivos,
       perfilFotoHint,
       perfilFotoUri,
       planoAtual,
@@ -263,11 +306,16 @@ export function buildSettingsSheetBodyRenderer({
       statusApi,
       statusAtualizacaoApp,
       supportChannelLabel,
+      sincronizacaoDispositivos,
       telefoneDraft,
       ultimaVerificacaoAtualizacaoLabel,
       ultimoTicketSuporte,
       uploadArquivosAtivo,
+      wifiOnlySync,
       workspaceLabel,
+      onTermosUso,
+      onPoliticaPrivacidade,
+      onLicencas,
       onAbrirPortalContinuation,
     });
   };

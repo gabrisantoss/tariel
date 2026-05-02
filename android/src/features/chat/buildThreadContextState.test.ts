@@ -47,7 +47,9 @@ describe("buildThreadContextState", () => {
 
     expect(state.mostrarContextoThread).toBe(true);
     expect(state.threadContextLayout).toBe("entry_chooser");
-    expect(state.laudoContextTitle).toBe("Iniciar inspeção");
+    expect(state.laudoContextTitle).toBe(
+      "Olá, sou Tariel. Como posso te ajudar?",
+    );
     expect(state.threadSpotlight.label).toBe("Inspeção guiada");
     expect(state.threadInsights).toEqual([]);
     expect(state.chipsContextoThread).toEqual([]);
@@ -75,9 +77,7 @@ describe("buildThreadContextState", () => {
         }),
       ]),
     );
-    expect(state.laudoContextDescription).toBe(
-      "Laudo técnico com checklist, evidências e revisão quando exigida.",
-    );
+    expect(state.laudoContextDescription).toBe("");
 
     const nr35Action = state.threadActions.find(
       (item) => item.key === "guided-template-nr35_linha_vida",
@@ -148,7 +148,7 @@ describe("buildThreadContextState", () => {
         }),
         expect.objectContaining({
           key: "mesa-handoff",
-          label: "Família exige Mesa",
+          label: "Revisão obrigatória",
         }),
       ]),
     );
@@ -159,7 +159,7 @@ describe("buildThreadContextState", () => {
           key: "ultima-evidencia",
           value: "Identificacao do ativo e da area",
         }),
-        expect.objectContaining({ key: "mesa", value: "Mesa obrigatória" }),
+        expect.objectContaining({ key: "mesa", value: "Revisão obrigatória" }),
       ]),
     );
     expect(state.threadActions).toEqual([
@@ -444,7 +444,7 @@ describe("buildThreadContextState", () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: "mesa",
-          value: "Mesa obrigatória",
+          value: "Revisão obrigatória",
           detail: expect.stringContaining(
             "A política ativa do tenant exige revisão humana antes da emissão.",
           ),
@@ -455,7 +455,7 @@ describe("buildThreadContextState", () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: "guided-open-mesa",
-          label: "Abrir Mesa",
+          label: "Abrir Revisão",
           onPress: onOpenMesaTab,
         }),
       ]),
@@ -477,7 +477,9 @@ describe("buildThreadContextState", () => {
     );
 
     expect(state.threadContextLayout).toBe("entry_chooser");
-    expect(state.laudoContextTitle).toBe("Iniciar inspeção");
+    expect(state.laudoContextTitle).toBe(
+      "Olá, sou Tariel. Como posso te ajudar?",
+    );
     expect(state.threadSpotlight.label).toBe("Guiado recomendado");
     expect(state.chipsContextoThread).toEqual([]);
     expect(state.threadActions).toEqual(
@@ -918,7 +920,7 @@ describe("buildThreadContextState", () => {
         }),
         expect.objectContaining({
           key: "review-mode",
-          label: "Mesa obrigatória",
+          label: "Revisão obrigatória",
         }),
       ]),
     );
@@ -930,7 +932,7 @@ describe("buildThreadContextState", () => {
         }),
         expect.objectContaining({
           key: "human-validation",
-          value: "Mesa obrigatória",
+          value: "Revisão obrigatória",
         }),
         expect.objectContaining({
           key: "current-owner",
@@ -942,11 +944,11 @@ describe("buildThreadContextState", () => {
         }),
         expect.objectContaining({
           key: "expected-decision",
-          value: "Parecer da mesa",
+          value: "Parecer da revisão",
         }),
         expect.objectContaining({
           key: "suggested-route",
-          value: "Abrir mesa",
+          value: "Abrir revisão",
         }),
         expect.objectContaining({
           key: "blockers",
@@ -962,7 +964,7 @@ describe("buildThreadContextState", () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: "finalization-open-mesa",
-          label: "Abrir Mesa",
+          label: "Abrir Revisão",
           onPress: onOpenMesaTab,
         }),
         expect.objectContaining({

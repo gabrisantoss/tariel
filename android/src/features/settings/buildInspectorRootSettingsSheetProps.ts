@@ -57,7 +57,12 @@ interface BuildInspectorRootSettingsSheetPropsInput {
     | "handleSelecionarModeloIa"
     | "handleSelecionarScreenshotBug"
     | "handleSincronizarIntegracaoExterna"
+    | "handleToggleBackupAutomatico"
+    | "handleToggleSincronizacaoDispositivos"
     | "handleToggleUploadArquivos"
+    | "onLicencas"
+    | "onPoliticaPrivacidade"
+    | "onTermosUso"
   > &
     Pick<
       SettingsSheetConfirmParams,
@@ -65,7 +70,9 @@ interface BuildInspectorRootSettingsSheetPropsInput {
       | "handleConfirmarSettingsSheetReauth"
       | "notificarConfiguracaoConcluida"
       | "onRegistrarEventoSegurancaLocal"
-    >;
+    > & {
+      fecharSheetConfiguracao: () => void;
+    };
   appState: {
     apiEnvironmentLabel: SettingsSheetBodyParams["apiEnvironmentLabel"];
     appBuildLabel: SettingsSheetBodyParams["appBuildLabel"];
@@ -85,6 +92,8 @@ interface BuildInspectorRootSettingsSheetPropsInput {
   draftState: Pick<
     SettingsSheetBodyParams,
     | "artigoAjudaExpandidoId"
+    | "autoUploadAttachments"
+    | "backupAutomatico"
     | "bugAttachmentDraft"
     | "bugDescriptionDraft"
     | "bugEmailDraft"
@@ -106,12 +115,16 @@ interface BuildInspectorRootSettingsSheetPropsInput {
     | "salvarHistoricoConversas"
     | "senhaAtualDraft"
     | "settingsSheet"
+    | "sincronizacaoDispositivos"
     | "statusApi"
     | "statusAtualizacaoApp"
     | "ultimoTicketSuporte"
     | "uploadArquivosAtivo"
+    | "wifiOnlySync"
   > &
-    Pick<SettingsSheetConfirmParams, "cartaoAtual">;
+    Pick<SettingsSheetConfirmParams, "cartaoAtual"> & {
+      voiceLanguage?: SettingsSheetBodyParams["voiceLanguage"];
+    };
   settersState: Pick<
     SettingsSheetConfirmParams,
     | "onSetBugAttachmentDraft"
@@ -142,8 +155,14 @@ interface BuildInspectorRootSettingsSheetPropsInput {
   > &
     Pick<
       SettingsSheetBodyParams,
-      "onSetBuscaAjuda" | "onSetNovoEmailDraft"
-    >;
+      | "onSetAutoUploadAttachments"
+      | "onSetBuscaAjuda"
+      | "onSetNovoEmailDraft"
+      | "onSetWifiOnlySync"
+    > & {
+      onSetRetencaoDados: SettingsSheetBodyParams["handleSelecionarRetencaoDados"];
+      onSetVoiceLanguage?: SettingsSheetBodyParams["handleSelecionarVoiceLanguage"];
+    };
 }
 
 export function buildInspectorRootSettingsSheetProps({
@@ -161,6 +180,16 @@ export function buildInspectorRootSettingsSheetProps({
   const identityRuntimeNote = buildMobileIdentityRuntimeNote(sessionUser);
   const portalContinuationLinks = resolveMobilePortalSwitchLinks(sessionUser);
   const topicosAjudaResumo = buildMobileHelpTopicsSummary(sessionUser);
+  const handleSelecionarRetencaoDados: SettingsSheetBodyParams["handleSelecionarRetencaoDados"] =
+    (value) => {
+      settersState.onSetRetencaoDados(value);
+      actionsState.fecharSheetConfiguracao();
+    };
+  const handleSelecionarVoiceLanguage: SettingsSheetBodyParams["handleSelecionarVoiceLanguage"] =
+    (value) => {
+      settersState.onSetVoiceLanguage?.(value);
+      actionsState.fecharSheetConfiguracao();
+    };
 
   const handleConfirmarSettingsSheet = buildSettingsSheetConfirmAction({
     bugAttachmentDraft: draftState.bugAttachmentDraft,
@@ -258,17 +287,25 @@ export function buildInspectorRootSettingsSheetProps({
     handleSelecionarEstiloResposta: actionsState.handleSelecionarEstiloResposta,
     handleSelecionarIdiomaResposta: actionsState.handleSelecionarIdiomaResposta,
     handleSelecionarModeloIa: actionsState.handleSelecionarModeloIa,
+    handleSelecionarVoiceLanguage,
+    handleSelecionarRetencaoDados,
     handleSelecionarScreenshotBug: actionsState.handleSelecionarScreenshotBug,
     handleSincronizarIntegracaoExterna:
       actionsState.handleSincronizarIntegracaoExterna,
+    handleToggleBackupAutomatico: actionsState.handleToggleBackupAutomatico,
+    handleToggleSincronizacaoDispositivos:
+      actionsState.handleToggleSincronizacaoDispositivos,
     handleToggleUploadArquivos: actionsState.handleToggleUploadArquivos,
     integracaoSincronizandoId: draftState.integracaoSincronizandoId,
     integracoesConectadasTotal: baseState.integracoesConectadasTotal,
     integracoesDisponiveisTotal: baseState.integracoesDisponiveisTotal,
     integracoesExternas: draftState.integracoesExternas,
+    autoUploadAttachments: draftState.autoUploadAttachments,
+    backupAutomatico: draftState.backupAutomatico,
     modeloIa: draftState.modeloIa,
     estiloResposta: draftState.estiloResposta,
     idiomaResposta: draftState.idiomaResposta,
+    voiceLanguage: draftState.voiceLanguage || "Sistema",
     nomeCompletoDraft: draftState.nomeCompletoDraft,
     nomeExibicaoDraft: draftState.nomeExibicaoDraft,
     novaSenhaDraft: draftState.novaSenhaDraft,
@@ -284,6 +321,7 @@ export function buildInspectorRootSettingsSheetProps({
     onSetNovoEmailDraft: settersState.onSetNovoEmailDraft,
     onSetSenhaAtualDraft: settersState.onSetSenhaAtualDraft,
     onSetTelefoneDraft: settersState.onSetTelefoneDraft,
+    onSetWifiOnlySync: settersState.onSetWifiOnlySync,
     perfilFotoHint: accountState.perfilFotoHint,
     perfilFotoUri: accountState.perfilFotoUri,
     planoAtual: accountState.planoAtual,
@@ -298,6 +336,7 @@ export function buildInspectorRootSettingsSheetProps({
     senhaAtualDraft: draftState.senhaAtualDraft,
     sessaoAtual: accountState.sessaoAtual,
     settingsSheet: draftState.settingsSheet,
+    sincronizacaoDispositivos: draftState.sincronizacaoDispositivos,
     statusApi: draftState.statusApi,
     statusAtualizacaoApp: draftState.statusAtualizacaoApp,
     supportChannelLabel: appState.supportChannelLabel,
@@ -306,7 +345,12 @@ export function buildInspectorRootSettingsSheetProps({
       baseState.ultimaVerificacaoAtualizacaoLabel,
     ultimoTicketSuporte: draftState.ultimoTicketSuporte,
     uploadArquivosAtivo: draftState.uploadArquivosAtivo,
+    wifiOnlySync: draftState.wifiOnlySync,
     workspaceLabel: baseState.workspaceResumoConfiguracao,
+    onSetAutoUploadAttachments: settersState.onSetAutoUploadAttachments,
+    onTermosUso: actionsState.onTermosUso,
+    onPoliticaPrivacidade: actionsState.onPoliticaPrivacidade,
+    onLicencas: actionsState.onLicencas,
     onAbrirPortalContinuation: actionsState.onAbrirPortalContinuation,
   });
 

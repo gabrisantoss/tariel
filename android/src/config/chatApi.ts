@@ -269,6 +269,7 @@ export async function enviarMensagemChatMobile(
     textoDocumento?: string;
     nomeDocumento?: string;
     laudoId?: number | null;
+    iniciarLaudo?: boolean;
     modo?: MobileChatMode | string;
     learningOptIn?: boolean;
     tone?: AppSettings["ai"]["tone"] | string;
@@ -296,6 +297,7 @@ export async function enviarMensagemChatMobile(
         texto_documento: payload.textoDocumento || "",
         nome_documento: payload.nomeDocumento || "",
         laudo_id: payload.laudoId ?? undefined,
+        iniciar_laudo: payload.iniciarLaudo === true || undefined,
         learning_opt_in: Boolean(payload.learningOptIn),
         tone: String(payload.tone || "").trim() || undefined,
         guided_inspection_draft: payload.guidedInspectionDraft || undefined,

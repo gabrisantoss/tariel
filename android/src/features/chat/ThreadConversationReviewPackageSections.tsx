@@ -450,7 +450,7 @@ export function ThreadConversationReviewActionsSection(props: {
     canSendMesa
       ? {
           command: "enviar_para_mesa",
-          label: "Enviar para Mesa Avaliadora",
+          label: "Enviar para revisão",
           testID: "mesa-review-action-send",
           tone: "accent" as const,
         }

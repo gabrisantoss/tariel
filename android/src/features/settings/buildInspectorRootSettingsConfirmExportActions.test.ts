@@ -16,6 +16,7 @@ jest.mock("./buildSettingsConfirmAndExportActions", () => ({
 
 import { buildSettingsConfirmAndExportActions } from "./buildSettingsConfirmAndExportActions";
 import { buildInspectorRootSettingsConfirmExportActions } from "./buildInspectorRootSettingsConfirmExportActions";
+import { createDefaultAppSettings } from "../../settings/schema/defaults";
 
 function criarInput() {
   return {
@@ -46,9 +47,30 @@ function criarInput() {
       serializarPayloadExportacao: jest.fn().mockReturnValue("{}"),
     },
     collectionState: {
+      cacheLeitura: {
+        bootstrap: null,
+        laudos: [],
+        conversaAtual: null,
+        conversasPorLaudo: {},
+        mesaPorLaudo: {},
+        guidedInspectionDrafts: {},
+        chatDrafts: {},
+        mesaDrafts: {},
+        chatAttachmentDrafts: {},
+        mesaAttachmentDrafts: {},
+        updatedAt: "",
+      },
+      conversaAtual: null,
       eventosSeguranca: [],
+      filaOffline: [],
+      filaSuporteLocal: [],
+      historicoOcultoIds: [],
       integracoesExternas: [],
       laudosDisponiveis: [],
+      laudosFixadosIds: [],
+      mensagemMesaRascunho: "",
+      mensagemRascunho: "",
+      mensagensMesa: [],
       notificacoes: [],
     },
     draftState: {
@@ -68,6 +90,7 @@ function criarInput() {
       memoriaIa: true,
       mostrarConteudoNotificacao: true,
       mostrarSomenteNovaMensagem: false,
+      settingsDocument: createDefaultAppSettings(),
       notificaPush: true,
       notificaRespostas: true,
       ocultarConteudoBloqueado: false,

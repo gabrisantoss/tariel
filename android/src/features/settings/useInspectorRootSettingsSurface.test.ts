@@ -152,6 +152,9 @@ describe("useInspectorRootSettingsSurface", () => {
               mockOperationsActions.handleAlternarIntegracaoExterna,
             handleRemoverScreenshotBug:
               mockOperationsActions.handleRemoverScreenshotBug,
+            onLicencas: mockEntryActions.handleLicencas,
+            onPoliticaPrivacidade: mockEntryActions.handlePoliticaPrivacidade,
+            onTermosUso: mockEntryActions.handleTermosUso,
           }),
         }),
         drawerState: expect.objectContaining({
@@ -167,11 +170,10 @@ describe("useInspectorRootSettingsSurface", () => {
             handleLimparCache: mockOperationsActions.handleLimparCache,
           }),
           supportAndSystemState: expect.objectContaining({
-            handleAbrirAjustesDoSistema:
-              mockSecurityActions.handleAbrirAjustesDoSistema,
             handleAbrirCanalSuporte:
               mockOperationsActions.handleAbrirCanalSuporte,
             handlePermissoes: mockEntryActions.handlePermissoes,
+            handleReportarProblema: mockEntryActions.handleReportarProblema,
           }),
         }),
       }),

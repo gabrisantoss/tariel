@@ -63,6 +63,7 @@ export function buildThreadComposerPanelProps(
     enviandoMensagem: input.enviandoMensagem,
     enviandoMesa: input.enviandoMesa,
     erroMesa: input.erroMesa,
+    filaOfflineTotal: input.filaOfflineOrdenada.length,
     keyboardVisible: input.keyboardVisible,
     mensagem: input.mensagem,
     mensagemMesa: input.mensagemMesa,
@@ -82,6 +83,7 @@ export function buildThreadComposerPanelProps(
     },
     onLimparReferenciaMesaAtiva: input.limparReferenciaMesaAtiva,
     onReopen: input.handleReabrir,
+    onSincronizarFilaOffline: input.onSincronizarFilaOffline,
     onSetMensagem: input.setMensagem,
     onSetMensagemMesa: input.setMensagemMesa,
     onSetQualityGateReason: input.setQualityGateReason,
@@ -100,6 +102,7 @@ export function buildThreadComposerPanelProps(
     qualityGateSubmitting: input.qualityGateSubmitting,
     qualityGateVisible: input.qualityGateVisible,
     showVoiceInputAction: input.showVoiceInputAction,
+    sincronizandoFilaOffline: input.sincronizandoFilaOffline,
     statusApi: input.statusApi,
     onVoiceInputPress: input.onVoiceInputPress,
     voiceInputEnabled: input.voiceInputEnabled,
@@ -112,11 +115,14 @@ export function buildThreadContextCardProps(
   input: AuthenticatedLayoutInput,
 ): ThreadContextCardPanelProps {
   return {
+    accentColor: input.accentColor,
     actions: input.threadActions,
     chips: input.chipsContextoThread,
     darkMode: input.settingsPrintDarkMode,
     description: input.laudoContextDescription,
     defaultExpanded: input.vendoFinalizacao,
+    densityScale: input.densityScale,
+    fontScale: input.fontScale,
     guidedTemplatesVisible: input.guidedTemplatesVisible,
     eyebrow:
       input.threadContextLayout === "entry_chooser"
@@ -175,7 +181,7 @@ export function buildThreadConversationPaneProps(
     ),
     emptyStateTitle:
       input.guidedInspectionDraft?.templateLabel ||
-      "Olá, sou Tariel, como posso te ajudar?",
+      "Olá, sou Tariel. Como posso te ajudar?",
     enviandoMensagem: input.enviandoMensagem,
     keyboardVisible: input.keyboardVisible,
     mesaDisponivel: input.mesaDisponivel,
@@ -226,10 +232,13 @@ export function buildThreadHeaderControlsProps(
   );
 
   return {
+    accentColor: input.accentColor,
     chatHasActiveCase: Boolean(input.conversaAtiva?.laudoId),
     darkMode: input.settingsPrintDarkMode,
     finalizacaoDisponivel,
     filaOfflineTotal: input.filaOfflineOrdenada.length,
+    densityScale: input.densityScale,
+    fontScale: input.fontScale,
     headerSafeTopInset: input.headerSafeTopInset,
     keyboardVisible: input.keyboardVisible,
     mesaAcessoPermitido: input.mesaAcessoPermitido,

@@ -96,6 +96,9 @@ export function useInspectorRootOperationalControllers({
         conversationControllers.chatController.actions.abrirLaudoPorId,
       carregarConversaAtual:
         conversationControllers.chatController.actions.carregarConversaAtual,
+      carregarConversaPorLaudoId:
+        conversationControllers.chatController.actions
+          .carregarConversaPorLaudoId,
       carregarListaLaudos:
         conversationControllers.chatController.actions.carregarListaLaudos,
       carregarMesaAtual:
@@ -153,6 +156,9 @@ export function useInspectorRootOperationalControllers({
       abaAtiva: bootstrap.localState.abaAtiva,
       carregarConversaAtual:
         conversationControllers.chatController.actions.carregarConversaAtual,
+      carregarConversaPorLaudoId:
+        conversationControllers.chatController.actions
+          .carregarConversaPorLaudoId,
       carregarListaLaudos:
         conversationControllers.chatController.actions.carregarListaLaudos,
       carregarMesaAtual:

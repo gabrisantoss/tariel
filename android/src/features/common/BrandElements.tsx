@@ -1,9 +1,10 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
-import { Animated, Easing, Text, View } from "react-native";
+import { Animated, Easing, Image, Text, View } from "react-native";
 
 import { useAppTranslation } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
+import { TARIEL_APP_MARK } from "../InspectorMobileApp.constants";
 import { styles } from "../InspectorMobileApp.styles";
 
 export function BrandIntroMark({
@@ -27,18 +28,12 @@ export function BrandIntroMark({
           { backgroundColor: `${brandColor}14` },
         ]}
       />
-      <View
-        style={{
-          width: compact ? 14 : 18,
-          height: compact ? 14 : 18,
-          borderRadius: 999,
-          backgroundColor: brandColor,
-          opacity: 0.92,
-        }}
+      <Image
+        resizeMode="cover"
+        source={TARIEL_APP_MARK}
+        style={compact ? styles.brandMarkCompact : styles.threadEmptyBrandMark}
       />
-      {title ? (
-        <Text style={styles.threadEmptyTitle}>{t(title)}</Text>
-      ) : null}
+      {title ? <Text style={styles.threadEmptyTitle}>{t(title)}</Text> : null}
     </View>
   );
 }
@@ -159,21 +154,16 @@ export function BrandLaunchOverlay({
             style={[
               styles.launchOverlayMark,
               {
-                alignItems: "center",
                 backgroundColor: colors.surfacePanelRaised,
                 borderColor: colors.surfaceStrokeStrong,
                 borderWidth: 1,
-                justifyContent: "center",
               },
             ]}
           >
-            <View
-              style={{
-                width: 18,
-                height: 18,
-                borderRadius: 999,
-                backgroundColor: accentColor,
-              }}
+            <Image
+              resizeMode="cover"
+              source={TARIEL_APP_MARK}
+              style={styles.launchOverlayLogo}
             />
           </View>
         </Animated.View>

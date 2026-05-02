@@ -30,6 +30,7 @@ interface AppLockModalProps {
 interface SettingsSheetModalProps {
   visible: boolean;
   settingsSheet: SettingsSheetState | null;
+  settingsSheetCanGoBack: boolean;
   settingsSheetLoading: boolean;
   settingsSheetNotice: string;
   renderSettingsSheetBody: () => ReactNode;
@@ -142,6 +143,7 @@ export function AppLockModal({
 export function SettingsSheetModal({
   visible,
   settingsSheet,
+  settingsSheetCanGoBack,
   settingsSheetLoading,
   settingsSheetNotice,
   renderSettingsSheetBody,
@@ -184,7 +186,7 @@ export function SettingsSheetModal({
                 testID="settings-sheet-close-button"
               >
                 <MaterialCommunityIcons
-                  name="close"
+                  name={settingsSheetCanGoBack ? "chevron-left" : "close"}
                   size={18}
                   color={colors.textPrimary}
                 />
@@ -222,7 +224,7 @@ export function SettingsSheetModal({
                 testID="settings-sheet-footer-close-button"
               >
                 <Text style={styles.settingsSheetGhostButtonText}>
-                  {t("Fechar")}
+                  {t(settingsSheetCanGoBack ? "Voltar" : "Fechar")}
                 </Text>
               </Pressable>
               {settingsSheet?.actionLabel ? (

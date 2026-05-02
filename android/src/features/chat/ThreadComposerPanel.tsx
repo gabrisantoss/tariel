@@ -40,6 +40,9 @@ export interface ThreadComposerPanelProps {
   keyboardVisible: boolean;
   canReopen: boolean;
   onReopen: () => void;
+  filaOfflineTotal?: number;
+  sincronizandoFilaOffline?: boolean;
+  onSincronizarFilaOffline?: () => void;
   qualityGateVisible: boolean;
   qualityGateLoading: boolean;
   qualityGateSubmitting: boolean;
@@ -114,13 +117,16 @@ function AttachmentDraftCard({
           />
         ) : (
           <View
-            style={styles.attachmentDraftIcon}
+            style={[
+              styles.attachmentDraftIcon,
+              darkMode ? styles.attachmentDraftIconDark : null,
+            ]}
             testID={`${baseTestId}-kind-document`}
           >
             <MaterialCommunityIcons
               name="file-document-outline"
               size={18}
-              color={colors.accent}
+              color={darkMode ? "#AFC0D2" : colors.textSecondary}
             />
           </View>
         )}
@@ -169,6 +175,9 @@ export function ThreadComposerPanel({
   keyboardVisible,
   canReopen,
   onReopen,
+  filaOfflineTotal = 0,
+  sincronizandoFilaOffline = false,
+  onSincronizarFilaOffline,
   qualityGateVisible,
   qualityGateLoading,
   qualityGateSubmitting,
@@ -220,9 +229,11 @@ export function ThreadComposerPanel({
   const showComposerHeader =
     vendoMesa && (!podeUsarComposerMesa || Boolean(composerNotice));
   const showInlineComposerNotice = Boolean(!vendoMesa && composerNotice);
+  const showOfflineQueueAction =
+    filaOfflineTotal > 0 && Boolean(onSincronizarFilaOffline);
   const composerTitle = podeUsarComposerMesa
-    ? t("Responder à mesa")
-    : t("Mesa em leitura");
+    ? t("Responder à revisão")
+    : t("Revisão em leitura");
   const composerStatusLabel = vendoMesa
     ? podeUsarComposerMesa
       ? t("Resposta liberada")
@@ -279,8 +290,31 @@ export function ThreadComposerPanel({
         </View>
       ) : null}
 
-      {canReopen || showInlineComposerNotice ? (
+      {canReopen || showInlineComposerNotice || showOfflineQueueAction ? (
         <View style={styles.composerMiniActions}>
+          {showOfflineQueueAction ? (
+            <Pressable
+              accessibilityLabel={t("Sincronizar fila offline")}
+              accessibilityState={{ disabled: sincronizandoFilaOffline }}
+              hitSlop={8}
+              onPress={() => {
+                if (sincronizandoFilaOffline) {
+                  return;
+                }
+                onSincronizarFilaOffline?.();
+              }}
+              style={[
+                styles.composerMiniAction,
+                darkMode ? styles.composerMiniActionDark : null,
+                sincronizandoFilaOffline
+                  ? styles.composerMiniActionDisabled
+                  : null,
+              ]}
+              testID="chat-composer-offline-sync-emoji"
+            >
+              <Text style={styles.composerMiniActionEmoji}>🔁</Text>
+            </Pressable>
+          ) : null}
           {canReopen ? (
             <Pressable
               accessibilityLabel={t("Reabrir laudo")}
@@ -295,7 +329,7 @@ export function ThreadComposerPanel({
               <MaterialCommunityIcons
                 name="history"
                 size={14}
-                color={colors.accent}
+                color={accentColor}
               />
             </Pressable>
           ) : null}
@@ -363,16 +397,19 @@ export function ThreadComposerPanel({
           ) : null}
 
           {anexoMesaRascunho ? (
-              <AttachmentDraftCard
-                attachment={anexoMesaRascunho}
-                darkMode={darkMode}
-                scope="mesa"
+            <AttachmentDraftCard
+              attachment={anexoMesaRascunho}
+              darkMode={darkMode}
+              scope="mesa"
               onRemove={onClearAnexoMesaRascunho}
             />
           ) : null}
 
           <View
-            style={[styles.composerRow, darkMode ? styles.composerRowDark : null]}
+            style={[
+              styles.composerRow,
+              darkMode ? styles.composerRowDark : null,
+            ]}
           >
             <Pressable
               accessibilityState={{ disabled: !podeAbrirAnexosMesa }}
@@ -470,7 +507,10 @@ export function ThreadComposerPanel({
           ) : null}
 
           <View
-            style={[styles.composerRow, darkMode ? styles.composerRowDark : null]}
+            style={[
+              styles.composerRow,
+              darkMode ? styles.composerRowDark : null,
+            ]}
           >
             <Pressable
               accessibilityState={{ disabled: !podeAbrirAnexosChat }}

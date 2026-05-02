@@ -1,5 +1,5 @@
 import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
-import { Alert, AppState, type AppStateStatus, Linking } from "react-native";
+import { Alert, Linking } from "react-native";
 
 import type { SettingsLockTimeout } from "../../settings";
 import {
@@ -49,8 +49,6 @@ interface UseAppLockControllerParams {
 export function useAppLockController(params: UseAppLockControllerParams) {
   const paramsRef = useRef(params);
   paramsRef.current = params;
-  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
-  const backgroundAtRef = useRef<number | null>(null);
 
   async function atualizarPermissoesDoSistema() {
     const snapshot = await readDevicePermissionSnapshot();
@@ -134,26 +132,11 @@ export function useAppLockController(params: UseAppLockControllerParams) {
   }
 
   function handleDesbloquearAplicativo() {
-    const current = paramsRef.current;
-    if (!current.session) {
-      current.setAppLocked(false);
-      return;
-    }
+    paramsRef.current.setAppLocked(false);
+  }
 
-    if (
-      !current.requireAuthOnOpen ||
-      current.isReauthenticationStillValid(current.reauthenticationExpiresAt)
-    ) {
-      current.setAppLocked(false);
-      return;
-    }
-
-    current.openReauthFlow(
-      "Confirme sua identidade para desbloquear o app do inspetor.",
-      () => {
-        current.setAppLocked(false);
-      },
-    );
+  function setBloqueioAppAtivoDesativado(_value: SetStateAction<boolean>) {
+    paramsRef.current.setAppLocked(false);
   }
 
   useEffect(() => {
@@ -164,60 +147,10 @@ export function useAppLockController(params: UseAppLockControllerParams) {
   }, [params.settingsHydrated]);
 
   useEffect(() => {
-    if (!params.session) {
+    if (params.appLocked) {
       params.setAppLocked(false);
-      return;
     }
-
-    const subscription = AppState.addEventListener("change", (nextState) => {
-      const current = paramsRef.current;
-      const estadoAtual = appStateRef.current;
-      appStateRef.current = nextState;
-
-      if (nextState === "background" || nextState === "inactive") {
-        backgroundAtRef.current = Date.now();
-        return;
-      }
-
-      if (nextState !== "active" || estadoAtual === "active") {
-        return;
-      }
-
-      void atualizarPermissoesDoSistema();
-
-      if (!current.requireAuthOnOpen) {
-        current.setAppLocked(false);
-        return;
-      }
-
-      const timeoutMs = current.resolveLockTimeoutMs(current.lockTimeout);
-      if (timeoutMs === null) {
-        current.setAppLocked(false);
-        return;
-      }
-
-      const tempoFora = backgroundAtRef.current
-        ? Date.now() - backgroundAtRef.current
-        : Number.POSITIVE_INFINITY;
-      if (timeoutMs > 0 && tempoFora < timeoutMs) {
-        return;
-      }
-
-      if (
-        current.deviceBiometricsEnabled &&
-        current.isReauthenticationStillValid(current.reauthenticationExpiresAt)
-      ) {
-        current.setAppLocked(false);
-        return;
-      }
-
-      current.setAppLocked(true);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [params.session]);
+  }, [params.appLocked, params.setAppLocked]);
 
   useEffect(() => {
     if (params.notificationsPermissionGranted || !params.pushEnabled) {
@@ -265,14 +198,14 @@ export function useAppLockController(params: UseAppLockControllerParams) {
 
   return {
     state: {
-      bloqueioAppAtivo: params.appLocked,
+      bloqueioAppAtivo: false,
     },
     actions: {
       atualizarPermissoesDoSistema,
       handleAbrirPermissaoNotificacoes,
       handleDesbloquearAplicativo,
       handleGerenciarPermissao,
-      setBloqueioAppAtivo: params.setAppLocked,
+      setBloqueioAppAtivo: setBloqueioAppAtivoDesativado,
     },
   };
 }

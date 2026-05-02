@@ -55,6 +55,18 @@ function normalizeOption<T extends readonly string[]>(
     : fallback;
 }
 
+function normalizeAccentColor(
+  value: unknown,
+  fallback: AppSettings["appearance"]["accentColor"],
+  migrateLegacyOrangeDefault = false,
+): AppSettings["appearance"]["accentColor"] {
+  if (migrateLegacyOrangeDefault && value === "laranja") {
+    return "padrão";
+  }
+
+  return normalizeOption(value, ACCENT_OPTIONS, fallback);
+}
+
 function normalizeTemperature(value: unknown, fallback: number): number {
   if (typeof value !== "number" || Number.isNaN(value)) {
     return fallback;
@@ -69,7 +81,10 @@ function normalizeSpeechRate(value: unknown, fallback: number): number {
   return Math.max(0.5, Math.min(1.5, Number(value)));
 }
 
-function normalizeSettings(input: unknown): AppSettings {
+function normalizeSettings(
+  input: unknown,
+  options: { migrateLegacyOrangeDefault?: boolean } = {},
+): AppSettings {
   const fallback = createDefaultAppSettings();
   if (!isRecord(input)) {
     return fallback;
@@ -110,10 +125,10 @@ function normalizeSettings(input: unknown): AppSettings {
         FONT_SIZE_OPTIONS,
         fallback.appearance.fontScale,
       ),
-      accentColor: normalizeOption(
+      accentColor: normalizeAccentColor(
         appearance.accentColor,
-        ACCENT_OPTIONS,
         fallback.appearance.accentColor,
+        options.migrateLegacyOrangeDefault,
       ),
       animationsEnabled: normalizeBoolean(
         appearance.animationsEnabled,
@@ -378,10 +393,10 @@ function migrateLegacySettings(input: Record<string, unknown>): AppSettings {
         FONT_SIZE_OPTIONS,
         defaults.appearance.fontScale,
       ),
-      accentColor: normalizeOption(
+      accentColor: normalizeAccentColor(
         input.corDestaque,
-        ACCENT_OPTIONS,
         defaults.appearance.accentColor,
+        true,
       ),
       animationsEnabled: normalizeBoolean(
         input.animacoesAtivas,
@@ -593,11 +608,15 @@ export function migrateSettingsDocument(
     return baseDocument;
   }
 
-  if (raw.schemaVersion === SETTINGS_SCHEMA_VERSION) {
+  if (isRecord(raw.settings)) {
+    const rawSchemaVersion =
+      typeof raw.schemaVersion === "number" ? raw.schemaVersion : 0;
     return {
       schemaVersion: SETTINGS_SCHEMA_VERSION,
       updatedAt: normalizeString(raw.updatedAt, baseDocument.updatedAt),
-      settings: normalizeSettings(raw.settings),
+      settings: normalizeSettings(raw.settings, {
+        migrateLegacyOrangeDefault: rawSchemaVersion < 3,
+      }),
     };
   }
 

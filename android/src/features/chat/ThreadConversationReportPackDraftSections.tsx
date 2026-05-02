@@ -333,9 +333,9 @@ export function ThreadConversationReportPackActionsSection(props: {
     <View style={styles.threadReviewActionsRail}>
       <Text style={styles.threadReviewFootnote}>
         {showOpenMesaAction && showFinalizeAction
-          ? "Próxima ação: abrir a Mesa Avaliadora para decisão humana rastreável. O quality gate fica como ação secundária."
+          ? "Próxima ação: abrir a revisão para decisão humana rastreável. O quality gate fica como ação secundária."
           : showOpenMesaAction
-            ? "Próxima ação: abrir a Mesa Avaliadora para decisão humana rastreável."
+            ? "Próxima ação: abrir a revisão para decisão humana rastreável."
             : "Próxima ação: validar no quality gate para seguir com o fechamento."}
       </Text>
       {showFinalizeAction ? (
@@ -376,7 +376,7 @@ export function ThreadConversationReportPackActionsSection(props: {
               styles.threadReviewActionButtonTextDanger,
             ]}
           >
-            Abrir Mesa Avaliadora
+            Abrir Revisão
           </Text>
         </Pressable>
       ) : null}

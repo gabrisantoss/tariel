@@ -6,17 +6,9 @@ import { useAppTranslation, type AppLocale } from "../../i18n/appTranslation";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 import {
-  resolverAllowedSurfaceActions,
-  resolverAllowedLifecycleTransitions,
   resolverCaseLifecycleStatus,
-  resolverCaseOwnerRole,
-  resumirCaseSurfaceActions,
-  targetThreadCaseLifecycle,
   rotuloCaseLifecycle,
-  rotuloCaseOwnerRole,
 } from "../chat/caseLifecycle";
-import { buildReportPackDraftSummary } from "../chat/reportPackHelpers";
-import { reasonLabelForInspectionEntryMode } from "../inspection/inspectionEntryMode";
 import type { HistoryDrawerPanelItem } from "./historyDrawerTypes";
 
 const HISTORY_DELETE_SWIPE_TRIGGER = 112;
@@ -50,17 +42,6 @@ function formatarResumoDataHistorico(dataIso: string, locale: AppLocale) {
   }
 }
 
-function formatHistoryEntryModeLabel(value?: string): string {
-  switch (value) {
-    case "evidence_first":
-      return "Coleta guiada";
-    case "chat_first":
-      return "Chat livre";
-    default:
-      return "";
-  }
-}
-
 function resolverTomBadgeHistorico(lifecycleStatus: string): HistoryBadgeTone {
   if (lifecycleStatus === "emitido" || lifecycleStatus === "aprovado") {
     return "success";
@@ -70,75 +51,7 @@ function resolverTomBadgeHistorico(lifecycleStatus: string): HistoryBadgeTone {
     return "danger";
   }
 
-  if (
-    lifecycleStatus === "pre_laudo" ||
-    lifecycleStatus === "laudo_em_coleta" ||
-    lifecycleStatus === "aguardando_mesa" ||
-    lifecycleStatus === "em_revisao_mesa"
-  ) {
-    return "accent";
-  }
-
   return "neutral";
-}
-
-function formatReportPackMeta(
-  reportPackSummary: ReturnType<typeof buildReportPackDraftSummary>,
-): string {
-  if (!reportPackSummary) {
-    return "";
-  }
-
-  const statusSummary =
-    reportPackSummary.pendingBlocks > 0
-      ? `${reportPackSummary.pendingBlocks} bloqueio${reportPackSummary.pendingBlocks === 1 ? "" : "s"}`
-      : reportPackSummary.attentionBlocks > 0
-        ? `${reportPackSummary.attentionBlocks} em revisão`
-        : reportPackSummary.totalBlocks > 0
-          ? `${reportPackSummary.readyBlocks}/${reportPackSummary.totalBlocks} blocos`
-          : "";
-
-  return [reportPackSummary.readinessLabel, statusSummary]
-    .filter(Boolean)
-    .join(" · ");
-}
-
-function resumirRotaSugeridaHistorico(params: {
-  lifecycleStatus: string;
-  ownerRole: string;
-  transitions: ReturnType<typeof resolverAllowedLifecycleTransitions>;
-  allowedSurfaceActions: ReturnType<typeof resolverAllowedSurfaceActions>;
-}): string {
-  if (
-    params.allowedSurfaceActions.includes("mesa_approve") ||
-    params.allowedSurfaceActions.includes("mesa_return")
-  ) {
-    return "Tratar na mesa";
-  }
-  const preferredTransition = params.transitions[0] || null;
-  if (preferredTransition?.preferred_surface === "mesa") {
-    return "Abrir mesa";
-  }
-  if (preferredTransition?.preferred_surface === "chat") {
-    return "Retomar chat";
-  }
-  if (preferredTransition?.preferred_surface === "mobile") {
-    return "Abrir finalizar";
-  }
-  if (params.allowedSurfaceActions.includes("chat_finalize")) {
-    return "Validar em finalizar";
-  }
-  if (params.allowedSurfaceActions.includes("chat_reopen")) {
-    return "Reabrir no chat";
-  }
-  if (params.allowedSurfaceActions.includes("system_issue")) {
-    return "Emitir documento";
-  }
-  return targetThreadCaseLifecycle(params.lifecycleStatus as any) === "mesa"
-    ? "Acompanhar mesa"
-    : params.ownerRole === "none"
-      ? "Acompanhar emissão"
-      : "Retomar coleta";
 }
 
 export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
@@ -213,112 +126,9 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
     tipo_template: item.tipo_template || undefined,
   };
   const lifecycleStatus = resolverCaseLifecycleStatus({ card: cardAdapter });
-  const ownerRole = resolverCaseOwnerRole({
-    card: cardAdapter,
-    lifecycleStatus,
-  });
-  const allowedSurfaceActions = resolverAllowedSurfaceActions({
-    card: cardAdapter,
-    lifecycleStatus,
-    ownerRole,
-  });
-  const allowedLifecycleTransitions = resolverAllowedLifecycleTransitions({
-    card: cardAdapter,
-    lifecycleStatus,
-  });
-  const metaResumo = [
-    rotuloCaseOwnerRole(ownerRole),
-    resumirCaseSurfaceActions(allowedSurfaceActions, 1),
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  const reportPackSummary = buildReportPackDraftSummary(item.report_pack_draft);
-  const reportPackMeta = formatReportPackMeta(reportPackSummary);
-  const prontoParaValidar =
-    Boolean(reportPackSummary?.autonomyReady) ||
-    Boolean(reportPackSummary?.readyForStructuredForm);
-  const officialIssueSummary = item.official_issue_summary;
-  const governanceMeta = officialIssueSummary
-    ? [officialIssueSummary.label, officialIssueSummary.detail]
-        .filter(Boolean)
-        .join(" · ")
-    : "";
-  const inspectionContextMeta = reportPackSummary?.inspectionContextLabel || "";
-  const entryModeLabel = formatHistoryEntryModeLabel(item.entry_mode_effective);
-  const entryModeReason = item.entry_mode_reason?.trim()
-    ? reasonLabelForInspectionEntryMode(item.entry_mode_reason)
-    : "";
-  const entryModeMeta = [entryModeLabel, entryModeReason]
-    .filter(Boolean)
-    .join(" · ");
-  const ownerLabel = rotuloCaseOwnerRole(ownerRole);
-  const routeSuggestion = resumirRotaSugeridaHistorico({
-    lifecycleStatus,
-    ownerRole,
-    transitions: allowedLifecycleTransitions,
-    allowedSurfaceActions,
-  });
-  const detailPills = [
-    ownerLabel
-      ? {
-          key: "owner",
-          label: `Responsável · ${ownerLabel}`,
-          testID: `history-item-owner-${item.id}`,
-        }
-      : null,
-    routeSuggestion
-      ? {
-          key: "route",
-          label: `Rota · ${routeSuggestion}`,
-          testID: `history-item-route-${item.id}`,
-        }
-      : null,
-    metaResumo
-      ? {
-          key: "operation",
-          label: `Operacao · ${metaResumo}`,
-          testID: `history-item-meta-${item.id}`,
-        }
-      : null,
-    entryModeMeta
-      ? {
-          key: "entry-mode",
-          label: `Entrada · ${entryModeMeta}`,
-          testID: `history-item-entry-mode-${item.id}`,
-        }
-      : null,
-    reportPackMeta
-      ? {
-          key: "report-pack",
-          label: `Pacote · ${reportPackMeta}`,
-          testID: `history-item-report-pack-${item.id}`,
-        }
-      : null,
-    governanceMeta
-      ? {
-          key: "governance",
-          label: `Governanca · ${governanceMeta}`,
-          testID: `history-item-governance-${item.id}`,
-        }
-      : null,
-    inspectionContextMeta
-      ? {
-          key: "context",
-          label: `Contexto · ${inspectionContextMeta}`,
-          testID: `history-item-context-${item.id}`,
-        }
-      : null,
-  ].filter((value): value is { key: string; label: string; testID: string } =>
-    Boolean(value),
-  );
   const badgeStatusLabel =
     item.status_card_label?.trim() || rotuloCaseLifecycle(lifecycleStatus);
   const badgeStatusTone = resolverTomBadgeHistorico(lifecycleStatus);
-  const badgeTemplateLabel = item.tipo_template
-    ? `Template ${item.tipo_template}`
-    : lifecycleStatus === "analise_livre"
-      ? "Chat livre"
-      : "Sem template";
   const badgeDateLabel = formatarResumoDataHistorico(item.data_iso, locale);
   const accentBarStyle =
     badgeStatusTone === "accent"
@@ -394,7 +204,9 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                     styles.historyItemTitle,
                     darkMode ? styles.historyItemTitleDark : null,
                     ativo ? styles.historyItemTitleActive : null,
-                    ativo && darkMode ? styles.historyItemTitleActiveDark : null,
+                    ativo && darkMode
+                      ? styles.historyItemTitleActiveDark
+                      : null,
                   ]}
                 >
                   {item.titulo}
@@ -403,12 +215,16 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                   <MaterialCommunityIcons
                     name="pin"
                     size={14}
-                    color={ativo ? "rgba(255,255,255,0.78)" : colors.accent}
+                    color={
+                      ativo || darkMode
+                        ? "rgba(255,255,255,0.78)"
+                        : colors.textSecondary
+                    }
                   />
                 ) : null}
               </View>
               <Text
-                numberOfLines={2}
+                numberOfLines={1}
                 style={[
                   styles.historyItemPreview,
                   darkMode ? styles.historyItemPreviewDark : null,
@@ -430,7 +246,9 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                           : null,
                     darkMode ? styles.historyItemBadgeDark : null,
                     ativo ? styles.historyItemBadgeActive : null,
-                    ativo && darkMode ? styles.historyItemBadgeActiveDark : null,
+                    ativo && darkMode
+                      ? styles.historyItemBadgeActiveDark
+                      : null,
                   ]}
                 >
                   <Text
@@ -453,62 +271,6 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                 <View
                   style={[
                     styles.historyItemBadge,
-                    prontoParaValidar ? styles.historyItemBadgeSuccess : null,
-                    darkMode ? styles.historyItemBadgeDark : null,
-                    ativo && prontoParaValidar
-                      ? styles.historyItemBadgeMutedActive
-                      : null,
-                    ativo ? styles.historyItemBadgeMutedActive : null,
-                    ativo && darkMode
-                      ? styles.historyItemBadgeMutedActiveDark
-                      : null,
-                  ]}
-                  testID={
-                    prontoParaValidar
-                      ? `history-item-validation-badge-${item.id}`
-                      : undefined
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.historyItemBadgeText,
-                      darkMode ? styles.historyItemBadgeTextDark : null,
-                      prontoParaValidar
-                        ? styles.historyItemBadgeTextSuccess
-                        : null,
-                      ativo ? styles.historyItemBadgeTextActive : null,
-                    ]}
-                  >
-                    {prontoParaValidar
-                      ? t("Pronto para validar")
-                      : t(badgeTemplateLabel)}
-                  </Text>
-                </View>
-                {!prontoParaValidar ? null : (
-                  <View
-                    style={[
-                      styles.historyItemBadge,
-                      darkMode ? styles.historyItemBadgeDark : null,
-                      ativo ? styles.historyItemBadgeMutedActive : null,
-                      ativo && darkMode
-                        ? styles.historyItemBadgeMutedActiveDark
-                        : null,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.historyItemBadgeText,
-                        darkMode ? styles.historyItemBadgeTextDark : null,
-                        ativo ? styles.historyItemBadgeTextActive : null,
-                      ]}
-                    >
-                      {t(badgeTemplateLabel)}
-                    </Text>
-                  </View>
-                )}
-                <View
-                  style={[
-                    styles.historyItemBadge,
                     darkMode ? styles.historyItemBadgeDark : null,
                     ativo ? styles.historyItemBadgeMutedActive : null,
                     ativo && darkMode
@@ -527,35 +289,6 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
                   </Text>
                 </View>
               </View>
-              {detailPills.length ? (
-                <View style={styles.historyItemDetailRail}>
-                  {detailPills.map((detail) => (
-                    <View
-                      key={detail.key}
-                      style={[
-                        styles.historyItemDetailPill,
-                        darkMode ? styles.historyItemDetailPillDark : null,
-                        ativo ? styles.historyItemDetailPillActive : null,
-                        ativo && darkMode
-                          ? styles.historyItemDetailPillActiveDark
-                          : null,
-                      ]}
-                    >
-                      <Text
-                        numberOfLines={2}
-                        style={[
-                          styles.historyItemDetailPillText,
-                          darkMode ? styles.historyItemDetailPillTextDark : null,
-                          ativo ? styles.historyItemDetailPillTextActive : null,
-                        ]}
-                        testID={detail.testID}
-                      >
-                        {t(detail.label)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
             </View>
           </View>
           <View
@@ -563,14 +296,18 @@ export function HistoryDrawerListItem<TItem extends HistoryDrawerPanelItem>({
               styles.historyItemChevronBadge,
               darkMode ? styles.historyItemChevronBadgeDark : null,
               ativo ? styles.historyItemChevronBadgeActive : null,
-              ativo && darkMode ? styles.historyItemChevronBadgeActiveDark : null,
+              ativo && darkMode
+                ? styles.historyItemChevronBadgeActiveDark
+                : null,
             ]}
           >
             <MaterialCommunityIcons
               name="chevron-right"
               size={18}
               color={
-                ativo || darkMode ? "rgba(255,255,255,0.78)" : colors.textSecondary
+                ativo || darkMode
+                  ? "rgba(255,255,255,0.78)"
+                  : colors.textSecondary
               }
             />
           </View>

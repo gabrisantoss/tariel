@@ -62,10 +62,19 @@ export function buildInspectorRootSettingsConfirmExportState({
       serializarPayloadExportacao,
     },
     collectionState: {
+      cacheLeitura: localState.cacheLeitura,
+      conversaAtual: localState.conversa,
       eventosSeguranca: settingsSupportState.presentationState.eventosSeguranca,
+      filaOffline: localState.filaOffline,
+      filaSuporteLocal: settingsSupportState.presentationState.filaSuporteLocal,
+      historicoOcultoIds: localState.historicoOcultoIds,
       integracoesExternas:
         settingsSupportState.presentationState.integracoesExternas,
       laudosDisponiveis: localState.laudosDisponiveis,
+      laudosFixadosIds: localState.laudosFixadosIds,
+      mensagemMesaRascunho: localState.mensagemMesa,
+      mensagemRascunho: localState.mensagem,
+      mensagensMesa: localState.mensagensMesa,
       notificacoes: localState.notificacoes,
     },
     draftState: {
@@ -88,6 +97,7 @@ export function buildInspectorRootSettingsConfirmExportState({
         settingsBindings.notifications.mostrarConteudoNotificacao,
       mostrarSomenteNovaMensagem:
         settingsBindings.notifications.mostrarSomenteNovaMensagem,
+      settingsDocument: settingsBindings.store.settingsState,
       notificaPush: settingsBindings.notifications.notificaPush,
       notificaRespostas: settingsBindings.notifications.notificaRespostas,
       ocultarConteudoBloqueado:

@@ -122,7 +122,7 @@ export function resumirIntegridadePdfOficial(
       ? "Reemissão recomendada"
       : "";
   const summary = diverged
-    ? "O PDF operacional atual divergiu do documento congelado na emissão oficial."
+    ? "A versão atual divergiu do documento congelado na emissão oficial."
     : reissueRecommended
       ? "A emissão segue registrada, mas a governança recomenda gerar um novo pacote antes da próxima entrega pública."
       : "";

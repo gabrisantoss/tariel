@@ -40,7 +40,7 @@ function adicionarAcoesModoGuiado(
   ) {
     threadActions.push({
       key: "guided-open-mesa",
-      label: "Abrir Mesa",
+      label: "Abrir Revisão",
       tone: "danger" as const,
       icon: "clipboard-alert-outline" as const,
       onPress: params.onOpenMesaTab,
@@ -104,7 +104,7 @@ export function buildThreadContextActions(params: {
       params.reportPackSummary?.finalValidationMode === "mesa_required")
       ? {
           key: "finalization-open-mesa",
-          label: "Abrir Mesa",
+          label: "Abrir Revisão",
           tone: "danger" as const,
           icon: "clipboard-alert-outline" as const,
           onPress: params.onOpenMesaTab,
@@ -132,23 +132,29 @@ export function buildThreadContextActions(params: {
       threadActions.push({
         key: "chat-free-start",
         label: "Chat livre",
-        tone: "success" as const,
+        tone: "accent" as const,
         icon: "message-processing-outline" as const,
         onPress: params.onStartFreeChat,
         testID: "free-chat-start-button",
       });
-      listGuidedInspectionTemplates().forEach((template) => {
-        threadActions.push({
-          key: `guided-template-${template.key}`,
-          label: template.label,
-          tone: "accent" as const,
-          icon: guidedInspectionIconForTemplate(template.key),
-          onPress: () => {
-            params.onStartGuidedInspection(template.key);
-          },
-          testID: `guided-inspection-template-${template.key}-button`,
+      listGuidedInspectionTemplates()
+        .filter(
+          (template) =>
+            template.key !== "padrao" &&
+            /\bNR\d+[A-Z]?\b/i.test(template.label),
+        )
+        .forEach((template) => {
+          threadActions.push({
+            key: `guided-template-${template.key}`,
+            label: template.label,
+            tone: "accent" as const,
+            icon: guidedInspectionIconForTemplate(template.key),
+            onPress: () => {
+              params.onStartGuidedInspection(template.key);
+            },
+            testID: `guided-inspection-template-${template.key}-button`,
+          });
         });
-      });
     }
   } else if (
     !params.vendoMesa &&

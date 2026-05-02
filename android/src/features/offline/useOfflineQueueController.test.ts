@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react-native";
+import { act, renderHook, waitFor } from "@testing-library/react-native";
 
 import {
   enviarMensagemChatMobile,
@@ -125,6 +125,7 @@ function criarParams(
     saveQueueLocally: jest.fn().mockResolvedValue(undefined),
     carregarListaLaudos: jest.fn().mockResolvedValue([]),
     carregarConversaAtual: jest.fn().mockResolvedValue(criarConversa()),
+    carregarConversaPorLaudoId: jest.fn().mockResolvedValue(criarConversa()),
     abrirLaudoPorId: jest.fn().mockResolvedValue(undefined),
     handleSelecionarLaudo: jest.fn().mockResolvedValue(undefined),
     carregarMesaAtual: jest.fn().mockResolvedValue(undefined),
@@ -304,10 +305,12 @@ describe("useOfflineQueueController", () => {
     });
 
     expect(params.carregarListaLaudos).toHaveBeenCalledWith("token-123", true);
-    expect(params.carregarConversaAtual).toHaveBeenCalledWith(
+    expect(params.carregarConversaPorLaudoId).toHaveBeenCalledWith(
       "token-123",
+      21,
       true,
     );
+    expect(params.carregarConversaAtual).not.toHaveBeenCalled();
 
     const removerUpdater = (params.setOfflineQueue as jest.Mock).mock
       .calls[1]?.[0] as
@@ -318,6 +321,43 @@ describe("useOfflineQueueController", () => {
       expect.objectContaining({
         kind: "offline_queue",
         ok: true,
+      }),
+    );
+  });
+
+  it("nao puxa conversa antiga ao sincronizar item sem laudo e sem id retornado", async () => {
+    (canSyncOnCurrentNetwork as jest.Mock).mockResolvedValue(true);
+    (enviarMensagemChatMobile as jest.Mock).mockResolvedValue({
+      laudoId: null,
+    });
+
+    const item = criarPendencia({
+      laudoId: null,
+      title: "Novo chat offline",
+    });
+    const params = criarParams({
+      conversation: {
+        ...criarConversa(),
+        laudoId: null,
+        mensagens: [],
+      },
+      offlineQueue: [item],
+    });
+
+    const { result } = renderHook(() => useOfflineQueueController(params));
+
+    await act(async () => {
+      await result.current.actions.sincronizarItemFilaOffline(item);
+    });
+
+    expect(params.carregarListaLaudos).toHaveBeenCalledWith("token-123", true);
+    expect(params.carregarConversaPorLaudoId).not.toHaveBeenCalled();
+    expect(params.carregarConversaAtual).not.toHaveBeenCalled();
+    expect(enviarMensagemChatMobile).toHaveBeenCalledWith(
+      "token-123",
+      expect.objectContaining({
+        iniciarLaudo: true,
+        laudoId: null,
       }),
     );
   });
@@ -418,5 +458,51 @@ describe("useOfflineQueueController", () => {
       null,
       "mesa:offline:1",
     );
+  });
+
+  it("retoma sincronizacao automatica quando a restricao de Wi-Fi e liberada", async () => {
+    (canSyncOnCurrentNetwork as jest.Mock)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValue(true);
+    (enviarMensagemChatMobile as jest.Mock).mockResolvedValue({
+      laudoId: 21,
+    });
+
+    const item = criarPendencia();
+    const params = criarParams({
+      offlineQueue: [item],
+      sessionLoading: false,
+      statusApi: "online",
+      wifiOnlySync: true,
+    });
+
+    const { rerender } = renderHook<
+      ReturnType<
+        typeof useOfflineQueueController<ChatState, OfflinePendingMessage>
+      >,
+      { currentParams: ReturnType<typeof criarParams> }
+    >(({ currentParams }) => useOfflineQueueController(currentParams), {
+      initialProps: {
+        currentParams: params,
+      },
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(enviarMensagemChatMobile).not.toHaveBeenCalled();
+
+    rerender({
+      currentParams: {
+        ...params,
+        wifiOnlySync: false,
+      },
+    });
+
+    await waitFor(() => {
+      expect(enviarMensagemChatMobile).toHaveBeenCalled();
+    });
+    expect(canSyncOnCurrentNetwork).toHaveBeenLastCalledWith(false);
   });
 });

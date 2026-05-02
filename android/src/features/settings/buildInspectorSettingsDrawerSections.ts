@@ -33,22 +33,15 @@ export function buildInspectorAdvancedResourcesSectionProps(
     input.advancedResourcesSectionProps || {
       speechEnabled: input.speechEnabled,
       entradaPorVoz: input.entradaPorVoz,
-      microfonePermitido: input.microfonePermitido,
-      onAbrirAjudaDitado: input.handleAbrirAjudaDitado,
-      onAbrirAjustesDoSistema: () =>
-        input.handleAbrirAjustesDoSistema(
-          "recursos de voz, acessibilidade e permissões de áudio",
-        ),
+      onAbrirMenuIdiomaVoz: input.handleAbrirMenuIdiomaVoz,
       onCyclePreferredVoice: input.onCyclePreferredVoice,
       onSetSpeechRate: input.setSpeechRate,
-      onSetVoiceLanguage: input.setVoiceLanguage,
       onToggleSpeechEnabled: input.handleToggleSpeechEnabled,
       onToggleEntradaPorVoz: input.handleToggleEntradaPorVoz,
       onToggleRespostaPorVoz: input.handleToggleRespostaPorVoz,
       preferredVoiceLabel: input.preferredVoiceLabel,
       respostaPorVoz: input.respostaPorVoz,
       speechRate: input.speechRate,
-      sttSupported: input.sttSupported,
       ttsSupported: input.ttsSupported,
       voiceLanguage: input.voiceLanguage,
     }
@@ -80,13 +73,17 @@ export function buildInspectorExperienceSectionProps(
       animacoesAtivas: input.animacoesAtivas,
       corDestaque: input.corDestaque,
       densidadeInterface: input.densidadeInterface,
+      economiaDados: input.economiaDados,
       onSetAnimacoesAtivas: input.setAnimacoesAtivas,
       onSetCorDestaque: input.setCorDestaque,
       onSetDensidadeInterface: input.setDensidadeInterface,
+      onSetEconomiaDados: input.setEconomiaDados,
       onSetTamanhoFonte: input.setTamanhoFonte,
       onSetTemaApp: input.setTemaApp,
+      onSetUsoBateria: input.setUsoBateria,
       tamanhoFonte: input.tamanhoFonte,
       temaApp: input.temaApp,
+      usoBateria: input.usoBateria,
     },
     experienceNotificationsSectionProps:
       input.experienceNotificationsSectionProps || {
@@ -132,6 +129,7 @@ export function buildInspectorOverviewSectionProps(
       estiloRespostaResumoConfiguracao: input.estiloRespostaResumoConfiguracao,
       iniciaisPerfilConfiguracao: input.iniciaisPerfilConfiguracao,
       nomeUsuarioExibicao: input.nomeUsuarioExibicao,
+      onAbrirCentralAtividade: input.handleAbrirCentralAtividade,
       onAbrirPaginaConfiguracoes: input.handleAbrirPaginaConfiguracoes,
       onFecharConfiguracoes: input.fecharConfiguracoes,
       onLogout: input.handleSolicitarLogout,
@@ -168,9 +166,7 @@ export function buildInspectorSecuritySectionProps(
   | "securityDataConversationsSectionProps"
   | "securityDeleteAccountSectionProps"
   | "securityDeviceProtectionSectionProps"
-  | "securityFileUploadSectionProps"
   | "securityIdentityVerificationSectionProps"
-  | "securityNotificationPrivacySectionProps"
   | "securityPermissionsSectionProps"
   | "securitySessionsSectionProps"
   | "securityTwoFactorSectionProps"
@@ -195,24 +191,21 @@ export function buildInspectorSecuritySectionProps(
       backupAutomatico: input.backupAutomatico,
       compartilharMelhoriaIa: input.compartilharMelhoriaIa,
       conversasOcultasTotal: input.conversasOcultasTotal,
-      conversasVisiveisTotal: input.conversasVisiveisTotal,
       crashReportsOptIn: input.crashReportsOptIn,
-      fixarConversas: input.fixarConversas,
       autoUploadAttachments: input.autoUploadAttachments,
       cacheStatusLabel: input.resumoCache,
       limpandoCache: input.limpandoCache,
       mediaCompression: input.mediaCompression,
+      onAbrirMenuRetencaoDados: input.handleAbrirMenuRetencaoDados,
+      onAbrirMenuSincronizacaoWifi: input.handleAbrirMenuSincronizacaoWifi,
       onApagarHistoricoConfiguracoes: input.handleApagarHistoricoConfiguracoes,
       onExportarDados: input.handleExportarDados,
-      onGerenciarConversasIndividuais:
-        input.handleGerenciarConversasIndividuais,
       onLimparCache: input.handleLimparCache,
       onSetAnalyticsOptIn: input.setAnalyticsOptIn,
       onSetCrashReportsOptIn: input.setCrashReportsOptIn,
       onSetMediaCompression: input.setMediaCompression,
       onLimparTodasConversasConfig: input.handleLimparTodasConversasConfig,
       onSetCompartilharMelhoriaIa: input.setCompartilharMelhoriaIa,
-      onSetFixarConversas: input.setFixarConversas,
       onSetRetencaoDados: input.setRetencaoDados,
       onSetSalvarHistoricoConversas: input.setSalvarHistoricoConversas,
       onSetWifiOnlySync: input.setWifiOnlySync,
@@ -244,25 +237,9 @@ export function buildInspectorSecuritySectionProps(
       onToggleBiometriaNoDispositivo: input.handleToggleBiometriaNoDispositivo,
       requireAuthOnOpen: input.requireAuthOnOpen,
     },
-    securityFileUploadSectionProps: {
-      onDetalhesSegurancaArquivos: input.handleDetalhesSegurancaArquivos,
-    },
     securityIdentityVerificationSectionProps: {
       onReautenticacaoSensivel: input.handleReautenticacaoSensivel,
       reautenticacaoStatus: input.reautenticacaoStatus,
-    },
-    securityNotificationPrivacySectionProps: {
-      mostrarConteudoNotificacao: input.mostrarConteudoNotificacao,
-      mostrarSomenteNovaMensagem: input.mostrarSomenteNovaMensagem,
-      ocultarConteudoBloqueado: input.ocultarConteudoBloqueado,
-      onToggleMostrarConteudoNotificacao:
-        input.handleToggleMostrarConteudoNotificacao,
-      onToggleMostrarSomenteNovaMensagem:
-        input.handleToggleMostrarSomenteNovaMensagem,
-      onToggleOcultarConteudoBloqueado:
-        input.handleToggleOcultarConteudoBloqueado,
-      previewPrivacidadeNotificacao: input.previewPrivacidadeNotificacao,
-      resumoPrivacidadeNotificacoes: input.resumoPrivacidadeNotificacoes,
     },
     securityPermissionsSectionProps: {
       arquivosPermitidos: input.arquivosPermitidos,
@@ -316,7 +293,8 @@ export function buildInspectorSecuritySectionProps(
 }
 
 export function buildInspectorSupportAndSystemSectionProps(
-  input: InspectorSettingsSupportAndSystemSectionInput,
+  input: InspectorSettingsSupportAndSystemSectionInput &
+    Pick<InspectorSettingsOverviewSectionInput, "planoResumoConfiguracao">,
 ): Pick<
   SettingsDrawerPanelBuilderInput,
   "supportSectionProps" | "systemSectionProps"
@@ -347,26 +325,9 @@ export function buildInspectorSupportAndSystemSectionProps(
     systemSectionProps: {
       appBuildChannel: input.appBuildChannel,
       appVersionLabel: input.appVersionLabel,
-      economiaDados: input.economiaDados,
-      idiomaApp: input.idiomaApp,
-      onAbrirCentralAtividade: input.handleAbrirCentralAtividade,
-      onFecharConfiguracoes: input.fecharConfiguracoes,
-      onLimparCache: input.handleLimparCache,
       onPermissoes: input.handlePermissoes,
-      onRefreshData: input.handleRefresh,
-      onSetEconomiaDados: input.setEconomiaDados,
-      onSetIdiomaApp: input.setIdiomaApp,
-      onSetUsoBateria: input.setUsoBateria,
-      onVerificarAtualizacoes: input.handleVerificarAtualizacoes,
-      resumoCache: input.resumoCache,
-      resumoCentralAtividade: input.resumoCentralAtividade,
-      resumoFilaOffline: input.resumoFilaOffline,
+      onSobreApp: input.handleAbrirSobreApp,
       resumoPermissoes: input.resumoPermissoes,
-      sincronizandoDados: input.sincronizandoDados,
-      ultimaVerificacaoAtualizacaoLabel:
-        input.ultimaVerificacaoAtualizacaoLabel,
-      usoBateria: input.usoBateria,
-      verificandoAtualizacoes: input.verificandoAtualizacoes,
     },
   };
 }

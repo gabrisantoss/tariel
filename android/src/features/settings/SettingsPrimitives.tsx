@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import {
-  Alert,
+  Modal,
   Pressable,
+  ScrollView,
   Switch,
   Text,
   TextInput,
@@ -14,6 +15,7 @@ import {
 import { colors } from "../../theme/tokens";
 import { useAppTranslation } from "../../i18n/appTranslation";
 import { styles } from "../InspectorMobileApp.styles";
+import { getSettingsHelpText } from "./settingsHelpText";
 
 type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 export type SettingsStatusTone = "success" | "muted" | "danger" | "accent";
@@ -23,12 +25,16 @@ const SETTINGS_DARK_ICON_COLOR = "#D8E3EE";
 interface SettingsSectionLayoutContextValue {
   hideHeader: boolean;
   darkMode: boolean;
+  densityScale: number;
+  fontScale: number;
 }
 
 const SettingsSectionLayoutContext =
   createContext<SettingsSectionLayoutContextValue>({
     hideHeader: false,
     darkMode: false,
+    densityScale: 1,
+    fontScale: 1,
   });
 
 function settingsIconColor(darkMode: boolean, danger = false) {
@@ -38,17 +44,159 @@ function settingsIconColor(darkMode: boolean, danger = false) {
   return darkMode ? SETTINGS_DARK_ICON_COLOR : SETTINGS_ICON_COLOR;
 }
 
+function buildDefaultSettingsHelpText(title: string) {
+  return `Esta opção ajuda a ajustar "${title}". Veja o nome do campo, confira o estado atual e escolha o valor que combina melhor com sua rotina. Se ficar em dúvida, você pode fechar esta explicação sem mudar nada.`;
+}
+
+function SettingsInfoModal({
+  description,
+  onClose,
+  title,
+  visible,
+}: {
+  description: string;
+  onClose: () => void;
+  title: string;
+  visible: boolean;
+}) {
+  const { t } = useAppTranslation();
+
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <Modal
+      animationType="fade"
+      onRequestClose={onClose}
+      transparent
+      visible={visible}
+    >
+      <View style={styles.settingsInfoModalBackdrop}>
+        <View style={styles.settingsInfoModalCard}>
+          <View style={styles.settingsInfoModalHeader}>
+            <Text style={styles.settingsInfoModalEyebrow}>
+              {t("Informações")}
+            </Text>
+            <Pressable
+              accessibilityLabel={t("Fechar informações")}
+              hitSlop={8}
+              onPress={onClose}
+              style={styles.settingsInfoModalClose}
+            >
+              <MaterialCommunityIcons
+                color={colors.textPrimary}
+                name="close"
+                size={20}
+              />
+            </Pressable>
+          </View>
+          <Text style={styles.settingsInfoModalTitle}>{title}</Text>
+          <ScrollView
+            contentContainerStyle={styles.settingsInfoModalContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.settingsInfoModalText}>{description}</Text>
+          </ScrollView>
+          <Pressable onPress={onClose} style={styles.settingsInfoModalButton}>
+            <Text style={styles.settingsInfoModalButtonText}>
+              {t("Fechar")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+export function SettingsInfoButton({
+  title,
+  description,
+  fallbackDescription,
+  darkMode = false,
+  danger = false,
+  iconColor,
+  iconName = "information-outline",
+  iconSize = 13,
+  style,
+  testID,
+}: {
+  title: string;
+  description?: string;
+  fallbackDescription?: string;
+  darkMode?: boolean;
+  danger?: boolean;
+  iconColor?: string;
+  iconName?: IconName;
+  iconSize?: number;
+  style?: StyleProp<ViewStyle>;
+  testID?: string;
+}) {
+  const { t } = useAppTranslation();
+  const [visible, setVisible] = useState(false);
+  const translatedTitle = t(title);
+  const reviewedDescription =
+    getSettingsHelpText(title) || getSettingsHelpText(translatedTitle);
+  const translatedDescription = t(
+    reviewedDescription ||
+      description ||
+      fallbackDescription ||
+      buildDefaultSettingsHelpText(translatedTitle),
+  );
+  const resolvedIconColor =
+    iconColor ||
+    (danger ? colors.danger : darkMode ? "#D8E3EE" : colors.ink700);
+
+  return (
+    <>
+      <Pressable
+        accessibilityLabel={`${t("Informações sobre")} ${translatedTitle}`}
+        hitSlop={8}
+        onPress={(event) => {
+          event.stopPropagation();
+          setVisible(true);
+        }}
+        style={[
+          styles.settingsFieldInfoButton,
+          darkMode ? styles.settingsFieldInfoButtonDark : null,
+          danger ? styles.settingsFieldInfoButtonDanger : null,
+          style,
+        ]}
+        testID={testID}
+      >
+        <MaterialCommunityIcons
+          color={resolvedIconColor}
+          name={iconName}
+          size={iconSize}
+        />
+      </Pressable>
+      <SettingsInfoModal
+        description={translatedDescription}
+        onClose={() => setVisible(false)}
+        title={translatedTitle}
+        visible={visible}
+      />
+    </>
+  );
+}
+
 export function SettingsSectionLayoutProvider({
   children,
   hideHeader,
   darkMode = false,
+  densityScale = 1,
+  fontScale = 1,
 }: {
   children: ReactNode;
   hideHeader: boolean;
   darkMode?: boolean;
+  densityScale?: number;
+  fontScale?: number;
 }) {
   return (
-    <SettingsSectionLayoutContext.Provider value={{ hideHeader, darkMode }}>
+    <SettingsSectionLayoutContext.Provider
+      value={{ hideHeader, darkMode, densityScale, fontScale }}
+    >
       {children}
     </SettingsSectionLayoutContext.Provider>
   );
@@ -76,22 +224,35 @@ function SettingsInfoIcon({
   testID?: string;
 }) {
   const { t } = useAppTranslation();
+  const [visible, setVisible] = useState(false);
   const translatedTitle = t(title);
-  const translatedDescription = t(description);
+  const translatedDescription = t(
+    getSettingsHelpText(title) ||
+      getSettingsHelpText(translatedTitle) ||
+      description,
+  );
 
   return (
-    <Pressable
-      accessibilityLabel={`${t("Informações sobre")} ${translatedTitle}`}
-      hitSlop={8}
-      onPress={(event) => {
-        event.stopPropagation();
-        Alert.alert(translatedTitle, translatedDescription);
-      }}
-      style={style}
-      testID={testID}
-    >
-      <MaterialCommunityIcons color={iconColor} name={icon} size={iconSize} />
-    </Pressable>
+    <>
+      <Pressable
+        accessibilityLabel={`${t("Informações sobre")} ${translatedTitle}`}
+        hitSlop={8}
+        onPress={(event) => {
+          event.stopPropagation();
+          setVisible(true);
+        }}
+        style={style}
+        testID={testID}
+      >
+        <MaterialCommunityIcons color={iconColor} name={icon} size={iconSize} />
+      </Pressable>
+      <SettingsInfoModal
+        description={translatedDescription}
+        onClose={() => setVisible(false)}
+        title={translatedTitle}
+        visible={visible}
+      />
+    </>
   );
 }
 
@@ -108,7 +269,9 @@ export function SettingsSection({
   children: ReactNode;
   testID?: string;
 }) {
-  const { hideHeader, darkMode } = useContext(SettingsSectionLayoutContext);
+  const { hideHeader, darkMode, densityScale, fontScale } = useContext(
+    SettingsSectionLayoutContext,
+  );
   const { t } = useAppTranslation();
   const translatedTitle = t(title);
   const translatedSubtitle = subtitle ? t(subtitle) : undefined;
@@ -125,6 +288,10 @@ export function SettingsSection({
               style={[
                 styles.settingsSectionIcon,
                 darkMode ? styles.settingsSectionIconDark : null,
+                {
+                  height: 36 * densityScale,
+                  width: 36 * densityScale,
+                },
               ]}
               title={translatedTitle}
             />
@@ -133,6 +300,10 @@ export function SettingsSection({
               style={[
                 styles.settingsSectionIcon,
                 darkMode ? styles.settingsSectionIconDark : null,
+                {
+                  height: 36 * densityScale,
+                  width: 36 * densityScale,
+                },
               ]}
             >
               <MaterialCommunityIcons
@@ -147,6 +318,7 @@ export function SettingsSection({
               style={[
                 styles.settingsSectionTitle,
                 darkMode ? styles.settingsSectionTitleDark : null,
+                { fontSize: 18 * fontScale, lineHeight: 24 * fontScale },
               ]}
             >
               {translatedTitle}
@@ -155,7 +327,11 @@ export function SettingsSection({
         </View>
       ) : null}
       <View
-        style={[styles.settingsCard, darkMode ? styles.settingsCardDark : null]}
+        style={[
+          styles.settingsCard,
+          darkMode ? styles.settingsCardDark : null,
+          { gap: 8 * densityScale },
+        ]}
       >
         {children}
       </View>
@@ -170,7 +346,7 @@ export function SettingsGroupLabel({
   title: string;
   description?: string;
 }) {
-  const { darkMode } = useContext(SettingsSectionLayoutContext);
+  const { darkMode, fontScale } = useContext(SettingsSectionLayoutContext);
   const { t } = useAppTranslation();
   return (
     <View style={styles.settingsGroupLabel}>
@@ -178,6 +354,7 @@ export function SettingsGroupLabel({
         style={[
           styles.settingsGroupEyebrow,
           darkMode ? styles.settingsGroupEyebrowDark : null,
+          { fontSize: 11 * fontScale, lineHeight: 15 * fontScale },
         ]}
       >
         {t(title)}
@@ -203,11 +380,12 @@ export function SettingsPressRow({
   danger?: boolean;
   testID?: string;
 }) {
-  const { darkMode } = useContext(SettingsSectionLayoutContext);
+  const { darkMode, densityScale, fontScale } = useContext(
+    SettingsSectionLayoutContext,
+  );
   const { t } = useAppTranslation();
   const iconColor = settingsIconColor(darkMode, danger);
   const translatedTitle = t(title);
-  const translatedDescription = description ? t(description) : undefined;
   return (
     <Pressable
       disabled={!onPress}
@@ -217,41 +395,34 @@ export function SettingsPressRow({
         darkMode ? styles.settingsRowDark : null,
         danger ? styles.settingsRowDanger : null,
         danger && darkMode ? styles.settingsRowDangerDark : null,
+        {
+          minHeight: 60 * densityScale,
+          paddingVertical: 12 * densityScale,
+        },
       ]}
       testID={testID}
     >
-      {description ? (
-        <SettingsInfoIcon
-          description={translatedDescription || description}
-          icon={icon}
-          iconColor={iconColor}
-          iconSize={18}
-          style={[
-            styles.settingsRowIcon,
-            darkMode ? styles.settingsRowIconDark : null,
-            danger ? styles.settingsRowIconDanger : null,
-            danger && darkMode ? styles.settingsRowIconDangerDark : null,
-          ]}
-          title={translatedTitle}
-        />
-      ) : (
-        <View
-          style={[
-            styles.settingsRowIcon,
-            darkMode ? styles.settingsRowIconDark : null,
-            danger ? styles.settingsRowIconDanger : null,
-            danger && darkMode ? styles.settingsRowIconDangerDark : null,
-          ]}
-        >
-          <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
-        </View>
-      )}
+      <View
+        style={[
+          styles.settingsRowIcon,
+          darkMode ? styles.settingsRowIconDark : null,
+          danger ? styles.settingsRowIconDanger : null,
+          danger && darkMode ? styles.settingsRowIconDangerDark : null,
+          {
+            height: 36 * densityScale,
+            width: 36 * densityScale,
+          },
+        ]}
+      >
+        <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
+      </View>
       <View style={styles.settingsRowCopy}>
         <Text
           style={[
             styles.settingsRowTitle,
             darkMode ? styles.settingsRowTitleDark : null,
             danger ? styles.settingsRowTitleDanger : null,
+            { fontSize: 15 * fontScale, lineHeight: 20 * fontScale },
           ]}
         >
           {translatedTitle}
@@ -264,6 +435,7 @@ export function SettingsPressRow({
               styles.settingsRowValue,
               darkMode ? styles.settingsRowValueDark : null,
               danger ? { color: colors.danger } : null,
+              { fontSize: 11 * fontScale, lineHeight: 15 * fontScale },
             ]}
           >
             {t(value)}
@@ -283,6 +455,18 @@ export function SettingsPressRow({
           />
         ) : null}
       </View>
+      <SettingsInfoButton
+        danger={danger}
+        darkMode={darkMode}
+        description={description}
+        fallbackDescription={
+          onPress
+            ? `Abre "${translatedTitle}" para revisar ou executar esta opção.`
+            : `Mostra o estado atual de "${translatedTitle}" nesta área.`
+        }
+        testID={testID ? `${testID}-info` : undefined}
+        title={title}
+      />
     </Pressable>
   );
 }
@@ -302,43 +486,42 @@ export function SettingsSwitchRow({
   onValueChange: (value: boolean) => void;
   testID?: string;
 }) {
-  const { darkMode } = useContext(SettingsSectionLayoutContext);
+  const { darkMode, densityScale, fontScale } = useContext(
+    SettingsSectionLayoutContext,
+  );
   const { t } = useAppTranslation();
   const iconColor = settingsIconColor(darkMode);
   const translatedTitle = t(title);
-  const translatedDescription = description ? t(description) : undefined;
   return (
     <View
-      style={[styles.settingsRow, darkMode ? styles.settingsRowDark : null]}
+      style={[
+        styles.settingsRow,
+        darkMode ? styles.settingsRowDark : null,
+        {
+          minHeight: 60 * densityScale,
+          paddingVertical: 12 * densityScale,
+        },
+      ]}
       testID={testID}
     >
-      {description ? (
-        <SettingsInfoIcon
-          description={translatedDescription || description}
-          icon={icon}
-          iconColor={iconColor}
-          iconSize={18}
-          style={[
-            styles.settingsRowIcon,
-            darkMode ? styles.settingsRowIconDark : null,
-          ]}
-          title={translatedTitle}
-        />
-      ) : (
-        <View
-          style={[
-            styles.settingsRowIcon,
-            darkMode ? styles.settingsRowIconDark : null,
-          ]}
-        >
-          <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
-        </View>
-      )}
+      <View
+        style={[
+          styles.settingsRowIcon,
+          darkMode ? styles.settingsRowIconDark : null,
+          {
+            height: 36 * densityScale,
+            width: 36 * densityScale,
+          },
+        ]}
+      >
+        <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
+      </View>
       <View style={styles.settingsRowCopy}>
         <Text
           style={[
             styles.settingsRowTitle,
             darkMode ? styles.settingsRowTitleDark : null,
+            { fontSize: 15 * fontScale, lineHeight: 20 * fontScale },
           ]}
         >
           {translatedTitle}
@@ -351,6 +534,13 @@ export function SettingsSwitchRow({
         trackColor={{ false: "#DDD1C4", true: colors.ink700 }}
         value={value}
       />
+      <SettingsInfoButton
+        darkMode={darkMode}
+        description={description}
+        fallbackDescription={`Liga ou desliga "${translatedTitle}" nas configurações do app.`}
+        testID={testID ? `${testID}-info` : undefined}
+        title={title}
+      />
     </View>
   );
 }
@@ -362,6 +552,8 @@ export function SettingsSegmentedRow<T extends string>({
   options,
   value,
   onChange,
+  activeColor,
+  getOptionLabel,
   testID,
 }: {
   icon: IconName;
@@ -370,49 +562,46 @@ export function SettingsSegmentedRow<T extends string>({
   options: readonly T[];
   value: T;
   onChange: (value: T) => void;
+  activeColor?: string;
+  getOptionLabel?: (option: T) => string;
   testID?: string;
 }) {
-  const { darkMode } = useContext(SettingsSectionLayoutContext);
+  const { darkMode, densityScale, fontScale } = useContext(
+    SettingsSectionLayoutContext,
+  );
   const { t } = useAppTranslation();
   const iconColor = settingsIconColor(darkMode);
   const translatedTitle = t(title);
-  const translatedDescription = description ? t(description) : undefined;
   return (
     <View
       style={[
         styles.settingsBlockRow,
         darkMode ? styles.settingsBlockRowDark : null,
+        {
+          paddingVertical: 14 * densityScale,
+        },
       ]}
       testID={testID}
     >
       <View style={styles.settingsBlockHeader}>
-        {description ? (
-          <SettingsInfoIcon
-            description={translatedDescription || description}
-            icon={icon}
-            iconColor={iconColor}
-            iconSize={18}
-            style={[
-              styles.settingsRowIcon,
-              darkMode ? styles.settingsRowIconDark : null,
-            ]}
-            title={translatedTitle}
-          />
-        ) : (
-          <View
-            style={[
-              styles.settingsRowIcon,
-              darkMode ? styles.settingsRowIconDark : null,
-            ]}
-          >
-            <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
-          </View>
-        )}
+        <View
+          style={[
+            styles.settingsRowIcon,
+            darkMode ? styles.settingsRowIconDark : null,
+            {
+              height: 36 * densityScale,
+              width: 36 * densityScale,
+            },
+          ]}
+        >
+          <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
+        </View>
         <View style={styles.settingsRowCopy}>
           <Text
             style={[
               styles.settingsRowTitle,
               darkMode ? styles.settingsRowTitleDark : null,
+              { fontSize: 15 * fontScale, lineHeight: 20 * fontScale },
             ]}
           >
             {translatedTitle}
@@ -430,6 +619,13 @@ export function SettingsSegmentedRow<T extends string>({
                 styles.settingsSegmentPill,
                 darkMode ? styles.settingsSegmentPillDark : null,
                 active ? styles.settingsSegmentPillActive : null,
+                active && activeColor
+                  ? { backgroundColor: activeColor, borderColor: activeColor }
+                  : null,
+                {
+                  minHeight: 36 * densityScale,
+                  paddingHorizontal: 14 * densityScale,
+                },
               ]}
             >
               <Text
@@ -437,14 +633,22 @@ export function SettingsSegmentedRow<T extends string>({
                   styles.settingsSegmentText,
                   darkMode ? styles.settingsSegmentTextDark : null,
                   active ? styles.settingsSegmentTextActive : null,
+                  { fontSize: 12 * fontScale, lineHeight: 16 * fontScale },
                 ]}
               >
-                {t(option)}
+                {t(getOptionLabel ? getOptionLabel(option) : option)}
               </Text>
             </Pressable>
           );
         })}
       </View>
+      <SettingsInfoButton
+        darkMode={darkMode}
+        description={description}
+        fallbackDescription={`Escolha uma das opções disponíveis para "${translatedTitle}". A mudança pode ser ajustada novamente depois.`}
+        testID={testID ? `${testID}-info` : undefined}
+        title={title}
+      />
     </View>
   );
 }
@@ -470,47 +674,42 @@ export function SettingsScaleRow({
   maxLabel: string;
   testID?: string;
 }) {
-  const { darkMode } = useContext(SettingsSectionLayoutContext);
+  const { darkMode, densityScale, fontScale } = useContext(
+    SettingsSectionLayoutContext,
+  );
   const { t } = useAppTranslation();
   const iconColor = settingsIconColor(darkMode);
   const translatedTitle = t(title);
-  const translatedDescription = description ? t(description) : undefined;
   return (
     <View
       style={[
         styles.settingsBlockRow,
         darkMode ? styles.settingsBlockRowDark : null,
+        {
+          paddingVertical: 14 * densityScale,
+        },
       ]}
       testID={testID}
     >
       <View style={styles.settingsBlockHeader}>
-        {description ? (
-          <SettingsInfoIcon
-            description={translatedDescription || description}
-            icon={icon}
-            iconColor={iconColor}
-            iconSize={18}
-            style={[
-              styles.settingsRowIcon,
-              darkMode ? styles.settingsRowIconDark : null,
-            ]}
-            title={translatedTitle}
-          />
-        ) : (
-          <View
-            style={[
-              styles.settingsRowIcon,
-              darkMode ? styles.settingsRowIconDark : null,
-            ]}
-          >
-            <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
-          </View>
-        )}
+        <View
+          style={[
+            styles.settingsRowIcon,
+            darkMode ? styles.settingsRowIconDark : null,
+            {
+              height: 36 * densityScale,
+              width: 36 * densityScale,
+            },
+          ]}
+        >
+          <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
+        </View>
         <View style={styles.settingsRowCopy}>
           <Text
             style={[
               styles.settingsRowTitle,
               darkMode ? styles.settingsRowTitleDark : null,
+              { fontSize: 15 * fontScale, lineHeight: 20 * fontScale },
             ]}
           >
             {translatedTitle}
@@ -520,6 +719,7 @@ export function SettingsScaleRow({
           style={[
             styles.settingsScaleValue,
             darkMode ? styles.settingsScaleValueDark : null,
+            { fontSize: 13 * fontScale, lineHeight: 17 * fontScale },
           ]}
         >
           {value.toFixed(1)}
@@ -555,6 +755,7 @@ export function SettingsScaleRow({
           style={[
             styles.settingsScaleLabel,
             darkMode ? styles.settingsScaleLabelDark : null,
+            { fontSize: 11 * fontScale, lineHeight: 15 * fontScale },
           ]}
         >
           {t(minLabel)}
@@ -563,11 +764,19 @@ export function SettingsScaleRow({
           style={[
             styles.settingsScaleLabel,
             darkMode ? styles.settingsScaleLabelDark : null,
+            { fontSize: 11 * fontScale, lineHeight: 15 * fontScale },
           ]}
         >
           {t(maxLabel)}
         </Text>
       </View>
+      <SettingsInfoButton
+        darkMode={darkMode}
+        description={description}
+        fallbackDescription={`Ajusta o nível de "${translatedTitle}" usando os pontos da escala.`}
+        testID={testID ? `${testID}-info` : undefined}
+        title={title}
+      />
     </View>
   );
 }
@@ -582,6 +791,7 @@ export function SettingsTextField({
   autoCapitalize = "sentences",
   autoCorrect = false,
   secureTextEntry = false,
+  description,
   testID,
 }: {
   icon: IconName;
@@ -593,16 +803,23 @@ export function SettingsTextField({
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
   autoCorrect?: boolean;
   secureTextEntry?: boolean;
+  description?: string;
   testID?: string;
 }) {
-  const { darkMode } = useContext(SettingsSectionLayoutContext);
+  const { darkMode, densityScale, fontScale } = useContext(
+    SettingsSectionLayoutContext,
+  );
   const { t } = useAppTranslation();
   const iconColor = settingsIconColor(darkMode);
+  const translatedTitle = t(title);
   return (
     <View
       style={[
         styles.settingsFieldBlock,
         darkMode ? styles.settingsFieldBlockDark : null,
+        {
+          paddingVertical: 14 * densityScale,
+        },
       ]}
       testID={testID}
     >
@@ -611,6 +828,10 @@ export function SettingsTextField({
           style={[
             styles.settingsRowIcon,
             darkMode ? styles.settingsRowIconDark : null,
+            {
+              height: 36 * densityScale,
+              width: 36 * densityScale,
+            },
           ]}
         >
           <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
@@ -619,9 +840,10 @@ export function SettingsTextField({
           style={[
             styles.settingsRowTitle,
             darkMode ? styles.settingsRowTitleDark : null,
+            { fontSize: 15 * fontScale, lineHeight: 20 * fontScale },
           ]}
         >
-          {t(title)}
+          {translatedTitle}
         </Text>
       </View>
       <TextInput
@@ -635,9 +857,22 @@ export function SettingsTextField({
         style={[
           styles.settingsTextField,
           darkMode ? styles.settingsTextFieldDark : null,
+          {
+            fontSize: 15 * fontScale,
+            lineHeight: 20 * fontScale,
+            minHeight: 46 * densityScale,
+            paddingVertical: 10 * densityScale,
+          },
         ]}
         testID={testID ? `${testID}-input` : undefined}
         value={value}
+      />
+      <SettingsInfoButton
+        darkMode={darkMode}
+        description={description}
+        fallbackDescription={`Preencha ou atualize "${translatedTitle}" neste campo.`}
+        testID={testID ? `${testID}-info` : undefined}
+        title={title}
       />
     </View>
   );
@@ -655,7 +890,7 @@ export function SettingsStatusPill({
   tone?: SettingsStatusTone;
 }) {
   const { t } = useAppTranslation();
-  const { darkMode } = useSettingsSectionLayout();
+  const { darkMode, fontScale } = useSettingsSectionLayout();
   const translatedLabel = t(label);
   const contentColor =
     tone === "success"
@@ -719,6 +954,7 @@ export function SettingsStatusPill({
                 : darkMode && tone === "accent"
                   ? styles.settingsStatusPillTextAccentDark
                   : null,
+            { fontSize: 11 * fontScale, lineHeight: 15 * fontScale },
           ]}
         >
           {translatedLabel}
@@ -732,7 +968,6 @@ export function SettingsOverviewCard({
   icon,
   title,
   description,
-  badge,
   onPress,
   tone = "muted",
   darkMode = false,
@@ -741,7 +976,6 @@ export function SettingsOverviewCard({
   icon: IconName;
   title: string;
   description: string;
-  badge: string;
   onPress: () => void;
   tone?: "muted" | "accent" | "success" | "danger";
   darkMode?: boolean;
@@ -789,11 +1023,7 @@ export function SettingsOverviewCard({
       ]}
       testID={testID}
     >
-      <SettingsInfoIcon
-        description={translatedDescription}
-        icon={icon}
-        iconColor={overviewIconColor}
-        iconSize={20}
+      <View
         style={[
           styles.settingsOverviewIcon,
           darkMode ? styles.settingsOverviewIconDark : null,
@@ -812,8 +1042,13 @@ export function SettingsOverviewCard({
                 ? styles.settingsOverviewIconDangerDark
                 : null,
         ]}
-        title={translatedTitle}
-      />
+      >
+        <MaterialCommunityIcons
+          color={overviewIconColor}
+          name={icon}
+          size={20}
+        />
+      </View>
       <View style={styles.settingsOverviewCopy}>
         <View style={styles.settingsOverviewHeading}>
           <Text
@@ -824,10 +1059,6 @@ export function SettingsOverviewCard({
           >
             {translatedTitle}
           </Text>
-          <SettingsStatusPill
-            label={t(badge)}
-            tone={tone === "muted" ? "accent" : tone}
-          />
         </View>
         <Text
           style={[
@@ -838,6 +1069,13 @@ export function SettingsOverviewCard({
           {translatedDescription}
         </Text>
       </View>
+      <SettingsInfoButton
+        darkMode={darkMode}
+        description={description}
+        fallbackDescription={`Abre a área "${translatedTitle}" para revisar as configurações relacionadas.`}
+        testID={testID ? `${testID}-info` : undefined}
+        title={title}
+      />
       <MaterialCommunityIcons
         color={darkMode ? "#AFC0D2" : colors.textSecondary}
         name="chevron-right"
@@ -872,6 +1110,7 @@ export function SettingsPrintRow({
 }) {
   const { t } = useAppTranslation();
   const translatedTitle = t(title);
+  const translatedSubtitle = subtitle ? t(subtitle) : undefined;
   const translatedInfoText = infoText ? t(infoText) : undefined;
   const iconColor = danger
     ? darkMode
@@ -894,40 +1133,18 @@ export function SettingsPrintRow({
       ]}
       testID={testID}
     >
-      {infoText ? (
-        <SettingsInfoIcon
-          description={translatedInfoText || infoText}
-          icon={icon}
-          iconColor={iconColor}
-          iconSize={20}
-          style={[
-            styles.settingsPrintRowIconShell,
-            darkMode ? styles.settingsPrintRowIconShellDark : null,
-            danger ? styles.settingsPrintRowIconShellDanger : null,
-            danger && darkMode
-              ? styles.settingsPrintRowIconShellDangerDark
-              : null,
-          ]}
-          title={translatedTitle}
-        />
-      ) : (
-        <View
-          style={[
-            styles.settingsPrintRowIconShell,
-            darkMode ? styles.settingsPrintRowIconShellDark : null,
-            danger ? styles.settingsPrintRowIconShellDanger : null,
-            danger && darkMode
-              ? styles.settingsPrintRowIconShellDangerDark
-              : null,
-          ]}
-        >
-          <MaterialCommunityIcons
-            color={iconColor}
-            name={icon}
-            size={20}
-          />
-        </View>
-      )}
+      <View
+        style={[
+          styles.settingsPrintRowIconShell,
+          darkMode ? styles.settingsPrintRowIconShellDark : null,
+          danger ? styles.settingsPrintRowIconShellDanger : null,
+          danger && darkMode
+            ? styles.settingsPrintRowIconShellDangerDark
+            : null,
+        ]}
+      >
+        <MaterialCommunityIcons color={iconColor} name={icon} size={20} />
+      </View>
       <View style={styles.settingsPrintRowCopy}>
         <Text
           style={[
@@ -945,10 +1162,22 @@ export function SettingsPrintRow({
               darkMode ? styles.settingsPrintRowSubtitleDark : null,
             ]}
           >
-            {t(subtitle)}
+            {translatedSubtitle}
           </Text>
         ) : null}
       </View>
+      <SettingsInfoButton
+        danger={danger}
+        darkMode={darkMode}
+        description={translatedInfoText || translatedSubtitle}
+        fallbackDescription={
+          onPress
+            ? `Abre "${translatedTitle}" para revisar ou executar esta opção.`
+            : `Mostra o estado atual de "${translatedTitle}" nesta área.`
+        }
+        testID={testID ? `${testID}-info` : undefined}
+        title={title}
+      />
       {trailingIcon ? (
         <MaterialCommunityIcons
           color={

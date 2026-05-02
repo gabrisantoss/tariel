@@ -12,15 +12,11 @@ interface SettingsOverviewSystemSupportSectionProps {
     page: SettingsDrawerPage,
     section?: SettingsSectionKey | "all",
   ) => void;
-  onReportarProblema: () => void;
-  planoResumoConfiguracao: string;
   settingsPrintDarkMode: boolean;
 }
 
 export function SettingsOverviewSystemSupportSection({
   onAbrirPaginaConfiguracoes,
-  onReportarProblema,
-  planoResumoConfiguracao,
   settingsPrintDarkMode,
 }: SettingsOverviewSystemSupportSectionProps) {
   return (
@@ -31,7 +27,7 @@ export function SettingsOverviewSystemSupportSection({
           settingsPrintDarkMode ? styles.settingsPrintSectionTitleDark : null,
         ]}
       >
-        Sistema e suporte
+        Ajuda e informações
       </Text>
       <View
         style={[
@@ -41,29 +37,11 @@ export function SettingsOverviewSystemSupportSection({
       >
         <SettingsPrintRow
           darkMode={settingsPrintDarkMode}
-          icon="star-circle-outline"
-          infoText={planoResumoConfiguracao || "Plano não informado"}
-          testID="settings-print-plan-row"
-          title="Plano e liberação"
-          trailingIcon={null}
-        />
-        <SettingsPrintRow
-          darkMode={settingsPrintDarkMode}
-          icon="microphone-outline"
-          infoText="Voz, microfone e ditado."
-          onPress={() =>
-            onAbrirPaginaConfiguracoes("sistemaSuporte", "recursosAvancados")
-          }
-          testID="settings-print-fala-row"
-          title="Fala"
-        />
-        <SettingsPrintRow
-          darkMode={settingsPrintDarkMode}
           icon="apps"
-          infoText="Sistema, atividade, manutenção e suporte."
+          infoText="Permissões, suporte e documentos do app."
           onPress={() => onAbrirPaginaConfiguracoes("sistemaSuporte")}
           testID="settings-print-aplicativos-row"
-          title="Sistema e suporte"
+          title="Ajuda e informações"
         />
         <SettingsPrintRow
           darkMode={settingsPrintDarkMode}
@@ -77,19 +55,21 @@ export function SettingsOverviewSystemSupportSection({
         />
         <SettingsPrintRow
           darkMode={settingsPrintDarkMode}
-          icon="bug-outline"
-          infoText="Enviar problema para análise."
-          onPress={onReportarProblema}
-          testID="settings-print-bug-row"
-          title="Informar bug"
+          icon="lifebuoy"
+          infoText="Informar bug, falar com suporte, enviar feedback e exportar diagnóstico."
+          onPress={() =>
+            onAbrirPaginaConfiguracoes("sistemaSuporte", "suporte")
+          }
+          testID="settings-print-support-contact-row"
+          title="Falar com o suporte"
         />
         <SettingsPrintRow
           darkMode={settingsPrintDarkMode}
           icon="information-outline"
-          infoText="Informações do app e ajuda."
+          infoText="Versão, termos, privacidade e licenças."
           last
           onPress={() =>
-            onAbrirPaginaConfiguracoes("sistemaSuporte", "suporte")
+            onAbrirPaginaConfiguracoes("sistemaSuporte", "sistema")
           }
           testID="settings-print-sobre-row"
           title="Sobre"

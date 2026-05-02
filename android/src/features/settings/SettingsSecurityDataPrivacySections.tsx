@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   DATA_RETENTION_OPTIONS,
   MEDIA_COMPRESSION_OPTIONS,
@@ -5,6 +7,7 @@ import {
 import {
   SettingsPressRow,
   SettingsSection,
+  SettingsSegmentedRow,
   SettingsSwitchRow,
 } from "./SettingsPrimitives";
 
@@ -20,7 +23,6 @@ interface SettingsSecurityDataConversationsSectionProps {
   analyticsOptIn: boolean;
   crashReportsOptIn: boolean;
   wifiOnlySync: boolean;
-  conversasVisiveisTotal: number;
   retencaoDados: DataRetention;
   backupAutomatico: boolean;
   sincronizacaoDispositivos: boolean;
@@ -28,15 +30,15 @@ interface SettingsSecurityDataConversationsSectionProps {
   mediaCompression: MediaCompression;
   cacheStatusLabel: string;
   limpandoCache: boolean;
-  fixarConversas: boolean;
   onSetSalvarHistoricoConversas: (value: boolean) => void;
   onSetCompartilharMelhoriaIa: (value: boolean) => void;
   onSetAnalyticsOptIn: (value: boolean) => void;
   onSetCrashReportsOptIn: (value: boolean) => void;
   onSetWifiOnlySync: (value: boolean) => void;
   onExportarDados: (formato: "JSON") => void;
-  onGerenciarConversasIndividuais: () => void;
   onSetRetencaoDados: (value: DataRetention) => void;
+  onAbrirMenuRetencaoDados: () => void;
+  onAbrirMenuSincronizacaoWifi: () => void;
   onApagarHistoricoConfiguracoes: () => void;
   onLimparTodasConversasConfig: () => void;
   onToggleBackupAutomatico: (value: boolean) => void;
@@ -44,7 +46,6 @@ interface SettingsSecurityDataConversationsSectionProps {
   onToggleAutoUploadAttachments: (value: boolean) => void;
   onSetMediaCompression: (value: MediaCompression) => void;
   onLimparCache: () => void;
-  onSetFixarConversas: (value: boolean) => void;
 }
 
 interface SettingsSecurityPermissionsSectionProps {
@@ -66,17 +67,6 @@ interface SettingsSecurityFileUploadSectionProps {
   onDetalhesSegurancaArquivos: (topico: UploadSecurityTopic) => void;
 }
 
-interface SettingsSecurityNotificationPrivacySectionProps {
-  resumoPrivacidadeNotificacoes: string;
-  previewPrivacidadeNotificacao: string;
-  mostrarConteudoNotificacao: boolean;
-  ocultarConteudoBloqueado: boolean;
-  mostrarSomenteNovaMensagem: boolean;
-  onToggleMostrarConteudoNotificacao: (value: boolean) => void;
-  onToggleOcultarConteudoBloqueado: (value: boolean) => void;
-  onToggleMostrarSomenteNovaMensagem: (value: boolean) => void;
-}
-
 interface SettingsSecurityDeleteAccountSectionProps {
   resumoExcluirConta: string;
   reautenticacaoStatus: string;
@@ -85,16 +75,34 @@ interface SettingsSecurityDeleteAccountSectionProps {
   onExcluirConta: () => void;
 }
 
-function nextOptionValue<T extends string>(
-  current: T,
-  options: readonly T[],
-): T {
-  const currentIndex = options.indexOf(current);
-  if (currentIndex === -1) {
-    return options[0];
-  }
-  return options[(currentIndex + 1) % options.length];
-}
+type DataControlsMenu = "compressao" | null;
+
+const MEDIA_COMPRESSION_INFO: readonly {
+  title: string;
+  value: string;
+  icon: Parameters<typeof SettingsPressRow>[0]["icon"];
+}[] = [
+  {
+    title: "Equilibrada",
+    value: "padrão",
+    icon: "scale-balance",
+  },
+  {
+    title: "Leve",
+    value: "mais qualidade",
+    icon: "image-outline",
+  },
+  {
+    title: "Original",
+    value: "sem compressão",
+    icon: "file-image-outline",
+  },
+  {
+    title: "Forte",
+    value: "menor arquivo",
+    icon: "archive-arrow-down-outline",
+  },
+];
 
 export function SettingsSecurityDataConversationsSection({
   salvarHistoricoConversas,
@@ -102,32 +110,27 @@ export function SettingsSecurityDataConversationsSection({
   analyticsOptIn,
   crashReportsOptIn,
   wifiOnlySync,
-  conversasVisiveisTotal,
   retencaoDados,
-  backupAutomatico,
-  sincronizacaoDispositivos,
-  autoUploadAttachments,
   mediaCompression,
   cacheStatusLabel,
   limpandoCache,
-  fixarConversas,
   onSetSalvarHistoricoConversas,
   onSetCompartilharMelhoriaIa,
   onSetAnalyticsOptIn,
   onSetCrashReportsOptIn,
-  onSetWifiOnlySync,
   onExportarDados,
-  onGerenciarConversasIndividuais,
-  onSetRetencaoDados,
+  onAbrirMenuRetencaoDados,
+  onAbrirMenuSincronizacaoWifi,
   onApagarHistoricoConfiguracoes,
   onLimparTodasConversasConfig,
-  onToggleBackupAutomatico,
-  onToggleSincronizacaoDispositivos,
-  onToggleAutoUploadAttachments,
   onSetMediaCompression,
   onLimparCache,
-  onSetFixarConversas,
 }: SettingsSecurityDataConversationsSectionProps) {
+  const [menuAberto, setMenuAberto] = useState<DataControlsMenu>(null);
+  const alternarMenu = (menu: Exclude<DataControlsMenu, null>) => {
+    setMenuAberto((atual) => (atual === menu ? null : menu));
+  };
+
   return (
     <SettingsSection
       icon="forum-outline"
@@ -166,39 +169,61 @@ export function SettingsSecurityDataConversationsSection({
         title="Relatórios de falha"
         value={crashReportsOptIn}
       />
-      <SettingsSwitchRow
-        description="Restringe sincronizações de fila e monitoramento de atividade a conexões Wi-Fi."
-        icon="wifi-lock"
-        onValueChange={onSetWifiOnlySync}
-        testID="settings-data-wifi-only-toggle-row"
-        title="Sincronizar só no Wi-Fi"
-        value={wifiOnlySync}
-      />
       <SettingsPressRow
-        description="A exportação exige reautenticação."
+        description="Gera um arquivo para auditoria com conversas, histórico local, configurações exportáveis e registros operacionais do app."
         icon="database-export-outline"
         onPress={() => onExportarDados("JSON")}
         testID="settings-data-export-row"
-        title="Exportar conversas"
+        title="Exportar dados para auditoria"
         value="JSON"
-      />
-      <SettingsPressRow
-        description="Abra o histórico lateral para fixar, retomar ou remover conversas específicas."
-        icon="playlist-edit"
-        onPress={onGerenciarConversasIndividuais}
-        title="Gerenciar conversas individualmente"
-        value={`${conversasVisiveisTotal} ativas`}
       />
       <SettingsPressRow
         description="Define por quanto tempo o histórico pode permanecer salvo."
         icon="timer-sand"
-        onPress={() =>
-          onSetRetencaoDados(
-            nextOptionValue(retencaoDados, DATA_RETENTION_OPTIONS),
-          )
-        }
+        onPress={onAbrirMenuRetencaoDados}
         title="Retenção de dados"
         value={retencaoDados}
+      />
+      <SettingsPressRow
+        description="Agrupa as regras de sincronização, Wi-Fi e envio automático."
+        icon="wifi-sync"
+        onPress={onAbrirMenuSincronizacaoWifi}
+        title="Sincronização e Wi-Fi"
+        value={wifiOnlySync ? "Wi-Fi" : "Livre"}
+      />
+      <SettingsPressRow
+        description="Define a intensidade da compressão aplicada a imagens antes do envio."
+        icon="image-size-select-small"
+        onPress={() => alternarMenu("compressao")}
+        title="Compressão de mídia"
+        value={mediaCompression}
+      />
+      {menuAberto === "compressao" ? (
+        <>
+          <SettingsSegmentedRow
+            icon="image-filter-center-focus"
+            onChange={onSetMediaCompression}
+            options={MEDIA_COMPRESSION_OPTIONS}
+            testID="settings-data-compression-menu"
+            title="Nível de compressão"
+            value={mediaCompression}
+          />
+          {MEDIA_COMPRESSION_INFO.map((item) => (
+            <SettingsPressRow
+              key={item.title}
+              icon={item.icon}
+              title={item.title}
+              value={item.value}
+            />
+          ))}
+        </>
+      ) : null}
+      <SettingsPressRow
+        description="Remove cache local de leitura, atividade e arquivos temporários do app."
+        icon="broom"
+        onPress={onLimparCache}
+        title="Limpar cache local"
+        value={limpandoCache ? "Limpando..." : cacheStatusLabel}
       />
       <SettingsPressRow
         danger
@@ -214,48 +239,6 @@ export function SettingsSecurityDataConversationsSection({
         onPress={onLimparTodasConversasConfig}
         title="Excluir conversas"
       />
-      <SettingsSwitchRow
-        icon="cloud-sync-outline"
-        onValueChange={onToggleBackupAutomatico}
-        title="Backup automático"
-        value={backupAutomatico}
-      />
-      <SettingsSwitchRow
-        icon="devices"
-        onValueChange={onToggleSincronizacaoDispositivos}
-        title="Sincronização entre dispositivos"
-        value={sincronizacaoDispositivos}
-      />
-      <SettingsSwitchRow
-        icon="cloud-upload-outline"
-        onValueChange={onToggleAutoUploadAttachments}
-        title="Upload automático de anexos"
-        value={autoUploadAttachments}
-      />
-      <SettingsPressRow
-        description="Define a intensidade da compressão aplicada a imagens antes do envio."
-        icon="image-size-select-small"
-        onPress={() =>
-          onSetMediaCompression(
-            nextOptionValue(mediaCompression, MEDIA_COMPRESSION_OPTIONS),
-          )
-        }
-        title="Compressão de mídia"
-        value={mediaCompression}
-      />
-      <SettingsPressRow
-        description="Remove cache local de leitura, atividade e arquivos temporários do app."
-        icon="broom"
-        onPress={onLimparCache}
-        title="Limpar cache local"
-        value={limpandoCache ? "Limpando..." : cacheStatusLabel}
-      />
-      <SettingsSwitchRow
-        icon="pin-outline"
-        onValueChange={onSetFixarConversas}
-        title="Fixar conversas"
-        value={fixarConversas}
-      />
     </SettingsSection>
   );
 }
@@ -264,18 +247,16 @@ export function SettingsSecurityPermissionsSection({
   microfonePermitido,
   cameraPermitida,
   arquivosPermitidos,
-  notificacoesPermitidas,
+  notificacoesPermitidas: _notificacoesPermitidas,
   biometriaPermitida,
   showBiometricsPermission = false,
-  permissoesNegadasTotal,
   onGerenciarPermissao,
   onAbrirAjustesDoSistema,
-  onRevisarPermissoesCriticas,
 }: SettingsSecurityPermissionsSectionProps) {
   return (
     <SettingsSection
       icon="shield-key-outline"
-      subtitle="Status atual de acesso ao microfone, câmera, arquivos e notificações."
+      subtitle="Status atual de acesso ao microfone, câmera e arquivos."
       title="Permissões"
     >
       <SettingsPressRow
@@ -311,17 +292,6 @@ export function SettingsSecurityPermissionsSection({
         title="Arquivos"
         value={arquivosPermitidos ? "Permitido" : "Negado"}
       />
-      <SettingsPressRow
-        icon="bell-outline"
-        onPress={() =>
-          onGerenciarPermissao(
-            "Notificações",
-            notificacoesPermitidas ? "permitido" : "negado",
-          )
-        }
-        title="Notificações"
-        value={notificacoesPermitidas ? "Permitido" : "Negado"}
-      />
       {showBiometricsPermission ? (
         <SettingsPressRow
           icon="fingerprint"
@@ -342,17 +312,6 @@ export function SettingsSecurityPermissionsSection({
           onAbrirAjustesDoSistema("as permissões do app do inspetor")
         }
         title="Abrir ajustes do sistema"
-      />
-      <SettingsPressRow
-        description="Reúne câmera, arquivos e notificações, que são as permissões mais sensíveis no fluxo do inspetor."
-        icon="shield-sync-outline"
-        onPress={onRevisarPermissoesCriticas}
-        title="Revisar permissões críticas"
-        value={
-          permissoesNegadasTotal
-            ? `${permissoesNegadasTotal} pendente(s)`
-            : "Tudo certo"
-        }
       />
     </SettingsSection>
   );
@@ -387,49 +346,6 @@ export function SettingsSecurityFileUploadSection({
         onPress={() => onDetalhesSegurancaArquivos("bloqueios")}
         title="Falhas e bloqueios"
         value="Com feedback"
-      />
-    </SettingsSection>
-  );
-}
-
-export function SettingsSecurityNotificationPrivacySection({
-  mostrarConteudoNotificacao,
-  ocultarConteudoBloqueado,
-  mostrarSomenteNovaMensagem,
-  onToggleMostrarConteudoNotificacao,
-  onToggleOcultarConteudoBloqueado,
-  onToggleMostrarSomenteNovaMensagem,
-}: SettingsSecurityNotificationPrivacySectionProps) {
-  return (
-    <SettingsSection
-      icon="bell-cog-outline"
-      subtitle="Defina o quanto aparece das mensagens nas notificações."
-      testID="settings-section-privacidade-notificacoes"
-      title="Privacidade em notificações"
-    >
-      <SettingsSwitchRow
-        description="Mostra o conteúdo da conversa quando permitido."
-        icon="message-text-outline"
-        onValueChange={onToggleMostrarConteudoNotificacao}
-        testID="settings-notification-show-content-row"
-        title="Mostrar conteúdo da mensagem"
-        value={mostrarConteudoNotificacao}
-      />
-      <SettingsSwitchRow
-        description="Nunca exibe prévias na tela bloqueada."
-        icon="cellphone-lock"
-        onValueChange={onToggleOcultarConteudoBloqueado}
-        testID="settings-notification-hide-locked-row"
-        title="Ocultar conteúdo na tela bloqueada"
-        value={ocultarConteudoBloqueado}
-      />
-      <SettingsSwitchRow
-        description='Exibe apenas o aviso "Nova mensagem".'
-        icon="message-badge-outline"
-        onValueChange={onToggleMostrarSomenteNovaMensagem}
-        testID="settings-notification-show-generic-row"
-        title='Mostrar apenas "Nova mensagem"'
-        value={mostrarSomenteNovaMensagem}
       />
     </SettingsSection>
   );

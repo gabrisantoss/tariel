@@ -176,7 +176,7 @@ describe("buildInspectorBaseDerivedStateSections", () => {
     });
 
     expect(state.placeholderComposer).toBe(
-      "Caso sob revisão da Mesa Avaliadora.",
+      "Caso sob revisão. Aguarde retorno ou pedido de correção.",
     );
   });
 
@@ -255,9 +255,9 @@ describe("buildInspectorBaseDerivedStateSections", () => {
 
     expect(state.mesaAcessoPermitido).toBe(true);
     expect(state.mesaIndisponivelTitulo).toBe(
-      "Mesa disponível após o primeiro laudo",
+      "Revisão disponível após o primeiro caso",
     );
-    expect(state.placeholderMesa).toBe("Aguardando retorno da mesa.");
+    expect(state.placeholderMesa).toBe("Aguardando retorno da revisão.");
   });
 
   it("usa revisão interna quando o pacote não exige Mesa separada", () => {
@@ -354,7 +354,7 @@ describe("buildInspectorBaseDerivedStateSections", () => {
     expect(state.officialIssueLabel).toBe("Emissão oficial indisponível");
     expect(state.mesaIndisponivelTitulo).toBe("Revisão interna governada");
     expect(state.placeholderMesa).toBe(
-      "Use a revisão interna do caso; este pacote não possui Mesa separada.",
+      "Use a revisão interna do caso; este pacote não possui revisão separada.",
     );
   });
 
@@ -448,7 +448,7 @@ describe("buildInspectorBaseDerivedStateSections", () => {
       enviandoMesa: false,
     });
 
-    expect(state.reviewSurfaceLabel).toBe("Mesa Avaliadora");
+    expect(state.reviewSurfaceLabel).toBe("Revisão do caso");
     expect(state.officialIssueAllowed).toBe(true);
     expect(state.officialIssueDownloadAllowed).toBe(true);
     expect(state.officialIssueLabel).toBe("Emissão oficial");

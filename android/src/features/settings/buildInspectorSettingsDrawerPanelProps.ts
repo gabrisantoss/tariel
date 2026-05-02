@@ -24,6 +24,7 @@ export function buildInspectorSettingsDrawerPanelProps(
       buildInspectorAdvancedResourcesSectionProps(input),
     artigosAjudaCount: input.artigosAjudaFiltrados.length,
     configuracoesDrawerX: input.configuracoesDrawerX,
+    densityScale: input.densityScale,
     emailRetorno:
       input.emailAtualConta || input.email || "Defina um email na conta",
     experienceAiSectionProps: experienceSectionProps.experienceAiSectionProps,
@@ -33,12 +34,12 @@ export function buildInspectorSettingsDrawerPanelProps(
       experienceSectionProps.experienceNotificationsSectionProps,
     fecharConfiguracoes: input.fecharConfiguracoes,
     filaSuporteCount: input.filaSuporteLocal.length,
+    fontScale: input.fontScale,
     handleVoltarResumoConfiguracoes: input.handleVoltarResumoConfiguracoes,
     mostrarGrupoContaAcesso: input.mostrarGrupoContaAcesso,
     mostrarGrupoExperiencia: input.mostrarGrupoExperiencia,
     mostrarGrupoSeguranca: input.mostrarGrupoSeguranca,
     mostrarGrupoSistema: input.mostrarGrupoSistema,
-    onAbrirFilaOffline: input.onAbrirFilaOffline,
     overviewContentProps: overviewSectionProps.overviewContentProps,
     priorityActionsContentProps:
       overviewSectionProps.priorityActionsContentProps,
@@ -53,12 +54,8 @@ export function buildInspectorSettingsDrawerPanelProps(
       securitySectionProps.securityDeleteAccountSectionProps,
     securityDeviceProtectionSectionProps:
       securitySectionProps.securityDeviceProtectionSectionProps,
-    securityFileUploadSectionProps:
-      securitySectionProps.securityFileUploadSectionProps,
     securityIdentityVerificationSectionProps:
       securitySectionProps.securityIdentityVerificationSectionProps,
-    securityNotificationPrivacySectionProps:
-      securitySectionProps.securityNotificationPrivacySectionProps,
     securityPermissionsSectionProps:
       securitySectionProps.securityPermissionsSectionProps,
     securitySessionsSectionProps:

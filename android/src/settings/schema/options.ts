@@ -26,12 +26,7 @@ export const SPEECH_LANGUAGE_OPTIONS = [
 export const THEME_OPTIONS = ["claro", "escuro", "automático"] as const;
 export const FONT_SIZE_OPTIONS = ["pequeno", "médio", "grande"] as const;
 export const DENSITY_OPTIONS = ["compacta", "confortável"] as const;
-export const ACCENT_OPTIONS = [
-  "azul",
-  "laranja",
-  "roxo",
-  "personalizado",
-] as const;
+export const ACCENT_OPTIONS = ["padrão", "laranja", "azul", "roxo"] as const;
 export const NOTIFICATION_SOUND_OPTIONS = [
   "Ping",
   "Sino curto",

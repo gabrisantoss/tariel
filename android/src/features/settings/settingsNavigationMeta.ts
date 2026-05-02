@@ -14,8 +14,6 @@ export type SettingsSectionKey =
   | "atividadeSeguranca"
   | "dadosConversas"
   | "permissoes"
-  | "segurancaArquivos"
-  | "privacidadeNotificacoes"
   | "excluirConta"
   | "recursosAvancados"
   | "sistema"
@@ -68,7 +66,7 @@ export const SETTINGS_DRAWER_SECTION_META: Record<
   },
   notificacoes: {
     title: "Notificações",
-    subtitle: "Alertas, push e vibração.",
+    subtitle: "Alertas, push e categorias.",
     icon: "bell-outline",
   },
   contasConectadas: {
@@ -108,18 +106,8 @@ export const SETTINGS_DRAWER_SECTION_META: Record<
   },
   permissoes: {
     title: "Permissões",
-    subtitle: "Câmera, arquivos, microfone e notificações.",
+    subtitle: "Câmera, arquivos e microfone.",
     icon: "shield-sync-outline",
-  },
-  segurancaArquivos: {
-    title: "Segurança de arquivos enviados",
-    subtitle: "Formatos, limites e proteção dos uploads.",
-    icon: "file-lock-outline",
-  },
-  privacidadeNotificacoes: {
-    title: "Privacidade em notificações",
-    subtitle: "Controle das prévias.",
-    icon: "bell-cog-outline",
   },
   excluirConta: {
     title: "Excluir conta",
@@ -127,18 +115,18 @@ export const SETTINGS_DRAWER_SECTION_META: Record<
     icon: "alert-outline",
   },
   recursosAvancados: {
-    title: "Fala",
-    subtitle: "Voz, transcrição e leitura.",
-    icon: "microphone-message",
+    title: "Voz e acessibilidade",
+    subtitle: "Voz, leitura e ajustes de fala.",
+    icon: "account-voice",
   },
   sistema: {
     title: "Sistema",
-    subtitle: "Idioma, versão e manutenção.",
+    subtitle: "Permissões e informações do app.",
     icon: "cellphone-cog",
   },
   suporte: {
-    title: "Suporte",
-    subtitle: "Ajuda, feedback e diagnóstico.",
+    title: "Falar com o suporte",
+    subtitle: "Bug, suporte, feedback e diagnóstico.",
     icon: "lifebuoy",
   },
 };
@@ -161,26 +149,25 @@ export const SETTINGS_DRAWER_PAGE_META: Record<
   },
   experiencia: {
     title: "Preferências",
-    subtitle: "IA, aparência e notificações.",
+    subtitle: "IA, voz, aparência e notificações.",
     icon: "palette-outline",
-    sections: ["preferenciasIa", "aparencia", "notificacoes"],
+    sections: [
+      "preferenciasIa",
+      "recursosAvancados",
+      "aparencia",
+      "notificacoes",
+    ],
   },
   seguranca: {
     title: "Segurança e privacidade",
     subtitle: "Permissões, dados locais e proteção.",
     icon: "shield-lock-outline",
-    sections: [
-      "protecaoDispositivo",
-      "permissoes",
-      "privacidadeNotificacoes",
-      "dadosConversas",
-      "segurancaArquivos",
-    ],
+    sections: ["permissoes", "dadosConversas"],
   },
   sistemaSuporte: {
-    title: "Sistema e suporte",
-    subtitle: "Fala, manutenção e ajuda.",
+    title: "Ajuda e informações",
+    subtitle: "Suporte, permissões e documentos do app.",
     icon: "cellphone-cog",
-    sections: ["sistema", "recursosAvancados", "suporte"],
+    sections: ["sistema", "suporte"],
   },
 };

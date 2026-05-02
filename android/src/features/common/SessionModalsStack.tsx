@@ -82,6 +82,7 @@ export interface SessionModalsStackProps {
   onConfirmSettingsSheet: () => void;
   renderSettingsSheetBody: () => ReactNode;
   settingsSheet: SettingsSheetState | null;
+  settingsSheetCanGoBack: boolean;
   settingsSheetLoading: boolean;
   settingsSheetNotice: string;
   settingsSheetVisible: boolean;
@@ -144,6 +145,7 @@ export function SessionModalsStack({
   onConfirmSettingsSheet,
   renderSettingsSheetBody,
   settingsSheet,
+  settingsSheetCanGoBack,
   settingsSheetLoading,
   settingsSheetNotice,
   settingsSheetVisible,
@@ -220,6 +222,7 @@ export function SessionModalsStack({
         onConfirm={onConfirmSettingsSheet}
         renderSettingsSheetBody={renderSettingsSheetBody}
         settingsSheet={settingsSheet}
+        settingsSheetCanGoBack={settingsSheetCanGoBack}
         settingsSheetLoading={settingsSheetLoading}
         settingsSheetNotice={settingsSheetNotice}
         visible={settingsSheetVisible}

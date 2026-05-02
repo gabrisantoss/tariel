@@ -2,8 +2,59 @@ import {
   runExportDataFlow,
   type RunExportDataFlowParams,
 } from "./exportDataFlow";
+import { createDefaultAppSettings } from "../../settings/schema/defaults";
 
 function criarParams(): RunExportDataFlowParams {
+  const conversaAtual = {
+    laudoId: 88,
+    estado: "aberto",
+    statusCard: "Aguardando",
+    permiteEdicao: true,
+    permiteReabrir: false,
+    laudoCard: null,
+    modo: "livre",
+    mensagens: [
+      {
+        id: 1,
+        papel: "usuario" as const,
+        texto: "Mensagem de auditoria",
+        tipo: "texto",
+      },
+    ],
+  };
+  const cacheLeitura = {
+    bootstrap: null,
+    laudos: [],
+    conversaAtual,
+    conversasPorLaudo: {
+      "laudo:88": conversaAtual,
+    },
+    mesaPorLaudo: {
+      "laudo:88": [
+        {
+          id: 3,
+          laudo_id: 88,
+          tipo: "mensagem",
+          texto: "Revisão registrada",
+          remetente_id: 2,
+          data: "13/04/2026 10:08",
+          criado_em_iso: "2026-04-13T10:08:00.000Z",
+          lida: false,
+          resolvida_em: "",
+          resolvida_em_label: "",
+          resolvida_por_nome: "",
+        },
+      ],
+    },
+    guidedInspectionDrafts: {},
+    chatDrafts: {
+      "laudo:88": "rascunho chat",
+    },
+    mesaDrafts: {},
+    chatAttachmentDrafts: {},
+    mesaAttachmentDrafts: {},
+    updatedAt: "2026-04-13T10:10:00.000Z",
+  };
   return {
     formato: "JSON",
     reautenticacaoExpiraEm: "2099-01-01T00:00:00.000Z",
@@ -41,10 +92,20 @@ function criarParams(): RunExportDataFlowParams {
     vibracaoAtiva: true,
     mostrarConteudoNotificacao: true,
     mostrarSomenteNovaMensagem: false,
+    settingsDocument: createDefaultAppSettings(),
     salvarHistoricoConversas: true,
     compartilharMelhoriaIa: true,
     retencaoDados: "90_dias",
     ocultarConteudoBloqueado: false,
+    cacheLeitura,
+    conversaAtual,
+    mensagensMesa: cacheLeitura.mesaPorLaudo["laudo:88"],
+    mensagemRascunho: "rascunho atual",
+    mensagemMesaRascunho: "",
+    filaOffline: [],
+    filaSuporteLocal: [],
+    laudosFixadosIds: [88],
+    historicoOcultoIds: [],
     integracoesExternas: [],
     laudosDisponiveis: [
       {
@@ -156,7 +217,26 @@ describe("exportDataFlow", () => {
     expect(serializedPayload.operationalSummary).toEqual({
       totalCases: 1,
       reissueRecommendedCount: 1,
+      cachedConversations: 1,
+      cachedMesaThreads: 1,
+      currentChatMessages: 1,
+      currentMesaMessages: 1,
+      offlineQueueItems: 0,
+      supportQueueItems: 0,
     });
+    expect(serializedPayload.settingsDocument.dataControls).toEqual(
+      params.settingsDocument.dataControls,
+    );
+    expect(
+      serializedPayload.auditData.conversations.byCase["laudo:88"].mensagens[0]
+        .texto,
+    ).toBe("Mensagem de auditoria");
+    expect(
+      serializedPayload.auditData.conversations.mesaByCase["laudo:88"][0].texto,
+    ).toBe("Revisão registrada");
+    expect(serializedPayload.auditData.localHistory.pinnedCaseIds).toEqual([
+      88,
+    ]);
     expect(serializedPayload.account).toEqual(
       expect.objectContaining({
         workspace: "Empresa A • Mobile principal com operador único",

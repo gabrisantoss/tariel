@@ -71,6 +71,15 @@ export function buildInspectorRootFinalScreenState({
         mensagem: localState.mensagem,
         mensagemMesa: localState.mensagemMesa,
         mensagemMesaReferenciaAtiva: localState.mensagemMesaReferenciaAtiva,
+        onSincronizarFilaOffline: () => {
+          const accessToken = sessionFlow.state.session?.accessToken;
+          if (!accessToken) {
+            return;
+          }
+          void controllers.offlineQueueController.actions.sincronizarFilaOffline(
+            accessToken,
+          );
+        },
         qualityGateLoading: localState.qualityGateLoading,
         qualityGateNotice: localState.qualityGateNotice,
         qualityGatePayload: localState.qualityGatePayload,
@@ -82,6 +91,7 @@ export function buildInspectorRootFinalScreenState({
         setMensagem: localState.setMensagem,
         setMensagemMesa: localState.setMensagemMesa,
         setQualityGateReason: localState.setQualityGateReason,
+        sincronizandoFilaOffline: localState.sincronizandoFilaOffline,
       },
       historyState: {
         buscaHistorico: shellSupport.buscaHistorico,
@@ -260,6 +270,8 @@ export function buildInspectorRootFinalScreenState({
         setConfirmTextDraft:
           settingsSupportState.navigationActions.setConfirmTextDraft,
         settingsSheet: settingsSupportState.navigationState.settingsSheet,
+        settingsSheetCanGoBack:
+          settingsSupportState.navigationState.settingsSheetCanGoBack,
         settingsSheetLoading:
           settingsSupportState.navigationState.settingsSheetLoading,
         settingsSheetNotice:
@@ -298,11 +310,16 @@ export function buildInspectorRootFinalScreenState({
         void controllers.chatController.actions.handleIniciarChatLivre();
       },
       onStartGuidedInspection: (templateKey = "nr35_linha_vida") => {
-        controllers.guidedInspectionController.actions.handleStartGuidedInspection(
-          {
-            templateKey,
-          },
-        );
+        void controllers.chatController.actions
+          .handleAbrirNovoChat()
+          .then(() => {
+            controllers.guidedInspectionController.actions.handleStartGuidedInspection(
+              {
+                templateKey,
+                ignoreActiveConversation: true,
+              },
+            );
+          });
       },
       onStopGuidedInspection:
         controllers.guidedInspectionController.actions

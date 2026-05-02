@@ -52,6 +52,8 @@ export function buildInspectorRootSettingsSheetState({
     },
     actionsState: {
       compartilharTextoExportado,
+      fecharSheetConfiguracao:
+        settingsSupportState.navigationActions.fecharSheetConfiguracao,
       formatarHorarioAtividade,
       formatarStatusReautenticacao,
       handleConfirmarSettingsSheetReauth:
@@ -89,6 +91,9 @@ export function buildInspectorRootSettingsSheetState({
     draftState: {
       artigoAjudaExpandidoId:
         settingsSupportState.presentationState.artigoAjudaExpandidoId,
+      autoUploadAttachments:
+        settingsBindings.dataControls.autoUploadAttachments,
+      backupAutomatico: settingsBindings.dataControls.backupAutomatico,
       bugAttachmentDraft:
         settingsSupportState.presentationState.bugAttachmentDraft,
       bugDescriptionDraft:
@@ -106,6 +111,7 @@ export function buildInspectorRootSettingsSheetState({
       modeloIa: settingsBindings.ai.modeloIa,
       estiloResposta: settingsBindings.ai.estiloResposta,
       idiomaResposta: settingsBindings.ai.idiomaResposta,
+      voiceLanguage: settingsBindings.speech.voiceLanguage,
       nomeCompletoDraft:
         settingsSupportState.presentationState.nomeCompletoDraft,
       nomeExibicaoDraft:
@@ -120,11 +126,14 @@ export function buildInspectorRootSettingsSheetState({
         settingsBindings.dataControls.salvarHistoricoConversas,
       senhaAtualDraft: settingsSupportState.presentationState.senhaAtualDraft,
       settingsSheet: settingsSupportState.navigationState.settingsSheet,
+      sincronizacaoDispositivos:
+        settingsBindings.dataControls.sincronizacaoDispositivos,
       statusApi: sessionFlow.state.statusApi,
       statusAtualizacaoApp:
         settingsSupportState.presentationState.statusAtualizacaoApp,
       ultimoTicketSuporte: derivedState.ultimoTicketSuporte,
       uploadArquivosAtivo: settingsBindings.attachments.uploadArquivosAtivo,
+      wifiOnlySync: settingsBindings.dataControls.wifiOnlySync,
     },
     settersState: {
       onSetBugAttachmentDraft:
@@ -134,6 +143,8 @@ export function buildInspectorRootSettingsSheetState({
       onSetBugEmailDraft:
         settingsSupportState.presentationActions.setBugEmailDraft,
       onSetBuscaAjuda: settingsSupportState.presentationActions.setBuscaAjuda,
+      onSetAutoUploadAttachments:
+        settingsBindings.dataControls.setAutoUploadAttachments,
       onSetCartaoAtual: settingsSupportState.presentationActions.setCartaoAtual,
       onSetConfirmarSenhaDraft:
         settingsSupportState.presentationActions.setConfirmarSenhaDraft,
@@ -150,6 +161,7 @@ export function buildInspectorRootSettingsSheetState({
         settingsSupportState.presentationActions.setNovaSenhaDraft,
       onSetNovoEmailDraft:
         settingsSupportState.presentationActions.setNovoEmailDraft,
+      onSetRetencaoDados: settingsBindings.dataControls.setRetencaoDados,
       onSetPerfilExibicao: settingsBindings.account.setPerfilExibicao,
       onSetPerfilFotoHint: settingsBindings.account.setPerfilFotoHint,
       onSetPerfilFotoUri: settingsBindings.account.setPerfilFotoUri,
@@ -169,6 +181,8 @@ export function buildInspectorRootSettingsSheetState({
         settingsSupportState.presentationActions.setStatusAtualizacaoApp,
       onSetTelefoneDraft:
         settingsSupportState.presentationActions.setTelefoneDraft,
+      onSetVoiceLanguage: settingsBindings.speech.setVoiceLanguage,
+      onSetWifiOnlySync: settingsBindings.dataControls.setWifiOnlySync,
       onSetUltimaVerificacaoAtualizacao:
         settingsSupportState.presentationActions
           .setUltimaVerificacaoAtualizacao,

@@ -2,10 +2,14 @@ import type {
   MobileActiveOwnerRole,
   MobileCaseLifecycleStatus,
   MobileLifecycleTransition,
+  MobileMesaMessage,
   MobileOfficialIssueSummary,
   MobileReportPackDraft,
   MobileSurfaceAction,
 } from "../../types/mobile";
+import type { AppSettings } from "../../settings";
+import type { ChatState, OfflinePendingMessage } from "../chat/types";
+import type { MobileReadCache } from "../common/readCacheTypes";
 import {
   resolverAllowedLifecycleTransitions,
   resolverAllowedSurfaceActions,
@@ -20,6 +24,7 @@ import { buildReportPackDraftSummary } from "../chat/reportPackHelpers";
 import { isOfficialIssueReissueRecommended } from "../common/officialIssueSummary";
 import type { SettingsSecurityEventPayload } from "./settingsConfirmActions";
 import type { SettingsSheetState } from "./settingsSheetTypes";
+import type { SupportQueueItem } from "./useSettingsPresentation";
 
 interface ExportIntegrationItem {
   id: string;
@@ -86,10 +91,20 @@ export interface RunExportDataFlowParams {
   vibracaoAtiva: boolean;
   mostrarConteudoNotificacao: boolean;
   mostrarSomenteNovaMensagem: boolean;
+  settingsDocument: AppSettings;
   salvarHistoricoConversas: boolean;
   compartilharMelhoriaIa: boolean;
   retencaoDados: string;
   ocultarConteudoBloqueado: boolean;
+  cacheLeitura: MobileReadCache;
+  conversaAtual: ChatState | null;
+  mensagensMesa: MobileMesaMessage[];
+  mensagemRascunho: string;
+  mensagemMesaRascunho: string;
+  filaOffline: OfflinePendingMessage[];
+  filaSuporteLocal: SupportQueueItem[];
+  laudosFixadosIds: number[];
+  historicoOcultoIds: number[];
   integracoesExternas: ExportIntegrationItem[];
   laudosDisponiveis: ExportLaudoItem[];
   notificacoes: ExportNotificationItem[];
@@ -150,10 +165,20 @@ export async function runExportDataFlow({
   vibracaoAtiva,
   mostrarConteudoNotificacao,
   mostrarSomenteNovaMensagem,
+  settingsDocument,
   salvarHistoricoConversas,
   compartilharMelhoriaIa,
   retencaoDados,
   ocultarConteudoBloqueado,
+  cacheLeitura,
+  conversaAtual,
+  mensagensMesa,
+  mensagemRascunho,
+  mensagemMesaRascunho,
+  filaOffline,
+  filaSuporteLocal,
+  laudosFixadosIds,
+  historicoOcultoIds,
   integracoesExternas,
   laudosDisponiveis,
   notificacoes,
@@ -198,10 +223,20 @@ export async function runExportDataFlow({
           vibracaoAtiva,
           mostrarConteudoNotificacao,
           mostrarSomenteNovaMensagem,
+          settingsDocument,
           salvarHistoricoConversas,
           compartilharMelhoriaIa,
           retencaoDados,
           ocultarConteudoBloqueado,
+          cacheLeitura,
+          conversaAtual,
+          mensagensMesa,
+          mensagemRascunho,
+          mensagemMesaRascunho,
+          filaOffline,
+          filaSuporteLocal,
+          laudosFixadosIds,
+          historicoOcultoIds,
           integracoesExternas,
           laudosDisponiveis,
           notificacoes,
@@ -280,6 +315,10 @@ export async function runExportDataFlow({
   const reissueRecommendedCount = laudos.filter(
     (item) => item.reissueRecommended,
   ).length;
+  const cachedConversationKeys = Object.keys(
+    cacheLeitura.conversasPorLaudo || {},
+  );
+  const cachedMesaKeys = Object.keys(cacheLeitura.mesaPorLaudo || {});
 
   const payload = {
     exportedAt: new Date().toISOString(),
@@ -326,9 +365,42 @@ export async function runExportDataFlow({
         lastSyncAt: item.lastSyncAt,
       })),
     },
+    settingsDocument,
     operationalSummary: {
       totalCases: laudos.length,
       reissueRecommendedCount,
+      cachedConversations: cachedConversationKeys.length,
+      cachedMesaThreads: cachedMesaKeys.length,
+      currentChatMessages: conversaAtual?.mensagens.length || 0,
+      currentMesaMessages: mensagensMesa.length,
+      offlineQueueItems: filaOffline.length,
+      supportQueueItems: filaSuporteLocal.length,
+    },
+    auditData: {
+      cacheUpdatedAt: cacheLeitura.updatedAt,
+      conversations: {
+        current: conversaAtual,
+        cachedCurrent: cacheLeitura.conversaAtual,
+        byCase: cacheLeitura.conversasPorLaudo,
+        mesaCurrent: mensagensMesa,
+        mesaByCase: cacheLeitura.mesaPorLaudo,
+      },
+      drafts: {
+        currentChatMessage: mensagemRascunho,
+        currentMesaMessage: mensagemMesaRascunho,
+        guidedInspectionDrafts: cacheLeitura.guidedInspectionDrafts || {},
+        chatDrafts: cacheLeitura.chatDrafts,
+        mesaDrafts: cacheLeitura.mesaDrafts,
+        chatAttachmentDrafts: cacheLeitura.chatAttachmentDrafts,
+        mesaAttachmentDrafts: cacheLeitura.mesaAttachmentDrafts,
+      },
+      localHistory: {
+        pinnedCaseIds: laudosFixadosIds,
+        hiddenCaseIds: historicoOcultoIds,
+      },
+      offlineQueue: filaOffline,
+      supportQueue: filaSuporteLocal,
+      cachedBootstrap: cacheLeitura.bootstrap,
     },
     laudos,
     notifications: notificacoes.map((item) => ({
@@ -361,6 +433,12 @@ export async function runExportDataFlow({
           "",
           `Laudos sincronizados: ${payload.laudos.length}`,
           `Reemissões recomendadas: ${payload.operationalSummary.reissueRecommendedCount}`,
+          `Conversas em cache: ${payload.operationalSummary.cachedConversations}`,
+          `Mensagens do chat atual: ${payload.operationalSummary.currentChatMessages}`,
+          `Conversas da mesa em cache: ${payload.operationalSummary.cachedMesaThreads}`,
+          `Mensagens da mesa atual: ${payload.operationalSummary.currentMesaMessages}`,
+          `Fila offline: ${payload.operationalSummary.offlineQueueItems}`,
+          `Fila de suporte: ${payload.operationalSummary.supportQueueItems}`,
           `Notificações locais: ${payload.notifications.length}`,
           `Eventos de segurança: ${payload.securityEvents.length}`,
           "",

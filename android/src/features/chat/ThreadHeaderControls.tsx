@@ -2,13 +2,20 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
 import { useAppTranslation } from "../../i18n/appTranslation";
+import {
+  colorWithAlpha,
+  resolveAccentColorForMode,
+} from "../../theme/colorUtils";
 import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
 
 export interface ThreadHeaderControlsProps {
+  accentColor?: string;
   chatHasActiveCase: boolean;
   darkMode?: boolean;
+  densityScale?: number;
   finalizacaoDisponivel: boolean;
+  fontScale?: number;
   headerSafeTopInset: number;
   keyboardVisible: boolean;
   mesaAcessoPermitido: boolean;
@@ -26,9 +33,12 @@ export interface ThreadHeaderControlsProps {
 }
 
 export function ThreadHeaderControls({
+  accentColor = colors.accent,
   chatHasActiveCase,
   darkMode = false,
+  densityScale = 1,
   finalizacaoDisponivel,
+  fontScale = 1,
   headerSafeTopInset,
   keyboardVisible,
   mesaAcessoPermitido,
@@ -63,17 +73,31 @@ export function ThreadHeaderControls({
   const eyebrow = vendoFinalizacao
     ? t("Entrega técnica")
     : vendoMesa
-      ? t("Mesa avaliadora")
+      ? t("Revisão do caso")
       : blankChatEntry
         ? t("Nova inspeção")
-        : t("Inspeção ativa");
+        : "";
   const title = vendoFinalizacao
     ? t("Finalizar")
     : vendoMesa
-      ? t("Mesa")
+      ? t("Revisão")
       : t("Chat");
   const compactHeader = keyboardVisible;
-  const tabActiveIconColor = darkMode ? "#F0F4F8" : colors.textPrimary;
+  const visibleAccentColor = resolveAccentColorForMode(accentColor, darkMode);
+  const accentForeground =
+    darkMode && visibleAccentColor === colors.textInverse
+      ? colors.ink900
+      : colors.white;
+  const accentWashColor = colorWithAlpha(
+    visibleAccentColor,
+    darkMode ? "24" : "18",
+  );
+  const accentBorderColor = colorWithAlpha(
+    visibleAccentColor,
+    darkMode ? "66" : "4D",
+  );
+  const scaledNavButtonSize = 48 * densityScale;
+  const tabActiveIconColor = visibleAccentColor;
   const tabIdleIconColor = darkMode ? "#AFC0D2" : colors.textSecondary;
   const showNewChatShortcut = !vendoMesa && !vendoFinalizacao;
   const subtitle = vendoFinalizacao
@@ -81,7 +105,7 @@ export function ThreadHeaderControls({
     : vendoMesa
       ? notificacoesMesaLaudoAtual
         ? t(
-            `${notificacoesMesaLaudoAtual} retorno${notificacoesMesaLaudoAtual === 1 ? "" : "s"} novo${notificacoesMesaLaudoAtual === 1 ? "" : "s"} da mesa.`,
+            `${notificacoesMesaLaudoAtual} retorno${notificacoesMesaLaudoAtual === 1 ? "" : "s"} novo${notificacoesMesaLaudoAtual === 1 ? "" : "s"} da revisão.`,
           )
         : ""
       : blankChatEntry
@@ -91,9 +115,7 @@ export function ThreadHeaderControls({
               `${filaOfflineTotal} pendência${filaOfflineTotal === 1 ? "" : "s"} na fila offline.`,
             )
           : chatHasActiveCase
-            ? t(
-                "Fotos, contexto e anexos entram direto na análise e no laudo.",
-              )
+            ? ""
             : "";
   const statusChips = (
     vendoFinalizacao
@@ -142,6 +164,10 @@ export function ThreadHeaderControls({
               styles.cleanNavButton,
               darkMode ? styles.cleanNavButtonDark : null,
               compactHeader ? styles.cleanNavButtonCompact : null,
+              {
+                height: scaledNavButtonSize,
+                width: scaledNavButtonSize,
+              },
             ]}
             testID="open-history-button"
           >
@@ -161,11 +187,12 @@ export function ThreadHeaderControls({
                 compactHeader ? styles.cleanHeaderCopyCompact : null,
               ]}
             >
-              {!compactHeader ? (
+              {eyebrow && !compactHeader ? (
                 <Text
                   style={[
                     styles.cleanHeaderEyebrow,
                     darkMode ? styles.cleanHeaderEyebrowDark : null,
+                    { fontSize: 11 * fontScale, lineHeight: 15 * fontScale },
                   ]}
                 >
                   {eyebrow}
@@ -176,6 +203,7 @@ export function ThreadHeaderControls({
                   styles.cleanHeaderTitle,
                   darkMode ? styles.cleanHeaderTitleDark : null,
                   compactHeader ? styles.cleanHeaderTitleCompact : null,
+                  { fontSize: 28 * fontScale, lineHeight: 34 * fontScale },
                 ]}
               >
                 {title}
@@ -185,6 +213,7 @@ export function ThreadHeaderControls({
                   style={[
                     styles.cleanHeaderSubtitle,
                     darkMode ? styles.cleanHeaderSubtitleDark : null,
+                    { fontSize: 13 * fontScale, lineHeight: 18 * fontScale },
                   ]}
                 >
                   {subtitle}
@@ -204,6 +233,10 @@ export function ThreadHeaderControls({
                   styles.cleanNavButton,
                   darkMode ? styles.cleanNavButtonDark : null,
                   compactHeader ? styles.cleanNavButtonCompact : null,
+                  {
+                    height: scaledNavButtonSize,
+                    width: scaledNavButtonSize,
+                  },
                 ]}
                 testID="open-new-chat-button"
               >
@@ -223,6 +256,10 @@ export function ThreadHeaderControls({
                 styles.cleanNavButton,
                 darkMode ? styles.cleanNavButtonDark : null,
                 compactHeader ? styles.cleanNavButtonCompact : null,
+                {
+                  height: scaledNavButtonSize,
+                  width: scaledNavButtonSize,
+                },
               ]}
               testID="open-settings-button"
             >
@@ -232,8 +269,18 @@ export function ThreadHeaderControls({
                 size={20}
               />
               {totalBadge ? (
-                <View style={styles.cleanNavBadge}>
-                  <Text style={styles.cleanNavBadgeText}>
+                <View
+                  style={[
+                    styles.cleanNavBadge,
+                    { backgroundColor: visibleAccentColor },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.cleanNavBadgeText,
+                      { color: accentForeground },
+                    ]}
+                  >
                     {Math.min(totalBadge, 9)}
                     {totalBadge > 9 ? "+" : ""}
                   </Text>
@@ -256,12 +303,19 @@ export function ThreadHeaderControls({
                     item.accent && darkMode
                       ? styles.cleanHeaderChipAccentDark
                       : null,
+                    item.accent
+                      ? {
+                          backgroundColor: accentWashColor,
+                          borderColor: accentBorderColor,
+                          paddingVertical: 6 * densityScale,
+                        }
+                      : null,
                   ]}
                 >
                   <MaterialCommunityIcons
                     color={
                       item.accent
-                        ? colors.accent
+                        ? visibleAccentColor
                         : darkMode
                           ? "#AFC0D2"
                           : colors.textSecondary
@@ -274,6 +328,8 @@ export function ThreadHeaderControls({
                       styles.cleanHeaderChipText,
                       darkMode ? styles.cleanHeaderChipTextDark : null,
                       item.accent ? styles.cleanHeaderChipTextAccent : null,
+                      item.accent ? { color: visibleAccentColor } : null,
+                      { fontSize: 12 * fontScale, lineHeight: 16 * fontScale },
                     ]}
                   >
                     {item.label}
@@ -311,9 +367,16 @@ export function ThreadHeaderControls({
                 styles.threadTab,
                 darkMode ? styles.threadTabDark : null,
                 compactHeader ? styles.threadTabCompact : null,
+                {
+                  minHeight: 40 * densityScale,
+                  paddingVertical: 9 * densityScale,
+                },
                 !vendoMesa && !vendoFinalizacao ? styles.threadTabActive : null,
                 !vendoMesa && !vendoFinalizacao && darkMode
                   ? styles.threadTabActiveDark
+                  : null,
+                !vendoMesa && !vendoFinalizacao
+                  ? { borderColor: accentBorderColor }
                   : null,
               ]}
               testID="chat-tab-button"
@@ -338,6 +401,10 @@ export function ThreadHeaderControls({
                   !vendoMesa && !vendoFinalizacao && darkMode
                     ? styles.threadTabTextActiveDark
                     : null,
+                  !vendoMesa && !vendoFinalizacao
+                    ? { color: visibleAccentColor }
+                    : null,
+                  { fontSize: 13 * fontScale, lineHeight: 17 * fontScale },
                 ]}
               >
                 Chat
@@ -347,10 +414,10 @@ export function ThreadHeaderControls({
               <Pressable
                 accessibilityLabel={
                   notificacoesMesaLaudoAtual
-                    ? `${t("Abrir aba Mesa")}, ${t(
+                    ? `${t("Abrir aba Revisão")}, ${t(
                         `${notificacoesMesaLaudoAtual} retorno${notificacoesMesaLaudoAtual === 1 ? "" : "s"} novo${notificacoesMesaLaudoAtual === 1 ? "" : "s"}`,
                       )}`
-                    : t("Abrir aba Mesa")
+                    : t("Abrir aba Revisão")
                 }
                 accessibilityRole="tab"
                 accessibilityState={{ selected: vendoMesa }}
@@ -359,15 +426,18 @@ export function ThreadHeaderControls({
                   styles.threadTab,
                   darkMode ? styles.threadTabDark : null,
                   compactHeader ? styles.threadTabCompact : null,
+                  {
+                    minHeight: 40 * densityScale,
+                    paddingVertical: 9 * densityScale,
+                  },
                   vendoMesa ? styles.threadTabActive : null,
                   vendoMesa && darkMode ? styles.threadTabActiveDark : null,
+                  vendoMesa ? { borderColor: accentBorderColor } : null,
                 ]}
                 testID="mesa-tab-button"
               >
                 <MaterialCommunityIcons
-                  color={
-                    vendoMesa ? tabActiveIconColor : tabIdleIconColor
-                  }
+                  color={vendoMesa ? tabActiveIconColor : tabIdleIconColor}
                   name="clipboard-text-outline"
                   size={16}
                 />
@@ -377,22 +447,32 @@ export function ThreadHeaderControls({
                     darkMode ? styles.threadTabTextDark : null,
                     compactHeader ? styles.threadTabTextCompact : null,
                     vendoMesa ? styles.threadTabTextActive : null,
-                    vendoMesa && darkMode ? styles.threadTabTextActiveDark : null,
+                    vendoMesa && darkMode
+                      ? styles.threadTabTextActiveDark
+                      : null,
+                    vendoMesa ? { color: visibleAccentColor } : null,
+                    { fontSize: 13 * fontScale, lineHeight: 17 * fontScale },
                   ]}
                 >
-                  {t("Mesa")}
+                  {t("Revisão")}
                 </Text>
                 {notificacoesMesaLaudoAtual ? (
                   <View
                     style={[
                       styles.threadTabBadge,
                       vendoMesa ? styles.threadTabBadgeActive : null,
+                      {
+                        backgroundColor: accentWashColor,
+                        borderColor: accentBorderColor,
+                      },
                     ]}
                   >
                     <Text
                       style={[
                         styles.threadTabBadgeText,
                         vendoMesa ? styles.threadTabBadgeTextActive : null,
+                        { color: visibleAccentColor },
+                        { fontSize: 10 * fontScale },
                       ]}
                     >
                       {notificacoesMesaLaudoAtual > 9
@@ -413,10 +493,15 @@ export function ThreadHeaderControls({
                   styles.threadTab,
                   darkMode ? styles.threadTabDark : null,
                   compactHeader ? styles.threadTabCompact : null,
+                  {
+                    minHeight: 40 * densityScale,
+                    paddingVertical: 9 * densityScale,
+                  },
                   vendoFinalizacao ? styles.threadTabActive : null,
                   vendoFinalizacao && darkMode
                     ? styles.threadTabActiveDark
                     : null,
+                  vendoFinalizacao ? { borderColor: accentBorderColor } : null,
                 ]}
                 testID="finalizar-tab-button"
               >
@@ -436,6 +521,8 @@ export function ThreadHeaderControls({
                     vendoFinalizacao && darkMode
                       ? styles.threadTabTextActiveDark
                       : null,
+                    vendoFinalizacao ? { color: visibleAccentColor } : null,
+                    { fontSize: 13 * fontScale, lineHeight: 17 * fontScale },
                   ]}
                 >
                   {t("Finalizar")}

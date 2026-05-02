@@ -58,7 +58,8 @@ type InspectorAuthenticatedBaseState = Pick<
   | "threadKeyboardPaddingBottom"
   | "vendoFinalizacao"
   | "vendoMesa"
->;
+> &
+  Partial<Pick<InspectorBaseDerivedState, "densityScale">>;
 
 type InspectorThreadContextState = Pick<
   ThreadContextStateResult,
@@ -95,6 +96,7 @@ interface BuildInspectorAuthenticatedLayoutScreenPropsInput {
     | "mensagem"
     | "mensagemMesa"
     | "mensagemMesaReferenciaAtiva"
+    | "onSincronizarFilaOffline"
     | "qualityGateLoading"
     | "qualityGateNotice"
     | "qualityGatePayload"
@@ -106,6 +108,7 @@ interface BuildInspectorAuthenticatedLayoutScreenPropsInput {
     | "setMensagem"
     | "setMensagemMesa"
     | "setQualityGateReason"
+    | "sincronizandoFilaOffline"
   >;
   historyState: Pick<
     AuthenticatedLayoutHistoryInput,
@@ -232,10 +235,12 @@ export function buildInspectorAuthenticatedLayoutScreenProps({
         chatKeyboardVerticalOffset: baseState.chatKeyboardVerticalOffset,
         composerNotice: shellState.composerNotice,
         configuracoesAberta: shellState.configuracoesAberta,
+        densityScale: baseState.densityScale,
         drawerOverlayOpacity: shellState.drawerOverlayOpacity,
         erroConversa: shellState.erroConversa,
         erroLaudos: shellState.erroLaudos,
         fecharPaineisLaterais: shellState.fecharPaineisLaterais,
+        fontScale: baseState.fontScale,
         introVisivel: shellState.introVisivel,
         keyboardAvoidingBehavior: baseState.keyboardAvoidingBehavior,
         keyboardVisible: baseState.keyboardVisible,
@@ -334,6 +339,7 @@ export function buildInspectorAuthenticatedLayoutScreenProps({
         mensagem: composerState.mensagem,
         mensagemMesa: composerState.mensagemMesa,
         mensagemMesaReferenciaAtiva: composerState.mensagemMesaReferenciaAtiva,
+        onSincronizarFilaOffline: composerState.onSincronizarFilaOffline,
         placeholderComposer: baseState.placeholderComposer,
         placeholderMesa: baseState.placeholderMesa,
         podeAbrirAnexosChat: baseState.podeAbrirAnexosChat,
@@ -353,6 +359,7 @@ export function buildInspectorAuthenticatedLayoutScreenProps({
         setMensagem: composerState.setMensagem,
         setMensagemMesa: composerState.setMensagemMesa,
         setQualityGateReason: composerState.setQualityGateReason,
+        sincronizandoFilaOffline: composerState.sincronizandoFilaOffline,
         showVoiceInputAction:
           speechState.speechEnabled && speechState.entradaPorVoz,
         voiceInputEnabled:

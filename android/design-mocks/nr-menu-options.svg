@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1700" viewBox="0 0 1080 1700" role="img" aria-labelledby="title desc">
+  <title id="title">Exemplos de menu para escolher NR</title>
+  <desc id="desc">Tres opcoes visuais para o menu de inspecao guiada do Tariel.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f4f5f7; }
+      .panel { fill: #ffffff; stroke: #d7dce2; stroke-width: 2; }
+      .phone { fill: #fbfcfd; stroke: #1f2933; stroke-width: 4; }
+      .screen { fill: #ffffff; }
+      .title { fill: #111827; font-family: Arial, sans-serif; font-size: 28px; font-weight: 700; }
+      .subtitle { fill: #5b6573; font-family: Arial, sans-serif; font-size: 17px; font-weight: 400; }
+      .section { fill: #111827; font-family: Arial, sans-serif; font-size: 20px; font-weight: 700; }
+      .muted { fill: #6b7280; font-family: Arial, sans-serif; font-size: 15px; font-weight: 400; }
+      .tiny { fill: #6b7280; font-family: Arial, sans-serif; font-size: 12px; font-weight: 400; }
+      .label { fill: #111827; font-family: Arial, sans-serif; font-size: 16px; font-weight: 700; }
+      .rowText { fill: #111827; font-family: Arial, sans-serif; font-size: 15px; font-weight: 600; }
+      .bodyText { fill: #4b5563; font-family: Arial, sans-serif; font-size: 13px; font-weight: 400; }
+      .chip { fill: #f2f4f7; stroke: #d7dce2; stroke-width: 1.5; }
+      .line { stroke: #e4e7ec; stroke-width: 2; }
+      .black { fill: #111827; }
+      .soft { fill: #f7f8fa; }
+      .soft2 { fill: #eef1f5; }
+      .accent { fill: #111827; }
+      .outline { fill: #ffffff; stroke: #d7dce2; stroke-width: 2; }
+      .button { fill: #111827; }
+      .buttonText { fill: #ffffff; font-family: Arial, sans-serif; font-size: 14px; font-weight: 700; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1080" height="1700"/>
+  <text x="54" y="74" class="title">Modelos de menu para as NRs</text>
+  <text x="54" y="106" class="subtitle">O botao "Iniciar inspecao guiada" pode abrir um menu separado, sem poluir a tela inicial.</text>
+
+  <g transform="translate(54 150)">
+    <rect class="panel" width="972" height="472" rx="26"/>
+    <text x="28" y="48" class="title">Opcao A - Lista simples</text>
+    <text x="28" y="78" class="subtitle">Mais direta. Boa quando o usuario ja sabe qual NR quer abrir.</text>
+
+    <g transform="translate(30 108)">
+      <rect class="phone" width="280" height="330" rx="34"/>
+      <rect class="screen" x="14" y="18" width="252" height="294" rx="24"/>
+      <rect class="black" x="86" y="32" width="108" height="7" rx="4"/>
+      <text x="30" y="72" class="section">Escolha a NR</text>
+      <rect class="soft" x="30" y="92" width="220" height="38" rx="10"/>
+      <circle cx="48" cy="111" r="7" fill="none" stroke="#6b7280" stroke-width="2"/>
+      <line x1="54" y1="117" x2="62" y2="125" stroke="#6b7280" stroke-width="2"/>
+      <text x="72" y="117" class="muted">Digite NR ou tema</text>
+
+      <g transform="translate(30 146)">
+        <rect class="outline" width="220" height="42" rx="11"/>
+        <rect class="black" x="12" y="11" width="28" height="20" rx="5"/>
+        <text x="17" y="26" class="buttonText">10</text>
+        <text x="52" y="26" class="rowText">NR10 RTI Eletrica</text>
+        <text x="203" y="26" class="muted">&gt;</text>
+      </g>
+      <g transform="translate(30 196)">
+        <rect class="outline" width="220" height="42" rx="11"/>
+        <rect class="black" x="12" y="11" width="28" height="20" rx="5"/>
+        <text x="17" y="26" class="buttonText">12</text>
+        <text x="52" y="26" class="rowText">NR12 Maquinas</text>
+        <text x="203" y="26" class="muted">&gt;</text>
+      </g>
+      <g transform="translate(30 246)">
+        <rect class="outline" width="220" height="42" rx="11"/>
+        <rect class="black" x="12" y="11" width="28" height="20" rx="5"/>
+        <text x="17" y="26" class="buttonText">35</text>
+        <text x="52" y="26" class="rowText">NR35 Altura</text>
+        <text x="203" y="26" class="muted">&gt;</text>
+      </g>
+    </g>
+
+    <g transform="translate(360 128)">
+      <text x="0" y="0" class="section">Como fica</text>
+      <text x="0" y="30" class="bodyText">Abre uma tela/menu com busca no topo e todas as NRs em lista.</text>
+      <text x="0" y="62" class="bodyText">Toque em uma NR para iniciar direto o roteiro personalizado.</text>
+      <text x="0" y="108" class="section">Ponto forte</text>
+      <text x="0" y="138" class="bodyText">E rapido, limpo e ocupa pouco espaco.</text>
+      <text x="0" y="184" class="section">Ponto fraco</text>
+      <text x="0" y="214" class="bodyText">Mostra menos contexto para quem ainda nao sabe o melhor caminho.</text>
+    </g>
+  </g>
+
+  <g transform="translate(54 654)">
+    <rect class="panel" width="972" height="472" rx="26"/>
+    <text x="28" y="48" class="title">Opcao B - Menu por categoria</text>
+    <text x="28" y="78" class="subtitle">Mais explicativa. Boa para clarear a escolha por assunto.</text>
+
+    <g transform="translate(30 108)">
+      <rect class="phone" width="280" height="330" rx="34"/>
+      <rect class="screen" x="14" y="18" width="252" height="294" rx="24"/>
+      <rect class="black" x="86" y="32" width="108" height="7" rx="4"/>
+      <text x="30" y="72" class="section">Inspecao guiada</text>
+      <text x="30" y="96" class="muted">Escolha pelo tipo de risco</text>
+
+      <g transform="translate(30 116)">
+        <rect class="soft" width="220" height="62" rx="14"/>
+        <rect class="black" x="12" y="14" width="34" height="34" rx="10"/>
+        <text x="58" y="28" class="rowText">Eletrica</text>
+        <text x="58" y="48" class="bodyText">NR10, RTI e LOTO</text>
+        <text x="205" y="38" class="muted">&gt;</text>
+      </g>
+      <g transform="translate(30 188)">
+        <rect class="soft" width="220" height="62" rx="14"/>
+        <rect class="black" x="12" y="14" width="34" height="34" rx="10"/>
+        <text x="58" y="28" class="rowText">Equipamentos</text>
+        <text x="58" y="48" class="bodyText">NR12 e NR13</text>
+        <text x="205" y="38" class="muted">&gt;</text>
+      </g>
+      <g transform="translate(30 260)">
+        <rect class="soft" width="220" height="38" rx="12"/>
+        <text x="18" y="24" class="rowText">Trabalho em altura</text>
+        <text x="205" y="24" class="muted">&gt;</text>
+      </g>
+    </g>
+
+    <g transform="translate(360 128)">
+      <text x="0" y="0" class="section">Como fica</text>
+      <text x="0" y="30" class="bodyText">Primeiro aparecem grupos simples, depois as NRs dentro do grupo.</text>
+      <text x="0" y="62" class="bodyText">Ajuda o usuario que nao lembra o numero da norma.</text>
+      <text x="0" y="108" class="section">Ponto forte</text>
+      <text x="0" y="138" class="bodyText">Mais didatico e combina com configuracoes em formato de menu.</text>
+      <text x="0" y="184" class="section">Ponto fraco</text>
+      <text x="0" y="214" class="bodyText">Exige um toque a mais quando o usuario ja sabe a NR.</text>
+    </g>
+  </g>
+
+  <g transform="translate(54 1158)">
+    <rect class="panel" width="972" height="472" rx="26"/>
+    <text x="28" y="48" class="title">Opcao C - Painel compacto</text>
+    <text x="28" y="78" class="subtitle">Equilibrada. Mostra favoritos primeiro e deixa o restante em lista.</text>
+
+    <g transform="translate(30 108)">
+      <rect class="phone" width="280" height="330" rx="34"/>
+      <rect class="screen" x="14" y="18" width="252" height="294" rx="24"/>
+      <rect class="black" x="86" y="32" width="108" height="7" rx="4"/>
+      <text x="30" y="72" class="section">Qual roteiro?</text>
+      <text x="30" y="96" class="muted">Mais usados</text>
+      <g transform="translate(30 112)">
+        <rect class="chip" width="62" height="34" rx="12"/>
+        <text x="17" y="22" class="rowText">NR10</text>
+      </g>
+      <g transform="translate(100 112)">
+        <rect class="chip" width="62" height="34" rx="12"/>
+        <text x="17" y="22" class="rowText">NR12</text>
+      </g>
+      <g transform="translate(170 112)">
+        <rect class="chip" width="62" height="34" rx="12"/>
+        <text x="17" y="22" class="rowText">NR35</text>
+      </g>
+      <line class="line" x1="30" y1="166" x2="250" y2="166"/>
+      <text x="30" y="194" class="muted">Todos os roteiros</text>
+      <g transform="translate(30 210)">
+        <rect class="outline" width="220" height="36" rx="10"/>
+        <text x="14" y="23" class="rowText">NR10 RTI Eletrica</text>
+        <text x="204" y="23" class="muted">&gt;</text>
+      </g>
+      <g transform="translate(30 254)">
+        <rect class="outline" width="220" height="36" rx="10"/>
+        <text x="14" y="23" class="rowText">NR35 Linha de Vida</text>
+        <text x="204" y="23" class="muted">&gt;</text>
+      </g>
+    </g>
+
+    <g transform="translate(360 128)">
+      <text x="0" y="0" class="section">Como fica</text>
+      <text x="0" y="30" class="bodyText">Um painel curto aparece com as NRs mais usadas e a lista completa abaixo.</text>
+      <text x="0" y="62" class="bodyText">Pode abrir por cima da tela inicial, como uma folha de menu.</text>
+      <text x="0" y="108" class="section">Ponto forte</text>
+      <text x="0" y="138" class="bodyText">Boa mistura entre rapidez e organizacao.</text>
+      <text x="0" y="184" class="section">Ponto fraco</text>
+      <text x="0" y="214" class="bodyText">Precisa decidir quais NRs entram como favoritas.</text>
+    </g>
+  </g>
+</svg>

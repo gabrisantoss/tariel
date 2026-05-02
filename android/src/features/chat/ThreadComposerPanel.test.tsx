@@ -1,5 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native";
 
+import { colors } from "../../theme/tokens";
+import { styles } from "../InspectorMobileApp.styles";
 import {
   ThreadComposerPanel,
   type ThreadComposerPanelProps,
@@ -128,7 +130,7 @@ describe("ThreadComposerPanel", () => {
 
   it("mantém ids estáveis para documento na mesa e permite limpar o rascunho", () => {
     const onClearAnexoMesaRascunho = jest.fn();
-    const { getByTestId } = render(
+    const { getByTestId, getByText } = render(
       <ThreadComposerPanel
         {...createProps({
           vendoMesa: true,
@@ -145,7 +147,17 @@ describe("ThreadComposerPanel", () => {
     );
 
     expect(getByTestId("mesa-attachment-draft-card")).toBeTruthy();
-    expect(getByTestId("mesa-attachment-draft-kind-document")).toBeTruthy();
+    const documentIcon = getByTestId("mesa-attachment-draft-kind-document");
+    expect(documentIcon).toBeTruthy();
+    expect(documentIcon.props.style).toEqual(
+      expect.arrayContaining([styles.attachmentDraftIcon]),
+    );
+    expect(styles.attachmentDraftIcon.backgroundColor).toBe(
+      colors.surfaceMuted,
+    );
+    expect(getByText("file-document-outline").props.color).toBe(
+      colors.textSecondary,
+    );
 
     fireEvent.press(getByTestId("mesa-attachment-draft-remove"));
 

@@ -182,9 +182,7 @@ export function ThreadFinalizationCard({
               {t(item.label)}
             </Text>
           </View>
-          <Text style={styles.threadOperationalPlanValue}>
-            {t(item.value)}
-          </Text>
+          <Text style={styles.threadOperationalPlanValue}>{t(item.value)}</Text>
           <Text style={styles.threadOperationalPlanDetail}>
             {t(item.detail)}
           </Text>

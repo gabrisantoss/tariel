@@ -896,6 +896,58 @@ describe("useInspectorChatController entry mode", () => {
     expect(setCaseCreationState).toHaveBeenNthCalledWith(2, "created");
   });
 
+  it("recarrega pelo id do laudo criado para nao cair em outro historico", async () => {
+    const laudoCard = criarLaudoCard({
+      id: 144,
+      titulo: "Chat livre 144",
+      entry_mode_effective: "chat_first",
+      entry_mode_preference: "chat_first",
+      entry_mode_reason: "user_choice",
+    });
+    const params = criarParams({
+      conversation: {
+        laudoId: null,
+        estado: "sem_relatorio",
+        statusCard: "aberto",
+        permiteEdicao: true,
+        permiteReabrir: false,
+        laudoCard: null,
+        modo: "detalhado",
+        mensagens: [],
+      },
+      message: "olá",
+    });
+    (carregarMensagensLaudo as jest.Mock).mockResolvedValue({
+      estado: "relatorio_ativo",
+      laudo_id: 144,
+      status_card: "aberto",
+      permite_edicao: true,
+      permite_reabrir: false,
+      laudo_card: laudoCard,
+      modo: "detalhado",
+      itens: [],
+      cursor_proximo: null,
+      tem_mais: false,
+      limite: 50,
+    });
+    (sendInspectorMessageFlow as jest.Mock).mockImplementation(async (args) => {
+      await args.carregarConversaPorLaudoId(144);
+    });
+
+    const { result } = renderHook(() =>
+      useInspectorChatController<OfflinePendingMessage, MobileReadCache>(
+        params,
+      ),
+    );
+
+    await act(async () => {
+      await result.current.actions.handleEnviarMensagem();
+    });
+
+    expect(carregarMensagensLaudo).toHaveBeenCalledWith("token-123", 144);
+    expect(carregarStatusLaudo).not.toHaveBeenCalled();
+  });
+
   it("marca que a criação do caso ficou pendente na fila local quando o primeiro envio é barrado offline", async () => {
     (gateHeavyTransfer as jest.Mock).mockResolvedValue({
       allowed: false,

@@ -34,6 +34,15 @@ interface BuildInspectorRootSettingsConfirmExportActionsInput {
   collectionState: Pick<
     SettingsConfirmExportParams,
     | "eventosSeguranca"
+    | "cacheLeitura"
+    | "conversaAtual"
+    | "mensagensMesa"
+    | "mensagemRascunho"
+    | "mensagemMesaRascunho"
+    | "filaOffline"
+    | "filaSuporteLocal"
+    | "laudosFixadosIds"
+    | "historicoOcultoIds"
     | "integracoesExternas"
     | "laudosDisponiveis"
     | "notificacoes"
@@ -54,6 +63,7 @@ interface BuildInspectorRootSettingsConfirmExportActionsInput {
     | "memoriaIa"
     | "mostrarConteudoNotificacao"
     | "mostrarSomenteNovaMensagem"
+    | "settingsDocument"
     | "notificaPush"
     | "notificaRespostas"
     | "ocultarConteudoBloqueado"
@@ -107,6 +117,15 @@ export function buildInspectorRootSettingsConfirmExportActions({
     emailsAtivos: preferenceState.emailsAtivos,
     estiloResposta: preferenceState.estiloResposta,
     eventosSeguranca: collectionState.eventosSeguranca,
+    cacheLeitura: collectionState.cacheLeitura,
+    conversaAtual: collectionState.conversaAtual,
+    mensagensMesa: collectionState.mensagensMesa,
+    mensagemRascunho: collectionState.mensagemRascunho,
+    mensagemMesaRascunho: collectionState.mensagemMesaRascunho,
+    filaOffline: collectionState.filaOffline,
+    filaSuporteLocal: collectionState.filaSuporteLocal,
+    laudosFixadosIds: collectionState.laudosFixadosIds,
+    historicoOcultoIds: collectionState.historicoOcultoIds,
     executarExclusaoContaLocal: actionState.executarExclusaoContaLocal,
     fecharConfirmacaoConfiguracao: actionState.fecharConfirmacaoConfiguracao,
     fecharSheetConfiguracao: actionState.fecharSheetConfiguracao,
@@ -118,6 +137,7 @@ export function buildInspectorRootSettingsConfirmExportActions({
     modeloIa: draftState.modeloIa,
     mostrarConteudoNotificacao: preferenceState.mostrarConteudoNotificacao,
     mostrarSomenteNovaMensagem: preferenceState.mostrarSomenteNovaMensagem,
+    settingsDocument: preferenceState.settingsDocument,
     notificacoes: collectionState.notificacoes,
     notificaPush: preferenceState.notificaPush,
     notificaRespostas: preferenceState.notificaRespostas,

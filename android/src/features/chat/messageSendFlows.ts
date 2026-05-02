@@ -13,6 +13,7 @@ import {
   type GuidedInspectionDraft,
 } from "../inspection/guidedInspection";
 import type {
+  MobileAttachment,
   MobileChatMode,
   MobileChatMessage,
   MobileChatSendResult,
@@ -67,6 +68,7 @@ interface SendInspectorMessageFlowParams<TOfflineItem> {
     resposta: MobileChatSendResult,
   ) => MobileChatMessage | null;
   carregarConversaAtual: () => Promise<void>;
+  carregarConversaPorLaudoId?: (laudoId: number) => Promise<void>;
   carregarListaLaudos: () => Promise<void>;
   erroSugereModoOffline: (erro: unknown) => boolean;
   criarItemFilaOffline: (params: {
@@ -142,6 +144,41 @@ export function criarClientMessageIdMesa(): string {
   return `mesa:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function criarAnexoOtimista(
+  anexo: ComposerAttachment | null,
+): MobileAttachment[] | undefined {
+  if (!anexo) {
+    return undefined;
+  }
+
+  if (anexo.kind === "image") {
+    return [
+      {
+        label: anexo.label,
+        nome: anexo.label,
+        nome_original: anexo.label,
+        mime_type: anexo.mimeType,
+        categoria: "imagem",
+        eh_imagem: true,
+        local_preview_uri: anexo.previewUri,
+        local_uri: anexo.fileUri,
+      },
+    ];
+  }
+
+  return [
+    {
+      label: anexo.label,
+      nome: anexo.nomeDocumento,
+      nome_original: anexo.nomeDocumento,
+      mime_type: anexo.mimeType,
+      categoria: "documento",
+      eh_imagem: false,
+      local_uri: anexo.fileUri,
+    },
+  ];
+}
+
 export async function sendInspectorMessageFlow<TOfflineItem>({
   mensagem,
   anexoAtual,
@@ -156,6 +193,7 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
   montarHistoricoParaEnvio,
   criarMensagemAssistenteServidor,
   carregarConversaAtual,
+  carregarConversaPorLaudoId,
   carregarListaLaudos,
   erroSugereModoOffline,
   criarItemFilaOffline,
@@ -192,9 +230,7 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
     texto: textoExibicao,
     tipo: "user",
     modo: modoAtivo,
-    anexos: anexoAtual
-      ? [{ label: anexoAtual.label, categoria: anexoAtual.kind }]
-      : undefined,
+    anexos: criarAnexoOtimista(anexoAtual),
   };
 
   onSetMensagem("");
@@ -240,6 +276,7 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
       textoDocumento,
       nomeDocumento,
       laudoId: snapshotConversa?.laudoId ?? null,
+      iniciarLaudo: !snapshotConversa?.laudoId,
       modo: modoAtivo,
       learningOptIn: aiRequestConfig.learningOptIn,
       tone: aiRequestConfig.tone,
@@ -250,16 +287,21 @@ export async function sendInspectorMessageFlow<TOfflineItem>({
         guidedInspectionDraft,
         attachmentKind,
       ),
-      historico: montarHistoricoParaEnvio([
-        ...(snapshotConversa?.mensagens || []),
-        mensagemOtimista,
-      ]),
+      historico: montarHistoricoParaEnvio(snapshotConversa?.mensagens || []),
     });
 
     const mensagemAssistenteServidor =
       criarMensagemAssistenteServidor(respostaChat);
     onApplyAssistantResponse(respostaChat, mensagemAssistenteServidor);
-    await carregarConversaAtual();
+    if (anexoAtual?.kind !== "image") {
+      const laudoIdParaRecarregar =
+        respostaChat.laudoId ?? snapshotConversa?.laudoId ?? null;
+      if (laudoIdParaRecarregar && carregarConversaPorLaudoId) {
+        await carregarConversaPorLaudoId(laudoIdParaRecarregar);
+      } else if (snapshotConversa?.laudoId) {
+        await carregarConversaAtual();
+      }
+    }
     await carregarListaLaudos();
   } catch (error) {
     const message =
@@ -346,6 +388,7 @@ export async function sendMesaMessageFlow<TOfflineItem>({
   }
 
   const textoExibicao = texto || textoFallbackAnexo(anexoAtual);
+  const anexosOtimistas = criarAnexoOtimista(anexoAtual);
   const mensagemOtimista: MobileMesaMessage = {
     id: Date.now(),
     laudo_id: conversa.laudoId,
@@ -364,9 +407,7 @@ export async function sendMesaMessageFlow<TOfflineItem>({
     entrega_status: "queued",
     client_message_id: clientMessageIdAtivo,
     referencia_mensagem_id: referenciaMensagemId || undefined,
-    anexos: anexoAtual
-      ? [{ label: anexoAtual.label, categoria: anexoAtual.kind }]
-      : undefined,
+    anexos: anexosOtimistas,
   };
 
   onSetMensagemMesa("");
@@ -403,7 +444,11 @@ export async function sendMesaMessageFlow<TOfflineItem>({
           item.id !== resposta.mensagem.id &&
           item.client_message_id !== resposta.mensagem.client_message_id,
       );
-      return [...semOtimista, resposta.mensagem].sort((a, b) => a.id - b.id);
+      const mensagemResposta =
+        anexoAtual?.kind === "image" && !resposta.mensagem.anexos?.length
+          ? { ...resposta.mensagem, anexos: anexosOtimistas }
+          : resposta.mensagem;
+      return [...semOtimista, mensagemResposta].sort((a, b) => a.id - b.id);
     });
 
     atualizarResumoLaudoAtual(resposta);

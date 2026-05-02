@@ -14,15 +14,11 @@ describe("useSettingsNavigation", () => {
     });
 
     act(() => {
-      result.current.actions.handleAbrirSecaoConfiguracoes(
-        "privacidadeNotificacoes",
-      );
+      result.current.actions.handleAbrirSecaoConfiguracoes("dadosConversas");
     });
 
     expect(result.current.state.settingsDrawerPage).toBe("seguranca");
-    expect(result.current.state.settingsDrawerSection).toBe(
-      "privacidadeNotificacoes",
-    );
+    expect(result.current.state.settingsDrawerSection).toBe("dadosConversas");
 
     act(() => {
       result.current.actions.handleVoltarResumoConfiguracoes();
@@ -48,15 +44,11 @@ describe("useSettingsNavigation", () => {
         "seguranca",
         "permissoes",
       );
-      result.current.actions.handleAbrirSecaoConfiguracoes(
-        "privacidadeNotificacoes",
-      );
+      result.current.actions.handleAbrirSecaoConfiguracoes("dadosConversas");
     });
 
     expect(result.current.state.settingsDrawerPage).toBe("seguranca");
-    expect(result.current.state.settingsDrawerSection).toBe(
-      "privacidadeNotificacoes",
-    );
+    expect(result.current.state.settingsDrawerSection).toBe("dadosConversas");
 
     act(() => {
       result.current.actions.handleVoltarResumoConfiguracoes();
@@ -110,6 +102,62 @@ describe("useSettingsNavigation", () => {
     expect(result.current.state.settingsSheetNotice).toBe("");
     expect(result.current.state.confirmSheet).toBeNull();
     expect(result.current.state.confirmTextDraft).toBe("");
+  });
+
+  it("volta pelas folhas de configuracao na ordem inversa da navegacao", () => {
+    const { result } = renderHook(() => useSettingsNavigation());
+
+    act(() => {
+      result.current.actions.abrirSheetConfiguracao({
+        kind: "about",
+        title: "Sobre o app",
+        subtitle: "Versao e documentos",
+      });
+      result.current.actions.abrirSheetConfiguracao({
+        kind: "terms",
+        title: "Termos de uso",
+        subtitle: "Texto completo",
+      });
+      result.current.actions.abrirSheetConfiguracao({
+        kind: "privacy",
+        title: "Politica de privacidade",
+        subtitle: "Texto completo",
+      });
+      result.current.actions.abrirSheetConfiguracao({
+        kind: "licenses",
+        title: "Licencas",
+        subtitle: "Catalogo",
+      });
+    });
+
+    expect(result.current.state.settingsSheet?.kind).toBe("licenses");
+    expect(result.current.state.settingsSheetCanGoBack).toBe(true);
+
+    act(() => {
+      result.current.actions.fecharSheetConfiguracao();
+    });
+
+    expect(result.current.state.settingsSheet?.kind).toBe("privacy");
+    expect(result.current.state.settingsSheetCanGoBack).toBe(true);
+
+    act(() => {
+      result.current.actions.fecharSheetConfiguracao();
+    });
+
+    expect(result.current.state.settingsSheet?.kind).toBe("terms");
+
+    act(() => {
+      result.current.actions.fecharSheetConfiguracao();
+    });
+
+    expect(result.current.state.settingsSheet?.kind).toBe("about");
+    expect(result.current.state.settingsSheetCanGoBack).toBe(false);
+
+    act(() => {
+      result.current.actions.fecharSheetConfiguracao();
+    });
+
+    expect(result.current.state.settingsSheet).toBeNull();
   });
 
   it("limpa navegacao e modais ao resetar a UI de configuracoes", () => {

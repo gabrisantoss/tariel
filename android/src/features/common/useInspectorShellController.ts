@@ -13,6 +13,7 @@ interface ScrollRefLike {
 }
 
 interface UseInspectorShellControllerParams {
+  animationsEnabled?: boolean;
   appLocked: boolean;
   onClearTransientSettingsPresentationState: () => void;
   onClearTransientSettingsUiPreservingReauth: () => void;
@@ -24,6 +25,7 @@ interface UseInspectorShellControllerParams {
 }
 
 export function useInspectorShellController({
+  animationsEnabled = true,
   appLocked,
   onClearTransientSettingsPresentationState,
   onClearTransientSettingsUiPreservingReauth,
@@ -46,6 +48,7 @@ export function useInspectorShellController({
     useState<AttachmentPreviewState | null>(null);
 
   const sidePanels = useSidePanelsController({
+    animationsEnabled,
     configuracoesAberta,
     historicoAberto,
     keyboardHeight,
@@ -105,11 +108,11 @@ export function useInspectorShellController({
     }
 
     const timeout = setTimeout(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
+      scrollRef.current?.scrollToEnd({ animated: animationsEnabled });
     }, 120);
 
     return () => clearTimeout(timeout);
-  }, [keyboardHeight, scrollRef, sessionActive]);
+  }, [animationsEnabled, keyboardHeight, scrollRef, sessionActive]);
 
   return {
     anexosAberto,

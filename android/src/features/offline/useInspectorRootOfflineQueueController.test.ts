@@ -35,6 +35,7 @@ function criarInput() {
     actionState: {
       abrirLaudoPorId: jest.fn().mockResolvedValue(undefined),
       carregarConversaAtual: jest.fn().mockResolvedValue(null),
+      carregarConversaPorLaudoId: jest.fn().mockResolvedValue(null),
       carregarListaLaudos: jest.fn().mockResolvedValue([]),
       carregarMesaAtual: jest.fn().mockResolvedValue(undefined),
       duplicarComposerAttachment: jest.fn((item) => item),
@@ -81,6 +82,8 @@ describe("useInspectorRootOfflineQueueController", () => {
     expect(mockedHook).toHaveBeenCalledWith(
       expect.objectContaining({
         activeThread: input.state.activeThread,
+        carregarConversaPorLaudoId:
+          input.actionState.carregarConversaPorLaudoId,
         carregarListaLaudos: input.actionState.carregarListaLaudos,
         setOfflineQueue: input.setterState.setOfflineQueue,
       }),

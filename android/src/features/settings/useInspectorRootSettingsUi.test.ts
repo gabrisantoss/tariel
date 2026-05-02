@@ -127,6 +127,10 @@ describe("useInspectorRootSettingsUi", () => {
       expect.objectContaining({
         actionsState: expect.objectContaining({
           handleSelecionarModeloIa: mockHandleSelecionarModeloIa,
+          handleToggleBackupAutomatico:
+            mockToggleActions.handleToggleBackupAutomatico,
+          handleToggleSincronizacaoDispositivos:
+            mockToggleActions.handleToggleSincronizacaoDispositivos,
           handleToggleUploadArquivos:
             mockToggleActions.handleToggleUploadArquivos,
         }),

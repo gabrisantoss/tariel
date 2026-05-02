@@ -88,6 +88,11 @@ interface CreateInspectorChatMessageControllerParams<
     accessToken: string,
     silencioso?: boolean,
   ) => Promise<ChatState | null>;
+  carregarConversaPorLaudoId: (
+    accessToken: string,
+    laudoId: number,
+    silencioso?: boolean,
+  ) => Promise<ChatState | null>;
   carregarListaLaudos: (
     accessToken: string,
     silencioso?: boolean,
@@ -218,6 +223,7 @@ export function createInspectorChatMessageController<
 >({
   paramsRef,
   carregarConversaAtual,
+  carregarConversaPorLaudoId,
   carregarListaLaudos,
 }: CreateInspectorChatMessageControllerParams<TOfflineItem>) {
   async function handleEnviarMensagem() {
@@ -282,6 +288,13 @@ export function createInspectorChatMessageController<
       criarMensagemAssistenteServidor: current.criarMensagemAssistenteServidor,
       carregarConversaAtual: async () => {
         await carregarConversaAtual(current.session!.accessToken, true);
+      },
+      carregarConversaPorLaudoId: async (laudoId) => {
+        await carregarConversaPorLaudoId(
+          current.session!.accessToken,
+          laudoId,
+          true,
+        );
       },
       carregarListaLaudos: async () => {
         await carregarListaLaudos(current.session!.accessToken, true);

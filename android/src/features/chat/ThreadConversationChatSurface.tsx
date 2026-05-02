@@ -17,23 +17,24 @@ import {
 } from "../../components/AssistantRichMessage";
 import { EmptyState } from "../../components/EmptyState";
 import { useAppTranslation } from "../../i18n/appTranslation";
-import { colors } from "../../theme/tokens";
+import {
+  colorWithAlpha,
+  resolveAccentColorForMode,
+} from "../../theme/colorUtils";
 import type {
   MobileAttachment,
   MobileChatMessage,
   MobileMesaMessage,
-  MobileReportPackDraft,
   MobileReviewPackage,
-  MobileSurfaceAction,
 } from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
 import { MessageAttachmentCard, MessageReferenceCard } from "./MessageCards";
 import { ehImagemAnexo } from "./attachmentUtils";
 import { stripEmbeddedChatAiPreferences } from "./preferences";
-import { renderizarReportPackDraftCard } from "./ThreadConversationReportPackDraftCard";
 import { renderizarDocumentoEmitidoCard } from "./ThreadConversationIssuedDocumentCard";
 
 interface ThreadConversationChatSurfaceProps {
+  accentColor: string;
   carregandoConversa: boolean;
   conversaVazia: boolean;
   darkMode?: boolean;
@@ -45,12 +46,7 @@ interface ThreadConversationChatSurfaceProps {
   scrollRef: RefObject<ScrollView | null>;
   fluxoFormalAtivo: boolean;
   reviewPackage?: MobileReviewPackage | null;
-  reportPackDraft?: MobileReportPackDraft | null;
   caseLifecycleStatus?: string;
-  allowedSurfaceActions?: MobileSurfaceAction[];
-  onAbrirMesaTab?: () => void;
-  onAbrirQualityGate?: () => void | Promise<void>;
-  onUsarPerguntaPreLaudo?: (value: string) => void;
   mensagensVisiveis: MobileChatMessage[];
   mensagensMesa: MobileMesaMessage[];
   obterResumoReferenciaMensagem: (
@@ -91,7 +87,21 @@ function buildLatestAssistantDocumentAttachmentKey(
   return latestKey;
 }
 
+function mensagemTemImagem(mensagem: MobileChatMessage): boolean {
+  return Boolean(mensagem.anexos?.some((anexo) => ehImagemAnexo(anexo)));
+}
+
+function textoEhFallbackImagem(texto: string, textoTraduzido: string): boolean {
+  const valor = texto.trim();
+  return (
+    valor === "[imagem]" ||
+    valor === "Imagem enviada" ||
+    valor === textoTraduzido
+  );
+}
+
 export function ThreadConversationChatSurface({
+  accentColor,
   carregandoConversa,
   conversaVazia,
   darkMode = false,
@@ -103,12 +113,7 @@ export function ThreadConversationChatSurface({
   scrollRef,
   fluxoFormalAtivo,
   reviewPackage,
-  reportPackDraft,
   caseLifecycleStatus,
-  allowedSurfaceActions,
-  onAbrirMesaTab,
-  onAbrirQualityGate,
-  onUsarPerguntaPreLaudo,
   mensagensVisiveis,
   mensagensMesa,
   obterResumoReferenciaMensagem,
@@ -124,6 +129,7 @@ export function ThreadConversationChatSurface({
   enviandoMensagem,
 }: ThreadConversationChatSurfaceProps) {
   const { t } = useAppTranslation();
+  const visibleAccentColor = resolveAccentColorForMode(accentColor, darkMode);
   const normalizarTextoRenderizado = (
     texto: string,
     options: { mensagemEhUsuario: boolean },
@@ -152,7 +158,7 @@ export function ThreadConversationChatSurface({
   if (carregandoConversa) {
     return (
       <View style={styles.loadingState}>
-        <ActivityIndicator color={colors.accent} size="large" />
+        <ActivityIndicator color={visibleAccentColor} size="large" />
         <Text
           style={[styles.loadingText, darkMode ? styles.loadingTextDark : null]}
         >
@@ -205,17 +211,6 @@ export function ThreadConversationChatSurface({
             onAbrirAnexo,
           )
         : null}
-      {fluxoFormalAtivo
-        ? renderizarReportPackDraftCard(reportPackDraft, {
-            canFinalize: Boolean(
-              allowedSurfaceActions?.includes("chat_finalize"),
-            ),
-            mode: "chat",
-            onAbrirMesaTab,
-            onAbrirQualityGate,
-            onUsarPerguntaPreLaudo,
-          })
-        : null}
       {mensagensVisiveis.map((item, index) => {
         const mensagemEhUsuario = item.papel === "usuario";
         const mensagemEhEngenharia = item.papel === "engenheiro";
@@ -223,7 +218,16 @@ export function ThreadConversationChatSurface({
         const textoRenderizado = normalizarTextoRenderizado(item.texto, {
           mensagemEhUsuario,
         });
-        const nomeAutor = mensagemEhEngenharia ? t("Mesa") : "";
+        const textoImagemFallback = t("Imagem enviada");
+        const textoMensagem =
+          textoRenderizado === "[imagem]"
+            ? textoImagemFallback
+            : textoRenderizado;
+        const ocultarTextoImagemUsuario =
+          mensagemEhUsuario &&
+          textoEhFallbackImagem(textoRenderizado, textoImagemFallback) &&
+          mensagemTemImagem(item);
+        const nomeAutor = mensagemEhEngenharia ? t("Revisão") : "";
         const referenciaId = Number(item.referencia_mensagem_id || 0) || null;
         const referenciaPreview = obterResumoReferenciaMensagem(
           referenciaId,
@@ -257,28 +261,30 @@ export function ThreadConversationChatSurface({
               >
                 {referenciaId ? (
                   <MessageReferenceCard
+                    accentColor={visibleAccentColor}
                     messageId={referenciaId}
                     onPress={() => onAbrirReferenciaNoChat(referenciaId)}
                     preview={referenciaPreview}
                     variant="outgoing"
                   />
                 ) : null}
-                <Text
-                  style={[
-                    styles.messageText,
-                    styles.messageTextOutgoing,
-                    dynamicMessageTextStyle,
-                  ]}
-                >
-                  {textoRenderizado === "[imagem]"
-                    ? t("Imagem enviada")
-                    : textoRenderizado}
-                </Text>
+                {!ocultarTextoImagemUsuario ? (
+                  <Text
+                    style={[
+                      styles.messageText,
+                      styles.messageTextOutgoing,
+                      dynamicMessageTextStyle,
+                    ]}
+                  >
+                    {textoMensagem}
+                  </Text>
+                ) : null}
                 {item.anexos?.length ? (
                   <View style={styles.messageAttachments}>
                     {item.anexos.map((anexo, anexoIndex) => {
                       return (
                         <MessageAttachmentCard
+                          accentColor={visibleAccentColor}
                           key={`${item.id ?? "msg"}-anexo-${anexoIndex}`}
                           accessToken={sessionAccessToken}
                           attachment={anexo}
@@ -322,7 +328,7 @@ export function ThreadConversationChatSurface({
                     ]}
                   >
                     <MaterialCommunityIcons
-                      color={colors.accent}
+                      color={visibleAccentColor}
                       name="clipboard-check-outline"
                       size={16}
                     />
@@ -355,21 +361,29 @@ export function ThreadConversationChatSurface({
                         style={[
                           styles.messageStatusBadge,
                           styles.messageStatusBadgeAccent,
+                          {
+                            backgroundColor: colorWithAlpha(
+                              visibleAccentColor,
+                              "18",
+                            ),
+                          },
                         ]}
                       >
                         <Text
                           style={[
                             styles.messageStatusBadgeText,
                             styles.messageStatusBadgeTextAccent,
+                            { color: visibleAccentColor },
                           ]}
                         >
-                          {t("Mesa")}
+                          {t("Revisão")}
                         </Text>
                       </View>
                     </View>
                   ) : null}
                   {referenciaId ? (
                     <MessageReferenceCard
+                      accentColor={visibleAccentColor}
                       messageId={referenciaId}
                       onPress={() => onAbrirReferenciaNoChat(referenciaId)}
                       preview={referenciaPreview}
@@ -377,11 +391,7 @@ export function ThreadConversationChatSurface({
                   ) : null}
                   {mensagemEhAssistente ? (
                     <AssistantMessageContent
-                      text={
-                        textoRenderizado === "[imagem]"
-                          ? t("Imagem enviada")
-                          : textoRenderizado
-                      }
+                      text={textoMensagem}
                       textStyle={[
                         styles.messageText,
                         darkMode ? styles.messageTextDark : null,
@@ -396,9 +406,7 @@ export function ThreadConversationChatSurface({
                         dynamicMessageTextStyle,
                       ]}
                     >
-                      {textoRenderizado === "[imagem]"
-                        ? t("Imagem enviada")
-                        : textoRenderizado}
+                      {textoMensagem}
                     </Text>
                   )}
                   {item.anexos?.length ? (
@@ -415,6 +423,7 @@ export function ThreadConversationChatSurface({
 
                         return (
                           <MessageAttachmentCard
+                            accentColor={visibleAccentColor}
                             key={`${item.id ?? "msg"}-anexo-${anexoIndex}`}
                             accessToken={sessionAccessToken}
                             attachment={anexo}
@@ -460,11 +469,14 @@ export function ThreadConversationChatSurface({
               darkMode ? styles.typingBubbleDark : null,
             ]}
           >
-            <ActivityIndicator color={colors.accent} size="small" />
+            <ActivityIndicator color={visibleAccentColor} size="small" />
             <Text
-              style={[styles.typingText, darkMode ? styles.typingTextDark : null]}
+              style={[
+                styles.typingText,
+                darkMode ? styles.typingTextDark : null,
+              ]}
             >
-              {t("Assistente está respondendo...")}
+              {t("Tariel está respondendo")}
             </Text>
           </View>
         </View>

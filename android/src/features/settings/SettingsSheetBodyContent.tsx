@@ -2,9 +2,12 @@ import {
   AI_MODEL_OPTIONS,
   APP_BUILD_CHANNEL,
   APP_VERSION_LABEL,
+  DATA_RETENTION_OPTIONS,
   LICENSES_CATALOG,
+  PRIVACY_POLICY_SECTIONS,
   RESPONSE_LANGUAGE_OPTIONS,
   RESPONSE_STYLE_OPTIONS,
+  SPEECH_LANGUAGE_OPTIONS,
   TERMS_OF_USE_SECTIONS,
   UPDATE_CHANGELOG,
 } from "../InspectorMobileApp.constants";
@@ -24,7 +27,12 @@ import {
   SettingsAiModelSheetContent,
   SettingsResponseLanguageSheetContent,
   SettingsResponseStyleSheetContent,
+  SettingsVoiceLanguageSheetContent,
 } from "./SettingsSheetExperienceContent";
+import {
+  SettingsDataRetentionSheetContent,
+  SettingsSyncWifiSheetContent,
+} from "./SettingsSheetDataControlsContent";
 import {
   SettingsBugSheetContent,
   SettingsFeedbackSheetContent,
@@ -94,8 +102,13 @@ export interface SettingsSheetBodyContentParams<
   modeloIa: (typeof AI_MODEL_OPTIONS)[number];
   estiloResposta: (typeof RESPONSE_STYLE_OPTIONS)[number];
   idiomaResposta: (typeof RESPONSE_LANGUAGE_OPTIONS)[number];
+  voiceLanguage: (typeof SPEECH_LANGUAGE_OPTIONS)[number];
+  autoUploadAttachments: boolean;
+  backupAutomatico: boolean;
   salvarHistoricoConversas: boolean;
-  retencaoDados: string;
+  retencaoDados: (typeof DATA_RETENTION_OPTIONS)[number];
+  sincronizacaoDispositivos: boolean;
+  wifiOnlySync: boolean;
   ultimaVerificacaoAtualizacaoLabel: string;
   statusAtualizacaoApp: string;
   resumoAtualizacaoApp: string;
@@ -159,10 +172,23 @@ export interface SettingsSheetBodyContentParams<
   onSelecionarIdiomaResposta: (
     value: (typeof RESPONSE_LANGUAGE_OPTIONS)[number],
   ) => void;
+  onSelecionarVoiceLanguage: (
+    value: (typeof SPEECH_LANGUAGE_OPTIONS)[number],
+  ) => void;
+  onSelecionarRetencaoDados: (
+    value: (typeof DATA_RETENTION_OPTIONS)[number],
+  ) => void;
+  onSetWifiOnlySync: (value: boolean) => void;
+  onToggleAutoUploadAttachments: (value: boolean) => void;
+  onToggleBackupAutomatico: (value: boolean) => void;
+  onToggleSincronizacaoDispositivos: (value: boolean) => void;
   onAbrirPortalContinuation: (
     url: string,
     label: string,
   ) => void | Promise<void>;
+  onTermosUso?: () => void;
+  onPoliticaPrivacidade?: () => void;
+  onLicencas?: () => void;
 }
 
 export function renderSettingsSheetBodyContent<
@@ -180,8 +206,12 @@ export function renderSettingsSheetBodyContent<
   portalContinuationLinks,
   topicosAjudaResumo,
   modeloIa,
+  autoUploadAttachments,
+  backupAutomatico,
   salvarHistoricoConversas,
   retencaoDados,
+  sincronizacaoDispositivos,
+  wifiOnlySync,
   ultimaVerificacaoAtualizacaoLabel,
   statusAtualizacaoApp,
   resumoAtualizacaoApp,
@@ -240,9 +270,19 @@ export function renderSettingsSheetBodyContent<
   onSelecionarModeloIa,
   onSelecionarEstiloResposta,
   onSelecionarIdiomaResposta,
+  onSelecionarVoiceLanguage,
+  onSelecionarRetencaoDados,
+  onSetWifiOnlySync,
+  onToggleAutoUploadAttachments,
+  onToggleBackupAutomatico,
+  onToggleSincronizacaoDispositivos,
   onAbrirPortalContinuation,
+  onTermosUso,
+  onPoliticaPrivacidade,
+  onLicencas,
   estiloResposta,
   idiomaResposta,
+  voiceLanguage,
 }: SettingsSheetBodyContentParams<TIntegration>) {
   if (!settingsSheet) {
     return null;
@@ -266,7 +306,11 @@ export function renderSettingsSheetBodyContent<
     resumoAtualizacaoApp,
     updateChangelog: UPDATE_CHANGELOG,
     termsSections: TERMS_OF_USE_SECTIONS,
+    privacySections: PRIVACY_POLICY_SECTIONS,
     licensesCatalog: LICENSES_CATALOG,
+    onTermosUso,
+    onPoliticaPrivacidade,
+    onLicencas,
   });
   if (staticSheetContent) {
     return staticSheetContent;
@@ -303,6 +347,33 @@ export function renderSettingsSheetBodyContent<
         <SettingsResponseLanguageSheetContent
           idiomaResposta={idiomaResposta}
           onSelecionarIdiomaResposta={onSelecionarIdiomaResposta}
+        />
+      );
+    case "voiceLanguage":
+      return (
+        <SettingsVoiceLanguageSheetContent
+          onSelecionarVoiceLanguage={onSelecionarVoiceLanguage}
+          voiceLanguage={voiceLanguage}
+        />
+      );
+    case "dataRetention":
+      return (
+        <SettingsDataRetentionSheetContent
+          onSelecionarRetencaoDados={onSelecionarRetencaoDados}
+          retencaoDados={retencaoDados}
+        />
+      );
+    case "syncWifi":
+      return (
+        <SettingsSyncWifiSheetContent
+          autoUploadAttachments={autoUploadAttachments}
+          backupAutomatico={backupAutomatico}
+          onSetWifiOnlySync={onSetWifiOnlySync}
+          onToggleAutoUploadAttachments={onToggleAutoUploadAttachments}
+          onToggleBackupAutomatico={onToggleBackupAutomatico}
+          onToggleSincronizacaoDispositivos={onToggleSincronizacaoDispositivos}
+          sincronizacaoDispositivos={sincronizacaoDispositivos}
+          wifiOnlySync={wifiOnlySync}
         />
       );
     case "reauth":

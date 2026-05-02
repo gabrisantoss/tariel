@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Pressable, Text, View } from "react-native";
+import { Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 
 import { useAppTranslation } from "../../i18n/appTranslation";
+import { resolveAccentColorForMode } from "../../theme/colorUtils";
 import { colors } from "../../theme/tokens";
+import { TARIEL_APP_MARK } from "../InspectorMobileApp.constants";
 import { styles } from "../InspectorMobileApp.styles";
 import { ThreadFinalizationCard } from "./ThreadFinalizationCard";
 import {
@@ -50,8 +52,11 @@ export interface ThreadAction {
 
 export interface ThreadContextCardProps {
   visible: boolean;
+  accentColor?: string;
   defaultExpanded?: boolean;
   darkMode?: boolean;
+  densityScale?: number;
+  fontScale?: number;
   layout?: "default" | "entry_chooser" | "finalization";
   guidedTemplatesVisible?: boolean;
   eyebrow: string;
@@ -87,8 +92,11 @@ function guidedTemplateMetaItems(actions: ThreadAction[]) {
 
 export function ThreadContextCard({
   visible,
+  accentColor = colors.accent,
   defaultExpanded = false,
   darkMode = false,
+  densityScale = 1,
+  fontScale = 1,
   layout = "default",
   guidedTemplatesVisible,
   eyebrow,
@@ -101,6 +109,7 @@ export function ThreadContextCard({
   insights,
 }: ThreadContextCardProps) {
   const { t } = useAppTranslation();
+  const visibleAccentColor = resolveAccentColorForMode(accentColor, darkMode);
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [guidedTemplatesVisibleState, setGuidedTemplatesVisibleState] =
@@ -170,6 +179,9 @@ export function ThreadContextCard({
         !item.key.startsWith("guided-template-"),
     );
     const guidedMetaItems = guidedTemplateMetaItems(guidedTemplateActions);
+    const guidedTemplateMenuVisible = Boolean(
+      guidedTemplateActions.length && guidedTemplatesExpanded,
+    );
 
     return (
       <View
@@ -180,11 +192,19 @@ export function ThreadContextCard({
         ]}
       >
         <View style={[styles.threadHeaderCopy, styles.threadHeaderChooserCopy]}>
+          <View style={styles.threadChooserBrandSignature}>
+            <Image
+              resizeMode="cover"
+              source={TARIEL_APP_MARK}
+              style={styles.threadChooserBrandLogo}
+            />
+          </View>
           {eyebrow ? (
             <Text
               style={[
                 styles.threadEyebrow,
                 darkMode ? styles.threadEyebrowDark : null,
+                { fontSize: 11 * fontScale, lineHeight: 15 * fontScale },
               ]}
             >
               {t(eyebrow)}
@@ -196,6 +216,7 @@ export function ThreadContextCard({
               styles.threadTitle,
               styles.threadChooserTitle,
               darkMode ? styles.threadChooserTitleDark : null,
+              { fontSize: 30 * fontScale, lineHeight: 36 * fontScale },
             ]}
           >
             {t(title)}
@@ -205,6 +226,7 @@ export function ThreadContextCard({
               style={[
                 styles.threadChooserDescription,
                 darkMode ? styles.threadChooserDescriptionDark : null,
+                { fontSize: 18 * fontScale, lineHeight: 28 * fontScale },
               ]}
             >
               {t(description)}
@@ -216,7 +238,9 @@ export function ThreadContextCard({
           <View style={styles.threadContextChips}>
             {chips.map((item) => (
               <ThreadContextChipView
+                accentColor={accentColor}
                 darkMode={darkMode}
+                fontScale={fontScale}
                 key={item.key}
                 item={item}
               />
@@ -225,20 +249,24 @@ export function ThreadContextCard({
         ) : null}
 
         {insights.length ? (
-          <ThreadContextInsightsGrid darkMode={darkMode} items={insights} />
+          <ThreadContextInsightsGrid
+            accentColor={accentColor}
+            darkMode={darkMode}
+            fontScale={fontScale}
+            items={insights}
+          />
         ) : null}
 
         <View style={styles.threadChooserActionStack}>
           {guidedTemplateActions.length ? (
             <ThreadContextChooserActionCard
+              accentColor={accentColor}
               badgeLabel={t("Recomendado")}
               darkMode={darkMode}
-              detail={
-                guidedTemplatesExpanded
-                  ? t("Escolha a família normativa para iniciar.")
-                  : t("Checklist técnico para laudo, evidências e Mesa.")
-              }
+              densityScale={densityScale}
+              detail={t("Escolha uma NR para seguir passo a passo.")}
               emphasis="primary"
+              fontScale={fontScale}
               icon="clipboard-text-outline"
               key="guided-entry"
               label={t("Iniciar inspeção guiada")}
@@ -248,16 +276,17 @@ export function ThreadContextCard({
               }}
               testID="guided-entry-open-button"
               tone="accent"
-              trailingIcon={
-                guidedTemplatesExpanded ? "chevron-up" : "chevron-right"
-              }
+              trailingIcon="chevron-right"
             />
           ) : null}
 
           {freeChatAction ? (
             <ThreadContextChooserActionCard
+              accentColor={accentColor}
               darkMode={darkMode}
+              densityScale={densityScale}
               detail={t("Envie fotos, dúvidas ou contexto sem modelo fixo.")}
+              fontScale={fontScale}
               icon={freeChatAction.icon}
               key={freeChatAction.key}
               label={freeChatAction.label}
@@ -267,63 +296,19 @@ export function ThreadContextCard({
                 setDismissed(true);
               }}
               testID={freeChatAction.testID}
-              tone={freeChatAction.tone}
+              tone="accent"
             />
-          ) : null}
-
-          {guidedTemplateActions.length && guidedTemplatesExpanded ? (
-            <View style={styles.threadChooserTemplateSection}>
-              <Text
-                style={[
-                  styles.threadChooserTemplateLabel,
-                  darkMode ? styles.threadChooserTemplateLabelDark : null,
-                ]}
-              >
-                {t("Família normativa")}
-              </Text>
-              <View style={styles.threadChooserTemplateGrid}>
-                {guidedTemplateActions.map((item) => (
-                  <Pressable
-                    accessibilityLabel={t(item.label)}
-                    accessibilityRole="button"
-                    key={item.key}
-                    onPress={() => {
-                      item.onPress();
-                      setDismissed(true);
-                    }}
-                    style={[
-                      styles.threadChooserTemplateButton,
-                      darkMode ? styles.threadChooserTemplateButtonDark : null,
-                    ]}
-                    testID={item.testID}
-                  >
-                    <MaterialCommunityIcons
-                      color={colors.accent}
-                      name={item.icon}
-                      size={16}
-                    />
-                    <Text
-                      style={[
-                        styles.threadChooserTemplateButtonText,
-                        darkMode
-                          ? styles.threadChooserTemplateButtonTextDark
-                          : null,
-                      ]}
-                    >
-                      {t(item.label)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
           ) : null}
 
           {fallbackActions.map((item) => (
             <ThreadContextChooserActionCard
+              accentColor={accentColor}
               darkMode={darkMode}
+              densityScale={densityScale}
               detail={t(
                 "Siga o fluxo sugerido para iniciar a coleta com o contexto certo.",
               )}
+              fontScale={fontScale}
               icon={item.icon}
               key={item.key}
               label={t(item.label)}
@@ -333,6 +318,139 @@ export function ThreadContextCard({
             />
           ))}
         </View>
+
+        {guidedTemplateMenuVisible ? (
+          <Modal
+            animationType="fade"
+            onRequestClose={() => setGuidedTemplatesVisibility(false)}
+            transparent
+            visible
+          >
+            <View style={styles.threadGuidedMenuBackdrop}>
+              <Pressable
+                accessibilityLabel={t("Fechar")}
+                accessibilityRole="button"
+                onPress={() => setGuidedTemplatesVisibility(false)}
+                style={styles.threadGuidedMenuDismissLayer}
+                testID="guided-template-menu-backdrop"
+              />
+              <View
+                style={[
+                  styles.threadGuidedMenuSheet,
+                  darkMode ? styles.threadGuidedMenuSheetDark : null,
+                ]}
+                testID="guided-template-menu"
+              >
+                <View style={styles.threadGuidedMenuHeader}>
+                  <View style={styles.threadGuidedMenuHeaderCopy}>
+                    <Text
+                      style={[
+                        styles.threadGuidedMenuEyebrow,
+                        darkMode ? styles.threadGuidedMenuEyebrowDark : null,
+                        {
+                          fontSize: 11 * fontScale,
+                          lineHeight: 15 * fontScale,
+                        },
+                      ]}
+                    >
+                      {t("Família normativa")}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.threadGuidedMenuTitle,
+                        darkMode ? styles.threadGuidedMenuTitleDark : null,
+                        {
+                          fontSize: 20 * fontScale,
+                          lineHeight: 26 * fontScale,
+                        },
+                      ]}
+                    >
+                      {t("Escolha uma NR para iniciar.")}
+                    </Text>
+                  </View>
+                  <Pressable
+                    accessibilityLabel={t("Fechar")}
+                    accessibilityRole="button"
+                    onPress={() => setGuidedTemplatesVisibility(false)}
+                    style={[
+                      styles.threadGuidedMenuClose,
+                      darkMode ? styles.threadGuidedMenuCloseDark : null,
+                    ]}
+                    testID="guided-template-menu-close"
+                  >
+                    <MaterialCommunityIcons
+                      color={darkMode ? "#F0F4F8" : colors.textPrimary}
+                      name="close"
+                      size={20 * fontScale}
+                    />
+                  </Pressable>
+                </View>
+
+                <ScrollView
+                  contentContainerStyle={styles.threadGuidedMenuListContent}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.threadGuidedMenuList}
+                >
+                  {guidedTemplateActions.map((item) => (
+                    <Pressable
+                      accessibilityLabel={t(item.label)}
+                      accessibilityRole="button"
+                      key={item.key}
+                      onPress={() => {
+                        setGuidedTemplatesVisibility(false);
+                        item.onPress();
+                        setDismissed(true);
+                      }}
+                      style={[
+                        styles.threadGuidedMenuRow,
+                        darkMode ? styles.threadGuidedMenuRowDark : null,
+                        {
+                          paddingHorizontal: 14 * densityScale,
+                          paddingVertical: 12 * densityScale,
+                        },
+                      ]}
+                      testID={item.testID}
+                    >
+                      <View
+                        style={[
+                          styles.threadGuidedMenuRowIcon,
+                          darkMode ? styles.threadGuidedMenuRowIconDark : null,
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          color={visibleAccentColor}
+                          name={item.icon}
+                          size={18 * fontScale}
+                        />
+                      </View>
+                      <View style={styles.threadGuidedMenuRowCopy}>
+                        <Text
+                          style={[
+                            styles.threadGuidedMenuRowTitle,
+                            darkMode
+                              ? styles.threadGuidedMenuRowTitleDark
+                              : null,
+                            {
+                              fontSize: 14 * fontScale,
+                              lineHeight: 18 * fontScale,
+                            },
+                          ]}
+                        >
+                          {t(item.label)}
+                        </Text>
+                      </View>
+                      <MaterialCommunityIcons
+                        color={darkMode ? "#AFC0D2" : colors.textSecondary}
+                        name="chevron-right"
+                        size={20 * fontScale}
+                      />
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
+        ) : null}
       </View>
     );
   }
@@ -365,6 +483,7 @@ export function ThreadContextCard({
               style={[
                 styles.threadEyebrow,
                 darkMode ? styles.threadEyebrowDark : null,
+                { fontSize: 11 * fontScale, lineHeight: 15 * fontScale },
               ]}
             >
               {t(eyebrow)}
@@ -372,7 +491,11 @@ export function ThreadContextCard({
           ) : null}
           <Text
             numberOfLines={1}
-            style={[styles.threadTitle, darkMode ? styles.threadTitleDark : null]}
+            style={[
+              styles.threadTitle,
+              darkMode ? styles.threadTitleDark : null,
+              { fontSize: 17 * fontScale, lineHeight: 22 * fontScale },
+            ]}
           >
             {t(title)}
           </Text>
@@ -381,14 +504,17 @@ export function ThreadContextCard({
             style={[
               styles.threadDescription,
               darkMode ? styles.threadDescriptionDark : null,
+              { fontSize: 13 * fontScale, lineHeight: 18 * fontScale },
             ]}
           >
             {t(description)}
           </Text>
         </View>
         <ThreadContextSpotlightBadge
+          accentColor={accentColor}
           compact
           darkMode={darkMode}
+          fontScale={fontScale}
           spotlight={spotlight}
         />
       </View>
@@ -398,15 +524,19 @@ export function ThreadContextCard({
           <View style={styles.threadCollapsedSummaryRow}>
             {primaryChip ? (
               <ThreadContextChipView
+                accentColor={accentColor}
                 compact
                 darkMode={darkMode}
+                fontScale={fontScale}
                 item={primaryChip}
               />
             ) : null}
             {primaryAction ? (
               <ThreadContextActionButton
+                accentColor={accentColor}
                 compact
                 darkMode={darkMode}
+                fontScale={fontScale}
                 item={primaryAction}
               />
             ) : null}
@@ -423,6 +553,7 @@ export function ThreadContextCard({
                   style={[
                     styles.threadToggleButtonText,
                     darkMode ? styles.threadToggleButtonTextDark : null,
+                    { fontSize: 12 * fontScale, lineHeight: 16 * fontScale },
                   ]}
                 >
                   {t("Detalhes")}
@@ -442,7 +573,9 @@ export function ThreadContextCard({
         <View style={styles.threadContextChips}>
           {visibleChips.map((item) => (
             <ThreadContextChipView
+              accentColor={accentColor}
               darkMode={darkMode}
+              fontScale={fontScale}
               key={item.key}
               item={item}
             />
@@ -463,7 +596,9 @@ export function ThreadContextCard({
           {primaryExpandedAction ? (
             <View style={styles.threadActionRow}>
               <ThreadContextActionButton
+                accentColor={accentColor}
                 darkMode={darkMode}
+                fontScale={fontScale}
                 item={primaryExpandedAction}
               />
             </View>
@@ -491,6 +626,7 @@ export function ThreadContextCard({
                     style={[
                       styles.threadSecondaryActionText,
                       darkMode ? styles.threadSecondaryActionTextDark : null,
+                      { fontSize: 12 * fontScale, lineHeight: 16 * fontScale },
                     ]}
                   >
                     {t(item.label)}
@@ -513,7 +649,9 @@ export function ThreadContextCard({
             {t("Status do caso")}
           </Text>
           <ThreadContextInsightsGrid
+            accentColor={accentColor}
             darkMode={darkMode}
+            fontScale={fontScale}
             items={visibleInsights}
           />
           {hiddenInsightsCount > 0 ? (
@@ -521,6 +659,7 @@ export function ThreadContextCard({
               style={[
                 styles.threadMoreSignalsHint,
                 darkMode ? styles.threadMoreSignalsHintDark : null,
+                { fontSize: 11 * fontScale, lineHeight: 16 * fontScale },
               ]}
             >
               {hiddenInsightsCount === 1
@@ -543,6 +682,7 @@ export function ThreadContextCard({
             style={[
               styles.threadToggleButtonText,
               darkMode ? styles.threadToggleButtonTextDark : null,
+              { fontSize: 12 * fontScale, lineHeight: 16 * fontScale },
             ]}
           >
             {t("Ocultar detalhes")}

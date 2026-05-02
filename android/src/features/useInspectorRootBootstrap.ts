@@ -133,6 +133,7 @@ export function useInspectorRootBootstrap() {
       onShowAlert: Alert.alert,
     },
     shellState: {
+      animationsEnabled: settingsBindings.appearance.animacoesAtivas,
       appLocked: localState.bloqueioAppAtivo,
       onClearTransientSettingsPresentationState:
         settingsSupportState.presentationActions

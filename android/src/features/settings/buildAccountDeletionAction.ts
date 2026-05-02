@@ -199,7 +199,7 @@ export function buildAccountDeletionAction({
     onSetTemaApp("claro");
     onSetTamanhoFonte("médio");
     onSetDensidadeInterface("confortável");
-    onSetCorDestaque("laranja");
+    onSetCorDestaque("padrão");
     onSetAnimacoesAtivas(true);
     onSetNotificaRespostas(true);
     onSetNotificaPush(true);

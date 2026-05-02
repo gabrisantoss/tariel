@@ -42,17 +42,22 @@ export function buildInspectorRootSettingsDrawerState({
       criticalAlertsEnabled:
         settingsBindings.notifications.criticalAlertsEnabled,
       densidadeInterface: settingsBindings.appearance.densidadeInterface,
+      economiaDados: settingsBindings.system.economiaDados,
       emailsAtivos: settingsBindings.notifications.emailsAtivos,
       entradaPorVoz: settingsBindings.speech.entradaPorVoz,
       estiloResposta: settingsBindings.ai.estiloResposta,
-      handleAbrirAjudaDitado:
-        controllers.voiceInputController.handleAbrirAjudaDitado,
+      handleAbrirMenuIdiomaVoz: () => {
+        settingsSupportState.navigationActions.abrirSheetConfiguracao({
+          kind: "voiceLanguage",
+          title: "Idioma de voz",
+          subtitle: "Escolha o idioma usado para voz e leitura em voz alta.",
+        });
+      },
       idiomaResposta: settingsBindings.ai.idiomaResposta,
       mediaCompression: settingsBindings.dataControls.mediaCompression,
       memoriaIa: settingsBindings.ai.memoriaIa,
       mesaCategoryEnabled: settingsBindings.notifications.mesaCategoryEnabled,
       mostrarCategoriaMesa,
-      microfonePermitido: settingsBindings.security.microfonePermitido,
       modeloIa: settingsBindings.ai.modeloIa,
       notificaPush: settingsBindings.notifications.notificaPush,
       notificaRespostas: settingsBindings.notifications.notificaRespostas,
@@ -71,6 +76,7 @@ export function buildInspectorRootSettingsDrawerState({
       setCriticalAlertsEnabled:
         settingsBindings.notifications.setCriticalAlertsEnabled,
       setDensidadeInterface: settingsBindings.appearance.setDensidadeInterface,
+      setEconomiaDados: settingsBindings.system.setEconomiaDados,
       setEmailsAtivos: settingsBindings.notifications.setEmailsAtivos,
       setMemoriaIa: settingsBindings.ai.setMemoriaIa,
       setMesaCategoryEnabled:
@@ -83,17 +89,17 @@ export function buildInspectorRootSettingsDrawerState({
       setTamanhoFonte: settingsBindings.appearance.setTamanhoFonte,
       setTemaApp: settingsBindings.appearance.setTemaApp,
       setTomConversa: settingsBindings.ai.setTomConversa,
-      setVoiceLanguage: settingsBindings.speech.setVoiceLanguage,
+      setUsoBateria: settingsBindings.system.setUsoBateria,
       somNotificacao: settingsBindings.notifications.somNotificacao,
       speechEnabled: settingsBindings.speech.speechEnabled,
       speechRate: settingsBindings.speech.speechRate,
-      sttSupported: runtimeController.voiceRuntimeState.sttSupported,
       systemCategoryEnabled:
         settingsBindings.notifications.systemCategoryEnabled,
       tamanhoFonte: settingsBindings.appearance.tamanhoFonte,
       temaApp: settingsBindings.appearance.temaApp,
       tomConversa: settingsBindings.ai.tomConversa,
       ttsSupported: runtimeController.voiceRuntimeState.ttsSupported,
+      usoBateria: settingsBindings.system.usoBateria,
       vibracaoAtiva: settingsBindings.notifications.vibracaoAtiva,
       voiceLanguage: settingsBindings.speech.voiceLanguage,
     },
@@ -102,15 +108,15 @@ export function buildInspectorRootSettingsDrawerState({
       appVersionLabel: `${runtimeController.appRuntime.versionLabel} • ${runtimeController.appRuntime.buildLabel}`,
       configuracoesDrawerX: shellSupport.configuracoesDrawerX,
       fecharConfiguracoes: shellSupport.fecharConfiguracoes,
+      handleAbrirCentralAtividade:
+        controllers.activityCenterController.actions
+          .handleAbrirCentralAtividade,
       handleAbrirPaginaConfiguracoes:
         settingsSupportState.navigationActions.handleAbrirPaginaConfiguracoes,
       handleAbrirSecaoConfiguracoes:
         settingsSupportState.navigationActions.handleAbrirSecaoConfiguracoes,
       handleVoltarResumoConfiguracoes:
         settingsSupportState.navigationActions.handleVoltarResumoConfiguracoes,
-      onAbrirFilaOffline: () => {
-        shellSupport.setFilaOfflineAberta(true);
-      },
       settingsDrawerPage:
         settingsSupportState.navigationState.settingsDrawerPage,
       settingsDrawerPanResponder: shellSupport.settingsDrawerPanResponder,
@@ -132,9 +138,21 @@ export function buildInspectorRootSettingsDrawerState({
         settingsBindings.security.deviceBiometricsEnabled,
       filtroEventosSeguranca:
         settingsSupportState.presentationState.filtroEventosSeguranca,
-      fixarConversas: settingsSupportState.presentationState.fixarConversas,
-      handleGerenciarConversasIndividuais:
-        controllers.historyController.handleGerenciarConversasIndividuais,
+      handleAbrirMenuRetencaoDados: () => {
+        settingsSupportState.navigationActions.abrirSheetConfiguracao({
+          kind: "dataRetention",
+          title: "Retenção de dados",
+          subtitle: "Escolha por quanto tempo o histórico permanece salvo.",
+        });
+      },
+      handleAbrirMenuSincronizacaoWifi: () => {
+        settingsSupportState.navigationActions.abrirSheetConfiguracao({
+          kind: "syncWifi",
+          title: "Sincronização e Wi-Fi",
+          subtitle:
+            "Ajuste Wi-Fi, backup, sincronização entre dispositivos e anexos.",
+        });
+      },
       handleLogout: sessionFlow.actions.handleLogout,
       handleGerenciarPermissao:
         controllers.appLockController.actions.handleGerenciarPermissao,
@@ -142,12 +160,7 @@ export function buildInspectorRootSettingsDrawerState({
       limpandoCache: localState.limpandoCache,
       lockTimeout: settingsBindings.security.lockTimeout,
       mediaCompression: settingsBindings.dataControls.mediaCompression,
-      mostrarConteudoNotificacao:
-        settingsBindings.notifications.mostrarConteudoNotificacao,
-      mostrarSomenteNovaMensagem:
-        settingsBindings.notifications.mostrarSomenteNovaMensagem,
-      ocultarConteudoBloqueado:
-        settingsBindings.notifications.ocultarConteudoBloqueado,
+      microfonePermitido: settingsBindings.security.microfonePermitido,
       provedoresConectados:
         settingsSupportState.presentationState.provedoresConectados,
       reautenticacaoStatus:
@@ -167,8 +180,6 @@ export function buildInspectorRootSettingsDrawerState({
       setCrashReportsOptIn: settingsBindings.dataControls.setCrashReportsOptIn,
       setFiltroEventosSeguranca:
         settingsSupportState.presentationActions.setFiltroEventosSeguranca,
-      setFixarConversas:
-        settingsSupportState.presentationActions.setFixarConversas,
       setHideInMultitask: settingsBindings.security.setHideInMultitask,
       setLockTimeout: settingsBindings.security.setLockTimeout,
       setMediaCompression: settingsBindings.dataControls.setMediaCompression,
@@ -187,23 +198,8 @@ export function buildInspectorRootSettingsDrawerState({
       wifiOnlySync: settingsBindings.dataControls.wifiOnlySync,
     },
     supportAndSystemState: {
-      economiaDados: settingsBindings.system.economiaDados,
       filaSuporteLocal: settingsSupportState.presentationState.filaSuporteLocal,
-      handleAbrirCentralAtividade:
-        controllers.activityCenterController.actions
-          .handleAbrirCentralAtividade,
-      handleRefresh: controllers.operationalState.handleRefresh,
-      idiomaApp: settingsBindings.system.idiomaApp,
-      resumoCache: controllers.operationalState.resumoCache,
-      resumoCentralAtividade:
-        controllers.operationalState.resumoCentralAtividade,
-      setEconomiaDados: settingsBindings.system.setEconomiaDados,
-      setIdiomaApp: settingsBindings.system.setIdiomaApp,
-      setUsoBateria: settingsBindings.system.setUsoBateria,
-      sincronizandoDados: controllers.operationalState.sincronizandoDados,
       supportChannelLabel: controllers.operationalState.canalSuporteLabel,
-      usoBateria: settingsBindings.system.usoBateria,
-      verificandoAtualizacoes: localState.verificandoAtualizacoes,
     },
   };
 }

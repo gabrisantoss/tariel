@@ -7,7 +7,7 @@ export function createDefaultAppSettings(): AppSettings {
       theme: "claro",
       density: "confortável",
       fontScale: "médio",
-      accentColor: "laranja",
+      accentColor: "padrão",
       animationsEnabled: true,
     },
     ai: {

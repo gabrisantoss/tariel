@@ -138,7 +138,7 @@ export function buildInspectorConversationDerivedState(
   });
   const reviewSurfaceLabel =
     separateMesaRequired || activeOwnerRole === "mesa"
-      ? "Mesa Avaliadora"
+      ? "Revisão do caso"
       : selfReviewAllowed
         ? "Revisão interna governada"
         : "Pendências do caso";
@@ -156,7 +156,7 @@ export function buildInspectorConversationDerivedState(
           ? "Adicione um contexto curto para acompanhar a evidência."
           : buildGuidedInspectionPlaceholder(guidedInspectionDraft)
         : activeOwnerRole === "mesa" && conversaAtiva && !podeEditarConversa
-          ? "Caso sob revisão da Mesa Avaliadora."
+          ? "Caso sob revisão. Aguarde retorno ou pedido de correção."
           : conversaAtiva && !podeEditarConversa
             ? "Laudo em modo leitura."
             : anexoRascunho
@@ -167,18 +167,18 @@ export function buildInspectorConversationDerivedState(
   const placeholderMesa = !mesaTemMensagens
     ? !mesaAcessoPermitido
       ? selfReviewAllowed && !separateMesaRequired
-        ? "Use a revisão interna do caso; este pacote não possui Mesa separada."
-        : "Seu acesso atual no app não inclui a Mesa Avaliadora."
-      : "Aguardando retorno da mesa."
+        ? "Use a revisão interna do caso; este pacote não possui revisão separada."
+        : "Seu acesso atual no app não inclui a revisão separada."
+      : "Aguardando retorno da revisão."
     : canChatReopen
       ? caseLifecycleStatus === "emitido"
-        ? "Reabra o caso antes de abrir um novo ciclo com a mesa."
-        : "Reabra o caso e ajuste no chat antes de responder à mesa."
+        ? "Reabra o caso antes de abrir um novo ciclo de revisão."
+        : "Reabra o caso e ajuste no chat antes de responder à revisão."
       : activeOwnerRole !== "mesa"
-        ? "A mesa só recebe respostas quando a etapa dela estiver ativa."
+        ? "A revisão só recebe respostas quando houver uma pendência aberta."
         : conversaAtiva && !conversaAtiva.permiteEdicao
           ? "Laudo em modo leitura."
-          : "Escreva uma resposta objetiva para a mesa...";
+          : "Responda de forma objetiva para a revisão...";
   const podeAcionarComposer =
     podeEditarConversa &&
     !enviandoMensagem &&
@@ -198,15 +198,15 @@ export function buildInspectorConversationDerivedState(
   );
   const fontScale = obterEscalaFonte(tamanhoFonte);
   const densityScale = obterEscalaDensidade(densidadeInterface);
+  const temaEfetivo = resolveInspectorEffectiveTheme(temaApp, colorScheme);
   const accentColor =
     corDestaque === "azul"
       ? "#3366FF"
-      : corDestaque === "roxo"
-        ? "#7C4DFF"
-        : corDestaque === "personalizado"
-          ? "#008F7A"
-          : colors.accent;
-  const temaEfetivo = resolveInspectorEffectiveTheme(temaApp, colorScheme);
+      : corDestaque === "laranja"
+        ? colors.accent
+        : corDestaque === "roxo"
+          ? "#7C4DFF"
+          : colors.ink900;
   const appGradientColors: readonly [string, string, ...string[]] =
     temaEfetivo === "escuro"
       ? (["#0B141E", "#121F2D"] as const)
@@ -260,13 +260,13 @@ export function buildInspectorConversationDerivedState(
     mesaIndisponivelDescricao: mesaAcessoPermitido
       ? "Envie o primeiro registro no chat para criar o caso e liberar este espaço."
       : selfReviewAllowed && !separateMesaRequired
-        ? "Este pacote usa revisão interna no app; Mesa Avaliadora só aparece quando contratada ou exigida."
-        : "O pacote e as permissões atuais desta conta não incluem a Mesa Avaliadora no app.",
+        ? "Este pacote usa revisão interna no app; a revisão separada só aparece quando contratada ou exigida."
+        : "O pacote e as permissões atuais desta conta não incluem revisão separada no app.",
     mesaIndisponivelTitulo: mesaAcessoPermitido
-      ? "Mesa disponível após o primeiro laudo"
+      ? "Revisão disponível após o primeiro caso"
       : selfReviewAllowed && !separateMesaRequired
         ? "Revisão interna governada"
-        : "Mesa indisponível para esta conta",
+        : "Revisão indisponível para esta conta",
     mensagensVisiveis,
     mobileChatFirstGovernance,
     officialIssueAllowed,
@@ -337,7 +337,7 @@ export function buildInspectorHistoryAndOfflineDerivedState(
   const filtrosFilaOffline: SessionModalsStackFilter[] = [
     { key: "all", label: "Tudo", count: filaOfflineOrdenada.length },
     { key: "chat", label: "Chat", count: totalFilaOfflineChat },
-    { key: "mesa", label: "Mesa", count: totalFilaOfflineMesa },
+    { key: "mesa", label: "Revisão", count: totalFilaOfflineMesa },
   ];
   const filaOfflineFiltrada =
     filtroFilaOffline === "all"
@@ -511,7 +511,7 @@ export function buildInspectorHistoryAndOfflineDerivedState(
             failedItems: totalFilaOfflineFiltradaFalha,
             waitingItems: totalFilaOfflineFiltradaEmEspera,
           })
-        : `Nenhuma pendência em ${filtroFilaOffline === "chat" ? "Chat" : "Mesa"}`;
+        : `Nenhuma pendência em ${filtroFilaOffline === "chat" ? "Chat" : "Revisão"}`;
   const podeSincronizarFilaOffline =
     statusApi === "online" && totalFilaOfflinePronta > 0;
   const notificacoesNaoLidas = notificacoesVisiveis.filter(
@@ -621,11 +621,13 @@ export function buildInspectorSettingsDerivedState(
         ? "Claro"
         : "Escuro";
   const corDestaqueResumoConfiguracao =
-    corDestaque === "laranja"
+    corDestaque === "padrão"
       ? "Padrão"
       : formatarTipoTemplateLaudo(corDestaque);
   const planoResumoConfiguracao =
-    resolveMobileUserCommercialServicePackageLabel(session?.bootstrap.usuario) ||
+    resolveMobileUserCommercialServicePackageLabel(
+      session?.bootstrap.usuario,
+    ) ||
     resolveMobileUserOperatingModelLabel(session?.bootstrap.usuario) ||
     planoAtual ||
     "Plano não informado";
@@ -719,7 +721,7 @@ export function buildInspectorSettingsDerivedState(
     ? "Assistente • Nova mensagem"
     : !mostrarConteudoNotificacao || ocultarConteudoBloqueado
       ? "Assistente • Mensagem protegida"
-      : "Assistente • Laudo 204 precisa de revisão da mesa";
+      : "Assistente • Laudo 204 precisa de revisão";
   const resumoExcluirConta = `${sessoesAtivas.length} sessões serão invalidadas • ${conversasVisiveisTotal} conversas visíveis nesta conta`;
   const resumoSuporteApp = `${APP_VERSION_LABEL} • ${APP_BUILD_CHANNEL}`;
   const ultimaVerificacaoAtualizacaoLabel = ultimaVerificacaoAtualizacao

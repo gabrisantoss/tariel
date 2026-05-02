@@ -115,8 +115,8 @@ export function renderizarDocumentoEmitidoCard(
                 : "A emissão oficial já está registrada para este caso."}
       </Text>
       <Text style={styles.threadReviewFootnote}>
-        PDF operacional é artefato de trabalho. Emissão oficial é o registro
-        congelado com pacote, hash e auditoria.
+        O documento de trabalho fica separado da emissão oficial, que mantém o
+        pacote, o hash e a auditoria.
       </Text>
       <View style={styles.threadReviewChipRail}>
         <View

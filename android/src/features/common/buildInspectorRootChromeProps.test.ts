@@ -92,6 +92,7 @@ describe("buildInspectorRootChromeProps", () => {
         renderSettingsSheetBody: jest.fn().mockReturnValue(null),
         setConfirmTextDraft: jest.fn(),
         settingsSheet: null,
+        settingsSheetCanGoBack: false,
         settingsSheetLoading: false,
         settingsSheetNotice: "",
       },

@@ -1,4 +1,5 @@
 import { fireEvent, render } from "@testing-library/react-native";
+import { Image } from "react-native";
 
 import { ThreadConversationPane } from "./ThreadConversationPane";
 
@@ -131,6 +132,41 @@ describe("ThreadConversationPane", () => {
 
     expect(getByTestId("mesa-thread-surface")).toBeTruthy();
     expect(getByTestId("mesa-thread-loaded")).toBeTruthy();
+  });
+
+  it("mostra a imagem enviada usando o preview local", () => {
+    const { UNSAFE_getAllByType, getByText, queryByText } = render(
+      <ThreadConversationPane
+        {...baseProps}
+        vendoMesa={false}
+        mensagensVisiveis={[
+          {
+            id: 22,
+            papel: "usuario",
+            texto: "Imagem enviada",
+            tipo: "user",
+            anexos: [
+              {
+                label: "foto-enviada.jpg",
+                mime_type: "image/jpeg",
+                categoria: "imagem",
+                eh_imagem: true,
+                local_preview_uri: "file:///tmp/foto-enviada.jpg",
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    const imagens = UNSAFE_getAllByType(Image);
+    expect(
+      imagens.some(
+        (imagem) => imagem.props.source?.uri === "file:///tmp/foto-enviada.jpg",
+      ),
+    ).toBe(true);
+    expect(getByText("foto-enviada.jpg")).toBeTruthy();
+    expect(queryByText("Imagem enviada")).toBeNull();
   });
 
   it("renderiza o card de revisão operacional quando o pacote está disponível", () => {
@@ -322,7 +358,7 @@ describe("ThreadConversationPane", () => {
     expect(getByText("Reemissão recomendada")).toBeTruthy();
     expect(
       getByText(
-        "O PDF operacional atual divergiu do documento congelado na emissão oficial. Emitido v0003 · Atual v0004.",
+        "A versão atual divergiu do documento congelado na emissão oficial. Emitido v0003 · Atual v0004.",
       ),
     ).toBeTruthy();
     expect(getByText("Aprovação governada")).toBeTruthy();
@@ -685,18 +721,12 @@ describe("ThreadConversationPane", () => {
     });
   });
 
-  it("renderiza o pre-laudo canônico dentro da thread do chat com ações operacionais", () => {
-    const onAbrirMesaTab = jest.fn();
-    const onAbrirQualityGate = jest.fn();
-    const onUsarPerguntaPreLaudo = jest.fn();
-    const { getAllByText, getByTestId, getByText, queryByText } = render(
+  it("mantém o pre-laudo operacional fora da thread do chat", () => {
+    const { getByText, queryByTestId, queryByText } = render(
       <ThreadConversationPane
         {...baseProps}
         allowedSurfaceActions={["chat_finalize"]}
         caseLifecycleStatus="laudo_em_coleta"
-        onAbrirMesaTab={onAbrirMesaTab}
-        onAbrirQualityGate={onAbrirQualityGate}
-        onUsarPerguntaPreLaudo={onUsarPerguntaPreLaudo}
         vendoMesa={false}
         conversaVazia={false}
         mensagensVisiveis={[
@@ -857,38 +887,47 @@ describe("ThreadConversationPane", () => {
       />,
     );
 
-    expect(getByTestId("chat-report-pack-card")).toBeTruthy();
-    expect(getByText("PDF operacional")).toBeTruthy();
+    expect(getByText("Pré-laudo em consolidação.")).toBeTruthy();
+    expect(queryByTestId("chat-report-pack-card")).toBeNull();
+    expect(queryByText("PDF operacional")).toBeNull();
     expect(queryByText("Baixar pacote oficial")).toBeNull();
-    expect(getAllByText("Histórico/Auditoria").length).toBeGreaterThan(0);
-    expect(getAllByText("Documento").length).toBeGreaterThan(0);
-    expect(getByText("Conversa e evidências")).toBeTruthy();
-    expect(
-      getByText(
-        "Próxima ação: abrir a Mesa Avaliadora para decisão humana rastreável. O quality gate fica como ação secundária.",
-      ),
-    ).toBeTruthy();
-    expect(getByText("Validar e finalizar")).toBeTruthy();
-    expect(getByText("Abrir Mesa Avaliadora")).toBeTruthy();
-
-    fireEvent.press(getByTestId("chat-report-pack-card-next-question-0"));
-    fireEvent.press(getByTestId("chat-report-pack-card-open-quality-gate"));
-    fireEvent.press(getByTestId("chat-report-pack-card-open-mesa"));
-
-    expect(onUsarPerguntaPreLaudo).toHaveBeenCalledWith(
-      "Confirme a conclusão técnica da ancoragem principal.",
-    );
-    expect(onAbrirQualityGate).toHaveBeenCalled();
-    expect(onAbrirMesaTab).toHaveBeenCalled();
+    expect(queryByText("Validar e finalizar")).toBeNull();
+    expect(queryByText("Abrir Mesa Avaliadora")).toBeNull();
   });
 
-  it("mantém CTA da Mesa quando o modo vem apenas do outline do pre-laudo", () => {
-    const onAbrirMesaTab = jest.fn();
+  it("mantém o pre-laudo operacional disponível na Mesa", () => {
     const { getByTestId, getByText } = render(
       <ThreadConversationPane
         {...baseProps}
+        reportPackDraft={{
+          modeled: true,
+          template_label: "NR35 Linha de Vida",
+          quality_gates: {
+            autonomy_ready: false,
+            final_validation_mode: "mesa_required",
+            missing_evidence: [
+              {
+                message: "Ainda faltam evidências visuais obrigatórias.",
+              },
+            ],
+          },
+          pre_laudo_outline: {
+            ready_for_structured_form: true,
+            ready_for_finalization: false,
+          },
+        }}
+      />,
+    );
+
+    expect(getByTestId("mesa-report-pack-card")).toBeTruthy();
+    expect(getByText("PDF operacional")).toBeTruthy();
+  });
+
+  it("não injeta CTA da Mesa do pre-laudo dentro do chat", () => {
+    const { getByText, queryByTestId, queryByText } = render(
+      <ThreadConversationPane
+        {...baseProps}
         caseLifecycleStatus="laudo_em_coleta"
-        onAbrirMesaTab={onAbrirMesaTab}
         vendoMesa={false}
         conversaVazia={false}
         mensagensVisiveis={[
@@ -921,20 +960,16 @@ describe("ThreadConversationPane", () => {
       />,
     );
 
-    expect(getByTestId("chat-report-pack-card-open-mesa")).toBeTruthy();
-    expect(getByText("Abrir Mesa Avaliadora")).toBeTruthy();
-
-    fireEvent.press(getByTestId("chat-report-pack-card-open-mesa"));
-    expect(onAbrirMesaTab).toHaveBeenCalled();
+    expect(getByText("Mobile pilot V2 target")).toBeTruthy();
+    expect(queryByTestId("chat-report-pack-card-open-mesa")).toBeNull();
+    expect(queryByText("Abrir Mesa Avaliadora")).toBeNull();
   });
 
-  it("mantém CTA da Mesa como fallback quando a família ainda não tem report pack modelado", () => {
-    const onAbrirMesaTab = jest.fn();
-    const { getAllByText, getByTestId } = render(
+  it("mantém o fallback de família não modelada fora do chat", () => {
+    const { getByText, queryByTestId, queryByText } = render(
       <ThreadConversationPane
         {...baseProps}
         caseLifecycleStatus="laudo_em_coleta"
-        onAbrirMesaTab={onAbrirMesaTab}
         vendoMesa={false}
         conversaVazia={false}
         mensagensVisiveis={[
@@ -966,19 +1001,17 @@ describe("ThreadConversationPane", () => {
       />,
     );
 
+    expect(getByText("Mobile pilot V2 target")).toBeTruthy();
     expect(
-      getAllByText(
+      queryByText(
         /Esta familia ainda nao possui report pack incremental modelado/,
-      ).length,
-    ).toBeGreaterThan(0);
-    expect(getByTestId("chat-report-pack-card-open-mesa")).toBeTruthy();
-
-    fireEvent.press(getByTestId("chat-report-pack-card-open-mesa"));
-    expect(onAbrirMesaTab).toHaveBeenCalled();
+      ),
+    ).toBeNull();
+    expect(queryByTestId("chat-report-pack-card-open-mesa")).toBeNull();
   });
 
-  it("mostra estado operacional limpo quando o pre-laudo ja nao tem bloqueios nem alertas", () => {
-    const { getAllByText, getByText } = render(
+  it("não mostra estado operacional do pre-laudo dentro do chat", () => {
+    const { getByText, queryByText } = render(
       <ThreadConversationPane
         {...baseProps}
         vendoMesa={false}
@@ -1036,9 +1069,10 @@ describe("ThreadConversationPane", () => {
       />,
     );
 
-    expect(getAllByText("Pronto para validar").length).toBeGreaterThan(0);
-    expect(getByText("Sem pendências do caso")).toBeTruthy();
-    expect(getByText("Sem revisão pendente")).toBeTruthy();
+    expect(getByText("Pacote consolidado.")).toBeTruthy();
+    expect(queryByText("Pronto para validar")).toBeNull();
+    expect(queryByText("Sem pendências do caso")).toBeNull();
+    expect(queryByText("Sem revisão pendente")).toBeNull();
   });
 
   it("destaca o documento emitido na thread quando o caso já tem emissão oficial", () => {
@@ -1095,7 +1129,7 @@ describe("ThreadConversationPane", () => {
     expect(getAllByText("Reemissão recomendada").length).toBeGreaterThan(0);
     expect(
       getByText(
-        "O PDF operacional atual divergiu do documento congelado na emissão oficial. Emitido v0003 · Atual v0004.",
+        "A versão atual divergiu do documento congelado na emissão oficial. Emitido v0003 · Atual v0004.",
       ),
     ).toBeTruthy();
     expect(

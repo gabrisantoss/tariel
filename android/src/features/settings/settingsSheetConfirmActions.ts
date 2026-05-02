@@ -838,7 +838,7 @@ export async function handleSettingsSheetConfirmDelegated({
     }
     case "terms": {
       const conteudo = [
-        "Tariel Inspetor - Termos de uso (resumo)",
+        "Tariel Inspetor - Termos de uso",
         `Gerado em: ${new Date().toLocaleString("pt-BR")}`,
         "",
         ...TERMS_OF_USE_SECTIONS.flatMap((item) => [
@@ -853,9 +853,7 @@ export async function handleSettingsSheetConfirmDelegated({
         prefixo: "tariel-termos-uso",
       });
       if (exportado) {
-        ui.onNotificarConfiguracaoConcluida(
-          "Resumo dos termos exportado em TXT.",
-        );
+        ui.onNotificarConfiguracaoConcluida("Termos de uso exportados em TXT.");
       } else {
         ui.onSetSettingsSheetNotice(
           "Não foi possível exportar os termos agora.",

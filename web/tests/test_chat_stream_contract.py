@@ -20,6 +20,17 @@ def test_chat_stream_contract_classifica_fluxo_com_laudo() -> None:
     assert contrato.eh_chat_livre_sem_laudo is False
 
 
+def test_chat_stream_contract_classifica_novo_chat_mobile_como_novo_laudo() -> None:
+    contrato = classificar_chat_stream_route(
+        DadosChat(mensagem="Começar conversa limpa", iniciar_laudo=True)
+    )
+
+    assert contrato.intent == "fluxo_laudo_ou_comando"
+    assert contrato.action == "preparar_fluxo_laudo"
+    assert contrato.response_kind == "case_stream_dispatch"
+    assert contrato.eh_chat_livre_sem_laudo is False
+
+
 def test_chat_stream_contract_classifica_comando_rapido() -> None:
     contrato = classificar_chat_stream_route(DadosChat(mensagem="/pendencias abertas"))
 

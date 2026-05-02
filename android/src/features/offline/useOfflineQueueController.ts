@@ -67,6 +67,11 @@ interface UseOfflineQueueControllerParams<
     accessToken: string,
     silencioso?: boolean,
   ) => Promise<TConversation | null>;
+  carregarConversaPorLaudoId: (
+    accessToken: string,
+    laudoId: number,
+    silencioso?: boolean,
+  ) => Promise<TConversation | null>;
   abrirLaudoPorId: (accessToken: string, laudoId: number) => Promise<void>;
   handleSelecionarLaudo: (card: MobileLaudoCard | null) => Promise<void>;
   carregarMesaAtual: (
@@ -224,6 +229,7 @@ export function useOfflineQueueController<
       textoDocumento,
       nomeDocumento,
       laudoId: laudoIdAtual,
+      iniciarLaudo: !laudoIdAtual,
       modo: current.normalizarModoChat(item.aiMode || conversaAtual?.modo),
       learningOptIn: item.aiLearningOptIn === true,
       tone: item.aiTone,
@@ -357,12 +363,15 @@ export function useOfflineQueueController<
       );
       removerItemFilaOffline(item.id);
       await current.carregarListaLaudos(current.session.accessToken, true);
-      const proximaConversa = await current.carregarConversaAtual(
-        current.session.accessToken,
-        true,
-      );
       const laudoAtual =
-        item.laudoId ?? laudoResultado ?? proximaConversa?.laudoId ?? null;
+        item.laudoId ?? laudoResultado ?? current.conversation?.laudoId ?? null;
+      if (laudoAtual) {
+        await current.carregarConversaPorLaudoId(
+          current.session.accessToken,
+          laudoAtual,
+          true,
+        );
+      }
       if (
         (item.channel === "mesa" || current.activeThread === "mesa") &&
         laudoAtual
@@ -504,11 +513,11 @@ export function useOfflineQueueController<
       }
 
       await current.carregarListaLaudos(accessToken, true);
-      const proximaConversa = await current.carregarConversaAtual(
-        accessToken,
-        true,
-      );
-      const laudoAtual = proximaConversa?.laudoId ?? laudoSequencial ?? null;
+      const laudoAtual =
+        laudoSequencial ?? current.conversation?.laudoId ?? null;
+      if (laudoAtual) {
+        await current.carregarConversaPorLaudoId(accessToken, laudoAtual, true);
+      }
       if (current.activeThread === "mesa" && laudoAtual) {
         await current.carregarMesaAtual(accessToken, laudoAtual, true);
       }
@@ -578,6 +587,7 @@ export function useOfflineQueueController<
     params.statusApi,
     params.syncEnabled,
     params.syncingQueue,
+    params.wifiOnlySync,
   ]);
 
   useEffect(() => {
@@ -622,6 +632,7 @@ export function useOfflineQueueController<
     params.statusApi,
     params.syncEnabled,
     params.syncingQueue,
+    params.wifiOnlySync,
   ]);
 
   return {

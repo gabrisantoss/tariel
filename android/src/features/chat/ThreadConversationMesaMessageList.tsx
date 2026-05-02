@@ -9,7 +9,7 @@ import {
 } from "react-native";
 
 import { EmptyState } from "../../components/EmptyState";
-import { colors } from "../../theme/tokens";
+import { colorWithAlpha } from "../../theme/colorUtils";
 import type {
   MobileAttachment,
   MobileChatMessage,
@@ -88,9 +88,12 @@ function obterContextoOperacionalMesa(item: MobileMesaMessage): {
 type ThreadConversationMesaMessageListProps = {
   accentColor: string;
   anexoAbrindoChave: string;
+  activeOwnerRole?: string;
+  caseLifecycleStatus?: string;
   conversaPermiteEdicao: boolean;
   dynamicMessageBubbleStyle: StyleProp<ViewStyle>;
   dynamicMessageTextStyle: StyleProp<TextStyle>;
+  hasReviewSummary: boolean;
   keyboardVisible: boolean;
   mensagensMesa: MobileMesaMessage[];
   mensagensVisiveis: MobileChatMessage[];
@@ -107,9 +110,69 @@ type ThreadConversationMesaMessageListProps = {
   toAttachmentKey: (attachment: MobileAttachment, fallback: string) => string;
 };
 
+function buildReviewEmptyState(params: {
+  activeOwnerRole?: string;
+  caseLifecycleStatus?: string;
+  hasReviewSummary: boolean;
+}): {
+  description: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  title: string;
+} {
+  const { activeOwnerRole, caseLifecycleStatus, hasReviewSummary } = params;
+
+  if (caseLifecycleStatus === "aprovado" || caseLifecycleStatus === "emitido") {
+    return {
+      description:
+        "A revisão não tem novas mensagens. O caso já pode seguir para a etapa final disponível.",
+      icon: "check-decagram-outline",
+      title: "Caso aprovado",
+    };
+  }
+
+  if (caseLifecycleStatus === "devolvido_para_correcao") {
+    return {
+      description:
+        "Quando a revisão registrar o que precisa ser corrigido, as pendências aparecem aqui. Faça os ajustes pelo chat e responda quando houver um pedido aberto.",
+      icon: "alert-circle-outline",
+      title: "Correção solicitada",
+    };
+  }
+
+  if (
+    activeOwnerRole === "mesa" ||
+    caseLifecycleStatus === "aguardando_mesa" ||
+    caseLifecycleStatus === "em_revisao_mesa"
+  ) {
+    return {
+      description:
+        "O caso está na etapa de revisão. Quando houver pedido de correção, aprovação ou comentário humano, tudo aparece nesta tela.",
+      icon: "clipboard-clock-outline",
+      title: "Aguardando revisão",
+    };
+  }
+
+  if (hasReviewSummary) {
+    return {
+      description:
+        "A prévia do caso está acima. Quando ela for enviada para revisão, os retornos humanos aparecem aqui.",
+      icon: "clipboard-text-outline",
+      title: "Revisão ainda sem retorno",
+    };
+  }
+
+  return {
+    description:
+      "Use o chat para montar o caso com fotos, documentos e contexto. Quando o caso for enviado para revisão, pedidos de ajuste e aprovações aparecem aqui.",
+    icon: "message-reply-text-outline",
+    title: "Revisão ainda não iniciada",
+  };
+}
+
 type MesaMessageSharedProps = Pick<
   ThreadConversationMesaMessageListProps,
   | "anexoAbrindoChave"
+  | "accentColor"
   | "dynamicMessageTextStyle"
   | "onAbrirAnexo"
   | "onAbrirReferenciaNoChat"
@@ -125,6 +188,7 @@ function MesaMessageAttachments(
   props: Pick<
     ThreadConversationMesaMessageListProps,
     | "anexoAbrindoChave"
+    | "accentColor"
     | "onAbrirAnexo"
     | "sessionAccessToken"
     | "toAttachmentKey"
@@ -134,6 +198,7 @@ function MesaMessageAttachments(
   },
 ) {
   const {
+    accentColor,
     anexoAbrindoChave,
     attachments,
     messageId,
@@ -152,6 +217,7 @@ function MesaMessageAttachments(
         const fallback = `${messageId}-anexo-${anexoIndex}`;
         return (
           <MessageAttachmentCard
+            accentColor={accentColor}
             key={fallback}
             accessToken={sessionAccessToken}
             attachment={anexo}
@@ -172,6 +238,7 @@ function MesaOutgoingMessageBubble(
 ) {
   const {
     anexoAbrindoChave,
+    accentColor,
     dynamicMessageBubbleStyle,
     dynamicMessageTextStyle,
     item,
@@ -197,6 +264,7 @@ function MesaOutgoingMessageBubble(
       </Text>
       {referenciaId ? (
         <MessageReferenceCard
+          accentColor={accentColor}
           messageId={referenciaId}
           onPress={() => onAbrirReferenciaNoChat(referenciaId)}
           preview={referenciaPreview}
@@ -213,6 +281,7 @@ function MesaOutgoingMessageBubble(
         {item.texto}
       </Text>
       <MesaMessageAttachments
+        accentColor={accentColor}
         anexoAbrindoChave={anexoAbrindoChave}
         attachments={item.anexos}
         messageId={item.id}
@@ -283,6 +352,9 @@ function MesaIncomingMessageBubble(
               estadoPendencia === "resolved"
                 ? styles.messageStatusBadgeSuccess
                 : styles.messageStatusBadgeAccent,
+              estadoPendencia === "resolved"
+                ? null
+                : { backgroundColor: colorWithAlpha(accentColor, "18") },
             ]}
           >
             <Text
@@ -291,18 +363,20 @@ function MesaIncomingMessageBubble(
                 estadoPendencia === "resolved"
                   ? styles.messageStatusBadgeTextSuccess
                   : styles.messageStatusBadgeTextAccent,
+                estadoPendencia === "resolved" ? null : { color: accentColor },
               ]}
             >
               {estadoPendencia === "resolved"
                 ? "Resolvida"
                 : estadoPendencia === "open"
                   ? "Pendência aberta"
-                  : "Mensagem da mesa"}
+                  : "Comentário da revisão"}
             </Text>
           </View>
         </View>
         {referenciaId ? (
           <MessageReferenceCard
+            accentColor={accentColor}
             messageId={referenciaId}
             onPress={() => onAbrirReferenciaNoChat(referenciaId)}
             preview={referenciaPreview}
@@ -311,7 +385,7 @@ function MesaIncomingMessageBubble(
         {operationalContext ? (
           <View style={styles.messageOperationalCard}>
             <Text style={styles.messageOperationalEyebrow}>
-              Refazer operacional
+              Correção solicitada
             </Text>
             <Text style={styles.messageOperationalTitle}>
               {operationalContext.title}
@@ -340,6 +414,7 @@ function MesaIncomingMessageBubble(
           {item.texto}
         </Text>
         <MesaMessageAttachments
+          accentColor={accentColor}
           anexoAbrindoChave={anexoAbrindoChave}
           attachments={item.anexos}
           messageId={item.id}
@@ -356,10 +431,12 @@ function MesaIncomingMessageBubble(
               <MaterialCommunityIcons
                 name="reply-outline"
                 size={15}
-                color={colors.accent}
+                color={accentColor}
               />
               <Text style={styles.messageActionText}>
-                Responder nesta mensagem
+                {estadoPendencia === "open"
+                  ? "Responder esta pendência"
+                  : "Responder"}
               </Text>
             </Pressable>
           </View>
@@ -381,9 +458,12 @@ export function ThreadConversationMesaMessageList(
   const {
     accentColor,
     anexoAbrindoChave,
+    activeOwnerRole,
+    caseLifecycleStatus,
     conversaPermiteEdicao,
     dynamicMessageBubbleStyle,
     dynamicMessageTextStyle,
+    hasReviewSummary,
     keyboardVisible,
     mensagensMesa,
     mensagensVisiveis,
@@ -397,6 +477,12 @@ export function ThreadConversationMesaMessageList(
   } = props;
 
   if (!mensagensMesa.length) {
+    const emptyState = buildReviewEmptyState({
+      activeOwnerRole,
+      caseLifecycleStatus,
+      hasReviewSummary,
+    });
+
     return (
       <View
         testID="mesa-thread-empty-state"
@@ -407,10 +493,10 @@ export function ThreadConversationMesaMessageList(
       >
         <EmptyState
           compact
-          description="Quando a mesa responder, os retornos aparecem aqui."
-          eyebrow="Mesa"
-          icon="message-reply-text-outline"
-          title="Nenhum retorno técnico"
+          description={emptyState.description}
+          eyebrow="Revisão"
+          icon={emptyState.icon}
+          title={emptyState.title}
         />
       </View>
     );
@@ -420,7 +506,7 @@ export function ThreadConversationMesaMessageList(
     <View testID="mesa-thread-loaded">
       {mensagensMesa.map((item, index) => {
         const mensagemEhUsuario = mensagemMesaEhUsuario(item);
-        const nomeAutor = mensagemEhUsuario ? nomeUsuarioExibicao : "Mesa";
+        const nomeAutor = mensagemEhUsuario ? nomeUsuarioExibicao : "Revisão";
         const referenciaId = Number(item.referencia_mensagem_id || 0) || null;
         const referenciaPreview = obterResumoReferenciaMensagem(
           referenciaId,
@@ -440,6 +526,7 @@ export function ThreadConversationMesaMessageList(
           >
             {mensagemEhUsuario ? (
               <MesaOutgoingMessageBubble
+                accentColor={accentColor}
                 anexoAbrindoChave={anexoAbrindoChave}
                 dynamicMessageBubbleStyle={dynamicMessageBubbleStyle}
                 dynamicMessageTextStyle={dynamicMessageTextStyle}

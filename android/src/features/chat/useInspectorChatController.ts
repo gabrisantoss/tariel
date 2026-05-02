@@ -234,6 +234,7 @@ export function useInspectorChatController<
 
   const {
     abrirLaudoPorId,
+    carregarConversaPorLaudoId,
     carregarConversaAtual,
     carregarListaLaudos,
     handleAbrirNovoChat,
@@ -311,6 +312,7 @@ export function useInspectorChatController<
     createInspectorChatMessageController<TOfflineItem>({
       paramsRef,
       carregarConversaAtual,
+      carregarConversaPorLaudoId,
       carregarListaLaudos,
     });
   const {
@@ -362,6 +364,7 @@ export function useInspectorChatController<
       handleAbrirQualityGate: qualityGateController.handleAbrirQualityGate,
       abrirLaudoPorId,
       abrirReferenciaNoChat,
+      carregarConversaPorLaudoId,
       carregarConversaAtual,
       carregarListaLaudos,
       handleAbrirNovoChat,

@@ -318,6 +318,7 @@ describe("conversationHelpers", () => {
             categoria: "documento",
             eh_imagem: false,
             url: "/revisao/api/laudo/77/mesa/anexos/7",
+            local_uri: "file://relatorio.pdf",
           },
         ],
       } as any),
@@ -326,6 +327,7 @@ describe("conversationHelpers", () => {
       anexos: [
         expect.objectContaining({
           url: "/app/api/laudo/77/mesa/anexos/7",
+          local_uri: "file://relatorio.pdf",
         }),
       ],
     });

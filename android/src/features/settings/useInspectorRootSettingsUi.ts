@@ -63,6 +63,8 @@ interface UseInspectorRootSettingsUiInput {
       | "handleSelecionarEstiloResposta"
       | "handleSelecionarIdiomaResposta"
       | "handleSelecionarModeloIa"
+      | "handleToggleBackupAutomatico"
+      | "handleToggleSincronizacaoDispositivos"
       | "handleToggleUploadArquivos"
     >;
   };
@@ -111,6 +113,10 @@ export function useInspectorRootSettingsUi({
         handleSelecionarEstiloResposta,
         handleSelecionarIdiomaResposta,
         handleSelecionarModeloIa,
+        handleToggleBackupAutomatico:
+          toggleActions.handleToggleBackupAutomatico,
+        handleToggleSincronizacaoDispositivos:
+          toggleActions.handleToggleSincronizacaoDispositivos,
         handleToggleUploadArquivos: toggleActions.handleToggleUploadArquivos,
       },
     });
@@ -127,12 +133,6 @@ export function useInspectorRootSettingsUi({
       handleRevisarPermissoesCriticas:
         toggleActions.handleRevisarPermissoesCriticas,
       handleToggleBackupAutomatico: toggleActions.handleToggleBackupAutomatico,
-      handleToggleMostrarConteudoNotificacao:
-        toggleActions.handleToggleMostrarConteudoNotificacao,
-      handleToggleMostrarSomenteNovaMensagem:
-        toggleActions.handleToggleMostrarSomenteNovaMensagem,
-      handleToggleOcultarConteudoBloqueado:
-        toggleActions.handleToggleOcultarConteudoBloqueado,
       handleToggleSincronizacaoDispositivos:
         toggleActions.handleToggleSincronizacaoDispositivos,
     },

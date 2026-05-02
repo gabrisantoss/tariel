@@ -50,7 +50,9 @@ export function useInspectorRootSecurityAndPersistence({
   }, [bootstrap.settingsBindings.store.settingsActions, persistenceScopeKey]);
 
   useEffect(() => {
-    setSecureDisplayEnabled(bootstrap.settingsBindings.security.hideInMultitask);
+    setSecureDisplayEnabled(
+      bootstrap.settingsBindings.security.hideInMultitask,
+    );
   }, [bootstrap.settingsBindings.security.hideInMultitask]);
 
   const appLockController = useInspectorRootAppLockController({

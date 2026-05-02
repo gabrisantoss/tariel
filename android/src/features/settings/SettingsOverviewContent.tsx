@@ -1,14 +1,11 @@
-import { Text, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Pressable, Text, View } from "react-native";
 
 import { ProfileAvatarPicker } from "../../settings/components";
 import { useAppTranslation } from "../../i18n/appTranslation";
+import { colors } from "../../theme/tokens";
 import { styles } from "../InspectorMobileApp.styles";
-import {
-  SettingsOverviewCard,
-  SettingsPrintRow,
-  SettingsStatusPill,
-} from "./SettingsPrimitives";
-import { SettingsOverviewQuickActionsSection } from "./SettingsOverviewQuickActionsSection";
+import { SettingsPrintRow, SettingsStatusPill } from "./SettingsPrimitives";
 import { SettingsOverviewSystemSupportSection } from "./SettingsOverviewSystemSupportSection";
 import type {
   SettingsDrawerPage,
@@ -36,6 +33,7 @@ interface SettingsOverviewContentProps {
     section?: SettingsSectionKey | "all",
   ) => void;
   onReportarProblema: () => void;
+  onAbrirCentralAtividade?: () => void;
   onFecharConfiguracoes: () => void;
   onLogout: () => void | Promise<void>;
 }
@@ -45,17 +43,14 @@ export function SettingsOverviewContent({
   perfilFotoUri,
   iniciaisPerfilConfiguracao,
   nomeUsuarioExibicao,
-  detalheGovernancaConfiguracao,
   workspaceResumoConfiguracao,
   planoResumoConfiguracao,
   reemissoesRecomendadasTotal,
   resumoGovernancaConfiguracao,
-  temaResumoConfiguracao,
-  corDestaqueResumoConfiguracao,
   estiloRespostaResumoConfiguracao,
   onUploadFotoPerfil,
   onAbrirPaginaConfiguracoes,
-  onReportarProblema,
+  onAbrirCentralAtividade = () => undefined,
   onFecharConfiguracoes,
   onLogout,
 }: SettingsOverviewContentProps) {
@@ -69,6 +64,27 @@ export function SettingsOverviewContent({
         ]}
         testID="settings-overview-summary-card"
       >
+        <Pressable
+          accessibilityLabel={t("Central de atividade")}
+          hitSlop={8}
+          onPress={() => {
+            onFecharConfiguracoes();
+            onAbrirCentralAtividade();
+          }}
+          style={[
+            styles.settingsSummaryActivityButton,
+            settingsPrintDarkMode
+              ? styles.settingsSummaryActivityButtonDark
+              : null,
+          ]}
+          testID="settings-overview-activity-button"
+        >
+          <MaterialCommunityIcons
+            color={settingsPrintDarkMode ? "#D8E3EE" : colors.ink700}
+            name="bell-outline"
+            size={15}
+          />
+        </Pressable>
         <View style={styles.settingsSummaryTop}>
           <ProfileAvatarPicker
             darkMode={settingsPrintDarkMode}
@@ -131,56 +147,58 @@ export function SettingsOverviewContent({
         </View>
       </View>
 
-      <View style={styles.settingsOverviewGrid}>
-        <SettingsOverviewCard
-          badge="Conta"
-          darkMode={settingsPrintDarkMode}
-          description="Nome, contato e acesso principal."
-          icon="account-circle-outline"
-          onPress={() => onAbrirPaginaConfiguracoes("contaAcesso")}
-          testID="settings-overview-account-card"
-          title="Conta e acesso"
-          tone="accent"
-        />
-        <SettingsOverviewCard
-          badge="App"
-          darkMode={settingsPrintDarkMode}
-          description="IA, aparência e notificações."
-          icon="tune-variant"
-          onPress={() => onAbrirPaginaConfiguracoes("experiencia")}
-          testID="settings-overview-experience-card"
-          title="Preferências"
-        />
-        <SettingsOverviewCard
-          badge="Revisar"
-          darkMode={settingsPrintDarkMode}
-          description={
-            reemissoesRecomendadasTotal
-              ? detalheGovernancaConfiguracao
-              : "Permissões, histórico e proteção local."
-          }
-          icon="shield-outline"
-          onPress={() => onAbrirPaginaConfiguracoes("seguranca")}
-          testID="settings-overview-security-card"
-          title="Segurança e privacidade"
-          tone="danger"
-        />
+      <View style={styles.settingsPrintSectionBlock}>
+        <Text
+          style={[
+            styles.settingsPrintSectionTitle,
+            settingsPrintDarkMode ? styles.settingsPrintSectionTitleDark : null,
+          ]}
+        >
+          {t("Configurações principais")}
+        </Text>
+        <View
+          style={[
+            styles.settingsPrintGroupCard,
+            settingsPrintDarkMode ? styles.settingsPrintGroupCardDark : null,
+          ]}
+        >
+          <SettingsPrintRow
+            darkMode={settingsPrintDarkMode}
+            icon="account-circle-outline"
+            infoText="Nome, telefone, e-mail, senha e dados principais da conta."
+            onPress={() => onAbrirPaginaConfiguracoes("contaAcesso")}
+            subtitle="Nome, contato e acesso principal."
+            testID="settings-overview-account-card"
+            title="Conta e acesso"
+          />
+          <SettingsPrintRow
+            darkMode={settingsPrintDarkMode}
+            icon="tune-variant"
+            infoText="Modelo da IA, voz, aparência, internet, bateria e notificações."
+            onPress={() => onAbrirPaginaConfiguracoes("experiencia")}
+            subtitle="IA, voz, aparência e avisos."
+            testID="settings-overview-experience-card"
+            title="Preferências"
+          />
+          <SettingsPrintRow
+            darkMode={settingsPrintDarkMode}
+            icon="shield-outline"
+            infoText="Permissões, histórico, proteção local e controles de privacidade."
+            last
+            onPress={() => onAbrirPaginaConfiguracoes("seguranca")}
+            subtitle={
+              reemissoesRecomendadasTotal
+                ? resumoGovernancaConfiguracao
+                : "Permissões, histórico e proteção local."
+            }
+            testID="settings-overview-security-card"
+            title="Segurança e privacidade"
+          />
+        </View>
       </View>
-
-      <SettingsOverviewQuickActionsSection
-        corDestaqueResumoConfiguracao={corDestaqueResumoConfiguracao}
-        reemissoesRecomendadasTotal={reemissoesRecomendadasTotal}
-        resumoGovernancaConfiguracao={resumoGovernancaConfiguracao}
-        onAbrirPaginaConfiguracoes={onAbrirPaginaConfiguracoes}
-        settingsPrintDarkMode={settingsPrintDarkMode}
-        temaResumoConfiguracao={temaResumoConfiguracao}
-        workspaceResumoConfiguracao={workspaceResumoConfiguracao}
-      />
 
       <SettingsOverviewSystemSupportSection
         onAbrirPaginaConfiguracoes={onAbrirPaginaConfiguracoes}
-        onReportarProblema={onReportarProblema}
-        planoResumoConfiguracao={planoResumoConfiguracao}
         settingsPrintDarkMode={settingsPrintDarkMode}
       />
 

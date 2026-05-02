@@ -35,7 +35,13 @@ export const styles = StyleSheet.create({
     width: 108,
     height: 108,
     borderRadius: 30,
+    overflow: "hidden",
     ...shadows.panel,
+  },
+  launchOverlayLogo: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 30,
   },
   launchOverlayBrand: {
     color: colors.textPrimary,
@@ -167,6 +173,12 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.md,
     paddingVertical: spacing.xxl,
+  },
+  loadingLogo: {
+    width: 76,
+    height: 76,
+    borderRadius: 22,
+    ...shadows.soft,
   },
   loadingText: {
     color: colors.textSecondary,

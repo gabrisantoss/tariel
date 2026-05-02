@@ -15,10 +15,10 @@ export function rotuloModoHandoffMesa(
     .trim()
     .toLowerCase();
   if (value === "mesa_required") {
-    return "Mesa obrigatória";
+    return "Revisão obrigatória";
   }
   if (value === "mobile_review_allowed") {
-    return "Revisão interna + Mesa";
+    return "Revisão interna ou separada";
   }
   if (value === "mobile_autonomous") {
     return "Revisão interna governada";
@@ -249,7 +249,7 @@ function resumirProximoPassoFinalizacao(params: {
     return {
       detail:
         reviewMode === "mesa_required"
-          ? "Resolva as pendências do pré-laudo no chat e então siga para a Mesa."
+          ? "Resolva as pendências do pré-laudo no chat e então siga para a revisão."
           : "Resolva as pendências do pré-laudo no chat antes de validar novamente.",
       icon:
         reviewMode === "mesa_required"
@@ -268,12 +268,12 @@ function resumirProximoPassoFinalizacao(params: {
   if (reviewMode === "mesa_required") {
     return {
       detail:
-        "O pacote está coerente, mas a política ativa ainda exige passagem pela Mesa antes da emissão.",
+        "O pacote está coerente, mas a política ativa ainda exige passagem pela revisão antes da emissão.",
       icon: "clipboard-alert-outline" as const,
       key: "next-step",
       label: "Próximo passo",
       tone: "accent" as const,
-      value: "Abrir Mesa",
+      value: "Abrir Revisão",
     };
   }
 
@@ -332,19 +332,19 @@ function resumirDecisaoEsperada(params: {
   if (params.reviewMode === "mesa_required") {
     return {
       detail:
-        "A empresa exige parecer humano da Mesa antes do PDF final. O mobile deve preparar o caso para esse handoff.",
+        "A empresa exige parecer humano da revisão antes do PDF final. O mobile deve preparar o caso para esse handoff.",
       icon: "clipboard-alert-outline" as const,
       key: "expected-decision",
       label: "Decisão esperada",
       tone: "danger" as const,
-      value: "Parecer da mesa",
+      value: "Parecer da revisão",
     };
   }
 
   if (params.reviewMode === "mobile_review_allowed") {
     return {
       detail:
-        "A decisão humana pode acontecer no app ou escalar para a Mesa, conforme a governança ativa do caso.",
+        "A decisão humana pode acontecer no app ou escalar para a revisão, conforme a governança ativa do caso.",
       icon: "account-check-outline" as const,
       key: "expected-decision",
       label: "Decisão esperada",
@@ -446,12 +446,12 @@ function resumirRotaSugeridaFinalizacao(params: {
   if (preferredTransition?.preferred_surface === "mesa") {
     return {
       detail:
-        "A próxima superfície dominante do caso é a Mesa. Use esse handoff para concluir a decisão humana exigida.",
+        "A próxima superfície dominante do caso é a revisão. Use esse handoff para concluir a decisão humana exigida.",
       icon: "clipboard-alert-outline" as const,
       key: "suggested-route",
       label: "Rota sugerida",
       tone: "danger" as const,
-      value: "Abrir mesa",
+      value: "Abrir revisão",
     };
   }
   if (preferredTransition?.preferred_surface === "chat") {
@@ -479,12 +479,12 @@ function resumirRotaSugeridaFinalizacao(params: {
   if (params.reviewMode === "mesa_required" || params.ownerRole === "mesa") {
     return {
       detail:
-        "A política e o responsável atual do caso apontam a Mesa como próxima etapa principal.",
+        "A política e o responsável atual do caso apontam a revisão como próxima etapa principal.",
       icon: "clipboard-alert-outline" as const,
       key: "suggested-route",
       label: "Rota sugerida",
       tone: "danger" as const,
-      value: "Abrir mesa",
+      value: "Abrir revisão",
     };
   }
   if (params.canChatFinalize) {
@@ -737,9 +737,9 @@ export function resumirContextoFinalizacao(params: {
         value: reviewModeLabel,
         detail:
           reviewMode === "mesa_required"
-            ? "A política ativa da empresa exige passagem pela Mesa antes da emissão."
+            ? "A política ativa da empresa exige passagem pela revisão antes da emissão."
             : reviewMode === "mobile_review_allowed"
-              ? "A empresa pode validar no mobile ou escalar para a Mesa conforme a governança do caso."
+              ? "A empresa pode validar no mobile ou escalar para a revisão conforme a governança do caso."
               : reviewMode === "mobile_autonomous"
                 ? "O inspetor pode validar internamente no app, mas a decisão final continua humana e rastreável."
                 : "Nenhum laudo é declarado pronto sem uma decisão humana rastreável.",
@@ -760,7 +760,7 @@ export function resumirContextoFinalizacao(params: {
         value: ownerRoleLabel,
         detail:
           ownerRole === "mesa"
-            ? "A Mesa domina o próximo movimento do caso neste momento."
+            ? "A revisão domina o próximo movimento do caso neste momento."
             : ownerRole === "none"
               ? "O ciclo técnico principal já foi concluído e o restante é acompanhamento documental."
               : "O inspetor segue como responsável pelo próximo avanço operacional.",

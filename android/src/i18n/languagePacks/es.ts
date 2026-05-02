@@ -100,6 +100,8 @@ export const esLanguagePack: TranslationTable = {
   "Densidade da interface": "Densidad de la interfaz",
   "Cor de destaque": "Color de acento",
   Animações: "Animaciones",
+  "Padrão usa o neutro preto e branco atual; as outras cores são personalização visual do layout.":
+    "El predeterminado usa el neutro blanco y negro actual; los otros colores son personalización visual del diseño.",
   claro: "claro",
   escuro: "oscuro",
   automático: "sistema",
@@ -111,7 +113,6 @@ export const esLanguagePack: TranslationTable = {
   azul: "azul",
   laranja: "naranja",
   roxo: "morado",
-  personalizado: "personalizado",
   Claro: "Claro",
   Escuro: "Oscuro",
   Padrão: "Predeterminado",
@@ -287,10 +288,13 @@ export const esLanguagePack: TranslationTable = {
     "Fotos, contexto y adjuntos entran directo en el análisis y el informe.",
   "Abrir aba Chat": "Abrir pestaña Chat",
   "Abrir aba Mesa": "Abrir pestaña Mesa",
+  "Abrir aba Revisão": "Abrir pestaña Revisión",
   "Abrir aba Finalizar": "Abrir pestaña Finalizar",
 
   "Responder à mesa": "Responder a la mesa",
+  "Responder à revisão": "Responder a revisión",
   "Mesa em leitura": "Mesa en lectura",
+  "Revisão em leitura": "Revisión en lectura",
   "Resposta liberada": "Respuesta habilitada",
   "Modo leitura": "Modo lectura",
   "Reabrir laudo": "Reabrir informe",
@@ -303,13 +307,22 @@ export const esLanguagePack: TranslationTable = {
   "Carregando a conversa do inspetor...":
     "Cargando la conversación del inspector...",
   "Abrindo a conversa com a mesa...": "Abriendo la conversación con la mesa...",
-  "Assistente está respondendo...": "El asistente está respondiendo...",
+  "Abrindo a revisão do caso...": "Abriendo la revisión del caso...",
+  "Tariel está respondendo": "Tariel está respondiendo",
 
   Recomendado: "Recomendado",
+  "Olá, sou Tariel. Como posso te ajudar?":
+    "Hola, soy Tariel. ¿Cómo puedo ayudarte?",
+  "Escolha uma NR para iniciar.": "Elige una NR para iniciar.",
+  "Escolha uma NR para seguir passo a passo.":
+    "Elige una NR para seguir paso a paso.",
+  "Roteiro guiado": "Ruta guiada",
   "Escolha a família normativa para iniciar.":
     "Elige la familia normativa para iniciar.",
   "Checklist técnico para laudo, evidências e Mesa.":
     "Checklist técnico para informe, evidencias y mesa.",
+  "Checklist técnico para laudo, evidências e revisão.":
+    "Checklist técnico para informe, evidencias y revisión.",
   "Iniciar inspeção guiada": "Iniciar inspección guiada",
   "Envie fotos, dúvidas ou contexto sem modelo fixo.":
     "Envía fotos, dudas o contexto sin modelo fijo.",

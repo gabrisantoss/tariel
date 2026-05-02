@@ -23,8 +23,8 @@ describe("ThreadContextCard", () => {
         visible
         layout="entry_chooser"
         eyebrow=""
-        title="Iniciar inspeção"
-        description="Laudo técnico com checklist, evidências e revisão quando exigida."
+        title="Olá, sou Tariel. Como posso te ajudar?"
+        description=""
         spotlight={{
           label: "Inspeção guiada",
           tone: "accent",
@@ -60,12 +60,12 @@ describe("ThreadContextCard", () => {
       />,
     );
 
-    expect(getByText("Iniciar inspeção")).toBeTruthy();
+    expect(getByText("Olá, sou Tariel. Como posso te ajudar?")).toBeTruthy();
     expect(
-      getByText(
+      queryByText(
         "Laudo técnico com checklist, evidências e revisão quando exigida.",
       ),
-    ).toBeTruthy();
+    ).toBeNull();
     expect(getByText("Iniciar inspeção guiada")).toBeTruthy();
     expect(getByText("Recomendado")).toBeTruthy();
     expect(getByText("NR35")).toBeTruthy();
@@ -75,9 +75,7 @@ describe("ThreadContextCard", () => {
     expect(
       getByText("Envie fotos, dúvidas ou contexto sem modelo fixo."),
     ).toBeTruthy();
-    expect(
-      getByText("Checklist técnico para laudo, evidências e Mesa."),
-    ).toBeTruthy();
+    expect(getByText("Escolha uma NR para seguir passo a passo.")).toBeTruthy();
     expect(queryByText("Laudo no 1º envio")).toBeNull();
     expect(queryByText("Chat do inspetor")).toBeNull();
   });
@@ -89,8 +87,8 @@ describe("ThreadContextCard", () => {
         visible
         layout="entry_chooser"
         eyebrow=""
-        title="Iniciar inspeção"
-        description="Laudo técnico com checklist, evidências e revisão quando exigida."
+        title="Olá, sou Tariel. Como posso te ajudar?"
+        description=""
         spotlight={{
           label: "IA recomenda guiado",
           tone: "accent",
@@ -127,14 +125,12 @@ describe("ThreadContextCard", () => {
     );
 
     expect(queryByText("NR35 Linha de Vida")).toBeNull();
-    expect(
-      getByText("Checklist técnico para laudo, evidências e Mesa."),
-    ).toBeTruthy();
+    expect(getByText("Escolha uma NR para seguir passo a passo.")).toBeTruthy();
 
     fireEvent.press(getByTestId("guided-entry-open-button"));
 
     expect(getByText("Família normativa")).toBeTruthy();
-    expect(getByText("Escolha a família normativa para iniciar.")).toBeTruthy();
+    expect(getByText("Escolha uma NR para iniciar.")).toBeTruthy();
     expect(getByText("NR35 Linha de Vida")).toBeTruthy();
     expect(getAllByText("NR13").length).toBeGreaterThan(0);
 
@@ -153,8 +149,8 @@ describe("ThreadContextCard", () => {
         layout="entry_chooser"
         guidedTemplatesVisible
         eyebrow=""
-        title="Iniciar inspeção"
-        description="Laudo técnico com checklist, evidências e revisão quando exigida."
+        title="Olá, sou Tariel. Como posso te ajudar?"
+        description=""
         spotlight={{
           label: "IA recomenda guiado",
           tone: "accent",
@@ -196,8 +192,8 @@ describe("ThreadContextCard", () => {
         visible
         layout="entry_chooser"
         eyebrow=""
-        title="Iniciar inspeção"
-        description="Laudo técnico com checklist, evidências e revisão quando exigida."
+        title="Olá, sou Tariel. Como posso te ajudar?"
+        description=""
         spotlight={{
           label: "Chat livre como padrão",
           tone: "success",

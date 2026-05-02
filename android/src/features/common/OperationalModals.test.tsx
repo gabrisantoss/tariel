@@ -1,9 +1,11 @@
 import { render } from "@testing-library/react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 jest.mock("@expo/vector-icons", () => ({
   MaterialCommunityIcons: "MaterialCommunityIcons",
 }));
 
+import { colors } from "../../theme/tokens";
 import {
   ActivityCenterModal,
   AttachmentPickerModal,
@@ -159,7 +161,7 @@ describe("ActivityCenterModal", () => {
 
 describe("AttachmentPickerModal", () => {
   it("renderiza documento bloqueado com contexto de politica", () => {
-    const { getByTestId, getByText } = render(
+    const { getByTestId, getByText, UNSAFE_getAllByType } = render(
       <AttachmentPickerModal
         visible
         onClose={jest.fn()}
@@ -190,6 +192,14 @@ describe("AttachmentPickerModal", () => {
         "Documentos liberam quando o caso ja estiver em coleta ou laudo.",
       ),
     ).toBeTruthy();
+    const icons = UNSAFE_getAllByType(MaterialCommunityIcons);
+    expect(
+      icons.find((icon) => icon.props.name === "camera-outline")?.props.color,
+    ).toBe(colors.textSecondary);
+    expect(
+      icons.find((icon) => icon.props.name === "file-document-outline")?.props
+        .color,
+    ).toBe(colors.textMuted);
   });
 });
 

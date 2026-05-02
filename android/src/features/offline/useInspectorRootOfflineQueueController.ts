@@ -24,6 +24,7 @@ interface UseInspectorRootOfflineQueueControllerInput {
     OfflineQueueControllerParams,
     | "abrirLaudoPorId"
     | "carregarConversaAtual"
+    | "carregarConversaPorLaudoId"
     | "carregarListaLaudos"
     | "carregarMesaAtual"
     | "duplicarComposerAttachment"
@@ -89,6 +90,7 @@ export function useInspectorRootOfflineQueueController({
     saveQueueLocally: actionState.saveQueueLocally,
     carregarListaLaudos: actionState.carregarListaLaudos,
     carregarConversaAtual: actionState.carregarConversaAtual,
+    carregarConversaPorLaudoId: actionState.carregarConversaPorLaudoId,
     abrirLaudoPorId: actionState.abrirLaudoPorId,
     handleSelecionarLaudo: actionState.handleSelecionarLaudo,
     carregarMesaAtual: actionState.carregarMesaAtual,

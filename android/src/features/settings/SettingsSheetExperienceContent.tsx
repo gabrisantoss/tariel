@@ -7,13 +7,16 @@ import {
   AI_MODEL_OPTIONS,
   RESPONSE_LANGUAGE_OPTIONS,
   RESPONSE_STYLE_OPTIONS,
+  SPEECH_LANGUAGE_OPTIONS,
 } from "../InspectorMobileApp.constants";
 import { styles } from "../InspectorMobileApp.styles";
+import { SettingsInfoButton } from "./SettingsPrimitives";
 
 type ModeloIa = (typeof AI_MODEL_OPTIONS)[number];
 type EstiloResposta = (typeof RESPONSE_STYLE_OPTIONS)[number];
 type IdiomaResposta = (typeof RESPONSE_LANGUAGE_OPTIONS)[number];
 type IdiomaGlobal = Exclude<IdiomaResposta, "Auto detectar">;
+type IdiomaVoz = (typeof SPEECH_LANGUAGE_OPTIONS)[number];
 
 const AI_MODEL_DETAILS: Record<ModeloIa, { subtitle: string }> = {
   rápido: {
@@ -58,6 +61,21 @@ const RESPONSE_LANGUAGE_DETAILS: Record<IdiomaResposta, { subtitle: string }> =
     },
   };
 
+const SPEECH_LANGUAGE_DETAILS: Record<IdiomaVoz, { subtitle: string }> = {
+  Sistema: {
+    subtitle: "Usa o idioma principal configurado no celular.",
+  },
+  Português: {
+    subtitle: "Usa português para leitura em voz alta e recursos de voz.",
+  },
+  Inglês: {
+    subtitle: "Usa inglês para leitura em voz alta e recursos de voz.",
+  },
+  Espanhol: {
+    subtitle: "Usa espanhol para leitura em voz alta e recursos de voz.",
+  },
+};
+
 const GLOBAL_LANGUAGE_OPTIONS = RESPONSE_LANGUAGE_OPTIONS.filter(
   (option): option is IdiomaGlobal => option !== "Auto detectar",
 );
@@ -89,6 +107,7 @@ function SettingsChoiceSheetContent<T extends string>({
     <View style={styles.settingsMiniList}>
       {options.map((option) => {
         const ativo = option === activeValue;
+        const itemTestId = optionTestId(testIDPrefix, option);
         return (
           <Pressable
             key={`${testIDPrefix}-${option}`}
@@ -98,7 +117,7 @@ function SettingsChoiceSheetContent<T extends string>({
               styles.settingsMiniListItemPressable,
               ativo ? styles.settingsMiniListItemActive : null,
             ]}
-            testID={optionTestId(testIDPrefix, option)}
+            testID={itemTestId}
           >
             <View style={styles.settingsMiniListItemHeader}>
               <Text
@@ -109,17 +128,25 @@ function SettingsChoiceSheetContent<T extends string>({
               >
                 {t(option)}
               </Text>
-              <View
-                style={[
-                  styles.settingsMiniListSelectionBadge,
-                  ativo ? styles.settingsMiniListSelectionBadgeActive : null,
-                ]}
-              >
-                <MaterialCommunityIcons
-                  color={ativo ? colors.white : colors.textSecondary}
-                  name={ativo ? "check" : "circle-outline"}
-                  size={14}
+              <View style={styles.settingsMiniListActions}>
+                <SettingsInfoButton
+                  description={details[option].subtitle}
+                  style={styles.settingsMiniListInfoButton}
+                  testID={`${itemTestId}-info`}
+                  title={option}
                 />
+                <View
+                  style={[
+                    styles.settingsMiniListSelectionBadge,
+                    ativo ? styles.settingsMiniListSelectionBadgeActive : null,
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    color={ativo ? colors.white : colors.textSecondary}
+                    name={ativo ? "check" : "circle-outline"}
+                    size={14}
+                  />
+                </View>
               </View>
             </View>
             <Text style={styles.settingsMiniListMeta}>
@@ -182,6 +209,24 @@ export function SettingsResponseLanguageSheetContent({
       onSelect={onSelecionarIdiomaResposta}
       options={GLOBAL_LANGUAGE_OPTIONS}
       testIDPrefix="settings-response-language-option"
+    />
+  );
+}
+
+export function SettingsVoiceLanguageSheetContent({
+  voiceLanguage,
+  onSelecionarVoiceLanguage,
+}: {
+  voiceLanguage: IdiomaVoz;
+  onSelecionarVoiceLanguage: (value: IdiomaVoz) => void;
+}) {
+  return (
+    <SettingsChoiceSheetContent
+      activeValue={voiceLanguage}
+      details={SPEECH_LANGUAGE_DETAILS}
+      onSelect={onSelecionarVoiceLanguage}
+      options={SPEECH_LANGUAGE_OPTIONS}
+      testIDPrefix="settings-voice-language-option"
     />
   );
 }

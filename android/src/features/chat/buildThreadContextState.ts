@@ -224,7 +224,7 @@ export function buildThreadContextState(
                 ? "Caso aguardando sincronização"
                 : blankCaseCreationError
                   ? "Falha ao criar caso"
-                  : "Iniciar inspeção");
+                  : "Olá, sou Tariel. Como posso te ajudar?");
   const laudoContextDescription = modoGuiadoAtivo
     ? guidedProgress?.isComplete
       ? `${guidedVisualIdentity?.focusLabel || "Coleta técnica flexível"}. Checklist base concluído; revise as evidências e envie para a IA consolidar o rascunho do laudo.`
@@ -258,7 +258,7 @@ export function buildThreadContextState(
             : blankCaseCreationError
               ? caseCreationError?.trim() ||
                 "O primeiro envio falhou antes de criar o caso. Revise a conexão e tente novamente."
-              : "Laudo técnico com checklist, evidências e revisão quando exigida.";
+              : "";
   const laudoContextDescriptionFinal = vendoFinalizacao
     ? finalizationSummary?.description || laudoContextDescription
     : laudoContextDescription;
@@ -448,7 +448,7 @@ export function buildThreadContextState(
         guidedInspectionDraft?.mesaHandoff?.required
           ? {
               key: "mesa-handoff",
-              label: "Família exige Mesa",
+              label: "Revisão obrigatória",
               tone: "danger" as const,
               icon: "clipboard-alert-outline" as const,
             }

@@ -20,7 +20,7 @@ describe("migrateSettingsDocument", () => {
       usoBateria: "Economia máxima",
     });
 
-    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.schemaVersion).toBe(3);
     expect(migrated.settings.account.fullName).toBe("Gabriel");
     expect(migrated.settings.account.displayName).toBe("Gabi");
     expect(migrated.settings.ai.model).toBe("avançado");
@@ -120,11 +120,44 @@ describe("migrateSettingsDocument", () => {
     });
 
     expect(migrated.updatedAt).toBe("2026-03-20T00:00:00.000Z");
+    expect(migrated.schemaVersion).toBe(3);
     expect(migrated.settings.appearance.theme).toBe("claro");
+    expect(migrated.settings.appearance.accentColor).toBe("padrão");
     expect(migrated.settings.notifications.soundPreset).toBe("Ping");
     expect(migrated.settings.speech.voiceLanguage).toBe("Sistema");
     expect(migrated.settings.speech.speechRate).toBe(1.5);
     expect(migrated.settings.ai.temperature).toBe(1);
     expect(migrated.settings.system.language).toBe("Português");
+  });
+
+  it("preserves custom orange accent after schema 3", () => {
+    const migrated = migrateSettingsDocument({
+      schemaVersion: 3,
+      updatedAt: "2026-03-21T00:00:00.000Z",
+      settings: {
+        appearance: {
+          theme: "claro",
+          density: "confortável",
+          fontScale: "médio",
+          accentColor: "laranja",
+          animationsEnabled: true,
+        },
+      },
+    });
+
+    expect(migrated.settings.appearance.accentColor).toBe("laranja");
+  });
+
+  it("removes unsupported personalized accent values", () => {
+    const migrated = migrateSettingsDocument({
+      schemaVersion: 3,
+      settings: {
+        appearance: {
+          accentColor: "personalizado",
+        },
+      },
+    });
+
+    expect(migrated.settings.appearance.accentColor).toBe("padrão");
   });
 });

@@ -238,12 +238,28 @@ function createHeadingStyle(
   const base = StyleSheet.flatten(textStyle) || {};
   const fontSize = typeof base.fontSize === "number" ? base.fontSize : 15;
   const lineHeight = typeof base.lineHeight === "number" ? base.lineHeight : 24;
+  const headingColor =
+    typeof base.color === "string" ? base.color : colors.textPrimary;
 
   return [
     styles.headingText,
     {
+      color: headingColor,
       fontSize: Math.max(12, Math.round(fontSize * 0.82)),
       lineHeight: Math.max(18, Math.round(lineHeight * 0.85)),
+    },
+  ];
+}
+
+function createListMarkerStyle(
+  textStyle?: StyleProp<TextStyle>,
+): StyleProp<TextStyle> {
+  const base = StyleSheet.flatten(textStyle) || {};
+
+  return [
+    styles.listMarker,
+    {
+      color: typeof base.color === "string" ? base.color : colors.textSecondary,
     },
   ];
 }
@@ -292,7 +308,9 @@ export function AssistantMessageContent({
                     key={`list-${blockIndex}-${itemIndex}`}
                     style={createListShellStyle(textStyle)}
                   >
-                    <Text style={styles.listMarker}>{marker}</Text>
+                    <Text style={createListMarkerStyle(textStyle)}>
+                      {marker}
+                    </Text>
                     <Text
                       style={[styles.paragraphText, textStyle, styles.listText]}
                     >
@@ -351,11 +369,13 @@ export function AssistantCitationList({
           <MaterialCommunityIcons
             name="book-open-page-variant-outline"
             size={15}
-            color={colors.accent}
+            color={colors.textSecondary}
           />
         </View>
         <View style={styles.citationsHeaderCopy}>
-          <Text style={styles.citationsTitle}>{t("Referências normativas")}</Text>
+          <Text style={styles.citationsTitle}>
+            {t("Referências normativas")}
+          </Text>
           <Text style={styles.citationsSubtitle}>
             {t("Base usada para sustentar a análise técnica do relatório.")}
           </Text>
@@ -395,7 +415,7 @@ export function AssistantCitationList({
                     <MaterialCommunityIcons
                       name="arrow-top-right"
                       size={14}
-                      color={colors.accent}
+                      color={colors.textSecondary}
                     />
                   </View>
                 ) : null}
@@ -410,25 +430,30 @@ export function AssistantCitationList({
 
 const styles = StyleSheet.create({
   contentStack: {
+    alignSelf: "stretch",
     gap: spacing.sm,
   },
   headingRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing.xs,
     marginTop: 2,
+    width: "100%",
   },
   headingLine: {
     width: 18,
     height: 2,
+    marginTop: 9,
     borderRadius: radii.pill,
-    backgroundColor: "#F4B57D",
+    backgroundColor: colors.surfaceStrokeStrong,
   },
   headingText: {
-    color: colors.accent,
+    flex: 1,
+    flexShrink: 1,
+    color: colors.textPrimary,
     fontWeight: "800",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0,
   },
   paragraphText: {
     color: colors.textPrimary,
@@ -449,7 +474,7 @@ const styles = StyleSheet.create({
   },
   listMarker: {
     minWidth: 18,
-    color: colors.accent,
+    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: "900",
     lineHeight: 24,
@@ -468,16 +493,16 @@ const styles = StyleSheet.create({
   },
   inlineCode: {
     fontFamily: "monospace",
-    backgroundColor: "#FFF1E4",
-    color: colors.accent,
+    backgroundColor: colors.surfaceMuted,
+    color: colors.textPrimary,
   },
   citationsCard: {
     marginTop: spacing.sm,
     padding: spacing.md,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#EBD8C6",
-    backgroundColor: "#FFF8F1",
+    borderColor: colors.surfaceStroke,
+    backgroundColor: colors.surfaceSoft,
     gap: spacing.sm,
   },
   citationsHeader: {
@@ -491,16 +516,16 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFF1E4",
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: "#F2D3B6",
+    borderColor: colors.surfaceStrokeStrong,
   },
   citationsHeaderCopy: {
     flex: 1,
     gap: 2,
   },
   citationsTitle: {
-    color: colors.accent,
+    color: colors.textPrimary,
     fontSize: 12,
     fontWeight: "800",
     textTransform: "uppercase",
@@ -522,7 +547,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#EADFD4",
+    borderColor: colors.surfaceStroke,
   },
   citationItemPressable: {
     shadowColor: colors.ink900,
@@ -537,10 +562,10 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFF1E4",
+    backgroundColor: colors.surfaceMuted,
   },
   citationIndexText: {
-    color: colors.accent,
+    color: colors.textSecondary,
     fontSize: 11,
     fontWeight: "900",
   },
@@ -566,7 +591,7 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   citationLinkText: {
-    color: colors.accent,
+    color: colors.textSecondary,
     fontSize: 11,
     fontWeight: "800",
     textTransform: "uppercase",

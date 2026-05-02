@@ -362,7 +362,7 @@ export const historyStyles = {
   },
   historySectionItems: {
     gap: 0,
-    borderRadius: 24,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
     backgroundColor: colors.surfacePanelRaised,
@@ -408,12 +408,12 @@ export const historyStyles = {
   historyItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.xs,
     borderBottomWidth: 1,
     borderBottomColor: colors.surfaceStroke,
     backgroundColor: colors.surfacePanelRaised,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 9,
   },
   historyItemDark: {
     backgroundColor: "#132231",
@@ -435,12 +435,12 @@ export const historyStyles = {
     flex: 1,
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   historyItemAccentBar: {
-    width: 4,
+    width: 3,
     alignSelf: "stretch",
-    minHeight: 56,
+    minHeight: 42,
     borderRadius: radii.pill,
     backgroundColor: colors.surfaceStrokeStrong,
   },
@@ -458,7 +458,7 @@ export const historyStyles = {
   },
   historyItemCopy: {
     flex: 1,
-    gap: 3,
+    gap: 2,
   },
   historyItemTitleRow: {
     flexDirection: "row",
@@ -468,7 +468,7 @@ export const historyStyles = {
   historyItemTitle: {
     flex: 1,
     color: colors.textPrimary,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
   },
   historyItemTitleDark: {
@@ -482,8 +482,8 @@ export const historyStyles = {
   },
   historyItemPreview: {
     color: colors.textSecondary,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 15,
   },
   historyItemPreviewDark: {
     color: "#AFC0D2",
@@ -494,12 +494,12 @@ export const historyStyles = {
   historyItemBadgeRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.xs,
-    marginTop: 2,
+    gap: 6,
+    marginTop: 1,
   },
   historyItemBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: radii.pill,
     borderWidth: 1,
     borderColor: colors.surfaceStroke,
@@ -539,7 +539,7 @@ export const historyStyles = {
   },
   historyItemBadgeText: {
     color: colors.textSecondary,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
   },
   historyItemBadgeTextDark: {
@@ -594,10 +594,10 @@ export const historyStyles = {
     color: "#AFC0D2",
   },
   historyItemChevronBadge: {
-    width: 30,
-    height: 30,
-    marginTop: 2,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    marginTop: 1,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surfaceSoft,

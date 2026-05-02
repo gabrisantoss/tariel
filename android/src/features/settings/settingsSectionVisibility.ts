@@ -103,22 +103,13 @@ export function buildSettingsSectionVisibility(
       key: "aparencia",
       group: "experiencia",
       terms: [
-        `aparencia tema fonte densidade cor destaque animacoes ${input.temaApp} ${input.tamanhoFonte} ${input.densidadeInterface} ${input.corDestaque}`,
+        `aparencia tema fonte densidade cor destaque animacoes economia dados bateria ${input.temaApp} ${input.tamanhoFonte} ${input.densidadeInterface} ${input.corDestaque}`,
       ],
     },
     {
       key: "notificacoes",
       group: "experiencia",
-      terms: [
-        `notificacoes push respostas som vibracao emails ${input.somNotificacao}`,
-      ],
-    },
-    {
-      key: "protecaoDispositivo",
-      group: "seguranca",
-      terms: [
-        `protecao no dispositivo biometria bloqueio local multitarefa ${input.lockTimeout}`,
-      ],
+      terms: ["notificacoes push respostas chat mesa sistema alertas criticos"],
     },
     {
       key: "dadosConversas",
@@ -130,36 +121,20 @@ export function buildSettingsSectionVisibility(
     {
       key: "permissoes",
       group: "seguranca",
-      terms: [
-        `permissoes microfone camera arquivos notificacoes ${input.resumoPermissoes}`,
-      ],
-    },
-    {
-      key: "segurancaArquivos",
-      group: "seguranca",
-      terms: [
-        "seguranca de arquivos upload pdf imagem docx urls assinadas validacao tamanho",
-      ],
-    },
-    {
-      key: "privacidadeNotificacoes",
-      group: "seguranca",
-      terms: [
-        `privacidade em notificacoes previa tela bloqueada nova mensagem ${input.resumoPrivacidadeNotificacoes}`,
-      ],
+      terms: [`permissoes microfone camera arquivos ${input.resumoPermissoes}`],
     },
     {
       key: "recursosAvancados",
-      group: "sistema",
+      group: "experiencia",
       terms: [
-        "fala voz transcricao leitura assistida microfone acessibilidade",
+        "voz acessibilidade fala transcricao leitura assistida microfone",
       ],
     },
     {
       key: "sistema",
       group: "sistema",
       terms: [
-        `sistema idioma regiao bateria versao atualizacoes atividade fila offline ${input.appVersionLabel} ${input.appBuildChannel}`,
+        `sistema permissoes sobre versao app informacoes ${input.appVersionLabel} ${input.appBuildChannel}`,
       ],
     },
     {
@@ -194,18 +169,14 @@ export function buildSettingsSectionVisibility(
   const mostrarGrupoContaAcesso = mostrarSecaoConfiguracao("conta");
   const mostrarGrupoExperiencia =
     mostrarSecaoConfiguracao("preferenciasIa") ||
+    mostrarSecaoConfiguracao("recursosAvancados") ||
     mostrarSecaoConfiguracao("aparencia") ||
     mostrarSecaoConfiguracao("notificacoes");
   const mostrarGrupoSeguranca =
-    mostrarSecaoConfiguracao("protecaoDispositivo") ||
     mostrarSecaoConfiguracao("dadosConversas") ||
-    mostrarSecaoConfiguracao("permissoes") ||
-    mostrarSecaoConfiguracao("segurancaArquivos") ||
-    mostrarSecaoConfiguracao("privacidadeNotificacoes");
+    mostrarSecaoConfiguracao("permissoes");
   const mostrarGrupoSistema =
-    mostrarSecaoConfiguracao("recursosAvancados") ||
-    mostrarSecaoConfiguracao("sistema") ||
-    mostrarSecaoConfiguracao("suporte");
+    mostrarSecaoConfiguracao("sistema") || mostrarSecaoConfiguracao("suporte");
   const totalSecoesConfiguracaoVisiveis = secoesConfiguracaoVisiveis.length;
   const totalSecoesContaAcesso = secoesConfiguracaoVisiveis.filter(
     (item) => item.group === "acesso",
