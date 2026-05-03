@@ -1,8 +1,10 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
+import * as ImagePicker from "expo-image-picker";
 import { Image } from "react-native";
 
 import {
   carregarDocumentoEditavelChatLivreMobile,
+  reavaliarEvidenciaDocumentoEditavelChatLivreMobile,
   salvarDocumentoEditavelChatLivreMobile,
 } from "../../config/api";
 import { styles } from "../InspectorMobileApp.styles";
@@ -10,7 +12,13 @@ import { ThreadConversationPane } from "./ThreadConversationPane";
 
 jest.mock("../../config/api", () => ({
   carregarDocumentoEditavelChatLivreMobile: jest.fn(),
+  reavaliarEvidenciaDocumentoEditavelChatLivreMobile: jest.fn(),
   salvarDocumentoEditavelChatLivreMobile: jest.fn(),
+}));
+
+jest.mock("expo-image-picker", () => ({
+  launchImageLibraryAsync: jest.fn(),
+  requestMediaLibraryPermissionsAsync: jest.fn(),
 }));
 
 jest.mock("@expo/vector-icons", () => {
@@ -960,7 +968,7 @@ describe("ThreadConversationPane", () => {
     expect(getByText("PDF operacional")).toBeTruthy();
   });
 
-  it("usa a revisão do chat livre para listar PDFs gerados", () => {
+  it("usa a revisão do chat livre para listar PDFs gerados", async () => {
     const onAbrirAnexo = jest.fn();
     const onCorrigirDocumentoChatLivre = jest.fn();
     const onDocumentoChatLivreGerado = jest.fn().mockResolvedValue(undefined);
@@ -973,6 +981,16 @@ describe("ThreadConversationPane", () => {
       documento: {
         title: "Laudo Técnico Consolidado",
         subtitle: "Resumo",
+        evidences: [
+          {
+            key: "evidencia_1",
+            index: 1,
+            title: "Evidência 1",
+            display_name: "foto-original.png",
+            image_data_uri: "data:image/png;base64,b3JpZ2luYWw=",
+            source: "original",
+          },
+        ],
         sections: [
           {
             key: "sintese_executiva",
@@ -981,8 +999,95 @@ describe("ThreadConversationPane", () => {
             editable: true,
             content: "Texto original",
           },
+          {
+            key: "evidencia_1_descricao",
+            title: "Evidência 1 | Descrição Consolidada",
+            kind: "paragraph",
+            editable: true,
+            content: "Descrição original da foto",
+          },
+          {
+            key: "evidencia_1_avaliacao",
+            title: "Evidência 1 | Avaliação Técnica",
+            kind: "paragraph",
+            editable: true,
+            content: "Avaliação original da foto",
+          },
         ],
       },
+    });
+    (
+      reavaliarEvidenciaDocumentoEditavelChatLivreMobile as jest.Mock
+    ).mockResolvedValueOnce({
+      ok: true,
+      laudo_id: 80,
+      attachment_id: 202,
+      evidence_key: "evidencia_1",
+      sections: [
+        {
+          key: "evidencia_1_avaliacao",
+          title: "Evidência 1 | Avaliação Técnica",
+          kind: "paragraph",
+          editable: true,
+          content: "Avaliação reavaliada da foto substituída",
+        },
+      ],
+      documento: {
+        title: "Laudo Técnico Consolidado",
+        subtitle: "Resumo",
+        evidences: [
+          {
+            key: "evidencia_1",
+            index: 1,
+            title: "Evidência 1",
+            display_name: "foto-nova.jpg",
+            image_data_uri: "data:image/jpeg;base64,bm92YQ==",
+            preview_uri: "file://foto-nova.jpg",
+            source: "replacement",
+            replacement: true,
+          },
+        ],
+        sections: [
+          {
+            key: "sintese_executiva",
+            title: "Síntese Executiva",
+            kind: "paragraph",
+            editable: true,
+            content: "Texto revisado",
+          },
+          {
+            key: "evidencia_1_descricao",
+            title: "Evidência 1 | Descrição Consolidada",
+            kind: "paragraph",
+            editable: true,
+            content: "Descrição original da foto",
+          },
+          {
+            key: "evidencia_1_avaliacao",
+            title: "Evidência 1 | Avaliação Técnica",
+            kind: "paragraph",
+            editable: true,
+            content: "Avaliação reavaliada da foto substituída",
+          },
+        ],
+      },
+    });
+    (
+      ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock
+    ).mockResolvedValueOnce({
+      granted: true,
+      accessPrivileges: "all",
+    });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValueOnce({
+      canceled: false,
+      assets: [
+        {
+          base64: "bm92YQ==",
+          fileName: "foto-nova.jpg",
+          mimeType: "image/jpeg",
+          uri: "file://foto-nova.jpg",
+        },
+      ],
     });
     (salvarDocumentoEditavelChatLivreMobile as jest.Mock).mockResolvedValueOnce(
       {
@@ -993,6 +1098,17 @@ describe("ThreadConversationPane", () => {
         anexos: [{ id: 203, mime_type: "application/pdf" }],
         documento_editavel: {
           title: "Laudo Técnico Consolidado",
+          evidences: [
+            {
+              key: "evidencia_1",
+              index: 1,
+              title: "Evidência 1",
+              display_name: "foto-nova.jpg",
+              image_data_uri: "data:image/jpeg;base64,bm92YQ==",
+              source: "replacement",
+              replacement: true,
+            },
+          ],
           sections: [
             {
               key: "sintese_executiva",
@@ -1066,33 +1182,76 @@ describe("ThreadConversationPane", () => {
     );
 
     fireEvent.press(getByTestId("free-chat-review-current-document-correct"));
-    return waitFor(() =>
+    await waitFor(() =>
       expect(getByTestId("free-chat-pdf-editor")).toBeTruthy(),
-    ).then(() => {
-      expect(carregarDocumentoEditavelChatLivreMobile).toHaveBeenCalledWith(
+    );
+    expect(carregarDocumentoEditavelChatLivreMobile).toHaveBeenCalledWith(
+      "token-123",
+      80,
+      202,
+    );
+    fireEvent.changeText(
+      getByTestId("free-chat-pdf-editor-section-sintese_executiva"),
+      "Texto revisado",
+    );
+    expect(
+      getByTestId("free-chat-pdf-editor-evidence-evidencia_1-image"),
+    ).toBeTruthy();
+    fireEvent.press(
+      getByTestId("free-chat-pdf-editor-evidence-evidencia_1-replace"),
+    );
+    await waitFor(() => {
+      expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          allowsMultipleSelection: false,
+          base64: true,
+          selectionLimit: 1,
+        }),
+      );
+    });
+    fireEvent.press(
+      getByTestId("free-chat-pdf-editor-evidence-evidencia_1-reanalyze"),
+    );
+    await waitFor(() => {
+      expect(
+        reavaliarEvidenciaDocumentoEditavelChatLivreMobile,
+      ).toHaveBeenCalledWith(
         "token-123",
         80,
         202,
+        "evidencia_1",
+        expect.objectContaining({
+          evidences: expect.arrayContaining([
+            expect.objectContaining({
+              image_data_uri: "data:image/jpeg;base64,bm92YQ==",
+              source: "replacement",
+            }),
+          ]),
+        }),
       );
-      fireEvent.changeText(
-        getByTestId("free-chat-pdf-editor-section-sintese_executiva"),
-        "Texto revisado",
-      );
+    });
+    await act(async () => {
       fireEvent.press(getByTestId("free-chat-pdf-editor-save"));
-      return waitFor(() => {
-        expect(salvarDocumentoEditavelChatLivreMobile).toHaveBeenCalledWith(
-          "token-123",
-          80,
-          202,
-          expect.objectContaining({
-            sections: expect.arrayContaining([
-              expect.objectContaining({ content: "Texto revisado" }),
-            ]),
-          }),
-        );
-        expect(onDocumentoChatLivreGerado).toHaveBeenCalledTimes(1);
-        expect(onCorrigirDocumentoChatLivre).not.toHaveBeenCalled();
-      });
+    });
+    await waitFor(() => {
+      expect(salvarDocumentoEditavelChatLivreMobile).toHaveBeenCalledWith(
+        "token-123",
+        80,
+        202,
+        expect.objectContaining({
+          sections: expect.arrayContaining([
+            expect.objectContaining({ content: "Texto revisado" }),
+          ]),
+          evidences: expect.arrayContaining([
+            expect.objectContaining({
+              image_data_uri: "data:image/jpeg;base64,bm92YQ==",
+              source: "replacement",
+            }),
+          ]),
+        }),
+      );
+      expect(onDocumentoChatLivreGerado).toHaveBeenCalledTimes(1);
+      expect(onCorrigirDocumentoChatLivre).not.toHaveBeenCalled();
     });
   });
 

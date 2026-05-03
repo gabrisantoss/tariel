@@ -361,3 +361,130 @@ def test_api_chat_livre_pdf_editavel_gera_nova_versao(ambiente_critico) -> None:
             .count()
         )
         assert total_pdfs == 2
+
+
+def test_api_chat_livre_pdf_editavel_reavalia_e_substitui_foto(ambiente_critico) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.primeira_mensagem = "Inspecao livre com foto para revisão editável."
+        mensagem_base = MensagemLaudo(
+            laudo_id=laudo_id,
+            remetente_id=ids["inspetor_a"],
+            tipo=TipoMensagem.USER.value,
+            conteudo="Foto mostra guarda de proteção do equipamento.",
+        )
+        banco.add(mensagem_base)
+        banco.flush()
+        evidencia = registrar_aprendizado_visual_automatico_chat(
+            banco,
+            empresa_id=ids["empresa_a"],
+            laudo_id=laudo_id,
+            criado_por_id=ids["inspetor_a"],
+            setor_industrial="geral",
+            mensagem_id=int(mensagem_base.id),
+            mensagem_chat=mensagem_base.conteudo,
+            dados_imagem=_imagem_png_data_uri_teste(),
+        )
+        assert evidencia is not None
+        evidencia.sintese_consolidada = "Guarda de proteção registrada na evidência visual."
+        evidencia.pontos_chave_json = ["Confirmar fixação da guarda"]
+        banco.commit()
+
+    resposta = client.post(
+        "/app/api/chat",
+        headers={"X-CSRF-Token": csrf},
+        json={
+            "mensagem": "gere um relatório em pdf",
+            "historico": [],
+            "laudo_id": laudo_id,
+        },
+    )
+    assert resposta.status_code == 200
+    anexo_id = int(resposta.json()["anexos"][0]["id"])
+
+    editavel = client.get(
+        f"/app/api/laudo/{laudo_id}/chat-livre/pdf/{anexo_id}/editavel"
+    )
+    assert editavel.status_code == 200
+    documento = editavel.json()["documento"]
+    assert documento["evidences"][0]["key"] == "evidencia_1"
+    assert documento["evidences"][0]["image_data_uri"].startswith("data:image/png;base64,")
+    documento["evidences"][0].update(
+        {
+            "display_name": "foto-substituida.png",
+            "image_data_uri": _imagem_png_data_uri_teste(),
+            "source": "replacement",
+            "replacement": True,
+        }
+    )
+
+    chamada_ia: dict[str, object] = {}
+
+    class ClienteIAStub:
+        def gerar_resposta_stream(self, prompt, dados_imagem, *args, **kwargs):  # noqa: ANN002, ANN003
+            chamada_ia["prompt"] = prompt
+            chamada_ia["dados_imagem"] = dados_imagem
+            chamada_ia["dados_imagens"] = kwargs.get("dados_imagens")
+            yield (
+                '{"descricao":"Guarda substituída coerente com a evidência",'
+                '"contexto":"Foto revisada no bloco da evidência 1",'
+                '"pontos":["Confirmar fixação da proteção"],'
+                '"avaliacao":"A nova foto reforça a avaliação específica da guarda.",'
+                '"encaminhamentos":["Registrar ação corretiva se houver folga"],'
+                '"criterios":["Critério visual de integridade"]}'
+            )
+
+    cliente_original = rotas_inspetor.cliente_ia
+    rotas_inspetor.cliente_ia = ClienteIAStub()
+    try:
+        reavaliacao = client.post(
+            (
+                f"/app/api/laudo/{laudo_id}/chat-livre/pdf/{anexo_id}/editavel/"
+                "evidencias/evidencia_1/reavaliar"
+            ),
+            headers={"X-CSRF-Token": csrf},
+            json=documento,
+        )
+    finally:
+        rotas_inspetor.cliente_ia = cliente_original
+
+    assert reavaliacao.status_code == 200
+    corpo_reavaliacao = reavaliacao.json()
+    assert corpo_reavaliacao["evidence_key"] == "evidencia_1"
+    assert chamada_ia["dados_imagem"] == _imagem_png_data_uri_teste()
+    assert chamada_ia["dados_imagens"] == [_imagem_png_data_uri_teste()]
+    assert "somente uma evidência visual" in str(chamada_ia["prompt"])
+    assert "Evidência em revisão: evidencia_1" in str(chamada_ia["prompt"])
+    assert any(
+        section["key"] == "evidencia_1_avaliacao"
+        and "avaliação específica da guarda" in section["content"]
+        for section in corpo_reavaliacao["sections"]
+    )
+
+    documento_reavaliado = corpo_reavaliacao["documento"]
+    revisao = client.post(
+        f"/app/api/laudo/{laudo_id}/chat-livre/pdf/{anexo_id}/editavel",
+        headers={"X-CSRF-Token": csrf},
+        json=documento_reavaliado,
+    )
+    assert revisao.status_code == 200
+    download = client.get(revisao.json()["anexos"][0]["url"])
+    assert download.status_code == 200
+    assert download.content.startswith(b"%PDF")
+    pypdf = pytest.importorskip("pypdf")
+    leitor = pypdf.PdfReader(io.BytesIO(download.content))
+    texto_pdf = "\n".join((pagina.extract_text() or "") for pagina in leitor.pages)
+    assert "Guarda substituída coerente com a evidência" in texto_pdf
+    assert "A nova foto reforça a avaliação específica da guarda" in texto_pdf

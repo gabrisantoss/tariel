@@ -326,11 +326,25 @@ export interface MobileFreeChatEditableDocumentSection {
   content: string;
 }
 
+export interface MobileFreeChatEditableEvidence {
+  key: string;
+  index?: number;
+  title?: string;
+  display_name?: string;
+  created_at_label?: string;
+  image_data_uri?: string;
+  image_url?: string;
+  preview_uri?: string;
+  source?: "original" | "replacement" | string;
+  replacement?: boolean;
+}
+
 export interface MobileFreeChatEditableDocument {
   contract?: "free_chat_report_editable_document" | string;
   version?: number;
   title: string;
   subtitle?: string;
+  evidences?: MobileFreeChatEditableEvidence[];
   sections: MobileFreeChatEditableDocumentSection[];
 }
 
@@ -349,6 +363,15 @@ export interface MobileFreeChatEditableDocumentSaveResponse {
   laudo_card?: MobileLaudoCard | null;
   anexos?: MobileAttachment[];
   documento_editavel?: MobileFreeChatEditableDocument;
+}
+
+export interface MobileFreeChatEditableEvidenceReanalysisResponse {
+  ok: boolean;
+  laudo_id: number;
+  attachment_id: number;
+  evidence_key: string;
+  sections: MobileFreeChatEditableDocumentSection[];
+  documento: MobileFreeChatEditableDocument;
 }
 
 export interface MobileAttachmentPolicy {

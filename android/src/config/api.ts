@@ -24,6 +24,7 @@ export {
   finalizarLaudoMobile,
   MobileQualityGateError,
   reabrirLaudoMobile,
+  reavaliarEvidenciaDocumentoEditavelChatLivreMobile,
   salvarDocumentoEditavelChatLivreMobile,
   salvarGuidedInspectionDraftMobile,
   uploadDocumentoChatMobile,

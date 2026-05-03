@@ -4,6 +4,7 @@ import type {
   MobileChatSendResult,
   MobileDocumentUploadResponse,
   MobileFreeChatEditableDocument,
+  MobileFreeChatEditableEvidenceReanalysisResponse,
   MobileFreeChatEditableDocumentResponse,
   MobileFreeChatEditableDocumentSaveResponse,
   MobileGuidedInspectionDraftPayload,
@@ -485,6 +486,44 @@ export async function salvarDocumentoEditavelChatLivreMobile(
       extrairMensagemErro(
         payload,
         "Não foi possível gerar a nova versão do PDF.",
+      ),
+    );
+  }
+
+  return payload;
+}
+
+export async function reavaliarEvidenciaDocumentoEditavelChatLivreMobile(
+  accessToken: string,
+  laudoId: number,
+  attachmentId: number,
+  evidenceKey: string,
+  documento: MobileFreeChatEditableDocument,
+): Promise<MobileFreeChatEditableEvidenceReanalysisResponse> {
+  const response = await fetchComObservabilidade(
+    "free_chat_editable_pdf_evidence_reanalysis",
+    buildApiUrl(
+      `/app/api/laudo/${laudoId}/chat-livre/pdf/${attachmentId}/editavel/evidencias/${encodeURIComponent(
+        evidenceKey,
+      )}/reavaliar`,
+    ),
+    {
+      method: "POST",
+      headers: construirHeaders(accessToken, {
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify(documento),
+    },
+  );
+
+  const payload = await lerJsonSeguro<
+    MobileFreeChatEditableEvidenceReanalysisResponse | { detail?: string }
+  >(response);
+  if (!response.ok || !payload || !("documento" in payload)) {
+    throw new Error(
+      extrairMensagemErro(
+        payload,
+        "Não foi possível reavaliar esta evidência.",
       ),
     );
   }

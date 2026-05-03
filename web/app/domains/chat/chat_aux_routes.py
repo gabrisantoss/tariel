@@ -20,6 +20,7 @@ from app.domains.chat.chat_service import obter_mensagens_laudo_payload, process
 from app.domains.chat.core_helpers import resposta_json_ok
 from app.domains.chat.free_chat_report import (
     build_free_chat_editable_document_response,
+    build_free_chat_editable_evidence_reanalysis_response,
     build_free_chat_editable_report_update_response,
 )
 from app.domains.chat.catalog_pdf_templates import (
@@ -763,6 +764,27 @@ async def salvar_documento_editavel_chat_livre(
     )
 
 
+async def reavaliar_evidencia_documento_editavel_chat_livre(
+    laudo_id: int,
+    anexo_id: int,
+    evidencia_key: str,
+    payload: dict[str, Any],
+    request: Request,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+):
+    exigir_csrf(request)
+    laudo = obter_laudo_do_inspetor(banco, laudo_id, usuario)
+    return build_free_chat_editable_evidence_reanalysis_response(
+        banco=banco,
+        laudo=laudo,
+        usuario=usuario,
+        attachment_id=anexo_id,
+        evidence_key=evidencia_key,
+        document_payload=payload,
+    )
+
+
 roteador_chat_aux.add_api_route(
     "/api/laudo/{laudo_id}/mensagens",
     obter_mensagens_laudo,
@@ -778,6 +800,15 @@ roteador_chat_aux.add_api_route(
 roteador_chat_aux.add_api_route(
     "/api/laudo/{laudo_id}/chat-livre/pdf/{anexo_id}/editavel",
     salvar_documento_editavel_chat_livre,
+    methods=["POST"],
+    responses=RESPOSTA_LAUDO_NAO_ENCONTRADO,
+)
+roteador_chat_aux.add_api_route(
+    (
+        "/api/laudo/{laudo_id}/chat-livre/pdf/{anexo_id}/editavel/"
+        "evidencias/{evidencia_key}/reavaliar"
+    ),
+    reavaliar_evidencia_documento_editavel_chat_livre,
     methods=["POST"],
     responses=RESPOSTA_LAUDO_NAO_ENCONTRADO,
 )
@@ -824,6 +855,7 @@ __all__ = [
     "obter_mensagens_laudo",
     "obter_documento_editavel_chat_livre",
     "registrar_feedback",
+    "reavaliar_evidencia_documento_editavel_chat_livre",
     "rota_feedback",
     "rota_pdf",
     "rota_upload_doc",

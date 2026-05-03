@@ -436,6 +436,35 @@ export const chatThreadSurfaceStyles = {
   threadReviewEditableSection: {
     gap: spacing.xs,
   },
+  threadReviewEditableEvidenceCard: {
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.surfaceStroke,
+    backgroundColor: colors.surfaceCanvas,
+  },
+  threadReviewEditableEvidenceHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  threadReviewEditableEvidenceImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 10,
+    backgroundColor: colors.surfacePanel,
+  },
+  threadReviewEditableEvidencePlaceholder: {
+    width: 76,
+    height: 76,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.surfaceStrokeStrong,
+    backgroundColor: colors.surfacePanel,
+  },
   threadReviewEditableSectionTitle: {
     color: colors.textPrimary,
     fontSize: 12,

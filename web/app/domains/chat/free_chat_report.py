@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
+import json
 from pathlib import Path
 import re
 import tempfile
@@ -19,6 +22,8 @@ from sqlalchemy.orm import Session
 
 from app.domains.chat.app_context import logger as chat_logger
 from app.domains.chat.auth_helpers import usuario_nome
+from app.domains.chat.chat_runtime import PREFIXO_CITACOES, PREFIXO_METADATA, PREFIXO_MODO_HUMANO
+from app.domains.chat.ia_runtime import obter_cliente_ia_ativo
 from app.domains.chat.laudo_state_helpers import serializar_card_laudo
 from app.domains.chat.learning_helpers import (
     CORRECAO_CHAT_AUTOMATICA_PADRAO,
@@ -51,6 +56,22 @@ PDF_CORRECTION_TRANSCRIPT_PREFIX = "Correção solicitada no PDF:"
 PDF_REPORT_GENERATED_MESSAGE_PREFIX = "relatorio tecnico consolidado gerado em pdf"
 FREE_CHAT_REPORT_SOURCE_METADATA_KEY = "free_chat_report_editable_source"
 FREE_CHAT_REPORT_SOURCE_VERSION = 1
+EDITABLE_EVIDENCE_IMAGE_MAX_CHARS = 14_500_000
+EDITABLE_EVIDENCE_IMAGE_MAX_BYTES = 10 * 1024 * 1024
+EDITABLE_EVIDENCE_IMAGE_MIME_SUFFIXES = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/webp": ".webp",
+}
+EDITABLE_EVIDENCE_SECTION_SUFFIXES = (
+    "descricao",
+    "contexto",
+    "pontos",
+    "avaliacao",
+    "encaminhamentos",
+    "criterios",
+)
 LOW_INFORMATION_CHAT_LINES = {
     "imagem enviada",
     "registro visual anexado.",
@@ -679,6 +700,27 @@ def _editable_section(
     }
 
 
+def _editable_evidence_key(index: int) -> str:
+    return f"evidencia_{int(index)}"
+
+
+def _editable_evidence_metadata(
+    *,
+    index: int,
+    evidence: _VisualEvidenceItem,
+) -> dict[str, Any]:
+    key = _editable_evidence_key(index)
+    return {
+        "key": key,
+        "index": int(index),
+        "title": _pdf_text(f"Evidência {int(index)}"),
+        "display_name": _pdf_text(evidence.display_name) or f"evidencia_{int(index)}",
+        "created_at_label": _pdf_text(evidence.created_at_label),
+        "source": "original",
+        "replacement": False,
+    }
+
+
 def _build_editable_document_payload(
     *,
     laudo: Laudo,
@@ -821,6 +863,10 @@ def _build_editable_document_payload(
         "version": FREE_CHAT_REPORT_SOURCE_VERSION,
         "title": REPORT_TITLE,
         "subtitle": REPORT_SUBTITLE,
+        "evidences": [
+            _editable_evidence_metadata(index=index, evidence=evidence)
+            for index, evidence in enumerate(evidences, start=1)
+        ],
         "sections": sections,
     }
 
@@ -1693,14 +1739,168 @@ def _editable_sections(document: Mapping[str, Any]) -> list[dict[str, Any]]:
     return sections
 
 
+def _valid_image_data_uri(value: Any) -> str:
+    data_uri = str(value or "").strip()
+    if not data_uri:
+        return ""
+    if len(data_uri) > EDITABLE_EVIDENCE_IMAGE_MAX_CHARS:
+        raise HTTPException(status_code=400, detail="Imagem substituída muito grande.")
+
+    match = re.match(
+        r"^data:(image/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=\s]+)$",
+        data_uri,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        raise HTTPException(status_code=400, detail="Imagem substituída inválida.")
+
+    mime_type = match.group(1).lower().replace("image/jpg", "image/jpeg")
+    if mime_type not in EDITABLE_EVIDENCE_IMAGE_MIME_SUFFIXES:
+        raise HTTPException(status_code=400, detail="Formato de imagem não suportado.")
+    return f"data:{mime_type};base64,{match.group(2).strip()}"
+
+
+def _editable_evidences(document: Mapping[str, Any]) -> list[dict[str, Any]]:
+    raw_evidences = document.get("evidences")
+    if not isinstance(raw_evidences, list):
+        return []
+
+    evidences: list[dict[str, Any]] = []
+    seen_keys: set[str] = set()
+    for fallback_index, raw in enumerate(raw_evidences, start=1):
+        if not isinstance(raw, Mapping):
+            continue
+        raw_index = raw.get("index")
+        try:
+            index = int(raw_index)
+        except (TypeError, ValueError):
+            index = fallback_index
+        if index <= 0:
+            index = fallback_index
+
+        key = str(raw.get("key") or _editable_evidence_key(index)).strip()
+        if not re.fullmatch(r"evidencia_\d+", key):
+            key = _editable_evidence_key(index)
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+
+        source = str(raw.get("source") or "original").strip().lower()
+        replacement = bool(raw.get("replacement")) or source == "replacement"
+        data_uri = _valid_image_data_uri(raw.get("image_data_uri"))
+        evidence_payload: dict[str, Any] = {
+            "key": key,
+            "index": index,
+            "title": _pdf_text(raw.get("title") or f"Evidência {index}") or f"Evidência {index}",
+            "display_name": _pdf_text(raw.get("display_name") or raw.get("title") or key)
+            or key,
+            "created_at_label": _pdf_text(raw.get("created_at_label") or ""),
+            "source": "replacement" if replacement and data_uri else "original",
+            "replacement": bool(replacement and data_uri),
+        }
+        if data_uri and evidence_payload["source"] == "replacement":
+            evidence_payload["image_data_uri"] = data_uri
+        if raw.get("image_url"):
+            evidence_payload["image_url"] = str(raw.get("image_url") or "").strip()
+        if raw.get("preview_uri"):
+            evidence_payload["preview_uri"] = str(raw.get("preview_uri") or "").strip()
+        evidences.append(evidence_payload)
+    return evidences
+
+
 def _normalize_editable_document_payload(document: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "contract": "free_chat_report_editable_document",
         "version": FREE_CHAT_REPORT_SOURCE_VERSION,
         "title": _pdf_text(document.get("title") or REPORT_TITLE) or REPORT_TITLE,
         "subtitle": _pdf_text(document.get("subtitle") or REPORT_SUBTITLE) or REPORT_SUBTITLE,
+        "evidences": _editable_evidences(document),
         "sections": _editable_sections(document),
     }
+
+
+def _image_mime_from_path(path: Path) -> str:
+    suffix = path.suffix.lower()
+    if suffix == ".png":
+        return "image/png"
+    if suffix == ".webp":
+        return "image/webp"
+    return "image/jpeg"
+
+
+def _image_data_uri_from_path(path_value: str) -> str:
+    path = Path(str(path_value or "").strip())
+    if not path.is_file():
+        return ""
+    try:
+        if path.stat().st_size > EDITABLE_EVIDENCE_IMAGE_MAX_BYTES:
+            return ""
+        raw = path.read_bytes()
+    except Exception:
+        return ""
+    if not raw:
+        return ""
+    encoded = base64.b64encode(raw).decode("ascii")
+    return f"data:{_image_mime_from_path(path)};base64,{encoded}"
+
+
+def _document_with_evidence_previews(
+    document: Mapping[str, Any],
+    evidences: list[_VisualEvidenceItem],
+) -> dict[str, Any]:
+    normalized = _normalize_editable_document_payload(document)
+    evidence_by_index = {
+        index: evidence
+        for index, evidence in enumerate(evidences, start=1)
+    }
+    enriched: list[dict[str, Any]] = []
+    for evidence_payload in normalized["evidences"]:
+        next_payload = dict(evidence_payload)
+        if not next_payload.get("image_data_uri"):
+            evidence = evidence_by_index.get(int(next_payload.get("index") or 0))
+            if evidence:
+                data_uri = _image_data_uri_from_path(evidence.file_path)
+                if data_uri:
+                    next_payload["image_data_uri"] = data_uri
+        enriched.append(next_payload)
+    normalized["evidences"] = enriched
+    return normalized
+
+
+def _evidence_payload_by_key(document: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        str(evidence.get("key") or ""): evidence
+        for evidence in _editable_evidences(document)
+        if str(evidence.get("key") or "").strip()
+    }
+
+
+def _materialize_editable_image_data_uri(data_uri: str, temp_files: list[str]) -> str:
+    valid_data_uri = _valid_image_data_uri(data_uri)
+    match = re.match(
+        r"^data:(image/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=\s]+)$",
+        valid_data_uri,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        raise HTTPException(status_code=400, detail="Imagem substituída inválida.")
+
+    mime_type = match.group(1).lower().replace("image/jpg", "image/jpeg")
+    try:
+        raw = base64.b64decode(match.group(2), validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Imagem substituída inválida.") from exc
+    if not raw or len(raw) > EDITABLE_EVIDENCE_IMAGE_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="Imagem substituída muito grande.")
+
+    suffix = EDITABLE_EVIDENCE_IMAGE_MIME_SUFFIXES.get(mime_type, ".jpg")
+    temp_image = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+    try:
+        temp_image.write(raw)
+    finally:
+        temp_image.close()
+    temp_files.append(temp_image.name)
+    return temp_image.name
 
 
 def _apply_editable_document_updates(
@@ -1726,6 +1926,31 @@ def _apply_editable_document_updates(
         normalized["title"] = _pdf_text(updates.get("title")) or normalized["title"]
     if updates.get("subtitle"):
         normalized["subtitle"] = _pdf_text(updates.get("subtitle")) or normalized["subtitle"]
+    updated_evidences = _evidence_payload_by_key(updates)
+    if updated_evidences:
+        next_evidences: list[dict[str, Any]] = []
+        for evidence in normalized["evidences"]:
+            updated = updated_evidences.get(str(evidence.get("key") or ""))
+            if not updated:
+                next_evidences.append(evidence)
+                continue
+            next_payload = {
+                **evidence,
+                "display_name": updated.get("display_name") or evidence.get("display_name"),
+                "title": updated.get("title") or evidence.get("title"),
+                "created_at_label": updated.get("created_at_label")
+                or evidence.get("created_at_label"),
+            }
+            if updated.get("source") == "replacement" and updated.get("image_data_uri"):
+                next_payload["source"] = "replacement"
+                next_payload["replacement"] = True
+                next_payload["image_data_uri"] = updated["image_data_uri"]
+            else:
+                next_payload["source"] = "original"
+                next_payload["replacement"] = False
+                next_payload.pop("image_data_uri", None)
+            next_evidences.append(next_payload)
+        normalized["evidences"] = next_evidences
     return normalized
 
 
@@ -1820,21 +2045,37 @@ def _render_editable_evidence_pages(
     temp_files: list[str],
 ) -> None:
     sections = _section_map(document)
+    evidence_payloads = _evidence_payload_by_key(document)
     for index, evidence in enumerate(evidences, start=1):
         pdf.add_mode_page("body")
         prefix = f"evidencia_{index}"
+        evidence_payload = evidence_payloads.get(prefix) or {}
+        display_name = _pdf_text(evidence_payload.get("display_name") or evidence.display_name)
+        created_at_label = _pdf_text(
+            evidence_payload.get("created_at_label") or evidence.created_at_label
+        )
         _write_section_title(pdf, f"Evidência {index}")
         pdf.set_font("helvetica", "B", 11)
-        _write_block(pdf, evidence.display_name)
+        _write_block(pdf, display_name or evidence.display_name)
         pdf.ln(1)
         pdf.set_font("helvetica", "", 10)
-        _write_block(pdf, _pdf_text(f"Registro: {evidence.created_at_label}"))
+        _write_block(pdf, _pdf_text(f"Registro: {created_at_label}"))
         _write_block(pdf, _pdf_text(f"Classificação: {evidence.verdict_label}"))
         pdf.ln(3)
 
         image_path = evidence.file_path
+        replacement_data_uri = (
+            str(evidence_payload.get("image_data_uri") or "").strip()
+            if evidence_payload.get("source") == "replacement"
+            else ""
+        )
+        if replacement_data_uri:
+            image_path = _materialize_editable_image_data_uri(
+                replacement_data_uri,
+                temp_files,
+            )
         try:
-            with Image.open(evidence.file_path) as image:
+            with Image.open(image_path) as image:
                 width_px, height_px = image.size
                 if str(image.format or "").upper() not in {"PNG", "JPEG", "JPG"}:
                     converted = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
@@ -2093,6 +2334,257 @@ def build_free_chat_report_response(
     )
 
 
+def _evidence_index_from_key(evidence_key: str) -> int:
+    match = re.fullmatch(r"evidencia_(\d+)", str(evidence_key or "").strip())
+    if not match:
+        raise HTTPException(status_code=400, detail="Evidência inválida.")
+    index = int(match.group(1))
+    if index <= 0:
+        raise HTTPException(status_code=400, detail="Evidência inválida.")
+    return index
+
+
+def _evidence_sections_for_prompt(
+    *,
+    document: Mapping[str, Any],
+    evidence_key: str,
+) -> list[dict[str, str]]:
+    sections = _section_map(document)
+    selected: list[dict[str, str]] = []
+    for suffix in EDITABLE_EVIDENCE_SECTION_SUFFIXES:
+        section = sections.get(f"{evidence_key}_{suffix}")
+        if not section:
+            continue
+        selected.append(
+            {
+                "key": str(section.get("key") or ""),
+                "title": str(section.get("title") or ""),
+                "content": _truncate_text_block(
+                    _multiline_pdf_text(section.get("content") or ""),
+                    limit=1200,
+                ),
+            }
+        )
+    return selected
+
+
+def _image_data_uri_for_evidence_reanalysis(
+    *,
+    document: Mapping[str, Any],
+    evidences: list[_VisualEvidenceItem],
+    evidence_key: str,
+) -> str:
+    evidence_payload = _evidence_payload_by_key(document).get(evidence_key) or {}
+    data_uri = str(evidence_payload.get("image_data_uri") or "").strip()
+    if data_uri:
+        return _valid_image_data_uri(data_uri)
+
+    index = _evidence_index_from_key(evidence_key)
+    if index > len(evidences):
+        raise HTTPException(status_code=404, detail="Evidência visual não encontrada.")
+    original_data_uri = _image_data_uri_from_path(evidences[index - 1].file_path)
+    if not original_data_uri:
+        raise HTTPException(status_code=400, detail="Imagem da evidência indisponível.")
+    return original_data_uri
+
+
+def _build_evidence_reanalysis_prompt(
+    *,
+    laudo: Laudo,
+    document: Mapping[str, Any],
+    evidence_key: str,
+) -> str:
+    evidence_sections = _evidence_sections_for_prompt(
+        document=document,
+        evidence_key=evidence_key,
+    )
+    sections_text = "\n\n".join(
+        f"{item['title']} ({item['key']}):\n{item['content'] or '[sem texto]'}"
+        for item in evidence_sections
+    )
+    return (
+        "Você está revisando somente uma evidência visual dentro de um laudo técnico "
+        "criado no chat livre. Use a imagem anexada e o texto atual abaixo para "
+        "reescrever apenas os campos dessa evidência, mantendo coerência com essa "
+        "parte específica do laudo e sem alterar conclusões de outras seções.\n\n"
+        "Responda somente em JSON válido, sem markdown, com estas chaves: "
+        "descricao, contexto, pontos, avaliacao, encaminhamentos, criterios. "
+        "Use textos objetivos; pontos, encaminhamentos e criterios podem ser listas "
+        "curtas. Não invente medições, datas, normas ou condições que não estejam "
+        "visíveis ou contextualizadas.\n\n"
+        f"Laudo #{int(laudo.id)} | contexto: "
+        f"{_pdf_text(getattr(laudo, 'setor_industrial', None)) or 'geral'}\n"
+        f"Evidência em revisão: {evidence_key}\n\n"
+        f"Texto atual dessa evidência:\n{sections_text or '[sem campos atuais]'}"
+    )
+
+
+def _run_evidence_reanalysis_ai(
+    *,
+    laudo: Laudo,
+    usuario: Usuario,
+    prompt: str,
+    image_data_uri: str,
+) -> str:
+    cliente_ia = obter_cliente_ia_ativo()
+    parts: list[str] = []
+    stream = cliente_ia.gerar_resposta_stream(
+        prompt,
+        image_data_uri,
+        _pdf_text(getattr(laudo, "setor_industrial", None)) or "geral",
+        empresa_id=int(usuario.empresa_id),
+        historico=[],
+        modo="detalhado",
+        dados_imagens=[image_data_uri],
+    )
+    for chunk in stream:
+        text = str(chunk or "")
+        if (
+            text.startswith(PREFIXO_METADATA)
+            or text.startswith(PREFIXO_CITACOES)
+            or text.startswith(PREFIXO_MODO_HUMANO)
+        ):
+            continue
+        parts.append(text)
+    final_text = "".join(parts).strip()
+    if not final_text:
+        raise HTTPException(status_code=502, detail="A IA não retornou texto para a evidência.")
+    return final_text
+
+
+def _parse_reanalysis_json(raw_text: str) -> dict[str, Any]:
+    text = str(raw_text or "").strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"\s*```$", "", text)
+    start = text.find("{")
+    end = text.rfind("}")
+    if start >= 0 and end > start:
+        text = text[start : end + 1]
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _reanalysis_content_value(value: Any, *, kind: str) -> str:
+    if isinstance(value, list):
+        items = normalizar_lista_textos(value, limite_itens=6, limite_chars=180)
+        return _editable_lines(items) if kind == "list" else "\n".join(items)
+    if isinstance(value, tuple):
+        items = normalizar_lista_textos(list(value), limite_itens=6, limite_chars=180)
+        return _editable_lines(items) if kind == "list" else "\n".join(items)
+    return _multiline_pdf_text(value)
+
+
+def _sections_from_evidence_reanalysis(
+    *,
+    document: Mapping[str, Any],
+    evidence_key: str,
+    raw_text: str,
+) -> list[dict[str, Any]]:
+    parsed = _parse_reanalysis_json(raw_text)
+    sections = _section_map(document)
+    suffix_to_json_key = {
+        "descricao": "descricao",
+        "contexto": "contexto",
+        "pontos": "pontos",
+        "avaliacao": "avaliacao",
+        "encaminhamentos": "encaminhamentos",
+        "criterios": "criterios",
+    }
+    updated_sections: list[dict[str, Any]] = []
+    for suffix, json_key in suffix_to_json_key.items():
+        section = sections.get(f"{evidence_key}_{suffix}")
+        if not section or json_key not in parsed:
+            continue
+        content = _reanalysis_content_value(
+            parsed.get(json_key),
+            kind=str(section.get("kind") or "paragraph"),
+        )
+        if content:
+            updated_sections.append({**section, "content": content})
+
+    if not updated_sections:
+        section = sections.get(f"{evidence_key}_avaliacao")
+        if section:
+            updated_sections.append(
+                {
+                    **section,
+                    "content": _truncate_text_block(_multiline_pdf_text(raw_text), limit=2600),
+                }
+            )
+    return updated_sections
+
+
+def build_free_chat_editable_evidence_reanalysis_response(
+    *,
+    banco: Session,
+    laudo: Laudo,
+    usuario: Usuario,
+    attachment_id: int,
+    evidence_key: str,
+    document_payload: Mapping[str, Any],
+) -> JSONResponse:
+    _evidence_index_from_key(evidence_key)
+    attachment = _attachment_for_editable_report(
+        banco=banco,
+        laudo_id=int(laudo.id),
+        attachment_id=int(attachment_id),
+    )
+    source = _editable_source_for_attachment(
+        banco=banco,
+        laudo=laudo,
+        usuario=usuario,
+        attachment=attachment,
+    )
+    current_document = _apply_editable_document_updates(source, document_payload)
+    evidences = _build_visual_evidence(
+        banco=banco,
+        laudo_id=int(laudo.id),
+        transcript=[],
+    )
+    image_data_uri = _image_data_uri_for_evidence_reanalysis(
+        document=document_payload,
+        evidences=evidences,
+        evidence_key=evidence_key,
+    )
+    prompt = _build_evidence_reanalysis_prompt(
+        laudo=laudo,
+        document=current_document,
+        evidence_key=evidence_key,
+    )
+    raw_reanalysis = _run_evidence_reanalysis_ai(
+        laudo=laudo,
+        usuario=usuario,
+        prompt=prompt,
+        image_data_uri=image_data_uri,
+    )
+    updated_sections = _sections_from_evidence_reanalysis(
+        document=current_document,
+        evidence_key=evidence_key,
+        raw_text=raw_reanalysis,
+    )
+    if not updated_sections:
+        raise HTTPException(status_code=502, detail="A IA não retornou campos editáveis.")
+
+    updated_document = _apply_editable_document_updates(
+        current_document,
+        {"sections": updated_sections},
+    )
+    return JSONResponse(
+        {
+            "ok": True,
+            "laudo_id": int(laudo.id),
+            "attachment_id": int(attachment.id),
+            "evidence_key": evidence_key,
+            "sections": updated_sections,
+            "documento": _document_with_evidence_previews(updated_document, evidences),
+        }
+    )
+
+
 def build_free_chat_editable_document_response(
     *,
     banco: Session,
@@ -2111,12 +2603,17 @@ def build_free_chat_editable_document_response(
         usuario=usuario,
         attachment=attachment,
     )
+    evidences = _build_visual_evidence(
+        banco=banco,
+        laudo_id=int(laudo.id),
+        transcript=[],
+    )
     return JSONResponse(
         {
             "ok": True,
             "laudo_id": int(laudo.id),
             "attachment_id": int(attachment.id),
-            "documento": source,
+            "documento": _document_with_evidence_previews(source, evidences),
         }
     )
 
@@ -2205,7 +2702,10 @@ def build_free_chat_editable_report_update_response(
             "laudo_id": int(laudo.id),
             "laudo_card": serializar_card_laudo(banco, laudo),
             "anexos": [serializar_anexos_mesa([new_attachment], portal="app")[0]],
-            "documento_editavel": updated_document,
+            "documento_editavel": _document_with_evidence_previews(
+                updated_document,
+                evidences,
+            ),
         }
     )
 
@@ -2213,6 +2713,7 @@ def build_free_chat_editable_report_update_response(
 __all__ = [
     "FreeChatReportGenerationResult",
     "build_free_chat_editable_document_response",
+    "build_free_chat_editable_evidence_reanalysis_response",
     "build_free_chat_editable_report_update_response",
     "build_free_chat_report_response",
     "generate_free_chat_report_result",

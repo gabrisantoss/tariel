@@ -1,7 +1,10 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Image,
   Pressable,
   Text,
   TextInput,
@@ -10,6 +13,7 @@ import {
 
 import {
   carregarDocumentoEditavelChatLivreMobile,
+  reavaliarEvidenciaDocumentoEditavelChatLivreMobile,
   salvarDocumentoEditavelChatLivreMobile,
 } from "../../config/api";
 import { colors } from "../../theme/tokens";
@@ -17,8 +21,11 @@ import type {
   MobileAttachment,
   MobileChatMessage,
   MobileFreeChatEditableDocument,
+  MobileFreeChatEditableDocumentSection,
+  MobileFreeChatEditableEvidence,
 } from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
+import { montarAnexoImagem } from "./attachmentFileHelpers";
 import { nomeExibicaoAnexo, tamanhoHumanoAnexo } from "./attachmentUtils";
 
 export interface FreeChatDocumentReviewItem {
@@ -218,16 +225,159 @@ function obterLaudoIdDoAnexo(attachment: MobileAttachment): number | null {
   return Number.isFinite(laudoId) && laudoId > 0 ? laudoId : null;
 }
 
+function obterPrefixoEvidencia(sectionKey: string): string {
+  const match = String(sectionKey || "").match(/^(evidencia_\d+)_/);
+  return match?.[1] || "";
+}
+
+function uriImagemEvidencia(evidence: MobileFreeChatEditableEvidence): string {
+  return String(
+    evidence.preview_uri || evidence.image_data_uri || evidence.image_url || "",
+  ).trim();
+}
+
+function atualizarSecaoDocumentoEditavel(
+  document: MobileFreeChatEditableDocument,
+  sectionIndex: number,
+  content: string,
+): MobileFreeChatEditableDocument {
+  const sections = document.sections.map((current, currentIndex) =>
+    currentIndex === sectionIndex ? { ...current, content } : current,
+  );
+  return { ...document, sections };
+}
+
 function FreeChatEditableDocumentEditor(props: {
   attachment: MobileAttachment;
   document: MobileFreeChatEditableDocument;
   error: string;
   busy: boolean;
+  evidenceBusyKey: string;
   notice: string;
   onCancel: () => void;
   onDocumentChange: (document: MobileFreeChatEditableDocument) => void;
+  onReanalyzeEvidence: (evidenceKey: string) => Promise<void>;
   onSave: () => void;
 }) {
+  const [localEvidenceBusyKey, setLocalEvidenceBusyKey] = useState("");
+  const evidences = props.document.evidences || [];
+  const renderedSectionKeys = new Set<string>();
+
+  async function substituirImagemEvidencia(evidenceKey: string) {
+    if (props.busy || localEvidenceBusyKey || props.evidenceBusyKey) {
+      return;
+    }
+    try {
+      setLocalEvidenceBusyKey(evidenceKey);
+      const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissao.granted && permissao.accessPrivileges !== "limited") {
+        Alert.alert(
+          "Biblioteca de imagens",
+          "Permita acesso às imagens para substituir a evidência.",
+        );
+        return;
+      }
+
+      const resultado = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: false,
+        allowsMultipleSelection: false,
+        selectionLimit: 1,
+        base64: true,
+        quality: 0.85,
+      });
+      if (resultado.canceled || !resultado.assets?.[0]) {
+        return;
+      }
+
+      const anexo = montarAnexoImagem(
+        resultado.assets[0],
+        "Imagem substituída no PDF editável.",
+      );
+      const evidencesAtualizadas = evidences.map((evidence) =>
+        evidence.key === evidenceKey
+          ? {
+              ...evidence,
+              display_name: anexo.label,
+              image_data_uri: anexo.dadosImagem,
+              preview_uri: anexo.previewUri,
+              source: "replacement",
+              replacement: true,
+            }
+          : evidence,
+      );
+      props.onDocumentChange({
+        ...props.document,
+        evidences: evidencesAtualizadas,
+      });
+    } catch (error) {
+      Alert.alert(
+        "Imagem",
+        error instanceof Error
+          ? error.message
+          : "Não foi possível substituir a imagem.",
+      );
+    } finally {
+      setLocalEvidenceBusyKey("");
+    }
+  }
+
+  async function reavaliarEvidencia(evidenceKey: string) {
+    if (props.busy || localEvidenceBusyKey || props.evidenceBusyKey) {
+      return;
+    }
+    setLocalEvidenceBusyKey(evidenceKey);
+    try {
+      await props.onReanalyzeEvidence(evidenceKey);
+    } finally {
+      setLocalEvidenceBusyKey("");
+    }
+  }
+
+  function renderEditableSection(
+    section: MobileFreeChatEditableDocumentSection,
+    index: number,
+  ) {
+    renderedSectionKeys.add(section.key);
+    return (
+      <View key={section.key} style={styles.threadReviewEditableSection}>
+        <Text style={styles.threadReviewEditableSectionTitle}>
+          {section.title}
+        </Text>
+        <TextInput
+          editable={!props.busy && section.editable !== false}
+          multiline
+          onChangeText={(content) => {
+            props.onDocumentChange(
+              atualizarSecaoDocumentoEditavel(props.document, index, content),
+            );
+          }}
+          style={styles.threadReviewEditableInput}
+          testID={`free-chat-pdf-editor-section-${section.key}`}
+          value={section.content}
+        />
+      </View>
+    );
+  }
+
+  const evidenceSectionsByKey = evidences.reduce<
+    Record<
+      string,
+      Array<{ section: MobileFreeChatEditableDocumentSection; index: number }>
+    >
+  >((acc, evidence) => {
+    acc[evidence.key] = [];
+    return acc;
+  }, {});
+  props.document.sections.forEach((section, index) => {
+    const prefix = obterPrefixoEvidencia(section.key);
+    if (prefix && evidenceSectionsByKey[prefix]) {
+      evidenceSectionsByKey[prefix].push({ section, index });
+    }
+  });
+
+  const evidenceBusyKey = props.evidenceBusyKey || localEvidenceBusyKey;
+
   return (
     <View
       style={styles.threadReviewEditableEditor}
@@ -243,27 +393,88 @@ function FreeChatEditableDocumentEditor(props: {
         {props.busy ? <ActivityIndicator color={colors.ink900} /> : null}
       </View>
 
-      {props.document.sections.map((section, index) => (
-        <View key={section.key} style={styles.threadReviewEditableSection}>
-          <Text style={styles.threadReviewEditableSectionTitle}>
-            {section.title}
-          </Text>
-          <TextInput
-            editable={!props.busy && section.editable !== false}
-            multiline
-            onChangeText={(content) => {
-              const sections = props.document.sections.map(
-                (current, currentIndex) =>
-                  currentIndex === index ? { ...current, content } : current,
-              );
-              props.onDocumentChange({ ...props.document, sections });
-            }}
-            style={styles.threadReviewEditableInput}
-            testID={`free-chat-pdf-editor-section-${section.key}`}
-            value={section.content}
-          />
-        </View>
-      ))}
+      {props.document.sections.map((section, index) =>
+        obterPrefixoEvidencia(section.key)
+          ? null
+          : renderEditableSection(section, index),
+      )}
+
+      {evidences.map((evidence, evidenceIndex) => {
+        const imageUri = uriImagemEvidencia(evidence);
+        const busyEvidence = evidenceBusyKey === evidence.key;
+        const evidenceTitle =
+          evidence.title || `Evidência ${evidence.index || evidenceIndex + 1}`;
+        return (
+          <View
+            key={evidence.key}
+            style={styles.threadReviewEditableEvidenceCard}
+            testID={`free-chat-pdf-editor-evidence-${evidence.key}`}
+          >
+            <View style={styles.threadReviewEditableEvidenceHeader}>
+              {imageUri ? (
+                <Image
+                  accessibilityLabel={`Imagem da ${evidenceTitle}`}
+                  resizeMode="cover"
+                  source={{ uri: imageUri }}
+                  style={styles.threadReviewEditableEvidenceImage}
+                  testID={`free-chat-pdf-editor-evidence-${evidence.key}-image`}
+                />
+              ) : (
+                <View style={styles.threadReviewEditableEvidencePlaceholder}>
+                  <MaterialCommunityIcons
+                    name="image-off-outline"
+                    size={24}
+                    color={colors.textSecondary}
+                  />
+                </View>
+              )}
+              <View style={styles.threadReviewListCopy}>
+                <Text style={styles.threadReviewEditableSectionTitle}>
+                  {evidenceTitle}
+                </Text>
+                <Text style={styles.threadReviewEditableNotice}>
+                  {evidence.display_name || "Imagem da evidência"}
+                </Text>
+                {busyEvidence ? (
+                  <ActivityIndicator color={colors.ink900} size="small" />
+                ) : null}
+              </View>
+            </View>
+            <View style={styles.threadReviewCompactActionsRail}>
+              {renderDocumentActionButton({
+                disabled: props.busy || Boolean(evidenceBusyKey),
+                icon: "image-edit-outline",
+                label: "Substituir",
+                onPress: () => {
+                  void substituirImagemEvidencia(evidence.key);
+                },
+                testID: `free-chat-pdf-editor-evidence-${evidence.key}-replace`,
+                tone: "neutral",
+              })}
+              {renderDocumentActionButton({
+                disabled: props.busy || Boolean(evidenceBusyKey),
+                icon: "auto-fix",
+                label: "Reavaliar",
+                onPress: () => {
+                  void reavaliarEvidencia(evidence.key);
+                },
+                testID: `free-chat-pdf-editor-evidence-${evidence.key}-reanalyze`,
+                tone: "neutral",
+              })}
+            </View>
+            {(evidenceSectionsByKey[evidence.key] || []).map(
+              ({ section, index }) => renderEditableSection(section, index),
+            )}
+          </View>
+        );
+      })}
+
+      {props.document.sections.map((section, index) =>
+        !renderedSectionKeys.has(section.key) &&
+        obterPrefixoEvidencia(section.key)
+          ? renderEditableSection(section, index)
+          : null,
+      )}
 
       {props.error ? (
         <Text style={styles.threadReviewWarningText}>{props.error}</Text>
@@ -310,6 +521,7 @@ function FreeChatDocumentsReviewCard(params: {
   const [attachmentEmEdicao, setAttachmentEmEdicao] =
     useState<MobileAttachment | null>(null);
   const [editorBusy, setEditorBusy] = useState(false);
+  const [editorEvidenceBusyKey, setEditorEvidenceBusyKey] = useState("");
   const [editorError, setEditorError] = useState("");
   const [editorNotice, setEditorNotice] = useState("");
 
@@ -332,6 +544,7 @@ function FreeChatDocumentsReviewCard(params: {
     setDocumentoEditavel(null);
     setEditorError("");
     setEditorNotice("");
+    setEditorEvidenceBusyKey("");
     setEditorBusy(true);
     try {
       const resposta = await carregarDocumentoEditavelChatLivreMobile(
@@ -388,6 +601,43 @@ function FreeChatDocumentsReviewCard(params: {
     }
   }
 
+  async function reavaliarEvidenciaEditor(evidenceKey: string) {
+    const token = String(params.sessionAccessToken || "").trim();
+    const attachment = attachmentEmEdicao;
+    const documento = documentoEditavel;
+    const laudoId = attachment ? obterLaudoIdDoAnexo(attachment) : null;
+    const attachmentId = Number(attachment?.id || 0);
+    if (!token || !laudoId || !attachmentId || !documento) {
+      setEditorError("Não foi possível reavaliar esta evidência.");
+      return;
+    }
+
+    setEditorEvidenceBusyKey(evidenceKey);
+    setEditorError("");
+    setEditorNotice("");
+    try {
+      const resposta = await reavaliarEvidenciaDocumentoEditavelChatLivreMobile(
+        token,
+        laudoId,
+        attachmentId,
+        evidenceKey,
+        documento,
+      );
+      setDocumentoEditavel(resposta.documento);
+      setEditorNotice(
+        "Evidência reavaliada. Revise o texto antes de gerar o PDF.",
+      );
+    } catch (error) {
+      setEditorError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível reavaliar esta evidência.",
+      );
+    } finally {
+      setEditorEvidenceBusyKey("");
+    }
+  }
+
   if (!atual) {
     return (
       <View
@@ -412,6 +662,7 @@ function FreeChatDocumentsReviewCard(params: {
           attachment={attachmentEmEdicao}
           busy={editorBusy}
           document={documentoEditavel}
+          evidenceBusyKey={editorEvidenceBusyKey}
           error={editorError}
           notice={editorNotice}
           onCancel={() => {
@@ -419,8 +670,10 @@ function FreeChatDocumentsReviewCard(params: {
             setDocumentoEditavel(null);
             setEditorError("");
             setEditorNotice("");
+            setEditorEvidenceBusyKey("");
           }}
           onDocumentChange={setDocumentoEditavel}
+          onReanalyzeEvidence={reavaliarEvidenciaEditor}
           onSave={salvarEditor}
         />
       ) : attachmentEmEdicao && editorBusy ? (
