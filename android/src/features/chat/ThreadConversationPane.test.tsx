@@ -951,30 +951,69 @@ describe("ThreadConversationPane", () => {
     expect(getByText("PDF operacional")).toBeTruthy();
   });
 
-  it("usa linguagem de revisão do relatório para chat livre", () => {
-    const { getByText, getByTestId } = render(
+  it("usa a revisão do chat livre para listar PDFs gerados", () => {
+    const onAbrirAnexo = jest.fn();
+    const onCorrigirDocumentoChatLivre = jest.fn();
+    const { getAllByText, getByText, getByTestId } = render(
       <ThreadConversationPane
         {...baseProps}
         caseWorkflowMode="analise_livre"
         entryModeEffective="chat_first"
-        reportPackDraft={{
-          modeled: true,
-          template_label: "Tema livre",
-          pre_laudo_document: {
-            template_label: "Tema livre",
+        mensagensVisiveis={[
+          {
+            id: 10,
+            papel: "assistente",
+            texto: "Primeira versão.",
+            tipo: "assistant",
+            anexos: [
+              {
+                id: 201,
+                nome_original: "relatorio_chat_livre_v1.pdf",
+                mime_type: "application/pdf",
+                categoria: "documento",
+                url: "/app/api/laudo/80/mesa/anexos/201",
+              },
+            ],
           },
-        }}
+          {
+            id: 11,
+            papel: "assistente",
+            texto: "Versão corrigida.",
+            tipo: "assistant",
+            anexos: [
+              {
+                id: 202,
+                nome_original: "relatorio_chat_livre_v2.pdf",
+                mime_type: "application/pdf",
+                categoria: "documento",
+                url: "/app/api/laudo/80/mesa/anexos/202",
+              },
+            ],
+          },
+        ]}
+        onAbrirAnexo={onAbrirAnexo}
+        onCorrigirDocumentoChatLivre={onCorrigirDocumentoChatLivre}
       />,
     );
 
-    expect(getByTestId("mesa-report-pack-card")).toBeTruthy();
-    expect(getByText("Revisão do relatório")).toBeTruthy();
-    expect(getByText("Relatório pronto para revisar")).toBeTruthy();
-    expect(
-      getByText(
-        "Corrija o relatório gerado no chat e baixe uma nova versão quando necessário.",
-      ),
-    ).toBeTruthy();
+    expect(getByTestId("free-chat-review-documents-card")).toBeTruthy();
+    expect(getAllByText("Revisar PDF").length).toBeGreaterThan(0);
+    expect(getByText("PDFs gerados")).toBeTruthy();
+    expect(getByText("Documento atual")).toBeTruthy();
+    expect(getByText("Documentos gerados")).toBeTruthy();
+    expect(getByText("Versão 2 · relatorio_chat_livre_v2.pdf")).toBeTruthy();
+    expect(getByText("Versão 1 · relatorio_chat_livre_v1.pdf")).toBeTruthy();
+
+    fireEvent.press(getByTestId("free-chat-review-current-document-download"));
+    expect(onAbrirAnexo).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 202 }),
+    );
+
+    fireEvent.press(getByTestId("free-chat-review-current-document-correct"));
+    expect(onCorrigirDocumentoChatLivre).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 202 }),
+      "Versão 2",
+    );
   });
 
   it("não injeta CTA da Mesa do pre-laudo dentro do chat", () => {

@@ -71,6 +71,10 @@ export interface ThreadConversationPaneProps {
   onExecutarComandoRevisaoMobile?: (
     payload: MobileMesaReviewCommandPayload,
   ) => Promise<void>;
+  onCorrigirDocumentoChatLivre?: (
+    attachment: MobileAttachment,
+    versionLabel: string,
+  ) => void;
   dynamicMessageBubbleStyle: StyleProp<ViewStyle>;
   dynamicMessageTextStyle: StyleProp<TextStyle>;
   enviandoMensagem: boolean;
@@ -113,6 +117,7 @@ export function ThreadConversationPane({
   emptyStateTitle,
   onDefinirReferenciaMesaAtiva,
   onExecutarComandoRevisaoMobile,
+  onCorrigirDocumentoChatLivre,
   accentColor,
   carregandoConversa,
   conversaVazia,
@@ -161,6 +166,7 @@ export function ThreadConversationPane({
         onAbrirReferenciaNoChat={onAbrirReferenciaNoChat}
         onDefinirReferenciaMesaAtiva={onDefinirReferenciaMesaAtiva}
         onExecutarComandoRevisaoMobile={onExecutarComandoRevisaoMobile}
+        onCorrigirDocumentoChatLivre={onCorrigirDocumentoChatLivre}
         reportPackDraft={reportPackDraft}
         reviewCommandBusy={reviewCommandBusy}
         reviewPackage={reviewPackage}

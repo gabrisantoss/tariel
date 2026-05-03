@@ -279,6 +279,12 @@ export const chatThreadSurfaceStyles = {
     borderRadius: 16,
     borderWidth: 1,
   },
+  threadReviewActionButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+  },
   threadReviewActionButtonPrimary: {
     alignSelf: "stretch",
     alignItems: "center",

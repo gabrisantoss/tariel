@@ -24,6 +24,10 @@ import type {
 } from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
 import { hasFreeChatDocumentReviewFlow } from "./caseLifecycle";
+import {
+  buildFreeChatDocumentReviewItems,
+  renderizarDocumentosChatLivreRevisao,
+} from "./ThreadConversationFreeChatDocumentsCard";
 import { ThreadConversationMesaMessageList } from "./ThreadConversationMesaMessageList";
 import { renderizarReportPackDraftCard } from "./ThreadConversationReportPackDraftCard";
 import { renderizarReviewPackageMesa } from "./ThreadConversationReviewPackageCard";
@@ -68,6 +72,10 @@ interface ThreadConversationMesaSurfaceProps {
   onExecutarComandoRevisaoMobile?: (
     payload: MobileMesaReviewCommandPayload,
   ) => Promise<void>;
+  onCorrigirDocumentoChatLivre?: (
+    attachment: MobileAttachment,
+    versionLabel: string,
+  ) => void;
   reviewCommandBusy?: boolean;
 }
 
@@ -89,16 +97,14 @@ function buildReviewStage(params: {
   if (freeChatDocumentReviewFlow) {
     return hasReviewSummary
       ? {
-          label: "Revisão do relatório",
-          title: "Relatório pronto para revisar",
-          description:
-            "Corrija o relatório gerado no chat e baixe uma nova versão quando necessário.",
+          label: "Revisar PDF",
+          title: "PDFs gerados",
+          description: "Baixe ou corrija versões do relatório.",
         }
       : {
-          label: "Revisão do relatório",
-          title: "Relatório ainda não gerado",
-          description:
-            "Peça o laudo no chat livre. Quando o PDF ficar pronto, ele aparece aqui para revisão e download.",
+          label: "Revisar PDF",
+          title: "Sem PDF gerado",
+          description: "Peça o relatório no chat livre.",
         };
   }
 
@@ -184,6 +190,7 @@ export function ThreadConversationMesaSurface({
   dynamicMessageBubbleStyle,
   dynamicMessageTextStyle,
   onExecutarComandoRevisaoMobile,
+  onCorrigirDocumentoChatLivre,
   reviewCommandBusy = false,
 }: ThreadConversationMesaSurfaceProps) {
   const { t } = useAppTranslation();
@@ -192,29 +199,39 @@ export function ThreadConversationMesaSurface({
     entryModeEffective,
     workflowMode: caseWorkflowMode,
   });
-  const reviewSummary =
-    renderizarReviewPackageMesa(
-      reviewPackage,
-      {
-        caseLifecycleStatus,
-        activeOwnerRole,
-        allowedNextLifecycleStatuses,
-        allowedLifecycleTransitions,
-        allowedSurfaceActions,
-      },
-      onExecutarComandoRevisaoMobile,
-      reviewCommandBusy,
-      onAbrirAnexo,
-    ) ||
-    renderizarReportPackDraftCard(reportPackDraft, {
-      mode: "mesa",
-      testID: "mesa-report-pack-card",
-    });
+  const documentosChatLivre = freeChatDocumentReviewFlow
+    ? buildFreeChatDocumentReviewItems(mensagensVisiveis)
+    : [];
+  const reviewSummary = freeChatDocumentReviewFlow
+    ? renderizarDocumentosChatLivreRevisao({
+        mensagens: mensagensVisiveis,
+        onAbrirAnexo,
+        onCorrigirDocumento: onCorrigirDocumentoChatLivre,
+      })
+    : renderizarReviewPackageMesa(
+        reviewPackage,
+        {
+          caseLifecycleStatus,
+          activeOwnerRole,
+          allowedNextLifecycleStatuses,
+          allowedLifecycleTransitions,
+          allowedSurfaceActions,
+        },
+        onExecutarComandoRevisaoMobile,
+        reviewCommandBusy,
+        onAbrirAnexo,
+      ) ||
+      renderizarReportPackDraftCard(reportPackDraft, {
+        mode: "mesa",
+        testID: "mesa-report-pack-card",
+      });
   const reviewStage = buildReviewStage({
     activeOwnerRole,
     caseLifecycleStatus,
     freeChatDocumentReviewFlow,
-    hasReviewSummary: Boolean(reviewSummary),
+    hasReviewSummary: freeChatDocumentReviewFlow
+      ? documentosChatLivre.length > 0
+      : Boolean(reviewSummary),
     messagesCount: mensagensMesa.length,
   });
 

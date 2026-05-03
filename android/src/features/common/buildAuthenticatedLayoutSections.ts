@@ -7,6 +7,7 @@ import type {
 } from "./inspectorUiBuilderTypes";
 import type { ThreadComposerPanelProps } from "../chat/ThreadComposerPanel";
 import type { ThreadConversationPaneProps } from "../chat/ThreadConversationPane";
+import { nomeExibicaoAnexo } from "../chat/attachmentUtils";
 import {
   hasCaseSurfaceAction,
   hasFreeChatDocumentReviewFlow,
@@ -115,6 +116,14 @@ export function buildThreadComposerPanelProps(
 export function buildThreadContextCardProps(
   input: AuthenticatedLayoutInput,
 ): ThreadContextCardPanelProps {
+  const freeChatDocumentReviewFlow = hasFreeChatDocumentReviewFlow({
+    conversation: input.conversaAtiva,
+    entryModeEffective:
+      input.conversaAtiva?.entryModeEffective ||
+      input.conversaAtiva?.laudoCard?.entry_mode_effective,
+    workflowMode: input.conversaAtiva?.caseWorkflowMode,
+  });
+
   return {
     accentColor: input.accentColor,
     actions: input.threadActions,
@@ -131,7 +140,9 @@ export function buildThreadContextCardProps(
         : input.vendoFinalizacao
           ? "finalização do caso"
           : input.vendoMesa
-            ? "mesa avaliadora"
+            ? freeChatDocumentReviewFlow
+              ? "revisão de PDFs"
+              : "mesa avaliadora"
             : "chat do inspetor",
     insights: input.threadInsights,
     layout: input.threadContextLayout,
@@ -199,6 +210,13 @@ export function buildThreadConversationPaneProps(
       void input.abrirReferenciaNoChat(id);
     },
     onAbrirQualityGate: input.handleAbrirQualityGate,
+    onCorrigirDocumentoChatLivre: (attachment, versionLabel) => {
+      const nomeDocumento = nomeExibicaoAnexo(attachment, "PDF gerado");
+      input.setAbaAtiva("chat");
+      input.setMensagem(
+        `Corrija a ${versionLabel} (${nomeDocumento}). Ajuste solicitado: `,
+      );
+    },
     onDefinirReferenciaMesaAtiva: input.definirReferenciaMesaAtiva,
     onExecutarComandoRevisaoMobile: (payload) =>
       input.handleExecutarComandoRevisaoMobile(payload),
