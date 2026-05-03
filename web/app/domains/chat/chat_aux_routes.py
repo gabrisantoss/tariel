@@ -6,7 +6,7 @@ from html import escape
 import os
 import tempfile
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
@@ -18,6 +18,10 @@ from starlette.background import BackgroundTask
 from app.domains.chat.app_context import logger
 from app.domains.chat.chat_service import obter_mensagens_laudo_payload, processar_upload_documento
 from app.domains.chat.core_helpers import resposta_json_ok
+from app.domains.chat.free_chat_report import (
+    build_free_chat_editable_document_response,
+    build_free_chat_editable_report_update_response,
+)
 from app.domains.chat.catalog_pdf_templates import (
     RENDER_MODE_CLIENT_PDF_FILLED,
     has_viable_legacy_preview_overlay_for_pdf_template,
@@ -725,10 +729,56 @@ async def rota_feedback(
     return resposta_json_ok({"ok": True})
 
 
+async def obter_documento_editavel_chat_livre(
+    laudo_id: int,
+    anexo_id: int,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+):
+    laudo = obter_laudo_do_inspetor(banco, laudo_id, usuario)
+    return build_free_chat_editable_document_response(
+        banco=banco,
+        laudo=laudo,
+        usuario=usuario,
+        attachment_id=anexo_id,
+    )
+
+
+async def salvar_documento_editavel_chat_livre(
+    laudo_id: int,
+    anexo_id: int,
+    payload: dict[str, Any],
+    request: Request,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+):
+    exigir_csrf(request)
+    laudo = obter_laudo_do_inspetor(banco, laudo_id, usuario)
+    return build_free_chat_editable_report_update_response(
+        banco=banco,
+        laudo=laudo,
+        usuario=usuario,
+        attachment_id=anexo_id,
+        document_payload=payload,
+    )
+
+
 roteador_chat_aux.add_api_route(
     "/api/laudo/{laudo_id}/mensagens",
     obter_mensagens_laudo,
     methods=["GET"],
+    responses=RESPOSTA_LAUDO_NAO_ENCONTRADO,
+)
+roteador_chat_aux.add_api_route(
+    "/api/laudo/{laudo_id}/chat-livre/pdf/{anexo_id}/editavel",
+    obter_documento_editavel_chat_livre,
+    methods=["GET"],
+    responses=RESPOSTA_LAUDO_NAO_ENCONTRADO,
+)
+roteador_chat_aux.add_api_route(
+    "/api/laudo/{laudo_id}/chat-livre/pdf/{anexo_id}/editavel",
+    salvar_documento_editavel_chat_livre,
+    methods=["POST"],
     responses=RESPOSTA_LAUDO_NAO_ENCONTRADO,
 )
 roteador_chat_aux.add_api_route(
@@ -772,10 +822,12 @@ registrar_feedback = rota_feedback
 __all__ = [
     "RESPOSTA_LAUDO_NAO_ENCONTRADO",
     "obter_mensagens_laudo",
+    "obter_documento_editavel_chat_livre",
     "registrar_feedback",
     "rota_feedback",
     "rota_pdf",
     "rota_upload_doc",
     "rota_verificacao_publica_laudo",
     "roteador_chat_aux",
+    "salvar_documento_editavel_chat_livre",
 ]

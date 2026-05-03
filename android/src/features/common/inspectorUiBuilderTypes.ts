@@ -109,6 +109,7 @@ export interface AuthenticatedLayoutThreadInput {
   handleExecutarComandoRevisaoMobile: (
     payload: MobileMesaReviewCommandPayload,
   ) => Promise<void>;
+  handleRecarregarConversaAtiva: () => Promise<void>;
   handleUsarPerguntaPreLaudo: (value: string) => void;
   headerSafeTopInset: number;
   laudoContextDescription: string;

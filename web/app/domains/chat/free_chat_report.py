@@ -8,7 +8,7 @@ from decimal import Decimal
 from pathlib import Path
 import re
 import tempfile
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
@@ -38,12 +38,19 @@ from app.shared.database import (
     commit_ou_rollback_operacional,
 )
 from nucleo.gerador_laudos import GeradorLaudos
-from nucleo.inspetor.comandos_chat import analisar_pedido_relatorio_chat_livre
+from nucleo.inspetor.comandos_chat import (
+    analisar_pedido_relatorio_chat_livre,
+    extrair_instrucao_correcao_relatorio_chat_livre,
+)
 
 REPORT_TITLE = "Laudo Técnico Consolidado"
 REPORT_SUBTITLE = "Consolidação profissional dos registros, evidências visuais e análises técnicas disponíveis."
 REPORT_KIND_LABEL = "Registro livre assistido"
 REPORT_STATUS_LABEL = "Emissão preliminar"
+PDF_CORRECTION_TRANSCRIPT_PREFIX = "Correção solicitada no PDF:"
+PDF_REPORT_GENERATED_MESSAGE_PREFIX = "relatorio tecnico consolidado gerado em pdf"
+FREE_CHAT_REPORT_SOURCE_METADATA_KEY = "free_chat_report_editable_source"
+FREE_CHAT_REPORT_SOURCE_VERSION = 1
 LOW_INFORMATION_CHAT_LINES = {
     "imagem enviada",
     "registro visual anexado.",
@@ -166,6 +173,8 @@ def _is_low_information_text(value: Any) -> bool:
         return True
     if normalized in LOW_INFORMATION_CHAT_LINES:
         return True
+    if normalized.startswith(PDF_REPORT_GENERATED_MESSAGE_PREFIX):
+        return True
     return normalized.startswith("[erro interno]")
 
 
@@ -259,6 +268,7 @@ class FreeChatReportGenerationResult:
     attachment_payload: dict[str, Any]
     message_id: int
     laudo_card_payload: dict[str, Any] | None
+    editable_document_payload: dict[str, Any]
 
 
 def _register_outline_entry(
@@ -305,6 +315,10 @@ def _build_transcript(
         ).strip()
         if not visible:
             continue
+
+        correction_instruction = extrair_instrucao_correcao_relatorio_chat_livre(visible)
+        if correction_instruction:
+            visible = f"{PDF_CORRECTION_TRANSCRIPT_PREFIX} {correction_instruction}"
 
         if (
             int(getattr(message, "id", 0) or 0) == int(request_message_id)
@@ -395,6 +409,18 @@ def _best_context_line(
         return _truncate_text_block(normalized, limit=260)
 
     return "Registro técnico com evidências visuais submetidas para consolidação preliminar."
+
+
+def _latest_pdf_correction(transcript: list[_TranscriptItem]) -> str:
+    for item in reversed(transcript):
+        if item.role != "inspetor":
+            continue
+        text = _multiline_pdf_text(item.text)
+        if not text.startswith(PDF_CORRECTION_TRANSCRIPT_PREFIX):
+            continue
+        _, _, instruction = text.partition(":")
+        return _truncate_text_block(instruction.strip(), limit=260)
+    return ""
 
 
 def _format_verdict_label(value: Any) -> str:
@@ -540,11 +566,13 @@ def _build_summary_text(
         findings=findings,
     )
     references = _build_normative_references(transcript=transcript, evidences=evidences)
+    correction = _latest_pdf_correction(transcript)
     lines: list[str | None] = [
         (
             "Contexto avaliado: "
             + _best_context_line(laudo=laudo, transcript=transcript, evidences=evidences)
         ),
+        f"Correção aplicada nesta versão: {correction}" if correction else None,
         (
             f"Escopo consolidado: {len(transcript)} registro(s) textuais relevantes e "
             f"{len(evidences)} evidência(s) visual(is) válidas na data de emissão."
@@ -569,7 +597,7 @@ def _build_summary_text(
             else None
         ),
     ]
-    return "\n\n".join(_dedupe_text_blocks(lines, limit=6))
+    return "\n\n".join(_dedupe_text_blocks(lines, limit=7))
 
 
 def _build_scope_text(
@@ -579,12 +607,14 @@ def _build_scope_text(
     evidences: list[_VisualEvidenceItem],
 ) -> str:
     user_lines = [item.text for item in transcript if item.role == "inspetor"]
+    correction = _latest_pdf_correction(transcript)
     lines: list[str | None] = [
         "Objetivo: consolidar tecnicamente o material registrado no fluxo livre para apoiar entendimento inicial, triagem técnica e encaminhamento do caso.",
         (
             "Objeto/contexto analisado: "
             + _best_context_line(laudo=laudo, transcript=transcript, evidences=evidences)
         ),
+        f"Correção solicitada para esta versão: {correction}" if correction else None,
         (
             f"Escopo considerado: {len(transcript)} interação(ões) relevante(s) e "
             f"{len(evidences)} evidência(s) visual(is) incorporada(s)."
@@ -606,7 +636,193 @@ def _build_scope_text(
                 for item in user_lines[1:3]
             )
         )
-    return "\n\n".join(_dedupe_text_blocks(lines, limit=4))
+    return "\n\n".join(_dedupe_text_blocks(lines, limit=5))
+
+
+def _editable_lines(items: Sequence[Any], *, limit: int | None = None) -> str:
+    values = _dedupe_text_blocks([str(item or "") for item in items], limit=limit)
+    return "\n".join(f"- {item}" for item in values if item)
+
+
+def _metadata_text_lines(*, laudo: Laudo, usuario: Usuario) -> list[str]:
+    empresa_nome = _pdf_text(
+        getattr(getattr(usuario, "empresa", None), "nome_fantasia", None)
+        or getattr(getattr(usuario, "empresa", None), "nome", None)
+        or getattr(getattr(usuario, "empresa", None), "razao_social", None)
+        or "Empresa"
+    )
+    return [
+        f"Documento: #{int(laudo.id)}",
+        f"Responsável pelo registro: {_pdf_text(usuario_nome(usuario)) or 'Inspetor'}",
+        f"Empresa: {empresa_nome}",
+        f"Contexto declarado: {_pdf_text(getattr(laudo, 'setor_industrial', None)) or 'geral'}",
+        f"Modalidade: {REPORT_KIND_LABEL}",
+        f"Status da emissão: {REPORT_STATUS_LABEL}",
+        f"Data de emissão: {_format_datetime_label(datetime.now().astimezone())}",
+    ]
+
+
+def _editable_section(
+    key: str,
+    title: str,
+    content: Any,
+    *,
+    kind: str = "paragraph",
+    editable: bool = True,
+) -> dict[str, Any]:
+    return {
+        "key": key,
+        "title": _pdf_text(title),
+        "kind": kind,
+        "editable": editable,
+        "content": _multiline_pdf_text(content),
+    }
+
+
+def _build_editable_document_payload(
+    *,
+    laudo: Laudo,
+    usuario: Usuario,
+    transcript: list[_TranscriptItem],
+    evidences: list[_VisualEvidenceItem],
+) -> dict[str, Any]:
+    findings = _build_consolidated_findings(transcript=transcript, evidences=evidences)
+    recommendations = _build_recommendations(
+        laudo=laudo,
+        transcript=transcript,
+        evidences=evidences,
+        findings=findings,
+    )
+    normative_refs = _build_normative_references(
+        transcript=transcript,
+        evidences=evidences,
+    )
+
+    sections: list[dict[str, Any]] = [
+        _editable_section(
+            "identificacao_contexto",
+            "Identificação e Contexto",
+            "\n".join(_metadata_text_lines(laudo=laudo, usuario=usuario)),
+        ),
+        _editable_section(
+            "objetivo_escopo",
+            "Objetivo e Escopo",
+            _build_scope_text(laudo=laudo, transcript=transcript, evidences=evidences),
+        ),
+        _editable_section(
+            "base_analise_criterios",
+            "Base de Análise e Critérios",
+            _build_analysis_basis_text(laudo=laudo, transcript=transcript, evidences=evidences),
+        ),
+        _editable_section(
+            "sintese_executiva",
+            "Síntese Executiva",
+            _build_summary_text(laudo=laudo, transcript=transcript, evidences=evidences),
+        ),
+        _editable_section(
+            "achados_tecnicos",
+            "Achados Técnicos",
+            _editable_lines(findings),
+            kind="list",
+        ),
+        _editable_section(
+            "conclusao_tecnica",
+            "Conclusão Técnica",
+            _build_conclusion_text(laudo=laudo, findings=findings),
+        ),
+        _editable_section(
+            "recomendacoes_proximos_passos",
+            "Recomendações e Próximos Passos",
+            _editable_lines(recommendations),
+            kind="list",
+        ),
+    ]
+    if normative_refs:
+        sections.append(
+            _editable_section(
+                "referencias_normativas",
+                "Referências Normativas",
+                _editable_lines(normative_refs),
+                kind="list",
+            )
+        )
+
+    evidence_overview_lines = [
+        (
+            f"{index}. {evidence.display_name} | {evidence.created_at_label} | "
+            f"{evidence.verdict_label}\n{_truncate_text_block(evidence.summary, limit=260)}"
+        )
+        for index, evidence in enumerate(evidences, start=1)
+    ]
+    sections.append(
+        _editable_section(
+            "resumo_evidencias",
+            "Resumo das Evidências",
+            "\n\n".join(evidence_overview_lines)
+            if evidence_overview_lines
+            else "Nenhuma evidência visual foi registrada até o momento.",
+        )
+    )
+
+    for index, evidence in enumerate(evidences, start=1):
+        prefix = f"evidencia_{index}"
+        sections.extend(
+            [
+                _editable_section(
+                    f"{prefix}_descricao",
+                    f"Evidência {index} | Descrição Consolidada",
+                    evidence.summary,
+                ),
+                _editable_section(
+                    f"{prefix}_contexto",
+                    f"Evidência {index} | Contexto Informado",
+                    evidence.context_text,
+                ),
+                _editable_section(
+                    f"{prefix}_pontos",
+                    f"Evidência {index} | Pontos Relevantes",
+                    _editable_lines(evidence.key_points),
+                    kind="list",
+                ),
+                _editable_section(
+                    f"{prefix}_avaliacao",
+                    f"Evidência {index} | Avaliação Técnica",
+                    evidence.technical_analysis,
+                ),
+                _editable_section(
+                    f"{prefix}_encaminhamentos",
+                    f"Evidência {index} | Encaminhamentos Sugeridos",
+                    _editable_lines(_build_evidence_recommendations(evidence)),
+                    kind="list",
+                ),
+                _editable_section(
+                    f"{prefix}_criterios",
+                    f"Evidência {index} | Critérios e Referências",
+                    _editable_lines(evidence.norm_refs),
+                    kind="list",
+                ),
+            ]
+        )
+
+    if transcript:
+        sections.append(
+            _editable_section(
+                "rastreabilidade_registro",
+                "Apêndice A | Rastreabilidade do Registro",
+                "\n\n".join(
+                    f"{item.role_label} | {item.created_at_label}\n{item.text}"
+                    for item in transcript[:8]
+                ),
+            )
+        )
+
+    return {
+        "contract": "free_chat_report_editable_document",
+        "version": FREE_CHAT_REPORT_SOURCE_VERSION,
+        "title": REPORT_TITLE,
+        "subtitle": REPORT_SUBTITLE,
+        "sections": sections,
+    }
 
 
 def _build_consolidated_findings(
@@ -1453,6 +1669,315 @@ def _generate_pdf_file(
         raise
 
 
+def _editable_sections(document: Mapping[str, Any]) -> list[dict[str, Any]]:
+    raw_sections = document.get("sections")
+    if not isinstance(raw_sections, list):
+        return []
+    sections: list[dict[str, Any]] = []
+    for raw in raw_sections:
+        if not isinstance(raw, Mapping):
+            continue
+        key = str(raw.get("key") or "").strip()
+        title = _pdf_text(raw.get("title") or key.replace("_", " ").title())
+        if not key or not title:
+            continue
+        sections.append(
+            {
+                "key": key,
+                "title": title,
+                "kind": str(raw.get("kind") or "paragraph").strip() or "paragraph",
+                "editable": bool(raw.get("editable", True)),
+                "content": _multiline_pdf_text(raw.get("content") or ""),
+            }
+        )
+    return sections
+
+
+def _normalize_editable_document_payload(document: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "contract": "free_chat_report_editable_document",
+        "version": FREE_CHAT_REPORT_SOURCE_VERSION,
+        "title": _pdf_text(document.get("title") or REPORT_TITLE) or REPORT_TITLE,
+        "subtitle": _pdf_text(document.get("subtitle") or REPORT_SUBTITLE) or REPORT_SUBTITLE,
+        "sections": _editable_sections(document),
+    }
+
+
+def _apply_editable_document_updates(
+    source: Mapping[str, Any],
+    updates: Mapping[str, Any],
+) -> dict[str, Any]:
+    normalized = _normalize_editable_document_payload(source)
+    updated_sections = _editable_sections(updates)
+    content_by_key = {
+        section["key"]: section["content"]
+        for section in updated_sections
+        if str(section.get("key") or "").strip()
+    }
+    if content_by_key:
+        next_sections: list[dict[str, Any]] = []
+        for section in normalized["sections"]:
+            if section["key"] in content_by_key and section.get("editable", True):
+                next_sections.append({**section, "content": content_by_key[section["key"]]})
+            else:
+                next_sections.append(section)
+        normalized["sections"] = next_sections
+    if updates.get("title"):
+        normalized["title"] = _pdf_text(updates.get("title")) or normalized["title"]
+    if updates.get("subtitle"):
+        normalized["subtitle"] = _pdf_text(updates.get("subtitle")) or normalized["subtitle"]
+    return normalized
+
+
+def _section_map(document: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        section["key"]: section
+        for section in _editable_sections(document)
+        if str(section.get("key") or "").strip()
+    }
+
+
+def _content_as_list_items(content: str) -> list[str]:
+    items: list[str] = []
+    for raw_line in _multiline_pdf_text(content).split("\n"):
+        line = raw_line.strip()
+        if not line:
+            continue
+        line = re.sub(r"^\s*[-•]\s*", "", line).strip()
+        if line:
+            items.append(line)
+    return items
+
+
+def _write_editable_section(pdf: FPDF, section: Mapping[str, Any]) -> None:
+    content = _multiline_pdf_text(section.get("content") or "")
+    if not content:
+        return
+    _write_section_title(pdf, str(section.get("title") or "Seção"))
+    if str(section.get("kind") or "").strip().lower() == "list":
+        _write_bullet_list(pdf, _content_as_list_items(content))
+    else:
+        pdf.set_font("helvetica", "", 10)
+        _write_block(pdf, content)
+    pdf.ln(2)
+
+
+def _render_editable_cover_page(
+    pdf: _FreeChatReportPdf,
+    *,
+    document: Mapping[str, Any],
+    laudo: Laudo,
+    usuario: Usuario,
+) -> None:
+    pdf.add_mode_page("cover")
+    pdf.set_fill_color(15, 43, 70)
+    pdf.rect(0, 0, pdf.w, 64, style="F")
+    pdf.set_xy(16, 18)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("helvetica", "B", 24)
+    pdf.multi_cell(0, 11, _pdf_text(document.get("title") or REPORT_TITLE))
+    pdf.ln(2)
+    pdf.set_x(16)
+    pdf.set_font("helvetica", "", 11)
+    pdf.set_text_color(228, 233, 239)
+    pdf.multi_cell(170, 6, _pdf_text(document.get("subtitle") or REPORT_SUBTITLE))
+    pdf.ln(2)
+    pdf.set_x(16)
+    pdf.set_font("helvetica", "B", 10)
+    pdf.set_text_color(255, 233, 208)
+    pdf.cell(
+        0,
+        6,
+        _pdf_text("Versão revisada pelo inspetor"),
+        new_x=XPos.LMARGIN,
+        new_y=YPos.NEXT,
+    )
+
+    pdf.set_xy(18, 88)
+    pdf.set_text_color(15, 43, 70)
+    pdf.set_font("helvetica", "B", 13)
+    pdf.cell(0, 7, _pdf_text("Identificação"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(2)
+    pdf.set_font("helvetica", "", 10)
+    for line in _metadata_text_lines(laudo=laudo, usuario=usuario):
+        _write_block(pdf, line)
+    pdf.ln(8)
+    pdf.set_font("helvetica", "", 10)
+    _write_block(
+        pdf,
+        _pdf_text(
+            "Este PDF foi reemitido a partir do editor de revisão do chat livre. "
+            "O histórico anterior permanece preservado na aba Revisar."
+        ),
+    )
+
+
+def _render_editable_evidence_pages(
+    pdf: _FreeChatReportPdf,
+    *,
+    document: Mapping[str, Any],
+    evidences: list[_VisualEvidenceItem],
+    temp_files: list[str],
+) -> None:
+    sections = _section_map(document)
+    for index, evidence in enumerate(evidences, start=1):
+        pdf.add_mode_page("body")
+        prefix = f"evidencia_{index}"
+        _write_section_title(pdf, f"Evidência {index}")
+        pdf.set_font("helvetica", "B", 11)
+        _write_block(pdf, evidence.display_name)
+        pdf.ln(1)
+        pdf.set_font("helvetica", "", 10)
+        _write_block(pdf, _pdf_text(f"Registro: {evidence.created_at_label}"))
+        _write_block(pdf, _pdf_text(f"Classificação: {evidence.verdict_label}"))
+        pdf.ln(3)
+
+        image_path = evidence.file_path
+        try:
+            with Image.open(evidence.file_path) as image:
+                width_px, height_px = image.size
+                if str(image.format or "").upper() not in {"PNG", "JPEG", "JPG"}:
+                    converted = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+                    converted.close()
+                    image.convert("RGB").save(converted.name, format="PNG")
+                    temp_files.append(converted.name)
+                    image_path = converted.name
+                image_width, image_height = _fit_image_box(
+                    width_px=width_px,
+                    height_px=height_px,
+                    max_width=180.0,
+                    max_height=96.0,
+                )
+        except Exception:
+            pdf.set_text_color(160, 30, 30)
+            _write_block(pdf, _pdf_text("Não foi possível embutir esta evidência visual no PDF."))
+            pdf.set_text_color(0, 0, 0)
+        else:
+            pos_x = max((pdf.w - image_width) / 2, pdf.l_margin)
+            pdf.image(image_path, x=pos_x, y=pdf.get_y(), w=image_width, h=image_height)
+            pdf.ln(image_height + 4)
+
+        for suffix in (
+            "descricao",
+            "contexto",
+            "pontos",
+            "avaliacao",
+            "encaminhamentos",
+            "criterios",
+        ):
+            section = sections.get(f"{prefix}_{suffix}")
+            if section:
+                _write_editable_section(pdf, section)
+
+
+def _generate_pdf_from_editable_document(
+    *,
+    laudo: Laudo,
+    usuario: Usuario,
+    document: Mapping[str, Any],
+    evidences: list[_VisualEvidenceItem],
+) -> str:
+    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    temp_pdf.close()
+    temp_files_to_remove: list[str] = []
+    normalized = _normalize_editable_document_payload(document)
+
+    try:
+        pdf = _FreeChatReportPdf(unit="mm", format="A4")
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.set_title(_pdf_text(f"{normalized['title']} #{int(laudo.id)}"))
+        _render_editable_cover_page(
+            pdf,
+            document=normalized,
+            laudo=laudo,
+            usuario=usuario,
+        )
+        pdf.add_mode_page("body")
+        for section in _editable_sections(normalized):
+            key = str(section.get("key") or "")
+            if key.startswith("evidencia_"):
+                continue
+            _write_editable_section(pdf, section)
+        if evidences:
+            _render_editable_evidence_pages(
+                pdf,
+                document=normalized,
+                evidences=evidences,
+                temp_files=temp_files_to_remove,
+            )
+        _render_back_cover(pdf, laudo=laudo, usuario=usuario)
+        pdf.output(temp_pdf.name)
+        for path in temp_files_to_remove:
+            safe_remove_file(path)
+        return temp_pdf.name
+    except Exception:
+        for path in [*temp_files_to_remove, temp_pdf.name]:
+            safe_remove_file(path)
+        raise
+
+
+def _metadata_editable_source(message: MensagemLaudo | None) -> dict[str, Any] | None:
+    metadata = getattr(message, "metadata_json", None)
+    if not isinstance(metadata, Mapping):
+        return None
+    source = metadata.get(FREE_CHAT_REPORT_SOURCE_METADATA_KEY)
+    if not isinstance(source, Mapping):
+        return None
+    normalized = _normalize_editable_document_payload(source)
+    if not normalized["sections"]:
+        return None
+    return normalized
+
+
+def _attachment_for_editable_report(
+    *,
+    banco: Session,
+    laudo_id: int,
+    attachment_id: int,
+) -> AnexoMesa:
+    attachment = (
+        banco.query(AnexoMesa)
+        .filter(
+            AnexoMesa.id == int(attachment_id),
+            AnexoMesa.laudo_id == int(laudo_id),
+            AnexoMesa.mime_type == "application/pdf",
+        )
+        .first()
+    )
+    if attachment is None:
+        raise HTTPException(status_code=404, detail="PDF do chat livre não encontrado.")
+    return attachment
+
+
+def _editable_source_for_attachment(
+    *,
+    banco: Session,
+    laudo: Laudo,
+    usuario: Usuario,
+    attachment: AnexoMesa,
+) -> dict[str, Any]:
+    source = _metadata_editable_source(getattr(attachment, "mensagem", None))
+    if source:
+        return source
+
+    transcript = _build_transcript(
+        banco=banco,
+        laudo_id=int(laudo.id),
+        request_message_id=int(getattr(attachment, "mensagem_id", 0) or 0),
+    )
+    evidences = _build_visual_evidence(
+        banco=banco,
+        laudo_id=int(laudo.id),
+        transcript=transcript,
+    )
+    return _build_editable_document_payload(
+        laudo=laudo,
+        usuario=usuario,
+        transcript=transcript,
+        evidences=evidences,
+    )
+
+
 def generate_free_chat_report_result(
     *,
     banco: Session,
@@ -1469,6 +1994,12 @@ def generate_free_chat_report_result(
         banco=banco,
         laudo_id=int(laudo.id),
         transcript=transcript,
+    )
+    editable_document_payload = _build_editable_document_payload(
+        laudo=laudo,
+        usuario=usuario,
+        transcript=transcript,
+        evidences=evidences,
     )
 
     if not transcript and not evidences and not str(getattr(laudo, "parecer_ia", "") or "").strip():
@@ -1497,6 +2028,9 @@ def generate_free_chat_report_result(
         remetente_id=int(usuario.id),
         tipo=TipoMensagem.IA.value,
         conteudo=message_text,
+        metadata_json={
+            FREE_CHAT_REPORT_SOURCE_METADATA_KEY: editable_document_payload,
+        },
         custo_api_reais=Decimal("0.0000"),
     )
     banco.add(assistant_message)
@@ -1529,6 +2063,7 @@ def generate_free_chat_report_result(
         attachment_payload=serializar_anexos_mesa([attachment], portal="app")[0],
         message_id=int(assistant_message.id),
         laudo_card_payload=serializar_card_laudo(banco, laudo),
+        editable_document_payload=editable_document_payload,
     )
 
 
@@ -1553,12 +2088,132 @@ def build_free_chat_report_response(
             "laudo_id": int(laudo.id),
             "laudo_card": result.laudo_card_payload,
             "anexos": [result.attachment_payload],
+            "documento_editavel": result.editable_document_payload,
+        }
+    )
+
+
+def build_free_chat_editable_document_response(
+    *,
+    banco: Session,
+    laudo: Laudo,
+    usuario: Usuario,
+    attachment_id: int,
+) -> JSONResponse:
+    attachment = _attachment_for_editable_report(
+        banco=banco,
+        laudo_id=int(laudo.id),
+        attachment_id=int(attachment_id),
+    )
+    source = _editable_source_for_attachment(
+        banco=banco,
+        laudo=laudo,
+        usuario=usuario,
+        attachment=attachment,
+    )
+    return JSONResponse(
+        {
+            "ok": True,
+            "laudo_id": int(laudo.id),
+            "attachment_id": int(attachment.id),
+            "documento": source,
+        }
+    )
+
+
+def build_free_chat_editable_report_update_response(
+    *,
+    banco: Session,
+    laudo: Laudo,
+    usuario: Usuario,
+    attachment_id: int,
+    document_payload: Mapping[str, Any],
+) -> JSONResponse:
+    attachment = _attachment_for_editable_report(
+        banco=banco,
+        laudo_id=int(laudo.id),
+        attachment_id=int(attachment_id),
+    )
+    source = _editable_source_for_attachment(
+        banco=banco,
+        laudo=laudo,
+        usuario=usuario,
+        attachment=attachment,
+    )
+    updated_document = _apply_editable_document_updates(source, document_payload)
+    evidences = _build_visual_evidence(
+        banco=banco,
+        laudo_id=int(laudo.id),
+        transcript=[],
+    )
+
+    pdf_path = _generate_pdf_from_editable_document(
+        laudo=laudo,
+        usuario=usuario,
+        document=updated_document,
+        evidences=evidences,
+    )
+    try:
+        pdf_bytes = Path(pdf_path).read_bytes()
+    finally:
+        safe_remove_file(pdf_path)
+
+    message_text = (
+        "Nova versão do relatório em PDF gerada a partir da revisão editável. "
+        "O arquivo está anexado logo abaixo para download."
+    )
+    assistant_message = MensagemLaudo(
+        laudo_id=int(laudo.id),
+        remetente_id=int(usuario.id),
+        tipo=TipoMensagem.IA.value,
+        conteudo=message_text,
+        metadata_json={
+            FREE_CHAT_REPORT_SOURCE_METADATA_KEY: updated_document,
+        },
+        custo_api_reais=Decimal("0.0000"),
+    )
+    banco.add(assistant_message)
+    banco.flush()
+
+    attachment_data = salvar_arquivo_anexo_mesa(
+        empresa_id=int(usuario.empresa_id),
+        laudo_id=int(laudo.id),
+        nome_original=f"relatorio_tecnico_inspecao_{int(laudo.id)}_revisado.pdf",
+        mime_type="application/pdf",
+        conteudo=pdf_bytes,
+    )
+    new_attachment = AnexoMesa(
+        laudo_id=int(laudo.id),
+        mensagem_id=int(assistant_message.id),
+        enviado_por_id=int(usuario.id),
+        **attachment_data,
+    )
+    banco.add(new_attachment)
+    laudo.atualizado_em = datetime.now().astimezone()
+    banco.flush()
+    commit_ou_rollback_operacional(
+        banco,
+        logger_operacao=chat_logger,
+        mensagem_erro="Falha ao persistir a revisão editável do PDF do chat livre.",
+    )
+
+    return JSONResponse(
+        {
+            "tipo": "relatorio_chat_livre",
+            "texto": message_text,
+            "mensagem_id": int(assistant_message.id),
+            "laudo_id": int(laudo.id),
+            "laudo_card": serializar_card_laudo(banco, laudo),
+            "anexos": [serializar_anexos_mesa([new_attachment], portal="app")[0]],
+            "documento_editavel": updated_document,
         }
     )
 
 
 __all__ = [
     "FreeChatReportGenerationResult",
+    "build_free_chat_editable_document_response",
+    "build_free_chat_editable_report_update_response",
     "build_free_chat_report_response",
     "generate_free_chat_report_result",
 ]

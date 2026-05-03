@@ -318,6 +318,39 @@ export interface MobileAttachment {
   local_uri?: string;
 }
 
+export interface MobileFreeChatEditableDocumentSection {
+  key: string;
+  title: string;
+  kind?: "paragraph" | "list" | string;
+  editable?: boolean;
+  content: string;
+}
+
+export interface MobileFreeChatEditableDocument {
+  contract?: "free_chat_report_editable_document" | string;
+  version?: number;
+  title: string;
+  subtitle?: string;
+  sections: MobileFreeChatEditableDocumentSection[];
+}
+
+export interface MobileFreeChatEditableDocumentResponse {
+  ok: boolean;
+  laudo_id: number;
+  attachment_id: number;
+  documento: MobileFreeChatEditableDocument;
+}
+
+export interface MobileFreeChatEditableDocumentSaveResponse {
+  tipo: "relatorio_chat_livre" | string;
+  texto: string;
+  mensagem_id: number;
+  laudo_id: number;
+  laudo_card?: MobileLaudoCard | null;
+  anexos?: MobileAttachment[];
+  documento_editavel?: MobileFreeChatEditableDocument;
+}
+
 export interface MobileAttachmentPolicy {
   contract_name?: "MobileInspectorAttachmentPolicyV2";
   contract_version?: "v2";

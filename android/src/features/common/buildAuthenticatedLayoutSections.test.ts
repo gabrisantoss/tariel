@@ -78,9 +78,12 @@ describe("buildThreadHeaderControlsProps", () => {
     expect(props.finalizacaoDisponivel).toBe(true);
   });
 
-  it("preenche o chat ao pedir correção de PDF do chat livre", () => {
+  it("não usa composer para corrigir PDF do chat livre", async () => {
     const setAbaAtiva = jest.fn();
     const setMensagem = jest.fn();
+    const handleRecarregarConversaAtiva = jest
+      .fn()
+      .mockResolvedValue(undefined);
     const props = buildThreadConversationPaneProps({
       ...buildHeaderInput({
         laudoId: 44,
@@ -111,6 +114,7 @@ describe("buildThreadHeaderControlsProps", () => {
       handleAbrirAnexo: jest.fn(),
       handleAbrirQualityGate: jest.fn(),
       handleExecutarComandoRevisaoMobile: jest.fn(),
+      handleRecarregarConversaAtiva,
       handleUsarPerguntaPreLaudo: jest.fn(),
       mensagensMesa: [],
       mensagensVisiveis: [],
@@ -132,9 +136,10 @@ describe("buildThreadHeaderControlsProps", () => {
       "Versão 2",
     );
 
-    expect(setAbaAtiva).toHaveBeenCalledWith("chat");
-    expect(setMensagem).toHaveBeenCalledWith(
-      "Corrija a Versão 2 (relatorio_chat_livre_v2.pdf). Ajuste solicitado: ",
-    );
+    expect(setAbaAtiva).not.toHaveBeenCalled();
+    expect(setMensagem).not.toHaveBeenCalled();
+
+    await props.onDocumentoChatLivreGerado?.();
+    expect(handleRecarregarConversaAtiva).toHaveBeenCalledTimes(1);
   });
 });

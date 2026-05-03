@@ -16,6 +16,7 @@ export {
 } from "./settingsApi";
 export {
   carregarGateQualidadeLaudoMobile,
+  carregarDocumentoEditavelChatLivreMobile,
   carregarLaudosMobile,
   carregarMensagensLaudo,
   carregarStatusLaudo,
@@ -23,6 +24,7 @@ export {
   finalizarLaudoMobile,
   MobileQualityGateError,
   reabrirLaudoMobile,
+  salvarDocumentoEditavelChatLivreMobile,
   salvarGuidedInspectionDraftMobile,
   uploadDocumentoChatMobile,
 } from "./chatApi";

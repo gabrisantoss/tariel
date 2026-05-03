@@ -257,6 +257,12 @@ export const chatThreadSurfaceStyles = {
     flexWrap: "wrap",
     gap: spacing.xs,
   },
+  threadReviewCompactActionsRail: {
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignSelf: "stretch",
+    gap: spacing.xs,
+  },
   threadReviewActionStack: {
     gap: spacing.xs,
   },
@@ -278,6 +284,11 @@ export const chatThreadSurfaceStyles = {
     paddingVertical: 10,
     borderRadius: 16,
     borderWidth: 1,
+  },
+  threadReviewCompactActionButton: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: "center",
   },
   threadReviewActionButtonContent: {
     flexDirection: "row",
@@ -303,6 +314,10 @@ export const chatThreadSurfaceStyles = {
     backgroundColor: colors.successWash,
     borderColor: colors.successSoft,
   },
+  threadReviewActionButtonNeutral: {
+    backgroundColor: colors.white,
+    borderColor: colors.ink900,
+  },
   threadReviewActionButtonDanger: {
     backgroundColor: colors.dangerWash,
     borderColor: colors.dangerSoft,
@@ -319,6 +334,9 @@ export const chatThreadSurfaceStyles = {
   },
   threadReviewActionButtonTextSuccess: {
     color: colors.success,
+  },
+  threadReviewActionButtonTextNeutral: {
+    color: colors.ink900,
   },
   threadReviewActionButtonTextDanger: {
     color: colors.danger,
@@ -400,6 +418,46 @@ export const chatThreadSurfaceStyles = {
     color: colors.accent,
     fontSize: 11,
     fontWeight: "800",
+  },
+  threadReviewEditableEditor: {
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.surfaceStrokeStrong,
+    backgroundColor: colors.surfacePanel,
+  },
+  threadReviewEditableHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  threadReviewEditableSection: {
+    gap: spacing.xs,
+  },
+  threadReviewEditableSectionTitle: {
+    color: colors.textPrimary,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  threadReviewEditableInput: {
+    minHeight: 92,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.surfaceStrokeStrong,
+    backgroundColor: colors.surfaceCanvas,
+    color: colors.textPrimary,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: "top",
+  },
+  threadReviewEditableNotice: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
   },
   threadContentKeyboard: {
     paddingTop: 2,

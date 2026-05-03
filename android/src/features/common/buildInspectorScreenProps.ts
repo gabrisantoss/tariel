@@ -163,6 +163,7 @@ interface BuildInspectorAuthenticatedLayoutScreenPropsInput {
     | "handleAbrirConfiguracoes"
     | "handleAbrirNovoChat"
     | "handleExecutarComandoRevisaoMobile"
+    | "handleRecarregarConversaAtiva"
     | "handleUsarPerguntaPreLaudo"
     | "guidedTemplatesVisible"
     | "mensagemChatDestacadaId"
@@ -289,6 +290,8 @@ export function buildInspectorAuthenticatedLayoutScreenProps({
         handleAbrirNovoChat: threadState.handleAbrirNovoChat,
         handleExecutarComandoRevisaoMobile:
           threadState.handleExecutarComandoRevisaoMobile,
+        handleRecarregarConversaAtiva:
+          threadState.handleRecarregarConversaAtiva,
         handleUsarPerguntaPreLaudo: threadState.handleUsarPerguntaPreLaudo,
         guidedTemplatesVisible: threadState.guidedTemplatesVisible,
         headerSafeTopInset: baseState.headerSafeTopInset,

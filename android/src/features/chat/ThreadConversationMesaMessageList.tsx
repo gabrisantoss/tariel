@@ -129,19 +129,12 @@ function buildReviewEmptyState(params: {
   } = params;
 
   if (freeChatDocumentReviewFlow) {
-    return hasReviewSummary
-      ? {
-          description:
-            "O relatório gerado no chat está acima. Novas correções e versões baixadas ficam concentradas nesta revisão.",
-          icon: "clipboard-text-outline",
-          title: "Sem novas correções",
-        }
-      : {
-          description:
-            "Peça o laudo no chat livre. O relatório gerado aparece aqui para revisão e novo download.",
-          icon: "message-reply-text-outline",
-          title: "Relatório ainda não gerado",
-        };
+    return {
+      description:
+        "Peça o laudo no chat livre. O relatório gerado aparece aqui para revisão e novo download.",
+      icon: "message-reply-text-outline",
+      title: "Relatório ainda não gerado",
+    };
   }
 
   if (caseLifecycleStatus === "aprovado" || caseLifecycleStatus === "emitido") {
@@ -501,6 +494,10 @@ export function ThreadConversationMesaMessageList(
   } = props;
 
   if (!mensagensMesa.length) {
+    if (freeChatDocumentReviewFlow && hasReviewSummary) {
+      return null;
+    }
+
     const emptyState = buildReviewEmptyState({
       activeOwnerRole,
       caseLifecycleStatus,

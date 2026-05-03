@@ -8,7 +8,11 @@ import pytest
 import app.domains.chat.routes as rotas_inspetor
 from app.domains.chat.learning_helpers import registrar_aprendizado_visual_automatico_chat
 from app.shared.database import AnexoMesa, Laudo, MensagemLaudo, StatusRevisao, TipoMensagem
-from nucleo.inspetor.comandos_chat import analisar_pedido_relatorio_chat_livre
+from nucleo.inspetor.comandos_chat import (
+    analisar_pedido_correcao_relatorio_chat_livre,
+    analisar_pedido_relatorio_chat_livre,
+    extrair_instrucao_correcao_relatorio_chat_livre,
+)
 from tests.regras_rotas_criticas_support import (
     _criar_laudo,
     _imagem_png_bytes_teste,
@@ -22,6 +26,17 @@ def test_analisar_pedido_relatorio_chat_livre_detecta_variacoes() -> None:
     assert analisar_pedido_relatorio_chat_livre("gera um relatorio profissional")
     assert analisar_pedido_relatorio_chat_livre("consegue criar um pdf com isso?")
     assert not analisar_pedido_relatorio_chat_livre("preciso analisar o equipamento")
+
+
+def test_analisar_correcao_relatorio_chat_livre_extrai_instrucao() -> None:
+    texto = "Corrigir PDF (Versão 2): remover conclusão sobre NR-12"
+
+    assert analisar_pedido_correcao_relatorio_chat_livre(texto)
+    assert (
+        extrair_instrucao_correcao_relatorio_chat_livre(texto)
+        == "remover conclusão sobre NR-12"
+    )
+    assert not analisar_pedido_correcao_relatorio_chat_livre("Corrigir PDF (Versão 2): ")
 
 
 def test_api_chat_com_imagens_persiste_fotos_no_historico(ambiente_critico) -> None:
@@ -267,3 +282,82 @@ def test_api_chat_pedido_natural_de_relatorio_gera_pdf_com_fotos(ambiente_critic
         assert ultima_mensagem is not None
         assert ultima_mensagem.tipo == TipoMensagem.IA.value
         assert "Relatório técnico consolidado gerado em PDF" in ultima_mensagem.conteudo
+
+
+def test_api_chat_livre_pdf_editavel_gera_nova_versao(ambiente_critico) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+
+    with SessionLocal() as banco:
+        laudo_id = _criar_laudo(
+            banco,
+            empresa_id=ids["empresa_a"],
+            usuario_id=ids["inspetor_a"],
+            status_revisao=StatusRevisao.RASCUNHO.value,
+        )
+        laudo = banco.get(Laudo, laudo_id)
+        assert laudo is not None
+        laudo.primeira_mensagem = "Inspecao livre com registro textual para PDF editavel."
+        laudo.parecer_ia = "Conclusao preliminar antes da revisao manual."
+        banco.add(
+            MensagemLaudo(
+                laudo_id=laudo_id,
+                remetente_id=ids["inspetor_a"],
+                tipo=TipoMensagem.USER.value,
+                conteudo="Registro inicial do inspetor com achado técnico para compor o relatório.",
+            )
+        )
+        banco.commit()
+
+    resposta = client.post(
+        "/app/api/chat",
+        headers={"X-CSRF-Token": csrf},
+        json={
+            "mensagem": "gere um relatório em pdf",
+            "historico": [],
+            "laudo_id": laudo_id,
+        },
+    )
+
+    assert resposta.status_code == 200
+    primeiro_anexo = resposta.json()["anexos"][0]
+    anexo_id = int(primeiro_anexo["id"])
+
+    editavel = client.get(
+        f"/app/api/laudo/{laudo_id}/chat-livre/pdf/{anexo_id}/editavel"
+    )
+    assert editavel.status_code == 200
+    documento = editavel.json()["documento"]
+    assert documento["sections"]
+    documento["sections"][0]["content"] += "\nTexto revisado manualmente pelo inspetor."
+
+    revisao = client.post(
+        f"/app/api/laudo/{laudo_id}/chat-livre/pdf/{anexo_id}/editavel",
+        headers={"X-CSRF-Token": csrf},
+        json=documento,
+    )
+    assert revisao.status_code == 200
+    corpo_revisao = revisao.json()
+    assert corpo_revisao["tipo"] == "relatorio_chat_livre"
+    assert int(corpo_revisao["anexos"][0]["id"]) != anexo_id
+
+    download = client.get(corpo_revisao["anexos"][0]["url"])
+    assert download.status_code == 200
+    assert download.content.startswith(b"%PDF")
+    pypdf = pytest.importorskip("pypdf")
+    leitor = pypdf.PdfReader(io.BytesIO(download.content))
+    texto_pdf = "\n".join((pagina.extract_text() or "") for pagina in leitor.pages)
+    assert "Texto revisado manualmente pelo inspetor" in texto_pdf
+
+    with SessionLocal() as banco:
+        total_pdfs = (
+            banco.query(AnexoMesa)
+            .filter(
+                AnexoMesa.laudo_id == laudo_id,
+                AnexoMesa.mime_type == "application/pdf",
+            )
+            .count()
+        )
+        assert total_pdfs == 2

@@ -149,6 +149,21 @@ export function buildInspectorRootFinalScreenState({
           controllers.chatController.actions.handleAbrirNovoChat,
         handleExecutarComandoRevisaoMobile:
           controllers.mesaController.actions.handleExecutarComandoRevisaoMobile,
+        handleRecarregarConversaAtiva: async () => {
+          const accessToken = sessionFlow.state.session?.accessToken;
+          const laudoId = derivedState.conversaAtiva?.laudoId || null;
+          if (!accessToken || !laudoId) {
+            return;
+          }
+          await controllers.chatController.actions.carregarConversaPorLaudoId(
+            accessToken,
+            laudoId,
+          );
+          await controllers.chatController.actions.carregarListaLaudos(
+            accessToken,
+            true,
+          );
+        },
         handleUsarPerguntaPreLaudo: (value) => {
           localState.setAbaAtiva("chat");
           localState.setMensagem(value);

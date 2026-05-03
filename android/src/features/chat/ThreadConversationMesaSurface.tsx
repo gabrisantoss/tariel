@@ -52,6 +52,7 @@ interface ThreadConversationMesaSurfaceProps {
   scrollRef: RefObject<ScrollView | null>;
   keyboardVisible: boolean;
   threadKeyboardPaddingBottom: number;
+  historyTitle?: string;
   nomeUsuarioExibicao: string;
   mensagensVisiveis: MobileChatMessage[];
   obterResumoReferenciaMensagem: (
@@ -76,6 +77,7 @@ interface ThreadConversationMesaSurfaceProps {
     attachment: MobileAttachment,
     versionLabel: string,
   ) => void;
+  onDocumentoChatLivreGerado?: () => Promise<void> | void;
   reviewCommandBusy?: boolean;
 }
 
@@ -97,12 +99,12 @@ function buildReviewStage(params: {
   if (freeChatDocumentReviewFlow) {
     return hasReviewSummary
       ? {
-          label: "Revisar PDF",
-          title: "PDFs gerados",
-          description: "Baixe ou corrija versões do relatório.",
+          label: "",
+          title: "Baixe ou corrija versões dos relatórios",
+          description: "",
         }
       : {
-          label: "Revisar PDF",
+          label: "",
           title: "Sem PDF gerado",
           description: "Peça o relatório no chat livre.",
         };
@@ -176,6 +178,7 @@ export function ThreadConversationMesaSurface({
   scrollRef,
   keyboardVisible,
   threadKeyboardPaddingBottom,
+  historyTitle,
   nomeUsuarioExibicao,
   mensagensVisiveis,
   obterResumoReferenciaMensagem,
@@ -191,6 +194,7 @@ export function ThreadConversationMesaSurface({
   dynamicMessageTextStyle,
   onExecutarComandoRevisaoMobile,
   onCorrigirDocumentoChatLivre,
+  onDocumentoChatLivreGerado,
   reviewCommandBusy = false,
 }: ThreadConversationMesaSurfaceProps) {
   const { t } = useAppTranslation();
@@ -204,9 +208,12 @@ export function ThreadConversationMesaSurface({
     : [];
   const reviewSummary = freeChatDocumentReviewFlow
     ? renderizarDocumentosChatLivreRevisao({
+        historyTitle,
         mensagens: mensagensVisiveis,
         onAbrirAnexo,
         onCorrigirDocumento: onCorrigirDocumentoChatLivre,
+        onDocumentoGerado: onDocumentoChatLivreGerado,
+        sessionAccessToken,
       })
     : renderizarReviewPackageMesa(
         reviewPackage,
@@ -315,14 +322,16 @@ export function ThreadConversationMesaSurface({
       testID="mesa-thread-surface"
     >
       <View style={styles.threadSection} testID="review-state-summary">
-        <Text
-          style={[
-            styles.threadSectionLabel,
-            darkMode ? styles.threadSectionLabelDark : null,
-          ]}
-        >
-          {t(reviewStage.label)}
-        </Text>
+        {reviewStage.label ? (
+          <Text
+            style={[
+              styles.threadSectionLabel,
+              darkMode ? styles.threadSectionLabelDark : null,
+            ]}
+          >
+            {t(reviewStage.label)}
+          </Text>
+        ) : null}
         <Text
           style={[
             styles.messageOperationalTitle,
@@ -331,14 +340,16 @@ export function ThreadConversationMesaSurface({
         >
           {t(reviewStage.title)}
         </Text>
-        <Text
-          style={[
-            styles.messageOperationalText,
-            darkMode ? styles.messageTextDark : null,
-          ]}
-        >
-          {t(reviewStage.description)}
-        </Text>
+        {reviewStage.description ? (
+          <Text
+            style={[
+              styles.messageOperationalText,
+              darkMode ? styles.messageTextDark : null,
+            ]}
+          >
+            {t(reviewStage.description)}
+          </Text>
+        ) : null}
       </View>
       {reviewSummary}
       <ThreadConversationMesaMessageList

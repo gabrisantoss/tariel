@@ -54,12 +54,45 @@ _ACOES_RELATORIO_CHAT = frozenset(
         "produzir",
     }
 )
+_ACOES_CORRECAO_RELATORIO_CHAT = frozenset(
+    {
+        "ajustar",
+        "ajuste",
+        "alterar",
+        "altere",
+        "corrige",
+        "corrigir",
+        "corrija",
+        "inclua",
+        "incluir",
+        "remova",
+        "remover",
+        "trocar",
+        "troque",
+    }
+)
+_ALVOS_CORRECAO_RELATORIO_CHAT = frozenset(
+    {
+        "documento",
+        "pdf",
+        "relatorio",
+        "versao",
+    }
+)
+_CORRECAO_INSTRUCAO_LIMITE = 1200
 
 
 def _normalizar_texto_sem_acento(texto: str) -> str:
     valor = unicodedata.normalize("NFKD", str(texto or "").strip().lower())
     sem_acento = "".join(char for char in valor if not unicodedata.combining(char))
     return re.sub(r"\s+", " ", sem_acento).strip()
+
+
+def _limpar_instrucao_correcao_relatorio_chat_livre(texto: str) -> str:
+    instrucao = re.sub(r"\s+", " ", str(texto or "")).strip(" .:-")
+    if len(instrucao) > _CORRECAO_INSTRUCAO_LIMITE:
+        instrucao = instrucao[:_CORRECAO_INSTRUCAO_LIMITE].rsplit(" ", 1)[0].strip()
+    return instrucao
 
 
 def mensagem_para_mesa(texto: str) -> bool:
@@ -105,6 +138,55 @@ def analisar_pedido_relatorio_chat_livre(texto: str) -> bool:
             bruto,
         )
     )
+
+
+def extrair_instrucao_correcao_relatorio_chat_livre(texto: str) -> str:
+    bruto = str(texto or "").strip()
+    if not bruto or bruto.startswith("/") or mensagem_para_mesa(bruto):
+        return ""
+
+    compacto = re.sub(r"\s+", " ", bruto).strip()
+    normalizado = _normalizar_texto_sem_acento(compacto)
+    if not normalizado:
+        return ""
+
+    tokens = set(re.findall(r"[a-z0-9_]+", normalizado))
+    tem_acao = bool(tokens & _ACOES_CORRECAO_RELATORIO_CHAT)
+    tem_alvo = bool(tokens & _ALVOS_CORRECAO_RELATORIO_CHAT)
+    if not tem_acao or not tem_alvo:
+        return ""
+
+    ajuste_match = re.search(
+        r"\bajuste\s+solicitad[ao]\s*[:\-]\s*(.+)$",
+        compacto,
+        flags=re.IGNORECASE,
+    )
+    if ajuste_match:
+        return _limpar_instrucao_correcao_relatorio_chat_livre(ajuste_match.group(1))
+
+    if ":" in compacto:
+        prefixo, instrucao = compacto.split(":", 1)
+        prefixo_normalizado = _normalizar_texto_sem_acento(prefixo)
+        prefixo_tokens = set(re.findall(r"[a-z0-9_]+", prefixo_normalizado))
+        if (
+            prefixo_tokens & _ACOES_CORRECAO_RELATORIO_CHAT
+            and prefixo_tokens & _ALVOS_CORRECAO_RELATORIO_CHAT
+        ):
+            return _limpar_instrucao_correcao_relatorio_chat_livre(instrucao)
+
+    instrucao_match = re.search(
+        r"\b(?:para|com|que)\s+(.+)$",
+        compacto,
+        flags=re.IGNORECASE,
+    )
+    if instrucao_match:
+        return _limpar_instrucao_correcao_relatorio_chat_livre(instrucao_match.group(1))
+
+    return ""
+
+
+def analisar_pedido_correcao_relatorio_chat_livre(texto: str) -> bool:
+    return bool(extrair_instrucao_correcao_relatorio_chat_livre(texto))
 
 
 def analisar_comando_finalizacao(

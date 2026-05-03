@@ -3,6 +3,9 @@ import type {
   MobileChatMessage,
   MobileChatSendResult,
   MobileDocumentUploadResponse,
+  MobileFreeChatEditableDocument,
+  MobileFreeChatEditableDocumentResponse,
+  MobileFreeChatEditableDocumentSaveResponse,
   MobileGuidedInspectionDraftPayload,
   MobileGuidedInspectionMessageContextPayload,
   MobileGuidedInspectionDraftUpdateResponse,
@@ -424,6 +427,69 @@ export async function uploadDocumentoChatMobile(
   }
 
   return corpo;
+}
+
+export async function carregarDocumentoEditavelChatLivreMobile(
+  accessToken: string,
+  laudoId: number,
+  attachmentId: number,
+): Promise<MobileFreeChatEditableDocumentResponse> {
+  const response = await fetchComObservabilidade(
+    "free_chat_editable_pdf_load",
+    buildApiUrl(
+      `/app/api/laudo/${laudoId}/chat-livre/pdf/${attachmentId}/editavel`,
+    ),
+    {
+      method: "GET",
+      headers: construirHeaders(accessToken),
+    },
+  );
+
+  const payload = await lerJsonSeguro<
+    MobileFreeChatEditableDocumentResponse | { detail?: string }
+  >(response);
+  if (!response.ok || !payload || !("documento" in payload)) {
+    throw new Error(
+      extrairMensagemErro(payload, "Não foi possível abrir o PDF editável."),
+    );
+  }
+
+  return payload;
+}
+
+export async function salvarDocumentoEditavelChatLivreMobile(
+  accessToken: string,
+  laudoId: number,
+  attachmentId: number,
+  documento: MobileFreeChatEditableDocument,
+): Promise<MobileFreeChatEditableDocumentSaveResponse> {
+  const response = await fetchComObservabilidade(
+    "free_chat_editable_pdf_save",
+    buildApiUrl(
+      `/app/api/laudo/${laudoId}/chat-livre/pdf/${attachmentId}/editavel`,
+    ),
+    {
+      method: "POST",
+      headers: construirHeaders(accessToken, {
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify(documento),
+    },
+  );
+
+  const payload = await lerJsonSeguro<
+    MobileFreeChatEditableDocumentSaveResponse | { detail?: string }
+  >(response);
+  if (!response.ok || !payload || !("mensagem_id" in payload)) {
+    throw new Error(
+      extrairMensagemErro(
+        payload,
+        "Não foi possível gerar a nova versão do PDF.",
+      ),
+    );
+  }
+
+  return payload;
 }
 
 export async function reabrirLaudoMobile(

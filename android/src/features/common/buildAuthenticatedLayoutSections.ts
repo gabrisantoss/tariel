@@ -7,7 +7,6 @@ import type {
 } from "./inspectorUiBuilderTypes";
 import type { ThreadComposerPanelProps } from "../chat/ThreadComposerPanel";
 import type { ThreadConversationPaneProps } from "../chat/ThreadConversationPane";
-import { nomeExibicaoAnexo } from "../chat/attachmentUtils";
 import {
   hasCaseSurfaceAction,
   hasFreeChatDocumentReviewFlow,
@@ -196,6 +195,11 @@ export function buildThreadConversationPaneProps(
       "Olá, sou Tariel. Como posso te ajudar?",
     enviandoMensagem: input.enviandoMensagem,
     keyboardVisible: input.keyboardVisible,
+    historyTitle:
+      input.conversaAtiva?.laudoCard?.titulo ||
+      (input.conversaAtiva?.laudoId
+        ? `Histórico #${input.conversaAtiva.laudoId}`
+        : "Histórico do relatório"),
     mesaDisponivel: input.mesaDisponivel,
     mesaIndisponivelDescricao: input.mesaIndisponivelDescricao,
     mesaIndisponivelTitulo: input.mesaIndisponivelTitulo,
@@ -210,13 +214,8 @@ export function buildThreadConversationPaneProps(
       void input.abrirReferenciaNoChat(id);
     },
     onAbrirQualityGate: input.handleAbrirQualityGate,
-    onCorrigirDocumentoChatLivre: (attachment, versionLabel) => {
-      const nomeDocumento = nomeExibicaoAnexo(attachment, "PDF gerado");
-      input.setAbaAtiva("chat");
-      input.setMensagem(
-        `Corrija a ${versionLabel} (${nomeDocumento}). Ajuste solicitado: `,
-      );
-    },
+    onCorrigirDocumentoChatLivre: () => undefined,
+    onDocumentoChatLivreGerado: () => input.handleRecarregarConversaAtiva(),
     onDefinirReferenciaMesaAtiva: input.definirReferenciaMesaAtiva,
     onExecutarComandoRevisaoMobile: (payload) =>
       input.handleExecutarComandoRevisaoMobile(payload),

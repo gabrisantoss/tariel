@@ -1,8 +1,23 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Pressable, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
+import {
+  carregarDocumentoEditavelChatLivreMobile,
+  salvarDocumentoEditavelChatLivreMobile,
+} from "../../config/api";
 import { colors } from "../../theme/tokens";
-import type { MobileAttachment, MobileChatMessage } from "../../types/mobile";
+import type {
+  MobileAttachment,
+  MobileChatMessage,
+  MobileFreeChatEditableDocument,
+} from "../../types/mobile";
 import { styles } from "../InspectorMobileApp.styles";
 import { nomeExibicaoAnexo, tamanhoHumanoAnexo } from "./attachmentUtils";
 
@@ -72,16 +87,26 @@ function renderDocumentActionButton({
   label: string;
   onPress: () => void;
   testID: string;
-  tone: "accent" | "success";
+  tone: "accent" | "success" | "neutral";
 }) {
   const toneStyle =
-    tone === "success"
-      ? styles.threadReviewActionButtonSuccess
-      : styles.threadReviewActionButtonAccent;
+    tone === "neutral"
+      ? styles.threadReviewActionButtonNeutral
+      : tone === "success"
+        ? styles.threadReviewActionButtonSuccess
+        : styles.threadReviewActionButtonAccent;
   const textStyle =
-    tone === "success"
-      ? styles.threadReviewActionButtonTextSuccess
-      : styles.threadReviewActionButtonTextAccent;
+    tone === "neutral"
+      ? styles.threadReviewActionButtonTextNeutral
+      : tone === "success"
+        ? styles.threadReviewActionButtonTextSuccess
+        : styles.threadReviewActionButtonTextAccent;
+  const iconColor =
+    tone === "neutral"
+      ? colors.ink900
+      : tone === "success"
+        ? colors.success
+        : colors.accent;
 
   return (
     <Pressable
@@ -90,17 +115,14 @@ function renderDocumentActionButton({
       onPress={onPress}
       style={[
         styles.threadReviewActionButton,
+        styles.threadReviewCompactActionButton,
         toneStyle,
         disabled ? styles.threadReviewActionButtonDisabled : null,
       ]}
       testID={testID}
     >
       <View style={styles.threadReviewActionButtonContent}>
-        <MaterialCommunityIcons
-          name={icon}
-          size={14}
-          color={tone === "success" ? colors.success : colors.accent}
-        />
+        <MaterialCommunityIcons name={icon} size={14} color={iconColor} />
         <Text style={[styles.threadReviewActionButtonText, textStyle]}>
           {label}
         </Text>
@@ -110,11 +132,13 @@ function renderDocumentActionButton({
 }
 
 function renderDocumentListItem({
+  historyTitle,
   item,
   onAbrirAnexo,
   onCorrigirDocumento,
   testIDPrefix,
 }: {
+  historyTitle: string;
   item: FreeChatDocumentReviewItem;
   onAbrirAnexo: (attachment: MobileAttachment) => void;
   onCorrigirDocumento?: (
@@ -123,8 +147,12 @@ function renderDocumentListItem({
   ) => void;
   testIDPrefix: string;
 }) {
-  const nome = nomeExibicaoAnexo(item.attachment, "Relatório técnico.pdf");
   const tamanho = tamanhoHumanoAnexo(item.attachment.tamanho_bytes);
+  const title =
+    item.status === "current"
+      ? "Relatório atual"
+      : `Relatório anterior v${item.version}`;
+  const subtitle = String(historyTitle || "Histórico do relatório").trim();
 
   return (
     <View
@@ -152,20 +180,18 @@ function renderDocumentListItem({
         </Text>
       </View>
       <View style={styles.threadReviewListCopy}>
-        <Text style={styles.threadReviewListTitle}>
-          {item.versionLabel} · {nome}
-        </Text>
+        <Text style={styles.threadReviewListTitle}>{title}</Text>
         <Text style={styles.threadReviewListText}>
-          {item.messageId ? `Mensagem #${item.messageId}` : "Documento gerado"}
+          {subtitle}
           {tamanho ? ` · ${tamanho}` : ""}
         </Text>
-        <View style={styles.threadReviewActionsRail}>
+        <View style={styles.threadReviewCompactActionsRail}>
           {renderDocumentActionButton({
             icon: "download-outline",
             label: "Baixar",
             onPress: () => onAbrirAnexo(item.attachment),
             testID: `${testIDPrefix}-download`,
-            tone: "success",
+            tone: "neutral",
           })}
           {renderDocumentActionButton({
             disabled: !onCorrigirDocumento,
@@ -174,7 +200,7 @@ function renderDocumentListItem({
             onPress: () =>
               onCorrigirDocumento?.(item.attachment, item.versionLabel),
             testID: `${testIDPrefix}-correct`,
-            tone: "accent",
+            tone: "neutral",
           })}
         </View>
       </View>
@@ -182,17 +208,185 @@ function renderDocumentListItem({
   );
 }
 
-export function renderizarDocumentosChatLivreRevisao(params: {
+function obterLaudoIdDoAnexo(attachment: MobileAttachment): number | null {
+  const url = String(attachment.url || "").trim();
+  const match = url.match(/\/laudo\/(\d+)\//);
+  if (!match) {
+    return null;
+  }
+  const laudoId = Number(match[1]);
+  return Number.isFinite(laudoId) && laudoId > 0 ? laudoId : null;
+}
+
+function FreeChatEditableDocumentEditor(props: {
+  attachment: MobileAttachment;
+  document: MobileFreeChatEditableDocument;
+  error: string;
+  busy: boolean;
+  notice: string;
+  onCancel: () => void;
+  onDocumentChange: (document: MobileFreeChatEditableDocument) => void;
+  onSave: () => void;
+}) {
+  return (
+    <View
+      style={styles.threadReviewEditableEditor}
+      testID="free-chat-pdf-editor"
+    >
+      <View style={styles.threadReviewEditableHeader}>
+        <View style={styles.threadReviewListCopy}>
+          <Text style={styles.threadReviewTitle}>PDF editável</Text>
+          <Text style={styles.threadReviewDescription}>
+            {nomeExibicaoAnexo(props.attachment, "PDF gerado")}
+          </Text>
+        </View>
+        {props.busy ? <ActivityIndicator color={colors.ink900} /> : null}
+      </View>
+
+      {props.document.sections.map((section, index) => (
+        <View key={section.key} style={styles.threadReviewEditableSection}>
+          <Text style={styles.threadReviewEditableSectionTitle}>
+            {section.title}
+          </Text>
+          <TextInput
+            editable={!props.busy && section.editable !== false}
+            multiline
+            onChangeText={(content) => {
+              const sections = props.document.sections.map(
+                (current, currentIndex) =>
+                  currentIndex === index ? { ...current, content } : current,
+              );
+              props.onDocumentChange({ ...props.document, sections });
+            }}
+            style={styles.threadReviewEditableInput}
+            testID={`free-chat-pdf-editor-section-${section.key}`}
+            value={section.content}
+          />
+        </View>
+      ))}
+
+      {props.error ? (
+        <Text style={styles.threadReviewWarningText}>{props.error}</Text>
+      ) : null}
+      {props.notice ? (
+        <Text style={styles.threadReviewEditableNotice}>{props.notice}</Text>
+      ) : null}
+
+      <View style={styles.threadReviewCompactActionsRail}>
+        {renderDocumentActionButton({
+          disabled: props.busy,
+          icon: "close",
+          label: "Cancelar",
+          onPress: props.onCancel,
+          testID: "free-chat-pdf-editor-cancel",
+          tone: "neutral",
+        })}
+        {renderDocumentActionButton({
+          disabled: props.busy,
+          icon: "file-pdf-box",
+          label: "Gerar PDF",
+          onPress: props.onSave,
+          testID: "free-chat-pdf-editor-save",
+          tone: "neutral",
+        })}
+      </View>
+    </View>
+  );
+}
+
+function FreeChatDocumentsReviewCard(params: {
+  historyTitle?: string;
   mensagens: MobileChatMessage[];
   onAbrirAnexo: (attachment: MobileAttachment) => void;
   onCorrigirDocumento?: (
     attachment: MobileAttachment,
     versionLabel: string,
   ) => void;
+  onDocumentoGerado?: () => Promise<void> | void;
+  sessionAccessToken?: string | null;
 }) {
+  const [documentoEditavel, setDocumentoEditavel] =
+    useState<MobileFreeChatEditableDocument | null>(null);
+  const [attachmentEmEdicao, setAttachmentEmEdicao] =
+    useState<MobileAttachment | null>(null);
+  const [editorBusy, setEditorBusy] = useState(false);
+  const [editorError, setEditorError] = useState("");
+  const [editorNotice, setEditorNotice] = useState("");
+
   const documentos = buildFreeChatDocumentReviewItems(params.mensagens);
   const atual = documentos[0] || null;
   const anteriores = documentos.slice(1);
+
+  async function abrirEditor(item: FreeChatDocumentReviewItem) {
+    const token = String(params.sessionAccessToken || "").trim();
+    const laudoId = obterLaudoIdDoAnexo(item.attachment);
+    const attachmentId = Number(item.attachment.id || 0);
+    if (!token || !laudoId || !attachmentId) {
+      setEditorError("Não foi possível abrir este PDF para edição.");
+      setAttachmentEmEdicao(item.attachment);
+      setDocumentoEditavel(null);
+      return;
+    }
+
+    setAttachmentEmEdicao(item.attachment);
+    setDocumentoEditavel(null);
+    setEditorError("");
+    setEditorNotice("");
+    setEditorBusy(true);
+    try {
+      const resposta = await carregarDocumentoEditavelChatLivreMobile(
+        token,
+        laudoId,
+        attachmentId,
+      );
+      setDocumentoEditavel(resposta.documento);
+    } catch (error) {
+      setEditorError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível abrir o PDF editável.",
+      );
+    } finally {
+      setEditorBusy(false);
+    }
+  }
+
+  async function salvarEditor() {
+    const token = String(params.sessionAccessToken || "").trim();
+    const attachment = attachmentEmEdicao;
+    const documento = documentoEditavel;
+    const laudoId = attachment ? obterLaudoIdDoAnexo(attachment) : null;
+    const attachmentId = Number(attachment?.id || 0);
+    if (!token || !laudoId || !attachmentId || !documento) {
+      setEditorError("Não foi possível gerar a nova versão.");
+      return;
+    }
+
+    setEditorBusy(true);
+    setEditorError("");
+    setEditorNotice("");
+    try {
+      const resposta = await salvarDocumentoEditavelChatLivreMobile(
+        token,
+        laudoId,
+        attachmentId,
+        documento,
+      );
+      if (resposta.documento_editavel) {
+        setDocumentoEditavel(resposta.documento_editavel);
+      }
+      setEditorNotice("Nova versão gerada.");
+      await params.onDocumentoGerado?.();
+    } catch (error) {
+      setEditorError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível gerar a nova versão do PDF.",
+      );
+    } finally {
+      setEditorBusy(false);
+    }
+  }
 
   if (!atual) {
     return (
@@ -200,7 +394,6 @@ export function renderizarDocumentosChatLivreRevisao(params: {
         style={[styles.threadReviewCard, styles.threadOperationalPdfCard]}
         testID="free-chat-review-documents-card"
       >
-        <Text style={styles.threadReviewEyebrow}>Revisar PDF</Text>
         <Text style={styles.threadReviewTitle}>Nenhum PDF</Text>
         <Text style={styles.threadReviewDescription}>
           Peça o relatório no chat livre.
@@ -214,30 +407,53 @@ export function renderizarDocumentosChatLivreRevisao(params: {
       style={[styles.threadReviewCard, styles.threadOperationalPdfCard]}
       testID="free-chat-review-documents-card"
     >
-      <Text style={styles.threadReviewEyebrow}>Revisar PDF</Text>
-      <Text style={styles.threadReviewTitle}>Documento atual</Text>
-      <Text style={styles.threadReviewDescription}>
-        {documentos.length} versão{documentos.length === 1 ? "" : "ões"} no
-        histórico.
-      </Text>
+      {attachmentEmEdicao && documentoEditavel ? (
+        <FreeChatEditableDocumentEditor
+          attachment={attachmentEmEdicao}
+          busy={editorBusy}
+          document={documentoEditavel}
+          error={editorError}
+          notice={editorNotice}
+          onCancel={() => {
+            setAttachmentEmEdicao(null);
+            setDocumentoEditavel(null);
+            setEditorError("");
+            setEditorNotice("");
+          }}
+          onDocumentChange={setDocumentoEditavel}
+          onSave={salvarEditor}
+        />
+      ) : attachmentEmEdicao && editorBusy ? (
+        <View style={styles.threadReviewEditableEditor}>
+          <ActivityIndicator color={colors.ink900} />
+          <Text style={styles.threadReviewEditableNotice}>
+            Abrindo PDF editável...
+          </Text>
+        </View>
+      ) : editorError ? (
+        <Text style={styles.threadReviewWarningText}>{editorError}</Text>
+      ) : null}
 
       {renderDocumentListItem({
+        historyTitle: params.historyTitle || "",
         item: atual,
         onAbrirAnexo: params.onAbrirAnexo,
-        onCorrigirDocumento: params.onCorrigirDocumento,
+        onCorrigirDocumento: () => {
+          void abrirEditor(atual);
+        },
         testIDPrefix: "free-chat-review-current-document",
       })}
 
       {anteriores.length ? (
         <View style={styles.threadReviewList}>
-          <Text style={styles.threadReviewSectionTitle}>
-            Documentos gerados
-          </Text>
           {anteriores.map((item) =>
             renderDocumentListItem({
+              historyTitle: params.historyTitle || "",
               item,
               onAbrirAnexo: params.onAbrirAnexo,
-              onCorrigirDocumento: params.onCorrigirDocumento,
+              onCorrigirDocumento: () => {
+                void abrirEditor(item);
+              },
               testIDPrefix: `free-chat-review-document-${item.version}`,
             }),
           )}
@@ -245,4 +461,18 @@ export function renderizarDocumentosChatLivreRevisao(params: {
       ) : null}
     </View>
   );
+}
+
+export function renderizarDocumentosChatLivreRevisao(params: {
+  historyTitle?: string;
+  mensagens: MobileChatMessage[];
+  onAbrirAnexo: (attachment: MobileAttachment) => void;
+  onCorrigirDocumento?: (
+    attachment: MobileAttachment,
+    versionLabel: string,
+  ) => void;
+  onDocumentoGerado?: () => Promise<void> | void;
+  sessionAccessToken?: string | null;
+}) {
+  return <FreeChatDocumentsReviewCard {...params} />;
 }

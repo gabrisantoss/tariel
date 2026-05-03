@@ -42,6 +42,7 @@ export interface ThreadConversationPaneProps {
   scrollRef: RefObject<ScrollView | null>;
   keyboardVisible: boolean;
   threadKeyboardPaddingBottom: number;
+  historyTitle?: string;
   nomeUsuarioExibicao: string;
   mensagensVisiveis: MobileChatMessage[];
   obterResumoReferenciaMensagem: (
@@ -75,6 +76,7 @@ export interface ThreadConversationPaneProps {
     attachment: MobileAttachment,
     versionLabel: string,
   ) => void;
+  onDocumentoChatLivreGerado?: () => Promise<void> | void;
   dynamicMessageBubbleStyle: StyleProp<ViewStyle>;
   dynamicMessageTextStyle: StyleProp<TextStyle>;
   enviandoMensagem: boolean;
@@ -103,6 +105,7 @@ export function ThreadConversationPane({
   scrollRef,
   keyboardVisible,
   threadKeyboardPaddingBottom,
+  historyTitle,
   nomeUsuarioExibicao,
   mensagensVisiveis,
   obterResumoReferenciaMensagem,
@@ -118,6 +121,7 @@ export function ThreadConversationPane({
   onDefinirReferenciaMesaAtiva,
   onExecutarComandoRevisaoMobile,
   onCorrigirDocumentoChatLivre,
+  onDocumentoChatLivreGerado,
   accentColor,
   carregandoConversa,
   conversaVazia,
@@ -153,6 +157,7 @@ export function ThreadConversationPane({
         dynamicMessageBubbleStyle={dynamicMessageBubbleStyle}
         dynamicMessageTextStyle={dynamicMessageTextStyle}
         entryModeEffective={entryModeEffective}
+        historyTitle={historyTitle}
         keyboardVisible={keyboardVisible}
         mesaAcessoPermitido={mesaAcessoPermitido}
         mesaDisponivel={mesaDisponivel}
@@ -167,6 +172,7 @@ export function ThreadConversationPane({
         onDefinirReferenciaMesaAtiva={onDefinirReferenciaMesaAtiva}
         onExecutarComandoRevisaoMobile={onExecutarComandoRevisaoMobile}
         onCorrigirDocumentoChatLivre={onCorrigirDocumentoChatLivre}
+        onDocumentoChatLivreGerado={onDocumentoChatLivreGerado}
         reportPackDraft={reportPackDraft}
         reviewCommandBusy={reviewCommandBusy}
         reviewPackage={reviewPackage}

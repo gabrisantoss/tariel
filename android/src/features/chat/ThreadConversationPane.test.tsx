@@ -1,8 +1,17 @@
-import { fireEvent, render } from "@testing-library/react-native";
+import { fireEvent, render, waitFor } from "@testing-library/react-native";
 import { Image } from "react-native";
 
+import {
+  carregarDocumentoEditavelChatLivreMobile,
+  salvarDocumentoEditavelChatLivreMobile,
+} from "../../config/api";
 import { styles } from "../InspectorMobileApp.styles";
 import { ThreadConversationPane } from "./ThreadConversationPane";
+
+jest.mock("../../config/api", () => ({
+  carregarDocumentoEditavelChatLivreMobile: jest.fn(),
+  salvarDocumentoEditavelChatLivreMobile: jest.fn(),
+}));
 
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
@@ -954,11 +963,54 @@ describe("ThreadConversationPane", () => {
   it("usa a revisão do chat livre para listar PDFs gerados", () => {
     const onAbrirAnexo = jest.fn();
     const onCorrigirDocumentoChatLivre = jest.fn();
-    const { getAllByText, getByText, getByTestId } = render(
+    const onDocumentoChatLivreGerado = jest.fn().mockResolvedValue(undefined);
+    (
+      carregarDocumentoEditavelChatLivreMobile as jest.Mock
+    ).mockResolvedValueOnce({
+      ok: true,
+      laudo_id: 80,
+      attachment_id: 202,
+      documento: {
+        title: "Laudo Técnico Consolidado",
+        subtitle: "Resumo",
+        sections: [
+          {
+            key: "sintese_executiva",
+            title: "Síntese Executiva",
+            kind: "paragraph",
+            editable: true,
+            content: "Texto original",
+          },
+        ],
+      },
+    });
+    (salvarDocumentoEditavelChatLivreMobile as jest.Mock).mockResolvedValueOnce(
+      {
+        tipo: "relatorio_chat_livre",
+        texto: "Nova versão gerada.",
+        mensagem_id: 12,
+        laudo_id: 80,
+        anexos: [{ id: 203, mime_type: "application/pdf" }],
+        documento_editavel: {
+          title: "Laudo Técnico Consolidado",
+          sections: [
+            {
+              key: "sintese_executiva",
+              title: "Síntese Executiva",
+              kind: "paragraph",
+              editable: true,
+              content: "Texto revisado",
+            },
+          ],
+        },
+      },
+    );
+    const { getAllByText, getByText, getByTestId, queryByText } = render(
       <ThreadConversationPane
         {...baseProps}
         caseWorkflowMode="analise_livre"
         entryModeEffective="chat_first"
+        historyTitle="Inspeção sala de bombas"
         mensagensVisiveis={[
           {
             id: 10,
@@ -993,16 +1045,20 @@ describe("ThreadConversationPane", () => {
         ]}
         onAbrirAnexo={onAbrirAnexo}
         onCorrigirDocumentoChatLivre={onCorrigirDocumentoChatLivre}
+        onDocumentoChatLivreGerado={onDocumentoChatLivreGerado}
+        sessionAccessToken="token-123"
       />,
     );
 
     expect(getByTestId("free-chat-review-documents-card")).toBeTruthy();
-    expect(getAllByText("Revisar PDF").length).toBeGreaterThan(0);
-    expect(getByText("PDFs gerados")).toBeTruthy();
-    expect(getByText("Documento atual")).toBeTruthy();
-    expect(getByText("Documentos gerados")).toBeTruthy();
-    expect(getByText("Versão 2 · relatorio_chat_livre_v2.pdf")).toBeTruthy();
-    expect(getByText("Versão 1 · relatorio_chat_livre_v1.pdf")).toBeTruthy();
+    expect(getByText("Baixe ou corrija versões dos relatórios")).toBeTruthy();
+    expect(queryByText("Revisar PDF")).toBeNull();
+    expect(queryByText("PDFs gerados")).toBeNull();
+    expect(queryByText("Documento atual")).toBeNull();
+    expect(queryByText("Documentos gerados")).toBeNull();
+    expect(getByText("Relatório atual")).toBeTruthy();
+    expect(getByText("Relatório anterior v1")).toBeTruthy();
+    expect(getAllByText("Inspeção sala de bombas").length).toBeGreaterThan(0);
 
     fireEvent.press(getByTestId("free-chat-review-current-document-download"));
     expect(onAbrirAnexo).toHaveBeenCalledWith(
@@ -1010,10 +1066,34 @@ describe("ThreadConversationPane", () => {
     );
 
     fireEvent.press(getByTestId("free-chat-review-current-document-correct"));
-    expect(onCorrigirDocumentoChatLivre).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 202 }),
-      "Versão 2",
-    );
+    return waitFor(() =>
+      expect(getByTestId("free-chat-pdf-editor")).toBeTruthy(),
+    ).then(() => {
+      expect(carregarDocumentoEditavelChatLivreMobile).toHaveBeenCalledWith(
+        "token-123",
+        80,
+        202,
+      );
+      fireEvent.changeText(
+        getByTestId("free-chat-pdf-editor-section-sintese_executiva"),
+        "Texto revisado",
+      );
+      fireEvent.press(getByTestId("free-chat-pdf-editor-save"));
+      return waitFor(() => {
+        expect(salvarDocumentoEditavelChatLivreMobile).toHaveBeenCalledWith(
+          "token-123",
+          80,
+          202,
+          expect.objectContaining({
+            sections: expect.arrayContaining([
+              expect.objectContaining({ content: "Texto revisado" }),
+            ]),
+          }),
+        );
+        expect(onDocumentoChatLivreGerado).toHaveBeenCalledTimes(1);
+        expect(onCorrigirDocumentoChatLivre).not.toHaveBeenCalled();
+      });
+    });
   });
 
   it("não injeta CTA da Mesa do pre-laudo dentro do chat", () => {
