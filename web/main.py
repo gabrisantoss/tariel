@@ -65,6 +65,7 @@ from app.domains.router_registry import (
     roteador_cliente,
     roteador_inspetor,
     roteador_revisor,
+    roteador_social_auth,
 )
 from app.domains.revisor.realtime import describe_revisor_realtime, shutdown_revisor_realtime, startup_revisor_realtime
 from app.shared.security import (
@@ -558,6 +559,7 @@ def create_app() -> FastAPI:
     app.include_router(roteador_cliente, prefix="/cliente", tags=["Cliente"])
     app.include_router(roteador_inspetor, prefix="/app", tags=["Inspetor"])
     app.include_router(roteador_revisor, tags=["Revisão"])
+    app.include_router(roteador_social_auth, tags=["Autenticação social"])
     registrar_rotas_operacionais(
         app,
         dir_static=DIR_STATIC,

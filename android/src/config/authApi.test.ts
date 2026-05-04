@@ -55,10 +55,10 @@ describe("authApi", () => {
 
   it("monta URLs de login social com fallbacks públicos corretos", () => {
     expect(obterUrlLoginSocialMobile("Google")).toBe(
-      "http://127.0.0.1:8000/app/login?provider=google",
+      "http://127.0.0.1:8000/auth/social/app/google/start",
     );
     expect(obterUrlLoginSocialMobile("Microsoft")).toBe(
-      "http://127.0.0.1:8000/app/login?provider=microsoft",
+      "http://127.0.0.1:8000/auth/social/app/microsoft/start",
     );
   });
 
@@ -69,7 +69,7 @@ describe("authApi", () => {
       "http://10.100.2.40:8000/app/login",
     );
     expect(obterUrlLoginSocialMobile("Google")).toBe(
-      "http://10.100.2.40:8000/app/login?provider=google",
+      "http://10.100.2.40:8000/auth/social/app/google/start",
     );
   });
 

@@ -68,12 +68,12 @@ export function obterUrlLoginSocialMobile(
   if (provider === "Google") {
     return montarUrlAuth(
       readRuntimeEnv("EXPO_PUBLIC_AUTH_GOOGLE_URL") || undefined,
-      "/app/login?provider=google",
+      "/auth/social/app/google/start",
     );
   }
   return montarUrlAuth(
     readRuntimeEnv("EXPO_PUBLIC_AUTH_MICROSOFT_URL") || undefined,
-    "/app/login?provider=microsoft",
+    "/auth/social/app/microsoft/start",
   );
 }
 
