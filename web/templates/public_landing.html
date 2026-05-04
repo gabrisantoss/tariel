@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#f6f7f2">
-    <meta name="description" content="Tariel organiza inspeções técnicas com coleta em campo, revisão governada, emissão oficial e pacote auditável.">
+    <meta name="description" content="Tariel ajuda equipes a registrar inspeções, acompanhar o andamento e entregar documentos em uma única plataforma.">
     <meta property="og:title" content="Tariel">
-    <meta property="og:description" content="Inspeções técnicas com coleta, revisão e emissão oficial em um só fluxo.">
+    <meta property="og:description" content="Inspeções com tela no celular, chat, painel do cliente e documento final em um só lugar.">
     <meta property="og:image" content="/static/img/og-image.png">
     <title>Tariel</title>
     <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
@@ -20,9 +20,8 @@
         </a>
         <nav class="public-nav__links" aria-label="Seções da página">
             <a href="#produto">Produto</a>
-            <a href="#governanca">Governança</a>
-            <a href="#pdf">PDF NR35</a>
-            <a href="#demonstracao">Demo</a>
+            <a href="#pdf">Laudos</a>
+            <a href="#demonstracao">Demonstração</a>
             <a class="public-nav__login" href="/app/login">Entrar</a>
         </nav>
     </header>
@@ -30,11 +29,11 @@
     <main>
         <section class="public-hero" aria-labelledby="landing-title">
             <div class="public-hero__content">
-                <p class="public-eyebrow">Inspeção técnica governada</p>
+                <p class="public-eyebrow">Inspeções em uma tela simples</p>
                 <h1 id="landing-title">Tariel</h1>
-                <p class="public-hero__lead">Inspeções técnicas com coleta, revisão e emissão oficial em um só fluxo.</p>
+                <p class="public-hero__lead">Tudo que acontece na inspeção, organizado do celular ao cliente.</p>
                 <p class="public-hero__copy">
-                    Organize evidências em campo, valide com Mesa Avaliadora e entregue pacotes oficiais auditáveis sem confundir rascunho, revisão e documento emitido.
+                    A Tariel centraliza o que antes ficava espalhado: registros no celular, conversas da equipe e visão do cliente em um fluxo claro para acompanhar cada inspeção.
                 </p>
                 <div class="public-hero__actions" aria-label="Ações principais">
                     <a class="public-button public-button--primary" href="mailto:contato@tariel.ia?subject=Quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20Tariel">
@@ -43,190 +42,238 @@
                     </a>
                     <a class="public-button public-button--secondary" href="/app/login">
                         <span class="material-symbols-rounded" aria-hidden="true">login</span>
-                        <span>Acessar plataforma</span>
+                        <span>Entrar na Tariel</span>
                     </a>
                 </div>
             </div>
-            <figure class="hero-product-shot" aria-label="Prévia real do portal mobile do inspetor">
-                <img src="/static/img/landing/landing-mobile-inspetor.webp" alt="Tela real do Portal do Inspetor com painel mobile, chat guiado e nova inspeção" loading="eager" width="390" height="844">
-                <figcaption>
-                    <strong>Coleta mobile em campo</strong>
-                    <span>Chat guiado, templates técnicos e estado operacional em uma tela.</span>
-                </figcaption>
-            </figure>
-            <div class="public-hero__status" aria-label="Resumo operacional">
-                <span>Coleta mobile</span>
-                <span>Mesa Avaliadora</span>
-                <span>Emissão oficial</span>
-                <span>Pacote auditável</span>
+            <div class="hero-showcase" aria-label="Prévia das telas Tariel">
+                <figure class="hero-screen hero-screen--mesa" tabindex="0">
+                    <img src="/static/img/landing/landing-mesa-avaliadora.webp" alt="Tela inicial do chat web com assistente Tariel e início de inspeção" loading="eager" width="980" height="581">
+                </figure>
+                <figure class="hero-screen hero-screen--client" tabindex="0">
+                    <img src="/static/img/landing/landing-portal-cliente.webp" alt="Painel do cliente com visão geral, indicadores e status das inspeções" loading="eager" width="980" height="581">
+                </figure>
+                <figure class="hero-phone" tabindex="0">
+                    <img src="/static/img/landing/landing-mobile-usuario.webp" alt="Tela inicial no celular logo após o login com assistente Tariel e inspeção guiada" loading="eager" width="390" height="844">
+                </figure>
+            </div>
+            <div class="public-hero__status" aria-label="Resumo das telas Tariel">
+                <article class="hero-feature-card hero-feature-card--mobile" tabindex="0">
+                    <span>01</span>
+                    <strong>Tela no celular</strong>
+                    <p>Tela real logo após o login. O profissional começa pelo assistente Tariel, registra o que encontrou, adiciona fotos e escolhe a NR da inspeção sem sair da tela.</p>
+                </article>
+                <article class="hero-feature-card hero-feature-card--chat" tabindex="0">
+                    <span>02</span>
+                    <strong>Chat da plataforma</strong>
+                    <p>No computador, a equipe acompanha conversas, recebe apoio da Tariel e inicia novas inspeções com poucos cliques. É a tela para organizar o trabalho do dia.</p>
+                </article>
+                <article class="hero-feature-card hero-feature-card--admin" tabindex="0">
+                    <span>03</span>
+                    <strong>Painel do cliente</strong>
+                    <p>O cliente acompanha status, equipe, documentos e pontos em aberto em uma visão clara. Isso reduz dúvidas e evita depender de mensagens soltas.</p>
+                </article>
             </div>
         </section>
 
         <section class="public-section public-section--audience" aria-labelledby="audience-title">
             <div class="public-section__heading">
                 <p class="public-section__kicker">Para quem é</p>
-                <h2 id="audience-title">Feito para operações que precisam provar o que foi inspecionado</h2>
+                <h2 id="audience-title">Feito para equipes que precisam registrar e entregar inspeções com clareza</h2>
             </div>
             <div class="audience-grid">
                 <article>
                     <span class="material-symbols-rounded" aria-hidden="true">engineering</span>
-                    <h3>Consultorias técnicas</h3>
-                    <p>Padronize coleta, revisão e entrega sem depender de planilhas, pastas soltas e versões manuais de PDF.</p>
+                    <h3>Consultorias e prestadores de inspeção</h3>
+                    <p>Padronize registros, conferência e entrega sem depender de planilhas, pastas soltas e PDFs manuais.</p>
                 </article>
                 <article>
                     <span class="material-symbols-rounded" aria-hidden="true">corporate_fare</span>
                     <h3>Empresas com inspeções recorrentes</h3>
-                    <p>Acompanhe pendências, documentos emitidos, histórico e auditoria em um fluxo visível para cliente e operação.</p>
+                    <p>Acompanhe pendências, documentos, histórico e responsáveis em uma visão simples para equipe e cliente.</p>
                 </article>
                 <article>
                     <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
-                    <h3>Times com exigência de governança</h3>
-                    <p>Separe PDF operacional, revisão, emissão oficial, reemissão recomendada e documento substituído.</p>
+                    <h3>Equipes que precisam de controle</h3>
+                    <p>Separe rascunho, conferência, documento final, correções e versões antigas sem confundir a equipe.</p>
                 </article>
+            </div>
+        </section>
+
+        <section class="public-section public-section--evidence" aria-labelledby="evidence-title">
+            <div class="public-section__heading">
+                <p class="public-section__kicker">Exemplos de inspeção</p>
+                <h2 id="evidence-title">A apresentação mostra como a evidência vira uma entrega clara</h2>
+            </div>
+            <div class="evidence-showcase">
+                <figure class="evidence-shot">
+                    <img src="/static/img/landing/landing-evidencias-nr.webp" alt="Cenas simuladas de inspeção técnica para NR12, NR13 e NR35" loading="lazy" width="1600" height="760">
+                    <figcaption>Imagem ilustrativa criada para apoiar a demonstração.</figcaption>
+                </figure>
+                <div class="evidence-list" aria-label="Exemplos técnicos simulados">
+                    <article>
+                        <span>NR12</span>
+                        <strong>Máquinas e proteções</strong>
+                        <p>Registro visual de condições, proteções e pontos que precisam de atenção.</p>
+                    </article>
+                    <article>
+                        <span>NR13</span>
+                        <strong>Teste e integridade</strong>
+                        <p>Organização dos registros de teste, instrumentos e resultado da inspeção.</p>
+                    </article>
+                    <article>
+                        <span>NR35</span>
+                        <strong>Linha de vida</strong>
+                        <p>Registro de pontos de ancoragem, componentes avaliados e conclusão do serviço.</p>
+                    </article>
+                </div>
             </div>
         </section>
 
         <section class="public-section public-section--journey" id="demo" aria-labelledby="journey-title">
             <div class="public-section__heading">
                 <p class="public-section__kicker">Fluxo de ponta a ponta</p>
-                <h2 id="journey-title">Da coleta ao documento certo</h2>
+                <h2 id="journey-title">Da coleta até a entrega final</h2>
             </div>
             <div class="journey-grid">
                 <article class="journey-card">
                     <span class="material-symbols-rounded" aria-hidden="true">assignment_add</span>
-                    <h3>Caso aberto</h3>
-                    <p>O cliente, pacote e família técnica definem o que pode ser coletado, revisado e emitido.</p>
+                    <h3>Serviço criado</h3>
+                    <p>O atendimento começa com cliente, tipo de inspeção e uma visão clara do que precisa ser registrado.</p>
                 </article>
                 <article class="journey-card">
                     <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
                     <h3>Coleta em campo</h3>
-                    <p>O inspetor registra evidências e acompanha pendências sem confundir rascunho com emissão oficial.</p>
+                    <p>O profissional registra fotos, observações e informações importantes direto no local da inspeção.</p>
                 </article>
                 <article class="journey-card">
                     <span class="material-symbols-rounded" aria-hidden="true">fact_check</span>
-                    <h3>Mesa Avaliadora</h3>
-                    <p>A revisão separa decisão operacional de histórico, auditoria e acompanhamento técnico.</p>
+                    <h3>Conferência</h3>
+                    <p>A equipe revisa o material coletado, verifica se falta algo e prepara a entrega com mais segurança.</p>
                 </article>
                 <article class="journey-card">
                     <span class="material-symbols-rounded" aria-hidden="true">verified</span>
-                    <h3>Emissão oficial</h3>
-                    <p>O documento aprovado vira pacote oficial com assinatura, hash e cadeia de auditoria.</p>
+                    <h3>Documento final</h3>
+                    <p>Quando tudo está correto, o documento final fica pronto para assinatura, envio e acompanhamento.</p>
                 </article>
             </div>
         </section>
 
         <section class="public-section public-section--product" id="produto" aria-labelledby="product-title">
             <div class="public-section__heading">
-                <p class="public-section__kicker">Superfícies conectadas</p>
-                <h2 id="product-title">Cada tela responde uma pergunta operacional</h2>
+                <p class="public-section__kicker">Exemplos que vendem a solução</p>
+                <h2 id="product-title">Três NRs para mostrar valor logo na primeira apresentação</h2>
+                <p class="public-section__intro">A ideia é apresentar casos que o cliente entende rápido: trabalho em altura, máquinas e equipamentos, e vasos ou tubulações. Cada exemplo mostra como a Tariel transforma a coleta em um documento pronto para análise.</p>
             </div>
-            <div class="surface-board" aria-label="Prévia das superfícies Tariel">
-                <article class="surface-shot surface-shot--mobile">
-                    <div class="surface-shot__media">
-                        <img src="/static/img/landing/landing-mobile-inspetor.webp" alt="Screenshot real do Portal do Inspetor mobile" loading="eager" width="390" height="844">
-                    </div>
-                    <div class="surface-shot__copy">
-                        <span class="preview-tag preview-tag--warning">Mobile</span>
-                        <h3>Coleta em campo</h3>
-                        <p>O inspetor abre serviços, acompanha estado operacional e usa templates guiados no mesmo fluxo.</p>
-                    </div>
-                </article>
-                <article class="surface-shot">
-                    <div class="surface-shot__media">
-                        <img src="/static/img/landing/landing-mesa-avaliadora.webp" alt="Screenshot real da Mesa Avaliadora com fila de decisão" loading="eager" width="980" height="581">
-                    </div>
-                    <div class="surface-shot__copy">
-                        <span class="preview-tag preview-tag--review">Mesa Avaliadora</span>
-                        <h3>Decidir agora</h3>
-                        <p>A fila separa o que exige resposta imediata do que é acompanhamento, histórico e auditoria.</p>
+            <div class="nr-case-grid" aria-label="Exemplos de NRs para demonstração">
+                <article class="nr-case-card nr-case-card--height">
+                    <figure class="nr-case-card__media">
+                        <img src="/static/img/landing/landing-nr35-ambiente.webp" alt="Ambiente demonstrativo de inspeção NR35 com linha de vida em área elevada" loading="lazy" width="900" height="506">
+                    </figure>
+                    <div class="nr-case-card__body">
+                        <div class="nr-case-card__header">
+                            <span class="nr-case-card__code">NR35</span>
+                            <span class="nr-case-card__line" aria-hidden="true"></span>
+                        </div>
+                        <h3>Trabalho em altura</h3>
+                        <p>Um exemplo forte para manutenção, obras, telhados, torres e linhas de vida. Mostra como fotos, pontos avaliados e conclusão podem virar uma entrega clara.</p>
+                        <div class="nr-case-card__tags" aria-label="Pontos demonstrados na NR35">
+                            <span>Fotos de campo</span>
+                            <span>Checklist</span>
+                            <span>Conclusão</span>
+                        </div>
                     </div>
                 </article>
-                <article class="surface-shot">
-                    <div class="surface-shot__media">
-                        <img src="/static/img/landing/landing-portal-cliente.webp" alt="Screenshot real do Portal Cliente com blocos administrativos" loading="eager" width="980" height="581">
+                <article class="nr-case-card nr-case-card--machine">
+                    <figure class="nr-case-card__media">
+                        <img src="/static/img/landing/landing-nr12-ambiente.webp" alt="Ambiente demonstrativo de inspeção NR12 com máquina protegida em área industrial" loading="lazy" width="900" height="506">
+                    </figure>
+                    <div class="nr-case-card__body">
+                        <div class="nr-case-card__header">
+                            <span class="nr-case-card__code">NR12</span>
+                            <span class="nr-case-card__line" aria-hidden="true"></span>
+                        </div>
+                        <h3>Máquinas e equipamentos</h3>
+                        <p>Ideal para indústrias, oficinas e plantas com máquinas. Ajuda a demonstrar proteções, comandos, bloqueios e pontos que precisam de ajuste.</p>
+                        <div class="nr-case-card__tags" aria-label="Pontos demonstrados na NR12">
+                            <span>Proteções</span>
+                            <span>Riscos</span>
+                            <span>Ações corretivas</span>
+                        </div>
                     </div>
-                    <div class="surface-shot__copy">
-                        <span class="preview-tag preview-tag--active">Portal Cliente</span>
-                        <h3>Entrega e acompanhamento</h3>
-                        <p>Cliente enxerga pacote, equipe, documentos, pendências e acompanhamento sem entrar no cockpit operacional.</p>
+                </article>
+                <article class="nr-case-card nr-case-card--pressure">
+                    <figure class="nr-case-card__media">
+                        <img src="/static/img/landing/landing-nr13-ambiente.webp" alt="Ambiente demonstrativo de inspeção NR13 com vaso de pressão e tubulações industriais" loading="lazy" width="900" height="506">
+                    </figure>
+                    <div class="nr-case-card__body">
+                        <div class="nr-case-card__header">
+                            <span class="nr-case-card__code">NR13</span>
+                            <span class="nr-case-card__line" aria-hidden="true"></span>
+                        </div>
+                        <h3>Vasos, caldeiras e tubulações</h3>
+                        <p>Funciona bem para clientes industriais que precisam organizar identificação do equipamento, registros de teste, resultado e próximos passos.</p>
+                        <div class="nr-case-card__tags" aria-label="Pontos demonstrados na NR13">
+                            <span>Identificação</span>
+                            <span>Teste</span>
+                            <span>Recomendação</span>
+                        </div>
                     </div>
                 </article>
             </div>
-        </section>
 
-        <section class="public-section public-section--governance" id="governanca" aria-labelledby="governance-title">
-            <div class="public-section__heading">
-                <p class="public-section__kicker">Governança comercial e técnica</p>
-                <h2 id="governance-title">A operação sabe o que está pronto, pendente ou substituído</h2>
-            </div>
-            <div class="governance-grid">
-                <article>
-                    <span>01</span>
-                    <h3>PDF operacional não é oficial</h3>
-                    <p>Prévia de trabalho, documento emitido e pacote oficial aparecem com hierarquia própria.</p>
-                </article>
-                <article>
-                    <span>02</span>
-                    <h3>Reemissão aparece como alerta</h3>
-                    <p>O usuário entende quando precisa revisar/reemitir sem parecer que a reemissão já aconteceu.</p>
-                </article>
-                <article>
-                    <span>03</span>
-                    <h3>Histórico não compete com o ativo</h3>
-                    <p>Documento substituído, auditoria e hash ficam em leitura secundária, preservando a ação principal.</p>
-                </article>
-            </div>
-            <div class="readiness-list">
-                <div><span>Pacote contratado</span><strong>Governado</strong></div>
-                <div><span>Portais liberados</span><strong>Mobile, Cliente, Mesa</strong></div>
-                <div><span>Famílias</span><strong>NR35 com Mesa</strong></div>
-                <div><span>Emissão oficial</span><strong>Pronta com signatário</strong></div>
-            </div>
-        </section>
-
-        <section class="public-section public-section--pdf" id="pdf" aria-labelledby="pdf-title">
-            <div class="public-section__heading">
-                <p class="public-section__kicker">Documento final</p>
-                <h2 id="pdf-title">PDF NR35 com evidência, conclusão e auditoria no mesmo pacote</h2>
-            </div>
-            <div class="pdf-showcase">
-                <figure class="pdf-shot">
-                    <img src="/static/img/landing/landing-pdf-nr35.webp" alt="Primeira página de um PDF NR35 de referência com evidência, status final e dados do documento" loading="eager" width="760" height="761">
-                    <figcaption>PDF de referência sintética para demonstração visual controlada.</figcaption>
-                </figure>
-                <div class="pdf-benefits">
-                    <article>
-                        <span class="material-symbols-rounded" aria-hidden="true">image</span>
-                        <div>
-                            <h3>Fotos e achados legíveis</h3>
-                            <p>Evidências, legendas e conclusão aparecem com leitura técnica, não como anexo solto.</p>
+            <div class="generated-reports" id="pdf" aria-labelledby="reports-title">
+                <div class="generated-reports__heading">
+                    <p class="public-section__kicker">Laudos gerados pela Tariel</p>
+                    <h3 id="reports-title">Uma prévia A4 do documento final</h3>
+                    <p>Este laudo é um exemplo criado para a apresentação. Ele mostra como a Tariel pode organizar dados da inspeção, fotos, checklist, conclusão e assinatura em uma entrega visualmente clara.</p>
+                </div>
+                <div class="report-a4-showcase">
+                    <figure class="report-a4-preview">
+                        <div class="report-a4-zoom" data-zoom="2.25">
+                            <img src="/static/img/landing/landing-laudo-a4-tariel.webp" alt="Exemplo demonstrativo de laudo A4 gerado pela Tariel para NR35" loading="lazy" width="960" height="1200">
+                            <span class="report-a4-zoom__lens" aria-hidden="true"></span>
+                            <span class="report-a4-zoom__preview" aria-hidden="true"></span>
                         </div>
-                    </article>
-                    <article>
-                        <span class="material-symbols-rounded" aria-hidden="true">draw</span>
-                        <div>
-                            <h3>Assinatura e emissão oficial</h3>
-                            <p>O pacote deixa claro o que foi oficialmente emitido e quem responde pela assinatura.</p>
-                        </div>
-                    </article>
-                    <article>
-                        <span class="material-symbols-rounded" aria-hidden="true">encrypted</span>
-                        <div>
-                            <h3>Auditoria sem poluir a leitura</h3>
-                            <p>Hash, histórico e documentos substituídos ficam disponíveis sem competir com o conteúdo principal.</p>
-                        </div>
-                    </article>
+                        <figcaption>Exemplo demonstrativo, sem dados reais de clientes.</figcaption>
+                    </figure>
+                    <div class="report-a4-notes" aria-label="O que o laudo demonstrativo mostra">
+                        <article>
+                            <span>01</span>
+                            <h4>Resultado em destaque</h4>
+                            <p>O laudo começa com o status da inspeção e os principais números, para o cliente entender rapidamente o resultado.</p>
+                        </article>
+                        <article>
+                            <span>02</span>
+                            <h4>Evidências organizadas</h4>
+                            <p>Fotos e observações aparecem juntas, com identificação clara do que foi avaliado em cada ponto da inspeção.</p>
+                        </article>
+                        <article>
+                            <span>03</span>
+                            <h4>Fechamento profissional</h4>
+                            <p>A conclusão, os responsáveis e a assinatura ficam reunidos no final, deixando a entrega pronta para apresentação.</p>
+                        </article>
+                    </div>
                 </div>
             </div>
         </section>
 
         <section class="public-section public-section--cta" id="demonstracao" aria-labelledby="cta-title">
             <div class="demo-form-copy">
-                <p class="public-section__kicker">Próximo passo</p>
-                <h2 id="cta-title">Veja o fluxo com um caso técnico realista</h2>
-                <p>Conte rapidamente o tipo de operação. O formulário abre um e-mail pronto com as informações, sem gravar dados no servidor público.</p>
+                <p class="public-section__kicker">Demonstração guiada</p>
+                <h2 id="cta-title">Veja a Tariel aplicada em uma inspeção parecida com a sua</h2>
+                <p>Conte qual cenário você quer apresentar. A demonstração pode mostrar tela no celular, chat da equipe, painel do cliente e um laudo demonstrativo no formato A4.</p>
+                <div class="demo-form-points" aria-label="O que pode entrar na demonstração">
+                    <span>NR35, NR12, NR13 ou outra NR</span>
+                    <span>Laudo demonstrativo criado para apresentação</span>
+                    <span>Fluxo completo: coleta, acompanhamento e entrega</span>
+                </div>
             </div>
             <form class="demo-form" id="demo-form" action="mailto:contato@tariel.ia" method="post" enctype="text/plain">
+                <div class="demo-form__header">
+                    <span>Solicitar demonstração</span>
+                    <strong>Resposta por e-mail ou WhatsApp</strong>
+                </div>
                 <div class="demo-form__grid">
                     <label>
                         <span>Nome</span>
@@ -245,19 +292,19 @@
                         <input type="tel" name="telefone" autocomplete="tel">
                     </label>
                     <label class="demo-form__full">
-                        <span>Tipo de operação</span>
+                        <span>Tipo de inspeção</span>
                         <select name="operacao" required>
                             <option value="">Selecione</option>
                             <option>NR35 - trabalho em altura</option>
                             <option>NR12 - máquinas e equipamentos</option>
                             <option>NR13 - vasos, caldeiras e tubulações</option>
                             <option>NR10 - elétrica</option>
-                            <option>Outro fluxo técnico</option>
+                            <option>Outro tipo de inspeção</option>
                         </select>
                     </label>
                     <label class="demo-form__full">
-                        <span>O que você quer demonstrar?</span>
-                        <textarea name="mensagem" rows="4" placeholder="Ex.: coleta em campo, Mesa Avaliadora, emissão oficial, Portal Cliente, PDF NR35"></textarea>
+                        <span>O que você quer mostrar para o cliente?</span>
+                        <textarea name="mensagem" rows="4" placeholder="Ex.: uma apresentação com NR35, fotos de campo, tela no celular e laudo A4 gerado pela Tariel"></textarea>
                     </label>
                 </div>
                 <button class="public-button public-button--primary" type="submit">
@@ -272,9 +319,9 @@
     <footer class="public-footer">
         <span>Tariel</span>
         <nav aria-label="Acessos de rodapé">
-            <a href="/app/login">Inspetor</a>
+            <a href="/app/login">Equipe</a>
             <a href="/cliente/login">Cliente</a>
-            <a href="/revisao/login">Mesa</a>
+            <a href="/revisao/login">Revisão</a>
         </nav>
     </footer>
     <script src="/static/js/shared/public_landing.js?v={{ v_app }}" defer></script>
