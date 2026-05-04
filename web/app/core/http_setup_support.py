@@ -588,3 +588,13 @@ def registrar_rotas_operacionais(
                 "v_app": app_versao,
             },
         )
+
+    @app.get("/entrar", response_class=HTMLResponse, include_in_schema=False)
+    def pagina_publica_entrada(request: Request) -> Response:
+        return templates_publicos.TemplateResponse(
+            request,
+            "public_login_options.html",
+            {
+                "v_app": app_versao,
+            },
+        )
