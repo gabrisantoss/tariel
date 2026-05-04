@@ -33,6 +33,7 @@ from app.core.telemetry_support import (
 CSP_STYLE_FONTES: Final[str] = "https://fonts.googleapis.com"
 CSP_FONT_GSTATIC: Final[str] = "https://fonts.gstatic.com"
 CSP_SCRIPTS_CDN: Final[str] = "https://cdn.jsdelivr.net"
+CSP_BROWSER_SYNC_INLINE_HASH: Final[str] = "'sha256-eh65ft/FLWhSquitmVRey50WJ/FUDjy1q+J6b/eMfQ8='"
 
 
 def obter_ws_origins(*, em_producao: bool, app_host_publico: str | None) -> list[str]:
@@ -45,6 +46,8 @@ def obter_ws_origins(*, em_producao: bool, app_host_publico: str | None) -> list
     return [
         "ws://127.0.0.1:8000",
         "ws://localhost:8000",
+        "ws://127.0.0.1:3000",
+        "ws://localhost:3000",
     ]
 
 
@@ -69,6 +72,10 @@ def construir_csp(
         ]
     )
 
+    script_src = f"script-src 'self' {CSP_SCRIPTS_CDN} 'nonce-{nonce}' 'unsafe-hashes'"
+    if not em_producao:
+        script_src = f"{script_src} {CSP_BROWSER_SYNC_INLINE_HASH}"
+
     partes = [
         "default-src 'self'",
         "base-uri 'self'",
@@ -77,7 +84,7 @@ def construir_csp(
         "manifest-src 'self'",
         f"style-src 'self' {CSP_STYLE_FONTES} 'unsafe-inline'",
         f"font-src 'self' data: {CSP_FONT_GSTATIC}",
-        f"script-src 'self' {CSP_SCRIPTS_CDN} 'nonce-{nonce}' 'unsafe-hashes'",
+        script_src,
         "img-src 'self' data: blob: https://cdn-icons-png.flaticon.com",
         f"connect-src {connect_src}",
         "worker-src 'self' blob:",

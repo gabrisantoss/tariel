@@ -272,6 +272,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     workspace_rail_css = (raiz / "static" / "css" / "inspetor" / "workspace_rail.css").read_text(encoding="utf-8")
     visual_refinements_css = (raiz / "static" / "css" / "inspetor" / "visual_refinements.css").read_text(encoding="utf-8")
     shared_api_js = (raiz / "static" / "js" / "shared" / "api.js").read_text(encoding="utf-8")
+    auth_mobile_support_py = (raiz / "app" / "domains" / "chat" / "auth_mobile_support.py").read_text(encoding="utf-8")
 
     assert not (raiz / "templates" / "base.html").exists()
     assert 'id="btn-toggle-ui"' in inspetor_base_html
@@ -298,13 +299,22 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="input-anexo"' in workspace_html
     assert 'id="preview-anexo"' in workspace_html
     assert 'id="workspace-template-compatibility-list"' in workspace_html
-    assert 'id="btn-toggle-humano"' in workspace_html
+    assert 'id="btn-toggle-humano"' not in workspace_html
+    assert "Ver pedidos da mesa" not in workspace_html
     assert 'class="technical-composer-icon-btn"' in workspace_html
-    assert 'id="btn-assistant-landing-open-inspecao-modal"' in workspace_assistant_html
-    assert "workspace-assistant-primary-action" in workspace_assistant_html
-    assert "workspace-operational-strip" in workspace_assistant_html
-    assert "workspace-guided-chat-strip" in workspace_html
+    assert "workspace-assistant-primary-action" not in workspace_html
+    assert "workspace-guided-nr-picker" in workspace_html
+    assert "workspace-guided-nr-summary__chips" in workspace_html
+    assert "workspace-guided-nr-card" in workspace_html
+    assert "workspace-guided-nr-card__badge" not in workspace_html
+    assert "Perguntas e evidências" not in workspace_html
+    assert "workspace-operational-strip" not in workspace_assistant_html
+    assert "workspace-assistant-landing__headline-subquestion" not in workspace_assistant_html
+    assert "workspace-assistant-landing__lead" not in workspace_assistant_html
+    assert "workspace-guided-chat-strip" not in workspace_html
     assert 'data-chat-guided="true"' in workspace_html
+    assert "uso este mês" not in auth_mobile_support_py
+    assert "Perguntas e evidências" not in auth_mobile_support_py
     assert "workspace-service-launcher" not in workspace_assistant_html
     assert 'id="rodape-contexto-titulo"' in workspace_html
     assert 'id="rodape-contexto-status"' in workspace_html
@@ -336,8 +346,11 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'data-tab="conversa"' in workspace_toolbar_html
     assert 'data-tab="historico"' in workspace_toolbar_html
     assert 'data-tab="anexos"' in workspace_toolbar_html
-    assert 'data-tab="mesa"' in workspace_toolbar_html
-    assert 'id="workspace-tab-badge-mesa"' in workspace_toolbar_html
+    assert 'data-tab="mesa"' not in workspace_toolbar_html
+    assert 'id="workspace-tab-badge-mesa"' not in workspace_toolbar_html
+    assert 'data-workspace-channel-tab="mesa"' not in workspace_conversation_html
+    assert "Mesa Avaliadora" not in workspace_conversation_html
+    assert 'criarBotaoAcaoWorkspace("support_agent", "Mesa", "enviar-mesa"' not in chat_index_js
     assert "canal dedicado da mesa avaliadora" in workspace_mesa_html
     assert 'id="workspace-channel-badge-mesa"' in workspace_mesa_html
     assert 'id="workspace-mesa-empty-state"' in workspace_mesa_html
@@ -349,8 +362,12 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="workspace-mesa-attachments-title"' in workspace_mesa_html
     assert 'id="workspace-mesa-attachments-list"' in workspace_mesa_html
     assert 'id="workspace-mesa-card-mode"' in workspace_rail_html
-    assert "Canal principal na aba Mesa" in workspace_rail_html
-    assert "Use a aba <strong>Mesa</strong>" in workspace_rail_html
+    assert "Canal principal na aba Mesa" not in workspace_rail_html
+    assert "Use a aba <strong>Mesa</strong>" not in workspace_rail_html
+    assert 'data-rail-thread-tab="mesa"' not in workspace_rail_html
+    assert "Finalizar laudo" in workspace_header_html
+    assert "Enviar para Mesa" not in workspace_header_html
+    assert "Enviar resumo para a mesa" not in chat_index_js
     assert 'id="mesa-widget-mode-badge"' in mesa_widget_html
     assert "thread-breadcrumb" not in workspace_toolbar_html
     assert 'aria-label="Ferramentas do laudo"' in workspace_rail_html
@@ -1267,6 +1284,7 @@ def test_run_schemathesis_carrega_hooks_binarios() -> None:
 def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     raiz = Path(__file__).resolve().parents[1]
     login_cliente = (raiz / "templates" / "login_cliente.html").read_text(encoding="utf-8")
+    login_app = (raiz / "templates" / "login_app.html").read_text(encoding="utf-8")
     portal_cliente_main = (raiz / "templates" / "cliente_portal.html").read_text(encoding="utf-8")
     portal_cliente_admin_content = (raiz / "templates" / "cliente" / "painel" / "_content.html").read_text(encoding="utf-8")
     portal_cliente_admin_overview = (raiz / "templates" / "cliente" / "painel" / "_overview.html").read_text(encoding="utf-8")
@@ -1323,7 +1341,7 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     portal_mesa_bundle_js = portal_mesa_surface_js + "\n" + mesa_page_js + "\n" + portal_mesa_js
 
     assert 'action="/cliente/login"' in login_cliente
-    assert "Portal da empresa" in login_cliente
+    assert "Acesso do cliente" in login_cliente
     assert "/static/css/cliente/cliente_auth.css?v={{ v_app }}" in login_cliente
     assert "/static/css/shared/auth_shell.css?v={{ v_app }}" not in login_cliente
     assert "Continuar com Google" not in login_cliente
@@ -1332,23 +1350,32 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "/admin/login" not in login_cliente
     assert "/revisao/login" in login_cliente
 
+    assert 'action="/app/login"' in login_app
+    assert "Portal do Inspetor" in login_app
+    assert "/static/css/admin/admin_auth_shell.css?v={{ v_app }}" in login_app
+    assert "/static/css/cliente/cliente_auth.css?v={{ v_app }}" in login_app
+    assert "/static/css/shared/auth_shell.css?v={{ v_app }}" not in login_app
+    assert 'class="auth-shell auth-shell--cliente auth-shell--portal"' in login_app
+    assert "auth-provider-actions" in login_app
+
     assert 'class="cliente-tabs-shell"' in portal_cliente_main
     assert '{% include "cliente/_primary_tabs.html" %}' in portal_cliente_main
     assert '{% include "cliente/painel/_content.html" %}' in portal_cliente_main
-    assert '{% include "cliente/servicos/_content.html" %}' in portal_cliente_main
-    assert '{% include "cliente/recorrencia/_content.html" %}' in portal_cliente_main
-    assert '{% include "cliente/ativos/_content.html" %}' in portal_cliente_main
     assert '{% include "cliente/documentos/_content.html" %}' in portal_cliente_main
-    assert '{% include "cliente/chat/_content.html" %}' in portal_cliente_main
-    assert '{% include "cliente/mesa/_content.html" %}' in portal_cliente_main
+    assert '{% include "cliente/servicos/_content.html" %}' not in portal_cliente_main
+    assert '{% include "cliente/recorrencia/_content.html" %}' not in portal_cliente_main
+    assert '{% include "cliente/ativos/_content.html" %}' not in portal_cliente_main
+    assert '{% include "cliente/chat/_content.html" %}' not in portal_cliente_main
+    assert '{% include "cliente/mesa/_content.html" %}' not in portal_cliente_main
     assert '{% include "cliente/_scripts.html" %}' in portal_cliente_main
-    assert '{% include "cliente/_shell_header.html" %}' in portal_cliente
+    assert '{% include "cliente/_shell_header.html" %}' not in portal_cliente_main
     assert '{% include "cliente/_shell_header.html" %}' not in portal_cliente_admin_content
-    assert '{% include "cliente/_shell_header.html" %}' in portal_cliente_admin_overview
+    assert '{% include "cliente/_shell_header.html" %}' not in portal_cliente_admin_overview
     assert "owner dominante" not in portal_cliente_admin_overview.lower()
-    assert "responsavel predominante" in portal_cliente_admin_overview.lower()
-    assert 'class="admin-surface-layout"' in portal_cliente
-    assert 'class="admin-content-header"' in portal_cliente
+    assert "responsavel predominante" not in portal_cliente_admin_overview.lower()
+    assert "Responsáveis técnicos e emissão oficial" in portal_cliente_admin_overview
+    assert 'class="cliente-management-page"' in portal_cliente
+    assert "cliente-management-tabs" in portal_cliente
     assert '{% include "cliente/painel/_overview.html" %}' in portal_cliente
     assert '{% include "cliente/painel/_capacity.html" %}' in portal_cliente
     assert '{% include "cliente/painel/_team.html" %}' in portal_cliente
@@ -1363,13 +1390,16 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert '{% include "cliente/mesa/_reply.html" %}' in portal_cliente
     assert 'id="hero-prioridades"' in portal_cliente
     assert 'id="tab-admin"' in portal_cliente
-    assert 'id="tab-servicos"' in portal_cliente
-    assert 'id="tab-recorrencia"' in portal_cliente
-    assert 'id="tab-ativos"' in portal_cliente
+    assert 'id="tab-equipe"' in portal_cliente
+    assert 'id="tab-plano"' in portal_cliente
     assert 'id="tab-documentos"' in portal_cliente
-    assert 'id="tab-chat"' in portal_cliente
-    assert 'id="tab-mesa"' in portal_cliente
-    assert 'aria-label="Navegação principal do portal da empresa"' in portal_cliente
+    assert 'id="tab-suporte"' in portal_cliente
+    assert 'id="tab-servicos"' not in portal_cliente
+    assert 'id="tab-recorrencia"' not in portal_cliente
+    assert 'id="tab-ativos"' not in portal_cliente
+    assert 'id="tab-chat"' not in portal_cliente
+    assert 'id="tab-mesa"' not in portal_cliente
+    assert 'aria-label="Navegação principal do Portal Cliente"' in portal_cliente
     assert 'data-cliente-shell-nav="compact"' in portal_cliente
     assert 'id="cliente-shell-current-title"' in portal_cliente
     assert 'id="cliente-shell-current-meta"' in portal_cliente
@@ -1394,6 +1424,14 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'id="admin-saude-historico"' in portal_cliente
     assert 'id="empresa-alerta-capacidade"' in portal_cliente
     assert 'id="plano-impacto-preview"' in portal_cliente
+    assert 'id="cliente-plan-current-summary"' in portal_cliente
+    assert 'id="cliente-plan-usage-grid"' in portal_cliente
+    assert 'id="cliente-plan-resources-list"' in portal_cliente
+    assert 'id="cliente-plan-catalog"' in portal_cliente
+    assert 'id="cliente-plan-request"' in portal_cliente
+    assert 'id="empresa-plano-urgencia"' in portal_cliente
+    assert 'id="empresa-plano-motivo"' in portal_cliente
+    assert 'id="empresa-plano-observacoes"' in portal_cliente
     assert 'id="admin-planos-historico"' in portal_cliente
     assert 'id="form-plano"' in portal_cliente
     assert 'id="btn-plano-registrar"' in portal_cliente
@@ -1421,6 +1459,13 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'id="ativos-industriais-lista"' in portal_cliente
     assert 'id="documentos-resumo-geral"' in portal_cliente
     assert 'id="documentos-lista"' in portal_cliente
+    assert 'id="documentos-attention-list"' in portal_cliente
+    assert 'id="documentos-busca"' in portal_cliente
+    assert 'id="documentos-filtro-status"' in portal_cliente
+    assert 'id="documentos-filtro-evidencia"' in portal_cliente
+    assert 'id="documentos-ordenacao"' in portal_cliente
+    assert 'id="documentos-lista-contagem"' in portal_cliente
+    assert 'id="btn-documentos-limpar-filtros"' in portal_cliente
     assert 'id="documentos-com-art-lista"' in portal_cliente
     assert 'id="documentos-com-pie-lista"' in portal_cliente
     assert 'id="documentos-com-prontuario-lista"' in portal_cliente
@@ -1440,21 +1485,16 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'data-admin-stage="capacity"' in portal_cliente
     assert 'data-admin-stage="team"' in portal_cliente
     assert 'data-admin-stage="support"' in portal_cliente
-    assert 'data-admin-section-tab="overview"' in portal_cliente
-    assert 'data-admin-section-tab="capacity"' in portal_cliente
-    assert 'data-admin-section-tab="team"' in portal_cliente
-    assert 'data-admin-section-tab="support"' in portal_cliente
     assert 'data-admin-panel="overview"' in portal_cliente
     assert 'data-admin-panel="capacity"' in portal_cliente
     assert 'data-admin-panel="team"' in portal_cliente
     assert 'data-admin-panel="support"' in portal_cliente
     assert 'data-surface-nav="admin"' in portal_cliente
-    assert 'id="admin-section-summary-title"' in portal_cliente
-    assert 'id="admin-section-summary-meta"' in portal_cliente
-    assert 'id="admin-section-count-overview"' in portal_cliente
-    assert 'id="admin-section-count-capacity"' in portal_cliente
-    assert 'id="admin-section-count-team"' in portal_cliente
-    assert 'id="admin-section-count-support"' in portal_cliente
+    assert 'id="tab-admin-count"' in portal_cliente
+    assert 'id="tab-equipe-count"' in portal_cliente
+    assert 'id="tab-plano-count"' in portal_cliente
+    assert 'id="tab-documentos-count"' in portal_cliente
+    assert 'id="tab-suporte-count"' in portal_cliente
     assert 'data-chat-panel="overview"' in portal_cliente
     assert 'data-servicos-panel="overview"' in portal_cliente
     assert 'data-servicos-section-tab="overview"' in portal_cliente
@@ -1507,6 +1547,7 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'id="mesa-section-count-reply"' in portal_cliente
     assert 'data-stage-state="idle"' in portal_cliente
     assert 'data-cliente-tab-inicial="{{ cliente_tab_inicial | default(\'admin\') | e }}"' in portal_cliente
+    assert 'data-cliente-admin-section-inicial="{{ cliente_admin_section_inicial | default(\'overview\') | e }}"' in portal_cliente
     assert 'data-cliente-servicos-section-inicial="{{ cliente_servicos_section_inicial | default(\'overview\') | e }}"' in portal_cliente
     assert 'data-cliente-recorrencia-section-inicial="{{ cliente_recorrencia_section_inicial | default(\'overview\') | e }}"' in portal_cliente
     assert 'data-cliente-ativos-section-inicial="{{ cliente_ativos_section_inicial | default(\'overview\') | e }}"' in portal_cliente
@@ -1514,6 +1555,10 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'data-cliente-mesa-section-inicial="{{ cliente_mesa_section_inicial | default(\'overview\') | e }}"' in portal_cliente
     assert 'data-cliente-documentos-section-inicial="{{ cliente_documentos_section_inicial | default(\'overview\') | e }}"' in portal_cliente
     assert 'data-cliente-route-admin="{{ cliente_surface_routes.admin | default(\'/cliente/painel\') | e }}"' in portal_cliente
+    assert 'data-cliente-route-home="{{ cliente_surface_routes.home | default(\'/cliente/home\') | e }}"' in portal_cliente
+    assert 'data-cliente-route-equipe="{{ cliente_surface_routes.equipe | default(\'/cliente/organizacao/equipe\') | e }}"' in portal_cliente
+    assert 'data-cliente-route-plano="{{ cliente_surface_routes.plano | default(\'/cliente/plano\') | e }}"' in portal_cliente
+    assert 'data-cliente-route-suporte="{{ cliente_surface_routes.suporte | default(\'/cliente/suporte\') | e }}"' in portal_cliente
     assert 'data-cliente-route-servicos="{{ cliente_surface_routes.servicos | default(\'/cliente/servicos\') | e }}"' in portal_cliente
     assert 'data-cliente-route-recorrencia="{{ cliente_surface_routes.recorrencia | default(\'/cliente/recorrencia\') | e }}"' in portal_cliente
     assert 'data-cliente-route-ativos="{{ cliente_surface_routes.ativos | default(\'/cliente/ativos\') | e }}"' in portal_cliente
@@ -1615,9 +1660,17 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert 'aria-current", ativa ? "page" : "false"' in portal_admin_surface_js
     assert "function resumirMomentoCanonicoTenantAdmin()" in portal_admin_surface_js
     assert "adminOverviewSurface?.renderGuidedOnboardingOverview?.()" in portal_admin_surface_js
-    assert "Momento canonico do tenant" in portal_admin_surface_js
-    assert "Momento canonico:" in portal_admin_surface_js
+    assert "Momento canônico da conta" in portal_admin_surface_js
+    assert "Momento canônico:" in portal_admin_surface_js
+    assert "function renderPlanCurrentSummary()" in portal_admin_surface_js
+    assert "function renderPlanUsageGrid()" in portal_admin_surface_js
+    assert "function renderPlanResourcesList()" in portal_admin_surface_js
+    assert "function renderPlanCatalog()" in portal_admin_surface_js
+    assert "renderPlanCatalog();" in portal_admin_surface_js
     assert "window.TarielClientePainelPage" in painel_page_js
+    assert "urgencia: texto(extra.urgencia).trim()" in painel_page_js
+    assert "motivo: texto(extra.motivo).trim()" in painel_page_js
+    assert "observacoes: texto(extra.observacoes).trim()" in painel_page_js
     assert "window.TarielClientePortalAdmin" in portal_admin_js
     assert "window.TarielClientePortalServicosSurface" in portal_servicos_surface_js
     assert "window.TarielClienteServicosPage" in servicos_page_js
@@ -1633,9 +1686,16 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     assert "window.TarielClientePortalDocumentos" in portal_documentos_js
     assert "renderSignalList" in portal_documentos_surface_js
     assert "renderSummaryCard" in portal_documentos_surface_js
+    assert "renderDocumentosAttentionQueue" in portal_documentos_surface_js
+    assert "documentosFiltradosOrdenados" in portal_documentos_surface_js
     assert "documentos-summary-card" in portal_documentos_surface_js
+    assert "documentosFiltroStatus" in documentos_page_js
+    assert "documentosFiltroEvidencia" in documentos_page_js
+    assert "documentosOrdenacao" in documentos_page_js
     assert "document-card__nr35" in portal_documentos_surface_css
     assert ".document-summary-card" in portal_documentos_surface_css
+    assert ".documentos-toolbar" in portal_documentos_surface_css
+    assert ".documentos-attention-item" in portal_documentos_surface_css
     assert ".document-card__timeline" in portal_documentos_surface_css
     assert "window.TarielClientePortalChatSurface" in portal_chat_surface_js
     assert 'aria-current", ativa ? "page" : "false"' in portal_chat_surface_js
@@ -2016,7 +2076,7 @@ def test_ux_d_padroniza_admin_sem_owner_cru() -> None:
     admin_js = (raiz_web / "static" / "js" / "cliente" / "portal_admin_surface.js").read_text(encoding="utf-8")
     admin_css = (raiz_web / "static" / "css" / "cliente" / "portal_admin_surface.css").read_text(encoding="utf-8")
 
-    assert "Responsavel predominante: " in admin_js
+    assert "Responsável predominante: " in admin_js
     assert "Owner predominante:" not in admin_js
     assert ".panel--admin .surface-nav--admin" in admin_css
     assert "position: static" in admin_css
@@ -2301,7 +2361,7 @@ def test_nomenclatura_admin_ceo_e_admin_cliente_fica_clara_nos_portais() -> None
 
     assert "Portal Admin-CEO" in login_admin
     assert "Admin-CEO da Tariel.ia" in login_admin
-    assert "Portal da empresa" in login_cliente
+    assert "Acesso do cliente" in login_cliente
     assert "Admin-CEO" not in login_cliente
     assert "Portal do Inspetor" in login_app
     assert "Painel Admin-CEO" in dashboard_admin

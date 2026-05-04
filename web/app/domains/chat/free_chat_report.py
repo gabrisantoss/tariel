@@ -1771,10 +1771,13 @@ def _editable_evidences(document: Mapping[str, Any]) -> list[dict[str, Any]]:
         if not isinstance(raw, Mapping):
             continue
         raw_index = raw.get("index")
-        try:
-            index = int(raw_index)
-        except (TypeError, ValueError):
+        if raw_index is None:
             index = fallback_index
+        else:
+            try:
+                index = int(raw_index)
+            except (TypeError, ValueError):
+                index = fallback_index
         if index <= 0:
             index = fallback_index
 

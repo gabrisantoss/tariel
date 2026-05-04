@@ -124,11 +124,11 @@ def resumo_saude_empresa_cliente(
 
     if atual > anterior:
         tendencia = "subindo"
-        tendencia_rotulo = "Operacao aquecendo"
+        tendencia_rotulo = "Operação aquecendo"
         tendencia_tone = "aprovado" if capacidade_status in {"estavel", "monitorar"} else capacidade_tone
     elif atual < anterior:
         tendencia = "caindo"
-        tendencia_rotulo = "Operacao desacelerando"
+        tendencia_rotulo = "Operação desacelerando"
         tendencia_tone = "aguardando"
     else:
         tendencia = "estavel"
@@ -181,7 +181,7 @@ def resumo_saude_empresa_cliente(
     )
 
     if bool(empresa.status_bloqueio):
-        saude_rotulo = "Operacao bloqueada"
+        saude_rotulo = "Operação bloqueada"
         saude_tone = "ajustes"
         saude_texto = "A empresa segue bloqueada e precisa de acao administrativa antes de recuperar o ritmo normal."
     elif capacidade_status == "critico":

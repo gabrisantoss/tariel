@@ -1,6 +1,6 @@
 <section
     id="admin-capacity"
-    class="admin-stage admin-tab-panel"
+    class="admin-stage admin-tab-panel cliente-management-section cliente-management-section--plan"
     data-admin-stage="capacity"
     data-admin-panel="capacity"
     data-stage-state="idle"
@@ -8,53 +8,130 @@
     aria-labelledby="admin-section-tab-capacity"
     {% if (cliente_admin_section_inicial | default('overview')) != 'capacity' %}hidden{% endif %}
 >
-    <div class="admin-stage-head">
+    <div class="admin-stage-head cliente-management-section__head">
         <div class="admin-stage-copy">
-            <span class="admin-stage-kicker">Trilha comercial</span>
-            <h3>Plano em uso, impacto e solicitacao</h3>
-            <p class="box-subtitle">A empresa avalia impacto e registra interesse. A alteracao comercial efetiva continua sendo concluida pela Tariel.</p>
+            <span class="admin-stage-kicker">Plano e assinatura</span>
+            <h3>Uso, limites e contratação</h3>
+            <p>Acompanhe capacidade da conta, recursos contratados e solicitações comerciais.</p>
         </div>
 
         <div class="admin-stage-meta">
-            <span class="hero-chip">Resumo de impacto</span>
-            <span class="hero-chip">Solicitacao guiada</span>
-            <span class="hero-chip">Historico comercial</span>
+            <span class="hero-chip">Plano atual</span>
+            <span class="hero-chip">Conta ativa</span>
+            <button class="btn primary" type="button" data-act="abrir-prioridade" data-kind="admin-section" data-target="cliente-plan-request" data-origem="admin">
+                Solicitar ajuste
+            </button>
         </div>
     </div>
 
     <div id="admin-capacity-brief" class="admin-stage-brief"></div>
 
-    <div class="admin-stage-grid admin-stage-grid--split">
-        <article class="box" id="admin-planos-box">
-            <div class="toolbar">
-                <div class="toolbar-copy">
-                    <h3>Plano, capacidade e solicitacao</h3>
-                    <p class="box-subtitle">Compare o impacto comercial dos planos e registre interesse para a Tariel concluir a mudanca.</p>
+    <div class="cliente-plan-layout">
+        <div class="cliente-plan-main">
+            <article class="box cliente-plan-summary-card" id="admin-planos-box">
+                <div class="toolbar">
+                    <div class="toolbar-copy">
+                        <span class="surface-card__eyebrow">Plano atual</span>
+                        <h3>Resumo do plano atual</h3>
+                    </div>
                 </div>
-            </div>
 
-            <div id="empresa-resumo-detalhado"></div>
-            <div id="empresa-alerta-capacidade"></div>
-            <div id="plano-impacto-preview"></div>
+                <div id="cliente-plan-current-summary" class="cliente-plan-current-summary"></div>
+                <div id="empresa-alerta-capacidade"></div>
+            </article>
 
-            <form id="form-plano" class="stack form-stack">
-                <label>
-                    Plano para avaliacao
-                    <select id="empresa-plano"></select>
-                </label>
-                <button id="btn-plano-registrar" class="btn primary" type="submit">Registrar interesse comercial</button>
-            </form>
-        </article>
-
-        <article class="box" id="admin-planos-historico-box">
-            <div class="toolbar">
-                <div class="toolbar-copy">
-                    <h3>Historico de solicitacoes</h3>
-                    <p class="box-subtitle">Consulte rapidamente o que ja foi sinalizado ao time comercial e qual impacto foi descrito em cada pedido.</p>
+            <article class="box cliente-plan-usage-card">
+                <div class="toolbar">
+                    <div class="toolbar-copy">
+                        <span class="surface-card__eyebrow">Uso e limites</span>
+                        <h3>Capacidade da conta</h3>
+                    </div>
                 </div>
-            </div>
 
-            <div id="admin-planos-historico" class="activity-list"></div>
-        </article>
+                <div id="cliente-plan-usage-grid" class="cliente-plan-usage-grid"></div>
+            </article>
+
+            <article class="box cliente-plan-resources-card">
+                <div class="toolbar">
+                    <div class="toolbar-copy">
+                        <span class="surface-card__eyebrow">Pacote contratado</span>
+                        <h3>Recursos incluídos</h3>
+                    </div>
+                </div>
+
+                <div id="cliente-plan-resources-list" class="cliente-plan-resources-list"></div>
+            </article>
+
+            <article class="box cliente-plan-catalog-card">
+                <div class="toolbar">
+                    <div class="toolbar-copy">
+                        <span class="surface-card__eyebrow">Comparativo</span>
+                        <h3>Planos disponíveis</h3>
+                    </div>
+                </div>
+
+                <div id="cliente-plan-catalog" class="cliente-plan-catalog"></div>
+            </article>
+        </div>
+
+        <aside class="cliente-plan-side">
+            <article class="box cliente-plan-request-card" id="cliente-plan-request">
+                <div class="toolbar">
+                    <div class="toolbar-copy">
+                        <span class="surface-card__eyebrow">Solicitação comercial</span>
+                        <h3>Solicitar ajuste de plano</h3>
+                    </div>
+                </div>
+
+                <div id="plano-impacto-preview"></div>
+
+                <form id="form-plano" class="stack form-stack cliente-plan-request-form">
+                    <label>
+                        Plano de interesse
+                        <select id="empresa-plano"></select>
+                    </label>
+                    <label>
+                        Urgência
+                        <select id="empresa-plano-urgencia">
+                            <option value="planejamento">Planejamento</option>
+                            <option value="30_dias">Próximos 30 dias</option>
+                            <option value="imediata">Imediata</option>
+                        </select>
+                    </label>
+                    <label class="cliente-plan-request-form__wide">
+                        Motivo principal
+                        <select id="empresa-plano-motivo">
+                            <option value="crescimento_equipe">Crescimento da equipe</option>
+                            <option value="volume_laudos">Maior volume de laudos</option>
+                            <option value="emissao_oficial">Emissão oficial e documentos</option>
+                            <option value="outro">Outro motivo</option>
+                        </select>
+                    </label>
+                    <label class="cliente-plan-request-form__wide">
+                        Observações
+                        <textarea id="empresa-plano-observacoes" rows="3" maxlength="600" placeholder="Contexto comercial, previsão de uso ou contato responsável"></textarea>
+                    </label>
+                    <p class="cliente-plan-request-note">
+                        A solicitação fica registrada para a conta. A alteração comercial final é analisada e aplicada pela Tariel.
+                    </p>
+                    <button id="btn-plano-registrar" class="btn primary" type="submit">Enviar solicitação para Tariel</button>
+                </form>
+            </article>
+
+            <article class="box" id="admin-planos-historico-box">
+                <div class="toolbar">
+                    <div class="toolbar-copy">
+                        <span class="surface-card__eyebrow">Histórico</span>
+                        <h3>Histórico comercial</h3>
+                    </div>
+                </div>
+
+                <div id="admin-planos-historico" class="activity-list"></div>
+            </article>
+        </aside>
+    </div>
+
+    <div class="cliente-management-hidden-runtime" aria-hidden="true">
+        <div id="empresa-resumo-detalhado"></div>
     </div>
 </section>

@@ -39,7 +39,7 @@
         const resolverSecaoAdminPorTarget = typeof surfaceModule.resolverSecaoAdminPorTarget === "function" ? surfaceModule.resolverSecaoAdminPorTarget : () => null;
 
         function coletarAllowedPortalsCreate() {
-            return ["inspetor", "revisor", "cliente"].filter((portal) => {
+            return ["inspetor", "revisor"].filter((portal) => {
                 const node = $(`usuario-acesso-${portal}`);
                 return Boolean(node?.checked);
             });
@@ -51,7 +51,7 @@
             )
                 .filter((node) => node.checked)
                 .map((node) => texto(node.dataset.portal).trim())
-                .filter(Boolean);
+                .filter((portal) => portal && portal !== "cliente");
         }
 
         function absolutizarUrl(url) {
@@ -70,7 +70,7 @@
             const papel = texto(origem.papel || fallback.papel).trim();
             const login = texto(origem.login || fallback.login).trim();
             const senha = texto(origem.senha || fallback.senha || fallback.senha_temporaria).trim();
-            const referencia = texto(origem.referencia || fallback.referencia).trim() || "Credencial temporaria";
+            const referencia = texto(origem.referencia || fallback.referencia).trim() || "Credencial temporária";
             const empresaNome = texto(origem.empresa_nome || origem.empresaNome || fallback.empresa_nome || fallback.empresaNome).trim();
             const orientacao = texto(origem.orientacao || fallback.orientacao).trim()
                 || "Compartilhe a senha em canal seguro e oriente a troca obrigatoria no primeiro acesso.";
@@ -95,8 +95,8 @@
             return {
                 referencia,
                 empresaNome,
-                usuarioNome: usuarioNome || "Usuario operacional",
-                papel: papel || "Usuario operacional",
+                usuarioNome: usuarioNome || "Usuário operacional",
+                papel: papel || "Usuário operacional",
                 login,
                 senha,
                 orientacao,
@@ -112,7 +112,7 @@
                 `Papel: ${credencial.papel}`,
                 credencial.empresaNome ? `Empresa: ${credencial.empresaNome}` : "",
                 `Login: ${credencial.login}`,
-                `Senha temporaria: ${credencial.senha}`,
+                `Senha temporária: ${credencial.senha}`,
                 "",
                 "Portais liberados:",
                 ...(credencial.portais.length
@@ -120,7 +120,7 @@
                     : ["- Portal liberado conforme cadastro atual."]),
                 credencial.acessoInicialUrl ? `Primeiro acesso guiado: ${absolutizarUrl(credencial.acessoInicialUrl)}` : "",
                 "",
-                `Orientacao: ${credencial.orientacao}`,
+                `Orientação: ${credencial.orientacao}`,
             ];
             return linhas.filter(Boolean).join("\n");
         }
@@ -128,7 +128,7 @@
         async function copiarTexto(textoBruto) {
             const conteudo = texto(textoBruto).trim();
             if (!conteudo) {
-                throw new Error("Nenhum dado de acesso disponivel para copiar.");
+                throw new Error("Nenhum dado de acesso disponível para copiar.");
             }
             if (windowRef.navigator?.clipboard?.writeText) {
                 await windowRef.navigator.clipboard.writeText(conteudo);
@@ -156,7 +156,7 @@
             const resumo = $("admin-credencial-resumo");
             const corpo = $("admin-credencial-body");
             if (resumo) {
-                resumo.textContent = "Use este quadro para copiar o login temporario e orientar o primeiro acesso em canal seguro.";
+                resumo.textContent = "Use este quadro para copiar o login temporário e orientar o primeiro acesso em canal seguro.";
             }
             if (corpo) {
                 corpo.innerHTML = "";
@@ -180,7 +180,7 @@
 
             state.ui = state.ui || {};
             state.ui.adminCredencialTemporaria = credencial;
-            resumo.textContent = `${credencial.usuarioNome} recebeu uma senha temporaria nova. Copie os dados abaixo e compartilhe em canal seguro.`;
+            resumo.textContent = `${credencial.usuarioNome} recebeu uma senha temporária nova. Copie os dados abaixo e compartilhe em canal seguro.`;
 
             const portaisResumo = credencial.portais.length
                 ? credencial.portais.map((item) => item.label).join(", ")
@@ -212,12 +212,12 @@
                         <p class="admin-credential-value admin-credential-value--secret">${escapeHtml(credencial.login)}</p>
                     </article>
                     <article class="admin-credential-field">
-                        <small>Senha temporaria</small>
+                        <small>Senha temporária</small>
                         <p class="admin-credential-value admin-credential-value--secret">${escapeHtml(credencial.senha)}</p>
                     </article>
                     <article class="admin-credential-field">
                         <small>Empresa</small>
-                        <p class="admin-credential-value">${escapeHtml(credencial.empresaNome || "Empresa atual")}</p>
+                        <p class="admin-credential-value">${escapeHtml(credencial.empresaNome || "Conta atual")}</p>
                     </article>
                     <article class="admin-credential-field">
                         <small>Portais liberados</small>
@@ -251,7 +251,6 @@
             const papel = texto($("usuario-papel")?.value).trim() || "inspetor";
             const acessoInspetor = $("usuario-acesso-inspetor");
             const acessoRevisor = $("usuario-acesso-revisor");
-            const acessoCliente = $("usuario-acesso-cliente");
             const nota = $("usuario-acesso-nota");
 
             if (acessoInspetor) {
@@ -268,19 +267,130 @@
                     acessoRevisor.checked = false;
                 }
             }
-            if (acessoCliente) {
-                acessoCliente.disabled = !governance.operationalUserAdminPortalEnabled;
-                if (!governance.operationalUserAdminPortalEnabled) {
-                    acessoCliente.checked = false;
-                }
-            }
             if (nota) {
                 nota.textContent = governance.enabled
-                    ? "Esta empresa usa conta principal unificada. Novos usuarios operacionais so podem ser criados se ainda houver vaga operacional livre."
-                    : governance.operationalUserAdminPortalEnabled
-                        ? "Algumas pessoas da operacao tambem podem receber acesso ao portal da empresa."
-                        : "Os acessos disponiveis seguem as liberacoes contratadas para esta empresa.";
+                    ? "Esta conta usa acesso principal unificado. Novos usuários operacionais só podem ser criados se ainda houver vaga operacional livre."
+                    : "Os acessos disponíveis seguem as liberações contratadas para esta conta.";
             }
+            configurarCampoCrea("usuario-crea", "usuario-crea-field", papel === "revisor");
+        }
+
+        function configurarCampoCrea(inputId, wrapperId, habilitado) {
+            const input = $(inputId);
+            const wrapper = $(wrapperId);
+            if (wrapper) wrapper.hidden = !habilitado;
+            if (!input) return;
+            input.disabled = !habilitado;
+            if (!habilitado) input.value = "";
+        }
+
+        function abrirDrawerCriacaoEquipe() {
+            const drawer = $("cliente-team-create-drawer");
+            if (!drawer) return;
+            drawer.hidden = false;
+            drawer.scrollTop = 0;
+            documentRef.body?.classList.add("cliente-team-screen-open");
+            sincronizarAcessosFormularioCriacao();
+            windowRef.setTimeout(() => $("usuario-nome")?.focus(), 30);
+        }
+
+        function fecharDrawerCriacaoEquipe() {
+            const drawer = $("cliente-team-create-drawer");
+            if (drawer) drawer.hidden = true;
+            sincronizarTelaEquipeAberta();
+        }
+
+        function sincronizarTelaEquipeAberta() {
+            const createOpen = $("cliente-team-create-drawer") && !$("cliente-team-create-drawer").hidden;
+            const editOpen = $("cliente-team-edit-drawer") && !$("cliente-team-edit-drawer").hidden;
+            documentRef.body?.classList.toggle("cliente-team-screen-open", Boolean(createOpen || editOpen));
+        }
+
+        function obterUsuarioEquipePorId(userId) {
+            const id = Number(userId || 0);
+            if (!Number.isFinite(id) || id <= 0) return null;
+            return (state.bootstrap?.usuarios || []).find((item) => Number(item?.id || 0) === id) || null;
+        }
+
+        function portalLiberadoParaUsuario(usuario, portal, papelFallback) {
+            const portais = Array.isArray(usuario?.allowed_portals) ? usuario.allowed_portals : [];
+            const papel = texto(usuario?.papel).toLowerCase();
+            const slug = papel.includes("avaliador") || papel.includes("mesa") || papel.includes("revisor")
+                ? "revisor"
+                : Number(usuario?.nivel_acesso || 0) === 80 || papel.includes("admin") || papel.includes("cliente")
+                    ? "admin_cliente"
+                    : "inspetor";
+            return portais.includes(portal) || slug === papelFallback;
+        }
+
+        function configurarAcessoEdicao(usuario) {
+            const governance = obterGovernancaOperacionalTenant();
+            const papel = texto(usuario?.papel).toLowerCase();
+            const baseRole = papel.includes("avaliador") || papel.includes("mesa") || papel.includes("revisor")
+                ? "revisor"
+                : Number(usuario?.nivel_acesso || 0) === 80 || papel.includes("admin") || papel.includes("cliente")
+                    ? "admin_cliente"
+                    : "inspetor";
+            const controles = [
+                {
+                    id: "usuario-edicao-acesso-inspetor",
+                    portal: "inspetor",
+                    checked: portalLiberadoParaUsuario(usuario, "inspetor", "inspetor"),
+                    disabled: baseRole === "inspetor",
+                },
+                {
+                    id: "usuario-edicao-acesso-revisor",
+                    portal: "revisor",
+                    checked: portalLiberadoParaUsuario(usuario, "revisor", "revisor"),
+                    disabled: baseRole === "revisor" ? true : !governance.operationalUserCrossPortalEnabled,
+                },
+            ];
+            controles.forEach((item) => {
+                const input = $(item.id);
+                if (!input) return;
+                input.checked = Boolean(item.checked);
+                input.disabled = Boolean(item.disabled);
+                input.dataset.portal = item.portal;
+            });
+            configurarCampoCrea("usuario-edicao-crea", "usuario-edicao-crea-field", baseRole === "revisor");
+        }
+
+        function abrirDrawerEdicaoUsuario(userId) {
+            const usuario = obterUsuarioEquipePorId(userId);
+            const drawer = $("cliente-team-edit-drawer");
+            if (!usuario || !drawer) return;
+            $("usuario-edicao-id").value = texto(usuario.id);
+            $("usuario-edicao-nome").value = texto(usuario.nome || "");
+            $("usuario-edicao-email").value = texto(usuario.email || "");
+            $("usuario-edicao-telefone").value = texto(usuario.telefone || "");
+            $("usuario-edicao-crea").value = texto(usuario.crea || "");
+            const titulo = $("cliente-team-edit-title");
+            const subtitulo = $("cliente-team-edit-subtitle");
+            if (titulo) titulo.textContent = texto(usuario.nome || usuario.email || "Editar usuário");
+            if (subtitulo) subtitulo.textContent = texto(usuario.email || "Atualize dados, permissões e módulos liberados.");
+            configurarAcessoEdicao(usuario);
+            drawer.hidden = false;
+            drawer.scrollTop = 0;
+            documentRef.body?.classList.add("cliente-team-screen-open");
+            windowRef.setTimeout(() => $("usuario-edicao-nome")?.focus(), 30);
+        }
+
+        function fecharDrawerEdicaoUsuario() {
+            const drawer = $("cliente-team-edit-drawer");
+            if (drawer) drawer.hidden = true;
+            sincronizarTelaEquipeAberta();
+        }
+
+        function coletarAllowedPortalsEdicao() {
+            return ["inspetor", "revisor"].filter((portal) => {
+                const node = $(`usuario-edicao-acesso-${portal}`);
+                return Boolean(node?.checked);
+            });
+        }
+
+        function campoAtivo(inputId) {
+            const input = $(inputId);
+            return Boolean(input && !input.disabled);
         }
 
         function aplicarFiltrosUsuarios({ busca = "", papel = "todos", userId = null } = {}) {
@@ -296,6 +406,9 @@
             if ($("usuarios-filtro-papel")) {
                 $("usuarios-filtro-papel").value = state.ui.usuariosPapel;
             }
+            if ($("usuarios-filtro-status")) {
+                $("usuarios-filtro-status").value = "";
+            }
 
             renderUsuarios();
         }
@@ -308,6 +421,7 @@
             abrirSecaoAdmin("team", { ensureRendered: true });
             if ($("usuarios-busca")) $("usuarios-busca").value = "";
             if ($("usuarios-filtro-papel")) $("usuarios-filtro-papel").value = "todos";
+            if ($("usuarios-filtro-status")) $("usuarios-filtro-status").value = state.ui.usuariosSituacao;
             renderUsuarios();
         }
 
@@ -319,6 +433,7 @@
             abrirSecaoAdmin("team", { ensureRendered: true });
             if ($("usuarios-busca")) $("usuarios-busca").value = "";
             if ($("usuarios-filtro-papel")) $("usuarios-filtro-papel").value = "todos";
+            if ($("usuarios-filtro-status")) $("usuarios-filtro-status").value = "";
             renderUsuarios();
         }
 
@@ -343,7 +458,7 @@
             }, 40);
         }
 
-        async function registrarInteressePlano(plano, origem) {
+        async function registrarInteressePlano(plano, origem, extra = {}) {
             const nomePlano = texto(plano).trim();
             if (!nomePlano) return null;
 
@@ -352,8 +467,46 @@
                 body: {
                     plano: nomePlano,
                     origem: texto(origem).trim().toLowerCase() || "admin",
+                    urgencia: texto(extra.urgencia).trim(),
+                    motivo: texto(extra.motivo).trim(),
+                    observacoes: texto(extra.observacoes).trim(),
                 },
             });
+        }
+
+        function fecharSolicitacaoHabilitacaoProfissional() {
+            const details = $("cliente-management-habilitacao-request");
+            if (details) details.open = false;
+        }
+
+        async function enviarEvidenciasHabilitacaoProfissional(signatarioId, arquivos) {
+            const id = Number(signatarioId || 0);
+            const lista = Array.from(arquivos || []).filter(Boolean);
+            if (!Number.isFinite(id) || id <= 0 || !lista.length) return [];
+
+            const statusNode = $("habilitacao-profissional-evidencias-status");
+            const enviados = [];
+            for (let index = 0; index < lista.length; index += 1) {
+                const arquivo = lista[index];
+                if (statusNode) {
+                    statusNode.textContent = `Enviando comprovação ${index + 1} de ${lista.length}...`;
+                }
+                const formData = new FormData();
+                formData.append("arquivo", arquivo);
+                const resposta = await api(`/cliente/api/habilitacao-profissional/${id}/evidencias`, {
+                    method: "POST",
+                    body: formData,
+                });
+                if (resposta?.documento) {
+                    enviados.push(resposta.documento);
+                }
+            }
+            if (statusNode) {
+                statusNode.textContent = enviados.length
+                    ? `${enviados.length} comprovação(ões) enviada(s).`
+                    : "";
+            }
+            return enviados;
         }
 
         async function prepararUpgradeGuiado({ origem = "admin", button = null } = {}) {
@@ -378,7 +531,7 @@
                     seletor.value = planoSugerido;
                 }
                 renderPreviewPlano();
-                feedback(`Interesse em ${planoSugerido} registrado no historico da empresa.`, false, "Solicitacao registrada");
+                feedback(`Interesse em ${planoSugerido} registrado no histórico da conta.`, false, "Solicitação registrada");
             }).catch((erro) => feedback(erro.message || "Falha ao registrar interesse comercial.", true));
         }
 
@@ -394,6 +547,21 @@
         }
 
         function bindAdminActions() {
+            documentRef.querySelectorAll("[data-team-drawer-open]").forEach((button) => {
+                button.addEventListener("click", () => abrirDrawerCriacaoEquipe());
+            });
+            documentRef.querySelectorAll("[data-team-drawer-close]").forEach((button) => {
+                button.addEventListener("click", () => fecharDrawerCriacaoEquipe());
+            });
+            documentRef.querySelectorAll("[data-team-edit-close]").forEach((button) => {
+                button.addEventListener("click", () => fecharDrawerEdicaoUsuario());
+            });
+            windowRef.addEventListener("keydown", (event) => {
+                if (event.key !== "Escape") return;
+                fecharDrawerCriacaoEquipe();
+                fecharDrawerEdicaoUsuario();
+            });
+
             $("empresa-plano")?.addEventListener("change", () => {
                 abrirSecaoAdmin("capacity", { ensureRendered: true });
                 renderPreviewPlano();
@@ -403,16 +571,64 @@
                 event.preventDefault();
                 const button = event.submitter || event.target.querySelector('button[type="submit"]');
                 const planoSelecionado = $("empresa-plano")?.value || "";
+                const urgencia = $("empresa-plano-urgencia")?.value || "";
+                const motivo = $("empresa-plano-motivo")?.value || "";
+                const observacoes = $("empresa-plano-observacoes")?.value || "";
                 abrirSecaoAdmin("capacity", { ensureRendered: true });
                 await withBusy(button, "Registrando...", async () => {
-                    await registrarInteressePlano(planoSelecionado, "admin");
+                    await registrarInteressePlano(planoSelecionado, "admin", {
+                        urgencia,
+                        motivo,
+                        observacoes,
+                    });
                     await bootstrapPortal({ surface: "admin", force: true });
                     feedback(
-                        `Interesse em ${planoSelecionado} registrado no historico do portal.`,
+                        `Interesse em ${planoSelecionado} registrado no histórico do portal.`,
                         false,
                         "Solicitacao registrada"
                     );
                 }).catch((erro) => feedback(erro.message || "Falha ao registrar interesse no plano.", true));
+            });
+
+            $("form-habilitacao-profissional")?.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const button = event.submitter || event.target.querySelector('button[type="submit"]');
+                const arquivos = Array.from($("habilitacao-profissional-evidencias")?.files || []);
+                await withBusy(button, "Enviando...", async () => {
+                    const resposta = await api("/cliente/api/habilitacao-profissional", {
+                        method: "POST",
+                        body: {
+                            nome: $("habilitacao-profissional-nome")?.value || "",
+                            tipo_profissional: $("habilitacao-profissional-tipo")?.value || "profissional_habilitado",
+                            registro_profissional: $("habilitacao-profissional-registro")?.value || "",
+                            email: $("habilitacao-profissional-email")?.value || "",
+                            telefone: $("habilitacao-profissional-telefone")?.value || "",
+                            observacoes: $("habilitacao-profissional-observacoes")?.value || "",
+                        },
+                    });
+                    const documentos = await enviarEvidenciasHabilitacaoProfissional(resposta?.signatario_id, arquivos);
+                    if (resposta?.habilitacao) {
+                        state.bootstrap = state.bootstrap || {};
+                        state.bootstrap.professional_habilitation = resposta.habilitacao;
+                    }
+                    event.target.reset();
+                    fecharSolicitacaoHabilitacaoProfissional();
+                    await bootstrapPortal({ surface: "admin", force: true });
+                    feedback(
+                        documentos.length
+                            ? `Solicitação enviada com ${documentos.length} comprovação(ões).`
+                            : "Solicitação enviada para análise da Tariel.",
+                        false,
+                        "Habilitação em análise"
+                    );
+                }).catch((erro) => feedback(erro.message || "Falha ao solicitar análise profissional.", true));
+            });
+
+            documentRef.querySelectorAll("[data-habilitacao-request-close]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    $("form-habilitacao-profissional")?.reset();
+                    fecharSolicitacaoHabilitacaoProfissional();
+                });
             });
 
             $("form-usuario")?.addEventListener("submit", async (event) => {
@@ -422,25 +638,29 @@
                 const governance = obterGovernancaOperacionalTenant();
                 if (governance.enabled && governance.operationalUsersAtLimit) {
                     feedback(
-                        `Esta empresa usa ${governance.operatingModelLabel}. A conta operacional unica ja esta ocupada (${governance.operationalUsersInUse}/${governance.operationalUserLimit}). Libere uma vaga antes de criar outra pessoa.`,
+                        `Esta conta usa ${governance.operatingModelLabel}. A conta operacional única já está ocupada (${governance.operationalUsersInUse}/${governance.operationalUserLimit}). Libere uma vaga antes de criar outra pessoa.`,
                         true
                     );
                     return;
                 }
                 await withBusy(button, "Criando...", async () => {
+                    const payload = {
+                        nome: $("usuario-nome").value,
+                        email: $("usuario-email").value,
+                        nivel_acesso: $("usuario-papel").value,
+                        telefone: $("usuario-telefone").value,
+                        allowed_portals: coletarAllowedPortalsCreate(),
+                    };
+                    if (campoAtivo("usuario-crea")) {
+                        payload.crea = $("usuario-crea").value;
+                    }
                     const resposta = await api("/cliente/api/usuarios", {
                         method: "POST",
-                        body: {
-                            nome: $("usuario-nome").value,
-                            email: $("usuario-email").value,
-                            nivel_acesso: $("usuario-papel").value,
-                            telefone: $("usuario-telefone").value,
-                            crea: $("usuario-crea").value,
-                            allowed_portals: coletarAllowedPortalsCreate(),
-                        },
+                        body: payload,
                     });
                     event.target.reset();
                     sincronizarAcessosFormularioCriacao();
+                    fecharDrawerCriacaoEquipe();
                     await bootstrapPortal({ surface: "admin", force: true });
                     renderCredencialTemporaria(
                         resposta.credencial_onboarding || {
@@ -451,12 +671,37 @@
                         },
                         { scroll: true }
                     );
-                    feedback(`Usuario criado. Senha temporaria: ${resposta.senha_temporaria}`);
-                }).catch((erro) => feedback(erro.message || "Falha ao criar usuario.", true));
+                    feedback(`Usuário criado. Senha temporária: ${resposta.senha_temporaria}`);
+                }).catch((erro) => feedback(erro.message || "Falha ao criar usuário.", true));
             });
 
             $("usuario-papel")?.addEventListener("change", () => {
                 sincronizarAcessosFormularioCriacao();
+            });
+
+            $("form-usuario-edicao")?.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const userId = Number($("usuario-edicao-id")?.value || 0);
+                if (!Number.isFinite(userId) || userId <= 0) return;
+                const button = event.submitter || $("btn-usuario-edicao-salvar");
+                const payload = {
+                    nome: $("usuario-edicao-nome")?.value || "",
+                    email: $("usuario-edicao-email")?.value || "",
+                    telefone: $("usuario-edicao-telefone")?.value || "",
+                    allowed_portals: coletarAllowedPortalsEdicao(),
+                };
+                if (campoAtivo("usuario-edicao-crea")) {
+                    payload.crea = $("usuario-edicao-crea")?.value || "";
+                }
+                await withBusy(button, "Salvando...", async () => {
+                    await api(`/cliente/api/usuarios/${userId}`, {
+                        method: "PATCH",
+                        body: payload,
+                    });
+                    fecharDrawerEdicaoUsuario();
+                    await bootstrapPortal({ surface: "admin", force: true });
+                    feedback("Cadastro do usuário atualizado.");
+                }).catch((erro) => feedback(erro.message || "Falha ao atualizar usuário.", true));
             });
 
             const tratarAcaoUsuario = async (event) => {
@@ -468,6 +713,11 @@
                 abrirSecaoAdmin("team", { ensureRendered: true });
 
                 try {
+                    if (button.dataset.act === "edit-user") {
+                        abrirDrawerEdicaoUsuario(userId);
+                        return;
+                    }
+
                     if (button.dataset.act === "reset-user") {
                         await withBusy(button, "Gerando...", async () => {
                             const resposta = await api(`/cliente/api/usuarios/${userId}/resetar-senha`, { method: "POST" });
@@ -478,16 +728,23 @@
                                 },
                                 { scroll: true }
                             );
-                            feedback(`Senha temporaria: ${resposta.senha_temporaria}`);
+                            feedback(`Senha temporária: ${resposta.senha_temporaria}`);
                         });
                         return;
                     }
 
                     if (button.dataset.act === "toggle-user") {
+                        const nomeUsuario = String(
+                            button.closest("tr")?.querySelector(".user-name")?.textContent
+                            || "este usuário"
+                        ).trim();
+                        const confirmou = windowRef.confirm(`Alterar o status de acesso de ${nomeUsuario}?`);
+                        if (!confirmou) return;
+
                         await withBusy(button, "Atualizando...", async () => {
                             await api(`/cliente/api/usuarios/${userId}/bloqueio`, { method: "PATCH" });
                             await bootstrapPortal({ surface: "admin", force: true });
-                            feedback("Status do usuario atualizado.");
+                            feedback("Status do usuário atualizado.");
                         });
                         return;
                     }
@@ -495,11 +752,11 @@
                     if (button.dataset.act === "delete-user") {
                         const nomeUsuario = String(
                             documentRef.querySelector(`[data-user="${userId}"][data-field="nome"]`)?.value
-                            || button.closest("tr")?.querySelector("strong")?.textContent
-                            || "este usuario"
+                            || button.closest("tr")?.querySelector(".user-name")?.textContent
+                            || "este usuário"
                         ).trim();
                         const confirmou = windowRef.confirm(
-                            `Excluir definitivamente ${nomeUsuario}? O historico operacional sera preservado sem o cadastro do usuario.`
+                            `Excluir definitivamente ${nomeUsuario}? O histórico operacional será preservado sem o cadastro do usuário.`
                         );
                         if (!confirmou) {
                             return;
@@ -527,10 +784,10 @@
                             body: payload,
                         });
                         await bootstrapPortal({ surface: "admin", force: true });
-                        feedback("Cadastro do usuario atualizado.");
+                        feedback("Cadastro do usuário atualizado.");
                     });
                 } catch (erro) {
-                    feedback(erro.message || "Falha ao atualizar usuario.", true);
+                    feedback(erro.message || "Falha ao atualizar usuário.", true);
                 }
             };
 
@@ -542,12 +799,12 @@
             $("btn-admin-credencial-copiar")?.addEventListener("click", async () => {
                 const credencial = state.ui?.adminCredencialTemporaria || null;
                 if (!credencial) {
-                    feedback("Nenhum dado temporario esta aberto para copia.", true);
+                    feedback("Nenhum dado temporário está aberto para cópia.", true);
                     return;
                 }
                 try {
                     await copiarTexto(textoCredencialTemporaria(credencial));
-                    feedback("Dados de acesso copiados para a area de transferencia.", false, "Acesso copiado");
+                    feedback("Dados de acesso copiados para a área de transferência.", false, "Acesso copiado");
                 } catch (erro) {
                     feedback(erro.message || "Falha ao copiar os dados de acesso.", true);
                 }
@@ -585,7 +842,7 @@
             $("btn-whatsapp-suporte")?.addEventListener("click", () => {
                 const whatsapp = texto(state.bootstrap?.portal?.suporte_whatsapp).trim();
                 if (!whatsapp) {
-                    feedback("Canal de suporte ainda nao foi configurado para este portal.", true);
+                    feedback("Canal de suporte ainda não foi configurado para este portal.", true);
                     return;
                 }
                 windowRef.open(`https://wa.me/${encodeURIComponent(whatsapp)}`, "_blank", "noopener");

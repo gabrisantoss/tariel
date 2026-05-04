@@ -79,9 +79,9 @@ def build_tenant_commercial_overview_cliente(
 ) -> dict[str, Any]:
     users = list(usuarios or [])
     portals = [
-        {"key": "cliente", "label": "Admin-Cliente", "enabled": True},
-        {"key": "inspetor", "label": "Inspetor", "enabled": bool(surface_availability.get("chat", True))},
-        {"key": "revisor", "label": "Mesa Avaliadora", "enabled": bool(surface_availability.get("mesa", True))},
+        {"key": "cliente", "label": "Portal Cliente", "enabled": True},
+        {"key": "inspetor", "label": "Chat de campo", "enabled": bool(surface_availability.get("chat", True))},
+        {"key": "revisor", "label": "Mesa avaliadora", "enabled": bool(surface_availability.get("mesa", True))},
     ]
     capability_entitlements = _bool_dict(tenant_policy_summary.get("tenant_capability_entitlements"))
     capability_aliases = _bool_dict(tenant_policy_summary.get("tenant_capability_aliases"))
@@ -136,13 +136,13 @@ def build_tenant_commercial_overview_cliente(
         ),
         _resource_item(
             key="chat",
-            label="Chat Inspetor",
+            label="Chat de campo",
             available=chat_enabled,
-            detail_available="Chat Inspetor web disponível para abrir casos, conversar com IA e acompanhar finalização.",
-            detail_unavailable="Chat Inspetor não está incluído no pacote atual.",
-            action_kind="chat-section",
-            action_target="chat-overview",
-            action_label="Abrir Chat",
+            detail_available="Chat de campo disponível para os usuários operacionais liberados nesta conta.",
+            detail_unavailable="Chat de campo não está incluído no pacote atual.",
+            action_kind="admin-section",
+            action_target="lista-usuarios",
+            action_label="Abrir equipe",
             chips=["IA", "Casos"],
         ),
         _resource_item(
@@ -156,14 +156,14 @@ def build_tenant_commercial_overview_cliente(
         ),
         _resource_item(
             key="mesa",
-            label="Mesa Avaliadora",
+            label="Mesa avaliadora",
             available=separate_mesa_available,
-            detail_available="Mesa Avaliadora disponível para revisão separada, devolução e aprovação quando contratada ou exigida.",
-            detail_unavailable="Mesa Avaliadora não incluída neste pacote; isso não é erro quando a família permite revisão interna.",
+            detail_available="Mesa avaliadora disponível para os usuários liberados quando a revisão separada estiver contratada ou exigida.",
+            detail_unavailable="Mesa avaliadora não incluída neste pacote; isso não é erro quando a família permite revisão interna.",
             depends_on_family=True,
-            action_kind="mesa-section",
-            action_target="mesa-overview",
-            action_label="Abrir Mesa",
+            action_kind="admin-section",
+            action_target="lista-usuarios",
+            action_label="Abrir equipe",
             chips=["Revisão separada", "Aprovação"],
         ),
         _resource_item(
@@ -182,8 +182,8 @@ def build_tenant_commercial_overview_cliente(
             key="documents",
             label="Documentos oficiais",
             available=documents_enabled,
-            detail_available="Aba Documentos disponível para histórico, status e downloads tenant-scoped.",
-            detail_unavailable="Documentos não estão liberados para este tenant.",
+            detail_available="Aba Documentos disponível para histórico, status e downloads da conta.",
+            detail_unavailable="Documentos não estão liberados para esta conta.",
             action_kind="documentos-section",
             action_target="documentos-overview",
             action_label="Abrir Documentos",

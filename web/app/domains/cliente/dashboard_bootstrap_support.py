@@ -24,7 +24,15 @@ from app.domains.chat.laudo_state_helpers import (
 from app.domains.chat.normalization import TIPOS_TEMPLATE_VALIDOS
 from app.shared.public_verification import build_public_verification_payload
 from app.shared.official_issue_package import build_official_issue_summary, serialize_official_issue_record
-from app.shared.database import EmissaoOficialLaudo, Laudo, MensagemLaudo, NivelAcesso, TipoMensagem, Usuario
+from app.shared.database import (
+    EmissaoOficialLaudo,
+    Laudo,
+    MensagemLaudo,
+    NivelAcesso,
+    SignatarioGovernadoLaudo,
+    TipoMensagem,
+    Usuario,
+)
 from app.shared.inspection_history import build_human_override_summary
 from app.shared.tenant_entitlement_guard import tenant_access_policy_for_user
 from app.shared.tenant_admin_policy import (
@@ -33,9 +41,9 @@ from app.shared.tenant_admin_policy import (
 )
 
 ROLE_LABELS = {
-    int(NivelAcesso.INSPETOR): "Inspetor",
-    int(NivelAcesso.REVISOR): "Mesa Avaliadora",
-    int(NivelAcesso.ADMIN_CLIENTE): "Admin-Cliente",
+    int(NivelAcesso.INSPETOR): "Operador de campo",
+    int(NivelAcesso.REVISOR): "Avaliador",
+    int(NivelAcesso.ADMIN_CLIENTE): "Acesso do cliente",
 }
 SERVICE_CATALOG = {
     "rti": {"label": "RTI", "family": "eletrica"},
@@ -58,6 +66,40 @@ _DOCUMENT_SIGNAL_DEFINITIONS = (
 )
 NR35_LINHA_VIDA_FAMILY_KEY = "nr35_inspecao_linha_de_vida"
 NR35_OFFICIAL_DOWNLOAD_BASE = "/cliente/api/documentos/laudos/{laudo_id}/nr35/emissao-oficial"
+_HABILITACAO_STATUS_LABELS = {
+    "pending": "Pendente",
+    "in_review": "Em análise",
+    "approved": "Aprovado",
+    "rejected": "Reprovado",
+    "suspended": "Suspenso",
+}
+_HABILITACAO_STATUS_ALIASES = {
+    "pendente": "pending",
+    "pending": "pending",
+    "em_analise": "in_review",
+    "em analise": "in_review",
+    "em análise": "in_review",
+    "analise": "in_review",
+    "análise": "in_review",
+    "in_review": "in_review",
+    "review": "in_review",
+    "aprovado": "approved",
+    "aprovada": "approved",
+    "approved": "approved",
+    "ready": "approved",
+    "reprovado": "rejected",
+    "reprovada": "rejected",
+    "rejected": "rejected",
+    "suspenso": "suspended",
+    "suspensa": "suspended",
+    "suspended": "suspended",
+}
+_HABILITACAO_TIPO_PROFISSIONAL_LABELS = {
+    "engenheiro_seguranca": "Engenheiro de Segurança do Trabalho",
+    "tecnico_seguranca": "Técnico de Segurança do Trabalho",
+    "profissional_habilitado": "Profissional habilitado",
+    "outro": "Responsável técnico",
+}
 
 
 def _dict_copy_or_empty(value: object) -> dict[str, Any]:
@@ -77,6 +119,204 @@ def _texto_curto(value: Any, *, fallback: str | None = None) -> str | None:
 
 def _isoformat_or_empty(value: Any) -> str:
     return value.isoformat() if hasattr(value, "isoformat") else ""
+
+
+def _normalizar_datetime_utc(value: Any) -> dt.datetime | None:
+    if not isinstance(value, dt.datetime):
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=dt.timezone.utc)
+    return value.astimezone(dt.timezone.utc)
+
+
+def _normalizar_metadata_datetime_utc(value: Any) -> dt.datetime | None:
+    if isinstance(value, dt.datetime):
+        return _normalizar_datetime_utc(value)
+    texto = str(value or "").strip()
+    if not texto:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(texto.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return _normalizar_datetime_utc(parsed)
+
+
+def _formatar_data_cliente(value: Any, *, fallback: str = "Não informado") -> str:
+    parsed = _normalizar_metadata_datetime_utc(value)
+    if parsed is None:
+        return fallback
+    return parsed.strftime("%d/%m/%Y %H:%M")
+
+
+def _formatar_tamanho_documento(tamanho_bytes: int) -> str:
+    if tamanho_bytes <= 0:
+        return "Sem tamanho"
+    if tamanho_bytes < 1024 * 1024:
+        return f"{tamanho_bytes / 1024:.1f} KB"
+    return f"{tamanho_bytes / (1024 * 1024):.1f} MB"
+
+
+def _documentos_habilitacao_profissional_cliente(metadata: dict[str, Any]) -> list[dict[str, Any]]:
+    documentos = metadata.get("professional_documents")
+    if not isinstance(documentos, list):
+        return []
+    itens: list[dict[str, Any]] = []
+    for item in documentos:
+        if not isinstance(item, dict):
+            continue
+        documento_id = _texto_curto(item.get("id"))
+        nome = _texto_curto(item.get("nome") or item.get("name"), fallback="Comprovação profissional")
+        if not documento_id or not nome:
+            continue
+        tamanho_bytes = int(item.get("tamanho_bytes") or 0)
+        uploaded_at = item.get("uploaded_at")
+        itens.append(
+            {
+                "id": documento_id,
+                "nome": nome,
+                "mime_type": _texto_curto(item.get("mime_type"), fallback="application/octet-stream"),
+                "categoria": _texto_curto(item.get("categoria"), fallback="documento"),
+                "tamanho_bytes": tamanho_bytes,
+                "tamanho_label": _formatar_tamanho_documento(tamanho_bytes),
+                "sha256": _texto_curto(item.get("sha256")),
+                "uploaded_at": str(uploaded_at or ""),
+                "uploaded_at_label": _formatar_data_cliente(uploaded_at, fallback="Sem envio registrado"),
+            }
+        )
+    return itens
+
+
+def _normalizar_status_habilitacao(value: Any, *, default: str = "approved") -> str:
+    texto = str(value or "").strip().lower().replace("-", "_")
+    if not texto:
+        return default if default in _HABILITACAO_STATUS_LABELS else "in_review"
+    return _HABILITACAO_STATUS_ALIASES.get(texto, "in_review")
+
+
+def _metadata_signatario(signatario: SignatarioGovernadoLaudo) -> dict[str, Any]:
+    metadata = getattr(signatario, "governance_metadata_json", None)
+    return dict(metadata) if isinstance(metadata, dict) else {}
+
+
+def _status_habilitacao_signatario(signatario: SignatarioGovernadoLaudo) -> tuple[str, str]:
+    metadata = _metadata_signatario(signatario)
+    status = _normalizar_status_habilitacao(
+        metadata.get("professional_approval_status") or metadata.get("approval_status"),
+        default="approved",
+    )
+    return status, _HABILITACAO_STATUS_LABELS[status]
+
+
+def resumir_habilitacao_profissional_empresa(banco: Session, *, empresa_id: int) -> dict[str, Any]:
+    signatarios = list(
+        banco.scalars(
+            select(SignatarioGovernadoLaudo)
+            .where(SignatarioGovernadoLaudo.tenant_id == int(empresa_id))
+            .order_by(SignatarioGovernadoLaudo.ativo.desc(), SignatarioGovernadoLaudo.nome.asc())
+        ).all()
+    )
+    agora = dt.datetime.now(dt.timezone.utc)
+    counts = {
+        "total": len(signatarios),
+        "approved": 0,
+        "in_review": 0,
+        "pending": 0,
+        "rejected": 0,
+        "suspended": 0,
+        "expired": 0,
+        "inactive": 0,
+        "eligible": 0,
+    }
+    items: list[dict[str, Any]] = []
+    for signatario in signatarios:
+        approval_status, approval_label = _status_habilitacao_signatario(signatario)
+        validade = _normalizar_datetime_utc(getattr(signatario, "valid_until", None))
+        ativo = bool(getattr(signatario, "ativo", False))
+        expirado = bool(validade is not None and validade < agora)
+        elegivel = bool(ativo and not expirado and approval_status == "approved")
+        counts[approval_status] += 1
+        if expirado:
+            counts["expired"] += 1
+        if not ativo:
+            counts["inactive"] += 1
+        if elegivel:
+            counts["eligible"] += 1
+        allowed_family_keys = list(getattr(signatario, "allowed_family_keys_json", None) or [])
+        metadata = _metadata_signatario(signatario)
+        documentos = _documentos_habilitacao_profissional_cliente(metadata)
+        tipo_profissional = _texto_curto(metadata.get("professional_type"), fallback="profissional_habilitado")
+        submitted_at = metadata.get("professional_approval_submitted_at")
+        documents_updated_at = metadata.get("professional_documents_updated_at")
+        items.append(
+            {
+                "id": int(signatario.id),
+                "nome": _texto_curto(getattr(signatario, "nome", None), fallback="Responsável técnico"),
+                "funcao": _texto_curto(getattr(signatario, "funcao", None), fallback="Responsável técnico"),
+                "registro_profissional": _texto_curto(getattr(signatario, "registro_profissional", None)),
+                "professional_type": tipo_profissional,
+                "professional_type_label": _HABILITACAO_TIPO_PROFISSIONAL_LABELS.get(
+                    str(tipo_profissional or ""),
+                    "Responsável técnico",
+                ),
+                "professional_email": _texto_curto(metadata.get("professional_email")),
+                "professional_phone": _texto_curto(metadata.get("professional_phone")),
+                "approval_status": approval_status,
+                "approval_status_label": approval_label,
+                "ativo": ativo,
+                "expired": expirado,
+                "eligible": elegivel,
+                "valid_until": validade.isoformat() if validade is not None else None,
+                "valid_until_label": validade.strftime("%d/%m/%Y") if validade is not None else "Sem validade",
+                "allowed_family_keys": allowed_family_keys,
+                "professional_documents": documentos,
+                "professional_documents_count": len(documentos),
+                "professional_documents_status": _texto_curto(
+                    metadata.get("professional_documents_status"),
+                    fallback="not_uploaded",
+                ),
+                "professional_documents_updated_at": str(documents_updated_at or ""),
+                "professional_documents_updated_at_label": _formatar_data_cliente(
+                    documents_updated_at,
+                    fallback="Sem comprovação enviada",
+                ),
+                "submitted_at": str(submitted_at or ""),
+                "submitted_at_label": _formatar_data_cliente(submitted_at, fallback="Sem envio registrado"),
+                "family_scope_summary": "Todas as famílias liberadas"
+                if not allowed_family_keys
+                else f"{len(allowed_family_keys)} família(s)",
+            }
+        )
+
+    if counts["eligible"] > 0:
+        status_key = "approved"
+        status_label = "Aprovado"
+        tone = "aprovado"
+        detail = "Existe profissional aprovado, ativo e dentro da validade para emissão oficial."
+    elif counts["in_review"] > 0 or counts["pending"] > 0:
+        status_key = "in_review"
+        status_label = "Em análise"
+        tone = "aguardando"
+        detail = "A Tariel precisa concluir a análise antes de liberar emissão oficial."
+    elif counts["total"] <= 0:
+        status_key = "not_configured"
+        status_label = "Não enviado"
+        tone = "aguardando"
+        detail = "Nenhum responsável técnico foi cadastrado para habilitação profissional."
+    else:
+        status_key = "blocked"
+        status_label = "Bloqueado"
+        tone = "critico"
+        detail = "Não há profissional aprovado e elegível para emissão oficial neste momento."
+
+    return {
+        "status_key": status_key,
+        "status_label": status_label,
+        "tone": tone,
+        "detail": detail,
+        "counts": counts,
+        "items": items,
+    }
 
 
 def _is_nr35_linha_vida_document(laudo: Laudo) -> bool:
@@ -275,9 +515,9 @@ def build_guided_onboarding_cliente(
             "title": "Ativar equipe operacional",
             "done": total_usuarios > 0,
             "detail": (
-                "A empresa já possui usuários operacionais cadastrados."
+                "A conta já possui usuários operacionais cadastrados."
                 if total_usuarios > 0
-                else "Cadastre ao menos um inspetor ou revisor para a WF começar a operar no tenant."
+                else "Cadastre ao menos um operador de campo ou avaliador para iniciar a operação."
             ),
             "action_label": "Abrir equipe",
             "action_kind": "admin-section",
@@ -290,7 +530,7 @@ def build_guided_onboarding_cliente(
             "detail": (
                 "A equipe já concluiu o primeiro acesso e não depende mais de senha temporária."
                 if total_usuarios > 0 and primeiros_acessos_concluidos >= total_usuarios
-                else "Peça para a equipe concluir o primeiro acesso antes de abrir operação crítica no tenant."
+                else "Peça para a equipe concluir o primeiro acesso antes de abrir operação crítica na conta."
             ),
             "action_label": "Abrir equipe",
             "action_kind": "admin-section",
@@ -298,12 +538,12 @@ def build_guided_onboarding_cliente(
         },
         {
             "key": "inspetor",
-            "title": "Liberar acesso de campo",
+            "title": "Liberar Chat de campo",
             "done": "inspetor" in papeis,
             "detail": (
                 "Já existe pelo menos um perfil de campo apto a iniciar laudos."
                 if "inspetor" in papeis
-                else "Crie um inspetor para a empresa abrir o primeiro caso real."
+                else "Crie um operador de campo para a conta abrir o primeiro caso real."
             ),
             "action_label": "Abrir ativação",
             "action_kind": "admin-section",
@@ -314,17 +554,17 @@ def build_guided_onboarding_cliente(
             "title": "Preparar revisão humana",
             "done": ("mesa avaliadora" in papeis) or ("revisor" in papeis) or not bool(surface_availability.get("mesa", False)),
             "detail": (
-                "A revisão humana já está coberta pela equipe da empresa."
+                "A revisão humana já está coberta pela equipe da conta."
                 if (("mesa avaliadora" in papeis) or ("revisor" in papeis))
                 else (
-                    "Este contrato não expõe mesa avaliadora para a empresa."
+                    "Este contrato não expõe Mesa avaliadora para a conta."
                     if not bool(surface_availability.get("mesa", False))
-                    else "Cadastre um revisor para fechar a etapa de decisão humana."
+                    else "Cadastre um avaliador para fechar a etapa de decisão humana."
                 )
             ),
-            "action_label": "Abrir mesa",
-            "action_kind": "mesa-section",
-            "action_target": "mesa-overview",
+            "action_label": "Abrir equipe",
+            "action_kind": "admin-section",
+            "action_target": "lista-usuarios",
         },
         {
             "key": "primeiro_laudo",
@@ -333,28 +573,28 @@ def build_guided_onboarding_cliente(
             "detail": (
                 "A carteira operacional já começou a ser formada."
                 if total_laudos > 0
-                else "Crie o primeiro laudo da empresa para alimentar serviços, ativos e documentos."
+                else "O primeiro laudo aparece quando a operação de campo começar a registrar casos."
             ),
-            "action_label": "Abrir chat",
-            "action_kind": "chat-section",
-            "action_target": "form-chat-laudo",
+            "action_label": "Abrir equipe",
+            "action_kind": "admin-section",
+            "action_target": "lista-usuarios",
         },
         {
             "key": "primeiro_envio_mesa",
             "title": "Enviar o primeiro caso para mesa",
             "done": total_mesa > 0 or not bool(surface_availability.get("mesa", False)),
             "detail": (
-                "A primeira rodada de revisão humana já aconteceu no tenant."
+                "A primeira rodada de revisão humana já aconteceu na conta."
                 if total_mesa > 0
                 else (
-                    "Este contrato não expõe mesa avaliadora para a empresa."
+                    "Este contrato não expõe Mesa avaliadora para a conta."
                     if not bool(surface_availability.get("mesa", False))
-                    else "Envie o primeiro caso para a mesa para validar o fluxo completo de revisão."
+                    else "Quando o primeiro caso chegar à Mesa, o fluxo completo de revisão aparece aqui."
                 )
             ),
-            "action_label": "Abrir mesa",
-            "action_kind": "mesa-section",
-            "action_target": "mesa-overview",
+            "action_label": "Abrir equipe",
+            "action_kind": "admin-section",
+            "action_target": "lista-usuarios",
         },
         {
             "key": "documentos",
@@ -1201,6 +1441,7 @@ __all__ = [
     "listar_servicos_empresa",
     "resumir_ativos_empresa",
     "resumir_documentos_empresa",
+    "resumir_habilitacao_profissional_empresa",
     "resumir_recorrencia_empresa",
     "resumir_servicos_empresa",
     "serializar_usuario_cliente",

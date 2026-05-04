@@ -139,6 +139,10 @@
             const bootstrap = state.bootstrap;
             if (!bootstrap) return;
             const tenantAdmin = bootstrap.tenant_admin_projection?.payload || null;
+            const definirBadge = (id, valor) => {
+                const node = $(id);
+                if (node) node.textContent = valor;
+            };
 
             const totalUsuarios = Number(tenantAdmin?.user_summary?.total_users || bootstrap.usuarios?.length || 0);
             const totalServicos = Number(bootstrap.servicos?.summary?.total_services || bootstrap.servicos?.items?.length || 0);
@@ -152,14 +156,23 @@
             ) || (bootstrap.mesa?.laudos || []).filter(
                 (item) => Number(item.pendencias_abertas || 0) > 0 || Number(item.whispers_nao_lidos || 0) > 0
             ).length;
+            const totalSuporte = Number(bootstrap.auditoria?.itens?.length || 0);
+            const acessosOperacionais = [
+                tenantAdmin?.visibility_policy?.shared_mobile_operator_web_inspector_enabled !== false,
+                tenantAdmin?.visibility_policy?.shared_mobile_operator_web_review_enabled !== false,
+            ].filter(Boolean).length;
 
-            $("tab-admin-count").textContent = formatarInteiro(totalUsuarios);
-            $("tab-servicos-count").textContent = formatarInteiro(totalServicos);
-            $("tab-recorrencia-count").textContent = formatarInteiro(totalRecorrencia);
-            $("tab-ativos-count").textContent = formatarInteiro(totalAtivos);
-            $("tab-documentos-count").textContent = formatarInteiro(totalDocumentos);
-            $("tab-chat-count").textContent = formatarInteiro(totalLaudosChat);
-            $("tab-mesa-count").textContent = formatarInteiro(totalMesaQuente || bootstrap.mesa?.laudos?.length || 0);
+            definirBadge("tab-admin-count", formatarInteiro(totalUsuarios));
+            definirBadge("tab-equipe-count", formatarInteiro(totalUsuarios));
+            definirBadge("tab-acessos-count", formatarInteiro(acessosOperacionais));
+            definirBadge("tab-plano-count", texto(bootstrap.empresa?.plano_ativo).trim() || "Plano");
+            definirBadge("tab-documentos-count", formatarInteiro(totalDocumentos));
+            definirBadge("tab-suporte-count", formatarInteiro(totalSuporte));
+            definirBadge("tab-servicos-count", formatarInteiro(totalServicos));
+            definirBadge("tab-recorrencia-count", formatarInteiro(totalRecorrencia));
+            definirBadge("tab-ativos-count", formatarInteiro(totalAtivos));
+            definirBadge("tab-chat-count", formatarInteiro(totalLaudosChat));
+            definirBadge("tab-mesa-count", formatarInteiro(totalMesaQuente || bootstrap.mesa?.laudos?.length || 0));
         }
 
         function sincronizarSelecoes() {
@@ -236,7 +249,7 @@
             if (!button || !title || !meta) return;
 
             if (!prioridade) {
-                button.textContent = "Abrir foco da empresa";
+                button.textContent = "Abrir foco da conta";
                 button.dataset.kind = "admin-section";
                 button.dataset.canal = "admin";
                 button.dataset.target = "admin-resumo-geral";
@@ -245,8 +258,8 @@
                 button.dataset.user = "";
                 button.dataset.busca = "";
                 button.dataset.papel = "";
-                title.textContent = "Abrir frente prioritaria da empresa";
-                meta.textContent = "O portal segue pronto para aprofundar capacidade, equipe, suporte ou historico operacional a partir do console administrativo.";
+                title.textContent = "Abrir frente prioritária da conta";
+                meta.textContent = "O portal segue pronto para aprofundar capacidade, equipe, suporte ou histórico operacional a partir do console de gestão.";
                 return;
             }
 
@@ -279,8 +292,8 @@
             const operationalSurfaceLabels = Array.isArray(visibilityPolicy?.shared_mobile_operator_surface_set)
                 ? visibilityPolicy.shared_mobile_operator_surface_set.map((item) => {
                     if (item === "mobile") return "App mobile";
-                    if (item === "inspetor_web") return "Portal Inspetor";
-                    if (item === "mesa_web") return "Portal Mesa";
+                    if (item === "inspetor_web") return "Chat de campo";
+                    if (item === "mesa_web") return "Mesa avaliadora";
                     return texto(item).replaceAll("_", " ");
                 }).filter(Boolean)
                 : [];
@@ -309,14 +322,14 @@
             if (focusMeta) {
                 focusMeta.textContent = prioridadeTop?.detalhe
                     || prioridadeResumo.acao
-                    || "Capacidade, equipe, suporte e operacao seguem alinhados em uma shell unica.";
+                    || "Capacidade, equipe, suporte e operação seguem alinhados em uma tela única.";
             }
             if (kpiStrip) {
                 kpiStrip.innerHTML = `
                     <article class="hero-kpi-card">
                         <small>Plano em vigor</small>
-                        <strong>${escapeHtml(empresa.plano_ativo || "Nao informado")}</strong>
-                        <span>${escapeHtml(usoPercentual)} de uso acompanhado na empresa.</span>
+                        <strong>${escapeHtml(empresa.plano_ativo || "Não informado")}</strong>
+                        <span>${escapeHtml(usoPercentual)} de uso acompanhado na conta.</span>
                     </article>
                     <article class="hero-kpi-card">
                         <small>Equipe ativa</small>
@@ -324,18 +337,18 @@
                         <span>${escapeHtml(
                             mobileSingleOperator
                                 ? `${formatarInteiro(operationalUsers)} de ${formatarInteiro(operationalLimit || 1)} conta operacional ocupada.`
-                                : `${formatarInteiro(totalUsuarios)} perfis operacionais sob a mesma governanca.`
+                                : `${formatarInteiro(totalUsuarios)} perfis operacionais sob a mesma governança.`
                         )}</span>
                     </article>
                     <article class="hero-kpi-card">
                         <small>Casos abertos</small>
                         <strong>${escapeHtml(formatarInteiro(casosAbertos))}</strong>
-                        <span>${escapeHtml(formatarInteiro(revisoesAtivas))} casos em revisao ou resposta.</span>
+                        <span>${escapeHtml(formatarInteiro(revisoesAtivas))} casos em revisão ou resposta.</span>
                     </article>
                     <article class="hero-kpi-card">
-                        <small>Trilha auditavel</small>
+                        <small>Trilha auditável</small>
                         <strong>${escapeHtml(formatarInteiro(totalAuditoria))}</strong>
-                        <span>${suggestedPlan ? `Plano sugerido: ${escapeHtml(suggestedPlan)}.` : "Suporte, equipe e comercial sob historico operacional."}</span>
+                        <span>${suggestedPlan ? `Plano sugerido: ${escapeHtml(suggestedPlan)}.` : "Suporte, equipe e comercial sob histórico operacional."}</span>
                     </article>
                 `;
             }
@@ -355,23 +368,23 @@
                                 : escapeHtml(formatarInteiro(empresa.usuarios_restantes))}</strong>
                         <span>${escapeHtml(
                             mobileSingleOperator
-                                ? "Admin-Cliente nao entra nessa conta operacional."
-                                : `${formatarInteiro(totalUsuarios)} perfis em operacao hoje.`
+                                ? "Portal Cliente não entra nessa conta operacional."
+                                : `${formatarInteiro(totalUsuarios)} perfis em operação hoje.`
                         )}</span>
                     </div>
                     <div class="hero-status">
                         <small>Modelo operacional</small>
-                        <strong>${escapeHtml(mobileSingleOperator ? "Operador unico" : "Operacao padrao")}</strong>
+                        <strong>${escapeHtml(mobileSingleOperator ? "Operador único" : "Operação padrão")}</strong>
                         <span>${escapeHtml(
                             mobileSingleOperator
                                 ? `Continuidade prevista em ${operationalSurfaceSummary}.`
-                                : "Perfis distribuidos conforme o contrato da empresa."
+                                : "Perfis distribuídos conforme o contrato da conta."
                         )}</span>
                     </div>
                     <div class="hero-status">
-                        <small>Politica de suporte</small>
+                        <small>Política de suporte</small>
                         <strong>${visibilityPolicy?.exceptional_support_access === "disabled" ? "Fechada" : "Governada"}</strong>
-                        <span>Diagnostico administrativo e trilha recente a um clique.</span>
+                        <span>Diagnóstico administrativo e trilha recente a um clique.</span>
                     </div>
                 `;
             }

@@ -267,12 +267,12 @@ def test_empresa_sem_mesa_multiusuario_admin_gerencia_inspetor_opera_e_portal_na
     assert resposta_inspetor_extra.status_code == 201
     corpo_inspetor_extra = resposta_inspetor_extra.json()
     inspetor_extra_id = int(corpo_inspetor_extra["usuario"]["id"])
-    assert corpo_inspetor_extra["usuario"]["papel"] == "Inspetor"
+    assert corpo_inspetor_extra["usuario"]["papel"] == "Operador de campo"
     assert corpo_inspetor_extra["usuario"]["allowed_portals"] == ["inspetor"]
     assert corpo_inspetor_extra["credencial_onboarding"]["portais"] == [
         {
             "portal": "inspetor",
-            "label": "Inspetor web/mobile",
+            "label": "Chat de campo",
             "login_url": "/app/login",
         }
     ]
@@ -284,7 +284,7 @@ def test_empresa_sem_mesa_multiusuario_admin_gerencia_inspetor_opera_e_portal_na
         str(contexto["inspetor_email"]),
         "inspetor-sem-mesa-g2@empresa.test",
     }
-    assert {item["papel"] for item in usuarios_payload} == {"Inspetor"}
+    assert {item["papel"] for item in usuarios_payload} == {"Operador de campo"}
     assert all(item["allowed_portals"] == ["inspetor"] for item in usuarios_payload)
 
     with SessionLocal() as banco:

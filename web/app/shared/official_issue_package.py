@@ -75,6 +75,34 @@ _DOCUMENT_VISUAL_STATE_LABELS = {
     "historical": "Histórico",
     "internal": "Interno",
 }
+_SIGNATORY_APPROVAL_STATUS_LABELS = {
+    "pending": "Pendente",
+    "in_review": "Em análise",
+    "approved": "Aprovado",
+    "rejected": "Reprovado",
+    "suspended": "Suspenso",
+}
+_SIGNATORY_APPROVAL_STATUS_ALIASES = {
+    "pendente": "pending",
+    "pending": "pending",
+    "em_analise": "in_review",
+    "em analise": "in_review",
+    "em análise": "in_review",
+    "analise": "in_review",
+    "análise": "in_review",
+    "in_review": "in_review",
+    "review": "in_review",
+    "aprovado": "approved",
+    "aprovada": "approved",
+    "approved": "approved",
+    "ready": "approved",
+    "reprovado": "rejected",
+    "reprovada": "rejected",
+    "rejected": "rejected",
+    "suspenso": "suspended",
+    "suspensa": "suspended",
+    "suspended": "suspended",
+}
 
 
 class OfficialIssueConflictError(RuntimeError):
@@ -161,6 +189,30 @@ def _normalize_key_list(value: Any) -> list[str]:
         seen.add(normalized)
         result.append(normalized)
     return result
+
+
+def _signatory_governance_metadata(signatory: SignatarioGovernadoLaudo | None) -> dict[str, Any]:
+    if signatory is None:
+        return {}
+    metadata = getattr(signatory, "governance_metadata_json", None)
+    return dict(metadata) if isinstance(metadata, dict) else {}
+
+
+def _normalize_signatory_approval_status(value: Any, *, default: str = "approved") -> str:
+    text = str(value or "").strip().lower().replace("-", "_")
+    if not text:
+        return default if default in _SIGNATORY_APPROVAL_STATUS_LABELS else "in_review"
+    return _SIGNATORY_APPROVAL_STATUS_ALIASES.get(text, "in_review")
+
+
+def _signatory_approval_status(signatory: SignatarioGovernadoLaudo | None) -> tuple[str, str]:
+    metadata = _signatory_governance_metadata(signatory)
+    status = _normalize_signatory_approval_status(
+        metadata.get("professional_approval_status")
+        or metadata.get("approval_status"),
+        default="approved",
+    )
+    return status, _SIGNATORY_APPROVAL_STATUS_LABELS[status]
 
 
 def _join_human_list(items: list[str]) -> str:
@@ -339,12 +391,15 @@ def _signatory_snapshot_payload(signatory: SignatarioGovernadoLaudo | None) -> d
     if signatory is None:
         return None
     status, status_label = _signatory_effective_status(signatory)
+    approval_status, approval_status_label = _signatory_approval_status(signatory)
     valid_until = _normalize_dt(getattr(signatory, "valid_until", None))
     return {
         "id": int(signatory.id),
         "nome": _clean_text(signatory.nome, limit=160),
         "funcao": _clean_text(signatory.funcao, limit=120),
         "registro_profissional": _clean_text(signatory.registro_profissional, limit=80),
+        "professional_approval_status": approval_status,
+        "professional_approval_status_label": approval_status_label,
         "valid_until": valid_until.isoformat() if valid_until is not None else None,
         "status": status,
         "status_label": status_label,
@@ -1371,6 +1426,9 @@ def _signatory_effective_status(signatory: SignatarioGovernadoLaudo) -> tuple[st
     valid_until = _normalize_dt(getattr(signatory, "valid_until", None))
     if valid_until is not None and valid_until < _now_utc():
         return "expired", "Validade expirada"
+    approval_status, approval_status_label = _signatory_approval_status(signatory)
+    if approval_status != "approved":
+        return f"approval_{approval_status}", approval_status_label
     if valid_until is not None and valid_until <= (_now_utc() + _SIGNATORY_EXPIRING_SOON_WINDOW):
         return "expiring_soon", "Validade próxima"
     return "ready", "Pronto para emissão"
@@ -1401,6 +1459,7 @@ def build_governed_signatory_summary(
         if not compatible:
             continue
         status, status_label = _signatory_effective_status(signatory)
+        approval_status, approval_status_label = _signatory_approval_status(signatory)
         if status == "ready":
             eligible_count += 1
         elif status == "expiring_soon":
@@ -1412,6 +1471,8 @@ def build_governed_signatory_summary(
                 "nome": _clean_text(signatory.nome, limit=160) or f"Signatário #{int(signatory.id)}",
                 "funcao": _clean_text(signatory.funcao, limit=120) or "Responsável técnico",
                 "registro_profissional": _clean_text(signatory.registro_profissional, limit=80),
+                "professional_approval_status": approval_status,
+                "professional_approval_status_label": approval_status_label,
                 "valid_until": _normalize_dt(getattr(signatory, "valid_until", None)),
                 "status": status,
                 "status_label": status_label,
@@ -1426,7 +1487,7 @@ def build_governed_signatory_summary(
         signature_status_label = "Sem signatário governado"
     elif eligible_count <= 0:
         signature_status = "blocked"
-        signature_status_label = "Sem signatário elegível"
+        signature_status_label = "Sem profissional aprovado"
     elif expiring_count > 0:
         signature_status = "attention"
         signature_status_label = "Signatário com validade próxima"
@@ -1503,8 +1564,8 @@ def build_official_issue_summary(
         blockers.append(
             {
                 "code": "no_eligible_signatory",
-                "title": "Sem signatário elegível",
-                "message": "Configure ao menos um signatário ativo e válido compatível com a família deste laudo.",
+                "title": "Sem profissional aprovado",
+                "message": "Aprove ao menos uma habilitação profissional ativa e válida compatível com a família deste laudo.",
                 "blocking": True,
             }
         )

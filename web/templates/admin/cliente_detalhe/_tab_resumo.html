@@ -432,15 +432,147 @@
                     <div class="secao-subtop">
                         <div>
                             <h4 class="subsecao-titulo">
-                                Signatários governados
-                                {{ help_icon("Cadastre aqui quem pode assinar ou validar a Emissão oficial pela empresa.", "Ajuda sobre Signatários governados") }}
+                                Habilitação profissional
+                                {{ help_icon("Aprove aqui quem pode assinar ou validar a Emissão oficial pela empresa.", "Ajuda sobre Habilitação profissional") }}
                             </h4>
-                            <p>Cadastre os Signatários governados autorizados para Emissão oficial, com validade e escopo por família.</p>
+                            <p>Valide responsáveis técnicos antes de liberar qualquer Emissão oficial, com validade e escopo por família.</p>
                         </div>
                         <span class="badge {{ 'conforme' if signatarios_governados else 'info' }}">
                             {{ signatarios_governados | length }} cadastrado(s)
                         </span>
                     </div>
+
+                    {% set _habilitacoes_em_revisao = namespace(total=0) %}
+                    {% for signatario in signatarios_governados %}
+                        {% if signatario.approval_needs_review %}
+                            {% set _habilitacoes_em_revisao.total = _habilitacoes_em_revisao.total + 1 %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if _habilitacoes_em_revisao.total %}
+                    <div class="professional-review-queue" aria-label="Solicitações de habilitação profissional aguardando análise">
+                        <div class="professional-review-queue__head">
+                            <div>
+                                <span>Fila de análise</span>
+                                <strong>Solicitações aguardando decisão da Tariel</strong>
+                            </div>
+                            <span class="badge atencao">{{ _habilitacoes_em_revisao.total }} em análise</span>
+                        </div>
+
+                        <div class="professional-review-queue__list">
+                            {% for signatario in signatarios_governados %}
+                            {% if signatario.approval_needs_review %}
+                            <article class="professional-review-item">
+                                <div class="professional-review-item__main">
+                                    <div>
+                                        <strong>{{ signatario.nome | e }}</strong>
+                                        <p>{{ signatario.funcao | e }}</p>
+                                    </div>
+                                    <div class="tenant-catalog-card__meta">
+                                        <span>{{ signatario.approval_source_label | e }}</span>
+                                        {% if signatario.registro_profissional %}
+                                        <span>{{ signatario.registro_profissional | e }}</span>
+                                        {% endif %}
+                                        {% if signatario.professional_email %}
+                                        <span>{{ signatario.professional_email | e }}</span>
+                                        {% endif %}
+                                        {% if signatario.professional_phone %}
+                                        <span>{{ signatario.professional_phone | e }}</span>
+                                        {% endif %}
+                                        <span>{{ signatario.submitted_at_label | e }}</span>
+                                    </div>
+                                    {% if signatario.observacoes %}
+                                    <p class="tenant-catalog-card__copy">{{ signatario.observacoes | e }}</p>
+                                    {% endif %}
+                                    <div class="professional-review-documents">
+                                        <strong>Comprovações enviadas</strong>
+                                        {% if signatario.professional_documents %}
+                                        <div class="professional-review-documents__list">
+                                            {% for documento in signatario.professional_documents %}
+                                            <a
+                                                href="/admin/clientes/{{ empresa.id | int }}/signatarios-governados/{{ signatario.id | int }}/evidencias/{{ documento.id | e }}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                <span class="material-symbols-rounded" aria-hidden="true">attach_file</span>
+                                                <span>
+                                                    {{ documento.nome | e }}
+                                                    <small>{{ documento.tamanho_label | e }} • {{ documento.uploaded_at_label | e }}</small>
+                                                </span>
+                                            </a>
+                                            {% endfor %}
+                                        </div>
+                                        {% else %}
+                                        <p>Nenhum arquivo foi anexado pelo cliente.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <form
+                                    method="POST"
+                                    action="/admin/clientes/{{ empresa.id | int }}/signatarios-governados/{{ signatario.id | int }}/revisao"
+                                    class="professional-review-approval"
+                                >
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <input type="hidden" name="approval_status" value="approved">
+                                    <label>
+                                        <span>Validade da aprovação</span>
+                                        <input type="date" name="valid_until" value="{{ signatario.valid_until.strftime('%Y-%m-%d') if signatario.valid_until else '' }}" required>
+                                    </label>
+                                    <div class="professional-review-scope" aria-label="Escopo por família">
+                                        {% for family in signatario_family_options %}
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                name="allowed_family_keys"
+                                                value="{{ family.family_key | e }}"
+                                                {% if family.family_key in signatario.allowed_family_keys %}checked{% endif %}
+                                            >
+                                            <span>{{ family.family_label | e }}</span>
+                                        </label>
+                                        {% else %}
+                                        <span class="texto-suave">Sem família liberada para escopo específico.</span>
+                                        {% endfor %}
+                                    </div>
+                                    <label class="professional-review-approval__wide">
+                                        <span>Observação interna</span>
+                                        <input type="text" name="observacoes" maxlength="500" value="{{ signatario.observacoes | default('', true) | e }}">
+                                    </label>
+                                    {% if not signatario.professional_documents %}
+                                    <p class="professional-review-approval__warning">
+                                        Anexe pelo menos uma comprovação profissional antes de aprovar.
+                                    </p>
+                                    {% endif %}
+                                    <button
+                                        type="submit"
+                                        class="btn-add"
+                                        {% if not signatario.professional_documents %}disabled title="Aprovação exige comprovação profissional anexada."{% endif %}
+                                    >
+                                        <span class="material-symbols-rounded" aria-hidden="true">verified</span>
+                                        Aprovar
+                                    </button>
+                                </form>
+
+                                <div class="professional-review-actions" aria-label="Ações de bloqueio">
+                                    <form method="POST" action="/admin/clientes/{{ empresa.id | int }}/signatarios-governados/{{ signatario.id | int }}/revisao">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <input type="hidden" name="approval_status" value="rejected">
+                                        <input type="hidden" name="observacoes" value="{{ signatario.observacoes | default('', true) | e }}">
+                                        <button type="submit" class="btn-reset professional-review-actions__danger">Reprovar</button>
+                                    </form>
+                                    <form method="POST" action="/admin/clientes/{{ empresa.id | int }}/signatarios-governados/{{ signatario.id | int }}/revisao">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <input type="hidden" name="approval_status" value="suspended">
+                                        <input type="hidden" name="observacoes" value="{{ signatario.observacoes | default('', true) | e }}">
+                                        <button type="submit" class="btn-reset">Suspender</button>
+                                    </form>
+                                </div>
+                            </article>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
 
                     <div class="tenant-catalog-grid">
                         {% for signatario in signatarios_governados %}
@@ -459,6 +591,7 @@
                                 {% if signatario.registro_profissional %}
                                 <span>{{ signatario.registro_profissional | e }}</span>
                                 {% endif %}
+                                <span>Habilitação: {{ signatario.approval_status_label | default("Em análise", true) | e }}</span>
                                 <span>{{ signatario.valid_until_label | e }}</span>
                                 <span>{{ signatario.family_scope_summary | e }}</span>
                             </div>
@@ -467,8 +600,29 @@
                             <p class="tenant-catalog-card__copy">{{ signatario.observacoes | e }}</p>
                             {% endif %}
 
+                            {% if signatario.professional_documents %}
+                            <div class="professional-review-documents professional-review-documents--compact">
+                                <strong>Comprovações</strong>
+                                <div class="professional-review-documents__list">
+                                    {% for documento in signatario.professional_documents %}
+                                    <a
+                                        href="/admin/clientes/{{ empresa.id | int }}/signatarios-governados/{{ signatario.id | int }}/evidencias/{{ documento.id | e }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <span class="material-symbols-rounded" aria-hidden="true">attach_file</span>
+                                        <span>
+                                            {{ documento.nome | e }}
+                                            <small>{{ documento.tamanho_label | e }}</small>
+                                        </span>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
                             <details class="tenant-catalog-release-disclosure">
-                                <summary>Editar Signatário governado</summary>
+                                <summary>Editar habilitação profissional</summary>
                                 <form method="POST" action="/admin/clientes/{{ empresa.id | int }}/signatarios-governados" class="tenant-catalog-release-form">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                     <input type="hidden" name="signatario_id" value="{{ signatario.id | int }}">
@@ -498,11 +652,33 @@
                                             </span>
                                             <input type="date" name="valid_until" value="{{ signatario.valid_until.strftime('%Y-%m-%d') if signatario.valid_until else '' }}">
                                         </label>
+                                        <label>
+                                            <span class="label-with-help">
+                                                <span>Status da habilitação</span>
+                                                {{ help_icon("Somente profissionais aprovados ficam elegíveis para Emissão oficial.", "Ajuda sobre status da habilitação") }}
+                                            </span>
+                                            <select name="approval_status">
+                                                <option value="pending" {% if signatario.approval_status == "pending" %}selected{% endif %}>Pendente</option>
+                                                <option value="in_review" {% if signatario.approval_status == "in_review" %}selected{% endif %}>Em análise</option>
+                                                <option
+                                                    value="approved"
+                                                    {% if signatario.approval_status == "approved" %}selected{% endif %}
+                                                    {% if not signatario.professional_documents and signatario.approval_status != "approved" %}disabled{% endif %}
+                                                >Aprovado</option>
+                                                <option value="rejected" {% if signatario.approval_status == "rejected" %}selected{% endif %}>Reprovado</option>
+                                                <option value="suspended" {% if signatario.approval_status == "suspended" %}selected{% endif %}>Suspenso</option>
+                                            </select>
+                                        </label>
                                         <label class="tenant-catalog-release-form__field tenant-catalog-release-form__field--wide">
                                             <span>Observações</span>
                                             <textarea name="observacoes" rows="3" placeholder="Escopo de assinatura, restrições ou observações técnicas.">{{ signatario.observacoes | default('', true) | e }}</textarea>
                                         </label>
                                     </div>
+                                    {% if not signatario.professional_documents and signatario.approval_status != "approved" %}
+                                    <div class="valor-auxiliar professional-review-approval__warning">
+                                        A aprovação fica bloqueada até existir pelo menos uma comprovação profissional anexada.
+                                    </div>
+                                    {% endif %}
                                     <div class="valor-auxiliar">Marque em quais famílias essa pessoa pode atuar na Emissão oficial.</div>
                                     <div class="tenant-catalog-release-checks">
                                         {% for family in signatario_family_options %}
@@ -534,7 +710,7 @@
                             <header class="tenant-catalog-card__header">
                                 <div>
                                     <strong>Novo Signatário governado</strong>
-                                    <p>Cadastre quem pode assinar a Emissão oficial desta empresa.</p>
+                                    <p>Cadastre quem será analisado antes de assinar a Emissão oficial desta empresa.</p>
                                 </div>
                                 <span class="badge info">Novo</span>
                             </header>
@@ -567,10 +743,26 @@
                                         </span>
                                         <input type="date" name="valid_until">
                                     </label>
+                                    <label>
+                                        <span class="label-with-help">
+                                            <span>Status da habilitação</span>
+                                            {{ help_icon("Somente profissionais aprovados ficam elegíveis para Emissão oficial.", "Ajuda sobre status da habilitação") }}
+                                        </span>
+                                        <select name="approval_status">
+                                            <option value="pending">Pendente</option>
+                                            <option value="in_review" selected>Em análise</option>
+                                            <option value="approved" disabled>Aprovado</option>
+                                            <option value="rejected">Reprovado</option>
+                                            <option value="suspended">Suspenso</option>
+                                        </select>
+                                    </label>
                                     <label class="tenant-catalog-release-form__field tenant-catalog-release-form__field--wide">
                                         <span>Observações</span>
                                         <textarea name="observacoes" rows="3" placeholder="Escopo de assinatura, restrições ou contexto comercial."></textarea>
                                     </label>
+                                </div>
+                                <div class="valor-auxiliar professional-review-approval__warning">
+                                    Cadastre primeiro em análise. A aprovação exige comprovação profissional anexada à solicitação.
                                 </div>
                                 <div class="valor-auxiliar">Marque em quais famílias essa pessoa pode atuar na Emissão oficial.</div>
                                 <div class="tenant-catalog-release-checks">

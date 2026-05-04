@@ -305,6 +305,7 @@
     "overview",
     "capacity",
     "team",
+    "access",
     "support",
   ].includes(bodyDataset.clienteAdminSectionInicial)
     ? bodyDataset.clienteAdminSectionInicial
@@ -344,6 +345,11 @@
     : "overview";
   const ROUTE_MAP = Object.freeze({
     admin: bodyDataset.clienteRouteAdmin || "/cliente/painel",
+    home: bodyDataset.clienteRouteHome || bodyDataset.clienteRouteAdmin || "/cliente/home",
+    equipe: bodyDataset.clienteRouteEquipe || "/cliente/organizacao/equipe",
+    acessos: bodyDataset.clienteRouteAcessos || "/cliente/acessos",
+    plano: bodyDataset.clienteRoutePlano || "/cliente/plano",
+    suporte: bodyDataset.clienteRouteSuporte || "/cliente/suporte",
     servicos: bodyDataset.clienteRouteServicos || "/cliente/servicos",
     recorrencia: bodyDataset.clienteRouteRecorrencia || "/cliente/recorrencia",
     ativos: bodyDataset.clienteRouteAtivos || "/cliente/ativos",

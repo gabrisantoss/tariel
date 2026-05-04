@@ -27,11 +27,13 @@ def status_signatario_governado(
     *,
     ativo: bool,
     valid_until: datetime | None,
+    approval_status: str = "in_review",
     dependencies: dict[str, Any],
 ) -> dict[str, str]:
     return dependencies["catalog_tenant_status_signatario"](
         ativo=ativo,
         valid_until=valid_until,
+        approval_status=approval_status,
         normalizar_datetime_admin=dependencies["normalizar_datetime_admin"],
         agora_utc=dependencies["agora_utc"],
     )
@@ -65,6 +67,7 @@ def upsert_signatario_governado_laudo(
     allowed_family_keys: list[str] | tuple[str, ...] | str | None = None,
     observacoes: str = "",
     ativo: bool = True,
+    approval_status: str | None = None,
     signatario_id: int | None = None,
     criado_por_id: int | None = None,
     dependencies: dict[str, Any],
@@ -79,6 +82,7 @@ def upsert_signatario_governado_laudo(
         allowed_family_keys=allowed_family_keys,
         observacoes=observacoes,
         ativo=ativo,
+        approval_status=approval_status,
         signatario_id=signatario_id,
         criado_por_id=criado_por_id,
         buscar_empresa=dependencies["buscar_empresa"],

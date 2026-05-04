@@ -287,7 +287,7 @@
             const snapshot = obterPayloadStatusRelatorioWorkspaceAtual();
             const rotuloBase = ctx.actions.obterRotuloAcaoFinalizacaoWorkspace?.(
                 snapshot?.case_lifecycle_status ?? snapshot?.laudo_card?.case_lifecycle_status
-            ) || (mesaAvaliadoraDisponivelParaUsuario() ? "Enviar para Mesa" : "Finalizar laudo");
+            ) || "Finalizar laudo";
             const algumCarregando = botoes.some(
                 (botao) => botao?.getAttribute("aria-busy") === "true"
             );

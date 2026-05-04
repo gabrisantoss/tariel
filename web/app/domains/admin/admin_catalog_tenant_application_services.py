@@ -250,12 +250,14 @@ def _status_signatario_governado(
     *,
     ativo: bool,
     valid_until: datetime | None,
+    approval_status: str = "in_review",
 ) -> dict[str, str]:
     from app.domains.admin import services as admin_services
 
     return _admin_signatory_status(
         ativo=ativo,
         valid_until=valid_until,
+        approval_status=approval_status,
         dependencies={
             "catalog_tenant_status_signatario": _catalog_tenant_status_signatario,
             "normalizar_datetime_admin": admin_services._normalizar_datetime_admin,
@@ -296,6 +298,7 @@ def upsert_signatario_governado_laudo(
     allowed_family_keys: list[str] | tuple[str, ...] | str | None = None,
     observacoes: str = "",
     ativo: bool = True,
+    approval_status: str | None = None,
     signatario_id: int | None = None,
     criado_por_id: int | None = None,
 ) -> SignatarioGovernadoLaudo:
@@ -311,6 +314,7 @@ def upsert_signatario_governado_laudo(
         allowed_family_keys=allowed_family_keys,
         observacoes=observacoes,
         ativo=ativo,
+        approval_status=approval_status,
         signatario_id=signatario_id,
         criado_por_id=criado_por_id,
         dependencies={

@@ -54,8 +54,8 @@
                         <span>Pendências</span>
                         <strong id="workspace-summary-pendencias">0</strong>
                     </article>
-                    <article class="workspace-hero-stat">
-                        <span>Mesa</span>
+                    <article class="workspace-hero-stat" hidden aria-hidden="true">
+                        <span></span>
                         <strong id="workspace-summary-mesa">Canal disponível</strong>
                     </article>
                 </div>
@@ -180,11 +180,11 @@
                 id="btn-finalizar-inspecao"
                 class="technical-record-btn technical-record-btn--primary"
                 data-finalizar-inspecao
-                data-inspector-entry="workspace-header-send-mesa"
+                data-inspector-entry="workspace-header-finalize"
                 {% if workspace_assistant_inicial %}hidden{% endif %}
             >
                 <span class="material-symbols-rounded" aria-hidden="true">send</span>
-                <span>Enviar para Mesa</span>
+                <span>Finalizar laudo</span>
             </button>
         </div>
     </div>

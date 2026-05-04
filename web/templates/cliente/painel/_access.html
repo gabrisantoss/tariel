@@ -1,0 +1,33 @@
+<section
+    id="admin-access"
+    class="admin-stage admin-tab-panel cliente-management-section"
+    data-admin-stage="access"
+    data-admin-panel="access"
+    data-stage-state="idle"
+    role="tabpanel"
+    aria-labelledby="tab-acessos"
+    {% if (cliente_admin_section_inicial | default('overview')) != 'access' %}hidden{% endif %}
+>
+    <div class="admin-stage-head cliente-management-section__head">
+        <div class="admin-stage-copy">
+            <span class="admin-stage-kicker">Acessos operacionais</span>
+            <h3>Chat de campo e Mesa avaliadora</h3>
+        </div>
+
+        <div class="admin-stage-meta">
+            <a class="cliente-management-primary" href="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}">Novo usuário</a>
+        </div>
+    </div>
+
+    <div id="admin-access-brief" class="admin-stage-brief"></div>
+
+    <article class="box box--section cliente-management-card" id="admin-access-matrix-card">
+        <div class="toolbar">
+            <div class="toolbar-copy">
+                <h3>Matriz de permissões</h3>
+            </div>
+        </div>
+
+        <div id="admin-access-matrix" class="cliente-access-matrix" aria-live="polite"></div>
+    </article>
+</section>

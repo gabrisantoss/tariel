@@ -42,6 +42,12 @@
     {% set _familias_ativas = _portfolio.get("active_family_count", 0) | int %}
     {% set _modelos_ativos = _portfolio.get("active_activation_count", 0) | int %}
     {% set _signatarios_total = signatarios_governados | length %}
+    {% set _signatarios_elegiveis = namespace(total=0) %}
+    {% for _signatario in signatarios_governados %}
+        {% if _signatario.status.key in ["ready", "expiring_soon"] %}
+            {% set _signatarios_elegiveis.total = _signatarios_elegiveis.total + 1 %}
+        {% endif %}
+    {% endfor %}
     {% set _admin_cliente_pronto = (admins_cliente | length) > 0 and not _primeiro_acesso.get("requires_password_reset") %}
     {% if _empresa_bloqueada %}
         {% set _readiness_label = "Pendente de configuração" %}
@@ -55,10 +61,10 @@
         {% set _readiness_label = "Pendente de família/template" %}
         {% set _readiness_badge = "atencao" %}
         {% set _readiness_reason = "Libere ao menos uma família com template operacional." %}
-    {% elif _emissao_liberada and _signatarios_total == 0 %}
+    {% elif _emissao_liberada and _signatarios_elegiveis.total == 0 %}
         {% set _readiness_label = "Pendente de signatário" %}
         {% set _readiness_badge = "atencao" %}
-        {% set _readiness_reason = "Emissão oficial exige Signatário governado." %}
+        {% set _readiness_reason = "Emissão oficial exige signatário aprovado pela Tariel." %}
     {% else %}
         {% set _readiness_label = "Pronto para operar" %}
         {% set _readiness_badge = "conforme" %}
@@ -222,13 +228,13 @@
                     <section class="admin-governance-block" data-uxg-block="signatarios-emissao">
                         <header>
                             <span>Signatários e emissão</span>
-                            <h3>Documento oficial</h3>
+                            <h3>Signatários governados</h3>
                         </header>
                         <div class="admin-governance-readiness-list">
-                            <span>Signatário governado <strong>{{ _signatarios_total }} cadastrado(s)</strong></span>
+                            <span>Habilitação profissional <strong>{{ _signatarios_elegiveis.total }} aprovado(s) de {{ _signatarios_total }}</strong></span>
                             <span>Emissão oficial <strong>{{ "liberada" if _emissao_liberada else "Não incluído no pacote" }}</strong></span>
                             <span>Pacote oficial <strong>{{ "disponível após emissão" if _emissao_liberada else "Não incluído no pacote" }}</strong></span>
-                            <span>{{ "Pendente de signatário" if _emissao_liberada and _signatarios_total == 0 else "Hash e auditoria entram no pacote oficial" }}</span>
+                            <span>{{ "Pendente de profissional aprovado" if _emissao_liberada and _signatarios_elegiveis.total == 0 else "Hash e auditoria entram no pacote oficial" }}</span>
                         </div>
                     </section>
                 </div>

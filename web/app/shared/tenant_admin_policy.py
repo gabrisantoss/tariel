@@ -48,22 +48,22 @@ _ACTION_MODE_LABELS: dict[TenantAdminCaseActionMode, str] = {
 }
 _OPERATING_MODEL_LABELS: dict[TenantAdminOperatingModel, str] = {
     "standard": "Operação padrão",
-    "mobile_single_operator": "Aplicativo principal com uma pessoa responsavel",
+    "mobile_single_operator": "Aplicativo principal com uma pessoa responsável",
 }
 _COMMERCIAL_SERVICE_PACKAGE_LABELS: dict[TenantAdminCommercialServicePackage, str] = {
-    "inspector_chat": "Chat Inspetor sem Mesa",
-    "inspector_chat_mesa": "Chat Inspetor + Mesa Avaliadora",
-    "inspector_chat_mesa_reviewer_services": "Chat Inspetor + Mesa + servicos no Inspetor",
+    "inspector_chat": "Chat de campo sem Mesa",
+    "inspector_chat_mesa": "Chat de campo + Mesa avaliadora",
+    "inspector_chat_mesa_reviewer_services": "Chat de campo + Mesa + serviços no campo",
 }
 _COMMERCIAL_SERVICE_PACKAGE_DESCRIPTIONS: dict[TenantAdminCommercialServicePackage, str] = {
     "inspector_chat": (
         "O inspetor conduz o caso no chat com IA e finaliza internamente, sem fila de Mesa."
     ),
     "inspector_chat_mesa": (
-        "O inspetor envia para a Mesa e a avaliacao/emissao ficam no portal de analise."
+        "O operador de campo envia para a Mesa e a avaliação/emissão ficam na Mesa avaliadora."
     ),
     "inspector_chat_mesa_reviewer_services": (
-        "Mantem Mesa Avaliadora e permite que usuarios operacionais acumulem campo e analise."
+        "Mantém Mesa avaliadora e permite que usuários operacionais acumulem campo e análise."
     ),
 }
 _COMMERCIAL_SERVICE_PACKAGE_PRESETS: dict[TenantAdminCommercialServicePackage, dict[str, Any]] = {
@@ -109,13 +109,13 @@ _COMMERCIAL_SERVICE_PACKAGE_PRESETS: dict[TenantAdminCommercialServicePackage, d
 }
 _OPERATING_SURFACE_LABELS: dict[str, str] = {
     "mobile": "App mobile",
-    "inspetor_web": "Area de campo",
-    "mesa_web": "Area de analise",
+    "inspetor_web": "Chat de campo",
+    "mesa_web": "Mesa avaliadora",
 }
 _USER_PORTAL_LABELS: dict[str, str] = {
-    "cliente": "Portal da empresa",
-    "inspetor": "Area de campo",
-    "revisor": "Area de analise",
+    "cliente": "Portal Cliente",
+    "inspetor": "Chat de campo",
+    "revisor": "Mesa avaliadora",
 }
 _TENANT_PORTAL_DEFAULTS: dict[str, bool] = {
     "cliente": True,

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{{ empresa.nome_fantasia | e }} • Dashboard • tariel.ia</title>
+    <script src="/static/js/shared/theme_bootstrap.js"></script>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+    <link rel="preload" as="image" href="/static/img/logo-horizontal-dark.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/admin/admin_icons.css">
+    <link rel="stylesheet" href="/static/css/cliente/portal_foundation.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/cliente/portal_components.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/cliente/portal.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/cliente/cliente_dashboard.css?v={{ v_app }}&dashboard_v2=1">
+    <link rel="stylesheet" href="/static/css/shared/official_visual_system.css?v={{ v_app }}">
+</head>
+<body class="cliente-dashboard-page">
+    {% set payload = dashboard_payload | default({}, true) %}
+    {% set empresa_resumo = payload.get("empresa", {}) %}
+    {% set projection = payload.get("tenant_admin_projection", {}) %}
+    {% set tenant_payload = projection.get("payload", {}) %}
+    {% set case_counts = tenant_payload.get("case_counts", {}) %}
+    {% set review_counts = tenant_payload.get("review_counts", {}) %}
+    {% set user_summary = tenant_payload.get("user_summary", {}) %}
+    {% set commercial = payload.get("tenant_commercial_package", {}) %}
+    {% set observability = payload.get("operational_observability", {}) %}
+    {% set executive_metrics = observability.get("executive_metrics", {}) %}
+    {% set guided = payload.get("guided_onboarding", {}) %}
+    {% set next_step = guided.get("next_step") or {} %}
+    {% set servicos_summary = (payload.get("servicos", {}) or {}).get("summary", {}) %}
+    {% set ativos_summary = (payload.get("ativos", {}) or {}).get("summary", {}) %}
+    {% set documentos_summary = (payload.get("documentos", {}) or {}).get("summary", {}) %}
+    {% set recorrencia_summary = (payload.get("recorrencia", {}) or {}).get("summary", {}) %}
+    {% set pending_center = observability.get("pending_center") or [] %}
+    {% set usuarios_percentual = empresa_resumo.get("usuarios_percentual") %}
+    {% set laudos_percentual = empresa_resumo.get("laudos_percentual") %}
+    {% set usuarios_chart = usuarios_percentual if usuarios_percentual is not none else 0 %}
+    {% set laudos_chart = laudos_percentual if laudos_percentual is not none else 0 %}
+    {% set total_usuarios = empresa_resumo.get("usuarios_em_uso", user_summary.get("total_users", 0)) | int %}
+    {% set admins_total = empresa_resumo.get("admins_cliente", 0) | int %}
+    {% set inspetores_total = empresa_resumo.get("inspetores", 0) | int %}
+    {% set revisores_total = empresa_resumo.get("revisores", 0) | int %}
+    {% set total_casos = case_counts.get("total_cases", empresa_resumo.get("total_laudos", 0)) | int %}
+    {% set casos_abertos = case_counts.get("open_cases", executive_metrics.get("open_cases", 0)) | int %}
+    {% set mesa_pendente = executive_metrics.get("awaiting_mesa", review_counts.get("pending_review", 0)) | int %}
+    {% set mesa_revisao = review_counts.get("in_review", 0) | int %}
+    {% set documentos_emitidos = documentos_summary.get("issued_documents", executive_metrics.get("issued", 0)) | int %}
+    {% set laudos_mes_atual = empresa_resumo.get("laudos_mes_atual", 0) | int %}
+    {% set laudos_mes_limite = empresa_resumo.get("laudos_mes_limite") %}
+    {% set period_dashboard = payload.get("dashboard_period", {}) or {} %}
+    {% set period_options = period_dashboard.get("options", []) %}
+    {% set period_label = period_dashboard.get("label", "30 dias") %}
+    {% set period_laudos_count = period_dashboard.get("laudos_count", laudos_mes_atual) | int %}
+    {% set period_total_casos = period_dashboard.get("total_cases", total_casos) | int %}
+    {% set period_casos_abertos = period_dashboard.get("open_cases", casos_abertos) | int %}
+    {% set period_mesa_pendente = period_dashboard.get("awaiting_mesa", mesa_pendente) | int %}
+    {% set period_mesa_revisao = period_dashboard.get("in_review", mesa_revisao) | int %}
+    {% set period_documentos_emitidos = period_dashboard.get("issued_documents", documentos_emitidos) | int %}
+    {% set chat_payload = payload.get("chat", {}) or {} %}
+    {% set mesa_payload = payload.get("mesa", {}) or {} %}
+    {% set recent_cases = period_dashboard.get("recent_cases") or chat_payload.get("laudos") or mesa_payload.get("laudos") or [] %}
+    {% set document_state_counts = documentos_summary.get("document_state_counts", {}) or {} %}
+    {% set status_title = next_step.get("title") or observability.get("blocking_reason") or "Operação ativa" %}
+    {% set pending_total = pending_center | length %}
+
+    <header class="dashboard-fixed-shell">
+        <nav class="dashboard-topbar" aria-label="Navegação do dashboard do cliente">
+            <a class="dashboard-brand" href="/cliente/dashboard" aria-label="Dashboard do cliente">
+                <img src="/static/img/logo-horizontal-dark.png" alt="tariel.ia">
+            </a>
+            <div class="dashboard-topbar__copy">
+                <span>Dashboard</span>
+                <strong>{{ empresa.nome_fantasia | e }}</strong>
+            </div>
+            <div class="dashboard-topbar__actions">
+                <a class="btn primary dashboard-home-button" href="{{ cliente_surface_routes.home | default('/cliente/home') | e }}">
+                    <span class="material-symbols-rounded" aria-hidden="true">home</span>
+                    <span>Home</span>
+                </a>
+                <form method="post" action="/cliente/logout">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button class="btn ghost" type="submit">Sair</button>
+                </form>
+            </div>
+        </nav>
+    </header>
+
+    <main class="cliente-dashboard">
+        <section class="dashboard-overview" aria-labelledby="dashboard-overview-title">
+            <div class="dashboard-overview__copy">
+                <span class="dashboard-kicker">{{ empresa.nome_fantasia | e }}</span>
+                <h1 id="dashboard-overview-title">Visão geral</h1>
+                <div class="dashboard-chip-row">
+                    <span class="hero-chip">Plano {{ empresa_resumo.get("plano_ativo", empresa.plano_ativo) | e }}</span>
+                    <span class="hero-chip">Base {{ (empresa_resumo.get("cidade_estado") or empresa.cidade_estado or "não informada") | e }}</span>
+                    <span class="hero-chip">CNPJ {{ empresa_resumo.get("cnpj", empresa.cnpj) | e }}</span>
+                </div>
+            </div>
+
+            <div class="dashboard-period" aria-label="Período do dashboard">
+                {% for option in period_options %}
+                <a href="{{ option.get('href', '/cliente/dashboard') | e }}" class="{% if option.get('active') %}is-active{% endif %}" {% if option.get('active') %}aria-current="page"{% endif %}>
+                    {{ option.get("label", "Período") | e }}
+                </a>
+                {% endfor %}
+            </div>
+
+            <aside class="dashboard-status-card">
+                <small>Status</small>
+                <strong>{{ status_title | e }}</strong>
+                <div>
+                    <span>{% if empresa_resumo.get("uso_percentual") is none %}Uso livre{% else %}Uso {{ empresa_resumo.get("uso_percentual") }}%{% endif %}</span>
+                    <span>{{ period_total_casos }} caso(s) em {{ period_label | e }}</span>
+                </div>
+            </aside>
+        </section>
+
+        <section class="dashboard-metrics" aria-label="Indicadores principais">
+            <article class="dashboard-metric">
+                <small>Laudos no período</small>
+                <strong>{{ period_laudos_count }}</strong>
+                <span>{{ period_label | e }}</span>
+            </article>
+            <article class="dashboard-metric">
+                <small>Casos abertos</small>
+                <strong>{{ period_casos_abertos }}</strong>
+                <span>{{ period_total_casos }} caso(s) no período</span>
+            </article>
+            <article class="dashboard-metric dashboard-metric--attention">
+                <small>Pendências</small>
+                <strong>{{ period_mesa_pendente + period_mesa_revisao }}</strong>
+                <span>{{ period_mesa_pendente }} aguardando mesa</span>
+            </article>
+            <article class="dashboard-metric">
+                <small>Equipe ativa</small>
+                <strong>{{ total_usuarios }}</strong>
+                <span>{{ admins_total }} admin, {{ inspetores_total }} inspetor(es), {{ revisores_total }} revisor(es)</span>
+            </article>
+            <article class="dashboard-metric">
+                <small>Documentos</small>
+                <strong>{{ period_documentos_emitidos }}</strong>
+                <span>Emitidos em {{ period_label | e }}</span>
+            </article>
+            <article class="dashboard-metric">
+                <small>Uso do plano</small>
+                <strong>{% if empresa_resumo.get("uso_percentual") is none %}Livre{% else %}{{ empresa_resumo.get("uso_percentual") }}%{% endif %}</strong>
+                <span>{{ empresa_resumo.get("capacidade_badge", "Operação monitorada") | e }}</span>
+            </article>
+        </section>
+
+        <section class="dashboard-insights" aria-label="Análises do dashboard">
+            <article class="dashboard-panel dashboard-panel--flow">
+                <div class="dashboard-panel__head">
+                    <span class="dashboard-kicker">Operação</span>
+                    <h2>Fluxo operacional</h2>
+                </div>
+
+                <div class="dashboard-bar-chart" aria-label="Fluxo operacional dos laudos">
+                    <div class="dashboard-bar-row" style="--value: {{ period_total_casos }};">
+                        <span>Total</span><div><i></i></div><strong>{{ period_total_casos }}</strong>
+                    </div>
+                    <div class="dashboard-bar-row" style="--value: {{ period_casos_abertos }};">
+                        <span>Abertos</span><div><i></i></div><strong>{{ period_casos_abertos }}</strong>
+                    </div>
+                    <div class="dashboard-bar-row" style="--value: {{ period_mesa_pendente }};">
+                        <span>Mesa</span><div><i></i></div><strong>{{ period_mesa_pendente }}</strong>
+                    </div>
+                    <div class="dashboard-bar-row" style="--value: {{ period_mesa_revisao }};">
+                        <span>Revisão</span><div><i></i></div><strong>{{ period_mesa_revisao }}</strong>
+                    </div>
+                    <div class="dashboard-bar-row" style="--value: {{ period_documentos_emitidos }};">
+                        <span>Emitidos</span><div><i></i></div><strong>{{ period_documentos_emitidos }}</strong>
+                    </div>
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--status">
+                <div class="dashboard-panel__head">
+                    <span class="dashboard-kicker">Status</span>
+                    <h2>Pontos de atenção</h2>
+                </div>
+
+                {% if pending_center %}
+                <div class="dashboard-attention-list">
+                    {% for item in pending_center[:4] %}
+                    <a href="/cliente/painel?sec=overview">
+                        <strong>{{ item.get("count", 0) }}</strong>
+                        <span>{{ item.get("title", "Pendência") | e }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="dashboard-empty dashboard-empty--compact">
+                    <strong>Sem bloqueio crítico</strong>
+                    <span>{{ empresa_resumo.get("capacidade_badge", "Operação monitorada") | e }}</span>
+                </div>
+                {% endif %}
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--usage">
+                <div class="dashboard-panel__head">
+                    <span class="dashboard-kicker">Contrato</span>
+                    <h2>Uso do plano</h2>
+                </div>
+
+                <div class="dashboard-gauge-grid">
+                    <div class="dashboard-gauge" style="--value: {{ laudos_chart | int }};">
+                        <div class="dashboard-gauge__ring"><strong>{% if laudos_percentual is none %}∞{% else %}{{ laudos_percentual }}%{% endif %}</strong></div>
+                        <span>Laudos</span>
+                        <small>{{ laudos_mes_atual }} / {% if laudos_mes_limite is none %}sem teto{% else %}{{ laudos_mes_limite }}{% endif %}</small>
+                    </div>
+                    <div class="dashboard-gauge" style="--value: {{ usuarios_chart | int }};">
+                        <div class="dashboard-gauge__ring"><strong>{% if usuarios_percentual is none %}∞{% else %}{{ usuarios_percentual }}%{% endif %}</strong></div>
+                        <span>Equipe</span>
+                        <small>{{ total_usuarios }} / {% if empresa_resumo.get("usuarios_max") is none %}sem teto{% else %}{{ empresa_resumo.get("usuarios_max") }}{% endif %}</small>
+                    </div>
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--ops">
+                <div class="dashboard-panel__head">
+                    <span class="dashboard-kicker">Frentes</span>
+                    <h2>Mapa técnico</h2>
+                </div>
+
+                <div class="dashboard-tile-chart">
+                    <a href="/cliente/servicos"><small>Serviços</small><strong>{{ servicos_summary.get("total_services", 0) }}</strong></a>
+                    <a href="/cliente/ativos"><small>Ativos</small><strong>{{ ativos_summary.get("total_assets", 0) }}</strong></a>
+                    <a href="/cliente/documentos"><small>Documentos</small><strong>{{ documentos_summary.get("total_documents", 0) }}</strong></a>
+                    <a href="/cliente/recorrencia"><small>Agenda</small><strong>{{ recorrencia_summary.get("total_events", 0) }}</strong></a>
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--team">
+                <div class="dashboard-panel__head">
+                    <span class="dashboard-kicker">Equipe</span>
+                    <h2>Perfis ativos</h2>
+                </div>
+
+                <div class="dashboard-split-chart">
+                    <div style="--value: {{ admins_total }};"><span>Admin</span><i></i><strong>{{ admins_total }}</strong></div>
+                    <div style="--value: {{ inspetores_total }};"><span>Inspetores</span><i></i><strong>{{ inspetores_total }}</strong></div>
+                    <div style="--value: {{ revisores_total }};"><span>Revisores</span><i></i><strong>{{ revisores_total }}</strong></div>
+                </div>
+            </article>
+
+            <article class="dashboard-panel dashboard-panel--documents">
+                <div class="dashboard-panel__head">
+                    <span class="dashboard-kicker">Documentos</span>
+                    <h2>Distribuição</h2>
+                </div>
+
+                <div class="dashboard-donut-summary">
+                    <div class="dashboard-mini-donut" style="--official: {{ document_state_counts.get("official", 0) | int }}; --draft: {{ document_state_counts.get("draft", 0) | int }}; --review: {{ document_state_counts.get("in_review", 0) | int }};">
+                        <strong>{{ documentos_summary.get("total_documents", 0) }}</strong>
+                    </div>
+                    <dl>
+                        <div><dt>Emitidos</dt><dd>{{ document_state_counts.get("official", 0) }}</dd></div>
+                        <div><dt>Rascunho</dt><dd>{{ document_state_counts.get("draft", 0) }}</dd></div>
+                        <div><dt>Revisão</dt><dd>{{ document_state_counts.get("in_review", 0) }}</dd></div>
+                    </dl>
+                </div>
+            </article>
+        </section>
+
+        <section class="dashboard-recent" aria-labelledby="dashboard-recent-title">
+            <div class="dashboard-panel__head">
+                <span class="dashboard-kicker">Histórico</span>
+                <h2 id="dashboard-recent-title">Últimos casos</h2>
+            </div>
+
+            {% if recent_cases %}
+            <div class="dashboard-table-wrap">
+                <table class="dashboard-case-table">
+                    <thead>
+                        <tr>
+                            <th>Caso</th>
+                            <th>Status</th>
+                            <th>Tipo</th>
+                            <th>Atualização</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for case in recent_cases[:6] %}
+                        <tr>
+                            <td>
+                                <strong>{{ case.get("titulo", "Laudo técnico") | e }}</strong>
+                                <span>#{{ case.get("id", "—") }}</span>
+                            </td>
+                            <td><span class="dashboard-status-pill">{{ case.get("status_card_label", case.get("status_revisao", "Laudo")) | e }}</span></td>
+                            <td>{{ case.get("tipo_template_label", case.get("tipo_template", "Inspeção")) | e }}</td>
+                            <td>{{ case.get("data_br", "—") | e }}{% if case.get("hora_br") %} às {{ case.get("hora_br") | e }}{% endif %}</td>
+                            <td><a href="/cliente/chat">Abrir</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="dashboard-empty">
+                <strong>Nenhum caso recente</strong>
+                <span>Não houve movimentação de laudos em {{ period_label | e }}.</span>
+            </div>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

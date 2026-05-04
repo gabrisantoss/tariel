@@ -194,21 +194,21 @@
             limparElemento(container);
             container.appendChild(criarStageBriefOverviewNode({
                 tone: prioridade.tone || "aprovado",
-                eyebrow: "Resumo executivo",
-                title: prioridade.badge || "Empresa sob controle",
-                detail: prioridade.acao || "A operacao da empresa segue visivel em uma regua unica de capacidade, equipe e suporte.",
+                eyebrow: "Próximo foco",
+                title: prioridade.badge || "Conta sob controle",
+                detail: prioridade.acao || "A operação da conta segue visível em uma régua única de capacidade, equipe e suporte.",
                 metrics: [
                     { label: "Casos monitorados", value: formatarInteiro(totalCasos) },
                     { label: "Casos abertos", value: formatarInteiro(casosAbertos) },
-                    { label: "Revisoes em curso", value: formatarInteiro(revisoesAtivas) },
+                    { label: "Revisões em curso", value: formatarInteiro(revisoesAtivas) },
                 ],
                 actions: [
                     {
-                        label: "Ver pulso da operacao",
+                        label: "Ver indicadores",
                         act: "abrir-prioridade",
                         kind: "admin-section",
                         canal: "admin",
-                        target: "admin-saude-resumo",
+                        target: "admin-resumo-geral",
                         origem: "admin",
                     },
                     {
@@ -239,12 +239,12 @@
                     accent: "live",
                     label: "Etapas concluídas",
                     value: `${formatarInteiro(Number(progress.completed || 0))}/${formatarInteiro(Number(progress.total || steps.length || 0))}`,
-                    meta: "Onboarding operacional do tenant até a primeira rotina real.",
+                    meta: "Onboarding operacional da conta até a primeira rotina real.",
                 },
                 {
                     accent: nextStep ? "waiting" : "done",
                     label: "Próximo passo",
-                    value: nextStep?.title || "Tenant pronto para operar",
+                    value: nextStep?.title || "Conta pronta para operar",
                     meta: nextStep?.detail || "Equipe, casos e leitura executiva já estão minimamente estruturados.",
                 },
                 {
@@ -303,7 +303,7 @@
                     accent: "live",
                     label: "Pacote ativo",
                     value: pacote.package_label || "Pacote contratado",
-                    meta: pacote.package_description || "Modelo comercial ativo para este tenant.",
+                    meta: pacote.package_description || "Modelo comercial ativo para esta conta.",
                 },
                 {
                     accent: pacote.mesa_contracted ? "done" : "waiting",
@@ -329,12 +329,12 @@
                 meta: "Modelo de operação e portais liberados",
                 tone: "aprovado",
                 pillLabel: `${surfaces.length} portais`,
-                detail: (pacote.active_summary || []).join(" • ") || "Resumo comercial do tenant.",
+                detail: (pacote.active_summary || []).join(" • ") || "Resumo comercial da conta.",
                 chips: surfaces.map((item) => item.label || item.key || "Portal"),
             }));
             lista.appendChild(criarActivityItemOverviewNode({
                 title: "O que ainda pede configuração",
-                meta: "Checklist comercial e operacional do tenant",
+                meta: "Checklist comercial e operacional da conta",
                 tone: pending.length ? "aguardando" : "aprovado",
                 pillLabel: pending.length ? "Pendente" : "Ativo",
                 detail: pending.length ? pending.join(" • ") : "Bloqueios de pacote aparecem abaixo como limite contratual, não como erro operacional.",
@@ -376,6 +376,28 @@
             });
         }
 
+        function renderProfessionalHabilitationOverview() {
+            const statusNode = $("cliente-management-habilitacao-status");
+            const approvedNode = $("cliente-management-habilitacao-aprovados");
+            const reviewNode = $("cliente-management-habilitacao-analise");
+            const blockedNode = $("cliente-management-habilitacao-bloqueios");
+            const detailNode = $("cliente-management-habilitacao-detail");
+            if (!statusNode || !approvedNode || !reviewNode || !blockedNode || !detailNode) return;
+
+            const habilitacao = state.bootstrap?.professional_habilitation || {};
+            const counts = habilitacao.counts || {};
+            const totalBloqueios =
+                Number(counts.rejected || 0) +
+                Number(counts.suspended || 0) +
+                Number(counts.expired || 0) +
+                Number(counts.inactive || 0);
+            statusNode.textContent = habilitacao.status_label || "Não enviado";
+            approvedNode.textContent = formatarInteiro(Number(counts.eligible || counts.approved || 0));
+            reviewNode.textContent = formatarInteiro(Number(counts.in_review || 0) + Number(counts.pending || 0));
+            blockedNode.textContent = formatarInteiro(totalBloqueios);
+            detailNode.textContent = habilitacao.detail || "A Tariel valida responsáveis técnicos antes de liberar emissão oficial.";
+        }
+
         function renderOperationalObservabilityOverview() {
             const resumo = $("admin-observability-summary");
             const timeline = $("admin-observability-timeline");
@@ -390,7 +412,7 @@
                     accent: "aberto",
                     label: "Abertos",
                     value: formatarInteiro(Number(metrics.open_cases || 0)),
-                    meta: "Casos técnicos ainda correndo no tenant.",
+                    meta: "Casos técnicos ainda correndo na conta.",
                 },
                 {
                     accent: "waiting",
@@ -408,7 +430,7 @@
                     accent: "attention",
                     label: "Motivo do bloqueio",
                     value: observability.blocking_reason || "Sem bloqueio dominante",
-                    meta: "Use esse sinal para explicar rápido o gargalo atual do tenant.",
+                    meta: "Use esse sinal para explicar rápido o gargalo atual da conta.",
                 },
             ].forEach((metric) => {
                 resumo.appendChild(criarMetricCardOverviewNode(metric));
@@ -418,7 +440,7 @@
             if (!steps.length) {
                 timeline.appendChild(criarEmptyStateOverviewNode(
                     "Sem linha do tempo consolidada",
-                    "Os eventos canônicos do tenant aparecem aqui conforme os casos forem avançando."
+                    "Os eventos canônicos da conta aparecem aqui conforme os casos forem avançando."
                 ));
                 return;
             }
@@ -442,14 +464,14 @@
             if (!items.length) {
                 lista.appendChild(criarEmptyStateOverviewNode(
                     "Nenhuma pendência central aberta",
-                    "Mesa, emissão e vencimentos aparecem aqui quando houver algo dominante no tenant."
+                    "Mesa, emissão e vencimentos aparecem aqui quando houver algo dominante na conta."
                 ));
                 return;
             }
             items.forEach((item) => {
                 lista.appendChild(criarActivityItemOverviewNode({
                     title: item.title || "Pendência",
-                    meta: item.kind || "operacao",
+                    meta: item.kind || "operação",
                     tone: "aguardando",
                     pillLabel: formatarInteiro(Number(item.count || 0)),
                     detail: item.detail || "Sem detalhe registrado.",
@@ -462,6 +484,7 @@
             renderGuidedOnboardingOverview,
             renderOperationalObservabilityOverview,
             renderOverviewBrief,
+            renderProfessionalHabilitationOverview,
             renderPendingCenterOverview,
         };
     };

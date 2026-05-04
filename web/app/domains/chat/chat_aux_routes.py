@@ -41,6 +41,7 @@ from app.domains.chat.session_helpers import exigir_csrf, laudo_id_sessao
 from app.domains.chat.media_helpers import safe_remove_file
 from app.shared.backend_hotspot_metrics import observe_backend_hotspot
 from app.shared.database import Laudo, Usuario, obter_banco
+from app.shared.pdf_officiality import marcar_pdf_nao_oficial_arquivo
 from app.shared.public_verification import (
     build_public_verification_payload,
     load_public_verification_payload,
@@ -608,6 +609,10 @@ async def rota_pdf(
                         pipeline_name = "legacy_pdf_preview"
                     with open(caminho_pdf, "wb") as arquivo_saida:
                         arquivo_saida.write(pdf_template)
+                    marcar_pdf_nao_oficial_arquivo(
+                        caminho_pdf,
+                        logger_context="inspector_template_preview",
+                    )
                     _registrar_soft_gate_documental_preview_pdf(
                         request=request,
                         banco=banco,
@@ -663,6 +668,10 @@ async def rota_pdf(
                 usuario_id=usuario.id,
                 codigo_hash_override=str(getattr(laudo, "codigo_hash", "") or "") or None,
                 public_verification=public_verification,
+            )
+            marcar_pdf_nao_oficial_arquivo(
+                caminho_pdf,
+                logger_context="inspector_legacy_pdf_preview",
             )
             if not hasattr(request.state, "v2_document_soft_gate_trace"):
                 _registrar_soft_gate_documental_preview_pdf(

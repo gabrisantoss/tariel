@@ -16,6 +16,10 @@ from app.domains.cliente.dashboard import (
     bootstrap_cliente as _bootstrap_cliente,
     resumo_empresa_cliente as _resumo_empresa_cliente,
 )
+from app.domains.cliente.dashboard_period import (
+    build_dashboard_period_payload,
+    normalizar_periodo_dashboard,
+)
 from app.domains.cliente.management_routes import (
     roteador_cliente_management,
 )
@@ -25,14 +29,18 @@ from app.domains.cliente.portal_bridge import (
 )
 from app.domains.cliente.route_support import (
     CHAVE_TROCA_SENHA_LEMBRAR,
+    URL_DASHBOARD,
+    URL_EQUIPE,
+    URL_HOME,
     URL_LOGIN,
-    URL_PAINEL,
+    URL_PLANO,
     _empresa_usuario,
     _iniciar_fluxo_troca_senha,
     _limpar_fluxo_troca_senha,
     _limpar_sessao_cliente,
     _mensagem_portal_correto,
     _redirect_login_cliente,
+    _render_dashboard_cliente,
     _registrar_sessao_cliente,
     _render_login_cliente,
     _render_portal_cliente,
@@ -90,7 +98,7 @@ async def raiz_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
 ):
     if usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return RedirectResponse(url=URL_PAINEL, status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=URL_DASHBOARD, status_code=status.HTTP_303_SEE_OTHER)
     return RedirectResponse(url=URL_LOGIN, status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -101,7 +109,7 @@ async def tela_login_cliente(
 ):
     usuario = obter_usuario_html(request, banco)
     if usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
-        return RedirectResponse(url=URL_PAINEL, status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=URL_DASHBOARD, status_code=status.HTTP_303_SEE_OTHER)
     email_prefill = str(request.query_params.get("email") or "").strip().lower()
     primeiro_acesso = str(request.query_params.get("primeiro_acesso") or "").strip().lower() in {
         "1",
@@ -203,7 +211,7 @@ async def processar_login_cliente(
     _registrar_sessao_cliente(request, usuario, lembrar=lembrar)
 
     logger.info("Login admin-cliente | usuario_id=%s | empresa_id=%s", usuario.id, usuario.empresa_id)
-    return RedirectResponse(url=URL_PAINEL, status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=URL_DASHBOARD, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @roteador_cliente.get("/trocar-senha", response_class=HTMLResponse)
@@ -254,7 +262,7 @@ async def processar_troca_senha_cliente(
     _registrar_sessao_cliente(request, usuario, lembrar=lembrar)
 
     logger.info("Troca obrigatória de senha concluída | admin_cliente_id=%s", usuario.id)
-    return RedirectResponse(url=URL_PAINEL, status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=URL_DASHBOARD, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @roteador_cliente.post("/logout")
@@ -269,17 +277,63 @@ async def logout_cliente(
     return _redirect_login_cliente()
 
 
+@roteador_cliente.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_cliente(
+    request: Request,
+    period: str = Query(default="30d"),
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    if not usuario_tem_acesso_portal(usuario, PORTAL_CLIENTE):
+        return _redirect_login_cliente()
+
+    assert usuario is not None
+    empresa = _empresa_usuario(banco, usuario)
+    dashboard_payload = _bootstrap_cliente(banco, usuario, request=request, surface=None)
+    dashboard_payload["dashboard_period"] = build_dashboard_period_payload(
+        banco,
+        usuario,
+        periodo=normalizar_periodo_dashboard(period),
+    )
+    return _render_dashboard_cliente(
+        request,
+        usuario=usuario,
+        empresa=empresa,
+        dashboard_payload=dashboard_payload,
+    )
+
+
 @roteador_cliente.get("/painel", response_class=HTMLResponse)
 async def painel_cliente(
     request: Request,
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="admin")
+    if request.query_params.get("sec") or request.query_params.get("secao"):
+        return RedirectResponse(url=URL_HOME, status_code=status.HTTP_303_SEE_OTHER)
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="admin", secao_inicial="overview")
+
+
+@roteador_cliente.get("/home", response_class=HTMLResponse)
+async def home_cliente(
+    request: Request,
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="admin", secao_inicial="overview")
 
 
 @roteador_cliente.get("/equipe", response_class=HTMLResponse)
 async def equipe_cliente(
+    request: Request,
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    return RedirectResponse(url=URL_EQUIPE, status_code=status.HTTP_303_SEE_OTHER)
+
+
+@roteador_cliente.get("/organizacao/equipe", response_class=HTMLResponse)
+async def organizacao_equipe_cliente(
     request: Request,
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
@@ -293,13 +347,40 @@ async def equipe_cliente(
     )
 
 
+@roteador_cliente.get("/acessos", response_class=HTMLResponse)
+async def acessos_cliente(
+    request: Request,
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    return RedirectResponse(url=URL_EQUIPE, status_code=status.HTTP_303_SEE_OTHER)
+
+
+@roteador_cliente.get("/plano", response_class=HTMLResponse)
+async def plano_cliente(
+    request: Request,
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="admin", secao_inicial="capacity")
+
+
+@roteador_cliente.get("/suporte", response_class=HTMLResponse)
+async def suporte_cliente(
+    request: Request,
+    usuario: Optional[Usuario] = Depends(obter_usuario_html),
+    banco: Session = Depends(obter_banco),
+):
+    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="admin", secao_inicial="support")
+
+
 @roteador_cliente.get("/chat", response_class=HTMLResponse)
 async def superficie_chat_cliente(
     request: Request,
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="chat")
+    return RedirectResponse(url=URL_HOME, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @roteador_cliente.get("/servicos", response_class=HTMLResponse)
@@ -308,7 +389,7 @@ async def superficie_servicos_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="servicos")
+    return RedirectResponse(url=URL_PLANO, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @roteador_cliente.get("/recorrencia", response_class=HTMLResponse)
@@ -317,7 +398,7 @@ async def superficie_recorrencia_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="recorrencia")
+    return RedirectResponse(url=URL_HOME, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @roteador_cliente.get("/ativos", response_class=HTMLResponse)
@@ -326,7 +407,7 @@ async def superficie_ativos_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="ativos")
+    return RedirectResponse(url=URL_HOME, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @roteador_cliente.get("/mesa", response_class=HTMLResponse)
@@ -335,7 +416,7 @@ async def superficie_mesa_cliente(
     usuario: Optional[Usuario] = Depends(obter_usuario_html),
     banco: Session = Depends(obter_banco),
 ):
-    return _render_superficie_cliente(request, usuario=usuario, banco=banco, tab_inicial="mesa")
+    return RedirectResponse(url=URL_HOME, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @roteador_cliente.get("/documentos", response_class=HTMLResponse)

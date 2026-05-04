@@ -51,7 +51,7 @@
         function humanizarAcaoSuperficieWorkspace(actionKey = "") {
             const chave = String(actionKey || "").trim().toLowerCase();
             if (chave === "chat_finalize") {
-                return mesaAvaliadoraDisponivelParaUsuario() ? "Enviar para Mesa" : "Finalizar laudo";
+                return "Finalizar laudo";
             }
             if (chave === "mesa_approve") return "Aprovar";
             if (chave === "mesa_return") return "Devolver para correção";
@@ -94,9 +94,9 @@
         function obterRotuloAcaoFinalizacaoWorkspace(valor = "") {
             const status = normalizarCaseLifecycleStatusSeguro(valor);
             if (status === "devolvido_para_correcao") {
-                return mesaAvaliadoraDisponivelParaUsuario() ? "Reenviar para Mesa" : "Aplicar correções";
+                return "Aplicar correções";
             }
-            return mesaAvaliadoraDisponivelParaUsuario() ? "Enviar para Mesa" : "Finalizar laudo";
+            return "Finalizar laudo";
         }
 
         function workspacePermiteFinalizacao(snapshot = null) {
@@ -213,7 +213,7 @@
         function formatarModoValidacaoWorkspace(valor = "") {
             const modo = String(valor || "").trim().toLowerCase();
             if (!modo) return "";
-            if (modo === "mesa_required") return "Mesa Avaliadora obrigatoria";
+            if (modo === "mesa_required") return "Revisão obrigatória";
             if (modo === "mobile_autonomous") return "Revisao interna governada";
             if (modo === "human_override") return "Override humano";
             return modo.replace(/[_-]+/g, " ");
@@ -442,7 +442,7 @@
                         reopenedDocumentMeta,
                         String(currentIssue?.issue_number || "").trim(),
                     ].filter(Boolean).join(" • "),
-                    actionLabel: "Abrir reemissão na Mesa",
+                    actionLabel: "Abrir reemissão",
                     actionKey: "reissue",
                 };
             }
@@ -458,7 +458,7 @@
                         reopenedDocumentMeta,
                         "Nova revisão em andamento",
                     ].filter(Boolean).join(" • "),
-                    actionLabel: "Abrir Mesa",
+                    actionLabel: "Abrir revisão",
                     actionKey: "mesa",
                 };
             }
@@ -477,7 +477,7 @@
                             resumoTransicoes[0] || "Próximo passo humano disponível",
                             validacaoHumanaObrigatoria ? "Validação humana obrigatória" : "",
                         ].filter(Boolean).join(" • "),
-                        actionLabel: "Abrir Mesa",
+                        actionLabel: "Abrir revisão",
                         actionKey: "mesa",
                     };
                 }
@@ -488,13 +488,13 @@
                 ) {
                     return {
                         visible: true,
-                        title: "Mesa com decisão pendente",
+                        title: "Revisão com decisão pendente",
                         detail: [
                             humanizarMarcadorWorkspace(lifecycleStatus),
                             resumoAcoes.join(" • "),
                             resumoTransicoes[0] || "",
                         ].filter(Boolean).join(" • "),
-                        actionLabel: "Abrir Mesa",
+                        actionLabel: "Abrir revisão",
                         actionKey: "mesa",
                     };
                 }

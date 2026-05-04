@@ -1,92 +1,254 @@
 <section
     id="admin-overview"
-    class="admin-stage admin-tab-panel"
+    class="admin-stage admin-tab-panel cliente-management-home"
     data-admin-stage="overview"
     data-admin-panel="overview"
     data-stage-state="idle"
     role="tabpanel"
-    aria-labelledby="admin-section-tab-overview"
+    aria-labelledby="tab-admin"
     {% if (cliente_admin_section_inicial | default('overview')) != 'overview' %}hidden{% endif %}
 >
-    {% include "cliente/_shell_header.html" %}
+    <div class="cliente-management-home-layout">
+        <div class="cliente-management-overview-main">
+            <div id="admin-executive-brief" class="admin-stage-brief cliente-management-brief"></div>
+            <div id="admin-resumo-geral" class="summary-grid cliente-management-metrics"></div>
 
-    <div class="admin-stage-head">
-        <div class="admin-stage-copy">
-            <span class="admin-stage-kicker">Empresa</span>
-            <h3>Capacidade, saude e contexto da empresa</h3>
-            <p class="box-subtitle">Veja se a empresa segue com folga operacional, que parte do contrato esta sendo pressionada e qual e o proximo foco administrativo.</p>
+            <div class="cliente-management-card-grid cliente-management-card-grid--areas">
+                <article class="cliente-management-card">
+                    <div class="cliente-management-card__head">
+                        <span class="material-symbols-rounded" aria-hidden="true">groups</span>
+                        <div>
+                            <span>Equipe e usuários</span>
+                            <strong>Usuários, perfis e convites</strong>
+                        </div>
+                    </div>
+                    <div id="admin-guided-onboarding-summary" class="summary-grid cliente-management-card__body"></div>
+                    <a class="cliente-management-card__link" href="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}">
+                        <span>Abrir equipe</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                    </a>
+                </article>
+
+                <article class="cliente-management-card">
+                    <div class="cliente-management-card__head">
+                        <span class="material-symbols-rounded" aria-hidden="true">credit_card</span>
+                        <div>
+                            <span>Plano e assinatura</span>
+                            <strong>Uso, limites e contratação</strong>
+                        </div>
+                    </div>
+                    <div class="cliente-management-plan-line cliente-management-plan-line--split">
+                        <span>Plano atual</span>
+                        <strong>{{ empresa.plano_ativo | default('Não informado', true) | e }}</strong>
+                        <span>Status</span>
+                        <strong>Ativo</strong>
+                    </div>
+                    <a class="cliente-management-card__link" href="{{ cliente_surface_routes.plano | default('/cliente/plano') | e }}">
+                        <span>Ver plano</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                    </a>
+                </article>
+
+                <article class="cliente-management-card">
+                    <div class="cliente-management-card__head">
+                        <span class="material-symbols-rounded" aria-hidden="true">description</span>
+                        <div>
+                            <span>Documentos</span>
+                            <strong>Laudos emitidos e histórico</strong>
+                        </div>
+                    </div>
+                    <div class="cliente-management-plan-line cliente-management-plan-line--split">
+                        <span>Área documental</span>
+                        <strong>Acesse e gerencie documentos</strong>
+                        <span>Total de documentos</span>
+                        <strong id="cliente-management-documentos-total">0</strong>
+                    </div>
+                    <a class="cliente-management-card__link" href="{{ cliente_surface_routes.documentos | default('/cliente/documentos') | e }}">
+                        <span>Abrir documentos</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                    </a>
+                </article>
+
+                <article class="cliente-management-card" id="cliente-management-habilitacao-card">
+                    <div class="cliente-management-card__head">
+                        <span class="material-symbols-rounded" aria-hidden="true">verified_user</span>
+                        <div>
+                            <span>Habilitação profissional</span>
+                            <strong>Responsáveis técnicos e emissão oficial</strong>
+                        </div>
+                    </div>
+                    <div class="cliente-management-plan-line cliente-management-plan-line--split">
+                        <span>Status</span>
+                        <strong id="cliente-management-habilitacao-status">Não enviado</strong>
+                        <span>Aprovados</span>
+                        <strong id="cliente-management-habilitacao-aprovados">0</strong>
+                        <span>Em análise</span>
+                        <strong id="cliente-management-habilitacao-analise">0</strong>
+                        <span>Bloqueios</span>
+                        <strong id="cliente-management-habilitacao-bloqueios">0</strong>
+                    </div>
+                    <p class="cliente-management-card__note" id="cliente-management-habilitacao-detail">
+                        A Tariel valida responsáveis técnicos antes de liberar emissão oficial.
+                    </p>
+                    <details class="cliente-management-request" id="cliente-management-habilitacao-request">
+                        <summary>
+                            <span>Solicitar análise</span>
+                            <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
+                        </summary>
+                        <form id="form-habilitacao-profissional" class="cliente-management-request__form">
+                            <label>
+                                <span>Nome do profissional</span>
+                                <input
+                                    id="habilitacao-profissional-nome"
+                                    name="nome"
+                                    type="text"
+                                    maxlength="160"
+                                    autocomplete="name"
+                                    required
+                                >
+                            </label>
+                            <label>
+                                <span>Perfil técnico</span>
+                                <select id="habilitacao-profissional-tipo" name="tipo_profissional" required>
+                                    <option value="engenheiro_seguranca">Engenheiro de Segurança do Trabalho</option>
+                                    <option value="tecnico_seguranca">Técnico de Segurança do Trabalho</option>
+                                    <option value="profissional_habilitado" selected>Profissional habilitado</option>
+                                    <option value="outro">Responsável técnico</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Registro profissional</span>
+                                <input
+                                    id="habilitacao-profissional-registro"
+                                    name="registro_profissional"
+                                    type="text"
+                                    maxlength="80"
+                                    placeholder="CREA, MTE/SRTE ou equivalente"
+                                    required
+                                >
+                            </label>
+                            <label>
+                                <span>E-mail profissional</span>
+                                <input
+                                    id="habilitacao-profissional-email"
+                                    name="email"
+                                    type="email"
+                                    maxlength="254"
+                                    autocomplete="email"
+                                >
+                            </label>
+                            <label>
+                                <span>Telefone</span>
+                                <input
+                                    id="habilitacao-profissional-telefone"
+                                    name="telefone"
+                                    type="tel"
+                                    maxlength="30"
+                                    autocomplete="tel"
+                                >
+                            </label>
+                            <label class="cliente-management-request__wide">
+                                <span>Observações</span>
+                                <textarea
+                                    id="habilitacao-profissional-observacoes"
+                                    name="observacoes"
+                                    maxlength="800"
+                                    rows="3"
+                                    placeholder="NRs atendidas, documentos disponíveis ou contexto para análise"
+                                ></textarea>
+                            </label>
+                            <label class="cliente-management-request__wide">
+                                <span>Comprovações profissionais</span>
+                                <input
+                                    id="habilitacao-profissional-evidencias"
+                                    name="evidencias"
+                                    type="file"
+                                    accept=".pdf,.docx,.png,.jpg,.jpeg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg"
+                                    multiple
+                                >
+                            </label>
+                            <p class="cliente-management-request__note">
+                                Envie CREA, registro profissional, diploma ou documento equivalente. O cadastro entra em análise da Tariel; a aprovação e a liberação de emissão oficial continuam restritas ao Admin CEO.
+                            </p>
+                            <p class="cliente-management-request__note" id="habilitacao-profissional-evidencias-status" aria-live="polite"></p>
+                            <div class="cliente-management-request__actions">
+                                <button class="btn ghost" type="button" data-habilitacao-request-close>Cancelar</button>
+                                <button class="btn primary" type="submit">Enviar para análise</button>
+                            </div>
+                        </form>
+                    </details>
+                    <a class="cliente-management-card__link" href="{{ cliente_surface_routes.suporte | default('/cliente/suporte') | e }}">
+                        <span>Falar com a Tariel</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                    </a>
+                </article>
+            </div>
         </div>
 
-        <div class="admin-stage-meta">
-            <span class="hero-chip">Status executivo</span>
-            <span class="hero-chip">Saude operacional</span>
-            <span class="hero-chip">Proximo foco</span>
-        </div>
+        <aside class="cliente-management-side-stack" aria-label="Atalhos e próximos passos">
+            <section class="cliente-management-overview-actions" aria-label="Ações rápidas">
+                <div>
+                    <span class="cliente-management-kicker">Ações rápidas</span>
+                    <h4>Ir direto para</h4>
+                </div>
+                <div class="cliente-management-shortcuts">
+                    <a href="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}">
+                        <span class="material-symbols-rounded" aria-hidden="true">groups</span>
+                        <span>
+                            <strong>Configurar equipe</strong>
+                            <small>Convide usuários e defina perfis de acesso.</small>
+                        </span>
+                        <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                    </a>
+                    <a href="{{ cliente_surface_routes.plano | default('/cliente/plano') | e }}">
+                        <span class="material-symbols-rounded" aria-hidden="true">credit_card</span>
+                        <span>
+                            <strong>Ver plano</strong>
+                            <small>Consulte assinatura, uso e limites.</small>
+                        </span>
+                        <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                    </a>
+                    <a href="{{ cliente_surface_routes.suporte | default('/cliente/suporte') | e }}">
+                        <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
+                        <span>
+                            <strong>Suporte</strong>
+                            <small>Abrir atendimento da conta.</small>
+                        </span>
+                        <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                    </a>
+                </div>
+            </section>
+
+            <section class="cliente-management-side-card cliente-management-side-card--focus" aria-label="Próximo passo recomendado">
+                <span class="material-symbols-rounded" aria-hidden="true">track_changes</span>
+                <div>
+                    <small>Próximo passo</small>
+                    <strong>Operação estável</strong>
+                    <p>Mantenha os indicadores em dia e revise acessos quando sua equipe crescer.</p>
+                </div>
+            </section>
+
+            <section class="cliente-management-side-card" aria-label="Status do plano">
+                <span class="material-symbols-rounded" aria-hidden="true">workspace_premium</span>
+                <div>
+                    <small>Status do plano</small>
+                    <strong>{{ empresa.plano_ativo | default('Plano não informado', true) | e }}</strong>
+                    <p>Uso e contratação ficam disponíveis na área de plano.</p>
+                </div>
+            </section>
+        </aside>
     </div>
 
-    <div id="admin-executive-brief" class="admin-stage-brief"></div>
-    <div id="admin-resumo-geral" class="summary-grid"></div>
-    <div id="empresa-cards" class="cards-grid"></div>
-
-    <div class="admin-stage-grid admin-stage-grid--split">
-        <article class="box box--section" id="admin-commercial-package">
-            <div class="toolbar">
-                <div class="toolbar-copy">
-                    <h3>Seu pacote e recursos</h3>
-                    <p class="box-subtitle">Mostra o que foi vendido, quais cockpits estão ativos e quais bloqueios são contratuais, não erro do sistema.</p>
-                </div>
-            </div>
-
-            <div id="admin-commercial-package-summary" class="summary-grid"></div>
-            <div id="admin-commercial-package-lista" class="activity-list activity-list--section"></div>
-            <div id="admin-package-resource-grid" class="activity-list activity-list--section"></div>
-        </article>
-
-        <article class="box box--section" id="admin-observability-executive">
-            <div class="toolbar">
-                <div class="toolbar-copy">
-                    <h3>Pulso executivo</h3>
-                    <p class="box-subtitle">Consolida situação atual, responsavel predominante, proximos vencimentos e motivo principal de bloqueio.</p>
-                </div>
-            </div>
-
-            <div id="admin-observability-summary" class="summary-grid"></div>
-            <div id="admin-observability-timeline" class="activity-list activity-list--section"></div>
-        </article>
+    <div class="cliente-management-hidden-runtime" aria-hidden="true">
+        <div id="empresa-cards"></div>
+        <div id="admin-saude-resumo"></div>
+        <div id="admin-commercial-package-summary"></div>
+        <div id="admin-commercial-package-lista"></div>
+        <div id="admin-package-resource-grid"></div>
+        <div id="admin-observability-summary"></div>
+        <div id="admin-observability-timeline"></div>
+        <div id="admin-pending-center-lista"></div>
+        <div id="admin-guided-onboarding-lista"></div>
+        <div id="admin-saude-historico"></div>
     </div>
-
-    <article class="box box--section" id="admin-pending-center">
-        <div class="toolbar">
-            <div class="toolbar-copy">
-                <h3>Central de pendências</h3>
-                <p class="box-subtitle">Priorize mesa, emissão e vencimentos sem varrer o tenant caso a caso.</p>
-            </div>
-        </div>
-
-        <div id="admin-pending-center-lista" class="activity-list activity-list--section"></div>
-    </article>
-
-    <article class="box box--section" id="admin-guided-onboarding">
-        <div class="toolbar">
-            <div class="toolbar-copy">
-                <h3>Onboarding guiado da empresa</h3>
-                <p class="box-subtitle">Mostra o próximo passo mais útil para a WF começar a operar bem no tenant, sem depender de memória oral.</p>
-            </div>
-        </div>
-
-        <div id="admin-guided-onboarding-summary" class="summary-grid"></div>
-        <div id="admin-guided-onboarding-lista" class="activity-list activity-list--section"></div>
-    </article>
-
-    <article class="box box--section">
-        <div class="toolbar">
-            <div class="toolbar-copy">
-                <h3>Saude da operacao</h3>
-                <p class="box-subtitle">Acompanhe tendencia de uso, aderencia da equipe e historico recente sem sair do console administrativo.</p>
-            </div>
-        </div>
-
-        <div id="admin-saude-resumo" class="summary-grid"></div>
-        <div id="admin-saude-historico" class="health-grid"></div>
-    </article>
 </section>

@@ -114,19 +114,19 @@
     const CONFIG_STATUS_MESA = {
         pronta: {
             icone: "support_agent",
-            texto: "Mesa pronta",
+            texto: "Revisão pronta",
         },
         canal_ativo: {
             icone: "alternate_email",
-            texto: "Canal da mesa ativo",
+            texto: "Revisão ativa",
         },
         aguardando: {
             icone: "hourglass_top",
-            texto: "Aguardando mesa",
+            texto: "Aguardando revisão",
         },
         respondeu: {
             icone: "mark_chat_read",
-            texto: "Mesa respondeu",
+            texto: "Revisão respondida",
         },
         pendencia_aberta: {
             icone: "assignment_late",
@@ -134,7 +134,7 @@
         },
         offline: {
             icone: "wifi_off",
-            texto: "Mesa indisponível",
+            texto: "Revisão indisponível",
         },
     };
 
@@ -157,7 +157,7 @@
     const CHAVE_CONTEXTO_VISUAL_LAUDOS = "tariel_workspace_contexto_visual_laudos";
     const LIMITE_CONTEXTO_VISUAL_LAUDOS_STORAGE = 50;
     const MENSAGEM_MESA_EXIGE_INSPECAO =
-        "A conversa com a mesa avaliadora só é permitida após iniciar uma nova inspeção.";
+        "A revisão só fica disponível após iniciar uma nova inspeção.";
     const MIME_ANEXOS_MESA_PERMITIDOS = new Set([
         "image/png",
         "image/jpeg",
@@ -182,7 +182,7 @@
             id: "pendencias",
             titulo: "Mapear pendências",
             descricao: "Lista o que ainda falta para fechar a inspeção com prioridade operacional.",
-            prompt: "Liste as pendências atuais desta inspeção em ordem de prioridade operacional, indicando o que falta coletar, o motivo e o impacto no envio para a mesa.",
+            prompt: "Liste as pendências atuais desta inspeção em ordem de prioridade operacional, indicando o que falta coletar, o motivo e o impacto no fechamento do laudo.",
             atalho: "/pendencias",
             sugestao: true,
             icone: "assignment_late",
@@ -200,7 +200,7 @@
             id: "plano-acao",
             titulo: "Plano de ação",
             descricao: "Organiza um plano de coleta com sequência prática para o inspetor.",
-            prompt: "Monte um plano de ação curto para concluir esta inspeção, com sequência prática de coleta, anexos necessários e pontos que precisam de validação da mesa.",
+            prompt: "Monte um plano de ação curto para concluir esta inspeção, com sequência prática de coleta, anexos necessários e pontos que precisam de validação técnica.",
             atalho: "/plano-acao",
             sugestao: false,
             icone: "checklist",
@@ -218,19 +218,10 @@
             id: "gerar-conclusao",
             titulo: "Gerar conclusão",
             descricao: "Redige uma conclusão preliminar profissional com ressalvas auditáveis.",
-            prompt: "Redija uma conclusão preliminar profissional desta inspeção, separando condições observadas, limitações de evidência, pendências e recomendação para envio à mesa.",
+            prompt: "Redija uma conclusão preliminar profissional desta inspeção, separando condições observadas, limitações de evidência, pendências e recomendação final.",
             atalho: "/gerar-conclusao",
             sugestao: true,
             icone: "article",
-        },
-        {
-            id: "mesa",
-            titulo: "Enviar resumo para a mesa",
-            descricao: "Abre o canal da mesa com uma minuta pronta para validação.",
-            prompt: "",
-            atalho: "/mesa",
-            sugestao: true,
-            icone: "support_agent",
         },
     ];
 
@@ -267,7 +258,7 @@
             headline: "No que voce esta pensando hoje?",
             description:
                 "Use o assistente para iniciar uma conversa, estruturar contexto ou abrir uma inspeção quando fizer sentido.",
-            placeholder: "Descreva ativo, TAG, setor, evidências ou pendência técnica",
+            placeholder: "Descreva ativo, TAG ou pendência técnica",
             contextTitle: "Envie a primeira mensagem",
             contextStatus: "O assistente responde e ajuda a estruturar o proximo passo.",
         },
@@ -514,8 +505,8 @@
         if (status === "analise_livre") return "ANÁLISE LIVRE";
         if (status === "pre_laudo") return "PRÉ-LAUDO";
         if (status === "laudo_em_coleta") return "EM COLETA";
-        if (status === "aguardando_mesa") return "AGUARDANDO MESA";
-        if (status === "em_revisao_mesa") return "MESA EM REVISÃO";
+        if (status === "aguardando_mesa") return "AGUARDANDO REVISÃO";
+        if (status === "em_revisao_mesa") return "EM REVISÃO";
         if (status === "devolvido_para_correcao") return "CORREÇÃO";
         if (status === "aprovado") return "APROVADO";
         if (status === "emitido") return "EMITIDO";
@@ -1301,7 +1292,7 @@
             return candidatos[0];
         }
 
-        if (papel === "mesa") return "Mesa";
+        if (papel === "mesa") return "Revisão";
         if (papel === "inspetor") return "Inspetor";
         if (papel === "sistema") return "Sistema";
         return "Assistente IA";
@@ -1906,7 +1897,6 @@
             acoes.className = `workspace-message-actions workspace-message-actions--${papel}`;
             acoes.appendChild(criarBotaoAcaoWorkspace("content_copy", "Copiar", "copiar", detalhe));
             acoes.appendChild(criarBotaoAcaoWorkspace("format_quote", "Citar", "citar", detalhe));
-            acoes.appendChild(criarBotaoAcaoWorkspace("support_agent", "Mesa", "enviar-mesa", detalhe));
             acoes.appendChild(criarBotaoAcaoWorkspace("keep", "Fixar", "fixar-contexto", detalhe));
             corpo.appendChild(acoes);
         });
@@ -2665,7 +2655,7 @@
     function criarResumoMesaPadraoInspetor() {
         return {
             status: "pronta",
-            titulo: "Mesa disponível",
+            titulo: "Revisão disponível",
             descricao: "",
             chipStatus: "",
             chipPendencias: "",
@@ -2810,7 +2800,7 @@
             obterModoEntradaSelecionadoModal: () => "auto_recommended",
             obterMensagemMesaPorId: noopNull,
             obterResumoOperacionalMesa: criarResumoMesaPadraoInspetor,
-            obterRotuloAcaoFinalizacaoWorkspace: () => "Enviar para Mesa",
+            obterRotuloAcaoFinalizacaoWorkspace: () => "Finalizar laudo",
             renderizarResumoOperacionalMesa: noop,
             renderizarGovernancaEntradaInspetor: noop,
             renderizarGovernancaHistoricoWorkspace: noop,

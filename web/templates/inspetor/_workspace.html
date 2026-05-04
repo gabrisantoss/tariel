@@ -93,14 +93,11 @@
                 data-conversation-variant="technical"
                 {% if not workspace_assistant_inicial %}hidden{% endif %}
             >
-                <div class="rodape-entrada__contexto">
+                <div class="rodape-entrada__contexto" hidden aria-hidden="true">
                     <div class="rodape-entrada__contexto-copy">
-                        <span class="rodape-entrada__eyebrow">Primeiro passo</span>
-                        <strong id="rodape-contexto-titulo">Envie a primeira mensagem</strong>
+                        <strong id="rodape-contexto-titulo"></strong>
                     </div>
-                    <span id="rodape-contexto-status" class="rodape-entrada__contexto-status">
-                        O assistente organiza o laudo enquanto voce descreve o cenario.
-                    </span>
+                    <span id="rodape-contexto-status" class="rodape-entrada__contexto-status"></span>
                 </div>
 
                 <div class="rodape-entrada__composer">
@@ -114,25 +111,6 @@
                         >
                             <span class="material-symbols-rounded" aria-hidden="true">description</span>
                             <span>Criar laudo pelo chat</span>
-                        </button>
-                    </div>
-
-                    <div class="workspace-context-actions" aria-label="Ações rápidas do laudo no chat">
-                        <button
-                            type="button"
-                            id="btn-ver-pendencias-chat"
-                            class="workspace-context-actions__button"
-                        >
-                            <span class="material-symbols-rounded" aria-hidden="true">rule</span>
-                            <span>Ver pedidos da mesa</span>
-                        </button>
-                        <button
-                            type="button"
-                            id="btn-previa-chat"
-                            class="workspace-context-actions__button"
-                        >
-                            <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
-                            <span>Ver prévia</span>
                         </button>
                     </div>
 
@@ -193,7 +171,7 @@
                                     autocomplete="off"
                                     aria-label="Campo de mensagem"
                                     aria-multiline="true"
-                                    placeholder="Descreva ativo, TAG, setor, evidências ou pendência técnica"
+                                    placeholder="Descreva ativo, TAG ou pendência técnica"
                                 ></textarea>
                             </div>
 
@@ -211,18 +189,6 @@
 
                         <div class="technical-composer-actions">
                             <span id="contador-chars" class="contador-chars" aria-live="polite" aria-atomic="true"></span>
-
-                            <button
-                                type="button"
-                                id="btn-toggle-humano"
-                                class="technical-composer-icon-btn"
-                                data-inspector-entry="composer-mesa"
-                                aria-label="Abrir canal da mesa avaliadora"
-                                hidden
-                                aria-hidden="true"
-                            >
-                                <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
-                            </button>
 
                             <button
                                 type="button"
@@ -255,6 +221,56 @@
                         aria-live="polite"
                     ></div>
 
+                    <div class="workspace-context-actions" aria-label="Ações rápidas do laudo no chat">
+                        <button
+                            type="button"
+                            id="btn-previa-chat"
+                            class="workspace-context-actions__button"
+                        >
+                            <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+                            <span>Ver prévia</span>
+                        </button>
+                    </div>
+
+                    <section class="workspace-composer-entry-panel" aria-label="Atalhos depois do composer">
+                        {% if modelos_portal %}
+                        <details class="workspace-guided-nr-picker" data-guided-nr-picker>
+                            <summary class="workspace-guided-nr-summary" data-inspector-entry="assistant-guided-nr-picker">
+                                <span class="material-symbols-rounded" aria-hidden="true">assignment</span>
+                                <span class="workspace-guided-nr-summary__copy">
+                                    <strong>Inspeção guiada</strong>
+                                    <small>Escolha a NR e abra o roteiro.</small>
+                                    <span class="workspace-guided-nr-summary__chips" aria-label="NRs liberadas">
+                                        {% for modelo in modelos_portal[:6] %}
+                                        <span>{{ modelo.titulo | e }}</span>
+                                        {% endfor %}
+                                    </span>
+                                </span>
+                                <span class="workspace-guided-nr-summary__badge">Escolher</span>
+                            </summary>
+
+                            <div class="workspace-guided-nr-grid" aria-label="NRs liberadas para roteiro da inspeção">
+                                {% for modelo in modelos_portal %}
+                                <button
+                                    type="button"
+                                    class="workspace-guided-nr-card btn-acao-rapida"
+                                    data-chat-guided="true"
+                                    data-tipo="{{ modelo.tipo | e }}"
+                                    data-runtime-tipo="{{ modelo.runtime_tipo | default(modelo.tipo, true) | e }}"
+                                    data-preprompt="{{ modelo.preprompt | e }}"
+                                    aria-label="Abrir roteiro {{ modelo.titulo | e }}"
+                                >
+                                    <span class="workspace-guided-nr-card__icon material-symbols-rounded" aria-hidden="true">{{ modelo.icone }}</span>
+                                    <span class="workspace-guided-nr-card__copy">
+                                        <strong>{{ modelo.titulo }}</strong>
+                                    </span>
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </details>
+                        {% endif %}
+                    </section>
+
                     <section class="workspace-entry-helper" aria-label="Guia rápido para abrir a conversa">
                         <div class="workspace-entry-helper__copy">
                             <span class="workspace-entry-helper__eyebrow">Boa primeira mensagem</span>
@@ -274,31 +290,6 @@
 
                     <p class="dica-composer">Enter envia • Shift+Enter quebra linha • / abre comandos</p>
 
-                    {% if modelos_portal %}
-                    <section class="workspace-guided-chat-strip" aria-labelledby="workspace-guided-chat-title">
-                        <div class="workspace-guided-chat-strip__header">
-                            <span>Chat guiado</span>
-                            <strong id="workspace-guided-chat-title">Templates prontos ao redor do chat</strong>
-                            <small>Escolha uma NR e continue enviando fotos no mesmo composer.</small>
-                        </div>
-                        <div class="workspace-guided-chat-strip__grid">
-                            {% for modelo in modelos_portal[:9] %}
-                            <button
-                                type="button"
-                                class="workspace-guided-chat-chip btn-acao-rapida"
-                                data-chat-guided="true"
-                                data-tipo="{{ modelo.tipo | e }}"
-                                data-runtime-tipo="{{ modelo.runtime_tipo | default(modelo.tipo, true) | e }}"
-                                data-preprompt="{{ modelo.preprompt | e }}"
-                                aria-label="Iniciar chat guiado {{ modelo.titulo | e }}"
-                            >
-                                <span class="material-symbols-rounded" aria-hidden="true">{{ modelo.icone }}</span>
-                                <span>{{ modelo.titulo }}</span>
-                            </button>
-                            {% endfor %}
-                        </div>
-                    </section>
-                    {% endif %}
                 </div>
             </footer>
         </div>

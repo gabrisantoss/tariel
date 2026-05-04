@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import app.domains.admin.client_routes as admin_client_routes
+from app.domains.admin.client_tenant_catalog_routes import PASTA_EVIDENCIAS_HABILITACAO
 import app.domains.admin.routes as rotas_admin
 import app.domains.admin.portal_support as admin_portal_support
 import app.domains.admin.services as admin_services
@@ -21,6 +24,7 @@ from app.shared.database import (
     NivelAcesso,
     RegistroAuditoriaEmpresa,
     SessaoAtiva,
+    SignatarioGovernadoLaudo,
     Usuario,
 )
 from app.shared.tenant_admin_policy import summarize_tenant_admin_policy
@@ -202,7 +206,7 @@ def test_admin_cadastrar_empresa_exibe_pacote_inicial_com_operacao_provisionada(
     assert "/cliente/login" in pagina.text
     assert "/app/login" in pagina.text
     assert "/revisao/login" in pagina.text
-    assert "Area de analise" in pagina.text
+    assert "Mesa avaliadora" in pagina.text
 
 
 def test_admin_clientes_renderiza_console_operacional_na_lista_e_no_detalhe(ambiente_critico) -> None:
@@ -332,7 +336,7 @@ def test_admin_ceo_pode_definir_modelo_mobile_single_operator_no_tenant(
     assert resposta.status_code == 303
     pagina = client.get(resposta.headers["location"])
     assert pagina.status_code == 200
-    assert "Aplicativo principal com uma pessoa responsavel" in pagina.text
+    assert "Aplicativo principal com uma pessoa responsável" in pagina.text
 
     with SessionLocal() as banco:
         empresa = banco.get(Empresa, ids["empresa_a"])
@@ -370,10 +374,10 @@ def test_admin_ceo_pode_definir_pacote_chat_inspetor_sem_mesa(
     assert resposta.status_code == 303
     pagina = client.get(resposta.headers["location"])
     assert pagina.status_code == 200
-    assert "Chat Inspetor sem Mesa" in pagina.text
+    assert "Chat de campo sem Mesa" in pagina.text
     listagem = client.get("/admin/clientes")
     assert listagem.status_code == 200
-    assert "Chat Inspetor sem Mesa" in listagem.text
+    assert "Chat de campo sem Mesa" in listagem.text
     assert "Mesa não contratada" in listagem.text
 
     with SessionLocal() as banco:
@@ -483,6 +487,224 @@ def test_admin_cliente_salva_signatario_governado_no_tenant(ambiente_critico) ->
     assert pagina.status_code == 200
     assert "Responsavel pela assinatura salvo para a empresa." in pagina.text
     assert "Eng. Tariel" in pagina.text
+
+
+def test_admin_revisa_habilitacao_profissional_solicitada_pelo_portal_cliente(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    ids = ambiente_critico["ids"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    comprovacao_bytes = b"%PDF-1.4\n% comprovacao admin\n"
+    comprovacao_path = PASTA_EVIDENCIAS_HABILITACAO / "tests" / "admin" / "crea_admin.pdf"
+    comprovacao_path.parent.mkdir(parents=True, exist_ok=True)
+    comprovacao_path.write_bytes(comprovacao_bytes)
+
+    with SessionLocal() as banco:
+        admin_services.upsert_familia_catalogo(
+            banco,
+            family_key="nr13_inspecao_caldeira",
+            nome_exibicao="NR13 · Caldeira",
+            macro_categoria="NR13",
+            status_catalogo="publicado",
+            technical_status="ready",
+            criado_por_id=ids["admin_a"],
+        )
+        admin_services.upsert_oferta_comercial_familia(
+            banco,
+            family_key="nr13_inspecao_caldeira",
+            nome_oferta="NR13 Caldeira",
+            lifecycle_status="active",
+            variantes_comerciais_text="padrao | Padrão | nr13_core | Operação base",
+            criado_por_id=ids["admin_a"],
+        )
+        admin_services.upsert_tenant_family_release(
+            banco,
+            tenant_id=ids["empresa_a"],
+            family_key="nr13_inspecao_caldeira",
+            release_status="active",
+            allowed_variants=["catalog:nr13_inspecao_caldeira:padrao"],
+            criado_por_id=ids["admin_a"],
+        )
+        signatario = SignatarioGovernadoLaudo(
+            tenant_id=ids["empresa_a"],
+            nome="Eng. Cliente NR",
+            funcao="Engenheiro de Segurança do Trabalho",
+            registro_profissional="CREA GO 9090",
+            allowed_family_keys_json=[],
+            governance_metadata_json={
+                "professional_approval_status": "in_review",
+                "professional_approval_source": "cliente_portal",
+                "professional_approval_submitted_by_id": ids["admin_cliente_a"],
+                "professional_approval_submitted_at": datetime(2026, 5, 3, 15, 0, tzinfo=timezone.utc).isoformat(),
+                "professional_email": "rt@empresa-a.test",
+                "professional_phone": "62999990000",
+                "professional_documents_status": "uploaded",
+                "professional_documents": [
+                    {
+                        "id": "doc-crea-admin",
+                        "nome": "crea_admin.pdf",
+                        "mime_type": "application/pdf",
+                        "categoria": "pdf",
+                        "tamanho_bytes": len(comprovacao_bytes),
+                        "sha256": hashlib.sha256(comprovacao_bytes).hexdigest(),
+                        "storage_path": str(comprovacao_path),
+                        "uploaded_at": datetime(2026, 5, 3, 15, 5, tzinfo=timezone.utc).isoformat(),
+                    }
+                ],
+                "professional_documents_count": 1,
+            },
+            ativo=True,
+            observacoes="Atua em NR13.",
+            criado_por_id=ids["admin_cliente_a"],
+        )
+        banco.add(signatario)
+        banco.commit()
+        signatario_id = int(signatario.id)
+
+    _login_admin(client, "admin@empresa-a.test")
+    pagina_revisao = client.get(f"/admin/clientes/{ids['empresa_a']}")
+    assert pagina_revisao.status_code == 200
+    assert "Solicitações aguardando decisão da Tariel" in pagina_revisao.text
+    assert "Portal Cliente" in pagina_revisao.text
+    assert "Eng. Cliente NR" in pagina_revisao.text
+    assert "rt@empresa-a.test" in pagina_revisao.text
+    assert "crea_admin.pdf" in pagina_revisao.text
+
+    resposta_download = client.get(
+        f"/admin/clientes/{ids['empresa_a']}/signatarios-governados/{signatario_id}/evidencias/doc-crea-admin"
+    )
+    assert resposta_download.status_code == 200
+    assert resposta_download.content == comprovacao_bytes
+
+    csrf = _csrf_pagina(client, f"/admin/clientes/{ids['empresa_a']}")
+    resposta = client.post(
+        f"/admin/clientes/{ids['empresa_a']}/signatarios-governados/{signatario_id}/revisao",
+        data={
+            "csrf_token": csrf,
+            "approval_status": "approved",
+            "valid_until": "2026-12-31",
+            "allowed_family_keys": ["nr13_inspecao_caldeira"],
+            "observacoes": "Documentação profissional conferida pela Tariel.",
+        },
+        follow_redirects=False,
+    )
+
+    assert resposta.status_code == 303
+    pagina = client.get(resposta.headers["location"])
+    assert pagina.status_code == 200
+    assert "Revisão de habilitação profissional registrada." in pagina.text
+    assert "Aprovado" in pagina.text
+
+    with SessionLocal() as banco:
+        revisado = banco.get(SignatarioGovernadoLaudo, signatario_id)
+        assert revisado is not None
+        assert revisado.allowed_family_keys_json == ["nr13_inspecao_caldeira"]
+        assert bool(revisado.ativo) is True
+        assert revisado.valid_until is not None
+        assert revisado.valid_until.date().isoformat() == "2026-12-31"
+        assert revisado.observacoes == "Documentação profissional conferida pela Tariel."
+        metadata = revisado.governance_metadata_json
+        assert metadata["professional_approval_status"] == "approved"
+        assert metadata["professional_approval_decided_by_id"] == ids["admin_a"]
+        assert metadata["professional_approval_source"] == "cliente_portal"
+        auditoria = list(
+            banco.scalars(
+                select(RegistroAuditoriaEmpresa)
+                .where(RegistroAuditoriaEmpresa.empresa_id == ids["empresa_a"])
+                .order_by(RegistroAuditoriaEmpresa.id.desc())
+            ).all()
+        )
+        assert any(item.acao == "tenant_professional_habilitation_reviewed" for item in auditoria)
+
+
+def test_admin_bloqueia_aprovacao_de_habilitacao_sem_comprovacao(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    ids = ambiente_critico["ids"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+
+    with SessionLocal() as banco:
+        signatario = SignatarioGovernadoLaudo(
+            tenant_id=ids["empresa_a"],
+            nome="Tec. Sem Comprovacao",
+            funcao="Técnico de Segurança do Trabalho",
+            registro_profissional="MTE 4040",
+            allowed_family_keys_json=[],
+            governance_metadata_json={
+                "professional_approval_status": "in_review",
+                "professional_approval_source": "cliente_portal",
+                "professional_approval_submitted_by_id": ids["admin_cliente_a"],
+                "professional_approval_submitted_at": datetime(2026, 5, 3, 15, 0, tzinfo=timezone.utc).isoformat(),
+                "professional_documents_status": "not_uploaded",
+            },
+            ativo=True,
+            criado_por_id=ids["admin_cliente_a"],
+        )
+        banco.add(signatario)
+        banco.commit()
+        signatario_id = int(signatario.id)
+
+    _login_admin(client, "admin@empresa-a.test")
+    pagina_revisao = client.get(f"/admin/clientes/{ids['empresa_a']}")
+    assert pagina_revisao.status_code == 200
+    assert "Nenhum arquivo foi anexado pelo cliente." in pagina_revisao.text
+    assert "Aprovação exige comprovação profissional anexada." in pagina_revisao.text
+
+    csrf = _csrf_pagina(client, f"/admin/clientes/{ids['empresa_a']}")
+    resposta = client.post(
+        f"/admin/clientes/{ids['empresa_a']}/signatarios-governados/{signatario_id}/revisao",
+        data={
+            "csrf_token": csrf,
+            "approval_status": "approved",
+            "valid_until": "2026-12-31",
+            "allowed_family_keys": [],
+        },
+        follow_redirects=False,
+    )
+
+    assert resposta.status_code == 303
+    pagina_erro = client.get(resposta.headers["location"])
+    assert pagina_erro.status_code == 200
+    assert "Anexe pelo menos uma comprovação profissional antes de aprovar a habilitação." in pagina_erro.text
+
+    csrf = _csrf_pagina(client, f"/admin/clientes/{ids['empresa_a']}")
+    resposta_edicao = client.post(
+        f"/admin/clientes/{ids['empresa_a']}/signatarios-governados",
+        data={
+            "csrf_token": csrf,
+            "signatario_id": signatario_id,
+            "nome": "Tec. Sem Comprovacao",
+            "funcao": "Técnico de Segurança do Trabalho",
+            "registro_profissional": "MTE 4040",
+            "valid_until": "2026-12-31",
+            "approval_status": "approved",
+            "ativo": "on",
+        },
+        follow_redirects=False,
+    )
+
+    assert resposta_edicao.status_code == 303
+    pagina_erro_edicao = client.get(resposta_edicao.headers["location"])
+    assert "Anexe pelo menos uma comprovação profissional antes de aprovar a habilitação." in pagina_erro_edicao.text
+
+    with SessionLocal() as banco:
+        bloqueado = banco.get(SignatarioGovernadoLaudo, signatario_id)
+        assert bloqueado is not None
+        metadata = bloqueado.governance_metadata_json
+        assert metadata["professional_approval_status"] == "in_review"
+        assert "professional_approval_decided_by_id" not in metadata
+        auditoria = list(
+            banco.scalars(
+                select(RegistroAuditoriaEmpresa)
+                .where(
+                    RegistroAuditoriaEmpresa.empresa_id == ids["empresa_a"],
+                    RegistroAuditoriaEmpresa.acao == "tenant_professional_habilitation_reviewed",
+                )
+            ).all()
+        )
+        assert auditoria == []
 
 
 def test_admin_paginas_de_governanca_renderizam_disclosures(ambiente_critico) -> None:

@@ -113,37 +113,43 @@
         overview: "admin-overview",
         capacity: "admin-capacity",
         team: "admin-team",
+        access: "admin-team",
         support: "admin-support",
       });
       const STAGE_ORDER = Object.freeze([
         "overview",
-        "capacity",
         "team",
+        "access",
+        "capacity",
         "support",
       ]);
       const SECTION_META = Object.freeze({
         overview: Object.freeze({
-          title: "Resumo",
-          meta: "Panorama, saude e proximo foco da empresa.",
+          title: "Visão geral",
+          meta: "Organização, equipe e plano.",
         }),
         capacity: Object.freeze({
-          title: "Plano e capacidade",
-          meta: "Limites, folga e historico comercial da empresa.",
+          title: "Plano e assinatura",
+          meta: "Uso, limites e contratação.",
         }),
         team: Object.freeze({
-          title: "Equipe",
-          meta: "Criacao, ativacao e manutencao dos acessos da empresa.",
+          title: "Equipe e usuários",
+          meta: "Perfis, convites e acessos.",
+        }),
+        access: Object.freeze({
+          title: "Acessos operacionais",
+          meta: "Chat de campo e Mesa avaliadora por usuário.",
         }),
         support: Object.freeze({
           title: "Suporte",
-          meta: "Diagnostico, protocolo e trilha recente da empresa.",
+          meta: "Chamados e histórico da conta.",
         }),
       });
       const AUDIT_FILTERS = Object.freeze([
         Object.freeze({
           key: "all",
           label: "Tudo",
-          description: "Historico completo da empresa",
+          description: "Histórico completo da conta",
         }),
         Object.freeze({
           key: "admin",
@@ -153,7 +159,7 @@
         Object.freeze({
           key: "support",
           label: "Suporte",
-          description: "Protocolos e diagnostico",
+          description: "Protocolos e diagnóstico",
         }),
         Object.freeze({
           key: "chat",
@@ -163,12 +169,12 @@
         Object.freeze({
           key: "mesa",
           label: "Mesa",
-          description: "Pendencias e respostas da mesa",
+          description: "Pendências e respostas da mesa",
         }),
         Object.freeze({
           key: "team",
           label: "Equipe",
-          description: "Criacao e manutencao de usuarios",
+          description: "Criação e manutenção de usuários",
         }),
       ]);
       const TARGET_TO_SECTION = Object.freeze({
@@ -185,6 +191,7 @@
         "admin-commercial-package-summary": "overview",
         "admin-commercial-package-lista": "overview",
         "admin-package-resource-grid": "overview",
+        "cliente-management-habilitacao-card": "overview",
         "admin-observability-executive": "overview",
         "admin-observability-summary": "overview",
         "admin-observability-timeline": "overview",
@@ -194,6 +201,11 @@
         "admin-capacity-brief": "capacity",
         "admin-planos": "capacity",
         "admin-planos-box": "capacity",
+        "cliente-plan-current-summary": "capacity",
+        "cliente-plan-usage-grid": "capacity",
+        "cliente-plan-resources-list": "capacity",
+        "cliente-plan-catalog": "capacity",
+        "cliente-plan-request": "capacity",
         "empresa-resumo-detalhado": "capacity",
         "empresa-alerta-capacidade": "capacity",
         "plano-impacto-preview": "capacity",
@@ -217,6 +229,10 @@
         "usuarios-resumo": "team",
         "lista-usuarios": "team",
         "usuarios-vazio": "team",
+        "admin-access": "team",
+        "admin-access-brief": "team",
+        "admin-access-matrix": "team",
+        "admin-access-matrix-card": "team",
         "admin-support": "support",
         "admin-support-brief": "support",
         "admin-governanca": "support",
@@ -239,6 +255,7 @@
         const secao = texto(valor).trim().toLowerCase();
         if (secao === "planos") return "capacity";
         if (secao === "equipe") return "team";
+        if (secao === "acessos" || secao === "access") return "team";
         if (secao === "governanca") return "support";
         return STAGE_ORDER.includes(secao) ? secao : "overview";
       }
@@ -264,7 +281,7 @@
         return state.bootstrap?.tenant_admin_projection?.payload || null;
       }
 
-      function formatarRotuloLista(lista, { fallback = "nao definido" } = {}) {
+      function formatarRotuloLista(lista, { fallback = "não definido" } = {}) {
         const itens = Array.isArray(lista)
           ? lista.map((item) => texto(item).trim()).filter(Boolean)
           : [];
@@ -311,8 +328,8 @@
           : [];
         const surfaceLabels = surfaceSet.map((item) => {
           if (item === "mobile") return "App mobile";
-          if (item === "inspetor_web") return "Portal de campo";
-          if (item === "mesa_web") return "Portal de revisao";
+          if (item === "inspetor_web") return "Chat de campo";
+          if (item === "mesa_web") return "Mesa avaliadora";
           return item.replaceAll("_", " ");
         });
         const assignablePortalSet = Array.isArray(
@@ -355,8 +372,8 @@
             fallback: "App mobile",
           }),
           identityNote: enabled
-            ? "A conta principal pode concentrar o portal da empresa, o campo, a revisao e o mobile conforme as liberacoes contratadas."
-            : "Cada pessoa segue a combinacao de acessos liberada para esta empresa.",
+            ? "A conta principal pode concentrar Chat de campo, Mesa avaliadora e mobile conforme as liberações contratadas."
+            : "Cada pessoa segue a combinação de acessos liberada para esta conta.",
         };
       }
 
@@ -379,9 +396,9 @@
           key: "tenant_monitoring",
           label: "Monitorar tenant",
           detail:
-            "A operacao segue distribuida sem um gargalo canonico dominante neste momento.",
+            "A operação segue distribuída sem um gargalo canônico dominante neste momento.",
           tone: "aguardando",
-          ownerLabel: "Leitura distribuida",
+          ownerLabel: "Leitura distribuída",
           observedCount: observedCaseIds.length,
           chips: [
             `${formatarInteiro(openCases)} abertos`,
@@ -397,7 +414,7 @@
             label: "Casos devolvidos ao campo",
             detail: `${formatarInteiro(sentBack)} caso(s) voltaram para ajuste e pedem retomada do time operacional.`,
             tone: "ajustes",
-            ownerLabel: "Responsavel predominante: campo",
+            ownerLabel: "Responsável predominante: campo",
           };
         }
 
@@ -406,9 +423,9 @@
             ...base,
             key: "tenant_in_review",
             label: "Mesa em andamento",
-            detail: `${formatarInteiro(inReview)} caso(s) estao com validacao humana em curso na mesa.`,
+            detail: `${formatarInteiro(inReview)} caso(s) estão com validação humana em curso na mesa.`,
             tone: "aberto",
-            ownerLabel: "Responsavel predominante: mesa",
+            ownerLabel: "Responsável predominante: mesa",
           };
         }
 
@@ -416,10 +433,10 @@
           return {
             ...base,
             key: "tenant_pending_review",
-            label: "Decisao pendente",
-            detail: `${formatarInteiro(pendingReview)} caso(s) aguardam decisao objetiva da mesa.`,
+            label: "Decisão pendente",
+            detail: `${formatarInteiro(pendingReview)} caso(s) aguardam decisão objetiva da mesa.`,
             tone: "aguardando",
-            ownerLabel: "Responsavel predominante: mesa",
+            ownerLabel: "Responsável predominante: mesa",
           };
         }
 
@@ -428,9 +445,9 @@
             ...base,
             key: "tenant_field_open",
             label: "Campo em andamento",
-            detail: `${formatarInteiro(openCases)} caso(s) seguem em coleta ou consolidacao antes da revisao humana.`,
+            detail: `${formatarInteiro(openCases)} caso(s) seguem em coleta ou consolidação antes da revisão humana.`,
             tone: "aberto",
-            ownerLabel: "Responsavel predominante: campo",
+            ownerLabel: "Responsável predominante: campo",
           };
         }
 
@@ -438,10 +455,10 @@
           return {
             ...base,
             key: "tenant_issued",
-            label: "Emissao concluida",
-            detail: `${formatarInteiro(issuedDocuments)} documento(s) ja fecharam o ciclo canonico recente do tenant.`,
+            label: "Emissão concluída",
+            detail: `${formatarInteiro(issuedDocuments)} documento(s) já fecharam o ciclo canônico recente da conta.`,
             tone: "aprovado",
-            ownerLabel: "Responsavel predominante: conclusao",
+            ownerLabel: "Responsável predominante: conclusão",
           };
         }
 
@@ -451,9 +468,9 @@
             key: "tenant_empty",
             label: "Sem casos observados",
             detail:
-              "Ainda nao ha casos suficientes na projecao para destacar um momento canonico do tenant.",
+              "Ainda não há casos suficientes na projeção para destacar um momento canônico da conta.",
             tone: "aguardando",
-            ownerLabel: "Responsavel predominante: indisponivel",
+            ownerLabel: "Responsável predominante: indisponível",
             chips: ["0 abertos", "0 em mesa", "0 emitidos"],
           };
         }
@@ -985,23 +1002,23 @@
           Number(tenantAdmin?.review_counts?.in_review || 0);
         const itens = {
           overview: {
-            title: "Pulso executivo da empresa",
-            meta: "Visao resumida de folga, operacao e proximo foco administrativo antes de entrar nas camadas mais detalhadas.",
+            title: "Resumo da organização",
+            meta: "Leitura rápida de uso, equipe e próximo foco administrativo.",
             chips: [
               `${formatarInteiro(Number(tenantAdmin?.case_counts?.open_cases || 0))} casos abertos`,
               `${formatarInteiro(totalUsuarios)} perfis monitorados`,
-              `${formatarInteiro(revisoesAtivas)} revisoes em curso`,
+              `${formatarInteiro(revisoesAtivas)} revisões em curso`,
             ],
           },
           capacity: {
-            title: "Capacidade comercial com leitura rapida",
-            meta: "Limites, folga, historico e sugestao comercial aparecem juntos, sem misturar essa decisao com a rotina operacional.",
+            title: "Plano e limites",
+            meta: "Folga, consumo e interesse comercial no mesmo bloco.",
             chips: [
               empresa.laudos_restantes == null
                 ? "Laudos sem teto"
                 : `${formatarInteiro(empresa.laudos_restantes)} laudos livres`,
               empresa.usuarios_restantes == null
-                ? "Usuarios sem teto"
+                ? "Usuários sem teto"
                 : `${formatarInteiro(empresa.usuarios_restantes)} vagas livres`,
               texto(empresa.plano_sugerido).trim()
                 ? `Plano sugerido ${texto(empresa.plano_sugerido).trim()}`
@@ -1009,21 +1026,30 @@
             ],
           },
           team: {
-            title: "Equipe com ativacao e manutencao no mesmo mapa",
-            meta: "Criacao, primeiros acessos e bloqueios ficam legiveis sem transformar a tela em uma parede de cadastros.",
+            title: "Equipe e usuários",
+            meta: "Criação, ativação e bloqueios em blocos separados.",
             chips: [
-              `${formatarInteiro(totalUsuarios)} acessos da empresa`,
+              `${formatarInteiro(totalUsuarios)} acessos da conta`,
               `${formatarInteiro((state.bootstrap?.usuarios || []).filter((item) => item?.senha_temporaria_ativa).length)} primeiros acessos`,
               `${formatarInteiro((state.bootstrap?.usuarios || []).filter((item) => !item?.ativo).length)} bloqueados`,
             ],
           },
+          access: {
+            title: "Acessos operacionais",
+            meta: "A conta cliente acompanha quem pode usar Chat de campo e Mesa avaliadora, sem operar essas filas por aqui.",
+            chips: [
+              `${formatarInteiro((state.bootstrap?.usuarios || []).length)} usuários`,
+              "Chat de campo",
+              "Mesa avaliadora",
+            ],
+          },
           support: {
-            title: "Suporte governado e historico consultavel",
-            meta: "Diagnostico, politica de suporte e auditoria fina ficam no mesmo contexto para acelerar leitura e exportacao.",
+            title: "Suporte e histórico",
+            meta: "Chamados, diagnóstico e auditoria recente no mesmo contexto.",
             chips: [
               `${formatarInteiro(Number(categorias.support || 0))} eventos de suporte`,
               `${formatarInteiro(Number(categorias.chat || 0) + Number(categorias.mesa || 0))} eventos operacionais`,
-              `${formatarInteiro(obterAuditoriaAdmin().length)} itens no historico`,
+              `${formatarInteiro(obterAuditoriaAdmin().length)} itens no histórico`,
             ],
           },
         };
@@ -1137,9 +1163,10 @@
             ? "Contrato sem teto mensal"
             : `${formatarInteiro(Math.max(Number(empresa.laudos_restantes || 0), 0))} laudos restantes`;
         const contagens = {
-          overview: `${formatarInteiro(laudosNoMes)} laudos no mes`,
+          overview: `${formatarInteiro(laudosNoMes)} laudos no mês`,
           capacity: laudosRestantes,
           team: `${formatarInteiro(totalUsuarios)} perfis operacionais`,
+          access: `${formatarInteiro(totalUsuarios)} usuários`,
           support: `${formatarInteiro(auditoria.length)} eventos recentes`,
         };
 
@@ -1167,6 +1194,7 @@
           contagens.capacity,
         );
         definirTextoNoElemento("admin-section-count-team", contagens.team);
+        definirTextoNoElemento("admin-section-count-access", contagens.access);
         definirTextoNoElemento(
           "admin-section-count-support",
           contagens.support,
@@ -1228,7 +1256,7 @@
         const usoValor =
           empresa.uso_percentual == null
             ? "Sem teto comercial neste contrato"
-            : `${formatarInteiro(empresa.laudos_mes_atual || 0)} laudos no mes`;
+            : `${formatarInteiro(empresa.laudos_mes_atual || 0)} laudos no mês`;
         const resumoUsuarios = formatarCapacidadeRestante(
           empresa.usuarios_restantes,
           empresa.usuarios_excedente,
@@ -1246,11 +1274,11 @@
             ? 18
             : Math.max(6, Math.min(100, Number(empresa.uso_percentual || 0)));
         const riscoLabel = texto(
-          empresa.capacidade_badge || "Capacidade estavel",
+          empresa.capacidade_badge || "Capacidade estável",
         );
         const riscoMensagem = texto(
           empresa.capacidade_acao ||
-            "A empresa ainda tem folga operacional dentro do plano.",
+            "A conta ainda tem folga operacional dentro do plano.",
         );
         const planoSugerido = texto(empresa.plano_sugerido).trim();
         const alertaCapacidade = $("empresa-alerta-capacidade");
@@ -1259,7 +1287,7 @@
         const formUsuario = $("form-usuario");
         const pacoteOperacionalResumo = governance.enabled
           ? `${governance.operatingModelLabel}. ${formatarInteiro(governance.operationalUsersInUse)} de ${formatarInteiro(governance.operationalUserLimit)} conta operacional ocupada.`
-          : "Perfis operacionais seguem a regra padrão contratada para esta empresa.";
+          : "Perfis operacionais seguem a regra padrão contratada para esta conta.";
 
         const empresaCards = $("empresa-cards");
         if (empresaCards) {
@@ -1267,11 +1295,11 @@
           [
             {
               accent: empresa.status_bloqueio ? "attention" : "done",
-              label: "Plano em operacao",
+              label: "Plano em operação",
               value: empresa.plano_ativo,
               meta: empresa.status_bloqueio
-                ? "Empresa bloqueada"
-                : "Empresa liberada para operar",
+                ? "Conta bloqueada"
+                : "Conta liberada para operar",
             },
             {
               accent:
@@ -1284,7 +1312,7 @@
                   empresa.usuarios_em_uso ||
                   empresa.total_usuarios,
               ),
-              meta: `${resumoUsuarios}. ${formatarInteiro(empresa.admins_cliente)} administradores da empresa, ${formatarInteiro(empresa.inspetores)} pessoas de campo e ${formatarInteiro(empresa.revisores)} pessoas de revisao.`,
+              meta: `${resumoUsuarios}. ${formatarInteiro(empresa.inspetores)} operadores de campo e ${formatarInteiro(empresa.revisores)} avaliadores. Acessos do cliente são criados pela Tariel.`,
             },
             {
               accent:
@@ -1292,7 +1320,7 @@
                 empresa.laudos_mes_limite != null
                   ? "attention"
                   : "aberto",
-              label: "Laudos deste mes",
+              label: "Laudos deste mês",
               value: formatarInteiro(empresa.laudos_mes_atual || 0),
               meta: `${resumoLaudos}. ${empresa.laudos_mes_limite == null ? "Contrato sem limite mensal fixo." : `Limite de ${formatarInteiro(empresa.laudos_mes_limite)} laudos.`}`,
             },
@@ -1321,13 +1349,13 @@
               status: empresa.status_bloqueio ? "ajustes" : "aberto",
               label: empresa.status_bloqueio
                 ? "Conta bloqueada"
-                : "Operacao liberada",
+                : "Operação liberada",
             }),
           );
           statusStrip.appendChild(
             criarPillAdminNode({
               kind: "role",
-              label: `CNPJ ${empresa.cnpj || "nao informado"}`,
+              label: `CNPJ ${empresa.cnpj || "não informado"}`,
             }),
           );
           stack.appendChild(statusStrip);
@@ -1341,7 +1369,7 @@
           consumoLabel.textContent = "Consumo mensal monitorado";
           consumoCopy.appendChild(consumoLabel);
           const consumoValor = documentRef.createElement("strong");
-          consumoValor.textContent = `${formatarInteiro(empresa.laudos_mes_atual || 0)} laudos criados neste mes`;
+          consumoValor.textContent = `${formatarInteiro(empresa.laudos_mes_atual || 0)} laudos criados neste mês`;
           consumoCopy.appendChild(consumoValor);
           contextHead.appendChild(consumoCopy);
           contextHead.appendChild(
@@ -1367,7 +1395,7 @@
           [
             `Limite mensal: ${empresa.laudos_mes_limite == null ? "sem teto" : formatarInteiro(empresa.laudos_mes_limite)}`,
             `Laudos restantes: ${empresa.laudos_restantes == null ? "sem teto" : formatarInteiro(empresa.laudos_restantes)}`,
-            `Limite de usuarios: ${empresa.usuarios_max == null ? "sem teto" : formatarInteiro(empresa.usuarios_max)}`,
+            `Limite de usuários: ${empresa.usuarios_max == null ? "sem teto" : formatarInteiro(empresa.usuarios_max)}`,
             `Vagas restantes: ${empresa.usuarios_restantes == null ? "sem teto" : formatarInteiro(empresa.usuarios_restantes)}`,
           ].forEach((label) => {
             toolbarMeta.appendChild(criarHeroChipAdminNode(label));
@@ -1386,12 +1414,12 @@
                   empresa.total_usuarios,
               ),
             },
-            { label: "Margem de usuarios", value: resumoUsuarios },
+            { label: "Margem de usuários", value: resumoUsuarios },
             {
               label: "Laudos na janela atual",
               value: formatarInteiro(empresa.laudos_mes_atual || 0),
             },
-            { label: "Margem do mes", value: resumoLaudos },
+            { label: "Margem do mês", value: resumoLaudos },
           ].forEach((item) => {
             contextGrid.appendChild(
               criarContextBlockAdminNode(item.label, item.value),
@@ -1404,16 +1432,16 @@
           [
             {
               enabled: Boolean(empresa.upload_doc),
-              label: `Envio de documentos ${empresa.upload_doc ? "ativo" : "indisponivel"}`,
+              label: `Envio de documentos ${empresa.upload_doc ? "ativo" : "indisponível"}`,
             },
             {
               enabled: Boolean(empresa.deep_research),
-              label: `Analise aprofundada ${empresa.deep_research ? "ativa" : "indisponivel"}`,
+              label: `Análise aprofundada ${empresa.deep_research ? "ativa" : "indisponível"}`,
             },
             {
-              label: `Responsavel ${empresa.nome_responsavel || "nao informado"}`,
+              label: `Responsável ${empresa.nome_responsavel || "não informado"}`,
             },
-            { label: `Base ${empresa.cidade_estado || "nao informada"}` },
+            { label: `Base ${empresa.cidade_estado || "não informada"}` },
             {
               label: `Processamento acumulado ${formatarInteiro(empresa.mensagens_processadas || 0)}`,
             },
@@ -1425,7 +1453,7 @@
               enabled: Boolean(governance.enabled),
               label: governance.enabled
                 ? `Continuidades: ${governance.surfacesSummary}`
-                : "Equipe distribuida por perfis da empresa",
+                : "Equipe distribuída por perfis da conta",
             },
           ].forEach((chip) => {
             chipList.appendChild(criarFeatureChipAdminNode(chip));
@@ -1435,7 +1463,7 @@
           stack.appendChild(
             criarContextGuidanceAdminNode({
               tone: prioridade.tone,
-              eyebrow: "Proximo foco da administracao",
+              eyebrow: "Próximo foco da gestão",
               title: prioridade.badge,
               detail: prioridade.acao,
               sideNode: criarPillAdminNode({
@@ -1461,7 +1489,7 @@
         if (alertaCapacidade) {
           const recomendacaoUpgrade = planoSugerido
             ? `Migrar para ${planoSugerido} tende a aliviar primeiro ${empresa.capacidade_gargalo === "usuarios" ? "a equipe" : "a fila mensal de laudos"}.`
-            : "O plano atual ja e o topo da escada comercial configurada.";
+            : "O plano atual já é o topo da escada comercial configurada.";
           limparElemento(alertaCapacidade);
           alertaCapacidade.appendChild(
             criarCapacityAlertAdminNode({
@@ -1484,7 +1512,7 @@
                   className: "hero-chip",
                   label: planoSugerido
                     ? `Plano sugerido: ${planoSugerido}`
-                    : "Sem solicitacao imediata",
+                    : "Sem solicitação imediata",
                 },
               ],
             }),
@@ -1501,19 +1529,19 @@
             limiteUsuariosAtingido || limitePacoteAtingido,
           );
           const notaTitulo = limitePacoteAtingido
-            ? "Operador unico ja ocupado"
+            ? "Operador único já ocupado"
             : limiteUsuariosAtingido
               ? "Equipe no teto do plano"
               : governance.enabled
                 ? "Pacote com conta principal unificada"
-                : "Capacidade para novos usuarios";
+                : "Capacidade para novos usuários";
           const notaDetalhe = limitePacoteAtingido
-            ? `${governance.operatingModelLabel}: ${formatarInteiro(governance.operationalUsersInUse)} de ${formatarInteiro(governance.operationalUserLimit)} conta operacional em uso. A administracao da empresa nao entra nessa conta.`
+            ? `${governance.operatingModelLabel}: ${formatarInteiro(governance.operationalUsersInUse)} de ${formatarInteiro(governance.operationalUserLimit)} conta operacional em uso. A gestão da conta não entra nesse limite.`
             : limiteUsuariosAtingido
               ? `${resumoUsuarios}. ${planoSugerido ? `Registre interesse em ${planoSugerido} antes de ampliar a equipe.` : "Revise o contrato antes de ampliar a equipe."}`
               : governance.enabled
                 ? `Este pacote permite ${formatarInteiro(governance.operationalUserLimit)} conta operacional e continuidade em ${governance.surfacesSummary}. ${governance.identityNote}`
-                : `${resumoUsuarios}. ${planoSugerido && (empresa.capacidade_status === "atencao" || empresa.capacidade_status === "monitorar") ? `Se a fila crescer, o melhor encaixe passa a ser ${planoSugerido}.` : "Ainda existe folga para ampliar a equipe com seguranca."}`;
+                : `${resumoUsuarios}. ${planoSugerido && (empresa.capacidade_status === "atencao" || empresa.capacidade_status === "monitorar") ? `Se a fila crescer, o melhor encaixe passa a ser ${planoSugerido}.` : "Ainda existe folga para ampliar a equipe com segurança."}`;
           limparElemento(notaCapacidadeUsuario);
           notaCapacidadeUsuario.appendChild(
             criarFormHintAdminNode({
@@ -1539,6 +1567,384 @@
               pacoteOperacionalResumo;
           }
         }
+      }
+
+      function textoLimitePlano(valor, singular, plural) {
+        if (valor == null) return "Sem teto";
+        return formatarLimitePlano(valor, singular, plural);
+      }
+
+      function textoMargemPlano(restante, excedente, singular, plural) {
+        if (restante == null) return "Sem teto contratado";
+        return formatarCapacidadeRestante(restante, excedente, singular, plural);
+      }
+
+      function porcentagemUsoPlano(usado, limite, percentualFallback) {
+        if (percentualFallback != null) {
+          return Math.max(4, Math.min(100, Number(percentualFallback || 0)));
+        }
+        if (limite == null || Number(limite) <= 0) return 100;
+        return Math.max(
+          4,
+          Math.min(100, Math.round((Number(usado || 0) / Number(limite)) * 100)),
+        );
+      }
+
+      function criarPlanUsageCardAdminNode({
+        label,
+        used,
+        limit,
+        remaining,
+        exceeded,
+        percent,
+        tone,
+        detail,
+      }) {
+        const card = documentRef.createElement("article");
+        card.className = "cliente-plan-usage-card-item";
+        card.dataset.tone = texto(tone || "aprovado");
+
+        const head = documentRef.createElement("div");
+        head.className = "cliente-plan-usage-card-item__head";
+        const copy = documentRef.createElement("div");
+        const title = documentRef.createElement("small");
+        title.textContent = texto(label);
+        copy.appendChild(title);
+        const value = documentRef.createElement("strong");
+        value.textContent = `${formatarInteiro(used || 0)} de ${limit == null ? "Livre" : formatarInteiro(limit)}`;
+        copy.appendChild(value);
+        head.appendChild(copy);
+        head.appendChild(
+          criarPillAdminNode({
+            kind: "priority",
+            status: tone,
+            label:
+              exceeded > 0
+                ? "Acima do plano"
+                : remaining === 0 && limit != null
+                  ? "No limite"
+                  : tone === "aguardando"
+                    ? "Atenção"
+                    : "Com folga",
+          }),
+        );
+        card.appendChild(head);
+
+        const track = documentRef.createElement("div");
+        track.className = "cliente-plan-progress";
+        const bar = documentRef.createElement("div");
+        bar.className = "cliente-plan-progress__bar";
+        bar.style.width = `${percent}%`;
+        track.appendChild(bar);
+        card.appendChild(track);
+
+        const meta = documentRef.createElement("p");
+        meta.textContent =
+          texto(detail).trim() ||
+          textoMargemPlano(remaining, exceeded, "item", "itens");
+        card.appendChild(meta);
+        return card;
+      }
+
+      function renderPlanCurrentSummary() {
+        const container = $("cliente-plan-current-summary");
+        const empresa = state.bootstrap?.empresa;
+        if (!container || !empresa) return;
+
+        const tenantAdmin = obterTenantAdminPayload();
+        const comercial = state.bootstrap?.tenant_commercial_overview || {};
+        const resourceSummary = comercial.resource_summary || {};
+        const planoSugerido = texto(empresa.plano_sugerido).trim();
+        const capacidadeTone = tomCapacidadeEmpresa(empresa);
+        limparElemento(container);
+
+        const status = documentRef.createElement("div");
+        status.className = "cliente-plan-current-status";
+        status.appendChild(
+          criarContextGuidanceAdminNode({
+            tone: capacidadeTone,
+            eyebrow: "Contrato da conta",
+            title: empresa.plano_ativo || "Plano não informado",
+            detail:
+              texto(comercial.package_label).trim() ||
+              texto(comercial.package_description).trim() ||
+              "Pacote contratado configurado pela Tariel.",
+            sideNode: criarPillAdminNode({
+              kind: "priority",
+              status: empresa.status_bloqueio ? "ajustes" : "aprovado",
+              label: empresa.status_bloqueio ? "Conta bloqueada" : "Ativo",
+            }),
+          }),
+        );
+        container.appendChild(status);
+
+        const metrics = documentRef.createElement("div");
+        metrics.className = "cliente-plan-current-metrics";
+        [
+          {
+            label: "Modelo contratado",
+            value: texto(comercial.operating_model_label).trim() || "Operação padrão",
+          },
+          {
+            label: "Usuários operacionais",
+            value: `${formatarInteiro(tenantAdmin?.user_summary?.total_users || empresa.usuarios_em_uso || 0)} em uso`,
+          },
+          {
+            label: "Emissão oficial",
+            value: resourceSummary.official_issue_allowed ? "Liberada" : "Não incluída",
+          },
+          {
+            label: "Próximo plano",
+            value: planoSugerido || "Sem upgrade sugerido",
+          },
+        ].forEach((item) => {
+          metrics.appendChild(criarContextBlockAdminNode(item.label, item.value));
+        });
+        container.appendChild(metrics);
+
+        const chips = documentRef.createElement("div");
+        chips.className = "chip-list";
+        [
+          {
+            enabled: Boolean(resourceSummary.documents_enabled),
+            label: resourceSummary.documents_enabled ? "Documentos liberados" : "Documentos não incluídos",
+          },
+          {
+            enabled: Boolean(resourceSummary.separate_mesa_available),
+            label: resourceSummary.separate_mesa_available ? "Mesa disponível" : "Mesa não incluída",
+          },
+          {
+            enabled: Boolean(resourceSummary.signatory_required),
+            label: resourceSummary.signatory_required ? "Signatário exigido" : "Signatário sob demanda",
+          },
+        ].forEach((chip) => {
+          chips.appendChild(criarFeatureChipAdminNode(chip));
+        });
+        container.appendChild(chips);
+      }
+
+      function renderPlanUsageGrid() {
+        const container = $("cliente-plan-usage-grid");
+        const empresa = state.bootstrap?.empresa;
+        if (!container || !empresa) return;
+
+        const capacidadeTone = tomCapacidadeEmpresa(empresa);
+        const usoLaudos = porcentagemUsoPlano(
+          empresa.laudos_mes_atual,
+          empresa.laudos_mes_limite,
+          empresa.laudos_percentual,
+        );
+        const usoUsuarios = porcentagemUsoPlano(
+          empresa.usuarios_em_uso,
+          empresa.usuarios_max,
+          empresa.usuarios_percentual,
+        );
+        limparElemento(container);
+        [
+          {
+            label: "Usuários ativos",
+            used: empresa.usuarios_em_uso || empresa.total_usuarios || 0,
+            limit: empresa.usuarios_max,
+            remaining: empresa.usuarios_restantes,
+            exceeded: empresa.usuarios_excedente,
+            percent: usoUsuarios,
+            tone:
+              Number(empresa.usuarios_excedente || 0) > 0
+                ? "ajustes"
+                : empresa.usuarios_restantes === 0 && empresa.usuarios_max != null
+                  ? "aguardando"
+                  : capacidadeTone,
+            detail: textoMargemPlano(
+              empresa.usuarios_restantes,
+              empresa.usuarios_excedente,
+              "vaga",
+              "vagas",
+            ),
+          },
+          {
+            label: "Laudos no mês",
+            used: empresa.laudos_mes_atual || 0,
+            limit: empresa.laudos_mes_limite,
+            remaining: empresa.laudos_restantes,
+            exceeded: empresa.laudos_excedente,
+            percent: usoLaudos,
+            tone:
+              Number(empresa.laudos_excedente || 0) > 0
+                ? "ajustes"
+                : empresa.laudos_restantes === 0 && empresa.laudos_mes_limite != null
+                  ? "aguardando"
+                  : capacidadeTone,
+            detail: textoMargemPlano(
+              empresa.laudos_restantes,
+              empresa.laudos_excedente,
+              "laudo",
+              "laudos",
+            ),
+          },
+          {
+            label: "Documentos e anexos",
+            used: empresa.upload_doc ? 1 : 0,
+            limit: 1,
+            remaining: empresa.upload_doc ? 1 : 0,
+            exceeded: 0,
+            percent: empresa.upload_doc ? 100 : 8,
+            tone: empresa.upload_doc ? "aprovado" : "aguardando",
+            detail: empresa.upload_doc
+              ? "Envio documental incluído no plano."
+              : "Envio documental não está incluído neste plano.",
+          },
+          {
+            label: "Análise aprofundada",
+            used: empresa.deep_research ? 1 : 0,
+            limit: 1,
+            remaining: empresa.deep_research ? 1 : 0,
+            exceeded: 0,
+            percent: empresa.deep_research ? 100 : 8,
+            tone: empresa.deep_research ? "aprovado" : "aguardando",
+            detail: empresa.deep_research
+              ? "Análise aprofundada liberada."
+              : "Análise aprofundada indisponível no plano atual.",
+          },
+        ].forEach((item) => {
+          container.appendChild(criarPlanUsageCardAdminNode(item));
+        });
+      }
+
+      function renderPlanResourcesList() {
+        const container = $("cliente-plan-resources-list");
+        const comercial = state.bootstrap?.tenant_commercial_overview || {};
+        const resources = Array.isArray(comercial.resources)
+          ? comercial.resources
+          : [];
+        if (!container) return;
+        limparElemento(container);
+        if (!resources.length) {
+          container.appendChild(
+            criarEmptyStateAdminNode(
+              "Nenhum recurso contratado retornado",
+              "O pacote comercial ainda não trouxe detalhes suficientes para esta conta.",
+            ),
+          );
+          return;
+        }
+
+        resources.forEach((resource) => {
+          const row = documentRef.createElement("article");
+          row.className = "cliente-plan-resource-row";
+          row.dataset.enabled = resource.available ? "true" : "false";
+
+          const copy = documentRef.createElement("div");
+          copy.className = "cliente-plan-resource-row__copy";
+          const title = documentRef.createElement("strong");
+          title.textContent = texto(resource.label);
+          copy.appendChild(title);
+          const detail = documentRef.createElement("p");
+          detail.textContent = resource.available
+            ? texto(resource.detail_available)
+            : texto(resource.detail_unavailable);
+          copy.appendChild(detail);
+          row.appendChild(copy);
+
+          const side = documentRef.createElement("div");
+          side.className = "cliente-plan-resource-row__side";
+          side.appendChild(
+            criarPillAdminNode({
+              kind: "priority",
+              status: resource.available ? "aprovado" : "aguardando",
+              label: resource.available ? "Incluído" : "Não incluído",
+            }),
+          );
+          const chips = documentRef.createElement("div");
+          chips.className = "chip-list";
+          (Array.isArray(resource.chips) ? resource.chips : []).forEach((chip) => {
+            chips.appendChild(criarHeroChipAdminNode(chip));
+          });
+          side.appendChild(chips);
+          row.appendChild(side);
+          container.appendChild(row);
+        });
+      }
+
+      function renderPlanCatalog() {
+        const container = $("cliente-plan-catalog");
+        const empresa = state.bootstrap?.empresa;
+        if (!container || !empresa) return;
+        const planos = Array.isArray(empresa.planos_catalogo)
+          ? empresa.planos_catalogo
+          : [];
+        limparElemento(container);
+        if (!planos.length) {
+          container.appendChild(
+            criarEmptyStateAdminNode(
+              "Catálogo de planos indisponível",
+              "A Tariel ainda não retornou os limites comerciais disponíveis.",
+            ),
+          );
+          return;
+        }
+
+        planos.forEach((plano) => {
+          const ehAtual = Boolean(plano.atual);
+          const sugerido = Boolean(plano.sugerido);
+          const card = documentRef.createElement("article");
+          card.className = "cliente-plan-catalog-item";
+          card.dataset.current = ehAtual ? "true" : "false";
+          card.dataset.suggested = sugerido ? "true" : "false";
+
+          const head = documentRef.createElement("div");
+          head.className = "cliente-plan-catalog-item__head";
+          const copy = documentRef.createElement("div");
+          const title = documentRef.createElement("strong");
+          title.textContent = texto(plano.plano);
+          copy.appendChild(title);
+          const detail = documentRef.createElement("p");
+          detail.textContent =
+            texto(plano.resumo_impacto).trim() ||
+            "Sem mudança material de limites.";
+          copy.appendChild(detail);
+          head.appendChild(copy);
+          head.appendChild(
+            criarPillAdminNode({
+              kind: "priority",
+              status: ehAtual ? "aprovado" : sugerido ? "aberto" : "aguardando",
+              label: ehAtual ? "Plano atual" : sugerido ? "Sugerido" : texto(plano.movimento || "opção"),
+            }),
+          );
+          card.appendChild(head);
+
+          card.appendChild(
+            criarToolbarMetaAdminNode(
+              [
+                criarHeroChipAdminNode(
+                  `Usuários: ${textoLimitePlano(plano.usuarios_max, "vaga", "vagas")}`,
+                ),
+                criarHeroChipAdminNode(
+                  `Laudos/mês: ${textoLimitePlano(plano.laudos_mes, "laudo", "laudos")}`,
+                ),
+                criarHeroChipAdminNode(plano.upload_doc ? "Documentos" : "Sem documentos"),
+                criarHeroChipAdminNode(plano.deep_research ? "Deep research" : "Sem deep research"),
+              ],
+              "toolbar-meta toolbar-meta--section",
+            ),
+          );
+
+          if (!ehAtual) {
+            card.appendChild(
+              criarToolbarMetaAdminNode(
+                [
+                  criarAdminActionButtonNode({
+                    label: "Registrar interesse",
+                    act: "registrar-interesse-plano",
+                    origem: "admin",
+                    dataset: { plano: plano.plano },
+                  }),
+                ],
+                "toolbar-meta toolbar-meta--section",
+              ),
+            );
+          }
+          container.appendChild(card);
+        });
       }
 
       function renderAdminResumo() {
@@ -1584,15 +1990,15 @@
         [
           {
             accent: "attention",
-            label: "Acesso pedindo revisao",
+            label: "Acesso pedindo revisão",
             value: formatarInteiro(bloqueados),
-            meta: "Usuarios bloqueados que podem travar operacao, escalonamento ou atendimento.",
+            meta: "Usuários bloqueados que podem travar operação, escalonamento ou atendimento.",
           },
           {
             accent: "waiting",
             label: "Primeiros acessos",
             value: formatarInteiro(temporarios),
-            meta: `${formatarInteiro(semLogin)} contas ainda nao registraram login no portal.`,
+            meta: `${formatarInteiro(semLogin)} contas ainda não registraram login no portal.`,
           },
           {
             accent:
@@ -1617,9 +2023,9 @@
           },
           {
             accent: prioridade.tone,
-            label: "Foco da administracao",
+            label: "Foco da gestão",
             value: prioridade.badge,
-            meta: `${prioridade.acao} ${formatarInteiro(revisoesAtivas)} casos seguem em fila de revisao.${planoSugerido ? ` Proximo plano sugerido: ${planoSugerido}.` : ""}`,
+            meta: `${prioridade.acao} ${formatarInteiro(revisoesAtivas)} casos seguem em fila de revisão.${planoSugerido ? ` Próximo plano sugerido: ${planoSugerido}.` : ""}`,
           },
         ].forEach((metric) => {
           container.appendChild(criarMetricCardAdminNode(metric));
@@ -1636,6 +2042,10 @@
 
       function renderCommercialPackageOverview() {
         adminOverviewSurface?.renderCommercialPackageOverview?.();
+      }
+
+      function renderProfessionalHabilitationOverview() {
+        adminOverviewSurface?.renderProfessionalHabilitationOverview?.();
       }
 
       function renderOperationalObservabilityOverview() {
@@ -1662,7 +2072,7 @@
               texto(empresa.capacidade_badge).trim() || "Capacidade monitorada",
             detail:
               texto(empresa.capacidade_acao).trim() ||
-              "Use o resumo abaixo para entender impacto, folga e proximo passo comercial sem reabrir a tela em blocos concorrentes.",
+              "Use o resumo abaixo para entender impacto, folga e próximo passo comercial.",
             metrics: [
               {
                 label: "Laudos restantes",
@@ -1672,7 +2082,7 @@
                     : formatarInteiro(empresa.laudos_restantes),
               },
               {
-                label: "Usuarios restantes",
+                label: "Usuários restantes",
                 value:
                   empresa.usuarios_restantes == null
                     ? "Livre"
@@ -1692,7 +2102,7 @@
                     origem: "admin",
                   }
                 : {
-                    label: "Ver historico comercial",
+                    label: "Ver histórico comercial",
                     act: "abrir-prioridade",
                     kind: "admin-section",
                     canal: "admin",
@@ -1708,8 +2118,8 @@
         const container = $("admin-team-brief");
         const usuarios = state.bootstrap?.usuarios || [];
         if (!container) return;
-        const governance = obterGovernancaOperacionalTenant();
         const total = usuarios.length;
+        const ativos = usuarios.filter((item) => item?.ativo).length;
         const semLogin = usuarios.filter(
           (item) => !parseDataIso(item?.ultimo_login),
         ).length;
@@ -1717,83 +2127,205 @@
           (item) => item?.senha_temporaria_ativa,
         ).length;
         const bloqueados = usuarios.filter((item) => !item?.ativo).length;
-        const tone =
-          governance.enabled && governance.operationalUsersAtLimit
-            ? "aguardando"
-            : bloqueados > 0
-              ? "ajustes"
-              : temporarios > 0
-                ? "aguardando"
-                : "aprovado";
-        const resumoOperacional = governance.enabled
-          ? `${formatarInteiro(governance.operationalUsersInUse)} de ${formatarInteiro(governance.operationalUserLimit)} conta operacional ocupada. Continuidade prevista em ${governance.surfacesSummary}.`
-          : "A equipe segue distribuida com a ativacao concluida para os perfis ativos.";
+        const operadores = usuarios.filter((item) => slugPapel(item) === "inspetor").length;
+        const avaliadores = usuarios.filter((item) => slugPapel(item) === "revisor").length;
 
-        const tituloEquipe = governance.enabled
-          ? "Pacote contratual com operador unico"
-          : bloqueados > 0
-            ? "Existem acessos travando a rotina"
-            : semLogin > 0
-              ? "A ativacao ainda pede conclusao"
-              : "Equipe principal estabilizada";
-        const detalheEquipe = governance.enabled
-          ? `${resumoOperacional} ${governance.identityNote}`
-          : bloqueados > 0
-            ? `${formatarInteiro(bloqueados)} cadastros bloqueados podem segurar atendimento ou revisao.`
-            : semLogin > 0
-              ? `${formatarInteiro(semLogin)} usuarios ainda nao acessaram o portal depois da criacao.`
-              : "A equipe segue distribuida com a ativacao concluida para os perfis ativos.";
+        const metrics = [
+          { label: "Total de usuários", value: formatarInteiro(total) },
+          { label: "Ativos", value: formatarInteiro(ativos) },
+          { label: "Pendentes", value: formatarInteiro(temporarios) },
+          { label: "Bloqueados", value: formatarInteiro(bloqueados) },
+          { label: "Sem login", value: formatarInteiro(semLogin) },
+        ];
+
+        limparElemento(container);
+
+        const panel = documentRef.createElement("section");
+        panel.className = "cliente-team-summary-panel";
+
+        const status = documentRef.createElement("article");
+        status.className = "cliente-team-summary-status";
+        const statusIcon = documentRef.createElement("span");
+        statusIcon.className = "material-symbols-rounded";
+        statusIcon.setAttribute("aria-hidden", "true");
+        statusIcon.textContent = bloqueados || temporarios || semLogin ? "pending_actions" : "verified_user";
+        status.appendChild(statusIcon);
+        const statusCopy = documentRef.createElement("div");
+        const statusLabel = documentRef.createElement("small");
+        statusLabel.textContent = bloqueados || temporarios || semLogin ? "Equipe pede atenção" : "Equipe ativa";
+        const statusTitle = documentRef.createElement("strong");
+        statusTitle.textContent = bloqueados
+          ? `${formatarInteiro(bloqueados)} usuários bloqueados`
+          : temporarios || semLogin
+            ? "Ativação em acompanhamento"
+            : "Todos os usuários cadastrados estão liberados para operar.";
+        const statusDetail = documentRef.createElement("p");
+        statusDetail.textContent = bloqueados
+          ? "Revise bloqueios antes de ampliar a operação da equipe."
+          : temporarios || semLogin
+            ? "Acompanhe primeiros acessos e cadastros que ainda não entraram."
+            : "Acompanhe perfis, permissões e acessos em uma lista única.";
+        statusCopy.appendChild(statusLabel);
+        statusCopy.appendChild(statusTitle);
+        statusCopy.appendChild(statusDetail);
+        status.appendChild(statusCopy);
+        panel.appendChild(status);
+
+        const metricGrid = documentRef.createElement("div");
+        metricGrid.className = "cliente-team-summary-metrics";
+        metrics.forEach((metric) => {
+          const card = documentRef.createElement("article");
+          card.className = "cliente-team-summary-metric";
+          const label = documentRef.createElement("small");
+          label.textContent = metric.label;
+          const value = documentRef.createElement("strong");
+          value.textContent = metric.value;
+          card.appendChild(label);
+          card.appendChild(value);
+          metricGrid.appendChild(card);
+        });
+        panel.appendChild(metricGrid);
+
+        const profileSummary = documentRef.createElement("div");
+        profileSummary.className = "cliente-team-profile-summary";
+        [
+          `Operadores de campo: ${formatarInteiro(operadores)}`,
+          `Avaliadores: ${formatarInteiro(avaliadores)}`,
+        ].forEach((label) => {
+          const chip = documentRef.createElement("span");
+          chip.textContent = label;
+          profileSummary.appendChild(chip);
+        });
+        panel.appendChild(profileSummary);
+
+        container.appendChild(panel);
+      }
+
+      function usuarioTemPortalOperacional(usuario, portal, papelFallback) {
+        const portais = Array.isArray(usuario?.allowed_portals)
+          ? usuario.allowed_portals
+          : [];
+        return portais.includes(portal) || slugPapel(usuario) === papelFallback;
+      }
+
+      function renderAccessBrief() {
+        const container = $("admin-access-brief");
+        const usuarios = state.bootstrap?.usuarios || [];
+        if (!container) return;
+
+        const chatLiberado = usuarios.filter((usuario) =>
+          usuarioTemPortalOperacional(usuario, "inspetor", "inspetor"),
+        ).length;
+        const mesaLiberada = usuarios.filter((usuario) =>
+          usuarioTemPortalOperacional(usuario, "revisor", "revisor"),
+        ).length;
+        const ambos = usuarios.filter(
+          (usuario) =>
+            usuarioTemPortalOperacional(usuario, "inspetor", "inspetor") &&
+            usuarioTemPortalOperacional(usuario, "revisor", "revisor"),
+        ).length;
 
         limparElemento(container);
         container.appendChild(
           criarStageBriefCardAdminNode({
-            tone,
-            eyebrow: "Operacao da equipe",
-            title: tituloEquipe,
-            detail: detalheEquipe,
+            tone: "aprovado",
+            eyebrow: "Permissões por usuário",
+            title: "Gestão separada da operação",
+            detail:
+              "Esta área define quem pode entrar no Chat de campo e na Mesa avaliadora. A operação dessas filas continua fora desta tela.",
             metrics: [
-              {
-                label: "Total operacional",
-                value: formatarInteiro(total),
-              },
-              {
-                label: "Primeiros acessos",
-                value: formatarInteiro(temporarios),
-              },
-              {
-                label: "Bloqueados",
-                value: formatarInteiro(bloqueados),
-              },
-              {
-                label: governance.enabled
-                  ? "Superficies liberadas"
-                  : "Modelo atual",
-                value: governance.enabled
-                  ? governance.surfacesSummary
-                  : "Perfis distribuidos",
-              },
+              { label: "Usuários", value: formatarInteiro(usuarios.length) },
+              { label: "Chat de campo", value: formatarInteiro(chatLiberado) },
+              { label: "Mesa avaliadora", value: formatarInteiro(mesaLiberada) },
+              { label: "Acesso duplo", value: formatarInteiro(ambos) },
             ],
             actions: [
               {
-                label: "Abrir ativacao",
+                label: "Novo usuário",
+                primary: true,
                 act: "abrir-prioridade",
                 kind: "admin-section",
                 canal: "admin",
-                target: "admin-onboarding-lista",
-                origem: "admin",
-              },
-              {
-                label: "Revisar equipe completa",
-                ghost: true,
-                act: "abrir-prioridade",
-                kind: "admin-section",
-                canal: "admin",
-                target: "lista-usuarios",
+                target: "form-usuario",
                 origem: "admin",
               },
             ],
           }),
         );
+      }
+
+      function criarAccessStatusNode(enabled) {
+        const span = documentRef.createElement("span");
+        span.className = "cliente-access-status";
+        span.dataset.enabled = enabled ? "true" : "false";
+        span.textContent = enabled ? "Liberado" : "Sem acesso";
+        return span;
+      }
+
+      function renderAccessMatrix() {
+        const container = $("admin-access-matrix");
+        const usuarios = state.bootstrap?.usuarios || [];
+        if (!container) return;
+
+        limparElemento(container);
+        if (!usuarios.length) {
+          container.appendChild(
+            criarEmptyStateAdminNode(
+              "Nenhum usuário operacional",
+              "Use Equipe e usuários para criar o primeiro acesso operacional.",
+            ),
+          );
+          return;
+        }
+
+        const table = documentRef.createElement("table");
+        table.className = "cliente-access-table";
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Perfil</th>
+              <th>Chat de campo</th>
+              <th>Mesa avaliadora</th>
+            </tr>
+          </thead>
+        `;
+        const tbody = documentRef.createElement("tbody");
+        usuarios.forEach((usuario) => {
+          const tr = documentRef.createElement("tr");
+          const nomeCell = documentRef.createElement("td");
+          const nome = documentRef.createElement("strong");
+          nome.textContent = texto(usuario?.nome || usuario?.email || "Usuário");
+          const email = documentRef.createElement("span");
+          email.textContent = texto(usuario?.email || "");
+          nomeCell.appendChild(nome);
+          nomeCell.appendChild(email);
+
+          const perfilCell = documentRef.createElement("td");
+          perfilCell.textContent = obterNomePapel(slugPapel(usuario));
+
+          const chatCell = documentRef.createElement("td");
+          chatCell.appendChild(
+            criarAccessStatusNode(
+              usuarioTemPortalOperacional(usuario, "inspetor", "inspetor"),
+            ),
+          );
+
+          const mesaCell = documentRef.createElement("td");
+          mesaCell.appendChild(
+            criarAccessStatusNode(
+              usuarioTemPortalOperacional(usuario, "revisor", "revisor"),
+            ),
+          );
+
+          tr.appendChild(nomeCell);
+          tr.appendChild(perfilCell);
+          tr.appendChild(chatCell);
+          tr.appendChild(mesaCell);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        container.appendChild(table);
       }
 
       function renderSupportBrief() {
@@ -1820,13 +2352,13 @@
               texto(visibilityPolicy.exceptional_support_access).trim() ===
               "disabled"
                 ? "Suporte excepcional desabilitado"
-                : "Suporte excepcional sob aprovacao e registro",
+                : "Suporte excepcional sob aprovação e registro",
             detail:
               suporteRecente?.resumo ||
-              "O portal mostra politica de acesso, diagnostico exportavel e o historico recente sem abrir evidencia tecnica bruta por padrao.",
+              "O portal mostra política de acesso, diagnóstico exportável e histórico recente sem abrir evidência técnica bruta por padrão.",
             metrics: [
               {
-                label: "Itens no historico",
+                label: "Itens no histórico",
                 value: formatarInteiro(obterAuditoriaAdmin().length),
               },
               {
@@ -1834,7 +2366,7 @@
                 value: suporteRecente?.payload?.protocolo || "Sem protocolo",
               },
               {
-                label: "Escopo maximo",
+                label: "Escopo máximo",
                 value:
                   texto(
                     visibilityPolicy.exceptional_support_scope_level,
@@ -1843,7 +2375,7 @@
             ],
             actions: [
               {
-                label: "Abrir historico",
+                label: "Abrir histórico",
                 act: "abrir-prioridade",
                 kind: "admin-section",
                 canal: "admin",
@@ -1875,7 +2407,7 @@
         [
           {
             accent: saude.tone || "aprovado",
-            label: "Status da operacao",
+            label: "Status da operação",
             value: saude.status || "Sem leitura",
             meta: saude.texto || "Sem observacoes adicionais.",
           },
@@ -1883,13 +2415,13 @@
             accent: saude.tendencia_tone || "aberto",
             label: "Tendencia mensal",
             value: saude.tendencia_rotulo || "Estavel",
-            meta: `${formatarVariacao(saude.variacao_mensal_percentual || 0)} em relacao ao mes anterior.`,
+            meta: `${formatarVariacao(saude.variacao_mensal_percentual || 0)} em relação ao mês anterior.`,
           },
           {
             accent: "live",
             label: "Equipe ativa em 14 dias",
             value: formatarInteiro(saude.usuarios_login_recente || 0),
-            meta: `${formatarInteiro(saude.usuarios_sem_login_recente || 0)} ainda nao apareceram na janela recente.`,
+            meta: `${formatarInteiro(saude.usuarios_sem_login_recente || 0)} ainda não apareceram na janela recente.`,
           },
           {
             accent: "waiting",
@@ -1905,9 +2437,9 @@
         historico.appendChild(
           criarHealthCardAdminNode({
             tone: saude.tendencia_tone || "aberto",
-            eyebrow: "Ultimos 6 meses",
-            title: saude.tendencia_rotulo || "Ritmo estavel",
-            detail: `Mes atual: ${formatarInteiro(saude.laudos_mes_atual || 0)} laudos. Mes anterior: ${formatarInteiro(saude.laudos_mes_anterior || 0)}.`,
+            eyebrow: "Últimos 6 meses",
+            title: saude.tendencia_rotulo || "Ritmo estável",
+            detail: `Mês atual: ${formatarInteiro(saude.laudos_mes_atual || 0)} laudos. Mês anterior: ${formatarInteiro(saude.laudos_mes_anterior || 0)}.`,
             pillLabel: formatarVariacao(saude.variacao_mensal_percentual || 0),
             serie: saude.historico_mensal || [],
           }),
@@ -1915,9 +2447,9 @@
         historico.appendChild(
           criarHealthCardAdminNode({
             tone: saude.tone || "aprovado",
-            eyebrow: "Pulso dos ultimos 14 dias",
+            eyebrow: "Pulso dos últimos 14 dias",
             title: saude.status || "Sem leitura",
-            detail: `${formatarInteiro(saude.usuarios_login_recente || 0)} pessoas usaram o portal recentemente, com ${formatarInteiro(saude.mix_equipe?.inspetores || 0)} pessoas de campo e ${formatarInteiro(saude.mix_equipe?.revisores || 0)} pessoas de revisao no mix.`,
+            detail: `${formatarInteiro(saude.usuarios_login_recente || 0)} pessoas usaram o portal recentemente, com ${formatarInteiro(saude.mix_equipe?.inspetores || 0)} operadores de campo e ${formatarInteiro(saude.mix_equipe?.revisores || 0)} avaliadores no mix.`,
             pillLabel: `${formatarInteiro(saude.eventos_comerciais_60d || 0)} eventos`,
             serie: saude.historico_diario || [],
           }),
@@ -1940,7 +2472,7 @@
         );
 
         const whatsapp = texto(portal.suporte_whatsapp).trim();
-        const ambiente = texto(portal.ambiente).trim() || "producao";
+        const ambiente = texto(portal.ambiente).trim() || "produção";
         const diagnosticoUrl =
           texto(portal.diagnostico_url).trim() || "/cliente/api/diagnostico";
         const totalAuditoria = auditoria.length;
@@ -1949,19 +2481,19 @@
         const momentoCanonico = resumirMomentoCanonicoTenantAdmin();
         const supportModeLabels = {
           disabled: "desabilitado",
-          approval_required: "com aprovacao previa",
+          approval_required: "com aprovação prévia",
           incident_controlled: "em incidente controlado",
         };
         const supportScopeLabels = {
           metadata_only: "metadados administrativos",
           administrative: "suporte administrativo",
-          tenant_diagnostic: "diagnostico da empresa",
+          tenant_diagnostic: "diagnóstico da conta",
         };
         const technicalAccessLabels = {
-          surface_scoped_operational: "superficies operacionais auditadas",
+          surface_scoped_operational: "acessos operacionais auditados",
         };
         const auditScopeLabels = {
-          tenant_operational_timeline: "historico operacional da empresa",
+          tenant_operational_timeline: "histórico operacional da conta",
         };
 
         const totalEquipeComercial =
@@ -1976,19 +2508,19 @@
         limparElemento(container);
         [
           `Ambiente: ${ambiente}`,
-          `Diagnostico: ${diagnosticoUrl}`,
+          `Diagnóstico: ${diagnosticoUrl}`,
           `Auditoria visivel: ${formatarInteiro(totalAuditoria)} itens`,
-          `Suporte: ${whatsapp || "nao configurado"}`,
-          `Visibilidade tecnica: ${technicalAccessLabels[visibilityPolicy?.technical_access_mode] || "nao definida"}`,
-          `Evidencia bruta: ${visibilityPolicy?.raw_evidence_access === "not_granted_by_projection" ? "fora da projecao gerencial" : "nao definida"}`,
-          `Escopo de auditoria: ${auditScopeLabels[visibilityPolicy?.audit_scope] || "nao definido"}`,
-          `Politica de suporte: ${supportModeLabels[visibilityPolicy?.exceptional_support_access] || "nao definida"}`,
+          `Suporte: ${whatsapp || "não configurado"}`,
+          `Visibilidade técnica: ${technicalAccessLabels[visibilityPolicy?.technical_access_mode] || "não definida"}`,
+          `Evidência bruta: ${visibilityPolicy?.raw_evidence_access === "not_granted_by_projection" ? "fora da projeção gerencial" : "não definida"}`,
+          `Escopo de auditoria: ${auditScopeLabels[visibilityPolicy?.audit_scope] || "não definido"}`,
+          `Política de suporte: ${supportModeLabels[visibilityPolicy?.exceptional_support_access] || "não definida"}`,
           `Modelo operacional: ${governance.operatingModelLabel}`,
           `Continuidade prevista: ${governance.surfacesSummary}`,
-          `Momento canonico: ${momentoCanonico.label}`,
+          `Momento canônico: ${momentoCanonico.label}`,
           momentoCanonico.ownerLabel,
           `Casos observados: ${formatarInteiro(momentoCanonico.observedCount)}`,
-          `Escopo maximo de suporte: ${supportScopeLabels[visibilityPolicy?.exceptional_support_scope_level] || "nao definido"}`,
+          `Escopo máximo de suporte: ${supportScopeLabels[visibilityPolicy?.exceptional_support_scope_level] || "não definido"}`,
           `Eventos de equipe/comercial: ${formatarInteiro(totalEquipeComercial)}`,
           `Eventos de suporte/chat/mesa: ${formatarInteiro(totalSuporteOperacao)}`,
         ].forEach((item) => {
@@ -2001,39 +2533,39 @@
           limparElemento(policyContainer);
           [
             {
-              label: "Momento canonico do tenant",
+              label: "Momento canônico da conta",
               value: momentoCanonico.label,
               detail: momentoCanonico.detail,
             },
             {
-              label: "Visibilidade tecnica",
+              label: "Visibilidade técnica",
               value:
                 technicalAccessLabels[
                   visibilityPolicy?.technical_access_mode
-                ] || "nao definida",
-              detail: `Evidencia bruta ${visibilityPolicy?.raw_evidence_access === "not_granted_by_projection" ? "fica fora da projecao gerencial" : "nao definida"}.`,
+                ] || "não definida",
+              detail: `Evidência bruta ${visibilityPolicy?.raw_evidence_access === "not_granted_by_projection" ? "fica fora da projeção gerencial" : "não definida"}.`,
             },
             {
               label: "Suporte excepcional",
               value:
                 supportModeLabels[
                   visibilityPolicy?.exceptional_support_access
-                ] || "nao definida",
-              detail: `Escopo maximo ${supportScopeLabels[visibilityPolicy?.exceptional_support_scope_level] || "nao definido"}.`,
+                ] || "não definida",
+              detail: `Escopo máximo ${supportScopeLabels[visibilityPolicy?.exceptional_support_scope_level] || "não definido"}.`,
             },
             {
               label: "Escopo de auditoria",
               value:
                 auditScopeLabels[visibilityPolicy?.audit_scope] ||
-                "nao definido",
-              detail: `${formatarInteiro(totalAuditoria)} itens recentes disponiveis para leitura da empresa.`,
+                "não definido",
+              detail: `${formatarInteiro(totalAuditoria)} itens recentes disponíveis para leitura da conta.`,
             },
             {
               label: "Pacote operacional",
               value: governance.operatingModelLabel,
               detail: governance.enabled
                 ? `${formatarInteiro(governance.operationalUsersInUse)} de ${formatarInteiro(governance.operationalUserLimit)} conta operacional ocupada. Continuidade em ${governance.surfacesSummary}.`
-                : "Sem limite contratual de operador unico nesta empresa.",
+                : "Sem limite contratual de operador único nesta conta.",
             },
           ].forEach((item) => {
             policyContainer.appendChild(criarSupportPolicyCardAdminNode(item));
@@ -2049,7 +2581,7 @@
                 "Nenhum protocolo recente",
               detail:
                 suporteRecente?.detalhe ||
-                "Quando houver novo relato, o numero de protocolo e o historico do caso ficam visiveis aqui sem expor evidencia tecnica bruta.",
+                "Quando houver novo relato, o número de protocolo e o histórico do caso ficam visíveis aqui sem expor evidência técnica bruta.",
             }),
           );
           protocolContainer.appendChild(
@@ -2072,8 +2604,8 @@
               {
                 className: "hero-chip",
                 label: visibilityPolicy?.exceptional_support_approval_required
-                  ? "aprovacao obrigatoria"
-                  : "aprovacao contextual",
+                  ? "aprovação obrigatória"
+                  : "aprovação contextual",
               },
               {
                 className: "hero-chip",
@@ -2117,25 +2649,25 @@
             accent: "waiting",
             label: "Primeiros acessos",
             value: formatarInteiro(temporarios.length),
-            meta: "Usuarios com senha temporaria ainda pendente de ativacao.",
+            meta: "Usuários com senha temporária ainda pendente de ativação.",
           },
           {
             accent: "aberto",
             label: "Sem login",
             value: formatarInteiro(semLogin.length),
-            meta: "Cadastros criados que ainda nao entraram nenhuma vez.",
+            meta: "Cadastros criados que ainda não entraram nenhuma vez.",
           },
           {
             accent: "attention",
             label: "Bloqueados",
             value: formatarInteiro(bloqueados.length),
-            meta: "Acessos travados que podem segurar a operacao da empresa.",
+            meta: "Acessos travados que podem segurar a operação da conta.",
           },
           {
             accent: "live",
             label: "Mesa sem login",
             value: formatarInteiro(revisoresSemLogin.length),
-            meta: "Pessoas da revisao que ainda nao ativaram o acesso.",
+            meta: "Avaliadores que ainda não ativaram o acesso.",
           },
         ].forEach((metric) => {
           resumo.appendChild(criarMetricCardAdminNode(metric));
@@ -2156,7 +2688,7 @@
           lista.appendChild(
             criarEmptyStateAdminNode(
               "Equipe principal ativada",
-              "Nao ha ativacao pendente agora. Novos primeiros acessos e bloqueios vao aparecer aqui.",
+              "Não há ativação pendente agora. Novos primeiros acessos e bloqueios vão aparecer aqui.",
             ),
           );
           lista.appendChild(quickActions);
@@ -2168,10 +2700,10 @@
           const prioridade = prioridadeUsuario(usuario);
           const papel = slugPapel(usuario);
           const detalhe = !usuario.ativo
-            ? `${usuario.nome || "Usuario"} esta bloqueado e pode estar segurando a rotina da empresa.`
+            ? `${usuario.nome || "Usuário"} está bloqueado e pode estar segurando a rotina da conta.`
             : usuario.senha_temporaria_ativa
-              ? `${usuario.nome || "Usuario"} ainda precisa concluir o primeiro acesso.`
-              : `${usuario.nome || "Usuario"} foi criado, mas ainda nao entrou nenhuma vez.`;
+              ? `${usuario.nome || "Usuário"} ainda precisa concluir o primeiro acesso.`
+              : `${usuario.nome || "Usuário"} foi criado, mas ainda não entrou nenhuma vez.`;
 
           const article = documentRef.createElement("article");
           article.className = "activity-item";
@@ -2181,7 +2713,7 @@
           const copy = documentRef.createElement("div");
           copy.className = "activity-copy";
           const title = documentRef.createElement("strong");
-          title.textContent = texto(usuario.nome || "Usuario");
+          title.textContent = texto(usuario.nome || "Usuário");
           copy.appendChild(title);
           const meta = documentRef.createElement("span");
           meta.className = "activity-meta";
@@ -2254,11 +2786,11 @@
           [
             {
               accent: "live",
-              label: "Itens visiveis",
+              label: "Itens visíveis",
               value: formatarInteiro(resumo.total),
               meta: buscaAtual
-                ? "Resultado apos busca e filtro atual."
-                : "Historico atual conforme a secao selecionada.",
+                ? "Resultado após busca e filtro atual."
+                : "Histórico atual conforme a seção selecionada.",
             },
             {
               accent: "aberto",
@@ -2272,13 +2804,13 @@
             },
             {
               accent: "waiting",
-              label: "Suporte e operacao",
+              label: "Suporte e operação",
               value: formatarInteiro(
                 Number(resumo.categories.support || 0) +
                   Number(resumo.categories.chat || 0) +
                   Number(resumo.categories.mesa || 0),
               ),
-              meta: "Protocolos, chat e mesa sob o mesmo trilho cronologico.",
+              meta: "Protocolos, chat e mesa sob o mesmo trilho cronológico.",
             },
             {
               accent: "aprovado",
@@ -2290,7 +2822,7 @@
                   : resumo.scopes.mesa > resumo.scopes.admin
                     ? "Mesa"
                     : "Painel",
-              meta: `${formatarInteiro(todosItens.length)} itens totais na empresa antes do recorte.`,
+              meta: `${formatarInteiro(todosItens.length)} itens totais na conta antes do recorte.`,
             },
           ].forEach((metric) => {
             overviewContainer.appendChild(criarMetricCardAdminNode(metric));
@@ -2311,7 +2843,7 @@
           container.appendChild(
             criarEmptyStateAdminNode(
               "Nenhuma atividade registrada ainda",
-              "As alteracoes de plano, equipe e acesso passam a aparecer aqui conforme o portal for sendo usado.",
+              "As alterações de plano, equipe e acesso passam a aparecer aqui conforme o portal for sendo usado.",
             ),
           );
           return;
@@ -2322,8 +2854,8 @@
             criarEmptyStateAdminNode(
               "Nenhum evento encontrado nesse recorte",
               buscaAtual
-                ? `A busca "${buscaAtual}" nao encontrou eventos dentro do filtro atual.`
-                : "Troque o filtro para recuperar outro trecho do historico operacional.",
+                ? `A busca "${buscaAtual}" não encontrou eventos dentro do filtro atual.`
+                : "Troque o filtro para recuperar outro trecho do histórico operacional.",
             ),
           );
           return;
@@ -2392,8 +2924,8 @@
         if (!itens.length) {
           container.appendChild(
             criarEmptyStateAdminNode(
-              "Nenhuma solicitacao comercial registrada ainda",
-              "Quando o portal registrar interesse em um novo plano, o impacto esperado fica listado aqui para consulta rapida.",
+              "Nenhuma solicitação comercial registrada ainda",
+              "Quando o portal registrar interesse em um novo plano, o impacto esperado fica listado aqui para consulta rápida.",
             ),
           );
           return;
@@ -2411,7 +2943,7 @@
           const acao = texto(item.acao);
           const rotuloMovimento =
             acao === "plano_interesse_registrado"
-              ? "solicitacao"
+              ? "solicitação"
               : texto(payload.movimento || "plano");
 
           const article = documentRef.createElement("article");
@@ -2421,7 +2953,7 @@
           const copy = documentRef.createElement("div");
           copy.className = "activity-copy";
           const title = documentRef.createElement("strong");
-          title.textContent = texto(item.resumo || "Solicitacao comercial");
+          title.textContent = texto(item.resumo || "Solicitação comercial");
           copy.appendChild(title);
           const meta = documentRef.createElement("span");
           meta.className = "activity-meta";
@@ -2439,15 +2971,15 @@
 
           const detail = documentRef.createElement("p");
           detail.className = "activity-detail";
-          detail.textContent = impacto || "Impacto nao informado.";
+          detail.textContent = impacto || "Impacto não informado.";
           article.appendChild(detail);
           article.appendChild(
             criarToolbarMetaAdminNode([
               criarHeroChipAdminNode(
-                antes ? `Antes: ${antes}` : "Antes nao informado",
+                antes ? `Antes: ${antes}` : "Antes não informado",
               ),
               criarHeroChipAdminNode(
-                depois ? `Depois: ${depois}` : "Depois nao informado",
+                depois ? `Depois: ${depois}` : "Depois não informado",
               ),
             ]),
           );
@@ -2486,12 +3018,12 @@
           tone,
           eyebrow: ehAtual
             ? "Plano atual em vigor"
-            : "Impacto esperado da solicitacao",
+            : "Impacto esperado da solicitação",
           title: planoSelecionado.plano,
           detail: ehAtual
-            ? `Este plano sustenta hoje ${state.bootstrap?.empresa?.capacidade_badge ? state.bootstrap.empresa.capacidade_badge.toLowerCase() : "a operacao atual"}.`
+            ? `Este plano sustenta hoje ${state.bootstrap?.empresa?.capacidade_badge ? state.bootstrap.empresa.capacidade_badge.toLowerCase() : "a operação atual"}.`
             : planoSelecionado.resumo_impacto ||
-              "Sem alteracao material detectada.",
+              "Sem alteração material detectada.",
           sideNode: criarPillAdminNode({
             kind: "priority",
             status: tone,
@@ -2503,7 +3035,7 @@
           if (copy) {
             const paragraph = documentRef.createElement("p");
             paragraph.textContent =
-              "A solicitacao fica registrada para a empresa, mas a mudanca comercial final e concluida pela Tariel.";
+              "A solicitação fica registrada para a conta, mas a mudança comercial final é concluída pela Tariel.";
             copy.appendChild(paragraph);
           }
         }
@@ -2512,20 +3044,20 @@
           criarToolbarMetaAdminNode(
             [
               criarHeroChipAdminNode(
-                `Usuarios: ${formatarLimitePlano(planoSelecionado.usuarios_max, "vaga", "vagas")}`,
+                `Usuários: ${formatarLimitePlano(planoSelecionado.usuarios_max, "vaga", "vagas")}`,
               ),
               criarHeroChipAdminNode(
-                `Laudos/mes: ${formatarLimitePlano(planoSelecionado.laudos_mes, "laudo", "laudos")}`,
+                `Laudos/mês: ${formatarLimitePlano(planoSelecionado.laudos_mes, "laudo", "laudos")}`,
               ),
               criarHeroChipAdminNode(
                 planoSelecionado.upload_doc
                   ? "Envio de documentos liberado"
-                  : "Envio de documentos indisponivel",
+                  : "Envio de documentos indisponível",
               ),
               criarHeroChipAdminNode(
                 planoSelecionado.deep_research
-                  ? "Analise aprofundada liberada"
-                  : "Analise aprofundada indisponivel",
+                  ? "Análise aprofundada liberada"
+                  : "Análise aprofundada indisponível",
               ),
             ],
             "toolbar-meta toolbar-meta--section",
@@ -2555,9 +3087,9 @@
 
       function labelPortalUsuario(portal) {
         const valor = texto(portal).trim().toLowerCase();
-        if (valor === "cliente") return "Portal da empresa";
-        if (valor === "inspetor") return "Campo web + mobile";
-        if (valor === "revisor") return "Revisao";
+        if (valor === "cliente") return "Acesso do cliente";
+        if (valor === "inspetor") return "Chat de campo";
+        if (valor === "revisor") return "Mesa avaliadora";
         return valor || "Portal";
       }
 
@@ -2569,7 +3101,7 @@
             : Array.isArray(usuario?.allowed_portals)
               ? usuario.allowed_portals.map(labelPortalUsuario)
               : [];
-        return labels;
+        return labels.filter((label) => texto(label).trim().toLowerCase() !== "portal cliente");
       }
 
       function criarUserFieldAdminNode({
@@ -2602,33 +3134,24 @@
         const canGrantCross = Boolean(
           governance.operationalUserCrossPortalEnabled,
         );
-        const canGrantCliente = Boolean(
-          governance.operationalUserAdminPortalEnabled,
-        );
         const controls = [
           {
             portal: "inspetor",
-            label: "Campo web + mobile",
+            label: "Chat de campo",
             checked: currentPortals.has("inspetor") || baseRole === "inspetor",
             disabled: true,
           },
           {
             portal: "revisor",
-            label: "Revisao",
+            label: "Mesa avaliadora",
             checked: currentPortals.has("revisor") || baseRole === "revisor",
             disabled: baseRole === "revisor" ? true : !canGrantCross,
-          },
-          {
-            portal: "cliente",
-            label: "Portal da empresa",
-            checked: currentPortals.has("cliente"),
-            disabled: !canGrantCliente,
           },
         ];
         const stack = documentRef.createElement("div");
         stack.className = "stack";
         const label = documentRef.createElement("small");
-        label.textContent = "Superficies liberadas";
+        label.textContent = "Acessos liberados";
         stack.appendChild(label);
         const grid = documentRef.createElement("div");
         grid.className = "user-grid";
@@ -2656,23 +3179,58 @@
         const papel = obterNomePapel(papelSlug);
         const prioridade = prioridadeUsuario(usuario);
         const userId = String(usuario.id || "");
+        const acessos = obterPortalGrantLabels(usuario);
+        if (!acessos.length) {
+          if (usuarioTemPortalOperacional(usuario, "inspetor", "inspetor")) {
+            acessos.push("Chat de campo");
+          }
+          if (usuarioTemPortalOperacional(usuario, "revisor", "revisor")) {
+            acessos.push("Mesa avaliadora");
+          }
+        }
+
         const tr = documentRef.createElement("tr");
+        tr.className = "cliente-team-user-row";
         tr.dataset.userRow = userId;
         if (Number(state.ui.usuarioEmDestaque || 0) === Number(usuario.id)) {
-          tr.className = "user-row-highlight";
+          tr.classList.add("user-row-highlight");
         }
 
         const mainCell = documentRef.createElement("td");
         const userMain = documentRef.createElement("div");
-        userMain.className = "user-main";
-        const primary = documentRef.createElement("div");
-        primary.className = "user-primary";
-        const name = documentRef.createElement("span");
+        userMain.className = "cliente-team-user-main";
+        const name = documentRef.createElement("strong");
         name.className = "user-name";
-        name.textContent = texto(usuario.nome || "Usuario");
-        primary.appendChild(name);
-        primary.appendChild(criarPillAdminNode({ kind: "role", label: papel }));
-        primary.appendChild(
+        name.textContent = texto(usuario.nome || "Usuário");
+        const email = documentRef.createElement("div");
+        email.className = "cliente-team-user-email";
+        email.textContent = texto(usuario.email);
+        userMain.appendChild(name);
+        userMain.appendChild(email);
+        mainCell.appendChild(userMain);
+        tr.appendChild(mainCell);
+
+        const perfilCell = documentRef.createElement("td");
+        perfilCell.appendChild(criarPillAdminNode({ kind: "role", label: papel }));
+        tr.appendChild(perfilCell);
+
+        const acessosCell = documentRef.createElement("td");
+        const accessList = documentRef.createElement("div");
+        accessList.className = "cliente-team-chip-list";
+        if (!acessos.length) {
+          accessList.appendChild(criarHeroChipAdminNode("Sem acessos"));
+        } else {
+          acessos.forEach((label) => {
+            accessList.appendChild(criarHeroChipAdminNode(label));
+          });
+        }
+        acessosCell.appendChild(accessList);
+        tr.appendChild(acessosCell);
+
+        const statusCell = documentRef.createElement("td");
+        const statusList = documentRef.createElement("div");
+        statusList.className = "cliente-team-chip-list";
+        statusList.appendChild(
           criarPillAdminNode({
             kind: "status",
             status: usuario.ativo ? "ativo" : "bloqueado",
@@ -2680,141 +3238,70 @@
           }),
         );
         if (usuario.senha_temporaria_ativa) {
-          primary.appendChild(
+          statusList.appendChild(
             criarPillAdminNode({
               kind: "status",
               status: "temporaria",
-              label: "Senha temporaria",
+              label: "Pendente",
             }),
           );
         }
-        primary.appendChild(
+        statusList.appendChild(
           criarPillAdminNode({
             kind: "priority",
             status: prioridade.tone,
             label: prioridade.badge,
           }),
         );
-        userMain.appendChild(primary);
-
-        const email = documentRef.createElement("div");
-        email.className = "user-email";
-        email.textContent = texto(usuario.email);
-        userMain.appendChild(email);
-        const chips = [
-          criarHeroChipAdminNode(
-            usuario.telefone ? usuario.telefone : "Sem telefone",
-          ),
-        ];
-        if (papelSlug === "revisor") {
-          chips.push(
-            criarHeroChipAdminNode(
-              usuario.crea ? `CREA ${usuario.crea}` : "Sem CREA",
-            ),
-          );
-        }
-        obterPortalGrantLabels(usuario).forEach((label) => {
-          chips.push(criarHeroChipAdminNode(label));
-        });
-        userMain.appendChild(criarToolbarMetaAdminNode(chips));
-
-        const details = documentRef.createElement("details");
-        details.className = "user-editor";
-        const summary = documentRef.createElement("summary");
-        summary.className = "user-editor-toggle";
-        summary.textContent = "Editar dados deste usuario";
-        details.appendChild(summary);
-        const grid = documentRef.createElement("div");
-        grid.className = "user-grid";
-        grid.appendChild(
-          criarUserFieldAdminNode({
-            label: "Nome",
-            field: "nome",
-            userId,
-            value: usuario.nome || "",
-          }),
-        );
-        grid.appendChild(
-          criarUserFieldAdminNode({
-            label: "E-mail",
-            field: "email",
-            userId,
-            value: usuario.email || "",
-            type: "email",
-          }),
-        );
-        grid.appendChild(
-          criarUserFieldAdminNode({
-            label: "Telefone",
-            field: "telefone",
-            userId,
-            value: usuario.telefone || "",
-            placeholder: "Telefone",
-          }),
-        );
-        if (papelSlug === "revisor") {
-          grid.appendChild(
-            criarUserFieldAdminNode({
-              label: "CREA",
-              field: "crea",
-              userId,
-              value: usuario.crea || "",
-              placeholder: "CREA",
-            }),
-          );
-        }
-        details.appendChild(grid);
-        details.appendChild(
-          criarPortalGrantEditorAdminNode(usuario, governance),
-        );
-        userMain.appendChild(details);
-        mainCell.appendChild(userMain);
-        tr.appendChild(mainCell);
-
-        const statusCell = documentRef.createElement("td");
-        const stack = documentRef.createElement("div");
-        stack.className = "stack";
-        stack.appendChild(
-          criarContextBlockAdminNode("Papel operacional", papel),
-        );
-        stack.appendChild(
-          criarContextBlockAdminNode(
-            "Ultimo login",
-            usuario.ultimo_login_label || "Nunca",
-          ),
-        );
-        stack.appendChild(
-          criarContextGuidanceAdminNode({
-            tone: prioridade.tone,
-            eyebrow: "Foco deste cadastro",
-            title: prioridade.badge,
-            detail: prioridade.acao,
-          }),
-        );
-        statusCell.appendChild(stack);
+        statusCell.appendChild(statusList);
         tr.appendChild(statusCell);
+
+        const lastAccessCell = documentRef.createElement("td");
+        lastAccessCell.className = "cliente-team-last-access";
+        lastAccessCell.textContent = usuario.ultimo_login_label || "Nunca";
+        tr.appendChild(lastAccessCell);
 
         const actionsCell = documentRef.createElement("td");
         const actions = documentRef.createElement("div");
-        actions.className = "user-actions";
+        actions.className = "cliente-team-row-actions";
+        actions.appendChild(
+          criarAdminActionButtonNode({
+            label: "Editar",
+            act: "edit-user",
+            dataset: { user: userId },
+          }),
+        );
+        const menu = documentRef.createElement("details");
+        menu.className = "cliente-team-actions-menu";
+        const summary = documentRef.createElement("summary");
+        summary.setAttribute("aria-label", `Mais ações para ${texto(usuario.nome || usuario.email || "usuário")}`);
+        const icon = documentRef.createElement("span");
+        icon.className = "material-symbols-rounded";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = "more_horiz";
+        summary.appendChild(icon);
+        menu.appendChild(summary);
+        const menuBody = documentRef.createElement("div");
+        menuBody.className = "cliente-team-actions-menu__body";
         [
-          { label: "Salvar cadastro", act: "save-user" },
+          { label: "Gerar senha temporária", act: "reset-user" },
           {
             label: usuario.ativo ? "Bloquear acesso" : "Desbloquear acesso",
             act: "toggle-user",
           },
-          { label: "Gerar senha temporaria", act: "reset-user", ghost: true },
-          { label: "Excluir cadastro", act: "delete-user", ghost: true },
+          { label: "Excluir cadastro", act: "delete-user", danger: true },
         ].forEach((action) => {
-          actions.appendChild(
-            criarAdminActionButtonNode({
-              label: action.label,
-              act: action.act,
-              ghost: action.ghost,
-              dataset: { user: userId },
-            }),
-          );
+          const button = criarAdminActionButtonNode({
+            label: action.label,
+            act: action.act,
+            ghost: true,
+            dataset: { user: userId },
+          });
+          if (action.danger) button.classList.add("is-danger");
+          menuBody.appendChild(button);
         });
+        menu.appendChild(menuBody);
+        actions.appendChild(menu);
         actionsCell.appendChild(actions);
         tr.appendChild(actionsCell);
         return tr;
@@ -2831,6 +3318,7 @@
         if (!tbody || !vazio || !resumo) return;
 
         const governance = obterGovernancaOperacionalTenant();
+        const todosUsuarios = state.bootstrap?.usuarios || [];
         const totalTemporarios = (state.bootstrap?.usuarios || []).filter(
           (item) => item.senha_temporaria_ativa,
         ).length;
@@ -2840,27 +3328,46 @@
         const totalSemLogin = (state.bootstrap?.usuarios || []).filter(
           (item) => !parseDataIso(item.ultimo_login),
         ).length;
-        const rotuloFiltroRapido =
-          rotuloSituacaoUsuarios(state.ui.usuariosSituacao) || "";
+        const totalAtivos = todosUsuarios.filter((item) => item.ativo).length;
+        const totalGeral = todosUsuarios.length;
         limparElemento(resumo);
         [
-          `${formatarInteiro(usuarios.length)} visiveis agora`,
-          `${formatarInteiro(totalTemporarios)} com senha temporaria`,
-          `${formatarInteiro(totalBloqueados)} bloqueados`,
-          `${formatarInteiro(totalSemLogin)} sem login`,
-          `${formatarInteiro((state.bootstrap?.usuarios || []).filter((item) => item.ativo).length)} ativos`,
-          governance.enabled
-            ? `Pacote: ${formatarInteiro(governance.operationalUsersInUse)}/${formatarInteiro(governance.operationalUserLimit)} operador`
-            : "",
-          rotuloFiltroRapido ? `Filtro rapido: ${rotuloFiltroRapido}` : "",
-        ]
-          .filter((label) => texto(label).trim())
-          .forEach((label) => {
-            resumo.appendChild(criarHeroChipAdminNode(label));
-          });
+          { label: `Todos: ${formatarInteiro(totalGeral)}`, situacao: "" },
+          { label: `Ativos: ${formatarInteiro(totalAtivos)}`, situacao: "ativos" },
+          { label: `Pendentes: ${formatarInteiro(totalTemporarios)}`, situacao: "temporarios" },
+          { label: `Bloqueados: ${formatarInteiro(totalBloqueados)}`, situacao: "bloqueados" },
+          { label: `Sem login: ${formatarInteiro(totalSemLogin)}`, situacao: "sem_login" },
+        ].forEach((chip) => {
+          const button = documentRef.createElement("button");
+          button.className = "cliente-team-filter-chip";
+          button.type = "button";
+          button.dataset.act = chip.situacao ? "filtrar-usuarios-status" : "limpar-filtro-usuarios";
+          if (chip.situacao) button.dataset.situacao = chip.situacao;
+          button.textContent = chip.label;
+          if ((state.ui?.usuariosSituacao || "") === chip.situacao) {
+            button.classList.add("is-active");
+          }
+          resumo.appendChild(button);
+        });
+        if (governance.enabled) {
+          const pacote = documentRef.createElement("span");
+          pacote.className = "cliente-team-filter-chip cliente-team-filter-chip--static";
+          pacote.textContent = `Pacote: ${formatarInteiro(governance.operationalUsersInUse)}/${formatarInteiro(governance.operationalUserLimit)} operador`;
+          resumo.appendChild(pacote);
+        }
         limparElemento(tbody);
 
         if (!usuarios.length) {
+          const title = vazio.querySelector("strong");
+          const detail = vazio.querySelector("p");
+          if (title) {
+            title.textContent = totalGeral ? "Nenhum usuário encontrado" : "Nenhum usuário cadastrado";
+          }
+          if (detail) {
+            detail.textContent = totalGeral
+              ? "Ajuste a busca ou os filtros para revisar outro grupo da equipe."
+              : "Cadastre o primeiro usuário da empresa para liberar acessos ao portal.";
+          }
           vazio.hidden = false;
           return;
         }
@@ -2881,18 +3388,27 @@
           renderAdminResumo();
           renderEmpresaCards();
           renderCommercialPackageOverview();
+          renderProfessionalHabilitationOverview();
           renderOperationalObservabilityOverview();
           renderPendingCenterOverview();
           renderGuidedOnboardingOverview();
           renderSaudeEmpresa();
         } else if (targetStage === "capacity") {
           renderCapacityBrief();
+          renderEmpresaCards();
+          renderPlanCurrentSummary();
+          renderPlanUsageGrid();
+          renderPlanResourcesList();
+          renderPlanCatalog();
           renderPreviewPlano();
           renderHistoricoPlanos();
         } else if (targetStage === "team") {
           renderTeamBrief();
           renderOnboardingEquipe();
           renderUsuarios();
+        } else if (targetStage === "access") {
+          renderAccessBrief();
+          renderAccessMatrix();
         } else {
           renderSupportBrief();
           renderAdminAuditoria();

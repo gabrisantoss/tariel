@@ -125,6 +125,132 @@
         return "collecting";
       }
 
+      function habilitacaoProfissionalDocumentos() {
+        const aninhada = state.bootstrap?.documentos?.professional_habilitation;
+        if (aninhada && typeof aninhada === "object") return aninhada;
+        return state.bootstrap?.professional_habilitation || {};
+      }
+
+      function tomHabilitacaoProfissional(statusKey) {
+        const key = texto(statusKey).trim();
+        if (key === "approved" || key === "aprovado") return "emitido";
+        if (
+          key === "in_review" ||
+          key === "pending" ||
+          key === "aguardando"
+        )
+          return "testing";
+        if (
+          key === "rejected" ||
+          key === "suspended" ||
+          key === "blocked" ||
+          key === "critico"
+        )
+          return "bloqueado";
+        return "substituido";
+      }
+
+      function renderDocumentosHabilitacaoProfissional() {
+        const container = $("documentos-habilitacao-lista");
+        const habilitacao = habilitacaoProfissionalDocumentos();
+        const counts = habilitacao?.counts || {};
+        const items = Array.isArray(habilitacao?.items) ? habilitacao.items : [];
+        const totalComprovacoes = items.reduce(
+          (total, item) =>
+            total +
+            Number(
+              item?.professional_documents_count ||
+                item?.professional_documents?.length ||
+                0,
+            ),
+          0,
+        );
+        const statusNode = $("documentos-habilitacao-status");
+        const totalNode = $("documentos-habilitacao-total");
+        const approvedNode = $("documentos-habilitacao-aprovados");
+        const reviewNode = $("documentos-habilitacao-analise");
+        const documentosNode = $("documentos-habilitacao-comprovacoes");
+
+        if (statusNode) {
+          statusNode.textContent = habilitacao?.status_label || "Não enviado";
+          statusNode.dataset.tone = tomHabilitacaoProfissional(
+            habilitacao?.status_key || habilitacao?.tone,
+          );
+        }
+        if (totalNode) totalNode.textContent = formatarInteiro(Number(counts.total || items.length || 0));
+        if (approvedNode) approvedNode.textContent = formatarInteiro(Number(counts.approved || 0));
+        if (reviewNode) reviewNode.textContent = formatarInteiro(Number(counts.in_review || 0) + Number(counts.pending || 0));
+        if (documentosNode) documentosNode.textContent = formatarInteiro(totalComprovacoes);
+        if (!container) return;
+
+        if (!items.length) {
+          container.innerHTML = `
+                    <div class="empty-state">
+                        <strong>Nenhuma comprovação profissional enviada.</strong>
+                        <p>${escapeHtml(habilitacao?.detail || "Solicitações de habilitação e anexos profissionais aparecerão aqui.")}</p>
+                        <a class="document-card__link document-card__link--primary" href="/cliente/home#cliente-management-habilitacao-card">Solicitar análise</a>
+                    </div>
+                `;
+          return;
+        }
+
+        container.innerHTML = items
+          .map((item) => {
+            const documentos = Array.isArray(item?.professional_documents)
+              ? item.professional_documents
+              : [];
+            const statusKey = texto(item?.approval_status).trim();
+            const contato = [
+              texto(item?.professional_email).trim(),
+              texto(item?.professional_phone).trim(),
+            ].filter(Boolean);
+            const documentosHtml = documentos.length
+              ? `
+                        <div class="documentos-habilitacao-docs" aria-label="Comprovações anexadas">
+                            ${documentos
+                              .map((documento) => {
+                                const sha = texto(documento?.sha256).trim();
+                                return `
+                                <div class="documentos-habilitacao-doc">
+                                    <div>
+                                        <strong>${escapeHtml(documento?.nome || "Comprovação profissional")}</strong>
+                                        <span>${escapeHtml(documento?.tamanho_label || documento?.categoria || "Documento")}</span>
+                                    </div>
+                                    <span>${escapeHtml(documento?.uploaded_at_label || "Sem envio registrado")}</span>
+                                    ${sha ? `<code>${escapeHtml(sha.slice(0, 12))}</code>` : ""}
+                                </div>
+                            `;
+                              })
+                              .join("")}
+                        </div>
+                    `
+              : `<span class="document-card__muted">Sem comprovação anexada.</span>`;
+            return `
+                    <article class="documentos-habilitacao-item">
+                        <div class="documentos-habilitacao-item__head">
+                            <div>
+                                <span class="document-card__badge" data-tone="${escapeAttr(tomHabilitacaoProfissional(statusKey))}">${escapeHtml(item?.approval_status_label || "Em análise")}</span>
+                                <h4>${escapeHtml(item?.nome || "Responsável técnico")}</h4>
+                            </div>
+                            <span class="documentos-habilitacao-item__count">${escapeHtml(String(documentos.length))} comprovação${documentos.length === 1 ? "" : "ões"}</span>
+                        </div>
+                        <div class="document-card__meta">
+                            <span>${escapeHtml(item?.professional_type_label || item?.funcao || "Responsável técnico")}</span>
+                            <span>${escapeHtml(item?.registro_profissional || "Registro não informado")}</span>
+                            <span>${escapeHtml(item?.family_scope_summary || "Escopo em análise")}</span>
+                            ${contato.length ? `<span>${escapeHtml(contato.join(" · "))}</span>` : ""}
+                        </div>
+                        ${documentosHtml}
+                        <div class="document-card__footer">
+                            <span>Solicitação: ${escapeHtml(item?.submitted_at_label || "Sem envio registrado")}</span>
+                            <span>Validade: ${escapeHtml(item?.valid_until_label || "Sem validade")}</span>
+                        </div>
+                    </article>
+                `;
+          })
+          .join("");
+      }
+
       function renderHashRows(rows) {
         const validRows = rows.filter((row) => texto(row.value).trim());
         if (!validRows.length) return "";
@@ -178,7 +304,10 @@
       const TARGET_TO_SECTION = Object.freeze({
         "documentos-overview": "overview",
         "documentos-lista": "overview",
+        "documentos-busca": "overview",
+        "documentos-attention-list": "overview",
         "documentos-resumo-geral": "overview",
+        "documentos-habilitacao-profissional": "overview",
       });
 
       function normalizarSecaoDocumentos(valor) {
@@ -191,6 +320,224 @@
         if (!alvo) return null;
         if (TARGET_TO_SECTION[alvo]) return TARGET_TO_SECTION[alvo];
         return SECTION_ORDER.includes(alvo) ? alvo : null;
+      }
+
+      function normalizarTextoBusca(valor) {
+        return texto(valor)
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .trim();
+      }
+
+      function dataDocumentoTimestamp(item) {
+        const raw =
+          item?.issued_at ||
+          item?.updated_at ||
+          item?.created_at ||
+          item?.emissao_oficial?.issued_at ||
+          "";
+        const parsed = new Date(raw).getTime();
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function sinaisDocumento(item) {
+        return Array.isArray(item?.document_signals?.present_labels)
+          ? item.document_signals.present_labels
+          : [];
+      }
+
+      function documentoTemEvidencia(item, filtro) {
+        const key = normalizarTextoBusca(filtro || "todos");
+        if (!key || key === "todos") return true;
+        if (key === "hash") {
+          return Boolean(item?.codigo_hash || item?.hash_short || item?.verification_url);
+        }
+        if (key === "nr35") {
+          return Boolean(
+            normalizarTextoBusca(item?.family_key).includes("nr35") ||
+              normalizarTextoBusca(item?.family_label).includes("nr35") ||
+              item?.nr35_summary,
+          );
+        }
+        const sinais = normalizarTextoBusca(sinaisDocumento(item).join(" "));
+        return sinais.includes(key);
+      }
+
+      function prioridadeDocumento(item) {
+        let score = 0;
+        if (item?.reissue_recommended) score += 100;
+        if (item?.ready_for_issue && !item?.already_issued) score += 72;
+        if (
+          (item?.already_issued || item?.ready_for_issue || item?.pdf_present) &&
+          !texto(item?.signatory_name).trim()
+        ) {
+          score += 42;
+        }
+        const nr35Status = normalizarTextoBusca(item?.nr35_summary?.conclusion_status);
+        if (nr35Status.includes("reprov")) score += 40;
+        if (item?.pdf_present && !item?.already_issued) score += 18;
+        return score;
+      }
+
+      function documentoAtendeStatus(item, filtro) {
+        const key = normalizarTextoBusca(filtro || "todos");
+        if (!key || key === "todos") return true;
+        if (key === "atencao") return prioridadeDocumento(item) > 0;
+        if (key === "oficial") {
+          return Boolean(
+            item?.already_issued ||
+              item?.issue_number ||
+              item?.emissao_oficial?.existe,
+          );
+        }
+        if (key === "operacional") {
+          return Boolean(item?.pdf_present && !item?.already_issued);
+        }
+        if (key === "revisao") {
+          return (
+            normalizarTextoBusca(item?.document_visual_state) === "in_review" ||
+            normalizarTextoBusca(item?.status_revisao).includes("aguard") ||
+            Boolean(item?.ready_for_issue && !item?.already_issued)
+          );
+        }
+        return true;
+      }
+
+      function corpusDocumento(item) {
+        const official = item?.emissao_oficial || {};
+        return normalizarTextoBusca(
+          [
+            item?.titulo,
+            item?.document_type_label,
+            item?.tipo_template_label,
+            item?.family_label,
+            item?.family_key,
+            item?.status_visual_label,
+            item?.issue_status_label,
+            item?.document_visual_state_label,
+            item?.signatory_name,
+            item?.codigo_hash,
+            item?.hash_short,
+            official.issue_number,
+            official.package_filename,
+            sinaisDocumento(item).join(" "),
+          ].join(" "),
+        );
+      }
+
+      function documentosFiltradosOrdenados(items) {
+        const ui = state.ui || {};
+        const busca = normalizarTextoBusca(ui.documentosBusca);
+        const filtroStatus = ui.documentosFiltroStatus || "todos";
+        const filtroEvidencia = ui.documentosFiltroEvidencia || "todos";
+        const ordenacao = ui.documentosOrdenacao || "atencao";
+        const filtrados = items.filter((item) => {
+          if (busca && !corpusDocumento(item).includes(busca)) return false;
+          if (!documentoAtendeStatus(item, filtroStatus)) return false;
+          return documentoTemEvidencia(item, filtroEvidencia);
+        });
+
+        return filtrados.sort((a, b) => {
+          if (ordenacao === "titulo") {
+            return texto(a?.titulo || "").localeCompare(texto(b?.titulo || ""), "pt-BR");
+          }
+          if (ordenacao === "familia") {
+            return texto(a?.family_label || a?.family_key || "").localeCompare(
+              texto(b?.family_label || b?.family_key || ""),
+              "pt-BR",
+            );
+          }
+          if (ordenacao === "recentes") {
+            return dataDocumentoTimestamp(b) - dataDocumentoTimestamp(a);
+          }
+          const prioridade = prioridadeDocumento(b) - prioridadeDocumento(a);
+          return prioridade || dataDocumentoTimestamp(b) - dataDocumentoTimestamp(a);
+        });
+      }
+
+      function atualizarResumoFiltrosDocumentos(total, filtrados) {
+        const node = $("documentos-lista-contagem");
+        if (!node) return;
+        const ui = state.ui || {};
+        const partes = [];
+        if (texto(ui.documentosBusca).trim()) partes.push(`busca "${texto(ui.documentosBusca).trim()}"`);
+        if (ui.documentosFiltroStatus && ui.documentosFiltroStatus !== "todos") {
+          partes.push(`status ${ui.documentosFiltroStatus.replace("_", " ")}`);
+        }
+        if (ui.documentosFiltroEvidencia && ui.documentosFiltroEvidencia !== "todos") {
+          partes.push(`evidência ${ui.documentosFiltroEvidencia}`);
+        }
+        node.textContent = partes.length
+          ? `Mostrando ${formatarInteiro(filtrados)} de ${formatarInteiro(total)} documentos com ${partes.join(", ")}.`
+          : `Mostrando ${formatarInteiro(filtrados)} de ${formatarInteiro(total)} documentos.`;
+      }
+
+      function motivoAtencaoDocumento(item) {
+        if (item?.reissue_recommended) {
+          return "Reemissão recomendada por divergência entre documento atual e emissão ativa.";
+        }
+        if (item?.ready_for_issue && !item?.already_issued) {
+          return "Documento pronto para emissão oficial, mas ainda sem registro ativo.";
+        }
+        if (
+          (item?.already_issued || item?.ready_for_issue || item?.pdf_present) &&
+          !texto(item?.signatory_name).trim()
+        ) {
+          return "Responsável técnico ainda não vinculado ao documento.";
+        }
+        const nr35Status = normalizarTextoBusca(item?.nr35_summary?.conclusion_status);
+        if (nr35Status.includes("reprov")) {
+          return "NR35 com conclusão reprovada pede acompanhamento documental.";
+        }
+        if (item?.pdf_present && !item?.already_issued) {
+          return "Existe PDF operacional, mas ele não substitui emissão oficial.";
+        }
+        return detalheTipoDocumento(item);
+      }
+
+      function tomBadgeAtencaoDocumento(item) {
+        if (item?.reissue_recommended) return "bloqueado";
+        if (item?.already_issued) return "emitido";
+        if (item?.ready_for_issue) return "testing";
+        return "substituido";
+      }
+
+      function renderDocumentosAttentionQueue(items) {
+        const container = $("documentos-attention-list");
+        if (!container) return;
+        const prioridades = (Array.isArray(items) ? items : [])
+          .filter((item) => prioridadeDocumento(item) > 0)
+          .sort((a, b) => prioridadeDocumento(b) - prioridadeDocumento(a))
+          .slice(0, 4);
+
+        if (!prioridades.length) {
+          container.innerHTML = `
+                    <div class="empty-state">
+                        <strong>Nenhuma prioridade documental.</strong>
+                        <p>Reemissões, emissões pendentes e documentos sem responsável técnico aparecerão aqui.</p>
+                    </div>
+                `;
+          return;
+        }
+
+        container.innerHTML = prioridades
+          .map(
+            (item) => `
+                <article class="documentos-attention-item">
+                    <div>
+                        <span class="document-card__badge" data-tone="${escapeAttr(tomBadgeAtencaoDocumento(item))}">${escapeHtml(statusDocumento(item))}</span>
+                        <strong>${escapeHtml(item?.titulo || "Documento técnico")}</strong>
+                    </div>
+                    <p>${escapeHtml(motivoAtencaoDocumento(item))}</p>
+                    <div class="documentos-attention-item__meta">
+                        <span>${escapeHtml(tituloTipoDocumento(item))}</span>
+                        <span>${escapeHtml(item?.family_label || item?.family_key || "Família não vinculada")}</span>
+                    </div>
+                </article>
+            `,
+          )
+          .join("");
       }
 
       function obterBotoesSecaoDocumentos() {
@@ -285,7 +632,9 @@
           Number(summary.nr35_pending || 0),
         );
         $("documentos-section-count-overview").textContent =
-          `${formatarInteiro(totalDocuments)} documentos no tenant`;
+          `${formatarInteiro(totalDocuments)} documentos da conta`;
+        renderDocumentosHabilitacaoProfissional();
+        renderDocumentosAttentionQueue(items);
 
         if (!alerta) return;
         if (!items.length) {
@@ -306,7 +655,7 @@
                   prioridade.latest_timeline_summary ||
                     prioridade.issue_status_label ||
                     prioridade.verification_summary ||
-                    "Acompanhe a situação documental do tenant.",
+                    "Acompanhe a situação documental da conta.",
                 )}</p>
             `;
       }
@@ -444,6 +793,8 @@
           ? state.bootstrap.documentos.items
           : [];
         const summary = state.bootstrap?.documentos?.summary || {};
+        const documentosVisiveis = documentosFiltradosOrdenados(items);
+        atualizarResumoFiltrosDocumentos(items.length, documentosVisiveis.length);
         renderSignalList(
           "documentos-com-art-lista",
           summary.with_art_items,
@@ -473,8 +824,17 @@
                 `;
           return;
         }
+        if (!documentosVisiveis.length) {
+          container.innerHTML = `
+                    <div class="empty-state">
+                        <strong>Nenhum documento encontrado.</strong>
+                        <p>Ajuste busca, status ou evidência para recuperar outro trecho da carteira documental.</p>
+                    </div>
+                `;
+          return;
+        }
 
-        container.innerHTML = items
+        container.innerHTML = documentosVisiveis
           .map((item) => {
             const ui = documentUi(item);
             const status = statusDocumento(item);

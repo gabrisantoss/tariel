@@ -608,7 +608,7 @@
             corpo.appendChild(criarMetaMensagem({
                 autor: textoSeguro(getNomeUsuario?.() || "João Silva"),
                 tempo: tempoMensagem,
-                destaque: whisper ? "Mesa Avaliadora" : "",
+                destaque: whisper ? "Revisão técnica" : "",
                 dateTime: opts.criadoEmIso,
             }));
 
@@ -755,7 +755,7 @@
                 remetenteNormalizado.includes("revisor") ||
                 tipoNormalizado === "humano_eng" ||
                 tipoNormalizado === "humanoeng";
-            const titulo = ehEngenharia ? "Mesa Avaliadora" : (textoSeguro(remetente).trim() || "Inspetor");
+            const titulo = ehEngenharia ? "Revisão técnica" : (textoSeguro(remetente).trim() || "Inspetor");
 
             const linha = document.createElement("div");
             linha.className = `linha-mensagem workspace-message-row ${ehEngenharia ? "mensagem-origem-mesa whisper-eng workspace-message-row--mesa" : "mensagem-inspetor whisper-insp workspace-message-row--user"}`;
@@ -866,12 +866,6 @@
                 const detalhe = montarDetalheMensagem(elementoIA, obterTextoBase());
                 if (!detalhe.texto) return;
                 emitirAcaoMensagem("citar", detalhe);
-            });
-
-            const btnMesa = criarBotaoAcao("support_agent", "Mesa", () => {
-                const detalhe = montarDetalheMensagem(elementoIA, obterTextoBase());
-                if (!detalhe.texto) return;
-                emitirAcaoMensagem("enviar-mesa", detalhe);
             });
 
             const btnFixar = criarBotaoAcao("keep", "Fixar", () => {
@@ -991,7 +985,6 @@
             acoes.appendChild(btnCopiar);
             acoes.appendChild(btnPdf);
             acoes.appendChild(btnCitar);
-            acoes.appendChild(btnMesa);
             acoes.appendChild(btnFixar);
             acoes.appendChild(btnCurtir);
             acoes.appendChild(btnDescurtir);
@@ -1005,7 +998,7 @@
                 });
 
                 btnFinalizar.className = "btn-acao-msg workspace-message-action workspace-message-action--primary btn-finalizar-relatorio";
-                btnFinalizar.setAttribute("aria-label", "Finalizar e enviar para a mesa");
+                btnFinalizar.setAttribute("aria-label", "Finalizar laudo");
                 btnFinalizar.title = "Enviar para revisão";
 
                 acoes.appendChild(btnFinalizar);

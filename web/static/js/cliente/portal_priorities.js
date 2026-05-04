@@ -74,8 +74,8 @@
 
         function resumoCanalOperacional(canal) {
             if (canal === "chat") return "Chat";
-            if (canal === "mesa") return "Mesa Avaliadora";
-            return "Admin";
+            if (canal === "mesa") return "Mesa avaliadora";
+            return "Portal Cliente";
         }
 
         function htmlBarrasHistorico(serie, tone) {
@@ -116,9 +116,9 @@
                     score: 1000,
                     tone: "ajustes",
                     canal: "admin",
-                    titulo: "Empresa bloqueada",
-                    detalhe: "A operacao central esta bloqueada e isso merece revisao imediata.",
-                    acaoLabel: "Abrir Admin",
+                    titulo: "Conta bloqueada",
+                    detalhe: "A operação central está bloqueada e isso merece revisão imediata.",
+                    acaoLabel: "Abrir gestão",
                     kind: "admin-section",
                     targetId: "empresa-resumo-detalhado",
                 });
@@ -130,7 +130,7 @@
                     tone: "ajustes",
                     canal: "admin",
                     titulo: "Capacidade comercial no limite",
-                    detalhe: empresa.capacidade_acao || "A empresa ja encostou no teto do contrato.",
+                    detalhe: empresa.capacidade_acao || "A conta já encostou no teto do contrato.",
                     acaoLabel: `Registrar interesse em ${empresa.plano_sugerido}`,
                     kind: "upgrade",
                     origem: empresa.capacidade_gargalo === "laudos" ? "chat" : "admin",
@@ -148,7 +148,7 @@
                         tone: "aguardando",
                         canal: "admin",
                         titulo: "Primeiro acesso pendente",
-                        detalhe: `${primeiroTemporario.nome || "Usuario"} ainda precisa concluir a troca de senha para operar.`,
+                        detalhe: `${primeiroTemporario.nome || "Usuário"} ainda precisa concluir a troca de senha para operar.`,
                         acaoLabel: "Revisar equipe",
                         kind: "admin-user",
                         targetId: "lista-usuarios",
@@ -167,8 +167,8 @@
                         score: 720,
                         tone: "ajustes",
                         canal: "admin",
-                        titulo: "Acesso bloqueado pede revisao",
-                        detalhe: `${primeiroBloqueado.nome || "Usuario"} esta bloqueado e pode estar travando a rotina da empresa.`,
+                        titulo: "Acesso bloqueado pede revisão",
+                        detalhe: `${primeiroBloqueado.nome || "Usuário"} está bloqueado e pode estar travando a rotina da conta.`,
                         acaoLabel: "Abrir equipe",
                         kind: "admin-user",
                         targetId: "lista-usuarios",
@@ -185,9 +185,9 @@
                         score: 740,
                         tone: "aguardando",
                         canal: "admin",
-                        titulo: "Equipe pede ativacao",
+                        titulo: "Equipe pede ativação",
                         detalhe: "Existe diferenca entre contas totais e ativas. Vale revisar acessos, bloqueios ou primeiros logins.",
-                        acaoLabel: "Abrir Admin",
+                        acaoLabel: "Abrir gestão",
                         kind: "admin-section",
                         targetId: "lista-usuarios",
                     });
@@ -267,8 +267,8 @@
                         canal: "mesa",
                         titulo: "Mesa avaliadora com fila ativa",
                         detalhe: pendentesMesa > 0
-                            ? `${formatarInteiro(pendentesMesa)} caso(s) aguardam revisao formal da mesa.`
-                            : `${formatarInteiro(emMesa)} caso(s) seguem em revisao ativa pela mesa.`,
+                            ? `${formatarInteiro(pendentesMesa)} caso(s) aguardam revisão formal da mesa.`
+                            : `${formatarInteiro(emMesa)} caso(s) seguem em revisão ativa pela mesa.`,
                         acaoLabel: "Abrir mesa",
                         kind: "mesa-section",
                         targetId: "mesa-contexto",
@@ -287,9 +287,9 @@
                     score: 100,
                     tone: "aprovado",
                     canal: "admin",
-                    titulo: "Operacao sob controle",
-                    detalhe: "Nenhum gargalo critico apareceu agora entre equipe, chat e mesa.",
-                    acaoLabel: "Abrir Admin",
+                    titulo: "Operação sob controle",
+                    detalhe: "Nenhum gargalo crítico apareceu agora entre equipe, chat e mesa.",
+                    acaoLabel: "Abrir gestão",
                     kind: "admin-section",
                     targetId: "panel-admin",
                 },
@@ -298,21 +298,22 @@
 
         function slugPapel(usuario) {
             const papel = texto(usuario?.papel).toLowerCase();
-            if (papel.includes("admin")) return "admin_cliente";
-            if (papel.includes("mesa") || papel.includes("revisor")) return "revisor";
+            if (Number(usuario?.nivel_acesso || 0) === 80 || papel.includes("admin") || papel.includes("cliente")) return "admin_cliente";
+            if (papel.includes("avaliador") || papel.includes("mesa") || papel.includes("revisor")) return "revisor";
             return "inspetor";
         }
 
         function obterNomePapel(slug) {
-            if (slug === "admin_cliente") return "Administrador da empresa";
-            if (slug === "revisor") return "Revisao";
-            return "Equipe de campo";
+            if (slug === "admin_cliente") return "Acesso do cliente";
+            if (slug === "revisor") return "Avaliador";
+            return "Operador de campo";
         }
 
         function rotuloSituacaoUsuarios(situacao) {
             if (situacao === "temporarios") return "Primeiros acessos";
             if (situacao === "sem_login") return "Sem login";
             if (situacao === "bloqueados") return "Bloqueados";
+            if (situacao === "ativos") return "Ativos";
             return "";
         }
 
@@ -403,7 +404,7 @@
             if (status === "aberto") {
                 return {
                     score: 320,
-                    badge: "Em operacao",
+                    badge: "Em operação",
                     tone: "aberto",
                     acao: "Continue a conversa ou finalize quando o laudo estiver pronto.",
                 };
@@ -434,9 +435,9 @@
             if (whispers > 0 && pendencias > 0) {
                 return {
                     score: 620 + whispers * 12 + pendencias * 8,
-                    badge: "Resposta e pendencias",
+                    badge: "Resposta e pendências",
                     tone: "ajustes",
-                    acao: "Leia os chamados novos e trate as pendencias abertas antes da aprovacao.",
+                    acao: "Leia os chamados novos e trate as pendências abertas antes da aprovação.",
                 };
             }
 
@@ -452,9 +453,9 @@
             if (pendencias > 0) {
                 return {
                     score: 500 + pendencias * 10,
-                    badge: "Resolver pendencias",
+                    badge: "Resolver pendências",
                     tone: "ajustes",
-                    acao: "Feche ou reabra as pendencias tecnicas antes de liberar o laudo.",
+                    acao: "Feche ou reabra as pendências técnicas antes de liberar o laudo.",
                 };
             }
 
@@ -472,7 +473,7 @@
                     score: 240,
                     badge: "Ajustes em campo",
                     tone: "ajustes",
-                    acao: "Acompanhe o retorno do time antes da aprovacao final.",
+                    acao: "Acompanhe o retorno do time antes da aprovação final.",
                 };
             }
 
@@ -489,7 +490,7 @@
                 score: 180,
                 badge: "Em preparacao",
                 tone: "aberto",
-                acao: "O laudo ainda esta sendo preparado pelo time antes da revisao formal.",
+                acao: "O laudo ainda está sendo preparado pelo time antes da revisão formal.",
             };
         }
 
@@ -506,41 +507,41 @@
                 return {
                     tone: "ajustes",
                     badge: "Conta bloqueada",
-                    acao: "Libere a empresa e revise imediatamente o que esta travando a operacao.",
+                    acao: "Libere a conta e revise imediatamente o que está travando a operação.",
                 };
             }
             if (capacidadeStatus === "critico") {
                 return {
                     tone: capacidadeTone,
                     badge: texto(empresa?.capacidade_badge || "Expandir plano agora"),
-                    acao: `${texto(empresa?.capacidade_acao || "A empresa chegou no limite contratado.")}${sugestaoPlano ? ` Proximo passo comercial: migrar para ${sugestaoPlano}.` : ""}`,
+                    acao: `${texto(empresa?.capacidade_acao || "A conta chegou no limite contratado.")}${sugestaoPlano ? ` Próximo passo comercial: migrar para ${sugestaoPlano}.` : ""}`,
                 };
             }
             if (bloqueados > 0) {
                 return {
                     tone: "aguardando",
                     badge: "Revisar acessos bloqueados",
-                    acao: "Ha usuarios travados. Confira se isso foi intencional ou se alguem precisa voltar a operar.",
+                    acao: "Há usuários travados. Confira se isso foi intencional ou se alguém precisa voltar a operar.",
                 };
             }
             if (capacidadeStatus === "atencao" || capacidadeStatus === "monitorar") {
                 return {
                     tone: capacidadeTone,
                     badge: texto(empresa?.capacidade_badge || "Planejar solicitacao"),
-                    acao: `${texto(empresa?.capacidade_acao || "O plano entrou na faixa de atencao.")}${sugestaoPlano ? ` Melhor encaixe agora: ${sugestaoPlano}.` : ""}`,
+                    acao: `${texto(empresa?.capacidade_acao || "O plano entrou na faixa de atenção.")}${sugestaoPlano ? ` Melhor encaixe agora: ${sugestaoPlano}.` : ""}`,
                 };
             }
             if (temporarios > 0 || uso >= 75) {
                 return {
                     tone: "aberto",
-                    badge: "Acompanhar ativacao",
-                    acao: "Existem primeiros acessos pendentes ou o consumo ja entrou na zona de atencao.",
+                    badge: "Acompanhar ativação",
+                    acao: "Existem primeiros acessos pendentes ou o consumo já entrou na zona de atenção.",
                 };
             }
             return {
                 tone: "aprovado",
-                badge: "Operacao estavel",
-                acao: "A empresa esta liberada e a equipe principal ja esta pronta para operar.",
+                badge: "Operação estável",
+                acao: "A conta está liberada e a equipe principal já está pronta para operar.",
             };
         }
 
@@ -562,7 +563,7 @@
                     score: 560,
                     tone: "aguardando",
                     badge: "Primeiro acesso",
-                    acao: "Este usuario ainda precisa concluir a troca obrigatoria de senha.",
+                    acao: "Este usuário ainda precisa concluir a troca obrigatória de senha.",
                 };
             }
 
@@ -571,7 +572,7 @@
                     score: papel === "admin_cliente" ? 500 : 470,
                     tone: "aguardando",
                     badge: "Sem login ainda",
-                    acao: "Confirme se a pessoa recebeu o acesso e se ja deveria estar operando.",
+                    acao: "Confirme se a pessoa recebeu o acesso e se já deveria estar operando.",
                 };
             }
 
@@ -579,8 +580,8 @@
                 return {
                     score: 260,
                     tone: "aberto",
-                    badge: "Gestao ativa",
-                    acao: "Conta administrativa pronta para coordenar empresa, chat e mesa.",
+                    badge: "Gestão ativa",
+                    acao: "Conta de gestão pronta para acompanhar equipe, plano e acessos.",
                 };
             }
 
@@ -588,8 +589,8 @@
                 return {
                     score: 220,
                     tone: "aberto",
-                    badge: "Mesa disponivel",
-                    acao: "Usuario de mesa apto para responder chamados, pendencias e aprovacoes.",
+                    badge: "Mesa disponível",
+                    acao: "Avaliador liberado para acessar a Mesa avaliadora.",
                 };
             }
 
@@ -597,7 +598,7 @@
                 score: 200,
                 tone: "aprovado",
                 badge: "Operando",
-                acao: "Usuario liberado para tocar o fluxo normal da empresa.",
+                acao: "Usuário liberado para tocar o fluxo normal da conta.",
             };
         }
 
@@ -610,7 +611,7 @@
                 `<span class="pill" data-kind="status" data-status="${usuario.ativo ? "ativo" : "bloqueado"}">${usuario.ativo ? "Ativo" : "Bloqueado"}</span>`,
             ];
             if (usuario.senha_temporaria_ativa) {
-                badges.push('<span class="pill" data-kind="status" data-status="temporaria">Senha temporaria</span>');
+                badges.push('<span class="pill" data-kind="status" data-status="temporaria">Senha temporária</span>');
             }
             return badges.join("");
         }
@@ -631,6 +632,7 @@
                 if (situacao === "temporarios" && !usuario.senha_temporaria_ativa) return false;
                 if (situacao === "sem_login" && parseDataIso(usuario.ultimo_login)) return false;
                 if (situacao === "bloqueados" && usuario.ativo) return false;
+                if (situacao === "ativos" && !usuario.ativo) return false;
                 if (!busca) return true;
 
                 const alvo = [

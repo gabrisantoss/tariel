@@ -7,6 +7,36 @@ from typing import Any, Callable
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+_SIGNATARIO_HABILITACAO_STATUS_LABELS = {
+    "pending": "Pendente",
+    "in_review": "Em análise",
+    "approved": "Aprovado",
+    "rejected": "Reprovado",
+    "suspended": "Suspenso",
+}
+
+_SIGNATARIO_HABILITACAO_STATUS_ALIASES = {
+    "pendente": "pending",
+    "pending": "pending",
+    "em_analise": "in_review",
+    "em analise": "in_review",
+    "em análise": "in_review",
+    "analise": "in_review",
+    "análise": "in_review",
+    "in_review": "in_review",
+    "review": "in_review",
+    "aprovado": "approved",
+    "aprovada": "approved",
+    "approved": "approved",
+    "ready": "approved",
+    "reprovado": "rejected",
+    "reprovada": "rejected",
+    "rejected": "rejected",
+    "suspenso": "suspended",
+    "suspensa": "suspended",
+    "suspended": "suspended",
+}
+
 
 def catalogo_actor_label(actor: Any, *, fallback: str = "Sistema Tariel") -> str:
     if actor is None:
@@ -287,18 +317,105 @@ def normalizar_family_keys_signatario(
     ]
 
 
+def normalizar_status_habilitacao_signatario(valor: Any, *, default: str = "in_review") -> str:
+    texto = str(valor or "").strip().lower()
+    texto = texto.replace("-", "_")
+    if not texto:
+        return default if default in _SIGNATARIO_HABILITACAO_STATUS_LABELS else "in_review"
+    return _SIGNATARIO_HABILITACAO_STATUS_ALIASES.get(texto, "in_review")
+
+
+def _metadata_signatario(signatario: Any) -> dict[str, Any]:
+    metadata = getattr(signatario, "governance_metadata_json", None)
+    return dict(metadata) if isinstance(metadata, dict) else {}
+
+
+def _normalizar_datetime_metadata_signatario(valor: Any) -> datetime | None:
+    if isinstance(valor, datetime):
+        dt = valor
+    else:
+        texto = str(valor or "").strip()
+        if not texto:
+            return None
+        try:
+            dt = datetime.fromisoformat(texto.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def _documentos_habilitacao_signatario(
+    metadata: dict[str, Any],
+    *,
+    normalizar_texto_opcional: Callable[..., str | None],
+    formatar_data_admin: Callable[..., str],
+) -> list[dict[str, Any]]:
+    documentos = metadata.get("professional_documents")
+    if not isinstance(documentos, list):
+        return []
+    itens: list[dict[str, Any]] = []
+    for item in documentos:
+        if not isinstance(item, dict):
+            continue
+        documento_id = str(item.get("id") or "").strip()
+        nome = normalizar_texto_opcional(item.get("nome") or item.get("name"), 180)
+        caminho = normalizar_texto_opcional(item.get("storage_path"), 600)
+        if not documento_id or not nome or not caminho:
+            continue
+        uploaded_at = _normalizar_datetime_metadata_signatario(item.get("uploaded_at"))
+        tamanho_bytes = int(item.get("tamanho_bytes") or 0)
+        itens.append(
+            {
+                "id": documento_id,
+                "nome": nome,
+                "mime_type": normalizar_texto_opcional(item.get("mime_type"), 120) or "application/octet-stream",
+                "categoria": normalizar_texto_opcional(item.get("categoria"), 40) or "documento",
+                "tamanho_bytes": tamanho_bytes,
+                "tamanho_label": f"{tamanho_bytes / 1024:.1f} KB" if tamanho_bytes else "Sem tamanho",
+                "sha256": normalizar_texto_opcional(item.get("sha256"), 80),
+                "storage_path": caminho,
+                "uploaded_at": uploaded_at,
+                "uploaded_at_label": formatar_data_admin(uploaded_at, fallback="Sem envio registrado"),
+            }
+        )
+    return itens
+
+
+def _status_habilitacao_signatario(signatario: Any) -> dict[str, str]:
+    metadata = _metadata_signatario(signatario)
+    status = normalizar_status_habilitacao_signatario(
+        metadata.get("professional_approval_status")
+        or metadata.get("approval_status"),
+        default="approved",
+    )
+    return {
+        "key": status,
+        "label": _SIGNATARIO_HABILITACAO_STATUS_LABELS[status],
+    }
+
+
 def status_signatario_governado(
     *,
     ativo: bool,
     valid_until: datetime | None,
+    approval_status: str = "in_review",
     normalizar_datetime_admin: Callable[[Any], Any],
     agora_utc: Callable[[], datetime],
 ) -> dict[str, str]:
+    status_habilitacao = normalizar_status_habilitacao_signatario(approval_status)
     validade = normalizar_datetime_admin(valid_until)
     if not ativo:
         return {"key": "inactive", "label": "Inativo", "tone": "idle"}
     if validade is not None and validade < agora_utc():
         return {"key": "expired", "label": "Expirado", "tone": "archived"}
+    if status_habilitacao != "approved":
+        return {
+            "key": f"approval_{status_habilitacao}",
+            "label": _SIGNATARIO_HABILITACAO_STATUS_LABELS[status_habilitacao],
+            "tone": "testing" if status_habilitacao == "in_review" else "idle",
+        }
     if validade is not None and validade <= (agora_utc() + timedelta(days=30)):
         return {"key": "expiring_soon", "label": "Validade próxima", "tone": "testing"}
     return {"key": "ready", "label": "Pronto", "tone": "active"}
@@ -317,9 +434,33 @@ def serializar_signatario_governado_admin(
     allowed_family_keys = normalizar_family_keys_signatario_fn(
         getattr(signatario, "allowed_family_keys_json", None)
     )
+    habilitacao_status = _status_habilitacao_signatario(signatario)
+    metadata = _metadata_signatario(signatario)
+    submitted_at = _normalizar_datetime_metadata_signatario(
+        metadata.get("professional_approval_submitted_at")
+    )
+    decided_at = _normalizar_datetime_metadata_signatario(
+        metadata.get("professional_approval_decided_at")
+    )
+    approval_source = str(metadata.get("professional_approval_source") or "").strip()
+    approval_source_label = (
+        "Portal Cliente"
+        if approval_source == "cliente_portal"
+        else "Admin CEO"
+        if approval_source == "admin_ceo"
+        else "Legado"
+        if not approval_source
+        else approval_source.replace("_", " ").title()
+    )
+    professional_documents = _documentos_habilitacao_signatario(
+        metadata,
+        normalizar_texto_opcional=normalizar_texto_opcional,
+        formatar_data_admin=formatar_data_admin,
+    )
     status = status_signatario_governado_fn(
         ativo=bool(getattr(signatario, "ativo", False)),
         valid_until=getattr(signatario, "valid_until", None),
+        approval_status=habilitacao_status["key"],
     )
     family_scope = [
         {
@@ -337,6 +478,24 @@ def serializar_signatario_governado_admin(
         "valid_until_label": formatar_data_admin(getattr(signatario, "valid_until", None), fallback="Sem validade"),
         "ativo": bool(getattr(signatario, "ativo", False)),
         "status": status,
+        "approval_status": habilitacao_status["key"],
+        "approval_status_label": habilitacao_status["label"],
+        "approval_source": approval_source,
+        "approval_source_label": approval_source_label,
+        "approval_needs_review": habilitacao_status["key"] in {"pending", "in_review"},
+        "professional_email": normalizar_texto_opcional(metadata.get("professional_email"), 254),
+        "professional_phone": normalizar_texto_opcional(metadata.get("professional_phone"), 40),
+        "professional_type": normalizar_texto_opcional(metadata.get("professional_type"), 80),
+        "professional_documents_status": normalizar_texto_opcional(
+            metadata.get("professional_documents_status"),
+            80,
+        ),
+        "professional_documents": professional_documents,
+        "professional_documents_count": len(professional_documents),
+        "submitted_at": submitted_at,
+        "submitted_at_label": formatar_data_admin(submitted_at, fallback="Sem envio registrado"),
+        "decided_at": decided_at,
+        "decided_at_label": formatar_data_admin(decided_at, fallback="Sem decisão registrada"),
         "allowed_family_keys": allowed_family_keys,
         "family_scope": family_scope,
         "family_scope_summary": "Todas as famílias liberadas do tenant" if not family_scope else ", ".join(
@@ -501,6 +660,7 @@ def upsert_signatario_governado_laudo(
     allowed_family_keys: list[str] | tuple[str, ...] | str | None = None,
     observacoes: str = "",
     ativo: bool = True,
+    approval_status: str | None = None,
     signatario_id: int | None = None,
     criado_por_id: int | None = None,
     buscar_empresa: Callable[[Session, int], Any],
@@ -523,6 +683,7 @@ def upsert_signatario_governado_laudo(
         )
         if registro is None:
             raise ValueError("Signatário governado não encontrado para este tenant.")
+    registro_novo = registro is None
     if registro is None:
         registro = signatario_model(
             tenant_id=int(empresa.id),
@@ -537,6 +698,25 @@ def upsert_signatario_governado_laudo(
     registro.allowed_family_keys_json = normalizar_family_keys_signatario_fn(allowed_family_keys)
     registro.observacoes = normalizar_texto_opcional(observacoes)
     registro.ativo = bool(ativo)
+    metadata = _metadata_signatario(registro)
+    status_anterior = normalizar_status_habilitacao_signatario(
+        metadata.get("professional_approval_status")
+        or metadata.get("approval_status"),
+        default="in_review" if registro_novo else "approved",
+    )
+    status_habilitacao = normalizar_status_habilitacao_signatario(
+        approval_status
+        if approval_status is not None
+        else metadata.get("professional_approval_status")
+        or metadata.get("approval_status"),
+        default="in_review" if registro_novo else status_anterior,
+    )
+    metadata["professional_approval_status"] = status_habilitacao
+    metadata["professional_approval_status_updated_at"] = datetime.now(timezone.utc).isoformat()
+    if status_habilitacao != status_anterior and criado_por_id:
+        metadata["professional_approval_decided_by_id"] = int(criado_por_id)
+        metadata["professional_approval_decided_at"] = datetime.now(timezone.utc).isoformat()
+    registro.governance_metadata_json = metadata
     if criado_por_id and not registro.criado_por_id:
         registro.criado_por_id = criado_por_id
 

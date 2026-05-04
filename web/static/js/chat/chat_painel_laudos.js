@@ -9,7 +9,7 @@
 // Responsável por:
 // - marcar item ativo no histórico
 // - criar/atualizar breadcrumb do laudo
-// - controlar tabs do workspace (conversa / historico / anexos / mesa)
+// - controlar tabs do workspace (conversa / historico / anexos / correcoes)
 // - persistir laudo atual
 // - sincronizar URL ?laudo=
 // - carregar laudo inicial
@@ -89,7 +89,7 @@
             bruto === "correction" ||
             bruto === "corrections"
         ) return "correcoes";
-        if (bruto === "mesa") return "mesa";
+        if (bruto === "mesa") return "correcoes";
         const fallbackNormalizado = String(fallback || "").trim().toLowerCase();
         if (fallbackNormalizado === "chat" || fallbackNormalizado === "conversa") return "conversa";
         if (fallbackNormalizado === "attachments" || fallbackNormalizado === "anexos") return "anexos";
@@ -100,7 +100,7 @@
             fallbackNormalizado === "correction" ||
             fallbackNormalizado === "corrections"
         ) return "correcoes";
-        if (fallbackNormalizado === "mesa") return "mesa";
+        if (fallbackNormalizado === "mesa") return "correcoes";
         return "historico";
     }
 
@@ -288,10 +288,10 @@
             return { variant: "aberto", label: "Em coleta" };
         }
         if (lifecycle === "aguardando_mesa") {
-            return { variant: "aguardando", label: "Aguardando mesa" };
+            return { variant: "aguardando", label: "Aguardando revisão" };
         }
         if (lifecycle === "em_revisao_mesa") {
-            return { variant: "aguardando", label: "Mesa em revisão" };
+            return { variant: "aguardando", label: "Em revisão" };
         }
         if (lifecycle === "devolvido_para_correcao") {
             return { variant: "ajustes", label: "Correção" };
@@ -318,16 +318,16 @@
     function obterRotuloOwnerRole(role = "") {
         const normalizado = normalizarActiveOwnerRole(role);
         if (normalizado === "inspetor") return "Responsável: campo";
-        if (normalizado === "mesa") return "Responsável: mesa";
+        if (normalizado === "mesa") return "Responsável: revisão";
         if (normalizado === "none") return "Responsável: conclusão";
         return "";
     }
 
     function obterRotuloSurfaceAction(action = "") {
         const normalizado = String(action || "").trim().toLowerCase();
-        if (normalizado === "chat_finalize") return "Próxima ação: enviar para mesa";
+        if (normalizado === "chat_finalize") return "Próxima ação: finalizar laudo";
         if (normalizado === "chat_reopen") return "Próxima ação: reabrir no chat";
-        if (normalizado === "mesa_approve") return "Próxima ação: aprovar na mesa";
+        if (normalizado === "mesa_approve") return "Próxima ação: aprovar revisão";
         if (normalizado === "mesa_return") return "Próxima ação: devolver para correção";
         if (normalizado === "system_issue") return "Próxima ação: emitir oficialmente";
         return "";
@@ -400,7 +400,7 @@
             label: String(summary.label || "").trim() || "Reemissão recomendada",
             detail: String(summary.detail || "").trim(),
             issueNumber: String(summary.issue_number || "").trim(),
-            openThreadTab: "mesa",
+            openThreadTab: "correcoes",
         };
     }
 
@@ -448,7 +448,7 @@
             labelEl.textContent = governance.label;
         }
         if (actionEl) {
-            actionEl.textContent = governance.visible ? "Abrir pela Mesa" : "";
+            actionEl.textContent = governance.visible ? "Abrir revisão" : "";
         }
         noteEl.hidden = !governance.visible;
     }
@@ -1232,9 +1232,7 @@
                             "correction",
                             "corrections",
                         ].includes(bruto) ? "correcoes" : bruto);
-        const mesaDisponivel =
-            window.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true;
-        if (valor === "mesa" && !mesaDisponivel) {
+        if (valor === "mesa") {
             valor = "correcoes";
         }
         const nav = garantirThreadNav();

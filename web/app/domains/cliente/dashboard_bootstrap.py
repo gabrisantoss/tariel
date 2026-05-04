@@ -36,6 +36,7 @@ from app.domains.cliente.dashboard_bootstrap_support import (
     listar_laudos_mesa_empresa,
     listar_recorrencia_empresa,
     listar_servicos_empresa,
+    resumir_habilitacao_profissional_empresa,
     resumir_ativos_empresa,
     resumir_documentos_empresa,
     resumir_recorrencia_empresa,
@@ -131,6 +132,10 @@ def bootstrap_cliente(
         laudos_chat: list[dict[str, object]] = []
         laudos_mesa: list[dict[str, object]] = []
         documentos: list[dict[str, object]] = []
+        professional_habilitation = resumir_habilitacao_profissional_empresa(
+            banco,
+            empresa_id=int(usuario.empresa_id),
+        )
         payload = {
             "portal": build_cliente_portal_context(),
             "empresa": empresa_summary,
@@ -153,6 +158,7 @@ def bootstrap_cliente(
                 surface_availability=surface_availability,
                 usuarios=usuarios_operacionais,
             ),
+            "professional_habilitation": professional_habilitation,
         }
 
         if incluir_admin:
@@ -213,6 +219,7 @@ def bootstrap_cliente(
             payload["documentos"] = {
                 "items": documentos,
                 "summary": resumir_documentos_empresa(documentos),
+                "professional_habilitation": professional_habilitation,
             }
 
         if not laudos_chat:
@@ -293,6 +300,7 @@ __all__ = [
     "listar_recorrencia_empresa",
     "listar_servicos_empresa",
     "resumir_ativos_empresa",
+    "resumir_habilitacao_profissional_empresa",
     "serializar_usuario_cliente",
     "resumir_recorrencia_empresa",
     "resumir_servicos_empresa",

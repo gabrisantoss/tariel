@@ -6,26 +6,26 @@
 
         <div class="hero-banner hero-banner--compact">
             <div class="hero-banner__copy">
-                <p class="hero-eyebrow">Portal da empresa</p>
+                <p class="hero-eyebrow">Portal Cliente</p>
                 <h1 class="hero-title">{{ empresa.nome_fantasia | e }}</h1>
                 <p class="hero-description">
-                    {{ usuario.nome_completo | e }} acompanha equipe, operacao e pendencias da empresa sem trocar de ambiente.
+                    {{ usuario.nome_completo | e }} acompanha equipe, operação e plano da conta em um ambiente de gestão.
                 </p>
             </div>
 
             <div id="hero-focus" class="hero-focus" aria-live="polite">
-                <span class="hero-focus__label">Resumo rapido</span>
-                <strong id="hero-focus-title">A operacao da empresa esta pronta para acompanhamento</strong>
-                <p id="hero-focus-meta">Abra a aba principal acima e siga direto para o bloco que precisa de atencao.</p>
+                <span class="hero-focus__label">Resumo rápido</span>
+                <strong id="hero-focus-title">A operação da conta está pronta para acompanhamento</strong>
+                <p id="hero-focus-meta">Abra a área principal acima e siga direto para o bloco que precisa de atenção.</p>
             </div>
         </div>
 
         <div class="hero-meta">
-            <span class="hero-chip">Responsavel {{ empresa.nome_responsavel | default('nao informado', true) | e }}</span>
-            <span class="hero-chip">Base {{ empresa.cidade_estado | default('nao informada', true) | e }}</span>
-            <span class="hero-chip">CNPJ {{ empresa.cnpj | default('nao informado', true) | e }}</span>
+            <span class="hero-chip">Responsável {{ empresa.nome_responsavel | default('não informado', true) | e }}</span>
+            <span class="hero-chip">Base {{ empresa.cidade_estado | default('não informada', true) | e }}</span>
+            <span class="hero-chip">CNPJ {{ empresa.cnpj | default('não informado', true) | e }}</span>
             <span class="hero-chip">
-                Pacote {{ tenant_admin_policy.commercial_service_package_label | default('Chat Inspetor + Mesa Avaliadora', true) | e }}
+                Pacote {{ tenant_admin_policy.commercial_service_package_label | default('Chat de campo + Mesa avaliadora', true) | e }}
             </span>
         </div>
     </section>
@@ -34,9 +34,9 @@
         <section class="hero-card hero-card--compact-shell">
             <div class="hero-plan">
                 <div>
-                    <p class="box-subtitle">Plano atual da empresa</p>
+                    <p class="box-subtitle">Plano atual da conta</p>
                     <strong>{{ empresa.plano_ativo | e }}</strong>
-                    <small>{{ tenant_admin_policy.commercial_service_package_description | default('Modelo operacional contratado para esta empresa.', true) | e }}</small>
+                    <small>{{ tenant_admin_policy.commercial_service_package_description | default('Modelo operacional contratado para esta conta.', true) | e }}</small>
                 </div>
                 <span class="plan-badge">Operando</span>
             </div>
@@ -49,8 +49,8 @@
                 </article>
                 <article class="hero-kpi-card">
                     <small>Equipe</small>
-                    <strong>Portal da empresa</strong>
-                    <span>Controles administrativos e operacionais no mesmo acesso.</span>
+                    <strong>Portal Cliente</strong>
+                    <span>Gestão de equipe, plano e acessos.</span>
                 </article>
             </div>
 
@@ -58,9 +58,9 @@
 
             <div id="hero-command" class="hero-command hero-command--compact">
                 <div class="hero-command__copy">
-                    <span class="hero-command__eyebrow">Proximo movimento</span>
-                    <strong id="hero-command-title">Abrir o bloco prioritario</strong>
-                    <p id="hero-command-meta">Use a navegacao do topo para entrar direto no ponto que precisa de ajuste.</p>
+                    <span class="hero-command__eyebrow">Próximo movimento</span>
+                    <strong id="hero-command-title">Abrir o bloco prioritário</strong>
+                    <p id="hero-command-meta">Use a navegação para entrar direto no ponto que precisa de ajuste.</p>
                 </div>
 
                 <div class="hero-command__actions">

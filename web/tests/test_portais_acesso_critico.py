@@ -241,61 +241,60 @@ def test_admin_cliente_login_funciona_e_painel_abre(ambiente_critico) -> None:
     _login_cliente(client, "cliente@empresa-a.test")
 
     resposta_painel = client.get("/cliente/painel")
-    resposta_painel_team = client.get("/cliente/painel?sec=team")
-    resposta_servicos = client.get("/cliente/servicos")
-    resposta_recorrencia = client.get("/cliente/recorrencia")
-    resposta_ativos = client.get("/cliente/ativos")
+    resposta_painel_team = client.get("/cliente/organizacao/equipe")
+    resposta_servicos = client.get("/cliente/servicos", follow_redirects=False)
+    resposta_plano = client.get("/cliente/plano")
+    resposta_recorrencia = client.get("/cliente/recorrencia", follow_redirects=False)
+    resposta_ativos = client.get("/cliente/ativos", follow_redirects=False)
     resposta_documentos = client.get("/cliente/documentos")
-    resposta_chat = client.get("/cliente/chat")
-    resposta_chat_queue = client.get("/cliente/chat?sec=queue")
-    resposta_mesa = client.get("/cliente/mesa")
-    resposta_mesa_reply = client.get("/cliente/mesa?sec=reply")
+    resposta_chat = client.get("/cliente/chat", follow_redirects=False)
+    resposta_chat_queue = client.get("/cliente/chat?sec=queue", follow_redirects=False)
+    resposta_mesa = client.get("/cliente/mesa", follow_redirects=False)
+    resposta_mesa_reply = client.get("/cliente/mesa?sec=reply", follow_redirects=False)
 
     assert resposta_painel.status_code == 200
-    assert "Portal da empresa" in resposta_painel.text
+    assert "Portal Cliente" in resposta_painel.text
     assert 'data-cliente-tab-inicial="admin"' in resposta_painel.text
     assert resposta_painel_team.status_code == 200
     assert 'data-cliente-admin-section-inicial="team"' in resposta_painel_team.text
 
-    assert resposta_servicos.status_code == 200
-    assert 'data-cliente-tab-inicial="servicos"' in resposta_servicos.text
-    assert 'id="servicos-contratados-grid"' in resposta_servicos.text
-    assert 'id="servicos-resumo-geral"' in resposta_servicos.text
+    assert resposta_servicos.status_code == 303
+    assert resposta_servicos.headers["location"] == "/cliente/plano"
+    assert resposta_plano.status_code == 200
+    assert 'data-cliente-admin-section-inicial="capacity"' in resposta_plano.text
+    assert 'id="cliente-plan-current-summary"' in resposta_plano.text
+    assert 'id="cliente-plan-usage-grid"' in resposta_plano.text
+    assert 'id="cliente-plan-resources-list"' in resposta_plano.text
+    assert 'id="cliente-plan-catalog"' in resposta_plano.text
+    assert 'id="cliente-plan-request"' in resposta_plano.text
+    assert "Enviar solicitação para Tariel" in resposta_plano.text
 
-    assert resposta_recorrencia.status_code == 200
-    assert 'data-cliente-tab-inicial="recorrencia"' in resposta_recorrencia.text
-    assert 'id="agenda-recorrencia-lista"' in resposta_recorrencia.text
-    assert 'id="recorrencia-resumo-geral"' in resposta_recorrencia.text
+    assert resposta_recorrencia.status_code == 303
+    assert resposta_recorrencia.headers["location"] == "/cliente/home"
 
-    assert resposta_ativos.status_code == 200
-    assert 'data-cliente-tab-inicial="ativos"' in resposta_ativos.text
-    assert 'id="ativos-industriais-lista"' in resposta_ativos.text
-    assert 'id="ativos-resumo-geral"' in resposta_ativos.text
+    assert resposta_ativos.status_code == 303
+    assert resposta_ativos.headers["location"] == "/cliente/home"
 
     assert resposta_documentos.status_code == 200
     assert 'data-cliente-tab-inicial="documentos"' in resposta_documentos.text
     assert 'id="documentos-lista"' in resposta_documentos.text
     assert 'id="documentos-resumo-geral"' in resposta_documentos.text
+    assert 'id="documentos-attention-list"' in resposta_documentos.text
+    assert 'id="documentos-busca"' in resposta_documentos.text
+    assert 'id="documentos-filtro-status"' in resposta_documentos.text
+    assert 'id="documentos-filtro-evidencia"' in resposta_documentos.text
+    assert 'id="documentos-ordenacao"' in resposta_documentos.text
+    assert 'id="documentos-habilitacao-profissional"' in resposta_documentos.text
 
-    assert resposta_chat.status_code == 200
-    assert 'data-cliente-tab-inicial="chat"' in resposta_chat.text
-    assert 'id="chat-busca-laudos"' in resposta_chat.text
-    assert 'id="chat-new-policy-hint"' in resposta_chat.text
-    assert 'id="chat-case-policy-note"' in resposta_chat.text
-    assert 'id="chat-message-policy-note"' in resposta_chat.text
-    assert 'id="btn-chat-msg-enviar"' in resposta_chat.text
-    assert resposta_chat_queue.status_code == 200
-    assert 'data-cliente-chat-section-inicial="queue"' in resposta_chat_queue.text
+    assert resposta_chat.status_code == 303
+    assert resposta_chat.headers["location"] == "/cliente/home"
+    assert resposta_chat_queue.status_code == 303
+    assert resposta_chat_queue.headers["location"] == "/cliente/home"
 
-    assert resposta_mesa.status_code == 200
-    assert 'data-cliente-tab-inicial="mesa"' in resposta_mesa.text
-    assert 'id="mesa-busca-laudos"' in resposta_mesa.text
-    assert 'id="mesa-reply-policy-hint"' in resposta_mesa.text
-    assert 'id="mesa-reply-policy-note"' in resposta_mesa.text
-    assert 'id="mesa-message-policy-note"' in resposta_mesa.text
-    assert 'id="btn-mesa-msg-enviar"' in resposta_mesa.text
-    assert resposta_mesa_reply.status_code == 200
-    assert 'data-cliente-mesa-section-inicial="reply"' in resposta_mesa_reply.text
+    assert resposta_mesa.status_code == 303
+    assert resposta_mesa.headers["location"] == "/cliente/home"
+    assert resposta_mesa_reply.status_code == 303
+    assert resposta_mesa_reply.headers["location"] == "/cliente/home"
 
 
 def test_admin_cliente_com_tenant_resumo_cai_no_painel_admin_e_nao_carrega_superficies_de_caso(
@@ -316,19 +315,15 @@ def test_admin_cliente_com_tenant_resumo_cai_no_painel_admin_e_nao_carrega_super
 
     _login_cliente(client, "cliente@empresa-a.test")
 
-    resposta_chat = client.get("/cliente/chat")
-    resposta_mesa = client.get("/cliente/mesa")
+    resposta_chat = client.get("/cliente/chat", follow_redirects=False)
+    resposta_mesa = client.get("/cliente/mesa", follow_redirects=False)
     resposta_bootstrap_chat = client.get("/cliente/api/bootstrap?surface=chat")
 
-    assert resposta_chat.status_code == 200
-    assert 'data-cliente-tab-inicial="admin"' in resposta_chat.text
-    assert 'id="tab-chat"' in resposta_chat.text
-    assert 'id="tab-mesa"' in resposta_chat.text
-    assert 'id="tab-chat"' in resposta_chat.text and 'data-surface-disabled="true"' in resposta_chat.text.split('id="tab-chat"', 1)[1].split(">", 1)[0]
-    assert 'id="tab-mesa"' in resposta_chat.text and 'data-surface-disabled="true"' in resposta_chat.text.split('id="tab-mesa"', 1)[1].split(">", 1)[0]
+    assert resposta_chat.status_code == 303
+    assert resposta_chat.headers["location"] == "/cliente/home"
 
-    assert resposta_mesa.status_code == 200
-    assert 'data-cliente-tab-inicial="admin"' in resposta_mesa.text
+    assert resposta_mesa.status_code == 303
+    assert resposta_mesa.headers["location"] == "/cliente/home"
 
     assert resposta_bootstrap_chat.status_code == 200
     corpo_bootstrap_chat = resposta_bootstrap_chat.json()
@@ -350,25 +345,25 @@ def test_admin_cliente_links_diretos_por_secao_resolvem_alias_e_fallback(ambient
     _login_cliente(client, "cliente@empresa-a.test")
 
     resposta_equipe_fixa = client.get("/cliente/equipe")
-    resposta_alias_team = client.get("/cliente/painel?sec=equipe")
-    resposta_alias_support = client.get("/cliente/painel?sec=governanca")
-    resposta_chat_invalido = client.get("/cliente/chat?sec=invalida")
-    resposta_mesa_invalido = client.get("/cliente/mesa?sec=desconhecida")
+    resposta_alias_team = client.get("/cliente/painel?sec=equipe", follow_redirects=False)
+    resposta_alias_support = client.get("/cliente/painel?sec=governanca", follow_redirects=False)
+    resposta_chat_invalido = client.get("/cliente/chat?sec=invalida", follow_redirects=False)
+    resposta_mesa_invalido = client.get("/cliente/mesa?sec=desconhecida", follow_redirects=False)
 
     assert resposta_equipe_fixa.status_code == 200
     assert 'data-cliente-admin-section-inicial="team"' in resposta_equipe_fixa.text
 
-    assert resposta_alias_team.status_code == 200
-    assert 'data-cliente-admin-section-inicial="team"' in resposta_alias_team.text
+    assert resposta_alias_team.status_code == 303
+    assert resposta_alias_team.headers["location"] == "/cliente/home"
 
-    assert resposta_alias_support.status_code == 200
-    assert 'data-cliente-admin-section-inicial="support"' in resposta_alias_support.text
+    assert resposta_alias_support.status_code == 303
+    assert resposta_alias_support.headers["location"] == "/cliente/home"
 
-    assert resposta_chat_invalido.status_code == 200
-    assert 'data-cliente-chat-section-inicial="overview"' in resposta_chat_invalido.text
+    assert resposta_chat_invalido.status_code == 303
+    assert resposta_chat_invalido.headers["location"] == "/cliente/home"
 
-    assert resposta_mesa_invalido.status_code == 200
-    assert 'data-cliente-mesa-section-inicial="overview"' in resposta_mesa_invalido.text
+    assert resposta_mesa_invalido.status_code == 303
+    assert resposta_mesa_invalido.headers["location"] == "/cliente/home"
 
 
 def test_admin_cliente_nao_acessa_admin_geral(ambiente_critico) -> None:

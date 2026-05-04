@@ -290,6 +290,7 @@
                         overview: "admin-overview",
                         capacity: "admin-capacity",
                         team: "admin-team",
+                        access: "admin-access",
                         support: "admin-support",
                     };
                     scrollToPortalSection(alvoPorSecao[section] || "panel-admin");
@@ -327,6 +328,13 @@
             $("usuarios-filtro-papel")?.addEventListener("change", (event) => {
                 state.ui.usuariosPapel = event.target.value || "todos";
                 state.ui.usuariosSituacao = "";
+                state.ui.usuarioEmDestaque = null;
+                if ($("usuarios-filtro-status")) $("usuarios-filtro-status").value = "";
+                renderUsuarios();
+            });
+
+            $("usuarios-filtro-status")?.addEventListener("change", (event) => {
+                state.ui.usuariosSituacao = event.target.value || "";
                 state.ui.usuarioEmDestaque = null;
                 renderUsuarios();
             });

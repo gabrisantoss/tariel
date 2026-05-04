@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta name="tariel-perf-mode" content="{{ '1' if perf_mode | default(false) else '0' }}">
-    <title>{{ empresa.nome_fantasia | e }} • Portal da empresa • tariel.ia</title>
+    <title>{{ empresa.nome_fantasia | e }} • Portal Cliente • tariel.ia</title>
     <script src="/static/js/shared/theme_bootstrap.js"></script>
     <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
     <link rel="preload" as="image" href="/static/img/logo-horizontal-dark.png">
@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="/static/css/cliente/portal_documentos_surface.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/cliente/portal_admin_theme.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/shared/official_visual_system.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/cliente/portal_management.css?v={{ v_app }}">
 </head>
 <body
     data-cliente-tab-inicial="{{ cliente_tab_inicial | default('admin') | e }}"
@@ -38,6 +39,11 @@
     data-cliente-mesa-section-inicial="{{ cliente_mesa_section_inicial | default('overview') | e }}"
     data-cliente-documentos-section-inicial="{{ cliente_documentos_section_inicial | default('overview') | e }}"
     data-cliente-route-admin="{{ cliente_surface_routes.admin | default('/cliente/painel') | e }}"
+    data-cliente-route-home="{{ cliente_surface_routes.home | default('/cliente/home') | e }}"
+    data-cliente-route-equipe="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}"
+    data-cliente-route-acessos="{{ cliente_surface_routes.acessos | default('/cliente/acessos') | e }}"
+    data-cliente-route-plano="{{ cliente_surface_routes.plano | default('/cliente/plano') | e }}"
+    data-cliente-route-suporte="{{ cliente_surface_routes.suporte | default('/cliente/suporte') | e }}"
     data-cliente-route-servicos="{{ cliente_surface_routes.servicos | default('/cliente/servicos') | e }}"
     data-cliente-route-recorrencia="{{ cliente_surface_routes.recorrencia | default('/cliente/recorrencia') | e }}"
     data-cliente-route-ativos="{{ cliente_surface_routes.ativos | default('/cliente/ativos') | e }}"
@@ -53,11 +59,6 @@
         <div class="cliente-shell">
             <main class="cliente-main">
                 {% include "cliente/painel/_content.html" %}
-                {% include "cliente/servicos/_content.html" %}
-                {% include "cliente/recorrencia/_content.html" %}
-                {% include "cliente/ativos/_content.html" %}
-                {% include "cliente/chat/_content.html" %}
-                {% include "cliente/mesa/_content.html" %}
                 {% include "cliente/documentos/_content.html" %}
             </main>
         </div>

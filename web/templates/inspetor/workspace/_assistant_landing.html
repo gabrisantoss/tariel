@@ -14,11 +14,7 @@
             <h1 class="workspace-assistant-landing__headline">
                 <span class="workspace-assistant-landing__headline-legacy" hidden>Por onde começamos?</span>
                 <span class="workspace-assistant-landing__headline-question">Olá, sou Tariel.</span>
-                <span class="workspace-assistant-landing__headline-subquestion">Comece pelo chat abaixo ou abra uma inspeção guiada quando quiser estruturar um laudo do zero.</span>
             </h1>
-            <p class="workspace-assistant-landing__lead">
-                Se preferir, use um starter rápido para preencher o composer com o primeiro contexto técnico.
-            </p>
 
             <section
                 id="workspace-assistant-governance"
@@ -35,108 +31,6 @@
                     REEMITIR
                 </span>
             </section>
-
-            <div class="workspace-assistant-landing__actions" aria-label="Ações principais do assistente">
-                <button
-                    type="button"
-                    id="btn-assistant-landing-open-inspecao-modal"
-                    class="workspace-assistant-primary-action"
-                    data-open-inspecao-modal
-                    data-inspector-entry="assistant-landing-new-inspection"
-                    aria-haspopup="dialog"
-                    aria-controls="modal-nova-inspecao"
-                    aria-expanded="false"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">add</span>
-                    <span>Nova inspeção</span>
-                </button>
-
-                <button
-                    type="button"
-                    class="workspace-assistant-primary-action workspace-assistant-primary-action--secondary"
-                    data-focus-composer
-                    aria-controls="campo-mensagem"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">forum</span>
-                    <span>Começar no chat</span>
-                </button>
-            </div>
-
-            <div class="workspace-assistant-entry-grid" aria-label="Modos de entrada do workspace">
-                <button
-                    type="button"
-                    class="workspace-assistant-entry-card workspace-assistant-entry-card--guided"
-                    data-open-inspecao-modal
-                    data-inspector-entry="assistant-landing-card-guided"
-                    aria-haspopup="dialog"
-                    aria-controls="modal-nova-inspecao"
-                    aria-expanded="false"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">assignment</span>
-                    <div class="workspace-assistant-entry-card__copy">
-                        <strong>Inspeção guiada</strong>
-                        <p>Abra uma nova inspeção para seguir a coleta técnica por etapas.</p>
-                    </div>
-                    <span class="workspace-assistant-entry-card__badge">Recomendado</span>
-                    <span class="workspace-assistant-entry-card__hint">Abrir fluxo guiado</span>
-                </button>
-
-                <button
-                    type="button"
-                    class="workspace-assistant-entry-card workspace-assistant-entry-card--chat"
-                    data-suggestion-text="Vou te passar o contexto do equipamento e do cenário. Estruture a sessão técnica e diga o que preciso observar primeiro."
-                    aria-controls="campo-mensagem"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">forum</span>
-                    <div class="workspace-assistant-entry-card__copy">
-                        <strong>Chat livre</strong>
-                        <p>Descreva o cenário e deixe o assistente estruturar o laudo no mesmo fluxo.</p>
-                    </div>
-                    <span class="workspace-assistant-entry-card__hint">Preencher o chat</span>
-                </button>
-
-                <button
-                    type="button"
-                    class="workspace-assistant-entry-card workspace-assistant-entry-card--mesa"
-                    data-suggestion-text="Explique quando devo envolver a mesa avaliadora neste caso e quais sinais devo reunir antes de encaminhar para validação."
-                    aria-controls="campo-mensagem"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
-                    <div class="workspace-assistant-entry-card__copy">
-                        <strong>Mesa integrada</strong>
-                        <p>Concentre pendências, ajustes e reemissões sem sair do workspace.</p>
-                    </div>
-                    <span class="workspace-assistant-entry-card__hint">Perguntar quando usar</span>
-                </button>
-            </div>
-
-            {% set operational_items = portal_operational_summary["items"] | default([], true) %}
-            {% if operational_items %}
-            <section class="workspace-operational-strip" aria-labelledby="workspace-operational-title">
-                <div class="workspace-operational-strip__header">
-                    <span>Estado operacional</span>
-                    <strong id="workspace-operational-title">
-                        {{ portal_operational_summary.primary_action_label | default("Iniciar serviço WF", true) }}
-                    </strong>
-                    <small>
-                        {% if portal_operational_summary.visible %}
-                            {{ portal_operational_summary.primary_action_detail | default("", true) }}
-                        {% else %}
-                            {{ portal_operational_summary.empty_message | default("Sem casos ativos. Escolha um serviço WF para começar.", true) }}
-                        {% endif %}
-                    </small>
-                </div>
-                <div class="workspace-operational-strip__grid">
-                    {% for item in operational_items %}
-                    <article class="workspace-operational-pill workspace-operational-pill--{{ item.tone | default('info', true) }}">
-                        <span class="material-symbols-rounded" aria-hidden="true">{{ item.icon }}</span>
-                        <strong>{{ item.value }}</strong>
-                        <span>{{ item.label }}</span>
-                    </article>
-                    {% endfor %}
-                </div>
-            </section>
-            {% endif %}
         </div>
     </div>
 </section>

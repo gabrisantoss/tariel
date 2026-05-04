@@ -6,7 +6,6 @@ from dataclasses import dataclass
 import logging
 import re
 import uuid
-from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -1292,22 +1291,14 @@ def montar_contexto_portal_inspetor(
         laudos=laudos_visiveis,
     )
 
-    agora = datetime.now().astimezone()
     ativos = 0
     aguardando = 0
     pendencias = 0
     prontos_emissao = 0
-    usos_modelos_mes: Counter[str] = Counter()
 
     for laudo in laudos_visiveis:
         resumo = serializar_card_laudo(banco, laudo, cache=cache)
         status_card = str(resumo.get("status_card") or "").strip().lower()
-        tipo_template = str(getattr(laudo, "tipo_template", "padrao") or "padrao")
-        referencia_mes = getattr(laudo, "atualizado_em", None) or getattr(laudo, "criado_em", None)
-        if referencia_mes:
-            referencia_local = referencia_mes.astimezone()
-            if referencia_local.year == agora.year and referencia_local.month == agora.month:
-                usos_modelos_mes[tipo_template] += 1
 
         if status_card == "aberto":
             ativos += 1
@@ -1353,7 +1344,6 @@ def montar_contexto_portal_inspetor(
         for opcao in tipos_template_portal:
             runtime_template_code = str(opcao.get("runtime_template_code") or "padrao").strip().lower() or "padrao"
             meta_visual = _MODELO_PORTAL_RUNTIME_META.get(runtime_template_code, _MODELO_PORTAL_RUNTIME_META["padrao"])
-            usos = int(usos_modelos_mes.get(runtime_template_code, 0))
             modelos_portal.append(
                 {
                     "titulo": str(opcao.get("variant_label") or opcao.get("label") or nome_template_humano(runtime_template_code)),
@@ -1368,17 +1358,16 @@ def montar_contexto_portal_inspetor(
                         f"Inicie {str(opcao.get('label') or nome_template_humano(runtime_template_code))}. "
                         "Quero checklist técnico, riscos, não conformidades e plano de ação."
                     ),
-                    "meta": f"{usos} {_pluralizar_portal(usos, 'uso', 'usos')} este mês • {str(opcao.get('group_label') or meta_visual['duracao'])}",
+                    "meta": "Roteiro guiado",
                 }
             )
     else:
         for modelo in MODELOS_TECNICOS_PORTAL:
-            usos = int(usos_modelos_mes.get(str(modelo["tipo"]), 0))
             modelos_portal.append(
                 {
                     **modelo,
                     "runtime_tipo": str(modelo["tipo"]),
-                    "meta": f"{usos} {_pluralizar_portal(usos, 'uso', 'usos')} este mês • {modelo['duracao']}",
+                    "meta": "Roteiro guiado",
                 }
             )
 

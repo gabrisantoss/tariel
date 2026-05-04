@@ -21,6 +21,7 @@ import app.domains.chat.routes as rotas_inspetor
 import app.domains.revisor.routes as rotas_revisor
 import main
 from app.domains.admin.mfa import current_totp
+from app.domains.cliente.route_support import URL_DASHBOARD
 from app.shared.database import (
     Base,
     Empresa,
@@ -237,8 +238,8 @@ def _login_cliente(client: TestClient, email: str) -> str:
         follow_redirects=False,
     )
     assert resposta.status_code == 303
-    assert resposta.headers["location"] == "/cliente/painel"
-    return _csrf_pagina(client, "/cliente/painel")
+    assert resposta.headers["location"] == URL_DASHBOARD
+    return _csrf_pagina(client, URL_DASHBOARD)
 
 
 def _csrf_pagina(client: TestClient, rota: str) -> str:

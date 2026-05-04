@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="no-referrer">
-    <title>Portal da empresa • tariel.ia</title>
+    <title>Login • tariel.ia</title>
     <script src="/static/js/shared/theme_bootstrap.js"></script>
     <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,19 +20,19 @@
         <section class="auth-hero" aria-hidden="true">
             <div class="auth-hero-placeholder"></div>
             <img src="/static/img/logo-horizontal-dark.png" alt="tariel.ia">
-            <span class="auth-hero-label">Portal da empresa</span>
+            <span class="auth-hero-label">Acesso do cliente</span>
         </section>
 
         <section class="auth-card">
             <div class="auth-card-shell">
                 <div class="auth-intro">
-                    <strong class="auth-intro__title">Portal da empresa</strong>
-                    <p class="auth-intro__copy">Use o e-mail e a senha da empresa para entrar. No primeiro acesso, o sistema vai pedir a definicao de uma nova senha.</p>
+                    <span class="auth-context-badge">Acesso do cliente</span>
+                    <strong class="auth-intro__title">Login</strong>
                 </div>
 
                 {% if primeiro_acesso %}
                 <div class="auth-inline-banner" role="status" aria-live="polite">
-                    Primeiro acesso: entre com o e-mail informado no cadastro da empresa e com a senha temporaria recebida em canal seguro.
+                    Primeiro acesso: entre com o e-mail informado no cadastro da conta e com a senha temporária recebida em canal seguro.
                 </div>
                 {% endif %}
 
@@ -45,7 +45,7 @@
                     <input type="hidden" name="primeiro_acesso" value="{{ '1' if primeiro_acesso else '' }}">
 
                     <div class="auth-field">
-                        <input id="email" type="email" name="email" autocomplete="username" placeholder="E-mail" value="{{ email_prefill | default('', true) | e }}" required aria-label="E-mail corporativo">
+                        <input id="email" type="email" name="email" autocomplete="username" placeholder="E-mail de acesso" value="{{ email_prefill | default('', true) | e }}" required aria-label="E-mail de acesso">
                     </div>
 
                     <div class="auth-field">
@@ -54,6 +54,24 @@
 
                     <button class="auth-button" type="submit">Acessar</button>
                 </form>
+
+                <div class="auth-provider-actions" aria-label="Vincular conta corporativa">
+                    <button class="auth-provider-button auth-provider-button--google" type="button" data-provider-link="Google" aria-label="Vincular conta Google">
+                        <span class="auth-provider-mark" aria-hidden="true">G</span>
+                        <span>Google</span>
+                    </button>
+                    <button class="auth-provider-button auth-provider-button--apple" type="button" data-provider-link="Apple" aria-label="Vincular conta Apple">
+                        <span class="auth-provider-mark" aria-hidden="true">A</span>
+                        <span>Apple</span>
+                    </button>
+                    <button class="auth-provider-button auth-provider-button--microsoft" type="button" data-provider-link="Microsoft" aria-label="Vincular conta Microsoft">
+                        <span class="auth-provider-mark auth-provider-mark--microsoft" aria-hidden="true">
+                            <span></span><span></span><span></span><span></span>
+                        </span>
+                        <span>Microsoft</span>
+                    </button>
+                </div>
+                <p class="auth-provider-feedback" data-provider-feedback hidden aria-live="polite"></p>
 
                 <p class="auth-access-note">Precisa de acesso ou apoio no primeiro login? Fale com a Tariel.</p>
                 <p class="auth-access-note"><a href="/revisao/login">Acessar Mesa Avaliadora</a></p>
@@ -71,6 +89,16 @@
                     if (!botao) return;
                     botao.disabled = true;
                     botao.innerHTML = "<span>Entrando...</span>";
+                });
+            });
+
+            const feedback = document.querySelector("[data-provider-feedback]");
+            document.querySelectorAll("[data-provider-link]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    if (!feedback) return;
+                    const provider = button.getAttribute("data-provider-link") || "provedor";
+                    feedback.hidden = false;
+                    feedback.textContent = `Vinculo com ${provider} sera liberado pela Tariel para contas autorizadas da empresa.`;
                 });
             });
         })();

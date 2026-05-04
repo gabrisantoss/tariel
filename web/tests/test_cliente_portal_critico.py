@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import tempfile
@@ -10,12 +11,15 @@ from pathlib import Path
 
 import app.domains.admin.services as admin_services
 import app.domains.cliente.portal_bridge as portal_bridge
+import pypdf
 import pytest
+from fpdf import FPDF
 from sqlalchemy import select
 
 from app.domains.chat.nr35_linha_vida_official_pdf import build_nr35_linha_vida_official_pdf_manifest
 from app.domains.chat.nr35_linha_vida_pdf_contract import NR35_REQUIRED_PHOTO_SLOTS
 from app.domains.chat.nr35_linha_vida_structured_review import NR35_STRUCTURED_REVIEW_VERSION
+from app.shared.pdf_officiality import NON_OFFICIAL_PDF_NOTICE_TITLE
 from app.shared.database import (
     AnexoMesa,
     ApprovedCaseSnapshot,
@@ -42,6 +46,25 @@ from tests.regras_rotas_criticas_support import (
     _login_admin,
     _login_cliente,
 )
+from app.domains.cliente.route_support import URL_DASHBOARD
+
+
+def _pdf_bytes_teste(texto: str = "PDF oficial NR35 cliente") -> bytes:
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("helvetica", size=12)
+    pdf.cell(0, 10, texto)
+    raw = pdf.output()
+    if isinstance(raw, bytes):
+        return raw
+    if isinstance(raw, bytearray):
+        return bytes(raw)
+    return str(raw).encode("latin-1", errors="replace")
+
+
+def _texto_pdf(conteudo: bytes) -> str:
+    leitor = pypdf.PdfReader(io.BytesIO(conteudo))
+    return "\n".join(page.extract_text() or "" for page in leitor.pages)
 
 
 def _concluir_primeiro_login_cliente(
@@ -79,7 +102,7 @@ def _concluir_primeiro_login_cliente(
         follow_redirects=False,
     )
     assert resposta_troca.status_code == 303
-    assert resposta_troca.headers["location"] == "/cliente/painel"
+    assert resposta_troca.headers["location"] == URL_DASHBOARD
     return _csrf_pagina(client, "/cliente/equipe")
 
 
@@ -245,7 +268,7 @@ def _criar_entrega_oficial_nr35_cliente(banco, ids: dict, tmp_path: Path) -> tup
     banco.add(signatario)
     banco.flush()
 
-    pdf_bytes = b"%PDF-1.4\n%nr35 cliente oficial\n"
+    pdf_bytes = _pdf_bytes_teste("PDF oficial NR35 cliente")
     package_bytes = b"nr35 official package cliente"
     pdf_path = tmp_path / "laudo_nr35_cliente.pdf"
     package_path = tmp_path / "TAR-NR35-CLIENTE.zip"
@@ -625,7 +648,7 @@ def test_admin_cliente_cria_e_gerencia_usuarios_restritos_a_empresa(ambiente_cri
     assert resposta_inspetor.status_code == 201
     corpo_inspetor = resposta_inspetor.json()
     usuario_inspetor_id = int(corpo_inspetor["usuario"]["id"])
-    assert corpo_inspetor["usuario"]["papel"] == "Inspetor"
+    assert corpo_inspetor["usuario"]["papel"] == "Operador de campo"
     assert corpo_inspetor["senha_temporaria"]
     credencial_inspetor = corpo_inspetor["credencial_onboarding"]
     assert credencial_inspetor["usuario_id"] == usuario_inspetor_id
@@ -634,7 +657,7 @@ def test_admin_cliente_cria_e_gerencia_usuarios_restritos_a_empresa(ambiente_cri
     assert credencial_inspetor["portais"] == [
         {
             "portal": "inspetor",
-            "label": "Inspetor web/mobile",
+            "label": "Chat de campo",
             "login_url": "/app/login",
         }
     ]
@@ -664,7 +687,7 @@ def test_admin_cliente_cria_e_gerencia_usuarios_restritos_a_empresa(ambiente_cri
     assert resposta_revisor.status_code == 201
     corpo_revisor = resposta_revisor.json()
     usuario_revisor_id = int(corpo_revisor["usuario"]["id"])
-    assert corpo_revisor["usuario"]["papel"] == "Mesa Avaliadora"
+    assert corpo_revisor["usuario"]["papel"] == "Avaliador"
     assert corpo_revisor["usuario"]["crea"] == "123456/GO"
 
     resposta_toggle_outra_empresa = client.patch(
@@ -690,7 +713,7 @@ def test_admin_cliente_cria_e_gerencia_usuarios_restritos_a_empresa(ambiente_cri
     assert corpo_reset["credencial_onboarding"]["portais"] == [
         {
             "portal": "revisor",
-            "label": "Mesa Avaliadora",
+            "label": "Mesa avaliadora",
             "login_url": "/revisao/login",
         }
     ]
@@ -699,7 +722,7 @@ def test_admin_cliente_cria_e_gerencia_usuarios_restritos_a_empresa(ambiente_cri
     assert resposta_lista.status_code == 200
     papeis = {item["papel"] for item in resposta_lista.json()["itens"]}
     emails = {item["email"] for item in resposta_lista.json()["itens"]}
-    assert papeis <= {"Inspetor", "Mesa Avaliadora"}
+    assert papeis <= {"Operador de campo", "Avaliador"}
     assert "cliente@empresa-a.test" not in emails
     assert "par-admin@empresa-a.test" not in emails
 
@@ -714,6 +737,102 @@ def test_admin_cliente_cria_e_gerencia_usuarios_restritos_a_empresa(ambiente_cri
         assert int(novo_revisor.empresa_id) == ids["empresa_a"]
         assert int(novo_inspetor.nivel_acesso) == int(NivelAcesso.INSPETOR)
         assert int(novo_revisor.nivel_acesso) == int(NivelAcesso.REVISOR)
+
+
+def test_admin_cliente_solicita_habilitacao_profissional_para_analise_da_tariel(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    csrf = _login_cliente(client, "cliente@empresa-a.test")
+
+    resposta = client.post(
+        "/cliente/api/habilitacao-profissional",
+        headers={"X-CSRF-Token": csrf},
+        json={
+            "nome": "Engenheira Responsável NR",
+            "tipo_profissional": "engenheiro_seguranca",
+            "registro_profissional": "CREA GO 123456",
+            "email": "rt@empresa-a.test",
+            "telefone": "62999990000",
+            "observacoes": "Atua em NR10 e NR35.",
+        },
+    )
+
+    assert resposta.status_code == 201
+    corpo = resposta.json()
+    assert corpo["success"] is True
+    habilitacao = corpo["habilitacao"]
+    assert habilitacao["status_key"] == "in_review"
+    assert habilitacao["counts"]["in_review"] == 1
+    assert habilitacao["counts"]["eligible"] == 0
+    assert habilitacao["items"][0]["approval_status"] == "in_review"
+    assert habilitacao["items"][0]["eligible"] is False
+    signatario_id = int(corpo["signatario_id"])
+
+    comprovacao_bytes = b"%PDF-1.4\n% comprovacao profissional\n"
+    resposta_upload = client.post(
+        f"/cliente/api/habilitacao-profissional/{signatario_id}/evidencias",
+        headers={"X-CSRF-Token": csrf},
+        files={"arquivo": ("crea.pdf", comprovacao_bytes, "application/pdf")},
+    )
+    assert resposta_upload.status_code == 201
+    corpo_upload = resposta_upload.json()
+    assert corpo_upload["success"] is True
+    assert corpo_upload["documento"]["nome"] == "crea.pdf"
+    assert corpo_upload["documento"]["mime_type"] == "application/pdf"
+    assert corpo_upload["documento"]["sha256"] == hashlib.sha256(comprovacao_bytes).hexdigest()
+
+    resposta_duplicada = client.post(
+        "/cliente/api/habilitacao-profissional",
+        headers={"X-CSRF-Token": csrf},
+        json={
+            "nome": "Outra Responsável",
+            "tipo_profissional": "profissional_habilitado",
+            "registro_profissional": " CREA GO 123456 ",
+        },
+    )
+    assert resposta_duplicada.status_code == 409
+
+    resposta_bootstrap = client.get("/cliente/api/bootstrap")
+    assert resposta_bootstrap.status_code == 200
+    assert resposta_bootstrap.json()["professional_habilitation"]["counts"]["in_review"] == 1
+
+    with SessionLocal() as banco:
+        signatario = banco.scalar(
+            select(SignatarioGovernadoLaudo).where(
+                SignatarioGovernadoLaudo.tenant_id == ids["empresa_a"],
+                SignatarioGovernadoLaudo.registro_profissional == "CREA GO 123456",
+            )
+        )
+        assert signatario is not None
+        assert signatario.funcao == "Engenheiro de Segurança do Trabalho"
+        assert signatario.allowed_family_keys_json == []
+        assert bool(signatario.ativo) is True
+        assert int(signatario.criado_por_id) == ids["admin_cliente_a"]
+        metadata = signatario.governance_metadata_json
+        assert metadata["professional_approval_status"] == "in_review"
+        assert metadata["professional_approval_source"] == "cliente_portal"
+        assert metadata["professional_type"] == "engenheiro_seguranca"
+        assert metadata["professional_email"] == "rt@empresa-a.test"
+        assert metadata["professional_documents_status"] == "uploaded"
+        assert metadata["professional_documents_count"] == 1
+        assert len(metadata["professional_documents"]) == 1
+        documento = metadata["professional_documents"][0]
+        assert documento["nome"] == "crea.pdf"
+        assert documento["sha256"] == hashlib.sha256(comprovacao_bytes).hexdigest()
+        assert Path(documento["storage_path"]).is_file()
+
+        auditoria = list(
+            banco.scalars(
+                select(RegistroAuditoriaEmpresa)
+                .where(RegistroAuditoriaEmpresa.empresa_id == ids["empresa_a"])
+                .order_by(RegistroAuditoriaEmpresa.id.desc())
+            ).all()
+        )
+        assert any(item.acao == "habilitacao_profissional_solicitada" for item in auditoria)
+        assert any(item.acao == "habilitacao_profissional_evidencia_enviada" for item in auditoria)
 
 
 def test_fluxo_fixo_empresa_admin_cliente_equipe_e_logins_operacionais_funciona(
@@ -777,7 +896,8 @@ def test_fluxo_fixo_empresa_admin_cliente_equipe_e_logins_operacionais_funciona(
     pagina_equipe = client.get("/cliente/equipe")
     assert pagina_equipe.status_code == 200
     assert 'data-cliente-admin-section-inicial="team"' in pagina_equipe.text
-    assert "Novo usuario operacional" in pagina_equipe.text
+    assert "Gerenciar usuários" in pagina_equipe.text
+    assert "Novo usuário" in pagina_equipe.text
 
     resposta_inspetor = client.post(
         "/cliente/api/usuarios",
@@ -892,17 +1012,17 @@ def test_admin_cliente_concede_superficies_adicionais_dentro_da_regra_do_tenant(
     assert credencial["portais"] == [
         {
             "portal": "inspetor",
-            "label": "Inspetor web/mobile",
+            "label": "Chat de campo",
             "login_url": "/app/login",
         },
         {
             "portal": "revisor",
-            "label": "Mesa Avaliadora",
+            "label": "Mesa avaliadora",
             "login_url": "/revisao/login",
         },
         {
             "portal": "cliente",
-            "label": "Admin-Cliente",
+            "label": "Portal Cliente",
             "login_url": "/cliente/login",
         },
     ]
@@ -1253,7 +1373,13 @@ def test_admin_cliente_registra_auditoria_de_plano_e_usuarios(ambiente_critico) 
     resposta_plano = client.post(
         "/cliente/api/empresa/plano/interesse",
         headers={"X-CSRF-Token": csrf},
-        json={"plano": "Intermediario", "origem": "admin"},
+        json={
+            "plano": "Intermediario",
+            "origem": "admin",
+            "urgencia": "30_dias",
+            "motivo": "crescimento_equipe",
+            "observacoes": "Contratação prevista para duas frentes novas.",
+        },
     )
     assert resposta_plano.status_code == 200
 
@@ -1288,6 +1414,9 @@ def test_admin_cliente_registra_auditoria_de_plano_e_usuarios(ambiente_critico) 
     assert registro_plano["payload"]["plano_sugerido"] == "Intermediario"
     assert registro_plano["payload"]["origem"] == "admin"
     assert registro_plano["payload"]["movimento"] == "downgrade"
+    assert registro_plano["payload"]["urgencia"] == "30_dias"
+    assert registro_plano["payload"]["motivo"] == "crescimento_equipe"
+    assert registro_plano["payload"]["observacoes"] == "Contratação prevista para duas frentes novas."
     assert "Impacto esperado" in registro_plano["detalhe"]
     assert registro_plano["categoria"] == "commercial"
     assert registro_plano["scope"] == "admin"
@@ -1470,6 +1599,76 @@ def test_admin_cliente_bootstrap_documentos_expoe_biblioteca_documental_minima(
     assert item["document_summary_card"]["hash"] == str(item["codigo_hash"])[-6:]
     assert item["document_package_sections"]["counts"]["documento_oficial"] >= 1
     assert any(step["key"] == "aprovado" for step in item["document_timeline"])
+
+
+def test_admin_cliente_documentos_concentra_comprovacoes_profissionais(
+    ambiente_critico,
+) -> None:
+    client = ambiente_critico["client"]
+    SessionLocal = ambiente_critico["SessionLocal"]
+    ids = ambiente_critico["ids"]
+    enviado_em = datetime(2026, 5, 3, 12, 10, tzinfo=timezone.utc)
+    documento_hash = hashlib.sha256(b"comprovacao documentos").hexdigest()
+
+    with SessionLocal() as banco:
+        signatario = SignatarioGovernadoLaudo(
+            tenant_id=ids["empresa_a"],
+            nome="Eng. Documentos Profissionais",
+            funcao="Engenheiro de Segurança do Trabalho",
+            registro_profissional="CREA DOCS 2026",
+            valid_until=enviado_em + timedelta(days=180),
+            allowed_family_keys_json=["nr12"],
+            governance_metadata_json={
+                "professional_approval_status": "in_review",
+                "professional_approval_source": "cliente_portal",
+                "professional_approval_submitted_at": enviado_em.isoformat(),
+                "professional_type": "engenheiro_seguranca",
+                "professional_email": "eng.docs@empresa-a.test",
+                "professional_phone": "62999990000",
+                "professional_documents_status": "uploaded",
+                "professional_documents_updated_at": enviado_em.isoformat(),
+                "professional_documents": [
+                    {
+                        "id": "doc-profissional-1",
+                        "nome": "crea-docs.pdf",
+                        "mime_type": "application/pdf",
+                        "categoria": "pdf",
+                        "tamanho_bytes": 2048,
+                        "sha256": documento_hash,
+                        "storage_path": "/tmp/nao-expor/crea-docs.pdf",
+                        "uploaded_at": enviado_em.isoformat(),
+                    }
+                ],
+            },
+            ativo=True,
+            criado_por_id=ids["admin_a"],
+        )
+        banco.add(signatario)
+        banco.commit()
+        signatario_id = int(signatario.id)
+
+    _login_cliente(client, "cliente@empresa-a.test")
+
+    pagina_documentos = client.get("/cliente/documentos")
+    assert pagina_documentos.status_code == 200
+    assert 'id="documentos-habilitacao-profissional"' in pagina_documentos.text
+    assert "Comprovações profissionais" in pagina_documentos.text
+
+    resposta_documentos = client.get("/cliente/api/bootstrap?surface=documentos")
+    assert resposta_documentos.status_code == 200
+    corpo = resposta_documentos.json()
+    habilitacao = corpo["documentos"]["professional_habilitation"]
+    item = next(entry for entry in habilitacao["items"] if int(entry["id"]) == signatario_id)
+    documento = item["professional_documents"][0]
+
+    assert item["professional_type_label"] == "Engenheiro de Segurança do Trabalho"
+    assert item["professional_email"] == "eng.docs@empresa-a.test"
+    assert item["approval_status"] == "in_review"
+    assert item["professional_documents_count"] == 1
+    assert documento["nome"] == "crea-docs.pdf"
+    assert documento["tamanho_label"] == "2.0 KB"
+    assert documento["sha256"] == documento_hash
+    assert "storage_path" not in documento
 
 
 def test_admin_cliente_bootstrap_documentos_agrega_art_pie_e_prontuario(
@@ -1677,6 +1876,9 @@ def test_admin_cliente_documentos_expoe_entrega_oficial_nr35_auditavel(
     resposta_pdf = client.get(item["emissao_oficial"]["download_pdf_url"])
     assert resposta_pdf.status_code == 200
     assert resposta_pdf.content == pdf_bytes
+    leitor_pdf_oficial = pypdf.PdfReader(io.BytesIO(resposta_pdf.content))
+    assert "/TarielOfficiality" not in leitor_pdf_oficial.metadata
+    assert NON_OFFICIAL_PDF_NOTICE_TITLE not in _texto_pdf(resposta_pdf.content)
     assert "laudo_nr35_cliente.pdf" in resposta_pdf.headers["content-disposition"]
 
     resposta_pacote = client.get(item["emissao_oficial"]["download_package_url"])
@@ -2202,7 +2404,7 @@ def test_admin_cliente_bootstrap_expoe_pacote_contratado_e_observabilidade_execu
     pacote = corpo["tenant_commercial_overview"]
     observability = corpo["operational_observability"]
 
-    assert pacote["package_label"] == "Chat Inspetor + Mesa + servicos no Inspetor"
+    assert pacote["package_label"] == "Chat de campo + Mesa + serviços no campo"
     assert pacote["mesa_contracted"] is True
     assert pacote["official_issue_included"] is True
     assert pacote["resource_summary"]["separate_mesa_available"] is True

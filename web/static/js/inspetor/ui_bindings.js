@@ -932,9 +932,6 @@
             document.addEventListener("tariel:mensagem-fixar-contexto", (event) => {
                 fixarContextoWorkspace(event?.detail || {});
             });
-            document.addEventListener("tariel:mensagem-enviar-mesa", (event) => {
-                abrirMesaComContexto(event?.detail || {}).catch(() => {});
-            });
             document.addEventListener("tariel:chat-status", (event) => {
                 ctx.actions.atualizarStatusChatWorkspace?.(
                     event?.detail?.status || "pronto",
@@ -972,13 +969,6 @@
                     }
                     return;
                 }
-
-                if (event.altKey && event.key.toLowerCase() === "m" && estado.modoInspecaoUI === "workspace") {
-                    event.preventDefault();
-                    abrirMesaComContexto({
-                        mensagem: `Solicito validação da mesa sobre este laudo.\n\n${ctx.actions.montarResumoContextoIAWorkspace?.() || ""}`,
-                    }).catch(() => {});
-                }
             });
 
             el.botoesAcoesRapidas.forEach((botao) => {
@@ -992,7 +982,12 @@
                     if (chatGuiado) {
                         const prePromptAplicado = aplicarPrePromptDaAcaoRapida(botao);
                         if (prePromptAplicado) {
-                            mostrarToast("Chat guiado aplicado ao composer.", "sucesso", 1800);
+                            const seletorNr = botao.closest("[data-guided-nr-picker]");
+                            if (seletorNr && "open" in seletorNr) {
+                                seletorNr.open = false;
+                            }
+                            focarComposerInspector();
+                            mostrarToast("Roteiro da NR aplicado ao composer.", "sucesso", 1800);
                         }
                         return;
                     }

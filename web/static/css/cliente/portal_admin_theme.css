@@ -364,12 +364,14 @@ tr.user-row-highlight td:first-child {
     color: var(--cliente-text-soft);
 }
 
+.cliente-home-shortcut,
 .cliente-areas-toggle {
     border-color: var(--cliente-primary-stroke);
     background: var(--cliente-primary-soft);
     color: var(--cliente-primary);
 }
 
+.cliente-home-shortcut:hover,
 .cliente-areas-toggle:hover {
     border-color: color-mix(in srgb, var(--cliente-primary) 34%, var(--cliente-primary-stroke));
     background: color-mix(in srgb, var(--cliente-primary-soft) 82%, white);

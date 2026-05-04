@@ -51,6 +51,7 @@
     gap: 8px;
 }
 
+.cliente-home-shortcut,
 .cliente-areas-toggle {
     display: inline-flex;
     align-items: center;
@@ -71,6 +72,16 @@
         color 0.14s ease;
 }
 
+.cliente-home-shortcut {
+    text-decoration: none;
+}
+
+.cliente-home-shortcut .material-symbols-rounded,
+.cliente-areas-toggle .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.cliente-home-shortcut:hover,
 .cliente-areas-toggle:hover {
     border-color: rgba(36, 92, 147, 0.32);
     background: rgba(36, 92, 147, 0.14);
@@ -348,6 +359,7 @@ textarea:focus-visible,
         justify-content: stretch;
     }
 
+    .cliente-home-shortcut,
     .cliente-areas-toggle {
         width: 100%;
         justify-content: center;

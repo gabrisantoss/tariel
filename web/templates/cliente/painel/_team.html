@@ -1,6 +1,6 @@
 <section
     id="admin-team"
-    class="admin-stage admin-tab-panel"
+    class="admin-stage admin-tab-panel cliente-management-section cliente-management-section--team"
     data-admin-stage="team"
     data-admin-panel="team"
     data-stage-state="idle"
@@ -8,140 +8,215 @@
     aria-labelledby="admin-section-tab-team"
     {% if (cliente_admin_section_inicial | default('overview')) != 'team' %}hidden{% endif %}
 >
-    <div class="admin-stage-head">
-        <div class="admin-stage-copy">
-            <span class="admin-stage-kicker">Equipe operacional</span>
-            <h3>Criacao, ativacao e manutencao da equipe</h3>
-            <p class="box-subtitle">Distribua acessos da equipe de campo e da revisao, acompanhe primeiros logins e mantenha a operacao da empresa fluindo.</p>
+    <div class="cliente-team-page-head">
+        <div class="cliente-team-page-head__copy">
+            <span class="cliente-management-kicker">Equipe e usuários</span>
+            <h3>Gerenciar usuários</h3>
+            <p>Visualize os usuários da empresa, acompanhe acessos e cadastre novos membros da equipe.</p>
         </div>
 
-        <div class="admin-stage-meta">
-            <span class="hero-chip">Criacao guiada</span>
-            <span class="hero-chip">Ativacao visivel</span>
-            <span class="hero-chip">Bloqueios sob controle</span>
-        </div>
+        <button id="btn-equipe-novo-usuario" class="cliente-management-action cliente-team-primary-action" type="button" data-team-drawer-open="create">
+            <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
+            <span>Novo usuário</span>
+        </button>
     </div>
 
     <div id="admin-team-brief" class="admin-stage-brief"></div>
 
-    <article id="admin-credencial-painel" class="box box--section admin-credential-panel" hidden aria-live="polite">
-        <div class="toolbar">
-            <div class="toolbar-copy">
-                <h3>Acesso temporario pronto para compartilhar</h3>
-                <p id="admin-credencial-resumo" class="box-subtitle">Use este quadro para copiar o login temporario e orientar o primeiro acesso em canal seguro.</p>
+    <article id="admin-equipe-lista" class="cliente-team-users-card">
+        <div class="cliente-team-users-card__head">
+            <div>
+                <span class="cliente-management-kicker">Equipe</span>
+                <h3>Usuários cadastrados</h3>
+                <p>Consulte perfis, status de acesso e permissões dos usuários da empresa.</p>
             </div>
 
-            <div class="toolbar-actions admin-credential-panel__actions">
-                <button id="btn-admin-credencial-copiar" class="btn" type="button">Copiar dados de acesso</button>
-                <button id="btn-admin-credencial-ocultar" class="btn ghost" type="button">Ocultar</button>
-            </div>
-        </div>
-
-        <div id="admin-credencial-body" class="admin-credential-panel__body"></div>
-    </article>
-
-    <div class="admin-stage-grid admin-stage-grid--split">
-        <article class="box" id="admin-equipe-criacao">
-            <div class="toolbar">
-                <div class="toolbar-copy">
-                    <h3>Novo usuario operacional</h3>
-                    <p class="box-subtitle">Crie pessoas da operacao e da revisao conforme as liberacoes da empresa. O acesso de administracao da empresa e liberado pela Tariel quando necessario.</p>
-                </div>
-            </div>
-
-            <form id="form-usuario" class="stack">
-                <label>
-                    Nome
-                    <input id="usuario-nome" required>
-                </label>
-                <label>
-                    E-mail
-                    <input id="usuario-email" type="email" required>
-                </label>
-                <label>
-                    Papel
-                    <select id="usuario-papel">
-                        <option value="inspetor">Equipe de campo</option>
-                        <option value="revisor">Revisao</option>
-                    </select>
-                </label>
-                <fieldset class="stack">
-                    <legend>Acessos liberados para esta pessoa</legend>
-                    <label>
-                        <input id="usuario-acesso-inspetor" type="checkbox" checked>
-                        Campo web + mobile
-                    </label>
-                    <label>
-                        <input id="usuario-acesso-revisor" type="checkbox">
-                        Revisao
-                    </label>
-                    <label>
-                        <input id="usuario-acesso-cliente" type="checkbox">
-                        Portal da empresa
-                    </label>
-                    <p class="box-subtitle" id="usuario-acesso-nota">Os acessos disponiveis seguem as liberacoes contratadas para esta empresa.</p>
-                </fieldset>
-                <label>
-                    Telefone
-                    <input id="usuario-telefone">
-                </label>
-                <label>
-                    CREA
-                    <input id="usuario-crea">
-                </label>
-                <div id="usuario-capacidade-nota"></div>
-                <button id="btn-usuario-criar" class="btn primary" type="submit">Criar usuario</button>
-            </form>
-        </article>
-
-        <article class="box" id="admin-equipe-onboarding">
-            <div class="toolbar">
-                <div class="toolbar-copy">
-                    <h3>Onboarding da equipe</h3>
-                    <p class="box-subtitle">Veja quem ainda nao ativou o acesso e entre direto na fila certa para destravar a operacao.</p>
-                </div>
-            </div>
-
-            <div id="admin-onboarding-resumo" class="summary-grid"></div>
-            <div id="admin-onboarding-lista" class="activity-list activity-list--section"></div>
-        </article>
-    </div>
-
-    <article class="box box--section" id="admin-equipe-lista">
-        <div class="toolbar">
-            <div class="toolbar-copy">
-                <h3>Equipe operacional da empresa</h3>
-                <p class="box-subtitle">Filtre equipe de campo e revisao, ajuste cadastro e controle bloqueio ou senha temporaria.</p>
-            </div>
-
-            <div class="toolbar-actions">
-                <input id="usuarios-busca" type="search" placeholder="Buscar por nome, e-mail ou telefone">
+            <div class="cliente-team-users-card__filters">
+                <input id="usuarios-busca" type="search" placeholder="Buscar por nome ou e-mail">
                 <select id="usuarios-filtro-papel">
-                    <option value="todos">Todos os papeis</option>
-                    <option value="inspetor">Equipe de campo</option>
-                    <option value="revisor">Revisao</option>
+                    <option value="todos">Todos os perfis</option>
+                    <option value="inspetor">Operador de campo</option>
+                    <option value="revisor">Avaliador</option>
+                </select>
+                <select id="usuarios-filtro-status">
+                    <option value="">Todos os status</option>
+                    <option value="temporarios">Pendentes</option>
+                    <option value="bloqueados">Bloqueados</option>
+                    <option value="sem_login">Sem login</option>
                 </select>
             </div>
         </div>
 
-        <div id="usuarios-resumo" class="toolbar-meta"></div>
+        <div id="usuarios-resumo" class="cliente-team-filter-chips"></div>
 
-        <div class="table-wrap">
-            <table>
+        <div class="cliente-team-table-wrap">
+            <table class="cliente-team-table">
                 <thead>
                     <tr>
-                        <th>Cadastro</th>
-                        <th>Operacao</th>
-                        <th>Acoes</th>
+                        <th>Usuário</th>
+                        <th>Perfil</th>
+                        <th>Acessos</th>
+                        <th>Status</th>
+                        <th>Último acesso</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="lista-usuarios"></tbody>
             </table>
         </div>
 
-        <div id="usuarios-vazio" class="empty-state" hidden>
-            <strong>Nenhum usuario encontrado</strong>
-            <p>Altere a busca ou o filtro para revisar a equipe certa.</p>
+        <div id="usuarios-vazio" class="cliente-team-empty-state" hidden>
+            <span class="material-symbols-rounded" aria-hidden="true">group_add</span>
+            <strong>Nenhum usuário cadastrado</strong>
+            <p>Cadastre o primeiro usuário da empresa para liberar acessos ao portal.</p>
+            <button class="cliente-management-action" type="button" data-team-drawer-open="create">
+                <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
+                <span>Novo usuário</span>
+            </button>
         </div>
     </article>
+
+    <div class="cliente-team-secondary-grid">
+        <article class="cliente-team-status-card" id="admin-equipe-onboarding">
+            <div class="cliente-team-status-card__head">
+                <div>
+                    <span class="cliente-management-kicker">Status de acesso</span>
+                    <h3>Status de acesso</h3>
+                    <p>Monitore usuários que ainda não acessaram, estão bloqueados ou precisam concluir a ativação.</p>
+                </div>
+            </div>
+
+            <div id="admin-onboarding-resumo" class="cliente-team-status-grid"></div>
+            <div id="admin-onboarding-lista" class="cliente-team-status-list"></div>
+        </article>
+
+        <article id="admin-credencial-painel" class="cliente-team-status-card admin-credential-panel" hidden aria-live="polite">
+            <div class="cliente-team-status-card__head">
+                <div>
+                    <span class="cliente-management-kicker">Acesso temporário</span>
+                    <h3>Acesso temporário</h3>
+                    <p id="admin-credencial-resumo">Copie login e senha temporária para enviar em canal seguro.</p>
+                </div>
+
+                <div class="admin-credential-panel__actions">
+                    <button id="btn-admin-credencial-copiar" class="btn" type="button">Copiar dados</button>
+                    <button id="btn-admin-credencial-ocultar" class="btn ghost" type="button">Ocultar</button>
+                </div>
+            </div>
+
+            <div id="admin-credencial-body" class="admin-credential-panel__body"></div>
+        </article>
+    </div>
+
+    <div id="cliente-team-create-drawer" class="cliente-team-drawer" hidden>
+        <div class="cliente-team-drawer__backdrop" data-team-drawer-close></div>
+        <aside class="cliente-team-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="cliente-team-create-title">
+            <header class="cliente-team-drawer__head">
+                <div>
+                    <span class="cliente-management-kicker">Novo usuário</span>
+                    <h3 id="cliente-team-create-title">Cadastrar usuário</h3>
+                    <p>Preencha os dados cadastrais, profissionais e os módulos que essa pessoa poderá usar.</p>
+                </div>
+                <button class="cliente-team-icon-button" type="button" aria-label="Fechar cadastro" data-team-drawer-close>
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </header>
+
+            <article id="admin-equipe-criacao" class="cliente-team-drawer__body">
+                <form id="form-usuario" class="cliente-team-form">
+                    <label>
+                        Nome
+                        <input id="usuario-nome" required autocomplete="name">
+                    </label>
+                    <label>
+                        E-mail
+                        <input id="usuario-email" type="email" required autocomplete="email">
+                    </label>
+                    <label>
+                        Papel / Perfil
+                        <select id="usuario-papel">
+                            <option value="inspetor">Operador de campo</option>
+                            <option value="revisor">Avaliador</option>
+                        </select>
+                    </label>
+                    <label>
+                        Telefone <span>opcional</span>
+                        <input id="usuario-telefone" autocomplete="tel">
+                    </label>
+                    <label id="usuario-crea-field" hidden>
+                        CREA <span>opcional</span>
+                        <input id="usuario-crea">
+                    </label>
+                    <fieldset>
+                        <legend>Módulos liberados</legend>
+                        <label>
+                            <input id="usuario-acesso-inspetor" type="checkbox" checked>
+                            Chat de campo
+                        </label>
+                        <label>
+                            <input id="usuario-acesso-revisor" type="checkbox">
+                            Mesa avaliadora
+                        </label>
+                        <p id="usuario-acesso-nota">Os acessos disponíveis seguem as liberações contratadas para esta conta.</p>
+                    </fieldset>
+                    <div id="usuario-capacidade-nota" class="cliente-team-capacity-note"></div>
+                    <footer class="cliente-team-drawer__footer">
+                        <button class="cliente-management-action cliente-management-action--ghost" type="button" data-team-drawer-close>Voltar</button>
+                        <button id="btn-usuario-criar" class="cliente-management-action cliente-team-primary-action" type="submit">Cadastrar usuário</button>
+                    </footer>
+                </form>
+            </article>
+        </aside>
+    </div>
+
+    <div id="cliente-team-edit-drawer" class="cliente-team-drawer" hidden>
+        <div class="cliente-team-drawer__backdrop" data-team-edit-close></div>
+        <aside class="cliente-team-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="cliente-team-edit-title">
+            <header class="cliente-team-drawer__head">
+                <div>
+                    <span class="cliente-management-kicker">Editar usuário</span>
+                    <h3 id="cliente-team-edit-title">Editar usuário</h3>
+                    <p id="cliente-team-edit-subtitle">Atualize dados, permissões e módulos liberados.</p>
+                </div>
+                <button class="cliente-team-icon-button" type="button" aria-label="Fechar edição" data-team-edit-close>
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </header>
+
+            <form id="form-usuario-edicao" class="cliente-team-form">
+                <input id="usuario-edicao-id" type="hidden">
+                <label>
+                    Nome
+                    <input id="usuario-edicao-nome" data-edit-field="nome" required>
+                </label>
+                <label>
+                    E-mail
+                    <input id="usuario-edicao-email" data-edit-field="email" type="email" required>
+                </label>
+                <label>
+                    Telefone <span>opcional</span>
+                    <input id="usuario-edicao-telefone" data-edit-field="telefone">
+                </label>
+                <label id="usuario-edicao-crea-field" hidden>
+                    CREA <span>opcional</span>
+                    <input id="usuario-edicao-crea" data-edit-field="crea">
+                </label>
+                <fieldset>
+                    <legend>Módulos liberados</legend>
+                    <label>
+                        <input id="usuario-edicao-acesso-inspetor" data-edit-portal="inspetor" type="checkbox">
+                        Chat de campo
+                    </label>
+                    <label>
+                        <input id="usuario-edicao-acesso-revisor" data-edit-portal="revisor" type="checkbox">
+                        Mesa avaliadora
+                    </label>
+                </fieldset>
+                <footer class="cliente-team-drawer__footer">
+                    <button class="cliente-management-action cliente-management-action--ghost" type="button" data-team-edit-close>Voltar</button>
+                    <button id="btn-usuario-edicao-salvar" class="cliente-management-action cliente-team-primary-action" type="submit">Salvar alterações</button>
+                </footer>
+            </form>
+        </aside>
+    </div>
 </section>

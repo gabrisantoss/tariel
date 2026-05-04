@@ -64,6 +64,11 @@
 
         const routeMap = Object.freeze({
             admin: texto(config.routeMap?.admin).trim() || "/cliente/painel",
+            home: texto(config.routeMap?.home).trim() || texto(config.routeMap?.admin).trim() || "/cliente/home",
+            equipe: texto(config.routeMap?.equipe).trim() || "/cliente/organizacao/equipe",
+            acessos: texto(config.routeMap?.acessos).trim() || "/cliente/acessos",
+            plano: texto(config.routeMap?.plano).trim() || "/cliente/plano",
+            suporte: texto(config.routeMap?.suporte).trim() || "/cliente/suporte",
             servicos: texto(config.routeMap?.servicos).trim() || "/cliente/servicos",
             recorrencia: texto(config.routeMap?.recorrencia).trim() || "/cliente/recorrencia",
             ativos: texto(config.routeMap?.ativos).trim() || "/cliente/ativos",
@@ -77,6 +82,8 @@
                 aliases: Object.freeze({
                     planos: "capacity",
                     equipe: "team",
+                    acessos: "team",
+                    access: "team",
                     governanca: "support",
                 }),
                 values: Object.freeze(["overview", "capacity", "team", "support"]),
@@ -122,7 +129,7 @@
         })();
         const shellSurfaceLabels = Object.freeze({
             admin: Object.freeze({
-                title: "Admin",
+                title: "Home",
                 desc: "Empresa, plano e equipe",
             }),
             servicos: Object.freeze({
@@ -400,6 +407,13 @@
 
         function tabAtualDaUrl() {
             const atual = _normalizarPath(locationRef?.pathname || "");
+            if (
+                atual === _normalizarPath(routeMap.home) ||
+                atual === _normalizarPath(routeMap.equipe) ||
+                atual === _normalizarPath(routeMap.acessos) ||
+                atual === _normalizarPath(routeMap.plano) ||
+                atual === _normalizarPath(routeMap.suporte)
+            ) return "admin";
             if (atual === _normalizarPath(routeMap.servicos)) return "servicos";
             if (atual === _normalizarPath(routeMap.recorrencia)) return "recorrencia";
             if (atual === _normalizarPath(routeMap.ativos)) return "ativos";
@@ -411,6 +425,13 @@
         }
 
         function secaoAtualDaUrl(surface = tabAtualDaUrl() || state.ui?.tab || initialTab || "admin") {
+            if (surface === "admin") {
+                const atual = _normalizarPath(locationRef?.pathname || "");
+                if (atual === _normalizarPath(routeMap.equipe)) return "team";
+                if (atual === _normalizarPath(routeMap.acessos)) return "access";
+                if (atual === _normalizarPath(routeMap.plano)) return "capacity";
+                if (atual === _normalizarPath(routeMap.suporte)) return "support";
+            }
             try {
                 const params = new URLSearchParams(locationRef?.search || "");
                 return normalizarSecao(surface, params.get("sec") || params.get("secao"));
@@ -420,6 +441,19 @@
         }
 
         function _urlDaSurface(nome, secao) {
+            if (nome === "admin") {
+                const secaoAdmin = normalizarSecao("admin", secao);
+                const rotaAdmin =
+                    secaoAdmin === "team"
+                        ? routeMap.equipe
+                        : secaoAdmin === "capacity"
+                            ? routeMap.plano
+                            : secaoAdmin === "support"
+                              ? routeMap.suporte
+                              : routeMap.home;
+                const urlAdmin = new URL(rotaAdmin, locationRef?.origin || windowRef.location.origin);
+                return urlAdmin.pathname;
+            }
             const rota = routeMap[nome];
             if (!rota) return "";
             const url = new URL(rota, locationRef?.origin || windowRef.location.origin);
@@ -497,8 +531,13 @@
             const chave = ["servicos", "recorrencia", "ativos", "documentos", "chat", "mesa"].includes(tab) ? tab : "admin";
             const fallback = shellSurfaceLabels[chave] || shellSurfaceLabels.admin;
             const tabAtiva = documentRef.querySelector(`.cliente-tab[data-tab="${chave}"]`);
-            const titulo = texto(tabAtiva?.dataset?.surfaceTitle).trim() || fallback.title;
-            const descricao = texto(tabAtiva?.dataset?.surfaceDesc).trim() || fallback.desc;
+            const linkGestaoAtivo = documentRef.querySelector(".cliente-management-link.is-active");
+            const titulo = texto(tabAtiva?.dataset?.surfaceTitle).trim()
+                || texto(linkGestaoAtivo?.dataset?.surfaceTitle).trim()
+                || fallback.title;
+            const descricao = texto(tabAtiva?.dataset?.surfaceDesc).trim()
+                || texto(linkGestaoAtivo?.dataset?.surfaceDesc).trim()
+                || fallback.desc;
 
             if (resumoTitulo) resumoTitulo.textContent = titulo;
             if (resumoMeta) resumoMeta.textContent = descricao;

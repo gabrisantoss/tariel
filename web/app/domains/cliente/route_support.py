@@ -45,8 +45,13 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 URL_LOGIN = "/cliente/login"
 URL_LOGIN_INSPETOR = "/app/login"
 URL_LOGIN_REVISOR = "/revisao/login"
+URL_DASHBOARD = "/cliente/dashboard"
+URL_HOME = "/cliente/home"
 URL_PAINEL = "/cliente/painel"
-URL_EQUIPE = "/cliente/equipe"
+URL_EQUIPE = "/cliente/organizacao/equipe"
+URL_ACESSOS = "/cliente/acessos"
+URL_PLANO = "/cliente/plano"
+URL_SUPORTE = "/cliente/suporte"
 URL_SERVICOS = "/cliente/servicos"
 URL_RECORRENCIA = "/cliente/recorrencia"
 URL_CHAT = "/cliente/chat"
@@ -54,7 +59,12 @@ URL_MESA = "/cliente/mesa"
 URL_ATIVOS = "/cliente/ativos"
 URL_DOCUMENTOS = "/cliente/documentos"
 CLIENTE_SURFACE_ROUTES = {
-    "admin": URL_PAINEL,
+    "admin": URL_HOME,
+    "home": URL_HOME,
+    "equipe": URL_EQUIPE,
+    "acessos": URL_ACESSOS,
+    "plano": URL_PLANO,
+    "suporte": URL_SUPORTE,
     "servicos": URL_SERVICOS,
     "recorrencia": URL_RECORRENCIA,
     "ativos": URL_ATIVOS,
@@ -64,6 +74,11 @@ CLIENTE_SURFACE_ROUTES = {
 }
 CLIENTE_SURFACE_SECTION_DEFAULTS = {
     "admin": "overview",
+    "home": "overview",
+    "equipe": "overview",
+    "acessos": "overview",
+    "plano": "overview",
+    "suporte": "overview",
     "servicos": "overview",
     "recorrencia": "overview",
     "ativos": "overview",
@@ -73,6 +88,11 @@ CLIENTE_SURFACE_SECTION_DEFAULTS = {
 }
 CLIENTE_SURFACE_SECTION_OPTIONS = {
     "admin": {"overview", "capacity", "team", "support"},
+    "home": {"overview"},
+    "equipe": {"overview"},
+    "acessos": {"overview"},
+    "plano": {"overview"},
+    "suporte": {"overview"},
     "servicos": {"overview"},
     "recorrencia": {"overview"},
     "ativos": {"overview"},
@@ -83,9 +103,19 @@ CLIENTE_SURFACE_SECTION_OPTIONS = {
 CLIENTE_SURFACE_SECTION_ALIASES = {
     "admin": {
         "planos": "capacity",
+        "plano": "capacity",
         "equipe": "team",
+        "usuarios": "team",
+        "acessos": "team",
+        "access": "team",
         "governanca": "support",
+        "suporte": "support",
     },
+    "home": {},
+    "equipe": {},
+    "acessos": {},
+    "plano": {},
+    "suporte": {},
     "servicos": {},
     "recorrencia": {},
     "ativos": {},
@@ -104,9 +134,9 @@ _PORTAL_LOGIN_ROUTES = {
     PORTAL_REVISOR: URL_LOGIN_REVISOR,
 }
 _ONBOARDING_PORTAL_LABELS = {
-    PORTAL_CLIENTE: "Admin-Cliente",
-    PORTAL_INSPETOR: "Inspetor web/mobile",
-    PORTAL_REVISOR: "Mesa Avaliadora",
+    PORTAL_CLIENTE: "Portal Cliente",
+    PORTAL_INSPETOR: "Chat de campo",
+    PORTAL_REVISOR: "Mesa avaliadora",
 }
 
 
@@ -142,6 +172,35 @@ def _render_login_cliente(
             "erro": erro,
             "email_prefill": str(email or "").strip().lower(),
             "primeiro_acesso": bool(primeiro_acesso),
+        },
+        status_code=status_code,
+    )
+
+
+def _render_dashboard_cliente(
+    request: Request,
+    *,
+    usuario: Usuario,
+    empresa: Empresa,
+    dashboard_payload: dict[str, Any],
+    status_code: int = 200,
+) -> HTMLResponse:
+    tenant_admin_policy = summarize_tenant_admin_policy(
+        getattr(empresa, "admin_cliente_policy_json", None)
+    )
+    return _render_template(
+        request,
+        "cliente_dashboard.html",
+        {
+            "usuario": usuario,
+            "empresa": empresa,
+            "dashboard_payload": dashboard_payload,
+            "cliente_surface_routes": CLIENTE_SURFACE_ROUTES,
+            "portal_switch_links": usuario_portal_switch_links(
+                usuario,
+                portal_atual=PORTAL_CLIENTE,
+            ),
+            "tenant_admin_policy": tenant_admin_policy,
         },
         status_code=status_code,
     )
@@ -439,6 +498,12 @@ def _render_portal_cliente(
         getattr(empresa, "admin_cliente_policy_json", None)
     )
     surface_availability = {
+        "admin": True,
+        "home": True,
+        "equipe": True,
+        "acessos": True,
+        "plano": True,
+        "suporte": True,
         "servicos": True,
         "recorrencia": True,
         "ativos": True,
@@ -587,9 +652,15 @@ def _registrar_auditoria_cliente_segura(
 
 __all__ = [
     "CLIENTE_SURFACE_ROUTES",
+    "URL_ACESSOS",
+    "URL_DASHBOARD",
+    "URL_EQUIPE",
+    "URL_HOME",
     "URL_LOGIN",
     "URL_LOGIN_INSPETOR",
     "URL_LOGIN_REVISOR",
+    "URL_PLANO",
+    "URL_SUPORTE",
     "URL_CHAT",
     "URL_MESA",
     "URL_PAINEL",
@@ -608,6 +679,7 @@ __all__ = [
     "_registrar_auditoria_cliente_segura",
     "_registrar_sessao_cliente",
     "_render_login_cliente",
+    "_render_dashboard_cliente",
     "_render_portal_cliente",
     "_render_template",
     "_render_troca_senha",
