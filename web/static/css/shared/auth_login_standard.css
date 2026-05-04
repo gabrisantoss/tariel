@@ -1,0 +1,249 @@
+.auth-login-standard {
+    gap: 16px;
+}
+
+.auth-login-standard .auth-intro {
+    display: grid;
+    gap: 8px;
+}
+
+.auth-login-standard .auth-context-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 28px;
+    padding: 6px 10px;
+    border: 1px solid rgba(31, 79, 130, 0.14);
+    border-radius: 999px;
+    background: rgba(31, 79, 130, 0.06);
+    color: var(--auth-accent, #234a73);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.auth-login-standard .auth-intro__title {
+    color: var(--auth-text, #12233c);
+    font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.auth-login-standard .auth-intro__copy {
+    margin: 0;
+    color: var(--auth-text-soft, #5f7388);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.auth-login-standard .auth-field--password input {
+    padding-right: 92px;
+}
+
+.auth-login-standard .auth-toggle {
+    width: auto;
+    min-width: 72px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.auth-login-standard .auth-utility {
+    width: 100%;
+    align-items: center;
+}
+
+.auth-login-standard .auth-checkbox {
+    cursor: pointer;
+    user-select: none;
+}
+
+.auth-login-standard .auth-checkbox input {
+    cursor: pointer;
+}
+
+.auth-login-standard .auth-helper-link,
+.auth-login-standard .auth-link-button {
+    color: var(--auth-accent, #234a73);
+    text-align: right;
+    text-decoration: none;
+}
+
+.auth-login-standard .auth-helper-link:hover,
+.auth-login-standard .auth-link-button:hover {
+    color: var(--auth-accent-hover, #1f4f82);
+    text-decoration: underline;
+}
+
+.auth-login-standard .auth-provider-group {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    margin-top: 2px;
+}
+
+.auth-login-standard .auth-provider-title {
+    margin: 0;
+    color: var(--auth-text-soft, #5f7388);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.auth-login-standard .auth-provider-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+}
+
+.auth-login-standard .auth-provider-button {
+    min-width: 0;
+    min-height: 44px;
+    gap: 8px;
+    padding: 0 10px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.auth-login-standard .auth-provider-mark {
+    display: inline-grid;
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.auth-login-standard .auth-provider-button--google .auth-provider-mark {
+    background: #1a73e8;
+}
+
+.auth-login-standard .auth-provider-button--apple .auth-provider-mark {
+    background: #111827;
+}
+
+.auth-login-standard .auth-provider-mark--microsoft {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    border-radius: 4px;
+    background: transparent;
+}
+
+.auth-login-standard .auth-provider-mark--microsoft span {
+    display: block;
+    width: 8px;
+    height: 8px;
+}
+
+.auth-login-standard .auth-provider-mark--microsoft span:nth-child(1) {
+    background: #f25022;
+}
+
+.auth-login-standard .auth-provider-mark--microsoft span:nth-child(2) {
+    background: #7fba00;
+}
+
+.auth-login-standard .auth-provider-mark--microsoft span:nth-child(3) {
+    background: #00a4ef;
+}
+
+.auth-login-standard .auth-provider-mark--microsoft span:nth-child(4) {
+    background: #ffb900;
+}
+
+.auth-login-standard .auth-provider-feedback {
+    width: 100%;
+    min-height: 38px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(31, 79, 130, 0.12);
+    border-radius: 12px;
+    background: rgba(31, 79, 130, 0.05);
+    color: var(--auth-text-soft, #5f7388);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.auth-login-standard .auth-portal-switcher {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    padding-top: 14px;
+    border-top: 1px solid var(--auth-border-soft, rgba(216, 224, 234, 0.64));
+}
+
+.auth-login-standard .auth-portal-switcher__label {
+    color: var(--auth-text-dim, #8694a5);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.auth-login-standard .auth-portal-switcher__links {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.auth-login-standard .auth-portal-option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 10px;
+    border: 1px solid var(--auth-border-soft, rgba(216, 224, 234, 0.64));
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.62);
+    color: var(--auth-text-soft, #5f7388);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    transition: border-color 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+
+.auth-login-standard .auth-portal-option:hover,
+.auth-login-standard .auth-portal-option:focus-visible {
+    border-color: rgba(31, 79, 130, 0.24);
+    background: rgba(31, 79, 130, 0.06);
+    color: var(--auth-accent, #234a73);
+}
+
+.auth-login-standard .auth-portal-option.is-active,
+.auth-login-standard .auth-portal-option[aria-current="page"] {
+    border-color: rgba(31, 79, 130, 0.28);
+    background: rgba(31, 79, 130, 0.1);
+    color: var(--auth-accent, #234a73);
+}
+
+body.auth-shell--admin .auth-login-standard .auth-layout-note {
+    color: #5f7388;
+}
+
+@media (max-width: 640px) {
+    .auth-login-standard .auth-provider-actions,
+    .auth-login-standard .auth-portal-switcher__links {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-login-standard .auth-utility {
+        display: grid;
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+
+    .auth-login-standard .auth-helper-link,
+    .auth-login-standard .auth-link-button {
+        text-align: left;
+    }
+}

@@ -463,6 +463,10 @@ def _render_login(request: Request, *, erro: str = "", status_code: int = 200) -
             "mfa_required": True,
             "identity_providers": identidade_provedores,
             "identity_providers_enabled": bool(identidade_provedores),
+            "identity_provider_urls": {
+                item["slug"]: item["start_url"]
+                for item in identidade_provedores
+            },
         },
         status_code=status_code,
     )

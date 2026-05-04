@@ -567,20 +567,7 @@ def registrar_rotas_operacionais(
     @app.get("/", include_in_schema=False)
     def pagina_publica_raiz(
         request: Request,
-        banco: Session = Depends(obter_banco),
     ) -> Response:
-        usuario = obter_usuario_da_sessao(request, banco)
-
-        if usuario:
-            logger.debug(
-                "Redirecionando usuário autenticado",
-                extra={
-                    "email": usuario.email,
-                    "nivel_acesso": usuario.nivel_acesso,
-                },
-            )
-            return redirecionar_por_nivel(usuario)
-
         return templates_publicos.TemplateResponse(
             request,
             "public_landing.html",

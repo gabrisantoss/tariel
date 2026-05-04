@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="/static/css/admin/admin_auth_shell.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/cliente/cliente_auth.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/shared/official_visual_system.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/shared/auth_login_standard.css?v={{ v_app }}">
 </head>
 <body class="auth-shell auth-shell--cliente">
     <main class="auth-layout auth-layout--split">
@@ -24,10 +25,11 @@
         </section>
 
         <section class="auth-card">
-            <div class="auth-card-shell">
+            <div class="auth-card-shell auth-login-standard">
                 <div class="auth-intro">
                     <span class="auth-context-badge">Acesso do cliente</span>
                     <strong class="auth-intro__title">Login</strong>
+                    <p class="auth-intro__copy">Portal administrativo da empresa para acompanhar equipe, inspeções e entregas.</p>
                 </div>
 
                 {% if primeiro_acesso %}
@@ -40,7 +42,7 @@
                 <div class="auth-error" role="alert" aria-live="assertive">{{ erro }}</div>
                 {% endif %}
 
-                <form class="auth-form auth-form--minimal" method="post" action="/cliente/login" data-auth-form>
+                <form class="auth-form auth-form--minimal" method="post" action="/cliente/login" data-auth-form data-auth-standard-form>
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="primeiro_acesso" value="{{ '1' if primeiro_acesso else '' }}">
 
@@ -48,60 +50,61 @@
                         <input id="email" type="email" name="email" autocomplete="username" placeholder="E-mail de acesso" value="{{ email_prefill | default('', true) | e }}" required aria-label="E-mail de acesso">
                     </div>
 
-                    <div class="auth-field">
+                    <div class="auth-field auth-field--password">
                         <input id="senha" type="password" name="senha" autocomplete="current-password" placeholder="Senha" required aria-label="Senha">
+                        <button class="auth-toggle" type="button" data-password-toggle data-password-target="senha" aria-label="Mostrar senha" aria-pressed="false">
+                            <span data-password-toggle-label>Mostrar</span>
+                        </button>
                     </div>
 
-                    <button class="auth-button" type="submit">Acessar</button>
+                    <div class="auth-utility">
+                        <label class="auth-checkbox">
+                            <input type="checkbox" name="lembrar" value="true">
+                            <span>Lembrar acesso</span>
+                        </label>
+                        <button class="auth-helper-link auth-link-button" type="button" data-auth-support-action data-auth-support-context="do Admin Cliente" data-auth-support-message="Para recuperar senha do Admin Cliente, fale com a Tariel ou com o responsavel interno da conta.">
+                            Esqueci a senha
+                        </button>
+                    </div>
+
+                    <button class="auth-button" type="submit" data-loading-label="Entrando...">Acessar</button>
                 </form>
 
-                <div class="auth-provider-actions" aria-label="Vincular conta corporativa">
-                    <button class="auth-provider-button auth-provider-button--google" type="button" data-provider-link="Google" aria-label="Vincular conta Google">
-                        <span class="auth-provider-mark" aria-hidden="true">G</span>
-                        <span>Google</span>
-                    </button>
-                    <button class="auth-provider-button auth-provider-button--apple" type="button" data-provider-link="Apple" aria-label="Vincular conta Apple">
-                        <span class="auth-provider-mark" aria-hidden="true">A</span>
-                        <span>Apple</span>
-                    </button>
-                    <button class="auth-provider-button auth-provider-button--microsoft" type="button" data-provider-link="Microsoft" aria-label="Vincular conta Microsoft">
-                        <span class="auth-provider-mark auth-provider-mark--microsoft" aria-hidden="true">
-                            <span></span><span></span><span></span><span></span>
-                        </span>
-                        <span>Microsoft</span>
-                    </button>
+                <div class="auth-provider-group">
+                    <p class="auth-provider-title">Entrar com conta corporativa</p>
+                    <div class="auth-provider-actions" aria-label="Entrar com conta corporativa">
+                        <button class="auth-provider-button auth-provider-button--google" type="button" data-provider-link="Google" data-provider-feedback-message="Login com Google no Admin Cliente sera liberado para contas autorizadas da empresa." aria-label="Entrar com Google">
+                            <span class="auth-provider-mark" aria-hidden="true">G</span>
+                            <span>Google</span>
+                        </button>
+                        <button class="auth-provider-button auth-provider-button--apple" type="button" data-provider-link="Apple" data-provider-feedback-message="Login com Apple no Admin Cliente sera liberado para contas autorizadas da empresa." aria-label="Entrar com Apple">
+                            <span class="auth-provider-mark" aria-hidden="true">A</span>
+                            <span>Apple</span>
+                        </button>
+                        <button class="auth-provider-button auth-provider-button--microsoft" type="button" data-provider-link="Microsoft" data-provider-feedback-message="Login com Microsoft no Admin Cliente sera liberado para contas autorizadas da empresa." aria-label="Entrar com Microsoft">
+                            <span class="auth-provider-mark auth-provider-mark--microsoft" aria-hidden="true">
+                                <span></span><span></span><span></span><span></span>
+                            </span>
+                            <span>Microsoft</span>
+                        </button>
+                    </div>
                 </div>
-                <p class="auth-provider-feedback" data-provider-feedback hidden aria-live="polite"></p>
+                <p class="auth-provider-feedback" data-auth-feedback hidden aria-live="polite"></p>
+
+                <nav class="auth-portal-switcher" aria-label="Escolher outro portal">
+                    <span class="auth-portal-switcher__label">Portais de acesso</span>
+                    <div class="auth-portal-switcher__links">
+                        <a class="auth-portal-option is-active" href="/cliente/login" aria-current="page">Admin Cliente</a>
+                        <a class="auth-portal-option" href="/app/login">Chat Inspetor</a>
+                        <a class="auth-portal-option" href="/revisao/login">Mesa Avaliadora</a>
+                    </div>
+                </nav>
 
                 <p class="auth-access-note">Precisa de acesso ou apoio no primeiro login? Fale com a Tariel.</p>
-                <p class="auth-access-note"><a href="/revisao/login">Acessar Mesa Avaliadora</a></p>
             </div>
         </section>
     </main>
 
-    <script nonce="{{ csp_nonce }}">
-        (() => {
-            "use strict";
-
-            document.querySelectorAll("[data-auth-form]").forEach((form) => {
-                form.addEventListener("submit", () => {
-                    const botao = form.querySelector(".auth-button");
-                    if (!botao) return;
-                    botao.disabled = true;
-                    botao.innerHTML = "<span>Entrando...</span>";
-                });
-            });
-
-            const feedback = document.querySelector("[data-provider-feedback]");
-            document.querySelectorAll("[data-provider-link]").forEach((button) => {
-                button.addEventListener("click", () => {
-                    if (!feedback) return;
-                    const provider = button.getAttribute("data-provider-link") || "provedor";
-                    feedback.hidden = false;
-                    feedback.textContent = `Vinculo com ${provider} sera liberado pela Tariel para contas autorizadas da empresa.`;
-                });
-            });
-        })();
-    </script>
+    <script src="/static/js/shared/auth_login_standard.js?v={{ v_app }}" defer nonce="{{ csp_nonce }}"></script>
 </body>
 </html>
