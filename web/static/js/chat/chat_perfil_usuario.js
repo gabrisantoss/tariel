@@ -344,7 +344,10 @@
         }
 
         if (avatarConta) {
-            avatarConta.textContent = obterIniciais(dados.nome_completo || "");
+            renderAvatar(avatarConta, {
+                nome: dados.nome_completo || "",
+                foto: dados.foto_perfil_url || "",
+            });
         }
     }
 
