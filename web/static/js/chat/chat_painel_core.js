@@ -859,8 +859,8 @@
                 preencherCampoMensagem,
                 enviarParaIA: (...args) => window.TarielAPI?.enviarParaIA?.(...args),
                 finalizarRelatorio: (...args) =>
-                    window.TarielAPI?.finalizarRelatorio?.(...args) ||
-                    window.finalizarInspecaoCompleta?.(...args),
+                    window.finalizarInspecaoCompleta?.(...args) ||
+                    window.TarielAPI?.finalizarRelatorio?.(...args),
                 enviarFeedback: (...args) => window.TarielAPI?.enviarFeedback?.(...args),
                 gerarPDF: (...args) => window.TarielAPI?.gerarPDF?.(...args),
             });

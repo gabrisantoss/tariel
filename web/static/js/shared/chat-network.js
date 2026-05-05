@@ -1101,7 +1101,7 @@
                 laudo_card: snapshot?.laudo_card ?? null,
             });
 
-            mostrarToast("Relatorio enviado para a mesa!", "sucesso", 5000);
+            mostrarToast("Relatorio finalizado.", "sucesso", 5000);
 
             return resposta;
         }
@@ -1109,11 +1109,11 @@
         async function finalizarRelatorio(opcoes = {}) {
             const tipoTemplate = opcoes?.tipoTemplate || window.tipoTemplateAtivo || "padrao";
 
-            if (opcoes?.direto === true) {
-                return finalizarRelatorioDireto(opcoes);
+            if (opcoes?.viaComando === true) {
+                return finalizarViaComandoSistema(tipoTemplate);
             }
 
-            return finalizarViaComandoSistema(tipoTemplate);
+            return finalizarRelatorioDireto(opcoes);
         }
 
         async function obterPreviaFinalizacaoRelatorio(laudoIdInformado = null) {

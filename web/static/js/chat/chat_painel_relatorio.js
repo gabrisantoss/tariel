@@ -403,13 +403,33 @@
     async function revisarAntesDeFinalizar(laudoId) {
         try {
             const preview = await window.TarielAPI?.obterPreviaFinalizacaoRelatorio?.(laudoId);
-            if (!preview) return true;
-            return await confirmarPreviaFinalizacao(preview);
+            if (!preview) return { confirmado: true, preview: null };
+            return {
+                confirmado: await confirmarPreviaFinalizacao(preview),
+                preview,
+            };
         } catch (erro) {
             TP.log?.("warn", "Falha ao obter previa de finalizacao:", erro);
             TP.toast?.("Não foi possível carregar a prévia. A finalização seguirá com os bloqueios do servidor.", "aviso", 3200);
-            return true;
+            return { confirmado: true, preview: null };
         }
+    }
+
+    function obterEstadoProvisorioFinalizacao(preview = null) {
+        const modoFinal = String(preview?.review_mode_final_preview || "").trim().toLowerCase();
+        const acaoPrimaria = String(preview?.primary_action || "").trim().toLowerCase();
+        if (modoFinal === "mobile_autonomous" || acaoPrimaria === "approve_without_mesa") {
+            return {
+                estado: "aprovado",
+                caseLifecycleStatus: "aprovado",
+                activeOwnerRole: "inspetor",
+            };
+        }
+        return {
+            estado: "aguardando",
+            caseLifecycleStatus: "aguardando_mesa",
+            activeOwnerRole: "mesa",
+        };
     }
 
     function solicitarPoliticaDocumentoEmitidoReabertura(snapshotAtual = {}) {
@@ -512,7 +532,7 @@
             desabilitado: bloqueadoPorIA || finalizacaoEmAndamento(),
             busy: finalizacaoEmAndamento(),
             motivo: bloqueadoPorIA
-                ? "Aguarde a IA terminar antes de enviar para a mesa."
+                ? "Aguarde a IA terminar antes de finalizar."
                 : "",
         });
     }
@@ -844,18 +864,20 @@
 
         TP.log?.("info", `Finalizando laudo ${laudoId} com template ${tipoTemplate}.`);
 
-        const confirmouPreview = await revisarAntesDeFinalizar(laudoId);
-        if (!confirmouPreview) {
+        const decisaoPreview = await revisarAntesDeFinalizar(laudoId);
+        if (!decisaoPreview?.confirmado) {
             return null;
         }
 
         const snapshotAntesFinalizacao = snapshotAtual;
+        const estadoProvisorio = obterEstadoProvisorioFinalizacao(decisaoPreview.preview);
         bloquearUIFinalizacao();
         aplicarModoLaudoSelecionado({
             laudoId,
-            estado: "aguardando",
+            estado: estadoProvisorio.estado,
             permiteReabrir: false,
-            caseLifecycleStatus: "aguardando_mesa",
+            caseLifecycleStatus: estadoProvisorio.caseLifecycleStatus,
+            activeOwnerRole: estadoProvisorio.activeOwnerRole,
             allowedSurfaceActions: [],
             allowedLifecycleTransitions: [],
         });

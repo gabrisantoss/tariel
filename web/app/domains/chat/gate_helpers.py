@@ -1191,13 +1191,24 @@ def avaliar_gate_qualidade_laudo(banco: Session, laudo: Laudo) -> dict[str, Any]
         "evidencias": qtd_evidencias,
     }
 
-    mensagem = (
-        "Coleta pronta para finalizar. O laudo pode ser enviado para a mesa avaliadora."
-        if aprovado
-        else (
-            f"O chat encontrou {len(faltantes)} ponto(s) pendente(s) antes de finalizar."
-        )
-    )
+    review_mode_sugerido = str(
+        report_pack_quality_gates.get("final_validation_mode") or "mesa_required"
+    ).strip()
+    if aprovado:
+        if review_mode_sugerido == "mobile_autonomous":
+            mensagem = (
+                "Coleta pronta para finalizar. O laudo pode seguir para "
+                "revisão interna governada."
+            )
+        elif review_mode_sugerido == "mesa_required":
+            mensagem = (
+                "Coleta pronta para finalizar. O laudo pode ser enviado para "
+                "a mesa avaliadora."
+            )
+        else:
+            mensagem = "Coleta pronta para finalizar. O laudo pode seguir para revisão governada."
+    else:
+        mensagem = f"O chat encontrou {len(faltantes)} ponto(s) pendente(s) antes de finalizar."
 
     resultado = {
         "codigo": "GATE_QUALIDADE_OK" if aprovado else "GATE_QUALIDADE_REPROVADO",
@@ -1210,9 +1221,7 @@ def avaliar_gate_qualidade_laudo(banco: Session, laudo: Laudo) -> dict[str, Any]
         "faltantes": faltantes,
         "roteiro_template": roteiro_template,
         "report_pack_draft": report_pack_draft,
-        "review_mode_sugerido": str(
-            report_pack_quality_gates.get("final_validation_mode") or "mesa_required"
-        ),
+        "review_mode_sugerido": review_mode_sugerido,
         "human_override_policy": _build_human_override_policy(
             laudo=laudo,
             tipo_template=tipo_template,

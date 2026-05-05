@@ -106,17 +106,12 @@
             document.body?.dataset?.iaRespondendo === "true"
         ) {
             dependencies.mostrarToast?.(
-                "Aguarde a IA terminar antes de enviar para a mesa.",
+                "Aguarde a IA terminar antes de finalizar.",
                 "aviso",
                 2600
             );
             return null;
         }
-
-        const confirmou = global.confirm(
-            "Deseja encerrar a coleta? O laudo será gerado e enviado para a mesa avaliadora."
-        );
-        if (!confirmou) return null;
 
         estado.finalizandoInspecao = true;
         dependencies.definirBotaoFinalizarCarregando?.(true);
@@ -127,6 +122,12 @@
             }
 
             if (global.TarielAPI?.finalizarRelatorio) {
+                const confirmou = typeof global.confirm === "function"
+                    ? global.confirm(
+                        "Deseja encerrar a coleta? A política do caso definirá se a revisão será interna ou pela Mesa."
+                    )
+                    : true;
+                if (!confirmou) return null;
                 return await global.TarielAPI.finalizarRelatorio({ direto: true });
             }
 
