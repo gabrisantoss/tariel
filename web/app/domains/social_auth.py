@@ -389,7 +389,13 @@ def _finalizar_inspetor(request: Request, banco: Session, usuario: Usuario) -> R
         encerrar_sessao(token_anterior)
 
     _registrar_login_sucesso(request, banco, usuario)
-    token = criar_sessao(int(usuario.id), lembrar=False)
+    token = criar_sessao(
+        int(usuario.id),
+        lembrar=False,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", ""),
+        portal=PORTAL_INSPETOR,
+    )
     definir_sessao_portal(
         request.session,
         portal=PORTAL_INSPETOR,

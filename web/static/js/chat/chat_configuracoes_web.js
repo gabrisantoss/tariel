@@ -7,6 +7,7 @@
 
     const STORAGE_KEY = "tariel:web:inspecao:configuracoes";
     const API_SETTINGS_URL = "/app/api/configuracoes";
+    const API_SESSOES_URL = "/app/api/sessoes";
     const SAVE_REMOTE_DELAY_MS = 420;
     const SECOES_PERMITIDAS = new Set(["conta", "preferencias", "notificacoes", "seguranca", "sistema"]);
     const RESPOSTAS_PERMITIDAS = new Set(["objetiva", "detalhada", "tecnica"]);
@@ -46,6 +47,8 @@
         status: document.getElementById("configuracoes-web-status"),
         health: document.getElementById("configuracoes-web-health"),
         versao: document.getElementById("configuracoes-web-versao"),
+        sessionsSummary: document.getElementById("configuracoes-web-sessions-summary"),
+        sessionsList: document.getElementById("configuracoes-web-sessions-list"),
         navItems: Array.from(document.querySelectorAll("[data-settings-section]")),
         sections: Array.from(document.querySelectorAll("[data-settings-panel-section]")),
         choiceButtons: Array.from(document.querySelectorAll("[data-settings-choice]")),
@@ -63,6 +66,8 @@
         salvandoRemotoTimer: 0,
         avisouFalhaSync: false,
         settingsMobile: null,
+        carregandoSessoes: false,
+        sessoesCarregadas: false,
     };
 
     const SELETOR_FOCAVEIS = [
@@ -365,6 +370,10 @@
             item.classList.toggle("is-active", ativa);
             item.hidden = !ativa;
         });
+
+        if (proxima === "seguranca") {
+            void carregarSessoes({ silencioso: true });
+        }
     }
 
     function aplicarEstadoControles() {
@@ -461,6 +470,144 @@
         }
     }
 
+    function formatarDataSessao(valor) {
+        const data = new Date(String(valor || ""));
+        if (Number.isNaN(data.getTime())) return "";
+        try {
+            return new Intl.DateTimeFormat("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+            }).format(data);
+        } catch (_) {
+            return data.toLocaleString();
+        }
+    }
+
+    function botoesAcao(action) {
+        return Array.from(el.modal.querySelectorAll(`[data-settings-action="${action}"]`));
+    }
+
+    function renderSessoes(payload) {
+        const sessoes = Array.isArray(payload?.sessions) ? payload.sessions : [];
+        const total = Number(payload?.total ?? sessoes.length) || 0;
+        const temOutras = Boolean(payload?.has_other_sessions);
+
+        if (el.sessionsSummary) {
+            el.sessionsSummary.textContent = total === 1 ? "1 sessão ativa." : `${total} sessões ativas.`;
+        }
+
+        botoesAcao("end-other-sessions").forEach((botao) => {
+            botao.disabled = !temOutras;
+            botao.title = temOutras ? "Encerrar outras sessões ativas" : "Nenhuma outra sessão ativa";
+        });
+
+        if (!el.sessionsList) return;
+        el.sessionsList.innerHTML = "";
+
+        if (!sessoes.length) {
+            const vazio = document.createElement("small");
+            vazio.textContent = "Nenhuma sessão ativa encontrada.";
+            el.sessionsList.appendChild(vazio);
+            return;
+        }
+
+        sessoes.forEach((sessao) => {
+            const item = document.createElement("div");
+            item.className = "configuracoes-web-session-item";
+
+            const copy = document.createElement("span");
+            const titulo = document.createElement("strong");
+            titulo.textContent = String(sessao.title || "Sessão ativa");
+            const detalhe = document.createElement("small");
+            const ultimaAtividade = formatarDataSessao(sessao.last_seen_at);
+            detalhe.textContent = ultimaAtividade
+                ? `${String(sessao.details || "Acesso ativo")} | última atividade ${ultimaAtividade}`
+                : String(sessao.details || "Acesso ativo");
+            copy.appendChild(titulo);
+            copy.appendChild(detalhe);
+
+            const badge = document.createElement("span");
+            badge.className = "configuracoes-web-session-item__badge";
+            badge.textContent = sessao.current ? "Atual" : sessao.persistent ? "Persistente" : "Ativa";
+
+            item.appendChild(copy);
+            item.appendChild(badge);
+            el.sessionsList.appendChild(item);
+        });
+    }
+
+    async function carregarSessoes({ silencioso = false } = {}) {
+        if (estado.carregandoSessoes) return false;
+        estado.carregandoSessoes = true;
+        if (el.sessionsSummary) el.sessionsSummary.textContent = "Carregando sessões ativas.";
+        botoesAcao("refresh-sessions").forEach((botao) => {
+            botao.disabled = true;
+        });
+
+        try {
+            const resposta = await fetch(API_SESSOES_URL, {
+                method: "GET",
+                credentials: "same-origin",
+                headers: { Accept: "application/json" },
+            });
+            const dados = await resposta.json();
+            if (!resposta.ok || !dados?.ok) {
+                throw new Error("Resposta inválida.");
+            }
+            renderSessoes(dados);
+            estado.sessoesCarregadas = true;
+            return true;
+        } catch (_) {
+            if (el.sessionsSummary) el.sessionsSummary.textContent = "Não foi possível carregar sessões.";
+            if (el.sessionsList) {
+                el.sessionsList.innerHTML = "";
+                const erro = document.createElement("small");
+                erro.textContent = "Tente atualizar novamente.";
+                el.sessionsList.appendChild(erro);
+            }
+            if (!silencioso) mostrarToast("Não consegui carregar as sessões agora.", "erro", 2800);
+            return false;
+        } finally {
+            estado.carregandoSessoes = false;
+            botoesAcao("refresh-sessions").forEach((botao) => {
+                botao.disabled = false;
+            });
+        }
+    }
+
+    async function encerrarOutrasSessoes() {
+        botoesAcao("end-other-sessions").forEach((botao) => {
+            botao.disabled = true;
+        });
+        try {
+            const headers = { Accept: "application/json" };
+            const csrf = tokenCsrf();
+            if (csrf) headers["X-CSRF-Token"] = csrf;
+
+            const resposta = await fetch(`${API_SESSOES_URL}/encerrar-outras`, {
+                method: "POST",
+                credentials: "same-origin",
+                headers,
+            });
+            const dados = await resposta.json();
+            if (!resposta.ok || !dados?.ok) {
+                throw new Error("Resposta inválida.");
+            }
+            renderSessoes(dados);
+            const removidas = Number(dados.removed || 0);
+            mostrarToast(
+                removidas === 1 ? "1 outra sessão encerrada." : `${removidas} outras sessões encerradas.`,
+                "sucesso",
+                2400
+            );
+        } catch (_) {
+            mostrarToast("Não consegui encerrar as outras sessões agora.", "erro", 3000);
+            void carregarSessoes({ silencioso: true });
+        }
+    }
+
     function limparPreferenciasLocais() {
         estado.settings = { ...DEFAULTS, section: estado.settings.section || "conta" };
         try {
@@ -533,6 +680,18 @@
             if (action === "clear-local") {
                 event.preventDefault();
                 limparPreferenciasLocais();
+                return;
+            }
+
+            if (action === "refresh-sessions") {
+                event.preventDefault();
+                void carregarSessoes({ silencioso: false });
+                return;
+            }
+
+            if (action === "end-other-sessions") {
+                event.preventDefault();
+                void encerrarOutrasSessoes();
                 return;
             }
 

@@ -217,6 +217,27 @@
                     </div>
 
                     <div class="configuracoes-web-row-list">
+                        <div class="configuracoes-web-session-panel">
+                            <div class="configuracoes-web-session-panel__head">
+                                <span class="material-symbols-rounded" aria-hidden="true">devices</span>
+                                <span>
+                                    <strong>Sessões e dispositivos</strong>
+                                    <small id="configuracoes-web-sessions-summary">Carregando sessões ativas.</small>
+                                </span>
+                                <span class="configuracoes-web-session-panel__actions">
+                                    <button type="button" data-settings-action="refresh-sessions" aria-label="Atualizar sessões">
+                                        <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+                                    </button>
+                                    <button type="button" data-settings-action="end-other-sessions">
+                                        Encerrar outras
+                                    </button>
+                                </span>
+                            </div>
+                            <div id="configuracoes-web-sessions-list" class="configuracoes-web-session-list">
+                                <small>Abra as configurações para sincronizar.</small>
+                            </div>
+                        </div>
+
                         <button type="button" class="configuracoes-web-row" data-settings-action="browser-permissions">
                             <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
                             <span>

@@ -131,3 +131,31 @@ def test_chat_inclui_estilo_de_resposta_persistido_no_prompt(ambiente_critico) -
     assert "Estilo de resposta: tecnica" in chamada_ia["mensagem"]
     assert "Use linguagem técnica" in chamada_ia["mensagem"]
     assert "Avalie o risco principal." in chamada_ia["mensagem"]
+
+
+def test_web_sessoes_lista_e_encerra_outros_acessos(ambiente_critico) -> None:
+    client = ambiente_critico["client"]
+    csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
+    headers_mobile = _login_mobile_inspetor(client, "inspetor@empresa-a.test")
+
+    resposta_sessoes = client.get("/app/api/sessoes")
+    assert resposta_sessoes.status_code == 200
+    corpo_sessoes = resposta_sessoes.json()
+    assert corpo_sessoes["total"] >= 2
+    assert corpo_sessoes["has_other_sessions"] is True
+    assert any(sessao["current"] for sessao in corpo_sessoes["sessions"])
+    assert all("token" not in sessao for sessao in corpo_sessoes["sessions"])
+
+    resposta_encerrar = client.post(
+        "/app/api/sessoes/encerrar-outras",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert resposta_encerrar.status_code == 200
+    corpo_encerrar = resposta_encerrar.json()
+    assert corpo_encerrar["removed"] >= 1
+    assert corpo_encerrar["total"] == 1
+    assert corpo_encerrar["has_other_sessions"] is False
+    assert corpo_encerrar["sessions"][0]["current"] is True
+
+    resposta_mobile = client.get("/app/api/mobile/account/settings", headers=headers_mobile)
+    assert resposta_mobile.status_code in {401, 403}

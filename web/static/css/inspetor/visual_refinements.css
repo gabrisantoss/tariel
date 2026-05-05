@@ -3086,6 +3086,131 @@ body.pagina-chat-dashboard-v2 .configuracoes-web-row--danger > .material-symbols
     color: #be123c;
 }
 
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel {
+    display: grid;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid rgba(226, 232, 240, 0.96);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.78);
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__head {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__head > .material-symbols-rounded {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+    background: rgba(31, 94, 142, 0.08);
+    color: #1f5e8e;
+    font-size: 20px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__head > span:nth-child(2) {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__head strong,
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-item strong {
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 13.5px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__head small,
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-item small,
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-list > small {
+    overflow: hidden;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid rgba(31, 94, 142, 0.14);
+    border-radius: 10px;
+    background: rgba(234, 243, 250, 0.78);
+    color: #1f5e8e;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__actions button:first-child {
+    width: 32px;
+    padding: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-list {
+    display: grid;
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 9px 10px;
+    border: 1px solid rgba(226, 232, 240, 0.86);
+    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.86);
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-item > span:first-child {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-session-item__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(31, 94, 142, 0.1);
+    color: #1f5e8e;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
 body.pagina-chat-dashboard-v2 .configuracoes-web-control,
 body.pagina-chat-dashboard-v2 .configuracoes-web-switch {
     display: grid;
@@ -3212,6 +3337,15 @@ body.pagina-chat-dashboard-v2.inspecao-settings-reduced-motion .configuracoes-we
     body.pagina-chat-dashboard-v2 .configuracoes-web-switch {
         grid-template-columns: minmax(0, 1fr);
         align-items: stretch;
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__head {
+        grid-template-columns: 38px minmax(0, 1fr);
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-session-panel__actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
     }
 
     body.pagina-chat-dashboard-v2 .configuracoes-web-segmented {

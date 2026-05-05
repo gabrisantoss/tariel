@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import logging
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import HTTPException, Request, UploadFile
@@ -37,6 +38,7 @@ from app.shared.database import (
     Laudo,
     MensagemLaudo,
     PreferenciaMobileUsuario,
+    SessaoAtiva,
     TipoMensagem,
     Usuario,
 )
@@ -266,6 +268,90 @@ class ContextoPreferenciaModoEntradaUsuario:
     entry_mode_preference: str
     remember_last_case_mode: bool
     last_case_mode: str | None = None
+
+
+def _normalizar_datetime_iso(valor: object) -> str:
+    if isinstance(valor, datetime):
+        return valor.isoformat()
+    return ""
+
+
+def _rotulo_portal_sessao(portal: object) -> str:
+    portal_norm = str(portal or "").strip().lower()
+    if portal_norm == PORTAL_INSPETOR:
+        return "Inspeção IA"
+    if portal_norm == "mobile":
+        return "Mobile"
+    if portal_norm == "admin":
+        return "Admin"
+    if portal_norm == "cliente":
+        return "Cliente"
+    if portal_norm == "revisor":
+        return "Revisão Técnica"
+    return "Acesso Tariel"
+
+
+def _id_publico_sessao(token: object) -> str:
+    token_norm = str(token or "").strip()
+    if not token_norm:
+        return ""
+    return hashlib.sha256(token_norm.encode("utf-8")).hexdigest()[:16]
+
+
+def serializar_sessoes_ativas_usuario(
+    banco: Session,
+    *,
+    usuario: Usuario,
+    token_atual: str | None,
+) -> list[dict[str, object]]:
+    agora = datetime.now(timezone.utc)
+    token_atual_norm = str(token_atual or "").strip()
+    registros = list(
+        banco.scalars(
+            select(SessaoAtiva)
+            .where(
+                SessaoAtiva.usuario_id == int(usuario.id),
+                SessaoAtiva.expira_em >= agora,
+            )
+            .order_by(SessaoAtiva.ultima_atividade_em.desc(), SessaoAtiva.criada_em.desc())
+        ).all()
+    )
+
+    sessoes: list[dict[str, object]] = []
+    for registro in registros:
+        token = str(registro.token or "")
+        atual = bool(token_atual_norm and token == token_atual_norm)
+        device_id = str(getattr(registro, "device_id", "") or "").strip()
+        portal = str(getattr(registro, "portal", "") or "").strip().lower()
+        titulo = "Sessão atual" if atual else _rotulo_portal_sessao(portal)
+        if device_id and not atual:
+            titulo = device_id
+
+        detalhes = [
+            "Acesso persistente" if bool(getattr(registro, "lembrar", False)) else "Sessão temporária",
+            _rotulo_portal_sessao(portal),
+        ]
+        mfa_level = str(getattr(registro, "mfa_level", "") or "").strip().lower()
+        if mfa_level:
+            detalhes.append(f"MFA {mfa_level}")
+
+        sessoes.append(
+            {
+                "id": _id_publico_sessao(token),
+                "current": atual,
+                "title": titulo,
+                "portal": portal or "",
+                "portal_label": _rotulo_portal_sessao(portal),
+                "device_id": device_id,
+                "persistent": bool(getattr(registro, "lembrar", False)),
+                "created_at": _normalizar_datetime_iso(getattr(registro, "criada_em", None)),
+                "last_seen_at": _normalizar_datetime_iso(getattr(registro, "ultima_atividade_em", None)),
+                "expires_at": _normalizar_datetime_iso(getattr(registro, "expira_em", None)),
+                "details": " | ".join(detalhes),
+            }
+        )
+
+    return sessoes
 
 def email_valido_basico(email: str) -> bool:
     return bool(re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email))

@@ -33,6 +33,7 @@ from app.domains.chat.auth_mobile_support import (
     serializar_configuracoes_web_usuario as _serializar_configuracoes_web_usuario,
     serializar_perfil_usuario as _serializar_perfil_usuario,
     serializar_preferencias_mobile_usuario as _serializar_preferencias_mobile_usuario,
+    serializar_sessoes_ativas_usuario as _serializar_sessoes_ativas_usuario,
 )
 from app.domains.chat.app_context import PADRAO_SUPORTE_WHATSAPP, _settings, configuracoes, logger, templates
 from app.domains.chat.laudo_state_helpers import criar_cache_resumo_laudos
@@ -54,9 +55,11 @@ from app.shared.security import (
     criar_sessao,
     definir_sessao_portal,
     encerrar_sessao,
+    encerrar_todas_sessoes_usuario,
     nivel_acesso_sessao_portal,
     limpar_sessao_portal,
     obter_dados_sessao_portal,
+    obter_token_autenticacao_request,
     obter_usuario_html,
     token_esta_ativo,
     exigir_inspetor,
@@ -130,7 +133,13 @@ async def processar_troca_senha_app(
 
     _limpar_fluxo_troca_senha(request)
 
-    token = criar_sessao(usuario.id, lembrar=lembrar)
+    token = criar_sessao(
+        usuario.id,
+        lembrar=lembrar,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", ""),
+        portal=PORTAL_INSPETOR,
+    )
     definir_sessao_portal(
         request.session,
         portal=PORTAL_INSPETOR,
@@ -230,7 +239,13 @@ async def processar_login_app(
         logger_operacao=logger,
         mensagem_erro="Falha ao confirmar troca obrigatoria de senha do inspetor.",
     )
-    token = criar_sessao(usuario.id, lembrar=lembrar)
+    token = criar_sessao(
+        usuario.id,
+        lembrar=lembrar,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", ""),
+        portal=PORTAL_INSPETOR,
+    )
     definir_sessao_portal(
         request.session,
         portal=PORTAL_INSPETOR,
@@ -450,6 +465,52 @@ async def api_salvar_configuracoes_usuario(
     )
 
 
+async def api_listar_sessoes_usuario(
+    request: Request,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+):
+    token_atual = obter_token_autenticacao_request(request)
+    sessoes = _serializar_sessoes_ativas_usuario(
+        banco,
+        usuario=usuario,
+        token_atual=token_atual,
+    )
+    return JSONResponse(
+        {
+            "ok": True,
+            "sessions": sessoes,
+            "total": len(sessoes),
+            "has_other_sessions": any(not bool(item.get("current")) for item in sessoes),
+        }
+    )
+
+
+async def api_encerrar_outras_sessoes_usuario(
+    request: Request,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+):
+    exigir_csrf(request)
+    token_atual = obter_token_autenticacao_request(request)
+    removidas = encerrar_todas_sessoes_usuario(int(usuario.id), exceto_token=token_atual)
+    banco.expire_all()
+    sessoes = _serializar_sessoes_ativas_usuario(
+        banco,
+        usuario=usuario,
+        token_atual=token_atual,
+    )
+    return JSONResponse(
+        {
+            "ok": True,
+            "removed": int(removidas),
+            "sessions": sessoes,
+            "total": len(sessoes),
+            "has_other_sessions": any(not bool(item.get("current")) for item in sessoes),
+        }
+    )
+
+
 async def api_upload_foto_perfil_usuario(
     request: Request,
     foto: UploadFile = File(...),
@@ -481,6 +542,7 @@ roteador_auth_portal.add_api_route("/laudo/{laudo_id:int}", pagina_laudo_alias, 
 roteador_auth_portal.add_api_route("/planos", pagina_planos, methods=["GET"], response_class=HTMLResponse)
 roteador_auth_portal.add_api_route("/api/perfil", api_obter_perfil_usuario, methods=["GET"])
 roteador_auth_portal.add_api_route("/api/configuracoes", api_obter_configuracoes_usuario, methods=["GET"])
+roteador_auth_portal.add_api_route("/api/sessoes", api_listar_sessoes_usuario, methods=["GET"])
 roteador_auth_portal.add_api_route(
     "/api/perfil",
     api_atualizar_perfil_usuario,
@@ -489,6 +551,11 @@ roteador_auth_portal.add_api_route(
         400: {"description": "Dados de perfil inválidos."},
         409: {"description": "E-mail já está em uso."},
     },
+)
+roteador_auth_portal.add_api_route(
+    "/api/sessoes/encerrar-outras",
+    api_encerrar_outras_sessoes_usuario,
+    methods=["POST"],
 )
 roteador_auth_portal.add_api_route(
     "/api/configuracoes",
@@ -510,6 +577,8 @@ roteador_auth_portal.add_api_route(
 
 __all__ = [
     "api_atualizar_perfil_usuario",
+    "api_encerrar_outras_sessoes_usuario",
+    "api_listar_sessoes_usuario",
     "api_obter_configuracoes_usuario",
     "api_obter_perfil_usuario",
     "api_salvar_configuracoes_usuario",

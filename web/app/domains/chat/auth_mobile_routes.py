@@ -110,6 +110,7 @@ async def api_login_mobile_inspetor(
         lembrar=bool(payload.lembrar),
         ip=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent", ""),
+        portal=PORTAL_INSPETOR,
     )
 
     return JSONResponse(
