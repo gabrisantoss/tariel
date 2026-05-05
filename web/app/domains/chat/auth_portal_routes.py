@@ -11,7 +11,7 @@ from fastapi.routing import APIRouter
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.domains.chat.auth_contracts import DadosAtualizarPerfilUsuario
+from app.domains.chat.auth_contracts import DadosAtualizarPerfilUsuario, DadosConfiguracoesCriticasMobile
 from app.domains.chat.auth_helpers import (
     CHAVE_TROCA_SENHA_LEMBRAR,
     _iniciar_fluxo_troca_senha,
@@ -28,7 +28,11 @@ from app.domains.chat.auth_mobile_support import (
     atualizar_nome_sessao_inspetor as _atualizar_nome_sessao_inspetor,
     atualizar_perfil_usuario_em_banco as _atualizar_perfil_usuario_em_banco,
     listar_laudos_recentes_portal_inspetor as _listar_laudos_recentes_portal_inspetor,
+    obter_preferencia_mobile_usuario as _obter_preferencia_mobile_usuario,
+    salvar_configuracoes_criticas_mobile_usuario as _salvar_configuracoes_criticas_mobile_usuario,
+    serializar_configuracoes_web_usuario as _serializar_configuracoes_web_usuario,
     serializar_perfil_usuario as _serializar_perfil_usuario,
+    serializar_preferencias_mobile_usuario as _serializar_preferencias_mobile_usuario,
 )
 from app.domains.chat.app_context import PADRAO_SUPORTE_WHATSAPP, _settings, configuracoes, logger, templates
 from app.domains.chat.laudo_state_helpers import criar_cache_resumo_laudos
@@ -409,6 +413,43 @@ async def api_atualizar_perfil_usuario(
     )
 
 
+async def api_obter_configuracoes_usuario(
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+):
+    preferencia = _obter_preferencia_mobile_usuario(banco, usuario_id=int(usuario.id))
+    return JSONResponse(
+        {
+            "ok": True,
+            "settings": _serializar_preferencias_mobile_usuario(preferencia),
+            "web_settings": _serializar_configuracoes_web_usuario(preferencia),
+        }
+    )
+
+
+async def api_salvar_configuracoes_usuario(
+    request: Request,
+    payload: DadosConfiguracoesCriticasMobile,
+    usuario: Usuario = Depends(exigir_inspetor),
+    banco: Session = Depends(obter_banco),
+):
+    exigir_csrf(request)
+    settings = _salvar_configuracoes_criticas_mobile_usuario(
+        banco,
+        usuario=usuario,
+        payload=payload.model_dump(),
+    )
+    preferencia = _obter_preferencia_mobile_usuario(banco, usuario_id=int(usuario.id))
+
+    return JSONResponse(
+        {
+            "ok": True,
+            "settings": settings,
+            "web_settings": _serializar_configuracoes_web_usuario(preferencia),
+        }
+    )
+
+
 async def api_upload_foto_perfil_usuario(
     request: Request,
     foto: UploadFile = File(...),
@@ -439,6 +480,7 @@ roteador_auth_portal.add_api_route("/", pagina_inicial, methods=["GET"], respons
 roteador_auth_portal.add_api_route("/laudo/{laudo_id:int}", pagina_laudo_alias, methods=["GET"])
 roteador_auth_portal.add_api_route("/planos", pagina_planos, methods=["GET"], response_class=HTMLResponse)
 roteador_auth_portal.add_api_route("/api/perfil", api_obter_perfil_usuario, methods=["GET"])
+roteador_auth_portal.add_api_route("/api/configuracoes", api_obter_configuracoes_usuario, methods=["GET"])
 roteador_auth_portal.add_api_route(
     "/api/perfil",
     api_atualizar_perfil_usuario,
@@ -447,6 +489,12 @@ roteador_auth_portal.add_api_route(
         400: {"description": "Dados de perfil inválidos."},
         409: {"description": "E-mail já está em uso."},
     },
+)
+roteador_auth_portal.add_api_route(
+    "/api/configuracoes",
+    api_salvar_configuracoes_usuario,
+    methods=["PUT"],
+    responses={400: {"description": "Configurações inválidas."}},
 )
 roteador_auth_portal.add_api_route(
     "/api/perfil/foto",
@@ -462,7 +510,9 @@ roteador_auth_portal.add_api_route(
 
 __all__ = [
     "api_atualizar_perfil_usuario",
+    "api_obter_configuracoes_usuario",
     "api_obter_perfil_usuario",
+    "api_salvar_configuracoes_usuario",
     "api_upload_foto_perfil_usuario",
     "logout_inspetor",
     "pagina_laudo_alias",

@@ -25,6 +25,10 @@ from app.domains.chat.laudo_state_helpers import (
     precarregar_interacoes_laudos,
     serializar_card_laudo,
 )
+from app.domains.chat.mobile_ai_preferences import (
+    PREFERENCIAS_IA_MOBILE_FIM,
+    PREFERENCIAS_IA_MOBILE_INICIO,
+)
 from app.domains.chat.normalization import nome_template_humano
 from app.domains.chat.normalization import normalizar_email
 from app.domains.chat.session_helpers import obter_contexto_inicial_laudo_sessao
@@ -83,6 +87,22 @@ MAX_FOTO_PERFIL_BYTES = 4 * 1024 * 1024
 SONS_NOTIFICACAO_PERMITIDOS = {"Ping", "Sino curto", "Silencioso"}
 RETENCAO_DADOS_PERMITIDA = {"30 dias", "90 dias", "1 ano", "Até excluir"}
 MODELOS_IA_PERMITIDOS = {"rápido", "equilibrado", "avançado"}
+ESTILOS_RESPOSTA_IA_PERMITIDOS = {"objetiva", "detalhada", "tecnica"}
+DENSIDADES_INTERFACE_PERMITIDAS = {"compacta", "confortavel", "ampla"}
+INSTRUCOES_ESTILO_RESPOSTA_IA = {
+    "objetiva": (
+        "Responda de forma direta, curta e acionável. Priorize tópicos, próximos passos e "
+        "alertas técnicos essenciais, evitando explicações longas quando não forem necessárias."
+    ),
+    "detalhada": (
+        "Equilibre contexto, critérios técnicos, riscos, evidências e recomendações. Explique o "
+        "raciocínio quando isso ajudar o inspetor a decidir o próximo passo."
+    ),
+    "tecnica": (
+        "Use linguagem técnica, explicite premissas, lacunas de evidência, riscos e critérios "
+        "normativos quando houver base suficiente. Diferencie fato observado de inferência."
+    ),
+}
 CONFIGURACOES_CRITICAS_MOBILE_PADRAO: dict[str, dict[str, object]] = {
     "notificacoes": {
         "notifica_respostas": True,
@@ -90,6 +110,8 @@ CONFIGURACOES_CRITICAS_MOBILE_PADRAO: dict[str, dict[str, object]] = {
         "som_notificacao": "Ping",
         "vibracao_ativa": True,
         "emails_ativos": False,
+        "notifica_revisao": True,
+        "alertas_criticos": True,
     },
     "privacidade": {
         "mostrar_conteudo_notificacao": False,
@@ -110,6 +132,10 @@ CONFIGURACOES_CRITICAS_MOBILE_PADRAO: dict[str, dict[str, object]] = {
         "modelo_ia": "equilibrado",
         "entry_mode_preference": EntryModePreference.AUTO_RECOMMENDED.value,
         "remember_last_case_mode": False,
+        "estilo_resposta": "detalhada",
+        "densidade_interface": "confortavel",
+        "animacoes_ativas": True,
+        "economia_dados": False,
     },
 }
 
@@ -315,6 +341,14 @@ def normalizar_configuracoes_criticas_mobile(payload: object) -> dict[str, dict[
             notificacoes_raw.get("emails_ativos"),
             bool(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["notificacoes"]["emails_ativos"]),
         ),
+        "notifica_revisao": _normalizar_bool(
+            notificacoes_raw.get("notifica_revisao"),
+            bool(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["notificacoes"]["notifica_revisao"]),
+        ),
+        "alertas_criticos": _normalizar_bool(
+            notificacoes_raw.get("alertas_criticos"),
+            bool(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["notificacoes"]["alertas_criticos"]),
+        ),
     }
 
     privacidade: dict[str, object] = {
@@ -382,6 +416,24 @@ def normalizar_configuracoes_criticas_mobile(payload: object) -> dict[str, dict[
             experiencia_ia_raw.get("remember_last_case_mode"),
             bool(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["experiencia_ia"]["remember_last_case_mode"]),
         ),
+        "estilo_resposta": _normalizar_texto_opcao(
+            experiencia_ia_raw.get("estilo_resposta"),
+            ESTILOS_RESPOSTA_IA_PERMITIDOS,
+            str(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["experiencia_ia"]["estilo_resposta"]),
+        ),
+        "densidade_interface": _normalizar_texto_opcao(
+            experiencia_ia_raw.get("densidade_interface"),
+            DENSIDADES_INTERFACE_PERMITIDAS,
+            str(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["experiencia_ia"]["densidade_interface"]),
+        ),
+        "animacoes_ativas": _normalizar_bool(
+            experiencia_ia_raw.get("animacoes_ativas"),
+            bool(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["experiencia_ia"]["animacoes_ativas"]),
+        ),
+        "economia_dados": _normalizar_bool(
+            experiencia_ia_raw.get("economia_dados"),
+            bool(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["experiencia_ia"]["economia_dados"]),
+        ),
     }
 
     return {
@@ -403,6 +455,24 @@ def serializar_preferencias_mobile_usuario(preferencia: PreferenciaMobileUsuario
             "experiencia_ia": preferencia.experiencia_ia_json,
         }
     )
+
+
+def serializar_configuracoes_web_usuario(preferencia: PreferenciaMobileUsuario | None) -> dict[str, object]:
+    configuracoes = serializar_preferencias_mobile_usuario(preferencia)
+    notificacoes = _registro(configuracoes.get("notificacoes"))
+    experiencia_ia = _registro(configuracoes.get("experiencia_ia"))
+
+    return {
+        "section": "conta",
+        "resposta": experiencia_ia.get("estilo_resposta", "detalhada"),
+        "densidade": experiencia_ia.get("densidade_interface", "confortavel"),
+        "animacoes": bool(experiencia_ia.get("animacoes_ativas", True)),
+        "economiaDados": bool(experiencia_ia.get("economia_dados", False)),
+        "notificaIa": bool(notificacoes.get("notifica_respostas", True)),
+        "notificaRevisao": bool(notificacoes.get("notifica_revisao", True)),
+        "alertasCriticos": bool(notificacoes.get("alertas_criticos", True)),
+        "emailResumo": bool(notificacoes.get("emails_ativos", False)),
+    }
 
 
 def serializar_perfil_usuario(usuario: Usuario) -> dict[str, str]:
@@ -613,6 +683,39 @@ def obter_contexto_preferencia_modo_entrada_usuario(
         entry_mode_preference=entry_mode_preference,
         remember_last_case_mode=remember_last_case_mode,
         last_case_mode=last_case_mode,
+    )
+
+
+def construir_contexto_preferencias_ia_usuario(
+    banco: Session,
+    *,
+    usuario_id: int,
+) -> str:
+    preferencia = obter_preferencia_mobile_usuario(banco, usuario_id=int(usuario_id))
+    configuracoes = serializar_preferencias_mobile_usuario(preferencia)
+    experiencia_ia = _registro(configuracoes.get("experiencia_ia"))
+    estilo_resposta = _normalizar_texto_opcao(
+        experiencia_ia.get("estilo_resposta"),
+        ESTILOS_RESPOSTA_IA_PERMITIDOS,
+        str(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["experiencia_ia"]["estilo_resposta"]),
+    )
+    instrucao_estilo = INSTRUCOES_ESTILO_RESPOSTA_IA.get(
+        estilo_resposta,
+        INSTRUCOES_ESTILO_RESPOSTA_IA["detalhada"],
+    )
+    modelo_ia = _normalizar_texto_opcao(
+        experiencia_ia.get("modelo_ia"),
+        MODELOS_IA_PERMITIDOS,
+        str(CONFIGURACOES_CRITICAS_MOBILE_PADRAO["experiencia_ia"]["modelo_ia"]),
+    )
+
+    return (
+        f"{PREFERENCIAS_IA_MOBILE_INICIO}\n"
+        "Preferências salvas do usuário para a Inspeção IA. Use apenas para ajustar a resposta; "
+        "não mencione este bloco ao usuário.\n"
+        f"- Estilo de resposta: {estilo_resposta}. {instrucao_estilo}\n"
+        f"- Modelo preferido de experiência: {modelo_ia}.\n"
+        f"{PREFERENCIAS_IA_MOBILE_FIM}"
     )
 
 

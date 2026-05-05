@@ -71,6 +71,8 @@ class DadosNotificacoesCriticasMobile(BaseModel):
     som_notificacao: str = Field(default="Ping", min_length=1, max_length=40)
     vibracao_ativa: bool = True
     emails_ativos: bool = False
+    notifica_revisao: bool = True
+    alertas_criticos: bool = True
 
     model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
 
@@ -100,6 +102,10 @@ class DadosExperienciaIaCriticasMobile(BaseModel):
     modelo_ia: str = Field(default="equilibrado", min_length=1, max_length=40)
     entry_mode_preference: Literal["chat_first", "evidence_first", "auto_recommended"] = "auto_recommended"
     remember_last_case_mode: bool = False
+    estilo_resposta: Literal["objetiva", "detalhada", "tecnica"] = "detalhada"
+    densidade_interface: Literal["compacta", "confortavel", "ampla"] = "confortavel"
+    animacoes_ativas: bool = True
+    economia_dados: bool = False
 
     model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
 

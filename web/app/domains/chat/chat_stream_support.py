@@ -14,7 +14,10 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.domains.chat.auth_helpers import usuario_nome
-from app.domains.chat.auth_mobile_support import obter_contexto_preferencia_modo_entrada_usuario
+from app.domains.chat.auth_mobile_support import (
+    construir_contexto_preferencias_ia_usuario,
+    obter_contexto_preferencia_modo_entrada_usuario,
+)
 from app.domains.chat.app_context import logger
 from app.domains.chat.catalog_pdf_templates import capture_catalog_snapshot_for_laudo
 from app.domains.chat.chat_runtime import MODO_DEEP, resolver_modo_entrada_caso
@@ -276,7 +279,12 @@ def prepare_free_assistant_chat_route(
     mensagem_limpa, preferencias_embutidas = extrair_preferencias_ia_mobile_embutidas(
         dados.mensagem or ""
     )
+    preferencias_usuario = construir_contexto_preferencias_ia_usuario(
+        banco,
+        usuario_id=int(usuario.id),
+    )
     preferencias_ia_mobile = combinar_preferencias_ia_mobile_contexto(
+        preferencias_usuario,
         getattr(dados, "preferencias_ia_mobile", ""),
         preferencias_embutidas,
     )
@@ -336,7 +344,12 @@ def prepare_chat_stream_route(
     mensagem_limpa, preferencias_embutidas = extrair_preferencias_ia_mobile_embutidas(
         dados.mensagem or ""
     )
+    preferencias_usuario = construir_contexto_preferencias_ia_usuario(
+        banco,
+        usuario_id=int(usuario.id),
+    )
     preferencias_ia_mobile = combinar_preferencias_ia_mobile_contexto(
+        preferencias_usuario,
         getattr(dados, "preferencias_ia_mobile", ""),
         preferencias_embutidas,
     )

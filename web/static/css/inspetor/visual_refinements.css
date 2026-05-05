@@ -3144,6 +3144,33 @@ body.pagina-chat-dashboard-v2 .configuracoes-web-switch input {
     accent-color: #1f5e8e;
 }
 
+body.pagina-chat-dashboard-v2[data-inspecao-settings-densidade="compacta"] .configuracoes-web-row,
+body.pagina-chat-dashboard-v2[data-inspecao-settings-densidade="compacta"] .configuracoes-web-static-row,
+body.pagina-chat-dashboard-v2[data-inspecao-settings-densidade="compacta"] .configuracoes-web-control,
+body.pagina-chat-dashboard-v2[data-inspecao-settings-densidade="compacta"] .configuracoes-web-switch {
+    min-height: 54px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+body.pagina-chat-dashboard-v2[data-inspecao-settings-densidade="ampla"] .configuracoes-web-row,
+body.pagina-chat-dashboard-v2[data-inspecao-settings-densidade="ampla"] .configuracoes-web-static-row,
+body.pagina-chat-dashboard-v2[data-inspecao-settings-densidade="ampla"] .configuracoes-web-control,
+body.pagina-chat-dashboard-v2[data-inspecao-settings-densidade="ampla"] .configuracoes-web-switch {
+    min-height: 74px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+body.pagina-chat-dashboard-v2.inspecao-settings-reduced-motion .modal-overlay-configuracoes-web,
+body.pagina-chat-dashboard-v2.inspecao-settings-reduced-motion .configuracoes-web-panel,
+body.pagina-chat-dashboard-v2.inspecao-settings-reduced-motion .configuracoes-web-row,
+body.pagina-chat-dashboard-v2.inspecao-settings-reduced-motion .configuracoes-web-nav__item,
+body.pagina-chat-dashboard-v2.inspecao-settings-reduced-motion .configuracoes-web-segmented button {
+    scroll-behavior: auto !important;
+    transition: none !important;
+}
+
 @media (max-width: 860px) {
     body.pagina-chat-dashboard-v2 .configuracoes-web-panel {
         width: 100vw;

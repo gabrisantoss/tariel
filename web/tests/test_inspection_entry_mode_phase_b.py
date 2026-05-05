@@ -179,7 +179,7 @@ def test_chat_cria_laudo_com_preferencia_persistida_do_usuario(ambiente_critico)
     csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
 
     class ClienteIAStub:
-        def stream_response(self, *_args, **_kwargs):
+        def gerar_resposta_stream(self, *_args, **_kwargs):
             yield "Resposta técnica inicial.\n"
 
     cliente_original = rotas_inspetor.cliente_ia
@@ -191,6 +191,7 @@ def test_chat_cria_laudo_com_preferencia_persistida_do_usuario(ambiente_critico)
             json={
                 "mensagem": "Abrindo coleta com preferência persistida.",
                 "historico": [],
+                "iniciar_laudo": True,
             },
         )
     finally:

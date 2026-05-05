@@ -6,6 +6,11 @@
     window.__TARIEL_CHAT_CONFIGURACOES_WEB_WIRED__ = true;
 
     const STORAGE_KEY = "tariel:web:inspecao:configuracoes";
+    const API_SETTINGS_URL = "/app/api/configuracoes";
+    const SAVE_REMOTE_DELAY_MS = 420;
+    const SECOES_PERMITIDAS = new Set(["conta", "preferencias", "notificacoes", "seguranca", "sistema"]);
+    const RESPOSTAS_PERMITIDAS = new Set(["objetiva", "detalhada", "tecnica"]);
+    const DENSIDADES_PERMITIDAS = new Set(["compacta", "confortavel", "ampla"]);
     const DEFAULTS = {
         section: "conta",
         resposta: "detalhada",
@@ -53,6 +58,11 @@
         settings: carregarSettings(),
         ultimoFoco: null,
         overflowAnteriorBody: "",
+        carregandoRemoto: false,
+        carregadoRemoto: false,
+        salvandoRemotoTimer: 0,
+        avisouFalhaSync: false,
+        settingsMobile: null,
     };
 
     const SELETOR_FOCAVEIS = [
@@ -64,12 +74,38 @@
         "[tabindex]:not([tabindex='-1'])",
     ].join(", ");
 
+    function normalizarSettingsWeb(dados) {
+        const bruto = dados && typeof dados === "object" ? dados : {};
+        return {
+            section: SECOES_PERMITIDAS.has(String(bruto.section || ""))
+                ? String(bruto.section)
+                : DEFAULTS.section,
+            resposta: RESPOSTAS_PERMITIDAS.has(String(bruto.resposta || ""))
+                ? String(bruto.resposta)
+                : DEFAULTS.resposta,
+            densidade: DENSIDADES_PERMITIDAS.has(String(bruto.densidade || ""))
+                ? String(bruto.densidade)
+                : DEFAULTS.densidade,
+            animacoes: typeof bruto.animacoes === "boolean" ? bruto.animacoes : DEFAULTS.animacoes,
+            economiaDados:
+                typeof bruto.economiaDados === "boolean" ? bruto.economiaDados : DEFAULTS.economiaDados,
+            notificaIa:
+                typeof bruto.notificaIa === "boolean" ? bruto.notificaIa : DEFAULTS.notificaIa,
+            notificaRevisao:
+                typeof bruto.notificaRevisao === "boolean" ? bruto.notificaRevisao : DEFAULTS.notificaRevisao,
+            alertasCriticos:
+                typeof bruto.alertasCriticos === "boolean" ? bruto.alertasCriticos : DEFAULTS.alertasCriticos,
+            emailResumo:
+                typeof bruto.emailResumo === "boolean" ? bruto.emailResumo : DEFAULTS.emailResumo,
+        };
+    }
+
     function carregarSettings() {
         try {
             const bruto = window.localStorage.getItem(STORAGE_KEY);
             if (!bruto) return { ...DEFAULTS };
             const dados = JSON.parse(bruto);
-            return { ...DEFAULTS, ...(dados && typeof dados === "object" ? dados : {}) };
+            return normalizarSettingsWeb({ ...DEFAULTS, ...(dados && typeof dados === "object" ? dados : {}) });
         } catch (_) {
             return { ...DEFAULTS };
         }
@@ -81,6 +117,177 @@
         } catch (_) {
             // localStorage pode estar bloqueado; a sessao atual continua funcional.
         }
+    }
+
+    function tokenCsrf() {
+        return document.querySelector('meta[name="csrf-token"]')?.content || "";
+    }
+
+    function registro(valor) {
+        return valor && typeof valor === "object" && !Array.isArray(valor) ? valor : {};
+    }
+
+    function payloadApiSettings(settings, mobileSettings = {}) {
+        const atual = normalizarSettingsWeb(settings);
+        const mobile = registro(mobileSettings);
+        const notificacoesAtuais = registro(mobile.notificacoes);
+        const privacidadeAtual = registro(mobile.privacidade);
+        const permissoesAtuais = registro(mobile.permissoes);
+        const experienciaAtual = registro(mobile.experiencia_ia);
+        return {
+            notificacoes: {
+                ...notificacoesAtuais,
+                notifica_respostas: atual.notificaIa,
+                notifica_push:
+                    typeof notificacoesAtuais.notifica_push === "boolean" ? notificacoesAtuais.notifica_push : true,
+                som_notificacao: notificacoesAtuais.som_notificacao || "Ping",
+                vibracao_ativa:
+                    typeof notificacoesAtuais.vibracao_ativa === "boolean" ? notificacoesAtuais.vibracao_ativa : true,
+                emails_ativos: atual.emailResumo,
+                notifica_revisao: atual.notificaRevisao,
+                alertas_criticos: atual.alertasCriticos,
+            },
+            privacidade: {
+                ...privacidadeAtual,
+                mostrar_conteudo_notificacao:
+                    typeof privacidadeAtual.mostrar_conteudo_notificacao === "boolean"
+                        ? privacidadeAtual.mostrar_conteudo_notificacao
+                        : false,
+                ocultar_conteudo_bloqueado:
+                    typeof privacidadeAtual.ocultar_conteudo_bloqueado === "boolean"
+                        ? privacidadeAtual.ocultar_conteudo_bloqueado
+                        : true,
+                mostrar_somente_nova_mensagem:
+                    typeof privacidadeAtual.mostrar_somente_nova_mensagem === "boolean"
+                        ? privacidadeAtual.mostrar_somente_nova_mensagem
+                        : true,
+                salvar_historico_conversas:
+                    typeof privacidadeAtual.salvar_historico_conversas === "boolean"
+                        ? privacidadeAtual.salvar_historico_conversas
+                        : true,
+                compartilhar_melhoria_ia:
+                    typeof privacidadeAtual.compartilhar_melhoria_ia === "boolean"
+                        ? privacidadeAtual.compartilhar_melhoria_ia
+                        : false,
+                retencao_dados: privacidadeAtual.retencao_dados || "90 dias",
+            },
+            permissoes: {
+                ...permissoesAtuais,
+                microfone_permitido:
+                    typeof permissoesAtuais.microfone_permitido === "boolean" ? permissoesAtuais.microfone_permitido : true,
+                camera_permitida:
+                    typeof permissoesAtuais.camera_permitida === "boolean" ? permissoesAtuais.camera_permitida : true,
+                arquivos_permitidos:
+                    typeof permissoesAtuais.arquivos_permitidos === "boolean" ? permissoesAtuais.arquivos_permitidos : true,
+                notificacoes_permitidas:
+                    typeof permissoesAtuais.notificacoes_permitidas === "boolean"
+                        ? permissoesAtuais.notificacoes_permitidas
+                        : true,
+                biometria_permitida:
+                    typeof permissoesAtuais.biometria_permitida === "boolean" ? permissoesAtuais.biometria_permitida : true,
+            },
+            experiencia_ia: {
+                ...experienciaAtual,
+                modelo_ia: experienciaAtual.modelo_ia || "equilibrado",
+                entry_mode_preference: experienciaAtual.entry_mode_preference || "auto_recommended",
+                remember_last_case_mode:
+                    typeof experienciaAtual.remember_last_case_mode === "boolean"
+                        ? experienciaAtual.remember_last_case_mode
+                        : false,
+                estilo_resposta: atual.resposta,
+                densidade_interface: atual.densidade,
+                animacoes_ativas: atual.animacoes,
+                economia_dados: atual.economiaDados,
+            },
+        };
+    }
+
+    function aplicarWebSettingsRemoto(webSettings) {
+        const sectionAtual = SECOES_PERMITIDAS.has(String(estado.settings.section || ""))
+            ? estado.settings.section
+            : DEFAULTS.section;
+        estado.settings = normalizarSettingsWeb({
+            ...estado.settings,
+            ...(webSettings && typeof webSettings === "object" ? webSettings : {}),
+            section: sectionAtual,
+        });
+        salvarSettings();
+        aplicarEstadoControles();
+        aplicarSecao(estado.settings.section);
+    }
+
+    async function carregarSettingsRemoto({ silencioso = true } = {}) {
+        if (estado.carregandoRemoto) return false;
+        estado.carregandoRemoto = true;
+        try {
+            const resposta = await fetch(API_SETTINGS_URL, {
+                method: "GET",
+                credentials: "same-origin",
+                headers: { Accept: "application/json" },
+            });
+            const dados = await resposta.json();
+            if (!resposta.ok || !dados?.ok) {
+                throw new Error("Resposta inválida.");
+            }
+            estado.settingsMobile = registro(dados.settings);
+            aplicarWebSettingsRemoto(dados.web_settings || {});
+            estado.carregadoRemoto = true;
+            estado.avisouFalhaSync = false;
+            if (el.status) el.status.textContent = "Sincronizado";
+            return true;
+        } catch (_) {
+            if (el.status) el.status.textContent = "Local";
+            if (!silencioso) {
+                mostrarToast("Não consegui carregar as configurações salvas.", "erro", 2800);
+            }
+            return false;
+        } finally {
+            estado.carregandoRemoto = false;
+        }
+    }
+
+    async function salvarSettingsRemoto({ toastSucesso = false } = {}) {
+        window.clearTimeout(estado.salvandoRemotoTimer);
+        estado.salvandoRemotoTimer = 0;
+
+        try {
+            const headers = {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            };
+            const csrf = tokenCsrf();
+            if (csrf) headers["X-CSRF-Token"] = csrf;
+
+            const resposta = await fetch(API_SETTINGS_URL, {
+                method: "PUT",
+                credentials: "same-origin",
+                headers,
+                body: JSON.stringify(payloadApiSettings(estado.settings, estado.settingsMobile)),
+            });
+            const dados = await resposta.json();
+            if (!resposta.ok || !dados?.ok) {
+                throw new Error("Resposta inválida.");
+            }
+
+            estado.settingsMobile = registro(dados.settings);
+            aplicarWebSettingsRemoto(dados.web_settings || {});
+            estado.avisouFalhaSync = false;
+            if (el.status) el.status.textContent = "Sincronizado";
+            if (toastSucesso) mostrarToast("Configurações salvas.", "sucesso", 2200);
+        } catch (_) {
+            if (el.status) el.status.textContent = "Local";
+            if (!estado.avisouFalhaSync) {
+                mostrarToast("Preferências salvas neste navegador. Sincronização indisponível agora.", "erro", 3200);
+                estado.avisouFalhaSync = true;
+            }
+        }
+    }
+
+    function agendarSalvarSettingsRemoto() {
+        window.clearTimeout(estado.salvandoRemotoTimer);
+        estado.salvandoRemotoTimer = window.setTimeout(() => {
+            void salvarSettingsRemoto();
+        }, SAVE_REMOTE_DELAY_MS);
     }
 
     function mostrarToast(mensagem, tipo = "info", duracao = 2600) {
@@ -197,6 +404,7 @@
         sincronizarResumoConta();
         aplicarEstadoControles();
         aplicarSecao(section || estado.settings.section || "conta");
+        void carregarSettingsRemoto({ silencioso: true });
 
         estado.ultimoFoco = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         estado.overflowAnteriorBody = document.body.style.overflow || "";
@@ -261,7 +469,7 @@
             // sem acao
         }
         aplicarEstadoControles();
-        mostrarToast("Preferências locais restauradas.", "sucesso", 2200);
+        void salvarSettingsRemoto({ toastSucesso: true });
     }
 
     function bindEventos() {
@@ -290,6 +498,7 @@
                 estado.settings[chave] = valor;
                 salvarSettings();
                 aplicarEstadoControles();
+                agendarSalvarSettingsRemoto();
             });
         });
 
@@ -300,6 +509,7 @@
                 estado.settings[chave] = !!input.checked;
                 salvarSettings();
                 aplicarEstadoControles();
+                agendarSalvarSettingsRemoto();
             });
         });
 
@@ -360,4 +570,5 @@
 
     aplicarEstadoControles();
     bindEventos();
+    void carregarSettingsRemoto({ silencioso: true });
 })();
