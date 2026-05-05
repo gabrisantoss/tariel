@@ -1,4 +1,4 @@
-"""Semântica canônica da colaboração da Mesa Avaliadora."""
+"""Semântica canônica da colaboração da Revisão Técnica."""
 
 from __future__ import annotations
 

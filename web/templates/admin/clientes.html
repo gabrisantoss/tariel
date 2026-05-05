@@ -333,10 +333,10 @@
                                 {% set _policy = c.admin_cliente_policy or {} %}
                                 {% set _capabilities = _policy.get('tenant_capability_entitlements', {}) %}
                                 <div class="tenant-package-stack" aria-label="Pacote comercial contratado">
-                                    <span class="badge info">{{ _policy.get("commercial_service_package_label", "Chat Inspetor + Mesa Avaliadora") | e }}</span>
+                                    <span class="badge info">{{ _policy.get("commercial_service_package_label", "Inspeção IA + Revisão Técnica") | e }}</span>
                                     <span class="meta-stack">{{ _policy.get("commercial_service_package_description", "Modelo operacional contratado para esta empresa.") | e }}</span>
                                     <span class="tenant-flow-summary__detail">
-                                        Mesa {{ "contratada" if _capabilities.get("inspector_send_to_mesa") else "não contratada" }}
+                                        Revisão Técnica {{ "contratada" if _capabilities.get("inspector_send_to_mesa") else "não contratada" }}
                                         · Emissão {{ "no Inspetor" if _capabilities.get("reviewer_issue") else "não liberada no Inspetor" }}
                                     </span>
                                 </div>

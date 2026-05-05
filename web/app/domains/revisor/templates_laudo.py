@@ -158,7 +158,7 @@ def _editor_laudo_context_payload(
     return {
         "active": True,
         "origin": _texto_curto(origin, limite=80),
-        "source_label": "Chat Inspetor" if str(origin or "").strip() == "inspetor_preparar_emissao" else "Fluxo tecnico",
+        "source_label": "Inspeção IA" if str(origin or "").strip() == "inspetor_preparar_emissao" else "Fluxo tecnico",
         "laudo_id": int(laudo.id),
         "family_key": _texto_curto(getattr(laudo, "catalog_family_key", None) or getattr(laudo, "tipo_template", None), limite=120),
         "status_revisao": _texto_curto(getattr(laudo, "status_revisao", None), limite=40),

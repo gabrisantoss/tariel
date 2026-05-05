@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.shared.database import MensagemLaudo, NivelAcesso, StatusRevisao, TipoMensagem, Usuario
 
-ASSINATURA_MESA_NOME_PADRAO = os.getenv("MESA_ENG_NOME_PADRAO", "Mesa Avaliadora").strip()
+ASSINATURA_MESA_NOME_PADRAO = os.getenv("MESA_ENG_NOME_PADRAO", "Revisão Técnica").strip()
 ASSINATURA_MESA_CARGO_PADRAO = os.getenv("MESA_ENG_CARGO_PADRAO", "Engenheiro Revisor").strip()
 ASSINATURA_MESA_CREA_PADRAO = os.getenv("MESA_ENG_CREA_PADRAO", "").strip()
 ASSINATURA_MESA_CARIMBO_PADRAO = os.getenv("MESA_ENG_CARIMBO_PADRAO", "CARIMBO DIGITAL TARIEL.IA").strip()
@@ -110,7 +110,7 @@ def obter_assinatura_mesa_para_pdf(
     laudo_id: int,
     empresa_id: int,
 ) -> dict[str, str]:
-    nome_padrao = ASSINATURA_MESA_NOME_PADRAO or "Mesa Avaliadora"
+    nome_padrao = ASSINATURA_MESA_NOME_PADRAO or "Revisão Técnica"
     cargo_padrao = ASSINATURA_MESA_CARGO_PADRAO or "Engenheiro Revisor"
     crea_padrao = ASSINATURA_MESA_CREA_PADRAO or "Nao informado"
     carimbo_padrao = ASSINATURA_MESA_CARIMBO_PADRAO or "CARIMBO DIGITAL TARIEL.IA"
@@ -171,7 +171,7 @@ def montar_texto_relatorio_pendencias(
     }.get(filtro, "Abertas")
 
     linhas = [
-        "Relatorio de Pendencias da Mesa Avaliadora",
+        "Relatorio de Pendencias da Revisão Técnica",
         f"Laudo #{laudo_id}",
         "",
         f"Filtro aplicado: {filtro_label}",
@@ -223,7 +223,7 @@ def descrever_status_revisao(status: str) -> str:
     status_normalizado = str(status or "").strip().lower()
     mapa = {
         StatusRevisao.RASCUNHO.value: "Rascunho em campo",
-        StatusRevisao.AGUARDANDO.value: "Aguardando mesa avaliadora",
+        StatusRevisao.AGUARDANDO.value: "Aguardando Revisão Técnica",
         StatusRevisao.APROVADO.value: "Aprovado",
     }
     return mapa.get(status_normalizado, status_normalizado or "Indefinido")

@@ -5,13 +5,13 @@ import unicodedata
 from typing import Callable
 
 REGEX_PREFIXO_MESA = re.compile(
-    r"^@?(?:insp|inspetor|eng|engenharia|revisor|mesa|avaliador|avaliacao)\b\s*[:\-]?\s*",
+    r"^@?(?:insp|inspetor|eng|engenharia|revisor|mesa|avaliador|avaliacao|revis[aã]o\s+t[eé]cnica)\b\s*[:\-]?\s*",
     flags=re.IGNORECASE,
 )
 
 REGEX_COMANDO_NATURAL_MESA = re.compile(
     r"^(?:por\s+favor\s+)?(?:avise|avisa|avisar|notifique|notifica|notificar|comunique|comunica|comunicar)\s+"
-    r"(?:a\s+)?(?:mesa(?:\s+avaliadora)?|engenharia|revisor(?:es)?|avaliador(?:es)?|avaliacao)\b"
+    r"(?:a\s+)?(?:mesa(?:\s+avaliadora)?|revis[aã]o\s+t[eé]cnica|engenharia|revisor(?:es)?|avaliador(?:es)?|avaliacao)\b"
     r"(?:\s+(?:que|sobre))?\s*[:\-]?\s*",
     flags=re.IGNORECASE,
 )

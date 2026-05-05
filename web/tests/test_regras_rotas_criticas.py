@@ -295,7 +295,7 @@ def test_revisor_preview_template_laudo_retorna_pdf(ambiente_critico) -> None:
                 "local_inspecao": "Planta Norte",
             },
             "trrf_observacoes": "TRRF preliminar alinhado ao memorial.",
-            "resumo_executivo": "Prévia de teste para validação da mesa.",
+            "resumo_executivo": "Prévia de teste para validação da Revisão Técnica.",
         }
     }
 
@@ -2013,7 +2013,7 @@ def test_api_gerar_pdf_materializa_nr36_unidade_abate_processamento_catalogado(a
             "programa_pausas": "DOC_3604 - programa_pausas_termicas_turno_tarde.pdf",
             "pcmso": "DOC_3605 - pcmso_planta_sul_2026.pdf",
             "pausas_termicas": "Escala de pausas abaixo do previsto para o turno da tarde.",
-            "ergonomia_posto": "Postos repetitivos com necessidade de rever altura da mesa secundaria.",
+            "ergonomia_posto": "Postos repetitivos com necessidade de rever altura da Revisão Técnica secundaria.",
             "descricao_pontos_atencao": "Pausa termica insuficiente na desossa e piso umido sem segregacao completa no corredor de abastecimento.",
             "conclusao": {"status": "Liberado com restricoes"},
         }
@@ -5946,7 +5946,7 @@ def test_inspetor_finalizacao_catalogada_persiste_laudo_output_canonico_nr36_uni
             "setor_produtivo": "Desossa e corte",
             "temperatura_ambiente": "10 C no setor com exposicao continua da equipe.",
             "pausas_termicas": "Escala de pausas abaixo do previsto para o turno da tarde.",
-            "ergonomia_posto": "Postos repetitivos com necessidade de rever altura da mesa secundaria.",
+            "ergonomia_posto": "Postos repetitivos com necessidade de rever altura da Revisão Técnica secundaria.",
             "facas_ferramentas": "Facas em uso com chaira e suporte organizados no posto principal.",
             "higienizacao": "Rotina de higienizacao em andamento entre lotes.",
             "epc_epi": "Luvas, mangotes e aventais disponiveis, com reforco necessario no uso do protetor auricular.",
@@ -7189,7 +7189,7 @@ def test_api_chat_comando_rapido_pendencias_retorna_json(ambiente_critico) -> No
     corpo = resposta.json()
     assert corpo["tipo"] == "comando_rapido"
     assert corpo["comando"] == "/pendencias"
-    assert "Pendências da Mesa" in corpo["texto"]
+    assert "Pendências da Revisão Técnica" in corpo["texto"]
 
     with SessionLocal() as banco:
         comando_salvo = (
@@ -7388,7 +7388,7 @@ def test_api_chat_avisa_mesa_em_linguagem_natural_dispara_whisper(ambiente_criti
         "/app/api/chat",
         headers={"X-CSRF-Token": csrf},
         json={
-            "mensagem": "Avise a mesa avaliadora que terminei a inspeção da NR10.",
+            "mensagem": "Avise a Revisão Técnica que terminei a inspeção da NR10.",
             "historico": [],
             "laudo_id": laudo_id,
         },
@@ -7423,14 +7423,14 @@ def test_api_chat_avisa_mesa_sem_texto_util_retorna_400(ambiente_critico) -> Non
         "/app/api/chat",
         headers={"X-CSRF-Token": csrf},
         json={
-            "mensagem": "Avise a mesa avaliadora",
+            "mensagem": "Avise a Revisão Técnica",
             "historico": [],
             "laudo_id": laudo_id,
         },
     )
 
     assert resposta.status_code == 400
-    assert resposta.json()["detail"] == "Mensagem para a mesa está vazia."
+    assert resposta.json()["detail"] == "Mensagem para a Revisão Técnica está vazia."
 
 
 def test_canais_ia_e_mesa_ficam_isolados_no_historico(ambiente_critico) -> None:
@@ -7463,13 +7463,13 @@ def test_canais_ia_e_mesa_ficam_isolados_no_historico(ambiente_critico) -> None:
                     laudo_id=laudo_id,
                     remetente_id=ids["inspetor_a"],
                     tipo=TipoMensagem.HUMANO_INSP.value,
-                    conteudo="Pergunta do inspetor para a mesa",
+                    conteudo="Pergunta do inspetor para a Revisão Técnica",
                 ),
                 MensagemLaudo(
                     laudo_id=laudo_id,
                     remetente_id=ids["revisor_a"],
                     tipo=TipoMensagem.HUMANO_ENG.value,
-                    conteudo="Retorno da mesa avaliadora",
+                    conteudo="Retorno da Revisão Técnica",
                 ),
             ]
         )
@@ -7677,7 +7677,7 @@ def test_inspetor_envia_mensagem_mesa_com_referencia_invalida_retorna_404(ambien
         f"/app/api/laudo/{laudo_id}/mesa/mensagem",
         headers={"X-CSRF-Token": csrf},
         json={
-            "texto": "Resposta do inspetor para a mesa.",
+            "texto": "Resposta do inspetor para a Revisão Técnica.",
             "referencia_mensagem_id": 999999,
         },
         follow_redirects=False,
@@ -7704,7 +7704,7 @@ def test_revisor_responde_e_inspetor_visualiza_no_canal_mesa(ambiente_critico) -
     resposta_revisor = client_revisor.post(
         f"/revisao/api/laudo/{laudo_id}/responder",
         headers={"X-CSRF-Token": csrf_revisor},
-        json={"texto": "Mesa avaliadora: incluir foto da placa de identificação."},
+        json={"texto": "Revisão Técnica: incluir foto da placa de identificação."},
     )
     assert resposta_revisor.status_code == 200
     corpo_resposta = resposta_revisor.json()
@@ -7724,7 +7724,7 @@ def test_revisor_responde_e_inspetor_visualiza_no_canal_mesa(ambiente_critico) -
     itens = resposta_mesa.json()["itens"]
     assert len(itens) >= 1
     assert itens[-1]["tipo"] == TipoMensagem.HUMANO_ENG.value
-    assert "Mesa avaliadora" in itens[-1]["texto"]
+    assert "Revisão Técnica" in itens[-1]["texto"]
     assert itens[-1]["lida"] is False
     assert itens[-1]["resolvida_por_nome"] == ""
     assert itens[-1]["resolvida_em"] == ""
@@ -7747,7 +7747,7 @@ def test_revisor_responde_com_anexo_e_inspetor_recebe_no_canal_mesa(ambiente_cri
     resposta_revisor = client_revisor.post(
         f"/revisao/api/laudo/{laudo_id}/responder-anexo",
         headers={"X-CSRF-Token": csrf_revisor},
-        data={"texto": "Segue checklist complementar da mesa."},
+        data={"texto": "Segue checklist complementar da Revisão Técnica."},
         files={"arquivo": ("checklist.pdf", _pdf_base_bytes_teste(), "application/pdf")},
     )
     assert resposta_revisor.status_code == 200
@@ -7790,7 +7790,7 @@ def test_laudo_com_ajustes_exige_reabertura_manual_para_chat_e_mesa(ambiente_cri
         laudo = banco.get(Laudo, laudo_id)
         assert laudo is not None
         laudo.encerrado_pelo_inspetor_em = datetime.now(timezone.utc)
-        laudo.primeira_mensagem = "Inspeção encerrada e enviada para a mesa."
+        laudo.primeira_mensagem = "Inspeção encerrada e enviada para a Revisão Técnica."
         banco.add(
             MensagemLaudo(
                 laudo_id=laudo_id,
@@ -7941,7 +7941,7 @@ def test_revisor_historico_reflete_retorno_do_inspetor_apos_reabertura(ambiente_
         laudo = banco.get(Laudo, laudo_id)
         assert laudo is not None
         laudo.encerrado_pelo_inspetor_em = datetime.now(timezone.utc)
-        laudo.primeira_mensagem = "Inspeção encerrada e enviada para a mesa."
+        laudo.primeira_mensagem = "Inspeção encerrada e enviada para a Revisão Técnica."
         banco.add(
             MensagemLaudo(
                 laudo_id=laudo_id,
@@ -8159,7 +8159,7 @@ def test_revisor_whisper_responder_rejeita_destinatario_diferente_do_responsavel
         json={
             "laudo_id": laudo_id,
             "destinatario_id": destinatario_invalido,
-            "mensagem": "Mensagem da mesa para inspetor incorreto.",
+            "mensagem": "Mensagem da Revisão Técnica para inspetor incorreto.",
         },
     )
 
@@ -8224,7 +8224,7 @@ def test_jornada_e2e_chat_ia_e_mesa_comunicacao_bilateral(ambiente_critico) -> N
             f"/revisao/api/laudo/{laudo_id}/responder",
             headers={"X-CSRF-Token": csrf_revisor},
             json={
-                "texto": "Mesa avaliadora: ponto recebido, pode seguir com evidência complementar.",
+                "texto": "Revisão Técnica: ponto recebido, pode seguir com evidência complementar.",
                 "referencia_mensagem_id": mensagem_inspetor_id,
             },
         )
@@ -8321,7 +8321,7 @@ def test_jornada_e2e_isolamento_multiempresa_no_chat_e_mesa(ambiente_critico) ->
                     laudo_id=laudo_id_a,
                     remetente_id=ids["revisor_a"],
                     tipo=TipoMensagem.HUMANO_ENG.value,
-                    conteudo="Mensagem da mesa para o inspetor A.",
+                    conteudo="Mensagem da Revisão Técnica para o inspetor A.",
                 ),
             ]
         )

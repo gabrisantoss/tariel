@@ -5,7 +5,7 @@
 // - namespace global do painel
 // - referências de DOM e estado compartilhado
 // - helpers base, anexos, badges e modais
-// - utilitários usados pelos módulos da mesa e histórico
+// - utilitários usados pelos módulos da Revisão Técnica e histórico
 // ==========================================
 
 (function () {
@@ -90,7 +90,7 @@
     };
     const TENANT_CAPABILITY_REASON_MAP = {
         reviewer_decision:
-            "A revisão da Mesa Avaliadora está desabilitada para esta empresa pelo Admin-CEO.",
+            "A revisão da Revisão Técnica está desabilitada para esta empresa pelo Admin-CEO.",
         reviewer_issue:
             "A emissão oficial está desabilitada para esta empresa pelo Admin-CEO."
     };
@@ -168,11 +168,11 @@
         [/\bpackage_sha256\b/gi, "Hash do pacote"],
         [/\bapproval_snapshot_id\b/gi, "Snapshot aprovado"],
         [/\breviewer_issue\b/gi, "Emissão oficial"],
-        [/\breviewer_decision\b/gi, "Decisão da Mesa"],
-        [/\bmobile_autonomous\b/gi, "Revisão interna governada"],
-        [/\bmobile_review_allowed\b/gi, "Revisão interna governada"],
+        [/\breviewer_decision\b/gi, "Decisão técnica"],
+        [/\bmobile_autonomous\b/gi, "Aprovação interna"],
+        [/\bmobile_review_allowed\b/gi, "Aprovação interna"],
         [/\btenant_without_mesa\b/gi, "Não incluído no pacote"],
-        [/\bnr35_mesa_required_unavailable\b/gi, "Família exige Mesa"],
+        [/\bnr35_mesa_required_unavailable\b/gi, "Família exige Revisão Técnica"],
         [/\bowner\b/gi, "Responsável ativo"],
         [/\bResponsavel\b/gi, "Responsável"],
         [/\bAnexo pack\b/gi, "Pacote técnico"],
@@ -278,12 +278,12 @@
 
         const mime = String(arquivo.type || "").trim().toLowerCase();
         if (!MIME_ANEXOS_MESA_PERMITIDOS.has(mime)) {
-            showStatus("Use PNG, JPG, WebP, PDF ou DOCX no canal da mesa.", "error");
+            showStatus("Use PNG, JPG, WebP, PDF ou DOCX no canal da Revisão Técnica.", "error");
             return;
         }
 
         if (arquivo.size > MAX_BYTES_ANEXO_MESA) {
-            showStatus("O anexo da mesa deve ter no máximo 12MB.", "error");
+            showStatus("O anexo da Revisão Técnica deve ter no máximo 12MB.", "error");
             return;
         }
 
@@ -469,7 +469,7 @@
     const tenantCapabilityReason = (capability) => {
         const chave = String(capability || "").trim();
         return TENANT_CAPABILITY_REASON_MAP[chave]
-            || "A ação da mesa está desabilitada para esta empresa pelo Admin-CEO.";
+            || "A ação da Revisão Técnica está desabilitada para esta empresa pelo Admin-CEO.";
     };
 
     const obterPacoteMesaLaudo = async ({ forcar = false } = {}) => {
@@ -762,7 +762,7 @@
         if (ownerRole === "mesa" || lifecycleStatus === "aguardando_mesa" || lifecycleStatus === "em_revisao_mesa") {
             return {
                 fila: "fechamento_mesa",
-                filaLabel: "Decisão da Mesa",
+                filaLabel: "Decisão técnica",
                 prioridade: "media",
                 prioridadeLabel: "Prioridade média",
                 proximaAcao: "Próxima: Aprovar ou devolver"

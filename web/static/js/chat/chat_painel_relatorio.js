@@ -5,7 +5,7 @@
 // - finalizar inspeção / relatório
 // - refletir estado do laudo na UI
 // - bloquear/desbloquear composer em modo leitura
-// - oferecer reabertura manual após ajustes da mesa
+// - oferecer reabertura manual após ajustes da Revisão Técnica
 // ==========================================
 
 (function () {
@@ -30,7 +30,7 @@
         inspector_case_finalize:
             "A finalização de laudos está desabilitada para esta empresa pelo Admin-CEO.",
         inspector_send_to_mesa:
-            "A conversa com a Mesa Avaliadora está desabilitada para esta empresa pelo Admin-CEO.",
+            "A conversa com a Revisão Técnica está desabilitada para esta empresa pelo Admin-CEO.",
     };
 
     function ouvirEventoTariel(nome, handler) {
@@ -294,8 +294,8 @@
     function formatarModoFinalizacaoPreview(preview = {}) {
         const tituloFerramentas = String(preview?.chat_review_tools?.title || "").trim();
         if (tituloFerramentas) return tituloFerramentas;
-        if (preview?.primary_action === "approve_without_mesa") return "Revisao interna governada";
-        if (preview?.primary_action === "send_to_mesa") return "Mesa Avaliadora";
+        if (preview?.primary_action === "approve_without_mesa") return "Aprovação interna";
+        if (preview?.primary_action === "send_to_mesa") return "Revisão Técnica";
         return "Pendencias do caso";
     }
 
@@ -646,12 +646,12 @@
         let descricaoTexto = "Este laudo está temporariamente bloqueado para novas mensagens.";
 
         if (estado === "aguardando") {
-            tituloTexto = "Laudo aguardando análise da mesa";
+            tituloTexto = "Laudo aguardando análise da Revisão Técnica";
             descricaoTexto = ownerRole === "mesa" || lifecycleStatus === "em_revisao_mesa"
-                ? "A mesa avaliadora está com a vez neste caso. Novas mensagens ficam bloqueadas até haver retorno."
-                : "A mesa avaliadora ainda está revisando este laudo. Novas mensagens ficam bloqueadas até haver retorno.";
+                ? "A Revisão Técnica está com a vez neste caso. Novas mensagens ficam bloqueadas até haver retorno."
+                : "A Revisão Técnica ainda está revisando este laudo. Novas mensagens ficam bloqueadas até haver retorno.";
         } else if (estado === "ajustes") {
-            tituloTexto = "Ajustes solicitados pela mesa";
+            tituloTexto = "Ajustes solicitados pela Revisão Técnica";
             descricaoTexto = permiteReabrir
                 ? "A mesa respondeu com ajustes. Reabra a inspeção para continuar a conversa e complementar o laudo."
                 : "A mesa respondeu com ajustes. A conversa fica bloqueada até a próxima reabertura autorizada.";
@@ -662,7 +662,7 @@
                     ? "A emissao oficial ja foi registrada. O caso fica em leitura ate uma nova reabertura autorizada."
                     : "A emissao oficial ja foi registrada e este caso agora esta disponivel apenas para consulta.";
             } else {
-                tituloTexto = "Laudo aprovado pela mesa";
+                tituloTexto = "Laudo aprovado pela Revisão Técnica";
                 descricaoTexto = "Este laudo foi aprovado e agora está disponível apenas para consulta.";
             }
         }
@@ -680,10 +680,10 @@
     function obterPlaceholderBloqueio(estado, caseLifecycleStatus = "") {
         const lifecycleStatus = normalizarCaseLifecycleStatus(caseLifecycleStatus);
         if (estado === "aguardando") {
-            return "Laudo aguardando retorno da mesa avaliadora...";
+            return "Laudo aguardando retorno da Revisão Técnica...";
         }
         if (estado === "ajustes") {
-            return "Reabra a inspeção para continuar após os ajustes da mesa...";
+            return "Reabra a inspeção para continuar após os ajustes da Revisão Técnica...";
         }
         if (estado === "aprovado") {
             if (lifecycleStatus === "emitido") {

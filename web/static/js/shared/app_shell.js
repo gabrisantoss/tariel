@@ -144,10 +144,10 @@
                 commercial_service_package_effective:
                     raw.commercial_service_package_effective || "inspector_chat_mesa_reviewer_services",
                 commercial_service_package_label:
-                    raw.commercial_service_package_label || "Chat Inspetor + Mesa + servicos no Inspetor",
+                    raw.commercial_service_package_label || "Inspeção IA + Revisão Técnica + Emissão",
                 commercial_service_package_description:
                     raw.commercial_service_package_description
-                    || "Simulacao local com ferramentas governadas da Mesa liberadas no Inspetor.",
+                    || "Simulacao local com ferramentas governadas da Revisão Técnica liberadas na Inspeção IA.",
                 portal_entitlements: portalEntitlements,
                 capability_entitlements: capabilityEntitlements,
                 capability_aliases: capabilityAliases,

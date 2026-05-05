@@ -190,7 +190,7 @@
             || ""
         ).trim().toLowerCase();
         const responsavelAtivo = activeOwnerRole === "mesa"
-            ? "Mesa Avaliadora"
+            ? "Revisão Técnica"
             : activeOwnerRole === "inspetor"
                 ? "Campo"
                 : activeOwnerRole === "none"
@@ -258,7 +258,7 @@
                     <strong>${escapeHtml(proximaAcao)}</strong>
                 </article>
                 <article class="view-case-summary-card">
-                    <span>Decisão da Mesa</span>
+                    <span>Decisão técnica</span>
                     <strong>${escapeHtml(decisionLabel)}</strong>
                 </article>
                 <article class="view-case-summary-card">

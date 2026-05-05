@@ -1,8 +1,8 @@
 // ==========================================
 // TARIEL CONTROL TOWER — CHAT_PAINEL_MESA.JS
-// Papel: integração com mesa avaliadora (@insp).
+// Papel: integração com Revisão Técnica (@insp).
 // Responsável por:
-// - normalizar prefixos da mesa avaliadora
+// - normalizar prefixos da Revisão Técnica
 // - ativar o modo de envio para engenharia/revisão
 // - focar o campo de mensagem
 // - bind do botão do composer e atalhos globais
@@ -28,11 +28,11 @@
     // =========================================================
 
     // Prefixo oficial usado pelo backend para encaminhar a mensagem
-    // ao fluxo da mesa avaliadora / engenharia.
+    // ao fluxo da Revisão Técnica / engenharia.
     const PREFIXO_BASE = String(TP.config?.ATALHO_MESA_AVALIADORA || "@insp").trim() || "@insp";
     const PREFIXO_MESA = `${PREFIXO_BASE} `;
     const MENSAGEM_MESA_EXIGE_INSPECAO =
-        "A conversa com a mesa avaliadora só é permitida após iniciar uma nova inspeção.";
+        "A conversa com a Revisão Técnica só é permitida após iniciar uma nova inspeção.";
 
     // Todos os aliases aceitos no início da mensagem.
     // Exemplo:
@@ -313,17 +313,17 @@
             const inputMesa = document.getElementById("mesa-widget-input");
             if (inputMesa?.disabled || inputMesa?.getAttribute("aria-disabled") === "true") {
                 TP.toast?.(
-                    "Canal da mesa aberto em modo consulta. Reabra a inspeção para responder.",
+                    "Canal da Revisão Técnica aberto em modo consulta. Reabra a inspeção para responder.",
                     "info",
                     2600
                 );
                 return true;
             }
-            TP.toast?.("Chat da mesa avaliadora aberto.", "info", 1800);
+            TP.toast?.("Chat da Revisão Técnica aberto.", "info", 1800);
             return true;
         }
 
-        TP.toast?.("Atalho @insp ativado para a mesa avaliadora.", "info", 1800);
+        TP.toast?.("Atalho @insp ativado para a Revisão Técnica.", "info", 1800);
         return true;
     }
 

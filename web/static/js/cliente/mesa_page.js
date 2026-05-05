@@ -118,7 +118,7 @@
                         }
 
                         if (!silencioso && state.ui.tab !== "mesa") {
-                            feedback("Fila da mesa sincronizada.");
+                            feedback("Fila da Revisão Técnica sincronizada.");
                         }
                         return { mensagens, pacote };
                     } catch (erro) {
@@ -172,7 +172,7 @@
                     if (tipoEvento === "keydown" && event.key !== "Enter" && event.key !== " ") return;
                     if (tipoEvento === "keydown") event.preventDefault();
                     abrirSecaoMesa("reply");
-                    await loadMesa(item.dataset.mesa).catch((erro) => feedback(erro.message || "Falha ao abrir laudo da mesa.", true));
+                    await loadMesa(item.dataset.mesa).catch((erro) => feedback(erro.message || "Falha ao abrir laudo da Revisão Técnica.", true));
                 });
             });
 
@@ -184,7 +184,7 @@
                 }
                 const laudoId = Number(state.mesa.laudoId || 0) || null;
                 if (!laudoId) {
-                    feedback("Selecione um laudo da mesa primeiro.", true);
+                    feedback("Selecione um laudo da Revisão Técnica primeiro.", true);
                     return;
                 }
 
@@ -222,7 +222,7 @@
                     feedback(
                         respostaMesa?.next_action_summary
                             || respostaMesa?.texto_notificacao
-                            || "Resposta registrada na mesa avaliadora."
+                            || "Resposta registrada na Revisão Técnica."
                     );
                 }).catch((erro) => feedback(erro.message || "Falha ao responder a mesa.", true));
             });
@@ -275,7 +275,7 @@
                     feedback(
                         respostaMesa?.next_action_summary
                             || respostaMesa?.status_visual_label
-                            || "Laudo aprovado pela mesa."
+                            || "Laudo aprovado pela Revisão Técnica."
                     );
                 }).catch((erro) => feedback(erro.message || "Falha ao aprovar laudo.", true));
             });

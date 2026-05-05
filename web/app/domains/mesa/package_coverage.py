@@ -1,4 +1,4 @@
-"""Mapa de cobertura do pacote da Mesa Avaliadora."""
+"""Mapa de cobertura do pacote da Revisão Técnica."""
 
 from __future__ import annotations
 

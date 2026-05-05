@@ -883,7 +883,7 @@ def _disparar_click_mesa_lista(page: Page, laudo_id: int) -> None:
         """(idLaudo) => {
             const item = document.querySelector(`#lista-mesa-laudos [data-mesa="${Number(idLaudo)}"]`);
             if (!(item instanceof HTMLElement)) {
-                throw new Error(`Item da fila da mesa não encontrado: ${idLaudo}`);
+                throw new Error(`Item da fila da Revisão Técnica não encontrado: ${idLaudo}`);
             }
             item.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
         }""",
@@ -2339,7 +2339,7 @@ def test_e2e_isolamento_portal_inspetor_nao_acessa_revisao(
 
     page.goto(f"{live_server_url}/revisao/painel", wait_until="domcontentloaded")
     conteudo = page.content()
-    assert "Mesa de Avaliação" not in conteudo
+    assert "Revisão Técnica" not in conteudo
     assert "/revisao/login" in page.url or "/app/login" in page.url or "Acesso restrito" in conteudo or "Sessão expirada" in conteudo
 
 
@@ -2456,7 +2456,7 @@ def test_e2e_widget_mesa_fica_somente_leitura_fora_da_coleta(
     expect(page.locator("#painel-mesa-widget")).to_be_visible(timeout=10000)
 
     cenarios = [
-        ("aguardando", re.compile(r"aguardando retorno da mesa", re.IGNORECASE)),
+        ("aguardando", re.compile(r"aguardando retorno da Revisão Técnica", re.IGNORECASE)),
         ("ajustes", re.compile(r"reabra a inspe[cç][aã]o", re.IGNORECASE)),
         ("aprovado", re.compile(r"laudo aprovado", re.IGNORECASE)),
     ]
@@ -3980,7 +3980,7 @@ def test_e2e_admin_ceo_onboard_empresa_e_admin_cliente_valida_contrato_como_comp
             re.compile(r"operacional WF", re.IGNORECASE),
             timeout=10000,
         )
-        texto_retorno_operacional = f"Retorno da mesa WF no portal revisor {sufixo}"
+        texto_retorno_operacional = f"Retorno da Revisão Técnica WF no portal revisor {sufixo}"
         page_revisor_wf.locator("#input-resposta").fill(texto_retorno_operacional)
         page_revisor_wf.locator("#btn-enviar-msg").click()
         expect(
@@ -4398,7 +4398,7 @@ def test_e2e_revisor_ui_responde_e_inspetor_recebe(
         expect(page_revisor.locator("#view-timeline")).to_contain_text(re.compile(r"teste UI", re.IGNORECASE))
         expect(page_revisor.locator("#mesa-operacao-painel .mesa-operacao-tag")).to_contain_text(re.compile(r"canal em triagem", re.IGNORECASE))
 
-        texto_resposta = f"Retorno da mesa via UI {uuid.uuid4().hex[:8]}"
+        texto_resposta = f"Retorno da Revisão Técnica via UI {uuid.uuid4().hex[:8]}"
         page_revisor.locator("#input-resposta").fill(texto_resposta)
         page_revisor.locator("#btn-enviar-msg").click()
 
@@ -4542,7 +4542,7 @@ def test_e2e_inspetor_retorna_no_widget_e_revisor_reflete_no_timeline(
         _abrir_laudo_no_revisor(page_revisor, laudo_id)
         expect(page_revisor.locator("#view-timeline")).to_contain_text(re.compile(r"solicitacao inicial", re.IGNORECASE))
 
-        texto_resposta = f"Retorno da mesa UI {uuid.uuid4().hex[:8]}"
+        texto_resposta = f"Retorno da Revisão Técnica UI {uuid.uuid4().hex[:8]}"
         page_revisor.locator("#input-resposta").fill(texto_resposta)
         page_revisor.locator("#btn-enviar-msg").click()
         expect(page_revisor.locator("#view-timeline .bolha.engenharia", has_text=texto_resposta).first).to_be_visible(timeout=10000)
@@ -4663,7 +4663,7 @@ def test_e2e_revisor_anexa_arquivo_e_inspetor_visualiza_no_widget_mesa(
             }
         )
         expect(page_revisor.locator("#preview-resposta-anexo")).to_contain_text("retorno-mesa.png", timeout=10000)
-        page_revisor.locator("#input-resposta").fill("Segue anexo complementar da mesa.")
+        page_revisor.locator("#input-resposta").fill("Segue anexo complementar da Revisão Técnica.")
         page_revisor.locator("#btn-enviar-msg").click()
 
         expect(page_revisor.locator("#view-timeline .anexo-mensagem-link", has_text="retorno-mesa.png").first).to_be_visible(timeout=10000)
@@ -4732,7 +4732,7 @@ def test_e2e_aba_mesa_destaca_anexos_recentes_da_revisao(
                 "buffer": base64.b64decode(PNG_1X1_TRANSPARENTE_B64),
             }
         )
-        page_revisor.locator("#input-resposta").fill("Segue anexo da mesa para o fluxo flagship.")
+        page_revisor.locator("#input-resposta").fill("Segue anexo da Revisão Técnica para o fluxo flagship.")
         page_revisor.locator("#btn-enviar-msg").click()
         expect(
             page_revisor.locator("#view-timeline .anexo-mensagem-link", has_text="flagship-retorno-mesa.png").first
@@ -5013,7 +5013,7 @@ def test_e2e_revisor_biblioteca_templates_escolhe_modelo_no_card_e_limpa_banner(
 
     for versao, titulo, texto, ativo in (
         (1, "Template Base Auto v1", "Versão ativa recomendada pela heurística.", True),
-        (2, "Template Base Fixa v2", "Versão manual para a mesa documental.", False),
+        (2, "Template Base Fixa v2", "Versão manual para a Revisão Técnica documental.", False),
     ):
         resposta_criar = _api_fetch(
             page,
@@ -5065,7 +5065,7 @@ def test_e2e_revisor_biblioteca_templates_escolhe_modelo_no_card_e_limpa_banner(
 
     grupo.locator(".js-select-model").click()
 
-    expect(page.locator("#status-lista")).to_contain_text("Modelo escolhido para a próxima leitura da mesa.", timeout=10000)
+    expect(page.locator("#status-lista")).to_contain_text("Modelo escolhido para a próxima leitura da Revisão Técnica.", timeout=10000)
     expect(page.locator("#selected-template-banner")).to_be_visible(timeout=10000)
     expect(page.locator("#selected-template-name")).to_contain_text("Template Base Auto v1", timeout=10000)
 

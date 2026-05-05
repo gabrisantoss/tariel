@@ -77,7 +77,7 @@ _PDF_SECTION_LABELS = {
     "achados_nao_conformidades": "Achados e nao conformidades",
     "nao_conformidades_criticidade": "Achados tecnicos e providencias",
     "conclusao": "Conclusao",
-    "revisao_mesa": "Revisao da Mesa Avaliadora",
+    "revisao_mesa": "Revisao Técnica",
     "assinaturas_responsabilidade_tecnica": "Assinaturas e responsabilidade tecnica",
     "auditoria_emissao": "Auditoria da emissao oficial",
 }
@@ -290,7 +290,7 @@ def _format_mesa_origin(value: Any) -> str | None:
     if not normalized:
         return None
     if normalized in {"mesa_humana", "mesa", "humana", "human"}:
-        return "Mesa Avaliadora"
+        return "Revisão Técnica"
     if normalized in {"ia", "ai", "automatizada"}:
         return "Origem automatizada"
     return _humanize_key(text)
@@ -302,7 +302,7 @@ def _format_official_issue_status(value: Any) -> str | None:
     if not normalized:
         return None
     if normalized in {"bloqueada_ate_validacao_mesa_pdf", "blocked_until_mesa_pdf_validation"}:
-        return "Bloqueada ate validacao da Mesa e do PDF oficial"
+        return "Bloqueada ate validacao da Revisão Técnica e do PDF oficial"
     if normalized in {"issued", "emitido", "emissao_oficial"}:
         return "Emissao oficial"
     if normalized in {"ready", "ready_for_issue", "pronto"}:
@@ -317,7 +317,7 @@ def _format_traceability_chain(value: Any) -> str | None:
     replacements = {
         "campo JSON": "campo do documento",
         "secao PDF": "secao do PDF",
-        "decisao Mesa": "decisao da Mesa Avaliadora",
+        "decisao Mesa": "decisao da Revisão Técnica",
         "emissao oficial": "emissao oficial",
     }
     for source, target in replacements.items():
@@ -1444,7 +1444,7 @@ def _build_mesa_review_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
         return None
     rows = [
         {
-            "label": "Status da Mesa Avaliadora",
+            "label": "Status da Revisão Técnica",
             "value": _format_scalar(_value_by_path(ctx["payload"], "mesa_review.status")) or "",
             "blank": _is_blank(_value_by_path(ctx["payload"], "mesa_review.status")),
             "semantics": "computed_on_emit",
@@ -1475,7 +1475,7 @@ def _build_mesa_review_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
             "multiline": True,
         },
         {
-            "label": "Observacoes da Mesa",
+            "label": "Observacoes da Revisão Técnica",
             "value": _format_scalar(_value_by_path(ctx["payload"], "mesa_review.observacoes_mesa")) or "",
             "blank": _is_blank(_value_by_path(ctx["payload"], "mesa_review.observacoes_mesa")),
             "semantics": "computed_on_emit",
@@ -1486,7 +1486,7 @@ def _build_mesa_review_section(ctx: dict[str, Any]) -> dict[str, Any] | None:
         return None
     return {
         "id": "revisao_mesa",
-        "title": "Revisao da Mesa Avaliadora",
+        "title": "Revisao Técnica",
         "intro": _section_intro(
             ctx,
             "revisao_mesa",

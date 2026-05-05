@@ -1,4 +1,4 @@
-"""Shell das rotas da mesa avaliadora no domínio do inspetor."""
+"""Shell das rotas da Revisão Técnica no domínio do inspetor."""
 
 from __future__ import annotations
 
@@ -43,8 +43,8 @@ roteador_mesa.add_api_route(
     methods=["POST"],
     responses={
         **RESPOSTA_LAUDO_NAO_ENCONTRADO,
-        201: {"description": "Mensagem enviada para a mesa."},
-        400: {"description": "Mensagem inválida para o canal da mesa."},
+        201: {"description": "Mensagem enviada para a Revisão Técnica."},
+        400: {"description": "Mensagem inválida para o canal da Revisão Técnica."},
     },
 )
 roteador_mesa.add_api_route(
@@ -53,7 +53,7 @@ roteador_mesa.add_api_route(
     methods=["POST"],
     responses={
         **RESPOSTA_LAUDO_NAO_ENCONTRADO,
-        201: {"description": "Anexo enviado para a mesa."},
+        201: {"description": "Anexo enviado para a Revisão Técnica."},
         400: {"description": "Corpo multipart inválido."},
         413: {"description": "Anexo acima do limite permitido."},
         415: {"description": "Tipo de arquivo não suportado."},
@@ -63,14 +63,14 @@ roteador_mesa.add_api_route(
     "/api/mobile/mesa/feed",
     feed_mesa_mobile,
     methods=["GET"],
-    responses={400: {"description": "Parâmetros inválidos para o feed da mesa."}},
+    responses={400: {"description": "Parâmetros inválidos para o feed da Revisão Técnica."}},
 )
 roteador_mesa.add_api_route(
     "/api/mobile/v2/mesa/feed",
     feed_mesa_mobile_public_v2,
     methods=["GET"],
     responses={
-        400: {"description": "Parâmetros inválidos para o feed V2 da mesa."},
+        400: {"description": "Parâmetros inválidos para o feed V2 da Revisão Técnica."},
         404: {"description": "Contrato publico mobile V2 desativado."},
     },
 )
@@ -90,7 +90,7 @@ roteador_mesa.add_api_route(
     responses={
         **RESPOSTA_LAUDO_NAO_ENCONTRADO,
         200: {
-            "description": "Download do anexo da mesa.",
+            "description": "Download do anexo da Revisão Técnica.",
             "content": {
                 "application/pdf": {},
                 "image/png": {},

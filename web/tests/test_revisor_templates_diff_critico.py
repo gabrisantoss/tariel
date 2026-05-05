@@ -117,7 +117,7 @@ def test_revisor_diff_templates_compara_versoes_do_mesmo_codigo(ambiente_critico
         (
             id_v2,
             "Linha de vida revisada",
-            "Ponto B validado pela mesa avaliadora.",
+            "Ponto B validado pela Revisão Técnica.",
         ),
     ):
         resposta_salvar = client.put(
@@ -159,7 +159,7 @@ def test_revisor_diff_templates_compara_versoes_do_mesmo_codigo(ambiente_critico
     assert corpo["resumo"]["linhas_adicionadas"] >= 1
     assert corpo["resumo_blocos"]["alterados"] >= 1
     assert any(item["status"] == "alterado" for item in corpo["diff_blocos"])
-    assert any("Ponto B validado pela mesa avaliadora." in item["texto"] for item in corpo["diff_linhas"])
+    assert any("Ponto B validado pela Revisão Técnica." in item["texto"] for item in corpo["diff_linhas"])
     assert any(item["campo"] == "Versão" and item["mudou"] is True for item in corpo["comparacao_campos"])
 
 

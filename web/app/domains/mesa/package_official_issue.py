@@ -1,4 +1,4 @@
-"""Pacote de emissao oficial da Mesa Avaliadora."""
+"""Pacote de emissao oficial da Revisão Técnica."""
 
 from __future__ import annotations
 

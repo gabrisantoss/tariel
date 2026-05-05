@@ -206,7 +206,7 @@ def avaliar_laudo_revisor(
     if acao_normalizada == "aprovar":
         status_destino = StatusRevisao.APROVADO.value
         motivo_rejeicao = None
-        texto_notificacao_inspetor = "✅ Seu laudo foi aprovado pela mesa avaliadora."
+        texto_notificacao_inspetor = "✅ Seu laudo foi aprovado pela Revisão Técnica."
         conteudo_notificacao = "✅ **APROVADO!** Laudo finalizado e liberado com ART."
         logger.info("Laudo aprovado | laudo=%s | revisor=%s", laudo_id, revisor_nome)
     elif acao_normalizada == "rejeitar":
@@ -300,7 +300,7 @@ def avaliar_laudo_revisor(
             )
     except Exception:
         logger.warning(
-            "Falha ao registrar memoria operacional da decisao da mesa | laudo=%s | acao=%s",
+            "Falha ao registrar memoria operacional da decisao da Revisão Técnica | laudo=%s | acao=%s",
             laudo_id,
             acao_normalizada,
             exc_info=True,
@@ -369,7 +369,7 @@ def registrar_whisper_resposta_revisor(
     commit_ou_rollback_operacional(
         banco,
         logger_operacao=logger,
-        mensagem_erro="Falha ao confirmar whisper da mesa.",
+        mensagem_erro="Falha ao confirmar whisper da Revisão Técnica.",
     )
 
     return WhisperRespostaResult(
@@ -418,7 +418,7 @@ def registrar_resposta_chat_revisor(
     commit_ou_rollback_operacional(
         banco,
         logger_operacao=logger,
-        mensagem_erro="Falha ao confirmar resposta textual da mesa.",
+        mensagem_erro="Falha ao confirmar resposta textual da Revisão Técnica.",
     )
 
     logger.info(
@@ -653,7 +653,7 @@ def registrar_resposta_chat_com_anexo_revisor(
         commit_ou_rollback_operacional(
             banco,
             logger_operacao=logger,
-            mensagem_erro="Falha ao confirmar resposta da mesa com anexo.",
+            mensagem_erro="Falha ao confirmar resposta da Revisão Técnica com anexo.",
         )
     except Exception:
         banco.rollback()
@@ -694,7 +694,7 @@ def carregar_anexo_mesa_revisor(
         .first()
     )
     if not anexo or not str(anexo.caminho_arquivo or "").strip() or not os.path.isfile(str(anexo.caminho_arquivo)):
-        raise HTTPException(status_code=404, detail="Anexo da mesa não encontrado.")
+        raise HTTPException(status_code=404, detail="Anexo da Revisão Técnica não encontrado.")
     return anexo
 
 
@@ -709,7 +709,7 @@ def marcar_whispers_lidos_revisor(
     commit_ou_rollback_operacional(
         banco,
         logger_operacao=logger,
-        mensagem_erro="Falha ao marcar whispers da mesa como lidos.",
+        mensagem_erro="Falha ao marcar whispers da Revisão Técnica como lidos.",
     )
     return total
 
@@ -734,7 +734,7 @@ def atualizar_pendencia_mesa_revisor_status(
         .first()
     )
     if not mensagem:
-        raise HTTPException(status_code=404, detail="Pendência da mesa não encontrada.")
+        raise HTTPException(status_code=404, detail="Pendência da Revisão Técnica não encontrada.")
 
     mensagem.lida = bool(lida)
     if mensagem.lida:
@@ -784,7 +784,7 @@ def atualizar_pendencia_mesa_revisor_status(
             )
     except Exception:
         logger.warning(
-            "Falha ao registrar memoria operacional da pendencia da mesa | laudo=%s | mensagem=%s",
+            "Falha ao registrar memoria operacional da pendencia da Revisão Técnica | laudo=%s | mensagem=%s",
             laudo_id,
             mensagem_id,
             exc_info=True,
@@ -793,7 +793,7 @@ def atualizar_pendencia_mesa_revisor_status(
     commit_ou_rollback_operacional(
         banco,
         logger_operacao=logger,
-        mensagem_erro="Falha ao atualizar status da pendencia da mesa.",
+        mensagem_erro="Falha ao atualizar status da pendencia da Revisão Técnica.",
     )
     banco.refresh(mensagem)
 

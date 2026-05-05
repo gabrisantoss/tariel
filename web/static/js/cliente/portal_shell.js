@@ -292,8 +292,8 @@
             const operationalSurfaceLabels = Array.isArray(visibilityPolicy?.shared_mobile_operator_surface_set)
                 ? visibilityPolicy.shared_mobile_operator_surface_set.map((item) => {
                     if (item === "mobile") return "App mobile";
-                    if (item === "inspetor_web") return "Chat de campo";
-                    if (item === "mesa_web") return "Mesa avaliadora";
+                    if (item === "inspetor_web") return "Inspeção IA";
+                    if (item === "mesa_web") return "Revisão Técnica";
                     return texto(item).replaceAll("_", " ");
                 }).filter(Boolean)
                 : [];

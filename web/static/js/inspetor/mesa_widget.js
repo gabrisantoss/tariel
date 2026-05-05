@@ -37,7 +37,7 @@
         const atualizarStatusMesa = (...args) => ctx.actions.atualizarStatusMesa?.(...args);
         const PERF = window.TarielPerf || window.TarielCore?.TarielPerf || null;
         const MESA_WIDGET_GOVERNED_REASON =
-            "A conversa com a Mesa Avaliadora está desabilitada para esta empresa pelo Admin-CEO.";
+            "A conversa com a Revisão Técnica está desabilitada para esta empresa pelo Admin-CEO.";
 
         PERF?.noteModule?.("inspetor/mesa_widget.js", {
             readyState: document.readyState,
@@ -176,12 +176,12 @@
 
         const mime = String(arquivo.type || "").trim().toLowerCase();
         if (!MIME_ANEXOS_MESA_PERMITIDOS.has(mime)) {
-            mostrarToast("Use PNG, JPG, WebP, PDF ou DOCX no chat da mesa.", "aviso", 2400);
+            mostrarToast("Use PNG, JPG, WebP, PDF ou DOCX no chat da Revisão Técnica.", "aviso", 2400);
             return;
         }
 
         if (arquivo.size > MAX_BYTES_ANEXO_MESA) {
-            mostrarToast("O anexo da mesa deve ter no máximo 12MB.", "aviso", 2400);
+            mostrarToast("O anexo da Revisão Técnica deve ter no máximo 12MB.", "aviso", 2400);
             return;
         }
 
@@ -255,7 +255,7 @@
         if (!(window.TARIEL?.hasUserCapability?.("inspector_send_to_mesa", true) ?? true)) {
             return {
                 status: "governado",
-                titulo: "Mesa governada pelo Admin-CEO",
+                titulo: "Revisão Técnica governada pelo Admin-CEO",
                 descricao: MESA_WIDGET_GOVERNED_REASON,
                 chipStatus: "Canal governado",
                 chipPendencias: "",
@@ -284,8 +284,8 @@
         if (conexao === "offline") {
             return {
                 status: "offline",
-                titulo: "Mesa indisponível no momento",
-                descricao: "O canal da mesa perdeu conexão. Aguarde a reconexão para retomar o fluxo.",
+                titulo: "Revisão Técnica indisponível no momento",
+                descricao: "O canal da Revisão Técnica perdeu conexão. Aguarde a reconexão para retomar o fluxo.",
                 chipStatus: "Offline",
                 chipPendencias: pendenciasAbertas > 0 ? `${pendenciasAbertas} ${pluralizarMesa(pendenciasAbertas, "pendência aberta")}` : "",
                 chipNaoLidas: naoLidas > 0 ? `${naoLidas} ${pluralizarMesa(naoLidas, "retorno novo", "retornos novos")}` : "",
@@ -298,7 +298,7 @@
                 titulo: `${pendenciasAbertas} ${pluralizarMesa(pendenciasAbertas, "pendência aberta")} da mesa`,
                 descricao: ultimaMensagemResumo
                     ? `Última solicitação: ${ultimaMensagemResumo}.${sufixoData}`
-                    : `Há item(ns) da mesa aguardando retorno do campo.${sufixoData}`,
+                    : `Há item(ns) da Revisão Técnica aguardando retorno do campo.${sufixoData}`,
                 chipStatus: "Pendência aberta",
                 chipPendencias: `${pendenciasAbertas} ${pluralizarMesa(pendenciasAbertas, "pendência aberta")}`,
                 chipNaoLidas: naoLidas > 0 ? `${naoLidas} ${pluralizarMesa(naoLidas, "retorno novo", "retornos novos")}` : "",
@@ -308,11 +308,11 @@
         if (naoLidas > 0) {
             return {
                 status: "respondeu",
-                titulo: `Mesa respondeu com ${naoLidas} ${pluralizarMesa(naoLidas, "retorno novo", "retornos novos")}`,
+                titulo: `Revisão Técnica respondeu com ${naoLidas} ${pluralizarMesa(naoLidas, "retorno novo", "retornos novos")}`,
                 descricao: ultimaMensagemResumo
                     ? `Novo retorno no canal: ${ultimaMensagemResumo}.${sufixoData}`
-                    : `Há retorno novo da mesa aguardando leitura.${sufixoData}`,
-                chipStatus: "Mesa respondeu",
+                    : `Há retorno novo da Revisão Técnica aguardando leitura.${sufixoData}`,
+                chipStatus: "Revisão Técnica respondeu",
                 chipPendencias: "",
                 chipNaoLidas: `${naoLidas} ${pluralizarMesa(naoLidas, "retorno novo", "retornos novos")}`,
             };
@@ -321,11 +321,11 @@
         if (ultimaMensagemEhMesa) {
             return {
                 status: "respondeu",
-                titulo: "Último retorno veio da mesa",
+                titulo: "Último retorno veio da Revisão Técnica",
                 descricao: ultimaMensagemResumo
                     ? `Mensagem mais recente: ${ultimaMensagemResumo}.${sufixoData}`
                     : `A mesa respondeu por último neste laudo.${sufixoData}`,
-                chipStatus: "Mesa respondeu",
+                chipStatus: "Revisão Técnica respondeu",
                 chipPendencias: "",
                 chipNaoLidas: "",
             };
@@ -334,11 +334,11 @@
         if (ultimaMensagemEhCampo) {
             return {
                 status: "aguardando",
-                titulo: "Aguardando resposta da mesa",
+                titulo: "Aguardando resposta da Revisão Técnica",
                 descricao: ultimaMensagemResumo
                     ? `Último envio do campo: ${ultimaMensagemResumo}.${sufixoData}`
                     : `O último movimento veio do campo; a mesa ainda não respondeu.${sufixoData}`,
-                chipStatus: "Aguardando mesa",
+                chipStatus: "Aguardando Revisão Técnica",
                 chipPendencias: "",
                 chipNaoLidas: "",
             };
@@ -348,7 +348,7 @@
             return {
                 status: "canal_ativo",
                 titulo: contextoOperacional.title || "Canal da revisão aberto",
-                descricao: contextoOperacional.detail || "Use este espaço para alinhar dúvidas, anexos e pendências com a mesa.",
+                descricao: contextoOperacional.detail || "Use este espaço para alinhar dúvidas, anexos e pendências com a Revisão Técnica.",
                 chipStatus: contextoOperacional.chipStatus || "Canal ativo",
                 chipPendencias: "",
                 chipNaoLidas: "",
@@ -359,7 +359,7 @@
             return {
                 status: "canal_ativo",
                 titulo: "Canal da revisão aberto",
-                descricao: "Use este espaço para alinhar dúvidas, anexos e pendências com a mesa.",
+                descricao: "Use este espaço para alinhar dúvidas, anexos e pendências com a Revisão Técnica.",
                 chipStatus: "Canal ativo",
                 chipPendencias: "",
                 chipNaoLidas: "",
@@ -369,10 +369,10 @@
         const reconectando = conexao === "reconectando";
         return {
             status: "pronta",
-            titulo: reconectando ? "Mesa reconectando" : "Canal da revisão disponível",
+            titulo: reconectando ? "Revisão Técnica reconectando" : "Canal da revisão disponível",
             descricao: reconectando
                 ? "A conexão está sendo retomada. Você ainda pode acompanhar o último contexto do canal."
-                : "Abra o canal para alinhar dúvidas, pendências e evidências com a mesa.",
+                : "Abra o canal para alinhar dúvidas, pendências e evidências com a Revisão Técnica.",
             chipStatus: reconectando ? "Reconectando" : "Canal disponível",
             chipPendencias: "",
             chipNaoLidas: "",
@@ -458,11 +458,11 @@
         const atalhoAba = mesaWidgetAtuaComoAtalhoDeAba();
         const partes = [
             atalhoAba
-                ? "Abrir aba Mesa"
+                ? "Abrir aba Revisão Técnica"
                 : (
                     fallbackDev
-                        ? (aberto ? "Fechar atalho de desenvolvimento da mesa avaliadora" : "Abrir atalho de desenvolvimento da mesa avaliadora")
-                        : (aberto ? "Fechar canal da mesa avaliadora" : "Abrir canal da mesa avaliadora")
+                        ? (aberto ? "Fechar atalho de desenvolvimento da Revisão Técnica" : "Abrir atalho de desenvolvimento da Revisão Técnica")
+                        : (aberto ? "Fechar canal da Revisão Técnica" : "Abrir canal da Revisão Técnica")
                 )
         ];
         if (resumo?.titulo) {
@@ -486,7 +486,7 @@
                 ? "Canal governado"
                 : (
                     atalhoAba
-                        ? "Abrir aba Mesa"
+                        ? "Abrir aba Revisão Técnica"
                         : (fallbackDev ? (aberto ? "Fechar atalho" : "Atalho dev") : (aberto ? "Fechar canal" : "Abrir canal"))
                 );
         }
@@ -669,7 +669,7 @@
         if (entradaMesa && pendenciaAberta) {
             return {
                 className: "pendencia-aberta",
-                origemLabel: "Mesa",
+                origemLabel: "Revisão Técnica",
                 pillClass: "pendencia-aberta",
                 pillLabel: "Pendência aberta",
                 responder: true,
@@ -680,7 +680,7 @@
         if (entradaMesa && pendenciaResolvida) {
             return {
                 className: "pendencia-resolvida",
-                origemLabel: "Mesa",
+                origemLabel: "Revisão Técnica",
                 pillClass: "pendencia-resolvida",
                 pillLabel: "Pendência resolvida",
                 responder: false,
@@ -691,9 +691,9 @@
         if (entradaMesa) {
             return {
                 className: "retorno-mesa",
-                origemLabel: "Mesa",
+                origemLabel: "Revisão Técnica",
                 pillClass: "mensagem-contexto",
-                pillLabel: "Retorno da mesa",
+                pillLabel: "Retorno da Revisão Técnica",
                 responder: true,
                 actionLabel: "Responder à mesa",
             };
@@ -797,7 +797,7 @@
         if (!mensagens.length) {
             const vazio = document.createElement("p");
             vazio.className = "texto-vazio-pendencias";
-            vazio.textContent = "Sem conversa da mesa neste laudo.";
+            vazio.textContent = "Sem conversa da Revisão Técnica neste laudo.";
             el.mesaWidgetLista.appendChild(vazio);
             return;
         }
@@ -806,7 +806,7 @@
             const descricaoItem = descreverItemMesaWidget(item);
             const pendenciaResolvida = item.pendency_state === "resolved" || descricaoItem.className === "pendencia-resolvida";
             const card = document.createElement("article");
-            card.className = `mesa-widget-item ${descricaoItem.origemLabel === "Mesa" ? "entrada" : "saida"} mesa-widget-item--${descricaoItem.className}`;
+            card.className = `mesa-widget-item ${descricaoItem.origemLabel === "Revisão Técnica" ? "entrada" : "saida"} mesa-widget-item--${descricaoItem.className}`;
             card.dataset.mensagemId = String(item.id);
             card.dataset.itemKind = String(item.item_kind || "message");
             card.dataset.messageKind = String(item.message_kind || "system_message");
@@ -998,7 +998,7 @@
                 return;
             }
             if (!silencioso) {
-                mostrarToast("Não foi possível carregar o chat da mesa.", "aviso", 2400);
+                mostrarToast("Não foi possível carregar o chat da Revisão Técnica.", "aviso", 2400);
             }
         } finally {
             if (estado.mesaWidgetAbortController === controller) {
@@ -1040,7 +1040,7 @@
         }
 
         if (!texto && !anexoPendente) {
-            mostrarToast("Digite uma mensagem ou selecione um anexo para a mesa avaliadora.", "aviso", 2200);
+            mostrarToast("Digite uma mensagem ou selecione um anexo para a Revisão Técnica.", "aviso", 2200);
             return;
         }
 
@@ -1122,7 +1122,7 @@
         } catch (erro) {
             const detalhe = String(erro?.message || "").trim();
             mostrarToast(
-                detalhe || "Falha ao enviar mensagem para a mesa.",
+                detalhe || "Falha ao enviar mensagem para a Revisão Técnica.",
                 "erro",
                 2600
             );

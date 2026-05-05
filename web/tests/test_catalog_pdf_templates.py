@@ -1558,7 +1558,7 @@ def test_build_catalog_pdf_payload_materializa_nr36_inspecao_unidade_abate_proce
             "setor_produtivo": "Desossa e corte",
             "temperatura_ambiente": "10 C no setor com exposicao continua da equipe.",
             "pausas_termicas": "Escala de pausas abaixo do previsto para o turno da tarde.",
-            "ergonomia_posto": "Postos repetitivos com necessidade de rever altura da mesa secundaria.",
+            "ergonomia_posto": "Postos repetitivos com necessidade de rever altura da Revisão Técnica secundaria.",
             "facas_ferramentas": "Facas em uso com chaira e suporte organizados no posto principal.",
             "higienizacao": "Rotina de higienizacao em andamento entre lotes.",
             "epc_epi": "Luvas, mangotes e aventais disponiveis, com reforco necessario no uso do protetor auricular.",
@@ -2555,7 +2555,7 @@ def test_nr35_pdf_visual_view_model_separa_fotos_mesa_conclusao_e_auditoria() ->
     assert "Proxima inspecao periodica" in conclusion_labels
 
     mesa = next(section for section in view_model["sections"] if section["id"] == "revisao_mesa")
-    assert "Mesa Avaliadora" in str(mesa)
+    assert "Revisão Técnica" in str(mesa)
     assert "mesa_humana" not in str(mesa)
 
     audit = next(section for section in view_model["sections"] if section["id"] == "auditoria_emissao")

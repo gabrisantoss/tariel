@@ -1,6 +1,6 @@
 // ==========================================
 // TARIEL.IA — REVISOR_PAINEL_OPERACAO.JS
-// Papel: renderização operacional da mesa no painel do revisor.
+// Papel: renderização operacional da Revisão Técnica no painel do revisor.
 // ==========================================
 
 (function () {
@@ -169,7 +169,7 @@
             return {
                 icone: "assignment_late",
                 rotulo: abertas === 1 ? "1 pendência aberta" : `${abertas} pendências abertas`,
-                descricao: "Há itens da mesa aguardando retorno do campo neste laudo.",
+                descricao: "Há itens da Revisão Técnica aguardando retorno do campo neste laudo.",
             };
         }
 
@@ -252,8 +252,8 @@
                 <div class="mesa-operacao-topo">
                     <div>
                         <span class="mesa-operacao-eyebrow">Caso selecionado</span>
-                        <h3>Mesa Avaliadora</h3>
-                        <p>Operação da Mesa: ${escapeHtml(statusOperacional.descricao)}</p>
+                        <h3>Revisão Técnica</h3>
+                        <p>Operação da Revisão Técnica: ${escapeHtml(statusOperacional.descricao)}</p>
                     </div>
                     <span class="mesa-operacao-tag">
                         <span class="material-symbols-rounded" aria-hidden="true">${escapeHtml(statusOperacional.icone)}</span>
@@ -283,10 +283,10 @@
                     <article class="mesa-operacao-kpi">
                         <span>Pendências do caso</span>
                         <strong>${escapeHtml(String(collaboration.openPendencyCount || 0))}</strong>
-                        <small>Mensagens da mesa ainda em aberto para o inspetor.</small>
+                        <small>Mensagens da Revisão Técnica ainda em aberto para o inspetor.</small>
                     </article>
                     <article class="mesa-operacao-kpi">
-                        <span>Decisão da Mesa</span>
+                        <span>Decisão técnica</span>
                         <strong>${escapeHtml(decisionSummary)}</strong>
                         <small>${escapeHtml(String(collaboration.resolvedPendencyCount || 0))} pendência(s) resolvida(s) recentemente.</small>
                     </article>
@@ -337,7 +337,7 @@
                     <section class="mesa-operacao-bloco" data-uxf-block="decisao-mesa">
                         <header class="mesa-operacao-bloco-header">
                             <span>Decisão operacional</span>
-                            <h4>Decisão da Mesa</h4>
+                            <h4>Decisão técnica</h4>
                             <p>Leitura de governança, revisão por seção e evidências que sustentam aprovar ou devolver.</p>
                         </header>
                         <div class="mesa-operacao-insights">

@@ -1,4 +1,4 @@
-"""Infra compartilhada de anexos da Mesa Avaliadora."""
+"""Infra compartilhada de anexos da Revisão Técnica."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ def categoria_mime_anexo_mesa(mime_type: str) -> tuple[str, str]:
     if not categoria_ext:
         raise HTTPException(
             status_code=415,
-            detail="Use PNG, JPG, WebP, GIF, PDF ou DOCX no canal da mesa.",
+            detail="Use PNG, JPG, WebP, GIF, PDF ou DOCX no canal da Revisão Técnica.",
         )
     return categoria_ext
 
@@ -47,9 +47,9 @@ def categoria_mime_anexo_mesa(mime_type: str) -> tuple[str, str]:
 def validar_anexo_mesa_bytes(*, mime_type: str, conteudo: bytes) -> tuple[str, str]:
     categoria, extensao = categoria_mime_anexo_mesa(mime_type)
     if not conteudo:
-        raise HTTPException(status_code=400, detail="Arquivo da mesa está vazio.")
+        raise HTTPException(status_code=400, detail="Arquivo da Revisão Técnica está vazio.")
     if len(conteudo) > MAX_BYTES_ANEXO_MESA:
-        raise HTTPException(status_code=413, detail="O anexo da mesa deve ter no máximo 12MB.")
+        raise HTTPException(status_code=413, detail="O anexo da Revisão Técnica deve ter no máximo 12MB.")
     return categoria, extensao
 
 

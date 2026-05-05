@@ -141,7 +141,7 @@ def test_superficies_expoem_tenant_access_policy_governado(
     tenant_policy_cliente = bootstrap_cliente.json()["tenant_access_policy"]
     assert tenant_policy_cliente["user_capability_entitlements"]["admin_manage_team"] is True
     pacote_cliente = bootstrap_cliente.json()["tenant_commercial_package"]
-    assert pacote_cliente["label"] == "Chat Inspetor + Mesa Avaliadora"
+    assert pacote_cliente["label"] == "Inspeção IA + Revisão Técnica"
     assert pacote_cliente["surface_availability"]["mesa"] is True
 
     usuario_bootstrap = next(
@@ -441,7 +441,7 @@ def test_finalizacao_sem_mesa_contratada_aprova_no_fluxo_interno_governado(
     assert corpo["success"] is True
     assert corpo["review_mode_final"] == "mobile_autonomous"
     assert corpo["review_mode_final_reason"] == "tenant_without_mesa"
-    assert "sem Mesa Avaliadora" in corpo["message"]
+    assert "aprovação interna" in corpo["message"]
 
     with SessionLocal() as banco:
         laudo = banco.get(Laudo, laudo_id)
@@ -612,10 +612,10 @@ def test_previa_finalizacao_sem_mesa_expoe_revisao_interna_sem_rotulo_mesa(
     corpo = resposta.json()
     assert corpo["can_finalize"] is True
     assert corpo["primary_action"] == "approve_without_mesa"
-    assert corpo["primary_label"] == "Aprovar sem Mesa"
-    assert corpo["chat_review_tools"]["title"] == "Revisão interna governada"
-    assert corpo["chat_review_tools"]["primary_label"] == "Confirmar revisão interna"
-    assert "Mesa Avaliadora" not in corpo["chat_review_tools"]["title"]
+    assert corpo["primary_label"] == "Aprovar internamente"
+    assert corpo["chat_review_tools"]["title"] == "Aprovação interna"
+    assert corpo["chat_review_tools"]["primary_label"] == "Aprovar internamente"
+    assert "Revisão Técnica" not in corpo["chat_review_tools"]["title"]
     assert corpo["chat_review_tools"]["self_review_allowed"] is True
     assert corpo["chat_review_tools"]["case_self_review"] is True
     assert corpo["chat_review_tools"]["separate_mesa_required"] is False
@@ -651,8 +651,8 @@ def test_previa_finalizacao_com_mesa_mantem_rotulo_mesa_avaliadora(
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["primary_action"] == "send_to_mesa"
-    assert corpo["chat_review_tools"]["title"] == "Revisão pela Mesa Avaliadora"
-    assert corpo["chat_review_tools"]["primary_label"] == "Enviar para Mesa"
+    assert corpo["chat_review_tools"]["title"] == "Revisão Técnica"
+    assert corpo["chat_review_tools"]["primary_label"] == "Enviar para Revisão Técnica"
     assert corpo["chat_review_tools"]["separate_mesa_required"] is True
     assert corpo["chat_review_tools"]["case_send_to_separate_review"] is True
     assert corpo["chat_review_tools"]["self_review_allowed"] is False
@@ -770,7 +770,7 @@ def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(
     )
     assert resposta_login_mobile.status_code == 200
     usuario_mobile = resposta_login_mobile.json()["usuario"]
-    assert usuario_mobile["commercial_service_package_label"] == "Chat Inspetor + Mesa + servicos no Inspetor"
+    assert usuario_mobile["commercial_service_package_label"] == "Inspeção IA + Revisão Técnica + Emissão"
     assert (
         usuario_mobile["tenant_access_policy"]["commercial_service_package_effective"]
         == "inspector_chat_mesa_reviewer_services"
@@ -781,11 +781,11 @@ def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(
     assert resposta_bootstrap_cliente.status_code == 200
     assert (
         resposta_bootstrap_cliente.json()["tenant_access_policy"]["commercial_service_package_label"]
-        == "Chat Inspetor + Mesa + servicos no Inspetor"
+        == "Inspeção IA + Revisão Técnica + Emissão"
     )
     assert (
         resposta_bootstrap_cliente.json()["tenant_commercial_package"]["label"]
-        == "Chat Inspetor + Mesa + servicos no Inspetor"
+        == "Inspeção IA + Revisão Técnica + Emissão"
     )
 
     _login_app_inspetor(client, "inspetor@empresa-a.test")
@@ -838,9 +838,8 @@ def test_inspetor_sem_servicos_da_mesa_nao_abre_preparacao_de_emissao(
     _login_cliente(client, "cliente@empresa-a.test")
     resposta_portal = client.get("/cliente/painel")
     assert resposta_portal.status_code == 200
-    assert "Chat Inspetor sem Mesa" in resposta_portal.text
-    assert 'id="tab-mesa"' in resposta_portal.text
-    assert 'data-surface-disabled="true"' in resposta_portal.text.split('id="tab-mesa"', 1)[1].split(">", 1)[0]
+    assert "Inspeção IA" in resposta_portal.text
+    assert 'id="tab-mesa"' not in resposta_portal.text
 
 
 def test_inspetor_com_servicos_da_mesa_emite_oficialmente_no_fluxo_do_chat(
@@ -1112,7 +1111,7 @@ def test_editor_visual_recebe_contexto_do_inspetor_para_laudo_real(
 
     assert resposta.status_code == 200
     assert "Contexto do laudo" in resposta.text
-    assert "Chat Inspetor" in resposta.text
+    assert "Inspeção IA" in resposta.text
     assert "Registrar ressalva documental sobre acesso parcial." in resposta.text
     assert "Inserir checklist" in resposta.text
     assert '"laudo_id": %d' % laudo_id in resposta.text

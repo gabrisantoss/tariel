@@ -135,8 +135,8 @@ _PORTAL_LOGIN_ROUTES = {
 }
 _ONBOARDING_PORTAL_LABELS = {
     PORTAL_CLIENTE: "Portal Cliente",
-    PORTAL_INSPETOR: "Chat de campo",
-    PORTAL_REVISOR: "Mesa avaliadora",
+    PORTAL_INSPETOR: "Inspeção IA",
+    PORTAL_REVISOR: "Revisão Técnica",
 }
 
 

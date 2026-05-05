@@ -80,8 +80,8 @@ def build_tenant_commercial_overview_cliente(
     users = list(usuarios or [])
     portals = [
         {"key": "cliente", "label": "Portal Cliente", "enabled": True},
-        {"key": "inspetor", "label": "Chat de campo", "enabled": bool(surface_availability.get("chat", True))},
-        {"key": "revisor", "label": "Mesa avaliadora", "enabled": bool(surface_availability.get("mesa", True))},
+        {"key": "inspetor", "label": "Inspeção IA", "enabled": bool(surface_availability.get("chat", True))},
+        {"key": "revisor", "label": "Revisão Técnica", "enabled": bool(surface_availability.get("mesa", True))},
     ]
     capability_entitlements = _bool_dict(tenant_policy_summary.get("tenant_capability_entitlements"))
     capability_aliases = _bool_dict(tenant_policy_summary.get("tenant_capability_aliases"))
@@ -136,10 +136,10 @@ def build_tenant_commercial_overview_cliente(
         ),
         _resource_item(
             key="chat",
-            label="Chat de campo",
+            label="Inspeção IA",
             available=chat_enabled,
-            detail_available="Chat de campo disponível para os usuários operacionais liberados nesta conta.",
-            detail_unavailable="Chat de campo não está incluído no pacote atual.",
+            detail_available="Inspeção IA disponível para os usuários operacionais liberados nesta conta.",
+            detail_unavailable="Inspeção IA não está incluído no pacote atual.",
             action_kind="admin-section",
             action_target="lista-usuarios",
             action_label="Abrir equipe",
@@ -149,17 +149,17 @@ def build_tenant_commercial_overview_cliente(
             key="self_review",
             label="Revisão interna",
             available=self_review_allowed,
-            detail_available="Revisão interna governada disponível para famílias que permitem aprovação sem Mesa separada.",
+            detail_available="Aprovação interna disponível para famílias que permitem aprovação interna.",
             detail_unavailable="Revisão interna não está liberada neste pacote ou a família exige revisão separada.",
             depends_on_family=True,
             chips=["Self-review", "Governança"],
         ),
         _resource_item(
             key="mesa",
-            label="Mesa avaliadora",
+            label="Revisão Técnica",
             available=separate_mesa_available,
-            detail_available="Mesa avaliadora disponível para os usuários liberados quando a revisão separada estiver contratada ou exigida.",
-            detail_unavailable="Mesa avaliadora não incluída neste pacote; isso não é erro quando a família permite revisão interna.",
+            detail_available="Revisão Técnica disponível para os usuários liberados quando a revisão separada estiver contratada ou exigida.",
+            detail_unavailable="Revisão Técnica não incluída neste pacote; isso não é erro quando a família permite revisão interna.",
             depends_on_family=True,
             action_kind="admin-section",
             action_target="lista-usuarios",
@@ -229,7 +229,7 @@ def build_tenant_commercial_overview_cliente(
         "active_summary": [
             f"{len([item for item in portals if item['enabled']])} portais liberados",
             f"{len(users)} operadores cadastrados",
-            "Mesa contratada" if mesa_contracted else "Sem Mesa contratada",
+            "Revisão Técnica contratada" if mesa_contracted else "Aprovação interna contratada",
             "Emissão oficial incluída" if official_issue_allowed else "Sem emissão oficial contratada",
         ],
         "pending_configuration": onboarding_pending,

@@ -1,4 +1,4 @@
-"""Revisao por bloco do pacote da Mesa Avaliadora."""
+"""Revisao por bloco do pacote da Revisão Técnica."""
 
 from __future__ import annotations
 

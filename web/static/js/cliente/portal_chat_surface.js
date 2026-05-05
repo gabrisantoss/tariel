@@ -328,7 +328,7 @@
       function humanizarOwnerRole(valor) {
         const mapa = {
           inspetor: "Campo tecnico",
-          mesa: "Mesa Avaliadora",
+          mesa: "Revisão Técnica",
           none: "Ciclo encerrado",
         };
         const chave = texto(valor).trim().toLowerCase();
@@ -832,7 +832,7 @@
             accent: "waiting",
             label: "Na Mesa",
             value: formatarInteiro(aguardando),
-            meta: "Laudos que ja sairam do campo e estao esperando retorno da mesa.",
+            meta: "Laudos que ja sairam do campo e estao esperando retorno da Revisão Técnica.",
           },
           {
             accent: prioridade ? prioridade.tone : "done",
@@ -880,7 +880,7 @@
         [
           ["Ver ajustes", "ajustes"],
           ["Ver abertos", "abertos"],
-          ["Ver na Mesa", "aguardando"],
+          ["Ver na Revisão Técnica", "aguardando"],
           ["Ver parados", "parados"],
         ].forEach(([label, situacao]) => {
           toolbar.appendChild(criarChatToolbarButton(label, situacao));
@@ -1328,7 +1328,7 @@
           renderEmptyState(container, {
             title: "Nenhuma mensagem carregada",
             detail:
-              "Assim que voce conversar com o assistente ou com a mesa, o historico aparece aqui.",
+              "Assim que voce conversar com o assistente ou com a Revisão Técnica, o historico aparece aqui.",
           });
           atualizarResumoSecaoChat();
           return;

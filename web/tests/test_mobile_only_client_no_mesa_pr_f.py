@@ -130,7 +130,7 @@ def test_cliente_individual_mobile_only_aprova_familia_simples_sem_mesa_e_sem_em
     assert preview["mobile_chat_first_governance"]["self_review_allowed"] is True
     assert preview["mobile_chat_first_governance"]["separate_mesa_required"] is False
     assert preview["mobile_chat_first_governance"]["official_issue_allowed"] is False
-    assert preview["chat_review_tools"]["title"] == "Revisão interna governada"
+    assert preview["chat_review_tools"]["title"] == "Aprovação interna"
     assert preview["chat_review_tools"]["official_issue_create"] is False
 
     resposta_finalizar = client.post(
@@ -142,7 +142,7 @@ def test_cliente_individual_mobile_only_aprova_familia_simples_sem_mesa_e_sem_em
     assert corpo_finalizar["success"] is True
     assert corpo_finalizar["review_mode_final"] == "mobile_autonomous"
     assert corpo_finalizar["review_mode_final_reason"] == "tenant_without_mesa"
-    assert "sem Mesa Avaliadora" in corpo_finalizar["message"]
+    assert "aprovação interna" in corpo_finalizar["message"]
 
     with SessionLocal() as banco:
         laudo = banco.get(Laudo, laudo_id)
@@ -282,7 +282,7 @@ def test_cliente_individual_mobile_only_nao_converte_nr35_em_self_review_sem_mes
                 MensagemLaudo(
                     laudo_id=laudo_id,
                     tipo=TipoMensagem.IA.value,
-                    conteudo="Parecer técnico preliminar NR35 depende de Mesa Avaliadora.",
+                    conteudo="Parecer técnico preliminar NR35 depende de Revisão Técnica.",
                 ),
             ]
         )
@@ -295,7 +295,7 @@ def test_cliente_individual_mobile_only_nao_converte_nr35_em_self_review_sem_mes
     assert detalhe_preview["code"] == "nr35_mesa_required_unavailable"
     assert detalhe_preview["review_mode_requested"] == "mesa_required"
     assert detalhe_preview["required_capability"] == "inspector_send_to_mesa"
-    assert "NR35 Linha de Vida exige Mesa Avaliadora" in detalhe_preview["message"]
+    assert "NR35 Linha de Vida exige Revisão Técnica" in detalhe_preview["message"]
 
     resposta_finalizar = client.post(
         f"/app/api/laudo/{laudo_id}/finalizar",

@@ -148,7 +148,7 @@
       const SECTION_META = Object.freeze({
         overview: Object.freeze({
           title: "Visao geral",
-          meta: "Panorama da analise da mesa.",
+          meta: "Panorama da analise da Revisão Técnica.",
         }),
         queue: Object.freeze({
           title: "Fila de revisao",
@@ -160,7 +160,7 @@
         }),
         reply: Object.freeze({
           title: "Responder",
-          meta: "Contexto, decisao e resposta da mesa.",
+          meta: "Contexto, decisao e resposta da Revisão Técnica.",
         }),
       });
       const TARGET_TO_SECTION = Object.freeze({
@@ -320,7 +320,7 @@
       function humanizarOwnerRole(valor) {
         const mapa = {
           inspetor: "Campo tecnico",
-          mesa: "Mesa Avaliadora",
+          mesa: "Revisão Técnica",
           none: "Ciclo encerrado",
         };
         const chave = texto(valor).trim().toLowerCase();
@@ -370,7 +370,7 @@
           return {
             ...base,
             key: "decision_ready",
-            label: "Decisao da Mesa disponivel",
+            label: "Revisão Técnica disponível",
             detail:
               "A mesa ja pode aprovar ou devolver com orientacao objetiva.",
             tone: "aprovado",
@@ -383,7 +383,7 @@
             key: "waiting_field_send",
             label: "Aguardando envio do campo",
             detail:
-              "A coleta ficou pronta, mas o caso ainda depende do envio formal para a mesa.",
+              "A coleta ficou pronta, mas o caso ainda depende do envio formal para a Revisão Técnica.",
             tone: "aguardando",
           };
         }
@@ -408,7 +408,7 @@
             key: "mesa_owner",
             label: "Mesa em acao",
             detail:
-              "A validacao humana da mesa segue como proximo passo do caso.",
+              "A validacao humana da Revisão Técnica segue como proximo passo do caso.",
             tone: "aberto",
           };
         }
@@ -574,7 +574,7 @@
         ) {
           title = "Ciclo de revisão encerrado";
           copy =
-            "A etapa da mesa já foi concluída e o caso segue para emissão ou reabertura.";
+            "A etapa da Revisão Técnica já foi concluída e o caso segue para emissão ou reabertura.";
           tone = "aprovado";
         }
 
@@ -1078,7 +1078,7 @@
         const meta = documentRef.createElement("span");
         meta.className = "activity-meta";
         meta.textContent =
-          "Os laudos mais novos tocados na fila da Mesa Avaliadora.";
+          "Os laudos mais novos tocados na fila da Revisão Técnica.";
         copy.appendChild(title);
         copy.appendChild(meta);
         head.appendChild(copy);
@@ -1112,7 +1112,7 @@
           contexto.appendChild(
             criarMesaEmptyStateNode(
               "Selecione um laudo para revisar",
-              "O painel da mesa mostra pendencias, chamados e historico do laudo selecionado.",
+              "O painel da Revisão Técnica mostra pendencias, chamados e historico do laudo selecionado.",
             ),
           );
           aprovar.disabled = true;
@@ -1265,7 +1265,7 @@
             accent: "waiting",
             label: "Pendencias abertas",
             value: formatarInteiro(totalPendencias),
-            meta: `${formatarInteiro(totalWhispers)} chamados ainda aguardam leitura da mesa.`,
+            meta: `${formatarInteiro(totalWhispers)} chamados ainda aguardam leitura da Revisão Técnica.`,
           },
           {
             accent: "live",
@@ -1354,7 +1354,7 @@
           renderEmptyState(container, {
             title: "Nada carregado ainda",
             detail:
-              "As respostas da mesa, chamados e anexos deste laudo aparecem aqui.",
+              "As respostas da Revisão Técnica, chamados e anexos deste laudo aparecem aqui.",
           });
           atualizarResumoSecaoMesa();
           return;

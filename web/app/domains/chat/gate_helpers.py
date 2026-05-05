@@ -166,7 +166,7 @@ ROTEIRO_COLETA_TEMPLATE: dict[str, dict[str, Any]] = {
                 "id": "padrao_achado_principal",
                 "categoria": "coleta",
                 "titulo": "Consolidar o achado principal da inspeção",
-                "descricao": "Antes de enviar para a mesa, deixe explícito o principal achado técnico ou a ausência de não conformidade relevante.",
+                "descricao": "Antes de enviar para a Revisão Técnica, deixe explícito o principal achado técnico ou a ausência de não conformidade relevante.",
             },
         ],
     },
@@ -290,7 +290,7 @@ ROTEIRO_COLETA_TEMPLATE: dict[str, dict[str, Any]] = {
         ],
     },
     "rti": {
-        "descricao": "A RTI deve chegar à mesa com foco em quadros, circuitos críticos, proteção e estado geral da instalação.",
+        "descricao": "A RTI deve chegar à Revisão Técnica com foco em quadros, circuitos críticos, proteção e estado geral da instalação.",
         "itens_especificos": [
             {
                 "id": "rti_quadros_circuitos",
@@ -344,7 +344,7 @@ ROTEIRO_COLETA_TEMPLATE: dict[str, dict[str, Any]] = {
         ],
     },
     "nr12maquinas": {
-        "descricao": "A mesa precisa receber uma coleta fechada sobre proteções, intertravamentos e zonas de risco da máquina.",
+        "descricao": "A Revisão Técnica precisa receber uma coleta fechada sobre proteções, intertravamentos e zonas de risco da máquina.",
         "itens_especificos": [
             {
                 "id": "nr12_protecoes_emergencia",
@@ -463,7 +463,7 @@ ROTEIRO_COLETA_TEMPLATE: dict[str, dict[str, Any]] = {
         ],
     },
     "cbmgo": {
-        "descricao": "Além das evidências mínimas, este template exige estruturação do formulário antes do envio para a mesa.",
+        "descricao": "Além das evidências mínimas, este template exige estruturação do formulário antes do envio para a Revisão Técnica.",
         "itens_especificos": [
             {
                 "id": "cbmgo_estrutura_rotas",
@@ -966,7 +966,7 @@ def _montar_roteiro_template_qualidade(tipo_template: str, regra: dict[str, Any]
             item_id="roteiro_fotos_essenciais",
             categoria="foto",
             titulo="Registrar fotos essenciais",
-            descricao=f"Garanta ao menos {min_fotos} foto(s) dos pontos críticos antes do envio para a mesa.",
+            descricao=f"Garanta ao menos {min_fotos} foto(s) dos pontos críticos antes do envio para a Revisão Técnica.",
         ),
         _item_roteiro_template(
             item_id="roteiro_parecer_ia",
@@ -982,7 +982,7 @@ def _montar_roteiro_template_qualidade(tipo_template: str, regra: dict[str, Any]
                 item_id="roteiro_formulario_estruturado",
                 categoria="formulario",
                 titulo="Gerar formulário estruturado do template",
-                descricao="Este template exige estruturação obrigatória antes da finalização e envio para a mesa.",
+                descricao="Este template exige estruturação obrigatória antes da finalização e envio para a Revisão Técnica.",
             )
         )
 
@@ -1198,12 +1198,12 @@ def avaliar_gate_qualidade_laudo(banco: Session, laudo: Laudo) -> dict[str, Any]
         if review_mode_sugerido == "mobile_autonomous":
             mensagem = (
                 "Coleta pronta para finalizar. O laudo pode seguir para "
-                "revisão interna governada."
+                "aprovação interna."
             )
         elif review_mode_sugerido == "mesa_required":
             mensagem = (
                 "Coleta pronta para finalizar. O laudo pode ser enviado para "
-                "a mesa avaliadora."
+                "a Revisão Técnica."
             )
         else:
             mensagem = "Coleta pronta para finalizar. O laudo pode seguir para revisão governada."

@@ -307,7 +307,7 @@
                 },
                 {
                     accent: pacote.mesa_contracted ? "done" : "waiting",
-                    label: "Mesa contratada",
+                    label: "Revisão Técnica contratada",
                     value: pacote.mesa_contracted ? "Sim" : "Não",
                     meta: pacote.official_issue_included ? "Emissão oficial incluída no pacote." : "Emissão oficial ainda não incluída.",
                 },

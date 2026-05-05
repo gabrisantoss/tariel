@@ -156,7 +156,7 @@
                     <div>
                         <span class="admin-governance-flow__eyebrow">Fluxo guiado de governança</span>
                         <h2 id="admin-governance-flow-title">Configuração comercial e técnica do cliente</h2>
-                        <p>Resumo operacional para entender pacote, portais, capacidades, famílias, Mesa Avaliadora, Emissão oficial e prontidão antes de operar.</p>
+                        <p>Resumo operacional para entender pacote, portais, capacidades, famílias, Revisão Técnica, Emissão oficial e prontidão antes de operar.</p>
                     </div>
                     <span class="badge {{ _readiness_badge | e }}">{{ _readiness_label | e }}</span>
                 </div>
@@ -166,14 +166,14 @@
                         <span class="admin-governance-step__label">Resumo do cliente</span>
                         <strong>{{ empresa.nome_fantasia | e }}</strong>
                         <p>
-                            Pacote {{ _admin_cliente_policy.get("commercial_service_package_label", "Chat Inspetor + Mesa Avaliadora") | e }}
+                            Pacote {{ _admin_cliente_policy.get("commercial_service_package_label", "Inspeção IA + Revisão Técnica") | e }}
                             · {{ _admin_cliente_policy.get("operating_model_label", "Operação padrão") | e }}
                             · {{ _readiness_reason | e }}
                         </p>
                     </article>
                     <article class="admin-governance-step">
                         <span class="admin-governance-step__label">Pacote contratado</span>
-                        <strong>{{ _admin_cliente_policy.get("commercial_service_package_label", "Chat Inspetor + Mesa Avaliadora") | e }}</strong>
+                        <strong>{{ _admin_cliente_policy.get("commercial_service_package_label", "Inspeção IA + Revisão Técnica") | e }}</strong>
                         <p>{{ _admin_cliente_policy.get("commercial_service_package_description", "Modelo governado pelo Admin CEO.") | e }}</p>
                     </article>
                     <article class="admin-governance-step">
@@ -191,8 +191,8 @@
                         </header>
                         <div class="admin-governance-pill-grid">
                             <span class="admin-governance-pill {{ 'is-on' if _portais_admin.get('cliente') else 'is-off' }}">Portal Cliente · {{ "liberado" if _portais_admin.get("cliente") else "Não incluído no pacote" }}</span>
-                            <span class="admin-governance-pill {{ 'is-on' if _portais_admin.get('inspetor') else 'is-off' }}">Chat Inspetor · {{ "liberado" if _portais_admin.get("inspetor") else "Não incluído no pacote" }}</span>
-                            <span class="admin-governance-pill {{ 'is-on' if _mesa_liberada else 'is-off' }}">Mesa Avaliadora · {{ "Mesa habilitada" if _mesa_liberada else "Pacote sem Mesa" }}</span>
+                            <span class="admin-governance-pill {{ 'is-on' if _portais_admin.get('inspetor') else 'is-off' }}">Inspeção IA · {{ "liberado" if _portais_admin.get("inspetor") else "Não incluído no pacote" }}</span>
+                            <span class="admin-governance-pill {{ 'is-on' if _mesa_liberada else 'is-off' }}">Revisão Técnica · {{ "Revisão habilitada" if _mesa_liberada else "Aprovação interna" }}</span>
                             <span class="admin-governance-pill {{ 'is-on' if _emissao_liberada else 'is-off' }}">Documentos oficiais · {{ "Emissão oficial liberada" if _emissao_liberada else "Não incluído no pacote" }}</span>
                         </div>
                     </section>
@@ -205,9 +205,9 @@
                         <div class="admin-governance-capability-list">
                             <span>Criar casos <strong>{{ "liberado" if _capabilities_admin.get("inspector_case_create") else "Não incluído no pacote" }}</strong></span>
                             <span>Finalizar coleta <strong>{{ "liberado" if _capabilities_admin.get("inspector_case_finalize") else "Não incluído no pacote" }}</strong></span>
-                            <span>Revisão interna governada <strong>{{ "liberada" if _capabilities_admin.get("mobile_case_approve") else "Depende da família/template" }}</strong></span>
-                            <span>Enviar para Mesa <strong>{{ "liberado" if _capabilities_admin.get("inspector_send_to_mesa") else "Não incluído no pacote" }}</strong></span>
-                            <span>Decisão da Mesa <strong>{{ "liberada" if _capabilities_admin.get("reviewer_decision") else "Não incluído no pacote" }}</strong></span>
+                            <span>Aprovação interna <strong>{{ "liberada" if _capabilities_admin.get("mobile_case_approve") else "Depende da família/template" }}</strong></span>
+                            <span>Enviar para Revisão Técnica <strong>{{ "liberado" if _capabilities_admin.get("inspector_send_to_mesa") else "Não incluído no pacote" }}</strong></span>
+                            <span>Decisão técnica <strong>{{ "liberada" if _capabilities_admin.get("reviewer_decision") else "Não incluído no pacote" }}</strong></span>
                             <span>Emissão oficial e download oficial <strong>{{ "liberados" if _emissao_liberada else "Não incluído no pacote" }}</strong></span>
                         </div>
                     </section>
@@ -220,7 +220,7 @@
                         <div class="admin-governance-readiness-list">
                             <span><strong>{{ _familias_ativas }}</strong> família(s) liberada(s)</span>
                             <span><strong>{{ _modelos_ativos }}</strong> modelo(s) ativo(s)</span>
-                            <span>{{ "Família exige Mesa quando a regra do catálogo exigir" if _mesa_liberada else "Famílias com Mesa ficam indisponíveis neste pacote" }}</span>
+                            <span>{{ "Família exige Revisão Técnica quando a regra do catálogo exigir" if _mesa_liberada else "Famílias com Revisão Técnica ficam indisponíveis neste pacote" }}</span>
                             <span>{{ "Release ativo configurado por família/template" if _modelos_ativos else "Pendente de família/template" }}</span>
                         </div>
                     </section>

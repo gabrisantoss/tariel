@@ -128,15 +128,15 @@ def _build_chat_review_tools_payload(
     self_review_allowed = bool(governance.get("self_review_allowed"))
     official_issue_allowed = bool(governance.get("official_issue_allowed"))
     if primary_action == "approve_without_mesa":
-        title = "Revisão interna governada"
-        tool_primary_label = "Confirmar revisão interna"
+        title = "Aprovação interna"
+        tool_primary_label = "Aprovar internamente"
         tool_next_step = (
             "O caso será aprovado por decisão humana interna do tenant, com trilha "
             "de responsabilidade preservada."
         )
         surface = "chat_self_review"
     elif primary_action == "send_to_mesa":
-        title = "Revisão pela Mesa Avaliadora"
+        title = "Revisão Técnica"
         tool_primary_label = primary_label
         tool_next_step = next_step
         surface = "separate_mesa"
@@ -148,10 +148,10 @@ def _build_chat_review_tools_payload(
 
     suggested_labels = {
         "pending_title": "Pendências do caso",
-        "self_review_title": "Revisão interna governada",
-        "self_review_primary_label": "Confirmar revisão interna",
-        "separate_mesa_title": "Revisão pela Mesa Avaliadora",
-        "separate_mesa_primary_label": "Enviar para Mesa",
+        "self_review_title": "Aprovação interna",
+        "self_review_primary_label": "Aprovar internamente",
+        "separate_mesa_title": "Revisão Técnica",
+        "separate_mesa_primary_label": "Enviar para Revisão Técnica",
         "official_issue_label": "Emissão oficial",
         "official_issue_download_label": "Download oficial",
     }
@@ -240,7 +240,7 @@ def _resolver_review_mode_final(
         detail={
             "code": "mesa_review_not_available",
             "message": (
-                "Esta empresa nao possui Mesa Avaliadora contratada e tambem nao possui "
+                "Esta empresa nao possui Revisão Técnica contratada e tambem nao possui "
                 "aprovacao interna liberada pelo Admin-CEO."
             ),
             "review_mode_requested": "mesa_required",
@@ -448,11 +448,11 @@ def _garantir_sem_correcoes_estruturadas_abertas_para_aprovacao_direta(laudo: La
             "codigo": "structured_corrections_pending",
             "message": (
                 "Ha correcoes estruturadas abertas. Marque cada correcao como aplicada "
-                "ou descartada antes de aprovar sem Mesa Avaliadora."
+                "ou descartada antes de aprovar internamente."
             ),
             "mensagem": (
                 "Há correções estruturadas abertas. Marque cada correção como aplicada "
-                "ou descartada antes de aprovar sem Mesa Avaliadora."
+                "ou descartada antes de aprovar internamente."
             ),
             "open_correction_count": len(abertas),
             "open_corrections": abertas[:8],
@@ -541,7 +541,7 @@ def obter_previa_finalizacao_laudo_resposta(
         bloqueios.append(
             {
                 "code": "structured_corrections_pending",
-                "message": "Resolva as correcoes abertas antes de aprovar sem Mesa.",
+                "message": "Resolva as correcoes abertas antes de aprovar internamente.",
                 "count": int(correcoes.get("open") or 0),
             }
         )
@@ -551,18 +551,18 @@ def obter_previa_finalizacao_laudo_resposta(
         primary_label = "Resolver pendências"
     elif final_validation_mode == "mobile_autonomous":
         primary_action = "approve_without_mesa"
-        primary_label = "Aprovar sem Mesa"
+        primary_label = "Aprovar internamente"
     else:
         primary_action = "send_to_mesa"
-        primary_label = "Enviar para Mesa"
+        primary_label = "Enviar para Revisão Técnica"
 
     next_step = (
         "Revise a aba Correcoes e marque cada item como aplicado ou descartado."
         if primary_action == "resolve_pending"
         else (
-            "O laudo sera aprovado internamente sem Mesa Avaliadora."
+            "O laudo sera aprovado internamente."
             if primary_action == "approve_without_mesa"
-            else "O laudo sera enviado para a Mesa Avaliadora."
+            else "O laudo sera enviado para a Revisão Técnica."
         )
     )
     chat_review_tools = _build_chat_review_tools_payload(
@@ -930,7 +930,7 @@ def _persistir_decisao_final_laudo(
             detail=(
                 "Laudo não está em estágio compatível com aprovação final."
                 if target_case_lifecycle_status == "aprovado"
-                else "Laudo não está em estágio compatível com envio para a mesa."
+                else "Laudo não está em estágio compatível com envio para a Revisão Técnica."
             ),
         )
 
@@ -1090,11 +1090,11 @@ async def finalizar_relatorio_resposta(
     payload = {
         "success": True,
         "message": (
-            "✅ Relatório aprovado no fluxo sem Mesa Avaliadora desta empresa."
+            "✅ Relatório aprovado pela aprovação interna desta empresa."
             if direct_without_mesa
             else "✅ Relatório aprovado automaticamente com o report pack canônico do caso."
             if final_validation_mode == "mobile_autonomous"
-            else "✅ Relatório enviado para engenharia! Já aparece na Mesa de Avaliação."
+            else "✅ Relatório enviado para engenharia! Já aparece na Revisão Técnica."
         ),
         "laudo_id": laudo.id,
         "estado": contexto["estado"],
@@ -1301,7 +1301,7 @@ async def executar_comando_revisao_mobile_resposta(
                     None,
                 ),
             )
-            success_message = "Caso enviado para a Mesa Avaliadora a partir do mobile."
+            success_message = "Caso enviado para a Revisão Técnica a partir do mobile."
     else:
         if laudo.status_revisao != StatusRevisao.RASCUNHO.value:
             raise HTTPException(

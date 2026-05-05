@@ -227,7 +227,7 @@
 
         function redirecionarMesaGovernadaParaCorrecoes() {
             mostrarToast(
-                "Mesa Avaliadora não está contratada para esta empresa. Use Correções no próprio chat.",
+                "Revisão Técnica não está contratada para esta empresa. Use Correções no próprio chat.",
                 "info",
                 2600
             );

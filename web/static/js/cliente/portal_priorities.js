@@ -74,7 +74,7 @@
 
         function resumoCanalOperacional(canal) {
             if (canal === "chat") return "Chat";
-            if (canal === "mesa") return "Mesa avaliadora";
+            if (canal === "mesa") return "Revisão Técnica";
             return "Portal Cliente";
         }
 
@@ -265,9 +265,9 @@
                         score: 650,
                         tone: pendentesMesa > 0 ? "aguardando" : "aberto",
                         canal: "mesa",
-                        titulo: "Mesa avaliadora com fila ativa",
+                        titulo: "Revisão Técnica com fila ativa",
                         detalhe: pendentesMesa > 0
-                            ? `${formatarInteiro(pendentesMesa)} caso(s) aguardam revisão formal da mesa.`
+                            ? `${formatarInteiro(pendentesMesa)} caso(s) aguardam revisão formal da Revisão Técnica.`
                             : `${formatarInteiro(emMesa)} caso(s) seguem em revisão ativa pela mesa.`,
                         acaoLabel: "Abrir mesa",
                         kind: "mesa-section",
@@ -320,7 +320,7 @@
         function rotuloSituacaoChat(situacao) {
             if (situacao === "ajustes") return "Ação agora";
             if (situacao === "abertos") return "Em operação";
-            if (situacao === "aguardando") return "Aguardando mesa";
+            if (situacao === "aguardando") return "Aguardando Revisão Técnica";
             if (situacao === "parados") return "Parados";
             if (situacao === "concluidos") return "Concluídos";
             return "";
@@ -413,9 +413,9 @@
             if (status === "aguardando") {
                 return {
                     score: 220,
-                    badge: "Aguardando mesa",
+                    badge: "Aguardando Revisão Técnica",
                     tone: "aguardando",
-                    acao: "Acompanhe o retorno da mesa e prepare a proxima resposta, se necessario.",
+                    acao: "Acompanhe o retorno da Revisão Técnica e prepare a proxima resposta, se necessario.",
                 };
             }
 
@@ -590,7 +590,7 @@
                     score: 220,
                     tone: "aberto",
                     badge: "Mesa disponível",
-                    acao: "Avaliador liberado para acessar a Mesa avaliadora.",
+                    acao: "Avaliador liberado para acessar a Revisão Técnica.",
                 };
             }
 

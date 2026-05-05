@@ -2,7 +2,7 @@
     {% set mesa_secao_inicial = cliente_mesa_section_inicial | default('overview') %}
     <div class="section-intro section-intro--surface">
         <div>
-            <h2>Mesa Avaliadora</h2>
+            <h2>Revisão Técnica</h2>
             <p>Separe fila, pendencias e resposta tecnica para manter a analise clara.</p>
         </div>
     </div>
@@ -13,7 +13,7 @@
         data-surface-active-section="{{ cliente_mesa_section_inicial | default('overview') | e }}"
     >
         <div class="surface-nav__intro">
-            <span class="surface-nav__eyebrow">Mesa avaliadora</span>
+            <span class="surface-nav__eyebrow">Revisão Técnica</span>
             <strong>Fila tecnica com leitura clara</strong>
             <p>Fila, pendencias e resposta em etapas distintas.</p>
         </div>
@@ -43,7 +43,7 @@
             </span>
         </div>
 
-        <div class="surface-tabs" role="tablist" aria-label="Seções da mesa avaliadora">
+        <div class="surface-tabs" role="tablist" aria-label="Seções da Revisão Técnica">
             <a
                 href="{{ cliente_surface_routes.mesa | default('/cliente/mesa') | e }}?sec=overview"
                 class="surface-tab{% if (cliente_mesa_section_inicial | default('overview')) == 'overview' %} is-active{% endif %}"

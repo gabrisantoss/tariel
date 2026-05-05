@@ -138,7 +138,7 @@ def test_familia_alto_risco_sem_mesa_bloqueia_self_review_generico(
     assert detalhe["review_mode_requested"] == "mesa_required"
     assert detalhe["required_capability"] == "inspector_send_to_mesa"
     assert detalhe["guardrail"] == "separate_mesa_required"
-    assert "NR13 Caldeira exige Mesa Avaliadora" in detalhe["message"]
+    assert "NR13 Caldeira exige Revisão Técnica" in detalhe["message"]
 
     resposta_finalizar = client.post(
         f"/app/api/laudo/{laudo_id}/finalizar",
@@ -194,4 +194,4 @@ def test_familia_alto_risco_com_policy_mobile_autonomous_e_mesa_forca_handoff(
     )
     assert corpo["mobile_chat_first_governance"]["separate_mesa_required"] is True
     assert corpo["mobile_chat_first_governance"]["self_review_allowed"] is False
-    assert corpo["chat_review_tools"]["title"] == "Revisão pela Mesa Avaliadora"
+    assert corpo["chat_review_tools"]["title"] == "Revisão Técnica"

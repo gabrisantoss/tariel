@@ -418,7 +418,7 @@ def test_websocket_whispers_bloqueia_broadcast_mesa_quando_superficie_indisponiv
     assert fake_manager.broadcasts == []
     assert fake_websocket.enviados[1] == {
         "tipo": "erro",
-        "detail": "A superfície Mesa Avaliadora não está disponível para esta empresa.",
+        "detail": "A superfície Revisão Técnica não está disponível para esta empresa.",
     }
     assert fake_manager.disconnected == [(11, 5, fake_websocket)]
 

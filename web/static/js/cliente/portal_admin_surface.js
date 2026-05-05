@@ -138,7 +138,7 @@
         }),
         access: Object.freeze({
           title: "Acessos operacionais",
-          meta: "Chat de campo e Mesa avaliadora por usuário.",
+          meta: "Inspeção IA e Revisão Técnica por usuário.",
         }),
         support: Object.freeze({
           title: "Suporte",
@@ -328,8 +328,8 @@
           : [];
         const surfaceLabels = surfaceSet.map((item) => {
           if (item === "mobile") return "App mobile";
-          if (item === "inspetor_web") return "Chat de campo";
-          if (item === "mesa_web") return "Mesa avaliadora";
+          if (item === "inspetor_web") return "Inspeção IA";
+          if (item === "mesa_web") return "Revisão Técnica";
           return item.replaceAll("_", " ");
         });
         const assignablePortalSet = Array.isArray(
@@ -372,7 +372,7 @@
             fallback: "App mobile",
           }),
           identityNote: enabled
-            ? "A conta principal pode concentrar Chat de campo, Mesa avaliadora e mobile conforme as liberações contratadas."
+            ? "A conta principal pode concentrar Inspeção IA, Revisão Técnica e mobile conforme as liberações contratadas."
             : "Cada pessoa segue a combinação de acessos liberada para esta conta.",
         };
       }
@@ -434,7 +434,7 @@
             ...base,
             key: "tenant_pending_review",
             label: "Decisão pendente",
-            detail: `${formatarInteiro(pendingReview)} caso(s) aguardam decisão objetiva da mesa.`,
+            detail: `${formatarInteiro(pendingReview)} caso(s) aguardam decisão objetiva da Revisão Técnica.`,
             tone: "aguardando",
             ownerLabel: "Responsável predominante: mesa",
           };
@@ -1036,11 +1036,11 @@
           },
           access: {
             title: "Acessos operacionais",
-            meta: "A conta cliente acompanha quem pode usar Chat de campo e Mesa avaliadora, sem operar essas filas por aqui.",
+            meta: "A conta cliente acompanha quem pode usar Inspeção IA e Revisão Técnica, sem operar essas filas por aqui.",
             chips: [
               `${formatarInteiro((state.bootstrap?.usuarios || []).length)} usuários`,
-              "Chat de campo",
-              "Mesa avaliadora",
+              "Inspeção IA",
+              "Revisão Técnica",
             ],
           },
           support: {
@@ -2232,11 +2232,11 @@
             eyebrow: "Permissões por usuário",
             title: "Gestão separada da operação",
             detail:
-              "Esta área define quem pode entrar no Chat de campo e na Mesa avaliadora. A operação dessas filas continua fora desta tela.",
+              "Esta área define quem pode entrar na Inspeção IA e na Revisão Técnica. A operação dessas filas continua fora desta tela.",
             metrics: [
               { label: "Usuários", value: formatarInteiro(usuarios.length) },
-              { label: "Chat de campo", value: formatarInteiro(chatLiberado) },
-              { label: "Mesa avaliadora", value: formatarInteiro(mesaLiberada) },
+              { label: "Inspeção IA", value: formatarInteiro(chatLiberado) },
+              { label: "Revisão Técnica", value: formatarInteiro(mesaLiberada) },
               { label: "Acesso duplo", value: formatarInteiro(ambos) },
             ],
             actions: [
@@ -2285,8 +2285,8 @@
             <tr>
               <th>Usuário</th>
               <th>Perfil</th>
-              <th>Chat de campo</th>
-              <th>Mesa avaliadora</th>
+              <th>Inspeção IA</th>
+              <th>Revisão Técnica</th>
             </tr>
           </thead>
         `;
@@ -3088,8 +3088,8 @@
       function labelPortalUsuario(portal) {
         const valor = texto(portal).trim().toLowerCase();
         if (valor === "cliente") return "Acesso do cliente";
-        if (valor === "inspetor") return "Chat de campo";
-        if (valor === "revisor") return "Mesa avaliadora";
+        if (valor === "inspetor") return "Inspeção IA";
+        if (valor === "revisor") return "Revisão Técnica";
         return valor || "Portal";
       }
 
@@ -3137,13 +3137,13 @@
         const controls = [
           {
             portal: "inspetor",
-            label: "Chat de campo",
+            label: "Inspeção IA",
             checked: currentPortals.has("inspetor") || baseRole === "inspetor",
             disabled: true,
           },
           {
             portal: "revisor",
-            label: "Mesa avaliadora",
+            label: "Revisão Técnica",
             checked: currentPortals.has("revisor") || baseRole === "revisor",
             disabled: baseRole === "revisor" ? true : !canGrantCross,
           },
@@ -3182,10 +3182,10 @@
         const acessos = obterPortalGrantLabels(usuario);
         if (!acessos.length) {
           if (usuarioTemPortalOperacional(usuario, "inspetor", "inspetor")) {
-            acessos.push("Chat de campo");
+            acessos.push("Inspeção IA");
           }
           if (usuarioTemPortalOperacional(usuario, "revisor", "revisor")) {
-            acessos.push("Mesa avaliadora");
+            acessos.push("Revisão Técnica");
           }
         }
 

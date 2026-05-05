@@ -1,4 +1,4 @@
-"""Suporte documental do pacote da Mesa Avaliadora."""
+"""Suporte documental do pacote da Revisão Técnica."""
 
 from __future__ import annotations
 

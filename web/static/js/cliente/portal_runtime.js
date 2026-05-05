@@ -153,7 +153,7 @@
                 desc: "Operação e laudos da empresa",
             }),
             mesa: Object.freeze({
-                title: "Mesa Avaliadora",
+                title: "Revisão Técnica",
                 desc: "Fila, pendências e aprovações",
             }),
         });

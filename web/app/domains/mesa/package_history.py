@@ -1,4 +1,4 @@
-"""Pacote de historico e memoria operacional da Mesa Avaliadora."""
+"""Pacote de historico e memoria operacional da Revisão Técnica."""
 
 from __future__ import annotations
 

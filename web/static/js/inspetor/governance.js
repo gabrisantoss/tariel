@@ -214,7 +214,7 @@
             const modo = String(valor || "").trim().toLowerCase();
             if (!modo) return "";
             if (modo === "mesa_required") return "Revisão obrigatória";
-            if (modo === "mobile_autonomous") return "Revisao interna governada";
+            if (modo === "mobile_autonomous") return "Aprovação interna";
             if (modo === "human_override") return "Override humano";
             return modo.replace(/[_-]+/g, " ");
         }

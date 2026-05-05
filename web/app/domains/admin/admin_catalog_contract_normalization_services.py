@@ -62,9 +62,9 @@ _CATALOGO_RELEASE_STATUS_LABELS = {
     "expired": ("Encerrada", "archived"),
 }
 _CATALOGO_REVIEW_MODE_LABELS = {
-    "mesa_required": ("Analise interna", "review"),
-    "mobile_review_allowed": ("Aplicativo com apoio da analise", "testing"),
-    "mobile_autonomous": ("Aplicativo com autonomia", "active"),
+    "mesa_required": ("Revisão Técnica obrigatória", "review"),
+    "mobile_review_allowed": ("Aprovação interna assistida", "testing"),
+    "mobile_autonomous": ("Aprovação interna", "active"),
 }
 _CATALOGO_REVIEW_OVERRIDE_LABELS = {
     "inherit": "Usar configuracao padrao",

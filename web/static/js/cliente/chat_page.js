@@ -265,7 +265,7 @@
                     await api(`/cliente/api/chat/laudos/${state.chat.laudoId}/finalizar`, { method: "POST" });
                     await bootstrapPortal({ surface: "chat", force: true });
                     await loadChat(state.chat.laudoId, { silencioso: true, force: true });
-                    feedback("Laudo enviado para a mesa avaliadora.");
+                    feedback("Laudo enviado para a Revisão Técnica.");
                 }).catch((erro) => feedback(erro.message || "Falha ao finalizar laudo.", true));
             });
 

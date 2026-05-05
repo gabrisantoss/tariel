@@ -85,9 +85,9 @@ _RUNTIME_PREFIX_RULES: tuple[tuple[str, str], ...] = (
     ("pie", "pie"),
 )
 _REVIEW_MODE_LABELS = {
-    "mesa_required": "Mesa obrigatória",
-    "mobile_review_allowed": "Mobile com revisão",
-    "mobile_autonomous": "Mobile autônomo",
+    "mesa_required": "Revisão Técnica obrigatória",
+    "mobile_review_allowed": "Aprovação interna assistida",
+    "mobile_autonomous": "Aprovação interna",
 }
 _RELEASE_STATUS_LABELS = {
     "draft": "Rascunho",

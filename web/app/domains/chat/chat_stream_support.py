@@ -405,12 +405,12 @@ def prepare_chat_stream_route(
             if not laudo:
                 raise HTTPException(
                     status_code=400,
-                    detail="A conversa com a mesa avaliadora só é permitida após iniciar uma nova inspeção.",
+                    detail="A conversa com a Revisão Técnica só é permitida após iniciar uma nova inspeção.",
                 )
             if not argumento_comando_rapido:
                 raise HTTPException(
                     status_code=400,
-                    detail="Use /enviar_mesa seguido da mensagem para a mesa avaliadora.",
+                    detail="Use /enviar_mesa seguido da mensagem para a Revisão Técnica.",
                 )
             mensagem_limpa = f"@insp {argumento_comando_rapido}"
         else:
@@ -589,7 +589,7 @@ def persist_chat_user_message(
         tipo_msg_usuario = TipoMensagem.HUMANO_INSP.value
         texto_exibicao = remover_mencao_mesa(prepared.mensagem_limpa)
         if not texto_exibicao:
-            raise HTTPException(status_code=400, detail="Mensagem para a mesa está vazia.")
+            raise HTTPException(status_code=400, detail="Mensagem para a Revisão Técnica está vazia.")
         referencia_mensagem_id = int(dados.referencia_mensagem_id or 0) or None
         texto_salvar = compor_texto_com_referencia(texto_exibicao, referencia_mensagem_id)
     elif eh_comando_finalizar:

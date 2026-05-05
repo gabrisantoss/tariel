@@ -35,10 +35,10 @@ MIME_IMAGEM_APRENDIZADO = {
     "image/gif": ".gif",
 }
 CORRECAO_CHAT_AUTOMATICA_PADRAO = (
-    "Sem correção explícita do inspetor. Evidência visual capturada do chat para validação posterior da mesa."
+    "Sem correção explícita do inspetor. Evidência visual capturada do chat para validação posterior da Revisão Técnica."
 )
 DESCRICAO_CHAT_AUTOMATICA_PADRAO = (
-    "Evidência visual capturada automaticamente do chat do inspetor para revisão da mesa avaliadora."
+    "Evidência visual capturada automaticamente do chat do inspetor para revisão da Revisão Técnica."
 )
 MARCADORES_INTERNOS_APRENDIZADO_PREFIXOS = (
     "aprendizado_bloqueado:",
@@ -803,7 +803,7 @@ def construir_contexto_aprendizado_para_ia(
     blocos = [
         "[aprendizados_visuais_validados]",
         (
-            "Considere os casos abaixo como referência validada pela mesa avaliadora, "
+            "Considere os casos abaixo como referência validada pela Revisão Técnica, "
             "incluindo variações reais de ângulo, enquadramento e qualidade de foto "
             "que já foram aceitas no tenant. Em caso de divergência com a evidência "
             "atual, explique a diferença em vez de copiar o caso antigo."

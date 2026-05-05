@@ -8,7 +8,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta name="tariel-perf-mode" content="{{ '1' if perf_mode | default(false) else '0' }}">
-    <title>Mesa de Avaliação • Tariel.ia</title>
+    <title>Revisão Técnica • Tariel.ia</title>
     <script src="/static/js/shared/theme_bootstrap.js"></script>
 
     <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
@@ -64,7 +64,7 @@
     {% set issued_reopen_hidden = issued_reopen and (issued_reopen.visible_in_active_case is sameas false) %}
     {% if 'mesa_approve' in allowed_surface_actions or 'mesa_return' in allowed_surface_actions %}
         {% set flow_summary_key = 'decision_ready' %}
-        {% set flow_summary_label = 'Decisao da Mesa disponivel' %}
+        {% set flow_summary_label = 'Revisão Técnica disponível' %}
     {% elif 'chat_finalize' in allowed_surface_actions %}
         {% set flow_summary_key = 'waiting_field_send' %}
         {% set flow_summary_label = 'Aguardando envio do campo' %}
@@ -140,7 +140,7 @@
             <span class="topbar-mark" aria-hidden="true">TI</span>
             <div class="topbar-brandcopy">
                 <span class="topbar-eyebrow">Tariel Plataforma</span>
-                <span class="topbar-title">Mesa Avaliadora</span>
+                <span class="topbar-title">Revisão Técnica</span>
             </div>
             <button type="button" id="btn-home-mesa" class="btn-link-topbar btn-link-topbar--home">
                 <span class="material-symbols-rounded icon-topbar" aria-hidden="true">home</span>
@@ -171,7 +171,7 @@
     </header>
 
     {% set total_fila = (laudos_em_andamento|length) + (laudos_pendentes|length) + (laudos_avaliados|length) %}
-    <section class="mesa-flow-strip" aria-label="Contexto do inbox da mesa avaliadora">
+    <section class="mesa-flow-strip" aria-label="Contexto do inbox da Revisão Técnica">
         <div class="mesa-flow-overview">
             <div class="mesa-flow-copy">
                 <span class="mesa-flow-label">Fila de decisão</span>
@@ -269,7 +269,7 @@
                 </div>
             </section>
 
-            <form method="get" action="/revisao/painel" class="filtros-mesa" aria-label="Filtros da mesa avaliadora">
+            <form method="get" action="/revisao/painel" class="filtros-mesa" aria-label="Filtros da Revisão Técnica">
                 <div class="filtros-topo">
                     <strong>Refinar fila</strong>
                     <span>{{ total_fila }} caso(s)</span>
@@ -447,7 +447,7 @@
                         <article class="mesa-dashboard-card mesa-dashboard-card--critical">
                             <span>Responder agora</span>
                             <strong>{{ responder_agora_count }}</strong>
-                            <p>Casos com chamado novo ou aprendizado pendente, pedindo ação rápida da mesa.</p>
+                            <p>Casos com chamado novo ou aprendizado pendente, pedindo ação rápida da Revisão Técnica.</p>
                         </article>
                         <article class="mesa-dashboard-card">
                             <span>Prontos para decisão</span>

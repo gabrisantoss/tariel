@@ -36,8 +36,8 @@
                     <div class="grid-2">
                         <div class="info-card">
                             <div class="label">Pacote contratado</div>
-                            <div class="valor">{{ _admin_cliente_policy.get("commercial_service_package_label", "Chat Inspetor + Mesa Avaliadora") | e }}</div>
-                            <div class="valor-auxiliar">{{ _admin_cliente_policy.get("commercial_service_package_description", "Define Portal Cliente, Chat Inspetor, Mesa Avaliadora e Emissão oficial.") | e }}</div>
+                            <div class="valor">{{ _admin_cliente_policy.get("commercial_service_package_label", "Inspeção IA + Revisão Técnica") | e }}</div>
+                            <div class="valor-auxiliar">{{ _admin_cliente_policy.get("commercial_service_package_description", "Define Portal Cliente, Inspeção IA, Revisão Técnica e Emissão oficial.") | e }}</div>
                         </div>
                         <div class="info-card">
                             <div class="label">Modelo contratado</div>
@@ -56,7 +56,7 @@
                             <div class="valor">{{ _admin_cliente_policy.get("case_visibility_mode_label", "Não definida") | e }}</div>
                             <div class="valor-auxiliar">
                                 {% if _policy.get("case_list_visible") %}
-                                A empresa pode acompanhar os casos em detalhe e usar a Mesa Avaliadora quando contratada.
+                                A empresa pode acompanhar os casos em detalhe e usar a Revisão Técnica quando contratada.
                                 {% else %}
                                 O portal da empresa fica so com visao resumida.
                                 {% endif %}
@@ -77,7 +77,7 @@
                             <label for="admin-cliente-commercial-service-package">
                                 <span class="label-with-help">
                                     <span>Pacote comercial governado</span>
-                                    {{ help_icon("Escolha o pacote vendido pelo Admin CEO. Este pacote libera ou bloqueia Portal Cliente, Chat Inspetor, Mesa Avaliadora e Emissão oficial.", "Ajuda sobre pacote comercial") }}
+                                    {{ help_icon("Escolha o pacote vendido pelo Admin CEO. Este pacote libera ou bloqueia Portal Cliente, Inspeção IA, Revisão Técnica e Emissão oficial.", "Ajuda sobre pacote comercial") }}
                                 </span>
                             </label>
                             <select id="admin-cliente-commercial-service-package" name="admin_cliente_commercial_service_package">
@@ -86,7 +86,7 @@
                                 {% endfor %}
                             </select>
                             <div class="valor-auxiliar">
-                                Sem Mesa: o inspetor finaliza internamente. Com Mesa Avaliadora: o caso vai para decisão governada. Com serviços no Inspetor: usuários autorizados podem acumular campo e revisão interna governada.
+                                Aprovação interna: o inspetor finaliza internamente. Com Revisão Técnica: o caso vai para decisão governada. Com emissão: usuários autorizados podem acumular campo e aprovação interna.
                             </div>
                         </div>
                         <div class="campo-form">
@@ -116,8 +116,8 @@
                         <div class="campo-form">
                             <label for="admin-cliente-mobile-web-mesa">
                                 <span class="label-with-help">
-                                    <span>A mesma pessoa pode usar a Mesa Avaliadora no navegador</span>
-                                    {{ help_icon("Ative quando a mesma pessoa puder revisar e concluir etapas também pela Mesa Avaliadora web.", "Ajuda sobre Mesa Avaliadora no navegador") }}
+                                    <span>A mesma pessoa pode usar a Revisão Técnica no navegador</span>
+                                    {{ help_icon("Ative quando a mesma pessoa puder revisar e concluir etapas também pela Revisão Técnica web.", "Ajuda sobre Revisão Técnica no navegador") }}
                                 </span>
                             </label>
                             <select id="admin-cliente-mobile-web-mesa" name="admin_cliente_mobile_web_review_enabled">

@@ -1,4 +1,4 @@
-"""Serviços de aplicação do domínio Mesa Avaliadora."""
+"""Serviços de aplicação do domínio Revisão Técnica."""
 
 from __future__ import annotations
 

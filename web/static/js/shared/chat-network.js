@@ -1026,7 +1026,7 @@
                 rearmarEmissaoStatusRelatorio();
 
                 mostrarToast(
-                    dados?.message ?? "Relatorio enviado para a mesa!",
+                    dados?.message ?? "Relatorio enviado para a Revisão Técnica!",
                     "sucesso",
                     5000
                 );
@@ -1399,15 +1399,15 @@
                     laudoId,
                     preview: texto.slice(0, 120),
                 });
-                emitirStatusChat("mesa", "Nova interação com a mesa avaliadora.");
+                emitirStatusChat("mesa", "Nova interação com a Revisão Técnica.");
             } else {
-                mostrarToast("Mensagem enviada para a mesa avaliadora.", "sucesso", 1800);
+                mostrarToast("Mensagem enviada para a Revisão Técnica.", "sucesso", 1800);
                 emitirStatusMesa("aguardando", {
                     origem: "inspetor",
                     laudoId,
                     preview: texto.slice(0, 120),
                 });
-                emitirStatusChat("mesa", "Mensagem encaminhada para a mesa avaliadora.");
+                emitirStatusChat("mesa", "Mensagem encaminhada para a Revisão Técnica.");
             }
 
             return true;

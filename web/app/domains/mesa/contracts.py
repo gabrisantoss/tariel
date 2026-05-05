@@ -1,4 +1,4 @@
-"""Contratos do domínio Mesa Avaliadora."""
+"""Contratos do domínio Revisão Técnica."""
 
 from __future__ import annotations
 

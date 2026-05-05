@@ -1,4 +1,4 @@
-"""Suporte mobile/sync da Mesa Avaliadora."""
+"""Suporte mobile/sync da Revisão Técnica."""
 
 from __future__ import annotations
 
@@ -482,7 +482,7 @@ def montar_feed_mesa_mobile(
             )
         except Exception:
             logger.debug(
-                "Falha ao derivar adapter canônico do feed mobile da mesa no V2.",
+                "Falha ao derivar adapter canônico do feed mobile da Revisão Técnica no V2.",
                 exc_info=True,
             )
             itens_publicos.append(legacy_item)

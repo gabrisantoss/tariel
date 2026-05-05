@@ -538,7 +538,7 @@ def build_guided_onboarding_cliente(
         },
         {
             "key": "inspetor",
-            "title": "Liberar Chat de campo",
+            "title": "Liberar Inspeção IA",
             "done": "inspetor" in papeis,
             "detail": (
                 "Já existe pelo menos um perfil de campo apto a iniciar laudos."
@@ -552,12 +552,12 @@ def build_guided_onboarding_cliente(
         {
             "key": "mesa",
             "title": "Preparar revisão humana",
-            "done": ("mesa avaliadora" in papeis) or ("revisor" in papeis) or not bool(surface_availability.get("mesa", False)),
+            "done": ("Revisão Técnica" in papeis) or ("revisor" in papeis) or not bool(surface_availability.get("mesa", False)),
             "detail": (
                 "A revisão humana já está coberta pela equipe da conta."
-                if (("mesa avaliadora" in papeis) or ("revisor" in papeis))
+                if (("Revisão Técnica" in papeis) or ("revisor" in papeis))
                 else (
-                    "Este contrato não expõe Mesa avaliadora para a conta."
+                    "Este contrato não expõe Revisão Técnica para a conta."
                     if not bool(surface_availability.get("mesa", False))
                     else "Cadastre um avaliador para fechar a etapa de decisão humana."
                 )
@@ -581,15 +581,15 @@ def build_guided_onboarding_cliente(
         },
         {
             "key": "primeiro_envio_mesa",
-            "title": "Enviar o primeiro caso para mesa",
+            "title": "Enviar o primeiro caso para Revisão Técnica",
             "done": total_mesa > 0 or not bool(surface_availability.get("mesa", False)),
             "detail": (
                 "A primeira rodada de revisão humana já aconteceu na conta."
                 if total_mesa > 0
                 else (
-                    "Este contrato não expõe Mesa avaliadora para a conta."
+                    "Este contrato não expõe Revisão Técnica para a conta."
                     if not bool(surface_availability.get("mesa", False))
-                    else "Quando o primeiro caso chegar à Mesa, o fluxo completo de revisão aparece aqui."
+                    else "Quando o primeiro caso chegar à Revisão Técnica, o fluxo completo de revisão aparece aqui."
                 )
             ),
             "action_label": "Abrir equipe",

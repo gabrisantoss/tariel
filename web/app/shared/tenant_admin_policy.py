@@ -51,19 +51,19 @@ _OPERATING_MODEL_LABELS: dict[TenantAdminOperatingModel, str] = {
     "mobile_single_operator": "Aplicativo principal com uma pessoa responsável",
 }
 _COMMERCIAL_SERVICE_PACKAGE_LABELS: dict[TenantAdminCommercialServicePackage, str] = {
-    "inspector_chat": "Chat de campo sem Mesa",
-    "inspector_chat_mesa": "Chat de campo + Mesa avaliadora",
-    "inspector_chat_mesa_reviewer_services": "Chat de campo + Mesa + serviços no campo",
+    "inspector_chat": "Inspeção IA",
+    "inspector_chat_mesa": "Inspeção IA + Revisão Técnica",
+    "inspector_chat_mesa_reviewer_services": "Inspeção IA + Revisão Técnica + Emissão",
 }
 _COMMERCIAL_SERVICE_PACKAGE_DESCRIPTIONS: dict[TenantAdminCommercialServicePackage, str] = {
     "inspector_chat": (
-        "O inspetor conduz o caso no chat com IA e finaliza internamente, sem fila de Mesa."
+        "O inspetor conduz o caso no chat com IA e finaliza por aprovação interna."
     ),
     "inspector_chat_mesa": (
-        "O operador de campo envia para a Mesa e a avaliação/emissão ficam na Mesa avaliadora."
+        "O operador de campo envia para a Revisão Técnica e a avaliação/emissão ficam na Revisão Técnica."
     ),
     "inspector_chat_mesa_reviewer_services": (
-        "Mantém Mesa avaliadora e permite que usuários operacionais acumulem campo e análise."
+        "Mantém Revisão Técnica e permite que usuários operacionais acumulem campo e análise."
     ),
 }
 _COMMERCIAL_SERVICE_PACKAGE_PRESETS: dict[TenantAdminCommercialServicePackage, dict[str, Any]] = {
@@ -109,13 +109,13 @@ _COMMERCIAL_SERVICE_PACKAGE_PRESETS: dict[TenantAdminCommercialServicePackage, d
 }
 _OPERATING_SURFACE_LABELS: dict[str, str] = {
     "mobile": "App mobile",
-    "inspetor_web": "Chat de campo",
-    "mesa_web": "Mesa avaliadora",
+    "inspetor_web": "Inspeção IA",
+    "mesa_web": "Revisão Técnica",
 }
 _USER_PORTAL_LABELS: dict[str, str] = {
     "cliente": "Portal Cliente",
-    "inspetor": "Chat de campo",
-    "revisor": "Mesa avaliadora",
+    "inspetor": "Inspeção IA",
+    "revisor": "Revisão Técnica",
 }
 _TENANT_PORTAL_DEFAULTS: dict[str, bool] = {
     "cliente": True,

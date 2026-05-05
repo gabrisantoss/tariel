@@ -611,11 +611,11 @@
         const widgetDedicadoAtivo = possuiMesaWidgetDedicado();
         const ativo = widgetDedicadoAtivo ? false : /^eng\b/i.test(campo.value);
         const tituloAtivo = widgetDedicadoAtivo
-            ? "Chat da mesa aberto"
-            : "Desativar conversa com a mesa";
+            ? "Chat da Revisão Técnica aberto"
+            : "Desativar conversa com a Revisão Técnica";
         const tituloInativo = widgetDedicadoAtivo
-            ? "Abrir chat da mesa avaliadora"
-            : "Falar com a mesa";
+            ? "Abrir chat da Revisão Técnica"
+            : "Falar com a Revisão Técnica";
 
         marcarBotaoPressionado(btnToggle, ativo, {
             color: TOGGLE_COLOR,

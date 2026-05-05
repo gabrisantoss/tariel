@@ -5,7 +5,7 @@
   - `routes.py`: núcleo compartilhado (helpers, estado, IA, utilitários)
   - `schemas.py`: contratos pydantic do domínio
   - `auth.py`, `laudo.py`, `chat.py`, `mesa.py`, `pendencias.py`: handlers e roteadores por responsabilidade
-- `app/domains/mesa`: contratos e serviços da mesa avaliadora
+- `app/domains/mesa`: contratos e serviços da Revisão Técnica
 - `app/domains/admin`: painel administrativo e serviços SaaS
 - `app/domains/revisor`: painel de revisão/engenharia
   - `routes.py`: fachada compatível do domínio

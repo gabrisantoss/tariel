@@ -281,7 +281,7 @@ def _preparar_coleta_premium_simples(banco, *, laudo_id: int, inspetor_id: int) 
         MensagemLaudo(
             laudo_id=laudo_id,
             tipo=TipoMensagem.IA.value,
-            conteudo="Parecer preliminar: encaminhar para Mesa Avaliadora antes da emissao oficial.",
+            conteudo="Parecer preliminar: encaminhar para Revisão Técnica antes da emissao oficial.",
         )
     )
     banco.commit()
@@ -402,7 +402,7 @@ def test_empresa_com_mesa_premium_mantem_handoff_aprovacao_emissao_e_portal_clie
     assert resposta_preview.status_code == 200
     preview = resposta_preview.json()
     assert preview["primary_action"] == "send_to_mesa"
-    assert preview["chat_review_tools"]["title"] == "Revisão pela Mesa Avaliadora"
+    assert preview["chat_review_tools"]["title"] == "Revisão Técnica"
     assert preview["chat_review_tools"]["case_send_to_separate_review"] is True
     assert preview["chat_review_tools"]["self_review_allowed"] is False
     assert preview["chat_review_tools"]["official_issue_create"] is False

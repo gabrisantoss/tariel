@@ -570,7 +570,7 @@ async def notificar_inspetor_sse(
             "mensagem_id": int(mensagem_id or 0) if mensagem_id else None,
             "referencia_mensagem_id": int(referencia_mensagem_id or 0) if referencia_mensagem_id else None,
             "de_usuario_id": int(de_usuario_id or 0) if de_usuario_id else None,
-            "de_nome": (de_nome or "Mesa Avaliadora").strip()[:120],
+            "de_nome": (de_nome or "Revisão Técnica").strip()[:120],
             "texto": (texto or "").strip()[:300],
             "timestamp": _agora_utc().isoformat(),
         }

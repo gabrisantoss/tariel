@@ -474,7 +474,7 @@ def exigir_revisor(
     usuario: Usuario = Depends(obter_usuario_api),
 ) -> Usuario:
     """
-    Mesa avaliadora:
+    Revisão Técnica:
     somente REVISOR.
     """
     _ = request

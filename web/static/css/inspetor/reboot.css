@@ -2241,7 +2241,7 @@ body.pagina-chat-dashboard-v2.inspetor-overlay-new-inspection .painel-chat {
     pointer-events: none;
 }
 
-/* Shell visual da mesa avaliadora agora é canônico em visual_refinements.css. */
+/* Shell visual da Revisão Técnica agora é canônico em visual_refinements.css. */
 
 body.pagina-chat-dashboard-v2 .camada-arraste {
     position: fixed;

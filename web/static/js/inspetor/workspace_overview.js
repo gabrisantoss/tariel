@@ -63,8 +63,8 @@
                 caption = "Correções estruturadas do laudo";
                 status = "Ajustes guiados no documento";
             } else if (tab === "mesa") {
-                caption = "Canal Mesa Avaliadora";
-                status = "Troca com a mesa";
+                caption = "Canal Revisão Técnica";
+                status = "Troca com a Revisão Técnica";
             } else {
                 caption = "Canal IA";
                 status = "Conversa e coleta no mesmo fluxo";
@@ -97,7 +97,7 @@
                 botao.setAttribute("aria-disabled", desabilitado ? "true" : "false");
                 if (alvo === "mesa") {
                     botao.title = mesaGovernada
-                        ? "A conversa com a Mesa Avaliadora está desabilitada para esta empresa pelo Admin-CEO."
+                        ? "A conversa com a Revisão Técnica está desabilitada para esta empresa pelo Admin-CEO."
                         : "";
                 } else if (alvo === "correcoes") {
                     botao.title = !mesaDisponivel

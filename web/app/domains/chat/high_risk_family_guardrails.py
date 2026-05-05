@@ -141,7 +141,7 @@ def resolve_high_risk_family_guardrail(
             family_label=_HIGH_RISK_FAMILY_LABELS[NR35_FAMILY_KEY],
             code="nr35_mesa_required_unavailable",
             message=(
-                "O piloto NR35 Linha de Vida exige Mesa Avaliadora antes de "
+                "O piloto NR35 Linha de Vida exige Revisão Técnica antes de "
                 "emissao oficial."
             ),
         )
@@ -165,7 +165,7 @@ def resolve_high_risk_family_guardrail(
         family_label=family_label,
         code="high_risk_mesa_required_unavailable",
         message=(
-            f"{family_label} exige Mesa Avaliadora antes de aprovacao final "
+            f"{family_label} exige Revisão Técnica antes de aprovacao final "
             "ou emissao oficial."
         ),
     )

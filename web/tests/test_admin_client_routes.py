@@ -206,7 +206,7 @@ def test_admin_cadastrar_empresa_exibe_pacote_inicial_com_operacao_provisionada(
     assert "/cliente/login" in pagina.text
     assert "/app/login" in pagina.text
     assert "/revisao/login" in pagina.text
-    assert "Mesa avaliadora" in pagina.text
+    assert "Revisão Técnica" in pagina.text
 
 
 def test_admin_clientes_renderiza_console_operacional_na_lista_e_no_detalhe(ambiente_critico) -> None:
@@ -374,11 +374,11 @@ def test_admin_ceo_pode_definir_pacote_chat_inspetor_sem_mesa(
     assert resposta.status_code == 303
     pagina = client.get(resposta.headers["location"])
     assert pagina.status_code == 200
-    assert "Chat de campo sem Mesa" in pagina.text
+    assert "Inspeção IA" in pagina.text
     listagem = client.get("/admin/clientes")
     assert listagem.status_code == 200
-    assert "Chat de campo sem Mesa" in listagem.text
-    assert "Mesa não contratada" in listagem.text
+    assert "Inspeção IA" in listagem.text
+    assert "Revisão Técnica não contratada" in listagem.text
 
     with SessionLocal() as banco:
         empresa = banco.get(Empresa, ids["empresa_a"])
@@ -1199,7 +1199,7 @@ def test_admin_catalogo_familia_salva_modo_calibracao_e_liberacao_tenant(ambient
     assert pagina_liberacao.status_code == 200
     assert "1 opção(ões) liberada(s)" in pagina_liberacao.text
     assert "RTI" in pagina_liberacao.text
-    assert "Analise interna" in pagina_liberacao.text
+    assert "Revisão Técnica obrigatória" in pagina_liberacao.text
     assert "Permitir" in pagina_liberacao.text
     assert "Piloto" in pagina_liberacao.text
     assert "limite(s) em uso" in pagina_liberacao.text
@@ -1328,7 +1328,7 @@ def test_admin_detalhe_cliente_sincroniza_portfolio_comercial_do_tenant(ambiente
     assert "Sincronizar portfólio" in resposta_detalhe.text
     assert "Detalhes técnicos da liberação" in resposta_detalhe.text
     assert "Foto inadequada" not in resposta_detalhe.text
-    assert "Revisão interna governada" in resposta_detalhe.text
+    assert "Aprovação interna" in resposta_detalhe.text
 
     csrf = _csrf_pagina(client, f"/admin/clientes/{ids['empresa_a']}")
     resposta_release = client.post(
@@ -1380,7 +1380,7 @@ def test_admin_detalhe_cliente_sincroniza_portfolio_comercial_do_tenant(ambiente
 
     resposta_atualizada = client.get(f"/admin/clientes/{ids['empresa_a']}")
     assert resposta_atualizada.status_code == 200
-    assert "Mesa obrigatória" in resposta_atualizada.text
+    assert "Revisão Técnica obrigatória" in resposta_atualizada.text
     assert "Permitir" in resposta_atualizada.text
     assert "Bloquear" in resposta_atualizada.text
     assert "NR13 Core" in resposta_atualizada.text
@@ -1522,7 +1522,7 @@ def test_admin_catalogo_e_dashboard_exibem_rollup_de_governanca(ambiente_critico
     assert "Famílias com regra ativa" in painel.text
     assert "Pacotes e etapas de liberacao" in painel.text
     assert "Recursos mais usados nos pacotes" in painel.text
-    assert "Analise interna" in painel.text
+    assert "Revisão Técnica obrigatória" in painel.text
     assert "Empresa B" in painel.text
 
 
@@ -1823,9 +1823,12 @@ def test_admin_login_exige_role_diretoria_sem_autoacesso_e_oculta_sso_inativo(am
     assert "Quer um acesso? Fale com a Tariel." in pagina_login.text
     assert "Continuar com Google" not in pagina_login.text
     assert "Continuar com Microsoft" not in pagina_login.text
-    assert "/cliente/login" not in pagina_login.text
-    assert "/app/login" not in pagina_login.text
-    assert "/revisao/login" not in pagina_login.text
+    assert "/cliente/login" in pagina_login.text
+    assert "/app/login" in pagina_login.text
+    assert "/revisao/login" in pagina_login.text
+    assert "Admin Cliente" in pagina_login.text
+    assert "Inspeção IA" in pagina_login.text
+    assert "Revisão Técnica" in pagina_login.text
 
     csrf = _csrf_pagina(client, "/admin/login")
     resposta = client.post(

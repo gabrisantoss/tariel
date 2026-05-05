@@ -657,7 +657,7 @@ def test_admin_cliente_cria_e_gerencia_usuarios_restritos_a_empresa(ambiente_cri
     assert credencial_inspetor["portais"] == [
         {
             "portal": "inspetor",
-            "label": "Chat de campo",
+            "label": "Inspeção IA",
             "login_url": "/app/login",
         }
     ]
@@ -713,7 +713,7 @@ def test_admin_cliente_cria_e_gerencia_usuarios_restritos_a_empresa(ambiente_cri
     assert corpo_reset["credencial_onboarding"]["portais"] == [
         {
             "portal": "revisor",
-            "label": "Mesa avaliadora",
+            "label": "Revisão Técnica",
             "login_url": "/revisao/login",
         }
     ]
@@ -1012,12 +1012,12 @@ def test_admin_cliente_concede_superficies_adicionais_dentro_da_regra_do_tenant(
     assert credencial["portais"] == [
         {
             "portal": "inspetor",
-            "label": "Chat de campo",
+            "label": "Inspeção IA",
             "login_url": "/app/login",
         },
         {
             "portal": "revisor",
-            "label": "Mesa avaliadora",
+            "label": "Revisão Técnica",
             "login_url": "/revisao/login",
         },
         {
@@ -2404,7 +2404,7 @@ def test_admin_cliente_bootstrap_expoe_pacote_contratado_e_observabilidade_execu
     pacote = corpo["tenant_commercial_overview"]
     observability = corpo["operational_observability"]
 
-    assert pacote["package_label"] == "Chat de campo + Mesa + serviços no campo"
+    assert pacote["package_label"] == "Inspeção IA + Revisão Técnica + Emissão"
     assert pacote["mesa_contracted"] is True
     assert pacote["official_issue_included"] is True
     assert pacote["resource_summary"]["separate_mesa_available"] is True
@@ -2478,7 +2478,7 @@ def test_admin_cliente_bootstrap_explica_recursos_do_pacote_sem_mesa(ambiente_cr
     assert recursos["official_issue"]["available"] is False
     assert "pdf operacional" in recursos["official_issue"]["detail"].lower()
     assert recursos["documents"]["available"] is True
-    assert not any("Mesa contratada não liberada" in item for item in pacote["pending_configuration"])
+    assert not any("Revisão Técnica contratada não liberada" in item for item in pacote["pending_configuration"])
 
     serializado = json.dumps(pacote, ensure_ascii=False).lower()
     for termo_sensivel in ("senha", "csrf", "token", "secret", "package_storage_path", "storage_path"):
@@ -2574,7 +2574,7 @@ def test_admin_cliente_filtra_auditoria_por_superficie_operacional(ambiente_crit
     resposta_mesa = client.post(
         f"/cliente/api/mesa/laudos/{laudo_mesa_id}/responder",
         headers={"X-CSRF-Token": csrf},
-        json={"texto": "Mesa respondeu pelo portal."},
+        json={"texto": "Revisão Técnica respondeu pelo portal."},
     )
     assert resposta_mesa.status_code == 200
 
@@ -2649,7 +2649,7 @@ def test_admin_cliente_registra_auditoria_operacional_de_chat_e_mesa(ambiente_cr
     resposta_mesa = client.post(
         f"/cliente/api/mesa/laudos/{laudo_mesa_resposta_id}/responder",
         headers={"X-CSRF-Token": csrf},
-        json={"texto": "Mesa respondeu pelo portal do admin-cliente."},
+        json={"texto": "Revisão Técnica respondeu pelo portal do admin-cliente."},
     )
     assert resposta_mesa.status_code == 200
 

@@ -1,4 +1,4 @@
-"""Correções estruturadas do Chat Inspetor."""
+"""Correções estruturadas do Inspeção IA."""
 
 from __future__ import annotations
 

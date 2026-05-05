@@ -60,7 +60,7 @@ def montar_resposta_comando_pendencias(
     resolvidas = max(total - abertas, 0)
 
     linhas = [
-        "### Pendências da Mesa",
+        "### Pendências da Revisão Técnica",
         f"- Filtro: **{MAPA_FILTRO_PENDENCIAS_LABEL.get(filtro, 'Abertas')}**",
         f"- Total geral: **{total}**",
         f"- Abertas: **{abertas}** | Resolvidas: **{resolvidas}**",
@@ -84,7 +84,7 @@ def montar_resposta_comando_pendencias(
         linhas.append(f"- ... e mais **{total_filtrado - len(pendencias)}** item(ns) no filtro atual.")
 
     linhas.append("")
-    linhas.append("Dica: use `/enviar_mesa <mensagem>` para responder no mesmo chat.")
+    linhas.append("Dica: use `/enviar_mesa <mensagem>` para responder para a Revisão Técnica no mesmo chat.")
     return "\n".join(linhas)
 
 
@@ -122,9 +122,9 @@ def montar_resposta_comando_resumo(
         f"- Laudo: **#{hash_curto or laudo.id}** ({nome_template_humano(getattr(laudo, 'tipo_template', 'padrao'))})",
         f"- Status: **{descrever_status_revisao(laudo.status_revisao)}**",
         f"- Atualizado em: **{formatar_data_humana(getattr(laudo, 'atualizado_em', None) or getattr(laudo, 'criado_em', None))}**",
-        f"- Mensagens: usuário/inspetor **{qtd_usuario}**, IA **{qtd_ia}**, mesa **{qtd_mesa}**",
+        f"- Mensagens: usuário/inspetor **{qtd_usuario}**, IA **{qtd_ia}**, Revisão Técnica **{qtd_mesa}**",
         f"- Evidências registradas: fotos **{qtd_fotos}**, documentos **{qtd_docs}**",
-        f"- Pendências abertas da mesa: **{pendencias_abertas}**",
+        f"- Pendências abertas da Revisão Técnica: **{pendencias_abertas}**",
         f"- Confiança IA (última síntese): **{confianca_geral}**",
     ]
 
@@ -201,7 +201,7 @@ def montar_resposta_comando_previa(
         "**Síntese técnica atual da IA**",
         parecer_preview,
         "",
-        f"**Pendências abertas da mesa:** {pendencias_abertas}",
+        f"**Pendências abertas da Revisão Técnica:** {pendencias_abertas}",
     ]
 
     if total_revisoes:

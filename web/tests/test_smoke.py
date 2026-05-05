@@ -217,14 +217,14 @@ def test_raiz_publica_exibe_landing_sem_sessao(cliente_main_isolado: TestClient)
 
     assert resposta.status_code == 200
     assert "<title>Tariel</title>" in resposta.text
-    assert "Inspeção técnica governada" in resposta.text
+    assert "Inspeções em uma tela simples" in resposta.text
     assert "Solicitar demonstração" in resposta.text
-    assert "PDF NR35" in resposta.text
-    assert "A operação sabe o que está pronto" in resposta.text
-    assert "/static/img/landing/landing-mobile-inspetor.webp" in resposta.text
+    assert "Uma prévia A4 do documento final" in resposta.text
+    assert "Padronize registros, conferência e entrega" in resposta.text
+    assert "/static/img/landing/landing-mobile-usuario.webp" in resposta.text
     assert "/static/img/landing/landing-portal-cliente.webp" in resposta.text
     assert "/static/img/landing/landing-mesa-avaliadora.webp" in resposta.text
-    assert "/static/img/landing/landing-pdf-nr35.webp" in resposta.text
+    assert "/static/img/landing/landing-laudo-a4-tariel.webp" in resposta.text
     assert 'id="demo-form"' in resposta.text
     assert 'name="empresa"' in resposta.text
     assert 'href="/app/login"' in resposta.text
@@ -300,7 +300,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="preview-anexo"' in workspace_html
     assert 'id="workspace-template-compatibility-list"' in workspace_html
     assert 'id="btn-toggle-humano"' not in workspace_html
-    assert "Ver pedidos da mesa" not in workspace_html
+    assert "Ver pedidos da Revisão Técnica" not in workspace_html
     assert 'class="technical-composer-icon-btn"' in workspace_html
     assert "workspace-assistant-primary-action" not in workspace_html
     assert "workspace-guided-nr-picker" in workspace_html
@@ -349,9 +349,9 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'data-tab="mesa"' not in workspace_toolbar_html
     assert 'id="workspace-tab-badge-mesa"' not in workspace_toolbar_html
     assert 'data-workspace-channel-tab="mesa"' not in workspace_conversation_html
-    assert "Mesa Avaliadora" not in workspace_conversation_html
+    assert "Revisão Técnica" not in workspace_conversation_html
     assert 'criarBotaoAcaoWorkspace("support_agent", "Mesa", "enviar-mesa"' not in chat_index_js
-    assert "canal dedicado da mesa avaliadora" in workspace_mesa_html
+    assert "canal dedicado da Revisão Técnica" in workspace_mesa_html
     assert 'id="workspace-channel-badge-mesa"' in workspace_mesa_html
     assert 'id="workspace-mesa-empty-state"' in workspace_mesa_html
     assert 'id="workspace-mesa-event-comment-title"' in workspace_mesa_html
@@ -362,12 +362,12 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="workspace-mesa-attachments-title"' in workspace_mesa_html
     assert 'id="workspace-mesa-attachments-list"' in workspace_mesa_html
     assert 'id="workspace-mesa-card-mode"' in workspace_rail_html
-    assert "Canal principal na aba Mesa" not in workspace_rail_html
+    assert "Canal principal na aba Revisão Técnica" not in workspace_rail_html
     assert "Use a aba <strong>Mesa</strong>" not in workspace_rail_html
     assert 'data-rail-thread-tab="mesa"' not in workspace_rail_html
     assert "Finalizar laudo" in workspace_header_html
-    assert "Enviar para Mesa" not in workspace_header_html
-    assert "Enviar resumo para a mesa" not in chat_index_js
+    assert "Enviar para Revisão Técnica" not in workspace_header_html
+    assert "Enviar resumo para a Revisão Técnica" not in chat_index_js
     assert 'id="mesa-widget-mode-badge"' in mesa_widget_html
     assert "thread-breadcrumb" not in workspace_toolbar_html
     assert 'aria-label="Ferramentas do laudo"' in workspace_rail_html
@@ -421,9 +421,9 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "Baixar pacote oficial" in preparar_emissao_html
     assert "Baixar PDF operacional" in preparar_emissao_html
     assert "Baixar pacote tecnico" not in preparar_emissao_html
-    assert "Revisao interna governada" in chat_painel_relatorio_js
+    assert "Aprovação interna" in chat_painel_relatorio_js
     assert "Pendencias do caso" in chat_painel_relatorio_js
-    assert "Aprovação interna sem Mesa" not in chat_painel_relatorio_js
+    assert "Aprovação interna sem Revisão Técnica" not in chat_painel_relatorio_js
     assert "Resolver pendências antes de finalizar" not in chat_painel_relatorio_js
     assert 'id="workspace-assistant-landing"' in workspace_assistant_html
     assert 'data-workspace-user-greeting-name' in workspace_assistant_html
@@ -610,7 +610,7 @@ def test_superficies_cliente_mesa_inspetor_e_mobile_usam_copy_sem_jargao_interno
     assert "Sessão ativa em <strong>/revisao/painel</strong>" not in painel_revisor_html
     assert "fila da mesa" in painel_revisor_html
     assert "modelos pendente de publicação" not in painel_revisor_html.lower()
-    assert "Retome laudos, inicie inspecoes e acompanhe os retornos da mesa" in portal_inspetor_html
+    assert "Retome laudos, inicie inspecoes e acompanhe os retornos da Revisão Técnica" in portal_inspetor_html
     assert "Escolha um modelo liberado" in portal_inspetor_html
     assert "Empresa sem elegibilidade para esta confirmação assistida." in auth_mobile_routes
     assert "Tenant não elegível para confirmação orgânica." not in auth_mobile_routes
@@ -1925,12 +1925,12 @@ def test_ux_product_language_padroniza_documentos_do_portal_cliente() -> None:
         "Histórico de emissões",
         "Reemissão recomendada",
         "Documento substituído",
-        "Revisão interna governada",
-        "Mesa Avaliadora",
+        "Aprovação interna",
+        "Revisão Técnica",
         "Pendências do caso",
         "Não incluído no pacote",
         "Depende da família/template",
-        "Família exige Mesa",
+        "Família exige Revisão Técnica",
     ):
         assert termo in linguagem_doc
 
@@ -1992,9 +1992,9 @@ def test_ux_d_padroniza_status_chat_mesa_sem_owner_cru() -> None:
         "Na Mesa",
         "Em coleta",
         "Pendente",
-        "Mesa Avaliadora",
+        "Revisão Técnica",
         "Responsavel ",
-        "Decisao da Mesa disponivel",
+        "Revisão Técnica disponível",
         "Pronto para emissao oficial",
         "Documento emitido",
     ):
@@ -2090,7 +2090,7 @@ def test_ux_d_padroniza_painel_revisor_sem_owner_cru() -> None:
     for termo in (
         "Status {{ lifecycle_label | e }}",
         "Responsável ativo {{ owner_label | e }}",
-        "Decisao da Mesa disponivel",
+        "Revisão Técnica disponível",
         "Pronto para emissão oficial",
         "Documento emitido",
     ):
@@ -2129,7 +2129,7 @@ def test_ux_f_mesa_separa_decisao_documento_e_auditoria() -> None:
         "data-uxf-block=\"documento-emissao\"",
         "data-uxf-block=\"historico-auditoria\"",
         "Pendências do caso",
-        "Decisão da Mesa",
+        "Decisão técnica",
         "Documento e emissão",
         "Histórico e auditoria",
     ):
@@ -2214,13 +2214,13 @@ def test_ux_g_admin_ceo_fluxo_guiado_governanca() -> None:
         assert termo in cliente_detalhe_html
 
     for termo in (
-        "Mesa Avaliadora",
-        "Revisão interna governada",
+        "Revisão Técnica",
+        "Aprovação interna",
         "Emissão oficial",
         "Pacote oficial",
         "Não incluído no pacote",
         "Depende da família/template",
-        "Família exige Mesa",
+        "Família exige Revisão Técnica",
         "Signatário governado",
         "Detalhes técnicos da liberação",
     ):
@@ -2296,7 +2296,8 @@ def test_logins_e_blueprint_nao_reintroduzem_autofill_dev() -> None:
     assert "BOOTSTRAP_ADMIN_PASSWORD" in render_yaml
     assert "rootDir: web" in render_yaml
     assert 'sessionStorage.setItem("tariel_force_home_landing", "1")' not in login_app
-    assert 'sessionStorage.removeItem("tariel_force_home_landing")' in login_app
+    auth_login_standard_js = (raiz / "static" / "js" / "shared" / "auth_login_standard.js").read_text(encoding="utf-8")
+    assert 'sessionStorage.removeItem("tariel_force_home_landing")' in auth_login_standard_js
 
 
 def test_manifesto_aponta_para_icones_existentes_e_sem_marca_legada() -> None:
@@ -2334,7 +2335,7 @@ def test_portais_principais_referenciam_marca_nos_templates_de_login() -> None:
     assert "/static/img/logo-horizontal-dark.png" in login_admin
     assert "/static/img/logo-horizontal-dark.png" in login_cliente
     assert "/static/img/logo-horizontal-dark.png" in login_app
-    assert "Mesa Avaliadora" in login_revisor
+    assert "Revisão Técnica" in login_revisor
     assert "/static/img/logo-horizontal-dark.png" not in login_revisor
     assert "/static/img/logo-horizontal-dark.png" in trocar_senha
     assert "/static/css/admin/admin_auth_shell.css" in trocar_senha

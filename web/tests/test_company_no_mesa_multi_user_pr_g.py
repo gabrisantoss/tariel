@@ -25,7 +25,7 @@ from tests.regras_rotas_criticas_support import (
 def _criar_empresa_sem_mesa_multiusuario_base(banco, *, sufixo: str) -> dict[str, int | str]:
     sufixo_numerico = "".join(ch for ch in sufixo if ch.isdigit()) or "0"
     empresa = Empresa(
-        nome_fantasia=f"Empresa Sem Mesa {sufixo.upper()}",
+        nome_fantasia=f"Empresa Aprovação interna {sufixo.upper()}",
         cnpj=f"33000000000{int(sufixo_numerico):03d}",
         plano_ativo=PlanoEmpresa.ILIMITADO.value,
         admin_cliente_policy_json={
@@ -40,7 +40,7 @@ def _criar_empresa_sem_mesa_multiusuario_base(banco, *, sufixo: str) -> dict[str
 
     admin = Usuario(
         empresa_id=int(empresa.id),
-        nome_completo="Admin Cliente Sem Mesa",
+        nome_completo="Admin Cliente Aprovação interna",
         email=f"cliente-sem-mesa-{sufixo}@empresa.test",
         senha_hash=SENHA_HASH_PADRAO,
         nivel_acesso=NivelAcesso.ADMIN_CLIENTE.value,
@@ -48,7 +48,7 @@ def _criar_empresa_sem_mesa_multiusuario_base(banco, *, sufixo: str) -> dict[str
     )
     inspetor = Usuario(
         empresa_id=int(empresa.id),
-        nome_completo="Inspetor Operacional Sem Mesa",
+        nome_completo="Inspetor Operacional Aprovação interna",
         email=f"inspetor-sem-mesa-{sufixo}@empresa.test",
         senha_hash=SENHA_HASH_PADRAO,
         nivel_acesso=NivelAcesso.INSPETOR.value,
@@ -164,7 +164,7 @@ def _criar_laudo_nr35_rascunho(
             MensagemLaudo(
                 laudo_id=laudo_id,
                 tipo=TipoMensagem.IA.value,
-                conteudo="Parecer tecnico preliminar NR35 depende de Mesa Avaliadora.",
+                conteudo="Parecer tecnico preliminar NR35 depende de Revisão Técnica.",
             ),
         ]
     )
@@ -272,7 +272,7 @@ def test_empresa_sem_mesa_multiusuario_admin_gerencia_inspetor_opera_e_portal_na
     assert corpo_inspetor_extra["credencial_onboarding"]["portais"] == [
         {
             "portal": "inspetor",
-            "label": "Chat de campo",
+            "label": "Inspeção IA",
             "login_url": "/app/login",
         }
     ]
@@ -348,7 +348,7 @@ def test_empresa_sem_mesa_multiusuario_admin_gerencia_inspetor_opera_e_portal_na
     assert preview["mobile_chat_first_governance"]["self_review_allowed"] is True
     assert preview["mobile_chat_first_governance"]["separate_mesa_required"] is False
     assert preview["mobile_chat_first_governance"]["official_issue_allowed"] is False
-    assert preview["chat_review_tools"]["title"] == "Revisão interna governada"
+    assert preview["chat_review_tools"]["title"] == "Aprovação interna"
     assert preview["chat_review_tools"]["official_issue_create"] is False
 
     resposta_finalizar = client.post(
@@ -360,7 +360,7 @@ def test_empresa_sem_mesa_multiusuario_admin_gerencia_inspetor_opera_e_portal_na
     assert corpo_finalizar["success"] is True
     assert corpo_finalizar["review_mode_final"] == "mobile_autonomous"
     assert corpo_finalizar["review_mode_final_reason"] == "tenant_without_mesa"
-    assert "sem Mesa Avaliadora" in corpo_finalizar["message"]
+    assert "aprovação interna" in corpo_finalizar["message"]
 
     with SessionLocal() as banco:
         laudo = banco.get(Laudo, laudo_id)
@@ -397,7 +397,7 @@ def test_empresa_sem_mesa_multiusuario_admin_gerencia_inspetor_opera_e_portal_na
     assert overview_final["operators_in_use"] == 2
     assert overview_final["mesa_contracted"] is False
     assert overview_final["official_issue_included"] is False
-    assert "Sem Mesa contratada" in overview_final["active_summary"]
+    assert "Aprovação interna contratada" in overview_final["active_summary"]
     assert "Sem emissão oficial contratada" in overview_final["active_summary"]
 
     documento = _buscar_item_por_laudo_id(bootstrap_final["documentos"]["items"], laudo_id)
@@ -450,7 +450,7 @@ def test_empresa_sem_mesa_multiusuario_nao_converte_nr35_em_self_review(
     assert detalhe_preview["code"] == "nr35_mesa_required_unavailable"
     assert detalhe_preview["review_mode_requested"] == "mesa_required"
     assert detalhe_preview["required_capability"] == "inspector_send_to_mesa"
-    assert "NR35 Linha de Vida exige Mesa Avaliadora" in detalhe_preview["message"]
+    assert "NR35 Linha de Vida exige Revisão Técnica" in detalhe_preview["message"]
 
     resposta_finalizar = client.post(
         f"/app/api/laudo/{laudo_id}/finalizar",

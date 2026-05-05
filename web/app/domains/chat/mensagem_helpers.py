@@ -140,7 +140,7 @@ async def notificar_mesa_whisper(
         )
 
     except Exception:
-        logger.warning("Falha ao notificar mesa avaliadora.", exc_info=True)
+        logger.warning("Falha ao notificar Revisão Técnica.", exc_info=True)
 
 
 __all__ = [
