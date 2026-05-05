@@ -2744,6 +2744,456 @@ body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--c
     color: #9f1239;
 }
 
+body.pagina-chat-dashboard-v2 .modal-overlay-configuracoes-web {
+    align-items: stretch;
+    justify-content: flex-end;
+    padding: 0;
+    background: rgba(15, 23, 42, 0.42);
+    backdrop-filter: blur(12px);
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-panel {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    width: min(920px, calc(100vw - 28px));
+    height: 100dvh;
+    margin-left: auto;
+    border-left: 1px solid rgba(203, 213, 225, 0.94);
+    background:
+        radial-gradient(circle at top right, rgba(31, 94, 142, 0.08), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 250, 252, 0.98));
+    color: #172033;
+    box-shadow: -28px 0 64px rgba(15, 23, 42, 0.18);
+    overflow: hidden;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.96);
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-title > .material-symbols-rounded {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    background: rgba(31, 94, 142, 0.1);
+    color: #1f5e8e;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-title h2,
+body.pagina-chat-dashboard-v2 .configuracoes-web-section__heading h3 {
+    margin: 0;
+    color: #0f172a;
+    font-weight: 750;
+    letter-spacing: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-title h2 {
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-title p,
+body.pagina-chat-dashboard-v2 .configuracoes-web-section__heading p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.86);
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(31, 94, 142, 0.14), rgba(31, 94, 142, 0.08));
+    color: #1f5e8e;
+    font-size: 16px;
+    font-weight: 800;
+    overflow: hidden;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-avatar.possui-foto {
+    background: #e2e8f0;
+    color: transparent;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-summary__copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-summary__copy span,
+body.pagina-chat-dashboard-v2 .configuracoes-web-summary__copy small {
+    overflow: hidden;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-summary__copy strong {
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 16px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-summary__chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-summary__chips span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid rgba(31, 94, 142, 0.12);
+    border-radius: 999px;
+    background: rgba(234, 243, 250, 0.74);
+    color: #1f5e8e;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 18px;
+    min-height: 0;
+    padding: 18px 24px 24px;
+    overflow: hidden;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    overflow: auto;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-nav__item {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: transparent;
+    color: #475569;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-nav__item span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-nav__item .material-symbols-rounded {
+    color: inherit;
+    font-size: 19px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-nav__item:hover,
+body.pagina-chat-dashboard-v2 .configuracoes-web-nav__item:focus-visible,
+body.pagina-chat-dashboard-v2 .configuracoes-web-nav__item.is-active {
+    outline: none;
+    border-color: rgba(31, 94, 142, 0.12);
+    background: rgba(234, 243, 250, 0.86);
+    color: #1f5e8e;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-content {
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+    padding-right: 2px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-section {
+    display: grid;
+    gap: 16px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-section[hidden] {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-section__heading {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 4px 0 2px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-section__heading > .material-symbols-rounded {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.05);
+    color: #334155;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-section__heading h3 {
+    font-size: 17px;
+    line-height: 1.25;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row-list,
+body.pagina-chat-dashboard-v2 .configuracoes-web-control-list {
+    display: grid;
+    gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row,
+body.pagina-chat-dashboard-v2 .configuracoes-web-static-row {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 64px;
+    padding: 12px 14px;
+    border: 1px solid rgba(226, 232, 240, 0.96);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.78);
+    color: #263244;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    box-shadow: none;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row:hover,
+body.pagina-chat-dashboard-v2 .configuracoes-web-row:focus-visible {
+    outline: none;
+    border-color: rgba(31, 94, 142, 0.2);
+    background: rgba(255, 255, 255, 0.96);
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row > .material-symbols-rounded:first-child,
+body.pagina-chat-dashboard-v2 .configuracoes-web-static-row > .material-symbols-rounded:first-child {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+    background: rgba(31, 94, 142, 0.08);
+    color: #1f5e8e;
+    font-size: 20px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row > .material-symbols-rounded:last-child {
+    color: #94a3b8;
+    font-size: 19px;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row span:nth-child(2),
+body.pagina-chat-dashboard-v2 .configuracoes-web-static-row span:nth-child(2) {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row strong,
+body.pagina-chat-dashboard-v2 .configuracoes-web-static-row strong,
+body.pagina-chat-dashboard-v2 .configuracoes-web-control strong,
+body.pagina-chat-dashboard-v2 .configuracoes-web-switch strong {
+    color: #0f172a;
+    font-size: 13.5px;
+    line-height: 1.25;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row small,
+body.pagina-chat-dashboard-v2 .configuracoes-web-static-row small,
+body.pagina-chat-dashboard-v2 .configuracoes-web-control small,
+body.pagina-chat-dashboard-v2 .configuracoes-web-switch small {
+    overflow: hidden;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row-form {
+    margin: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row--danger {
+    color: #9f1239;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-row--danger > .material-symbols-rounded:first-child {
+    background: rgba(255, 241, 242, 0.98);
+    color: #be123c;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-control,
+body.pagina-chat-dashboard-v2 .configuracoes-web-switch {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    min-height: 64px;
+    padding: 12px 14px;
+    border: 1px solid rgba(226, 232, 240, 0.96);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.78);
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-control > div:first-child,
+body.pagina-chat-dashboard-v2 .configuracoes-web-switch > span {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-segmented {
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(86px, auto);
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: rgba(226, 232, 240, 0.7);
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-segmented button {
+    min-height: 32px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #475569;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-segmented button:hover,
+body.pagina-chat-dashboard-v2 .configuracoes-web-segmented button:focus-visible,
+body.pagina-chat-dashboard-v2 .configuracoes-web-segmented button.is-active {
+    outline: none;
+    background: #ffffff;
+    color: #1f5e8e;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+body.pagina-chat-dashboard-v2 .configuracoes-web-switch input {
+    width: 42px;
+    height: 24px;
+    accent-color: #1f5e8e;
+}
+
+@media (max-width: 860px) {
+    body.pagina-chat-dashboard-v2 .configuracoes-web-panel {
+        width: 100vw;
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-summary {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-summary__chips {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px 16px 20px;
+        overflow: auto;
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-nav__item {
+        width: auto;
+        min-width: 156px;
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-content {
+        overflow: visible;
+        padding-right: 0;
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-control,
+    body.pagina-chat-dashboard-v2 .configuracoes-web-switch {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
+    }
+
+    body.pagina-chat-dashboard-v2 .configuracoes-web-segmented {
+        grid-auto-flow: row;
+        grid-auto-columns: auto;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
 body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-account-menu__logout {
     margin: 0;
 }

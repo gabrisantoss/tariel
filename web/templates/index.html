@@ -28,6 +28,7 @@
 {% include "inspetor/modals/_nova_inspecao.html" %}
 {% include "inspetor/modals/_gate_qualidade.html" %}
 {% include "inspetor/modals/_perfil.html" %}
+{% include "inspetor/modals/_configuracoes.html" %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -80,7 +81,8 @@
 <script src="/static/js/inspetor/workspace_perf.js?v={{ v_app }}" defer nonce="{{ csp_nonce }}"></script>
 <script src="/static/js/chat/chat_index_page_runtime.js?v={{ v_app }}" defer nonce="{{ csp_nonce }}"></script>
 <script src="/static/js/chat/chat_index_page.js?v={{ v_app }}&ui_rev=20260423_free_chat_flow" defer nonce="{{ csp_nonce }}"></script>
-<script src="/static/js/chat/chat_perfil_usuario.js?v={{ v_app }}" defer nonce="{{ csp_nonce }}"></script>
+<script src="/static/js/chat/chat_perfil_usuario.js?v={{ v_app }}&ui_rev=20260505_web_settings_panel" defer nonce="{{ csp_nonce }}"></script>
+<script src="/static/js/chat/chat_configuracoes_web.js?v={{ v_app }}&ui_rev=20260505_web_settings_panel" defer nonce="{{ csp_nonce }}"></script>
 <script src="/static/js/chat/chat_painel_core.js?v={{ v_app }}" defer nonce="{{ csp_nonce }}"></script>
 <script src="/static/js/chat/chat_painel_laudos.js?v={{ v_app }}" defer nonce="{{ csp_nonce }}"></script>
 <script src="/static/js/chat/chat_painel_historico_acoes.js?v={{ v_app }}" defer nonce="{{ csp_nonce }}"></script>

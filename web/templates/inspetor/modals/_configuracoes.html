@@ -1,0 +1,288 @@
+<div
+    id="modal-configuracoes-web"
+    class="modal-overlay modal-overlay-configuracoes-web"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="configuracoes-web-titulo"
+    aria-describedby="configuracoes-web-descricao"
+    aria-hidden="true"
+    hidden
+>
+    <section class="configuracoes-web-panel" role="document">
+        <header class="configuracoes-web-header">
+            <div class="configuracoes-web-title">
+                <span class="material-symbols-rounded" aria-hidden="true">settings</span>
+                <div>
+                    <h2 id="configuracoes-web-titulo">Configurações</h2>
+                    <p id="configuracoes-web-descricao">Inspeção IA, conta, segurança e suporte.</p>
+                </div>
+            </div>
+
+            <button
+                type="button"
+                id="btn-fechar-configuracoes-web"
+                class="btn-fechar-modal configuracoes-web-close"
+                aria-label="Fechar configurações"
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">close</span>
+            </button>
+        </header>
+
+        <div class="configuracoes-web-summary">
+            <span id="configuracoes-web-avatar" class="configuracoes-web-avatar" aria-hidden="true">US</span>
+            <div class="configuracoes-web-summary__copy">
+                <span>Conta ativa</span>
+                <strong id="configuracoes-web-nome">Usuário</strong>
+                <small id="configuracoes-web-email">E-mail não informado</small>
+            </div>
+            <div class="configuracoes-web-summary__chips" aria-label="Resumo do acesso">
+                <span>Inspeção IA</span>
+                <span id="configuracoes-web-status">Local</span>
+            </div>
+        </div>
+
+        <div class="configuracoes-web-layout">
+            <nav class="configuracoes-web-nav" aria-label="Seções de configurações">
+                <button type="button" class="configuracoes-web-nav__item is-active" data-settings-section="conta" aria-current="page">
+                    <span class="material-symbols-rounded" aria-hidden="true">account_circle</span>
+                    <span>Conta e acesso</span>
+                </button>
+                <button type="button" class="configuracoes-web-nav__item" data-settings-section="preferencias">
+                    <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+                    <span>Preferências</span>
+                </button>
+                <button type="button" class="configuracoes-web-nav__item" data-settings-section="notificacoes">
+                    <span class="material-symbols-rounded" aria-hidden="true">notifications</span>
+                    <span>Notificações</span>
+                </button>
+                <button type="button" class="configuracoes-web-nav__item" data-settings-section="seguranca">
+                    <span class="material-symbols-rounded" aria-hidden="true">shield</span>
+                    <span>Segurança</span>
+                </button>
+                <button type="button" class="configuracoes-web-nav__item" data-settings-section="sistema">
+                    <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
+                    <span>Sistema e suporte</span>
+                </button>
+            </nav>
+
+            <div class="configuracoes-web-content">
+                <section class="configuracoes-web-section is-active" data-settings-panel-section="conta" aria-labelledby="configuracoes-conta-titulo">
+                    <div class="configuracoes-web-section__heading">
+                        <span class="material-symbols-rounded" aria-hidden="true">account_circle</span>
+                        <div>
+                            <h3 id="configuracoes-conta-titulo">Conta e acesso</h3>
+                            <p>Perfil, senha e provedores de entrada.</p>
+                        </div>
+                    </div>
+
+                    <div class="configuracoes-web-row-list">
+                        <button type="button" class="configuracoes-web-row" data-settings-action="open-profile">
+                            <span class="material-symbols-rounded" aria-hidden="true">badge</span>
+                            <span>
+                                <strong>Editar perfil</strong>
+                                <small>Foto, nome, e-mail e telefone.</small>
+                            </span>
+                            <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                        </button>
+
+                        <a class="configuracoes-web-row" href="/app/trocar-senha">
+                            <span class="material-symbols-rounded" aria-hidden="true">password</span>
+                            <span>
+                                <strong>Alterar senha</strong>
+                                <small>Atualiza o acesso principal da Inspeção IA.</small>
+                            </span>
+                            <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                        </a>
+
+                        <a class="configuracoes-web-row" href="/auth/social/app/google/start">
+                            <span class="material-symbols-rounded" aria-hidden="true">account_circle</span>
+                            <span>
+                                <strong>Entrar com Google</strong>
+                                <small>Usa a conta liberada pelo administrador.</small>
+                            </span>
+                            <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
+                        </a>
+
+                        <a class="configuracoes-web-row" href="/auth/social/app/microsoft/start">
+                            <span class="material-symbols-rounded" aria-hidden="true">business</span>
+                            <span>
+                                <strong>Entrar com Microsoft</strong>
+                                <small>Usa Microsoft Entra quando configurado.</small>
+                            </span>
+                            <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
+                        </a>
+                    </div>
+                </section>
+
+                <section class="configuracoes-web-section" data-settings-panel-section="preferencias" aria-labelledby="configuracoes-preferencias-titulo" hidden>
+                    <div class="configuracoes-web-section__heading">
+                        <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+                        <div>
+                            <h3 id="configuracoes-preferencias-titulo">Preferências da Inspeção IA</h3>
+                            <p>Resposta da IA, densidade e visual do workspace.</p>
+                        </div>
+                    </div>
+
+                    <div class="configuracoes-web-control-list">
+                        <div class="configuracoes-web-control">
+                            <div>
+                                <strong>Estilo da resposta</strong>
+                                <small id="settings-value-resposta">Detalhada</small>
+                            </div>
+                            <div class="configuracoes-web-segmented" role="group" aria-label="Estilo da resposta">
+                                <button type="button" data-settings-choice="resposta" data-settings-value="objetiva">Objetiva</button>
+                                <button type="button" data-settings-choice="resposta" data-settings-value="detalhada">Detalhada</button>
+                                <button type="button" data-settings-choice="resposta" data-settings-value="tecnica">Técnica</button>
+                            </div>
+                        </div>
+
+                        <div class="configuracoes-web-control">
+                            <div>
+                                <strong>Densidade da interface</strong>
+                                <small id="settings-value-densidade">Confortável</small>
+                            </div>
+                            <div class="configuracoes-web-segmented" role="group" aria-label="Densidade da interface">
+                                <button type="button" data-settings-choice="densidade" data-settings-value="compacta">Compacta</button>
+                                <button type="button" data-settings-choice="densidade" data-settings-value="confortavel">Confortável</button>
+                                <button type="button" data-settings-choice="densidade" data-settings-value="ampla">Ampla</button>
+                            </div>
+                        </div>
+
+                        <label class="configuracoes-web-switch">
+                            <span>
+                                <strong>Animações</strong>
+                                <small>Transições e respostas visuais no workspace.</small>
+                            </span>
+                            <input type="checkbox" data-settings-pref="animacoes">
+                        </label>
+
+                        <label class="configuracoes-web-switch">
+                            <span>
+                                <strong>Economia de dados</strong>
+                                <small>Reduz carregamentos extras quando possível.</small>
+                            </span>
+                            <input type="checkbox" data-settings-pref="economiaDados">
+                        </label>
+                    </div>
+                </section>
+
+                <section class="configuracoes-web-section" data-settings-panel-section="notificacoes" aria-labelledby="configuracoes-notificacoes-titulo" hidden>
+                    <div class="configuracoes-web-section__heading">
+                        <span class="material-symbols-rounded" aria-hidden="true">notifications</span>
+                        <div>
+                            <h3 id="configuracoes-notificacoes-titulo">Notificações</h3>
+                            <p>Alertas do chat, Revisão Técnica e operação.</p>
+                        </div>
+                    </div>
+
+                    <div class="configuracoes-web-control-list">
+                        <label class="configuracoes-web-switch">
+                            <span>
+                                <strong>Respostas da IA</strong>
+                                <small>Avisos quando uma resposta terminar.</small>
+                            </span>
+                            <input type="checkbox" data-settings-pref="notificaIa">
+                        </label>
+                        <label class="configuracoes-web-switch">
+                            <span>
+                                <strong>Revisão Técnica</strong>
+                                <small>Retornos e pendências do canal técnico.</small>
+                            </span>
+                            <input type="checkbox" data-settings-pref="notificaRevisao">
+                        </label>
+                        <label class="configuracoes-web-switch">
+                            <span>
+                                <strong>Alertas críticos</strong>
+                                <small>Falhas, bloqueios e itens de emissão.</small>
+                            </span>
+                            <input type="checkbox" data-settings-pref="alertasCriticos">
+                        </label>
+                        <label class="configuracoes-web-switch">
+                            <span>
+                                <strong>Resumo por e-mail</strong>
+                                <small>Resumo operacional quando estiver disponível.</small>
+                            </span>
+                            <input type="checkbox" data-settings-pref="emailResumo">
+                        </label>
+                    </div>
+                </section>
+
+                <section class="configuracoes-web-section" data-settings-panel-section="seguranca" aria-labelledby="configuracoes-seguranca-titulo" hidden>
+                    <div class="configuracoes-web-section__heading">
+                        <span class="material-symbols-rounded" aria-hidden="true">shield</span>
+                        <div>
+                            <h3 id="configuracoes-seguranca-titulo">Segurança e privacidade</h3>
+                            <p>Permissões, sessão atual e dados locais.</p>
+                        </div>
+                    </div>
+
+                    <div class="configuracoes-web-row-list">
+                        <button type="button" class="configuracoes-web-row" data-settings-action="browser-permissions">
+                            <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+                            <span>
+                                <strong>Permissões do navegador</strong>
+                                <small>Câmera, microfone e arquivos dependem do navegador.</small>
+                            </span>
+                            <span class="material-symbols-rounded" aria-hidden="true">info</span>
+                        </button>
+                        <button type="button" class="configuracoes-web-row" data-settings-action="clear-local">
+                            <span class="material-symbols-rounded" aria-hidden="true">database</span>
+                            <span>
+                                <strong>Limpar preferências locais</strong>
+                                <small>Remove ajustes salvos neste navegador.</small>
+                            </span>
+                            <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                        </button>
+                        <form action="/app/logout" method="POST" class="configuracoes-web-row-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button type="submit" class="configuracoes-web-row configuracoes-web-row--danger">
+                                <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+                                <span>
+                                    <strong>Encerrar sessão</strong>
+                                    <small>Sai da Inspeção IA neste navegador.</small>
+                                </span>
+                                <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <section class="configuracoes-web-section" data-settings-panel-section="sistema" aria-labelledby="configuracoes-sistema-titulo" hidden>
+                    <div class="configuracoes-web-section__heading">
+                        <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
+                        <div>
+                            <h3 id="configuracoes-sistema-titulo">Sistema e suporte</h3>
+                            <p>Status local, suporte e informações da aplicação.</p>
+                        </div>
+                    </div>
+
+                    <div class="configuracoes-web-row-list">
+                        <button type="button" class="configuracoes-web-row" data-settings-action="check-health">
+                            <span class="material-symbols-rounded" aria-hidden="true">monitor_heart</span>
+                            <span>
+                                <strong>Status do sistema</strong>
+                                <small id="configuracoes-web-health">Ainda não verificado.</small>
+                            </span>
+                            <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+                        </button>
+                        <a class="configuracoes-web-row" href="mailto:suporte@tariel.ia?subject=Suporte%20Inspe%C3%A7%C3%A3o%20IA">
+                            <span class="material-symbols-rounded" aria-hidden="true">mail</span>
+                            <span>
+                                <strong>Falar com suporte</strong>
+                                <small>Envia um e-mail para suporte@tariel.ia.</small>
+                            </span>
+                            <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
+                        </a>
+                        <div class="configuracoes-web-static-row">
+                            <span class="material-symbols-rounded" aria-hidden="true">deployed_code</span>
+                            <span>
+                                <strong>Versão</strong>
+                                <small id="configuracoes-web-versao">Tariel 2.0 SaaS</small>
+                            </span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+</div>

@@ -576,6 +576,13 @@
                 return;
             }
 
+            if (acao === "settings") {
+                event.preventDefault();
+                fecharMenuConta();
+                document.dispatchEvent(new CustomEvent("tariel:configuracoes:abrir"));
+                return;
+            }
+
             if (acao === "add-account") {
                 event.preventDefault();
                 fecharMenuConta();
