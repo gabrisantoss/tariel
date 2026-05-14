@@ -94,6 +94,40 @@ _BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
 _RUNNER_DB_SNAPSHOT_CACHE: dict[str, Any] | None = None
 
 
+def resolve_windows_executable(name: str) -> str:
+    if os.name != "nt":
+        return name
+    if name == "python3":
+        return str(pathlib.Path(sys.executable))
+    preferred_suffixes = {
+        "npm": (".cmd", ".bat", ".exe"),
+        "maestro": (".bat", ".cmd", ".exe"),
+        "bash": (".exe", ".cmd", ".bat"),
+    }.get(name, (".exe", ".cmd", ".bat"))
+    for suffix in preferred_suffixes:
+        resolved = shutil.which(f"{name}{suffix}")
+        if resolved:
+            return resolved
+    resolved = shutil.which(name)
+    if resolved and pathlib.Path(resolved).suffix.lower() != ".ps1":
+        return resolved
+    common_bash = pathlib.Path("C:/Program Files/Git/bin/bash.exe")
+    if name == "bash" and common_bash.exists():
+        return str(common_bash)
+    return name
+
+
+def normalize_command_for_platform(command: list[str]) -> list[str]:
+    if not command:
+        return command
+    executable = command[0]
+    if os.name == "nt" and executable.endswith(".sh"):
+        return [resolve_windows_executable("bash"), executable, *command[1:]]
+    if os.path.basename(executable) == executable:
+        return [resolve_windows_executable(executable), *command[1:]]
+    return command
+
+
 class RunnerError(RuntimeError):
     """Erro operacional do runner."""
 
@@ -400,6 +434,7 @@ def run_command(
     check: bool = True,
     stream_output: bool = False,
 ) -> CommandResult:
+    command = normalize_command_for_platform(command)
     if stream_output:
         print(f"$ {command_display(command)}", flush=True)
         process = subprocess.Popen(
@@ -2616,7 +2651,7 @@ def start_logcat_capture(state: ExecutionState) -> None:
     full_log_path = state.artifacts_dir / "logcat_full.txt"
     handle = full_log_path.open("w", encoding="utf-8")
     state.logcat_process = subprocess.Popen(
-        ["adb", "-s", state.device_id, "logcat", "-v", "time"],
+        normalize_command_for_platform(["adb", "-s", state.device_id, "logcat", "-v", "time"]),
         stdout=handle,
         stderr=subprocess.STDOUT,
         text=True,
@@ -3051,6 +3086,7 @@ def install_failure_is_environmental(result: CommandResult) -> bool:
 
 
 def probe_text(command: list[str], *, cwd: pathlib.Path | None = None) -> str:
+    command = normalize_command_for_platform(command)
     try:
         completed = subprocess.run(
             command,
@@ -3112,7 +3148,7 @@ def probe_nvm_node_runtime(version_text: str) -> tuple[str, str, str]:
     )
     try:
         completed = subprocess.run(
-            ["bash", "-lc", command],
+            normalize_command_for_platform(["bash", "-lc", command]),
             cwd=str(ANDROID_ROOT),
             check=False,
             capture_output=True,

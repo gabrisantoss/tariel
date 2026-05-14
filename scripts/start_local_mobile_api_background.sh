@@ -7,6 +7,8 @@ WEB_ROOT="$REPO_ROOT/web"
 LOG_PATH="$REPO_ROOT/local-mobile-api.log"
 ERROR_LOG_PATH="$REPO_ROOT/local-mobile-api.error.log"
 PID_FILE="$REPO_ROOT/local-mobile-api.pid"
+RUNTIME_DIR="$REPO_ROOT/.test-artifacts/runtime"
+DB_PATH="${RUNTIME_DIR}/tariel-mobile-dev.sqlite3"
 
 resolve_python() {
   local candidates=(
@@ -107,6 +109,12 @@ sleep 0.4
 rm -f "$PID_FILE"
 
 cd -- "$WEB_ROOT"
+mkdir -p "$RUNTIME_DIR"
+export AMBIENTE=dev
+export DATABASE_URL="sqlite:///$DB_PATH"
+export DB_BOOTSTRAP_BLOCKING_STARTUP=0
+export REVISOR_REALTIME_FAIL_CLOSED_ON_STARTUP=0
+export PYTHONPATH=.
 export SEED_DEV_BOOTSTRAP=1
 
 if command -v setsid >/dev/null 2>&1; then

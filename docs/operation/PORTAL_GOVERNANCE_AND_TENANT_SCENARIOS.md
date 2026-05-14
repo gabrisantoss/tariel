@@ -247,7 +247,7 @@ Checkpoint UX-D.1 (`2026-04-27`): o mesmo corte de shell visual foi estendido pa
 | Fluxo sem Mesa precisa narrativa documental clara. | Cliente pode confundir finalização interna com emissão oficial auditável. | P1 produto/documento. |
 | Mobile-first ainda depende de validação operacional hospedada. | Para cliente que só quer app, produção real exige EAS, backend hospedado, push/offline e suporte. | P0/P1 infra/mobile. |
 | Emissão oficial mais madura está concentrada em caminho governado. | Cenários sem Mesa podem precisar outro modelo de responsabilidade e assinatura. | P1 decisão de produto. |
-| Família pode exigir regra diferente do pacote. | Exemplo: NR35 exige Mesa no piloto, mesmo que tenant sem Mesa exista. | Já modelado, mas precisa comunicação clara. |
+| Família pode recomendar regra diferente do pacote. | Exemplo: NR35 recomenda Mesa no piloto, mas tenant sem Mesa pode seguir por aprovação interna autorizada quando o gate técnico estiver completo. | Já modelado, mas precisa comunicação clara. |
 | Admin Cliente com ações técnicas precisa fronteira clara. | Evita virar Admin CEO informal ou revisor sem governança. | P1 segurança/produto. |
 | Reemissão/superseded ainda é follow-up. Downloads oficiais já registram auditoria sanitizada. | Histórico de substituição de emissão ainda pode ficar incompleto para produção real. | P0 para produção documental forte. |
 
@@ -258,7 +258,7 @@ Checkpoint UX-D.1 (`2026-04-27`): o mesmo corte de shell visual foi estendido pa
 3. Diferenciar claramente três resultados documentais: rascunho/PDF operacional, aprovação/revisão e `EmissaoOficialLaudo`.
 4. Para cliente individual e mobile-first, criar narrativa própria: operação simples, finalização interna quando permitida, limites explícitos e upgrade para Mesa/emissão oficial.
 5. Para empresa grande, fortalecer auditoria, signatários, histórico, reemissão e permissões por papel.
-6. Generalizar o padrão NR35 para outras famílias apenas depois de definir se a família exige Mesa, aceita mobile review ou permite autonomia governada.
+6. Generalizar o padrão NR35 para outras famílias apenas depois de definir se a família recomenda Mesa, aceita mobile review ou permite autonomia governada.
 7. Melhorar a UX do Portal Cliente para explicar capacidades liberadas e bloqueadas por contrato, sem parecer erro.
 8. Antes de produção real, fechar PR9 de reemissão/superseded e manter auditoria de download oficial coberta nos fluxos Portal Cliente, Chat/Mobile e Mesa.
 

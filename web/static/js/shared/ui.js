@@ -16,7 +16,7 @@
     const BREAKPOINT_LAYOUT_INSPETOR_COMPACTO = 1199;
     const TOGGLE_COLOR = "#F47B20";
     const SELETOR_ACAO_HOME = '[data-action="go-home"]';
-    const DESTINO_HOME_PADRAO = "/app/?home=1";
+    const DESTINO_HOME_PADRAO = "/";
     const _toastsAtivos = new Map();
     let _dockRapidoSyncRaf = 0;
     let _dockRapidoObserver = null;
@@ -182,10 +182,11 @@
 
     function inspetorWorkspaceAtivo() {
         const painel = document.getElementById("painel-chat");
+        const modoBody = String(document.body?.dataset?.inspecaoUi || "").trim();
+        const modoPainel = String(painel?.dataset?.inspecaoUi || "").trim();
         return !!(
-            painel &&
             document.body?.classList?.contains("pagina-chat-dashboard-v2") &&
-            String(painel.dataset.inspecaoUi || "").trim() === "workspace"
+            (modoPainel === "workspace" || modoBody === "workspace")
         );
     }
 
@@ -194,11 +195,15 @@
     }
 
     function dockRapidoPodeAparecer() {
+        const { baseScreen, overlayOwner } = obterContextoTelaInspetor();
+        if (inspetorWorkspaceAtivo() && !overlayOwner) {
+            return true;
+        }
+
         const visibilidadeDeclarada = String(document.body?.dataset?.inspectorQuickDock || "").trim();
         if (visibilidadeDeclarada === "visible") return true;
         if (visibilidadeDeclarada === "hidden") return false;
 
-        const { baseScreen, overlayOwner } = obterContextoTelaInspetor();
         return layoutInspectorCompacto() && !overlayOwner && (
             baseScreen === "inspection_record" ||
             baseScreen === "inspection_conversation"
@@ -398,11 +403,15 @@
     }
 
     function homeRapidoEstaDisponivel() {
+        const { baseScreen, overlayOwner } = obterContextoTelaInspetor();
+        if (inspetorWorkspaceAtivo() && !overlayOwner) {
+            return true;
+        }
+
         const visibilidadeDeclarada = document.body?.dataset?.homeActionVisible;
         if (visibilidadeDeclarada === "true") return true;
         if (visibilidadeDeclarada === "false") return false;
 
-        const { baseScreen, overlayOwner } = obterContextoTelaInspetor();
         if (!overlayOwner && document.body.classList.contains("modo-foco") && baseScreen === "assistant_landing") {
             return true;
         }
@@ -780,7 +789,7 @@
         // desktop = lateral visível; mobile = lateral fechada.
         definirEstadoSidebar(isMobile() ? false : !sidebar.classList.contains("oculta"));
 
-        if (btnMenu.dataset.uiWired !== "true") {
+        if (btnMenu && btnMenu.dataset.uiWired !== "true") {
             btnMenu.dataset.uiWired = "true";
             btnMenu.addEventListener("click", abrirFecharSidebar);
         }

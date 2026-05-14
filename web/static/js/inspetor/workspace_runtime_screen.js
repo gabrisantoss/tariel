@@ -28,6 +28,7 @@
             "inspection_record",
             "inspection_mesa",
             "inspection_corrections",
+            "inspection_finalization",
         ].includes(screenBase);
         const workspaceView = dependencies.resolveWorkspaceView?.(screen);
         const laudoAtivoId = dependencies.normalizarLaudoAtualId?.(
@@ -42,21 +43,21 @@
         const mesaDisponivel = mesaAvaliadoraDisponivelParaUsuario();
         const quickDock = !overlayAtivo && compacto && (
             assistantAtivo ||
-            (inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada)
+            (inspectionAtivo && !["inspection_mesa", "inspection_finalization"].includes(workspaceView) && !conversaLivreFocada)
         )
             ? "visible"
             : "hidden";
-        const contextRail = inspectionAtivo && workspaceView !== "inspection_mesa" && !conversaLivreFocada && !overlayAtivo && !compacto
+        const contextRail = inspectionAtivo && !["inspection_mesa", "inspection_finalization"].includes(workspaceView) && !conversaLivreFocada && !overlayAtivo && !compacto
             ? "visible"
             : "hidden";
         const mesaEntry = mesaDisponivel
             && inspectionAtivo
-            && workspaceView !== "inspection_mesa"
+            && !["inspection_mesa", "inspection_finalization"].includes(workspaceView)
             && !conversaLivreFocada
             && !overlayAtivo
             ? (compacto ? "composer" : "rail")
             : "hidden";
-        const finalizeEntry = inspectionAtivo && workspaceView !== "inspection_mesa" && !overlayAtivo && !!laudoAtivoId
+        const finalizeEntry = inspectionAtivo && !["inspection_mesa", "inspection_finalization"].includes(workspaceView) && !overlayAtivo && !!laudoAtivoId
             ? "header"
             : "hidden";
         let novaInspecaoEntry = "hidden";
@@ -158,6 +159,7 @@
             "inspection_record",
             "inspection_mesa",
             "inspection_corrections",
+            "inspection_finalization",
         ].includes(screenBase)) {
             return screenBase;
         }
@@ -169,6 +171,7 @@
         const threadTabAtual = dependencies.normalizarThreadTab?.(snapshot.threadTab);
         if (threadTabAtual === "anexos") return "inspection_record";
         if (threadTabAtual === "correcoes") return "inspection_corrections";
+        if (threadTabAtual === "finalizar") return "inspection_finalization";
         if (threadTabAtual === "mesa") {
             return mesaAvaliadoraDisponivelParaUsuario() ? "inspection_mesa" : "inspection_corrections";
         }

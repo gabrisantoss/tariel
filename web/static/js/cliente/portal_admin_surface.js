@@ -125,16 +125,16 @@
       ]);
       const SECTION_META = Object.freeze({
         overview: Object.freeze({
-          title: "Visão geral",
-          meta: "Organização, equipe e plano.",
+          title: "Início",
+          meta: "Ações, equipe e plano.",
         }),
         capacity: Object.freeze({
-          title: "Plano e assinatura",
+          title: "Plano",
           meta: "Uso, limites e contratação.",
         }),
         team: Object.freeze({
-          title: "Equipe e usuários",
-          meta: "Perfis, convites e acessos.",
+          title: "Equipe e acessos",
+          meta: "Perfis, convites e permissões.",
         }),
         access: Object.freeze({
           title: "Acessos operacionais",
@@ -1026,8 +1026,8 @@
             ],
           },
           team: {
-            title: "Equipe e usuários",
-            meta: "Criação, ativação e bloqueios em blocos separados.",
+            title: "Equipe e acessos",
+            meta: "Criação, ativação e bloqueios em um fluxo único.",
             chips: [
               `${formatarInteiro(totalUsuarios)} acessos da conta`,
               `${formatarInteiro((state.bootstrap?.usuarios || []).filter((item) => item?.senha_temporaria_ativa).length)} primeiros acessos`,
@@ -2272,7 +2272,7 @@
           container.appendChild(
             criarEmptyStateAdminNode(
               "Nenhum usuário operacional",
-              "Use Equipe e usuários para criar o primeiro acesso operacional.",
+              "Use Equipe e acessos para criar o primeiro acesso operacional.",
             ),
           );
           return;

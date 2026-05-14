@@ -9,7 +9,8 @@
 // Responsável por:
 // - marcar item ativo no histórico
 // - criar/atualizar breadcrumb do laudo
-// - controlar tabs do workspace (conversa / historico / anexos / correcoes)
+// - controlar fluxo do workspace (chat / revisao / finalizar) e apoios
+//   secundarios (historico / anexos / correcoes)
 // - persistir laudo atual
 // - sincronizar URL ?laudo=
 // - carregar laudo inicial
@@ -89,7 +90,8 @@
             bruto === "correction" ||
             bruto === "corrections"
         ) return "correcoes";
-        if (bruto === "mesa") return "correcoes";
+        if (bruto === "finalizar" || bruto === "finalizacao" || bruto === "finalização" || bruto === "finish") return "finalizar";
+        if (bruto === "mesa") return "mesa";
         const fallbackNormalizado = String(fallback || "").trim().toLowerCase();
         if (fallbackNormalizado === "chat" || fallbackNormalizado === "conversa") return "conversa";
         if (fallbackNormalizado === "attachments" || fallbackNormalizado === "anexos") return "anexos";
@@ -100,7 +102,8 @@
             fallbackNormalizado === "correction" ||
             fallbackNormalizado === "corrections"
         ) return "correcoes";
-        if (fallbackNormalizado === "mesa") return "correcoes";
+        if (fallbackNormalizado === "finalizar" || fallbackNormalizado === "finalizacao" || fallbackNormalizado === "finalização" || fallbackNormalizado === "finish") return "finalizar";
+        if (fallbackNormalizado === "mesa") return "mesa";
         return "historico";
     }
 
@@ -937,6 +940,15 @@
         const detail = thread && typeof thread === "object" ? thread : {};
         const threadId = String(detail.id || "").trim();
         if (!threadId) return null;
+        const contextoPersonalizado = detail.free_chat_template_context
+            && typeof detail.free_chat_template_context === "object"
+            ? detail.free_chat_template_context
+            : null;
+        const rotuloContexto = String(
+            contextoPersonalizado?.title
+            || contextoPersonalizado?.badge
+            || ""
+        ).trim();
 
         const item = document.createElement("div");
         item.className = "inspetor-sidebar-report item-historico";
@@ -975,9 +987,12 @@
         const metaCanonica = document.createElement("small");
         metaCanonica.className = "meta-canonica-laudo";
         const totalMensagens = Number(detail.message_count || 0) || 0;
+        const prefixoMeta = rotuloContexto
+            ? `Chat livre • ${rotuloContexto}`
+            : "Chat livre";
         metaCanonica.textContent = totalMensagens > 1
-            ? `Chat livre • ${totalMensagens} mensagens`
-            : "Chat livre • 1 mensagem";
+            ? `${prefixoMeta} • ${totalMensagens} mensagens`
+            : `${prefixoMeta} • 1 mensagem`;
         texto.appendChild(metaCanonica);
 
         const side = document.createElement("span");
@@ -1232,8 +1247,8 @@
                             "correction",
                             "corrections",
                         ].includes(bruto) ? "correcoes" : bruto);
-        if (valor === "mesa") {
-            valor = "correcoes";
+        if (["finalizar", "finalizacao", "finalização", "finish"].includes(valor)) {
+            valor = "finalizar";
         }
         const nav = garantirThreadNav();
         const tabs = nav?.querySelectorAll(".thread-tab[data-tab]") || [];

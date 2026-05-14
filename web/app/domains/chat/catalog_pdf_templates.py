@@ -1828,16 +1828,16 @@ def materialize_runtime_style_json_for_pdf_template(
         "margens_mm": {"top": 22, "right": 16, "bottom": 20, "left": 16},
     }
     estilo["tipografia"] = {
-        "font_family": "Georgia, 'Times New Roman', serif",
-        "font_size_px": 11,
-        "line_height": 1.52,
+        "font_family": "Aptos, 'Segoe UI', Arial, sans-serif",
+        "font_size_px": 12,
+        "line_height": 1.5,
     }
     estilo["tema"] = {
-        "primaria": "#17324d",
-        "secundaria": "#607284",
-        "acento": "#9f6f2f",
-        "suave": "#f3f6f8",
-        "borda": "#ccd6de",
+        "primaria": "#0f2b46",
+        "secundaria": "#627287",
+        "acento": "#28b7d3",
+        "suave": "#f6f9fc",
+        "borda": "#ccdae8",
     }
     estilo["marca_dagua"] = {"texto": "", "opacity": 0.08, "font_size_px": 72, "rotate_deg": -32}
     return estilo

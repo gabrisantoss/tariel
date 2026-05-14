@@ -530,7 +530,7 @@ Caminhos que nao devem ser usados como prova final do Golden Path:
 | Qual e o renderer oficial por familia fora NR35? | Existem varios renderizadores e fallback legado |
 | O pacote oficial deve sempre incluir o PDF primario ou pode referenciar storage externo? | Hoje resolve artefato e hash, mas politica de storage precisa ser estavel |
 | Assinatura digital externa sera obrigatoria em producao? | Hoje ha signatario governado, nao necessariamente assinatura criptografica |
-| Como tratar tenants sem Mesa para familias de alto risco? | Existe `inspector_chat` e mobile autonomy, mas NR35 piloto exige Mesa |
+| Como tratar tenants sem Mesa para familias de alto risco? | Existe `inspector_chat` e mobile autonomy; NR35 piloto passa a recomendar Mesa sem bloqueio universal quando o gate técnico estiver completo |
 | O Portal Cliente deve expor pacote oficial completo para todos os perfis? | Risco de JSON/anexos sensiveis |
 | Qual caminho sera o baseline para familias nao NR35? | NR35 tem contrato especial local; outras familias podem estar menos fechadas |
 

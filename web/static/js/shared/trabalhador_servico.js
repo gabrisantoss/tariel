@@ -1,6 +1,6 @@
 // ==========================================
 // TARIEL CONTROL TOWER — SERVICE WORKER
-// Versão: 3.0.7-Enterprise
+// Versão: 3.0.8-Enterprise
 // Escopo: /app/ (apenas área do inspetor)
 //
 // ATENÇÃO: /admin/ NUNCA deve ser cacheado.
@@ -18,7 +18,7 @@
 
 "use strict";
 
-const VERSAO_APP = "3.0.7";
+const VERSAO_APP = "3.0.8";
 const PREFIXO_CACHE = "tariel-";
 const CACHE_ESTATICO = `${PREFIXO_CACHE}estatico-v${VERSAO_APP}`;
 const CACHE_DINAMICO = `${PREFIXO_CACHE}dinamico-v${VERSAO_APP}`;
@@ -255,12 +255,28 @@ self.addEventListener("fetch", (evento) => {
         return;
     }
 
+    if (_assetDevePriorizarRede(url)) {
+        evento.respondWith(_estrategiaNetworkFirst(req, CACHE_ESTATICO, false));
+        return;
+    }
+
     evento.respondWith(_estrategiaStaleWhileRevalidate(req, CACHE_ESTATICO, false));
 });
 
 // ==========================================
 // ESTRATÉGIAS DE CACHE
 // ==========================================
+
+function _assetDevePriorizarRede(url) {
+    const caminho = String(url?.pathname || "");
+    const assetCritico =
+        caminho.startsWith("/static/js/") ||
+        caminho.startsWith("/static/css/");
+
+    if (!assetCritico) return false;
+    if (!EM_PRODUCAO) return true;
+    return url.searchParams.has("ui_rev") || url.searchParams.has("v");
+}
 
 async function _estrategiaRedePura(req) {
     try {

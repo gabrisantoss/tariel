@@ -8,6 +8,11 @@ import { stripEmbeddedChatAiPreferences } from "./preferences";
 import { normalizarAnexoMensagem } from "./conversationAttachmentHelpers";
 import { normalizarModoChat } from "./conversationModeHelpers";
 
+const LIMITE_TEXTO_HISTORICO_ENVIO = 7_500;
+const CABECA_TEXTO_HISTORICO_ENVIO = 5_900;
+const NOTA_HISTORICO_ENCURTADO =
+  "\n\n[Histórico anterior encurtado automaticamente pelo app para caber no limite da API.]\n\n";
+
 export function sanitizarTextoMensagemChat(
   texto: string,
   options?: { papel?: MobileChatMessage["papel"] },
@@ -60,6 +65,26 @@ function sanitizarFalhaOperacionalAssistente(texto: string): string {
   }
 
   return conteudo;
+}
+
+function encurtarTextoHistoricoParaEnvio(texto: string): string {
+  const conteudo = String(texto || "").trim();
+  if (conteudo.length <= LIMITE_TEXTO_HISTORICO_ENVIO) {
+    return conteudo;
+  }
+
+  const espacoCauda = Math.max(
+    0,
+    LIMITE_TEXTO_HISTORICO_ENVIO -
+      CABECA_TEXTO_HISTORICO_ENVIO -
+      NOTA_HISTORICO_ENCURTADO.length,
+  );
+  const cabeca = conteudo.slice(0, CABECA_TEXTO_HISTORICO_ENVIO).trimEnd();
+  const cauda = espacoCauda ? conteudo.slice(-espacoCauda).trimStart() : "";
+
+  return `${cabeca}${NOTA_HISTORICO_ENCURTADO}${cauda}`
+    .trim()
+    .slice(0, LIMITE_TEXTO_HISTORICO_ENVIO);
 }
 
 export function normalizarMensagemChat(
@@ -125,7 +150,9 @@ export function montarHistoricoParaEnvio(
         mensagem.papel === "usuario" ? "usuario" : "assistente";
       return {
         papel,
-        texto: sanitizarTextoMensagemChat(mensagem.texto, { papel }).trim(),
+        texto: encurtarTextoHistoricoParaEnvio(
+          sanitizarTextoMensagemChat(mensagem.texto, { papel }),
+        ),
       };
     })
     .filter((mensagem) => Boolean(mensagem.texto));

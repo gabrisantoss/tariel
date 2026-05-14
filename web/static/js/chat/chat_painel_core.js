@@ -263,6 +263,7 @@
         if (normalizado === "chat" || normalizado === "conversa") return "conversa";
         if (normalizado === "history" || normalizado === "historico") return "historico";
         if (normalizado === "attachments" || normalizado === "anexos") return "anexos";
+        if (normalizado === "finalizar" || normalizado === "finalizacao" || normalizado === "finalização" || normalizado === "finish") return "finalizar";
         if (normalizado === "mesa") return "mesa";
         return "";
     }

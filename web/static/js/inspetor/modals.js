@@ -45,10 +45,111 @@
 
     function criarContextoVisualPadrao() {
         return {
-            title: "Assistente Tariel IA",
-            subtitle: "Conversa inicial • nenhum laudo ativo",
-            statusBadge: "CHAT LIVRE",
+            title: "Tariel",
+            subtitle: "Chat técnico",
+            statusBadge: "IA",
         };
+    }
+
+    function normalizarModoVisualNr(valor = "") {
+        const texto = String(valor || "")
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[\s-]+/g, "_");
+
+        if (!texto || texto === "padrao" || texto === "ia" || texto === "geral") return "";
+        if (texto.includes("nr35") || texto.includes("linha_vida") || texto.includes("altura")) return "nr35";
+        if (texto.includes("nr33") || texto.includes("confin")) return "nr33";
+        if (texto.includes("nr20") || texto.includes("inflam") || texto.includes("combust")) return "nr20";
+        if (texto.includes("nr13") || texto.includes("caldeira") || texto.includes("vaso")) return "nr13";
+        if (texto.includes("nr12") || texto.includes("maquina")) return "nr12";
+        if (texto.includes("spda")) return "spda";
+        if (texto.includes("loto") || texto.includes("bloqueio")) return "loto";
+        if (texto.includes("pie") || texto.includes("prontuario_eletrico")) return "pie";
+        if (texto.includes("rti") || texto.includes("nr10_rti")) return "rti";
+        return "";
+    }
+
+    function resolverModoVisualContextoChatLivre(contexto = {}) {
+        const candidatos = [
+            contexto.runtimeTipo,
+            contexto.templateKey,
+            contexto.tipo,
+            contexto.badge,
+            contexto.title,
+            contexto.meta,
+            contexto.preprompt,
+        ];
+
+        for (const candidato of candidatos) {
+            const modo = normalizarModoVisualNr(candidato);
+            if (modo) return modo;
+        }
+
+        return "";
+    }
+
+    function resolverRotuloModoVisualNr(modo = "") {
+        const modoNormalizado = normalizarModoVisualNr(modo);
+        const rotulos = {
+            rti: "RTI",
+            pie: "PIE",
+            spda: "SPDA",
+            loto: "LOTO",
+            nr12: "NR12 Máquinas",
+            nr13: "NR13 Integridade",
+            nr20: "NR20 Inflamáveis",
+            nr33: "NR33 Espaço Confinado",
+            nr35: "NR35 Linha de Vida",
+        };
+        return rotulos[modoNormalizado] || "";
+    }
+
+    function obterModoVisualPersistido() {
+        return normalizarModoVisualNr(
+            document.body?.dataset?.nrVisualMode
+            || el.painelChat?.dataset?.nrVisualMode
+            || el.campoMensagem?.placeholder
+            || ""
+        );
+    }
+
+    function obterTituloVisualPersistido(modo = "") {
+        return String(
+            document.body?.dataset?.nrVisualTitle
+            || el.painelChat?.dataset?.nrVisualTitle
+            || resolverRotuloModoVisualNr(modo)
+            || ""
+        ).trim();
+    }
+
+    function obterContextoChatLivreVisualAtivo() {
+        const contexto = estado.freeChatTemplateContext;
+        if (!contexto || typeof contexto !== "object") return null;
+        return contexto;
+    }
+
+    function aplicarModoVisualContextoChatLivre(contexto = null) {
+        const modo = contexto ? resolverModoVisualContextoChatLivre(contexto) : "";
+        const titulo = String(contexto?.title || contexto?.titulo || contexto?.badge || "").trim()
+            || resolverRotuloModoVisualNr(modo);
+        [document.body, el.painelChat].forEach((alvo) => {
+            if (!alvo?.dataset) return;
+            if (modo) {
+                alvo.dataset.nrVisualMode = modo;
+                if (titulo) {
+                    alvo.dataset.nrVisualTitle = titulo;
+                }
+            } else if (!contexto) {
+                delete alvo.dataset.nrVisualMode;
+                delete alvo.dataset.nrVisualTitle;
+                delete alvo.dataset.nrVisualBadge;
+            }
+        });
+
+        return modo;
     }
 
     function montarTempoWorkspaceResumo(valorIso = "") {
@@ -121,14 +222,35 @@
 
     function aplicarContextoVisualWorkspace(contexto = {}) {
         const fallback = criarContextoVisualPadrao();
+        const contextoChatLivre = obterContextoChatLivreVisualAtivo();
+        const tituloChatLivre = String(contextoChatLivre?.title || contextoChatLivre?.titulo || "").trim();
+        const modoChatLivre = aplicarModoVisualContextoChatLivre(contextoChatLivre);
+        const modoPersistido = modoChatLivre || obterModoVisualPersistido();
+        const tituloPersistido = tituloChatLivre || obterTituloVisualPersistido(modoPersistido);
+        const modoNrAtivo = !!modoPersistido && !!tituloPersistido;
         estado.workspaceVisualContext = {
-            title: String(contexto?.title || estado.workspaceVisualContext?.title || fallback.title).trim() || fallback.title,
-            subtitle: String(contexto?.subtitle || estado.workspaceVisualContext?.subtitle || fallback.subtitle).trim() || fallback.subtitle,
-            statusBadge: String(contexto?.statusBadge || estado.workspaceVisualContext?.statusBadge || fallback.statusBadge).trim().toUpperCase() || fallback.statusBadge,
+            title: modoNrAtivo
+                ? `Tariel está no modo ${tituloPersistido}`
+                : String(contexto?.title || estado.workspaceVisualContext?.title || fallback.title).trim() || fallback.title,
+            subtitle: contextoChatLivre
+                ? (
+                    String(contextoChatLivre.subtitle || "").trim()
+                    || `Chat livre • ${tituloPersistido || "contexto técnico"}`
+                )
+                : String(contexto?.subtitle || estado.workspaceVisualContext?.subtitle || fallback.subtitle).trim() || fallback.subtitle,
+            statusBadge: modoNrAtivo
+                ? String(contextoChatLivre?.badge || modoPersistido || contextoChatLivre?.runtimeTipo || fallback.statusBadge).trim().toUpperCase() || fallback.statusBadge
+                : String(contexto?.statusBadge || estado.workspaceVisualContext?.statusBadge || fallback.statusBadge).trim().toUpperCase() || fallback.statusBadge,
         };
 
         if (el.workspaceTituloLaudo) {
             el.workspaceTituloLaudo.textContent = estado.workspaceVisualContext.title;
+            el.workspaceTituloLaudo.dataset.nrTitleActive = modoNrAtivo ? "true" : "false";
+            if (modoNrAtivo) {
+                el.workspaceTituloLaudo.dataset.nrModeLabel = tituloPersistido;
+            } else {
+                delete el.workspaceTituloLaudo.dataset.nrModeLabel;
+            }
         }
         if (el.workspaceSubtituloLaudo) {
             el.workspaceSubtituloLaudo.textContent = estado.workspaceVisualContext.subtitle;

@@ -4,6 +4,8 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
+    "start:dev-client": "expo start --dev-client",
+    "start:tunnel": "expo start --tunnel",
     "android": "expo run:android",
     "android:dev": "node ./scripts/fix-gradle-wrapper.cjs && node ./scripts/run-android-dev.cjs",
     "android:prebuild": "npx --no-install expo prebuild --platform android --clean && node ./scripts/fix-gradle-wrapper.cjs",
@@ -11,6 +13,7 @@
     "android:preview:fresh": "npx --no-install expo prebuild --platform android --clean && node ./scripts/fix-gradle-wrapper.cjs && node ./scripts/run-android-preview.cjs --clean",
     "eas:build:android:preview": "npx eas build --platform android --profile preview",
     "eas:build:android:production": "npx eas build --platform android --profile production",
+    "eas:build:ios:development": "npx eas build --platform ios --profile development",
     "eas:build:ios:preview": "npx eas build --platform ios --profile preview",
     "eas:build:ios:production": "npx eas build --platform ios --profile production",
     "eas:submit:android:production": "npx eas submit --platform android --profile production",

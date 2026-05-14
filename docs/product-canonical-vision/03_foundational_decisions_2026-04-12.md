@@ -190,7 +190,7 @@ O fluxo oficial parte do web do inspetor ou do mobile e aceita variações comer
 3. no `chat livre`, a IA pode apenas analisar, produzir histórico simples ou gerar relatório genérico;
 4. no trilho documental, o caso sobe para `pré-laudo` ou já nasce como `laudo guiado`;
 5. inspetor completa dados, evidências e checkpoints quando houver exigência documental;
-6. a política do tenant decide se o caso segue sem mesa, com mesa opcional ou com mesa obrigatória;
+6. a política do tenant decide se o caso segue sem mesa, com mesa opcional ou com mesa exigida explicitamente pelo contrato;
 7. quando vai para revisão humana, a mesa avalia, aprova, aprova com ressalva ou devolve;
 8. se devolvido, o caso retorna ao inspetor;
 9. só após validação humana o documento pode ser tratado como concluído;
@@ -245,13 +245,13 @@ O produto deve suportar três modelos de revisão:
 
 1. `sem mesa`
 2. `mesa opcional`
-3. `mesa obrigatória`
+3. `mesa exigida por contrato`
 
 ### Implicação comercial e operacional
 
 - isso pode variar por empresa;
 - isso pode variar por pacote vendido;
-- isso pode variar por criticidade do caso.
+- a criticidade do caso pode recomendar Mesa, mas nao deve torna-la obrigatoria sem politica explicita do tenant.
 - a mesa pode existir no web, no mobile ou em ambos;
 - em certos pacotes, a mesma pessoa que opera o mobile pode também validar no mobile.
 - a mesa padrão pertence ao próprio tenant/empresa;
@@ -770,7 +770,7 @@ Estas decisões implicam:
 6. o inspetor web permanece oficial e compatível com o mesmo domínio;
 7. o `Admin Cliente` precisa de visão ampla sobre a operação do próprio tenant;
 8. o `Admin Geral` precisa operar por menor acesso ao conteúdo técnico;
-9. a mesa pode ser opcional ou obrigatória conforme a venda;
+9. a mesa pode ser opcional ou exigida explicitamente conforme a venda;
 10. a conclusão final continua dependente de validação humana;
 11. o documento final entregue é PDF, sem travar agora o formato-fonte interno;
 12. o mobile precisa suportar fluxo nativo de validação quando a mesa existir no app;

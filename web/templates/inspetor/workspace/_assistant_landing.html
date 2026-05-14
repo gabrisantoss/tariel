@@ -8,13 +8,19 @@
         <div class="workspace-assistant-landing__hero">
             <span
                 id="workspace-assistant-greeting-name"
+                class="workspace-assistant-landing__greeting-name"
                 data-workspace-user-greeting-name
-                hidden
             >{{ (usuario_nome or "Inspetor").split(" ")[0] }}</span>
             <h1 class="workspace-assistant-landing__headline">
                 <span class="workspace-assistant-landing__headline-legacy" hidden>Por onde começamos?</span>
-                <span class="workspace-assistant-landing__headline-question">Olá, sou Tariel.</span>
+                <span class="workspace-assistant-landing__headline-question">Por onde começamos?</span>
             </h1>
+            <p
+                id="workspace-nr-mode-title"
+                class="workspace-assistant-landing__mode-title"
+                aria-live="polite"
+                hidden
+            ></p>
 
             <section
                 id="workspace-assistant-governance"

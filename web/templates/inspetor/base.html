@@ -35,15 +35,15 @@
         @import url("/static/css/shared/material-symbols.css?v={{ v_app }}") layer(tariel.global);
         @import url("/static/css/inspetor/tokens.generated.css?v={{ v_app }}") layer(tariel.tokens);
         @import url("/static/css/inspetor/tokens.css?v={{ v_app }}") layer(tariel.tokens);
-        @import url("/static/css/shared/app_shell.css?v={{ v_app }}") layer(tariel.shell);
-        @import url("/static/css/inspetor/reboot.css?v={{ v_app }}") layer(tariel.reboot);
+        @import url("/static/css/shared/app_shell.css?v={{ v_app }}&ui_rev=20260513_shell_profile_icon_v1") layer(tariel.shell);
+        @import url("/static/css/inspetor/reboot.css?v={{ v_app }}&ui_rev=20260511_auto_user_pill") layer(tariel.reboot);
         @import url("/static/css/shared/official_visual_system.css?v={{ v_app }}") layer(tariel.system);
         @import url("/static/css/inspetor/workspace_chrome.css?v={{ v_app }}&ui_rev=20260406_mesa_channels_layout_fix") layer(tariel.chrome);
         @import url("/static/css/inspetor/workspace_history.css?v={{ v_app }}") layer(tariel.history);
-        @import url("/static/css/inspetor/workspace_rail.css?v={{ v_app }}") layer(tariel.rail);
+        @import url("/static/css/inspetor/workspace_rail.css?v={{ v_app }}&ui_rev=20260512_rail_fit_options_v2") layer(tariel.rail);
         @import url("/static/css/inspetor/workspace_states.css?v={{ v_app }}&ui_rev=20260406_mesa_channels_attachment_fix") layer(tariel.states);
         @import url("/static/css/inspetor/workspace_corrections.css?v={{ v_app }}") layer(tariel.corrections);
-        @import url("/static/css/inspetor/visual_refinements.css?v={{ v_app }}&ui_rev=20260505_web_sessions") layer(tariel.refinements);
+        @import url("/static/css/inspetor/visual_refinements.css?v={{ v_app }}&ui_rev=20260513_guided_nr_title_v5") layer(tariel.refinements);
     </style>
     {% block extra_head %}{% endblock %}
 </head>
@@ -137,24 +137,12 @@
             class="shell-action-btn shell-action-btn-secundario"
             data-shell-aux="true"
             data-action="go-home"
-            data-home-destino="/app/?home=1"
-            data-tooltip="Home"
-            aria-label="Ir para a tela inicial"
+            data-home-destino="/"
+            data-tooltip="Apresentação"
+            aria-label="Ir para a apresentação da Tariel"
             hidden
         >
-            <span class="material-symbols-rounded" aria-hidden="true">home</span>
-        </button>
-
-        <button
-            type="button"
-            id="btn-shell-profile"
-            class="shell-action-btn shell-action-btn-secundario"
-            data-shell-aux="true"
-            data-tooltip="Perfil"
-            aria-label="Abrir perfil do usuário"
-            hidden
-        >
-            <span class="material-symbols-rounded" aria-hidden="true">account_circle</span>
+            <span class="material-symbols-rounded" aria-hidden="true">web</span>
         </button>
 
         <button

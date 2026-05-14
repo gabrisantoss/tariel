@@ -15,20 +15,22 @@
     <link rel="stylesheet" href="/static/css/shared/auth_shell.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/shared/official_visual_system.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/shared/auth_login_standard.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/shared/auth_login_unified.css?v={{ v_app }}">
 </head>
-<body class="auth-shell auth-shell--mesa-login">
+<body class="auth-shell auth-shell--mesa-login auth-shell--standard-login">
     <main class="auth-layout auth-layout--split">
         <section class="auth-hero" aria-hidden="true">
             <div class="auth-hero-placeholder"></div>
-            <span class="auth-hero-label">Revisão Técnica</span>
+            <img src="/static/img/logo-horizontal-dark.png" alt="tariel.ia">
+            <div class="auth-portal-identity">
+                <strong class="auth-portal-identity__title">Revisão Técnica</strong>
+            </div>
         </section>
 
         <section class="auth-card">
             <div class="auth-card-shell auth-login-standard">
                 <div class="auth-intro">
-                    <span class="auth-context-badge">Revisão Técnica</span>
-                    <strong class="auth-intro__title">Login</strong>
-                    <p class="auth-intro__copy">Acesso de revisão para conferir evidências, pendências e laudos antes da entrega.</p>
+                    <strong class="auth-intro__title">Revisão Técnica</strong>
                 </div>
 
                 {% if erro %}
@@ -64,8 +66,7 @@
                 </form>
 
                 <div class="auth-provider-group">
-                    <p class="auth-provider-title">Entrar com conta corporativa</p>
-                    <div class="auth-provider-actions" aria-label="Entrar com conta corporativa">
+                    <div class="auth-provider-actions" aria-label="Contas corporativas">
                         <button class="auth-provider-button auth-provider-button--google" type="button" data-provider-link="Google" data-provider-url="/auth/social/revisao/google/start" data-provider-feedback-message="Login com Google na Revisão Técnica sera liberado para contas autorizadas da empresa." aria-label="Entrar com Google">
                             <span class="auth-provider-mark" aria-hidden="true">G</span>
                             <span>Google</span>
@@ -84,16 +85,6 @@
                 </div>
                 <p class="auth-provider-feedback" data-auth-feedback hidden aria-live="polite"></p>
 
-                <nav class="auth-portal-switcher" aria-label="Escolher outro portal">
-                    <span class="auth-portal-switcher__label">Portais de acesso</span>
-                    <div class="auth-portal-switcher__links">
-                        <a class="auth-portal-option" href="/cliente/login">Admin Cliente</a>
-                        <a class="auth-portal-option" href="/app/login">Inspeção IA</a>
-                        <a class="auth-portal-option is-active" href="/revisao/login" aria-current="page">Revisão Técnica</a>
-                    </div>
-                </nav>
-
-                <p class="auth-access-note">Quer um acesso? Fale com o administrador.</p>
             </div>
         </section>
     </main>

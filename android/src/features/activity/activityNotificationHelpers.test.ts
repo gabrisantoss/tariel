@@ -59,7 +59,7 @@ describe("activityNotificationHelpers", () => {
       hintDestinoNotificacaoAtividade({
         targetThread: "finalizar",
       } as any),
-    ).toBe("Ver emissão oficial");
+    ).toBe("Abrir caso");
     expect(
       sanitizarTextoNotificacaoAtividade(
         "mobile_autonomous mobile_review_allowed primary_pdf_diverged reissue_reason_codes approval_snapshot_updated issue_state issued superseded revoked package_sha256 approval_snapshot_id reviewer_issue reviewer_decision tenant_without_mesa nr35_mesa_required_unavailable",
@@ -192,7 +192,8 @@ describe("activityNotificationHelpers", () => {
       } as any),
     ).toMatchObject({
       title: "Caso pronto para validar",
-      targetThread: "finalizar",
+      targetThread: "chat",
+      body: "Laudo 16 já está pronto para validação. Abra o caso para revisar o relatório e seguir pela emissão contextual.",
     });
     expect(
       criarNotificacaoStatusLaudo({
@@ -236,8 +237,8 @@ describe("activityNotificationHelpers", () => {
       id: "status:6:emitido|aprovado|Emitido|1|0|emitido|none|devolvido_para_correcao|chat_reopen|reissue|EO-6|v0003|v0004",
       kind: "alerta_critico",
       title: "Reemissão recomendada",
-      body: "Laudo 6: PDF emitido divergente · Emitido v0003 · Atual v0004. Abra a finalização para reemitir.",
-      targetThread: "finalizar",
+      body: "Laudo 6: PDF emitido divergente · Emitido v0003 · Atual v0004. Abra o caso para reemitir pelo fluxo contextual.",
+      targetThread: "chat",
     });
     expect(
       criarNotificacaoStatusLaudo({
@@ -265,8 +266,8 @@ describe("activityNotificationHelpers", () => {
     ).toMatchObject({
       kind: "alerta_critico",
       title: "Reemissão recomendada",
-      body: "Laudo 7: Reemissão motivada por nova aprovação governada. Abra a finalização para reemitir.",
-      targetThread: "finalizar",
+      body: "Laudo 7: Reemissão motivada por nova aprovação governada. Abra o caso para reemitir pelo fluxo contextual.",
+      targetThread: "chat",
     });
 
     expect(

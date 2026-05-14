@@ -97,6 +97,24 @@ _MOBILE_APPROVAL_REVIEW_MODES = {"mobile_autonomous", "mobile_review_allowed"}
 _REOPEN_ISSUED_DOCUMENT_POLICIES = {"keep_visible", "hide_from_case"}
 
 
+def _review_advisories_from_request_state(request: Request) -> list[dict[str, Any]]:
+    advisories = getattr(request.state, "review_advisories", None)
+    if not isinstance(advisories, list):
+        return []
+    return [item for item in advisories if isinstance(item, dict)]
+
+
+def _append_review_advisory(request: Request, advisory: dict[str, Any] | None) -> None:
+    if not isinstance(advisory, dict):
+        return
+    current = _review_advisories_from_request_state(request)
+    code = str(advisory.get("code") or "").strip()
+    if code and any(str(item.get("code") or "").strip() == code for item in current):
+        return
+    current.append(advisory)
+    request.state.review_advisories = current
+
+
 def _build_chat_review_tools_payload(
     *,
     usuario: Usuario,
@@ -213,23 +231,39 @@ def _resolver_review_mode_final(
         or None,
         report_pack_family=report_pack_family or None,
     )
-    if high_risk_guardrail is not None and review_mode != "mesa_required":
-        request.state.final_validation_mode_reason = "high_risk_family_requires_mesa"
-        review_mode = "mesa_required"
+    if high_risk_guardrail is not None:
+        _append_review_advisory(
+            request,
+            high_risk_guardrail.advisory_detail(
+                requested_review_mode=requested_review_mode,
+            ),
+        )
+
+    if review_mode in _MOBILE_APPROVAL_REVIEW_MODES and not tenant_capability_enabled_for_user(
+        usuario,
+        capability="mobile_case_approve",
+    ):
+        if tenant_capability_enabled_for_user(usuario, capability="inspector_send_to_mesa"):
+            request.state.final_validation_mode_reason = "tenant_policy_requires_mesa"
+            return "mesa_required"
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "mobile_review_not_available",
+                "message": (
+                    "Esta empresa nao possui aprovacao interna liberada para este caso."
+                ),
+                "review_mode_requested": requested_review_mode,
+                "required_capability": "mobile_case_approve",
+                "fallback_surface": "mesa",
+            },
+        )
 
     if review_mode != "mesa_required":
         return review_mode
 
     if tenant_capability_enabled_for_user(usuario, capability="inspector_send_to_mesa"):
         return review_mode
-
-    if high_risk_guardrail is not None:
-        raise HTTPException(
-            status_code=422,
-            detail=high_risk_guardrail.unavailable_detail(
-                requested_review_mode=requested_review_mode,
-            ),
-        )
 
     if tenant_capability_enabled_for_user(usuario, capability="mobile_case_approve"):
         request.state.final_validation_mode_reason = "tenant_without_mesa"
@@ -593,6 +627,7 @@ def obter_previa_finalizacao_laudo_resposta(
             "missing_evidence_count": len(list(quality_gates.get("missing_evidence") or [])),
             "final_validation_mode": str(quality_gates.get("final_validation_mode") or "").strip() or None,
         },
+        "review_advisories": _review_advisories_from_request_state(request),
         "next_step": next_step,
     }
     return payload, 200
@@ -1101,6 +1136,7 @@ async def finalizar_relatorio_resposta(
         "permite_reabrir": contexto["permite_reabrir"],
         "review_mode_final": final_validation_mode,
         "review_mode_final_reason": final_validation_mode_reason or None,
+        "review_advisories": _review_advisories_from_request_state(request),
         "idempotent_replay": False,
         "inspection_history": build_inspection_history_summary(
             banco,

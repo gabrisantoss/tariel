@@ -101,7 +101,7 @@ function resolverResumoReemissaoPdfOficial(item: MobileLaudoCard): {
   const detail = getOfficialIssueReissueDetail(summary).replace(/[.。]+$/u, "");
   return {
     title: String(summary?.label || "").trim() || "Reemissão recomendada",
-    body: `${item.titulo}: ${detail}. Abra a finalização para reemitir.`,
+    body: `${item.titulo}: ${detail}. Abra o caso para reemitir pelo fluxo contextual.`,
   };
 }
 
@@ -206,7 +206,7 @@ export function criarNotificacaoStatusLaudo(
       body: sanitizarTextoNotificacaoAtividade(reissueSummary.body),
       createdAt: new Date().toISOString(),
       unread: true,
-      targetThread: "finalizar",
+      targetThread: "chat",
     };
   }
 
@@ -255,11 +255,11 @@ export function criarNotificacaoStatusLaudo(
       laudoId: item.id,
       title: "Caso pronto para validar",
       body: sanitizarTextoNotificacaoAtividade(
-        `${item.titulo} já está pronto para validação final. Abra Finalizar para revisar o quality gate do caso.`,
+        `${item.titulo} já está pronto para validação. Abra o caso para revisar o relatório e seguir pela emissão contextual.`,
       ),
       createdAt: new Date().toISOString(),
       unread: true,
-      targetThread: "finalizar",
+      targetThread: "chat",
     };
   }
 
@@ -391,7 +391,7 @@ export function hintDestinoNotificacaoAtividade(
   item: MobileActivityNotification,
 ): string {
   if (item.targetThread === "finalizar") {
-    return "Ver emissão oficial";
+    return "Abrir caso";
   }
   if (item.targetThread === "mesa") {
     return "Abrir Mesa Avaliadora";

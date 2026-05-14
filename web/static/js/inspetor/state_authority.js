@@ -283,8 +283,8 @@
             ? "new_inspection"
             : inspectorBaseScreen;
         const homeActionVisible = snapshotBase.overlayOwner !== "new_inspection" && (
-            inspectorBaseScreen === "inspection_workspace" ||
-            inspectorBaseScreen === "assistant_landing"
+            inspectorBaseScreen === "assistant_landing" ||
+            String(inspectorBaseScreen || "").startsWith("inspection_")
         );
 
         const divergenciaLaudo = autoridadeDisponivel

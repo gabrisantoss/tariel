@@ -328,6 +328,7 @@ body.auth-shell.auth-shell--cliente .auth-hero {
     align-content: center;
     justify-items: center;
     padding: 56px 44px;
+    isolation: isolate;
 }
 
 body.auth-shell.auth-shell--cliente .auth-hero::after {
@@ -335,11 +336,27 @@ body.auth-shell.auth-shell--cliente .auth-hero::after {
 }
 
 body.auth-shell.auth-shell--cliente .auth-hero-placeholder {
+    position: relative;
+    z-index: 1;
     width: min(72%, 420px);
     height: clamp(180px, 24vw, 260px);
 }
 
+body.auth-shell.auth-shell--cliente .auth-hero img {
+    position: absolute;
+    right: clamp(-420px, -26vw, -180px);
+    bottom: clamp(-36px, 2vh, 34px);
+    z-index: 0;
+    width: min(178%, 1320px);
+    max-width: none;
+    height: auto;
+    opacity: 0.96;
+    pointer-events: none;
+}
+
 body.auth-shell.auth-shell--cliente .auth-hero-label {
+    position: relative;
+    z-index: 1;
     color: var(--auth-text-dim);
     font-size: 11px;
     font-weight: 700;
@@ -656,5 +673,100 @@ body.auth-shell.auth-shell--cliente .auth-access-note {
 
     body.auth-shell.auth-shell--cliente .auth-provider-actions {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 921px) {
+    body.auth-shell.auth-shell--cliente {
+        min-height: 100vh;
+        display: grid;
+        align-items: center;
+    }
+}
+
+@media (min-width: 921px) and (max-height: 920px) {
+    body.auth-shell.auth-shell--cliente {
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-layout--split {
+        min-height: calc(100vh - 32px);
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-hero {
+        padding: 34px 34px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-card {
+        padding: 28px 34px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-card-shell {
+        gap: 11px;
+        padding: 24px 28px 20px;
+        border-radius: 28px;
+    }
+}
+
+@media (min-width: 921px) and (max-height: 840px) {
+    body.auth-shell.auth-shell--cliente .auth-intro {
+        gap: 5px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-intro__title {
+        font-size: 25px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-intro__copy {
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-error,
+    body.auth-shell.auth-shell--cliente .auth-inline-banner {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-form--minimal {
+        gap: 10px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-form--minimal .auth-field input {
+        min-height: 48px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-button {
+        min-height: 48px;
+        margin-top: 0;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-provider-title,
+    body.auth-shell.auth-shell--cliente .auth-access-note {
+        font-size: 11px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-provider-actions,
+    body.auth-shell.auth-shell--cliente .auth-portal-switcher__links {
+        gap: 8px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-provider-button {
+        min-height: 38px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-portal-option {
+        min-height: 34px;
+        padding: 6px 8px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-login-standard .auth-provider-group {
+        gap: 7px;
+    }
+
+    body.auth-shell.auth-shell--cliente .auth-login-standard .auth-portal-switcher {
+        gap: 8px;
+        padding-top: 10px;
     }
 }

@@ -223,7 +223,7 @@ def test_cliente_individual_mobile_only_aprova_familia_simples_sem_mesa_e_sem_em
     )
 
 
-def test_cliente_individual_mobile_only_nao_converte_nr35_em_self_review_sem_mesa(
+def test_cliente_individual_mobile_only_aprova_nr35_no_chat_com_aviso_de_mesa(
     ambiente_critico,
 ) -> None:
     client = ambiente_critico["client"]
@@ -290,12 +290,14 @@ def test_cliente_individual_mobile_only_nao_converte_nr35_em_self_review_sem_mes
 
     csrf_inspetor = _login_app_inspetor(client, "inspetor@empresa-a.test")
     resposta_preview = client.get(f"/app/api/laudo/{laudo_id}/finalizacao-preview")
-    assert resposta_preview.status_code == 422
-    detalhe_preview = resposta_preview.json()["detail"]
-    assert detalhe_preview["code"] == "nr35_mesa_required_unavailable"
-    assert detalhe_preview["review_mode_requested"] == "mesa_required"
-    assert detalhe_preview["required_capability"] == "inspector_send_to_mesa"
-    assert "NR35 Linha de Vida exige Revisão Técnica" in detalhe_preview["message"]
+    assert resposta_preview.status_code == 200
+    preview = resposta_preview.json()
+    assert preview["primary_action"] == "approve_without_mesa"
+    assert preview["review_mode_final_preview"] == "mobile_autonomous"
+    assert preview["review_mode_final_reason"] == "tenant_without_mesa"
+    assert preview["review_advisories"][0]["code"] == "nr35_mesa_recommended"
+    assert preview["review_advisories"][0]["recommended_capability"] == "inspector_send_to_mesa"
+    assert "NR35 Linha de Vida recomenda Revisão Técnica" in preview["review_advisories"][0]["message"]
 
     resposta_finalizar = client.post(
         f"/app/api/laudo/{laudo_id}/finalizar",
@@ -303,26 +305,6 @@ def test_cliente_individual_mobile_only_nao_converte_nr35_em_self_review_sem_mes
     )
 
     assert resposta_finalizar.status_code == 422
-
-    with SessionLocal() as banco:
-        laudo = banco.get(Laudo, laudo_id)
-        assert laudo is not None
-        assert laudo.status_revisao == StatusRevisao.RASCUNHO.value
-        assert (
-            (laudo.report_pack_draft_json or {})
-            .get("quality_gates", {})
-            .get("final_validation_mode")
-            == "mesa_required"
-        )
-        assert (
-            banco.scalar(
-                select(ApprovedCaseSnapshot).where(ApprovedCaseSnapshot.laudo_id == laudo_id)
-            )
-            is None
-        )
-        assert (
-            banco.scalar(
-                select(EmissaoOficialLaudo).where(EmissaoOficialLaudo.laudo_id == laudo_id)
-            )
-            is None
-        )
+    detalhe = resposta_finalizar.json()["detail"]
+    assert detalhe["codigo"] == "GATE_QUALIDADE_REPROVADO"
+    assert detalhe["action_plan"]["cta_label"] == "Voltar ao chat"

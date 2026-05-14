@@ -558,6 +558,11 @@
 
         function ocultarEmptyStateHonestoConversa() {
             const emptyState = document.getElementById("workspace-conversation-empty");
+            const painelChat = document.getElementById("painel-chat");
+            document.body.dataset.workspaceConversationEmptyVisible = "false";
+            if (painelChat) {
+                painelChat.dataset.workspaceConversationEmptyVisible = "false";
+            }
             if (!emptyState) return;
             emptyState.hidden = true;
             emptyState.setAttribute("aria-hidden", "true");
@@ -624,9 +629,13 @@
                 corpo.dataset.temDocumentoPrincipal = "true";
             }
 
-            if (imagemBase64) {
-                const base64Validado = validarPrefixoBase64(imagemBase64);
+            const imagensEnviadas = (Array.isArray(imagemBase64) ? imagemBase64 : (imagemBase64 ? [imagemBase64] : []))
+                .map((imagem) => validarPrefixoBase64(imagem))
+                .filter(Boolean)
+                .slice(0, 10);
 
+            if (imagensEnviadas.length === 1) {
+                const base64Validado = imagensEnviadas[0];
                 if (base64Validado) {
                     const img = document.createElement("img");
                     img.src = base64Validado;
@@ -634,6 +643,19 @@
                     img.className = "img-anexo";
                     corpo.appendChild(img);
                 }
+            } else if (imagensEnviadas.length > 1) {
+                const galeria = document.createElement("div");
+                galeria.className = "mensagem-imagens-enviadas";
+
+                imagensEnviadas.forEach((base64Validado, indice) => {
+                    const img = document.createElement("img");
+                    img.src = base64Validado;
+                    img.alt = `Evidência enviada ${indice + 1}`;
+                    img.className = "img-anexo img-anexo--compacta";
+                    galeria.appendChild(img);
+                });
+
+                corpo.appendChild(galeria);
             }
 
             if (texto) {

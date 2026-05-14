@@ -172,7 +172,7 @@
         [/\bmobile_autonomous\b/gi, "Aprovação interna"],
         [/\bmobile_review_allowed\b/gi, "Aprovação interna"],
         [/\btenant_without_mesa\b/gi, "Não incluído no pacote"],
-        [/\bnr35_mesa_required_unavailable\b/gi, "Família exige Revisão Técnica"],
+        [/\bnr35_mesa_required_unavailable\b/gi, "Família recomenda Revisão Técnica"],
         [/\bowner\b/gi, "Responsável ativo"],
         [/\bResponsavel\b/gi, "Responsável"],
         [/\bAnexo pack\b/gi, "Pacote técnico"],

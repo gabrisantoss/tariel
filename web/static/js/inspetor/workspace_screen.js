@@ -271,6 +271,7 @@
         definirRootAtivo?.(el.workspaceConversationViewRoot, view === "inspection_conversation");
         definirRootAtivo?.(el.workspaceMesaViewRoot, view === "inspection_mesa");
         definirRootAtivo?.(el.workspaceCorrectionsViewRoot, view === "inspection_corrections");
+        definirRootAtivo?.(el.workspaceFinalizationViewRoot, view === "inspection_finalization");
 
         if (!el.threadNav) {
             el.threadNav = docRef?.querySelector?.(".thread-nav");

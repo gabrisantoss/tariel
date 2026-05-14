@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from sqlalchemy import select
-
 from app.domains.chat.high_risk_family_guardrails import (
+    family_has_mesa_review_advisory,
     family_requires_separate_mesa_review,
     resolve_high_risk_family_guardrail,
 )
 from app.shared.database import (
-    ApprovedCaseSnapshot,
-    EmissaoOficialLaudo,
     Empresa,
     Laudo,
     StatusRevisao,
@@ -57,7 +54,7 @@ def _criar_laudo_com_familia(
     return laudo_id
 
 
-def test_guardrail_reconhece_familias_modeladas_de_alto_risco() -> None:
+def test_guardrail_reconhece_familias_modeladas_de_alto_risco_com_mesa_recomendada() -> None:
     for family_key in (
         "nr35_inspecao_linha_de_vida",
         "nr35_inspecao_ponto_ancoragem",
@@ -66,10 +63,11 @@ def test_guardrail_reconhece_familias_modeladas_de_alto_risco() -> None:
         "nr20_prontuario_instalacoes_inflamaveis",
         "nr10_prontuario_instalacoes_eletricas",
     ):
-        assert family_requires_separate_mesa_review(catalog_family_key=family_key) is True
+        assert family_has_mesa_review_advisory(catalog_family_key=family_key) is True
 
-    assert family_requires_separate_mesa_review(catalog_family_key="geral") is False
-    assert family_requires_separate_mesa_review(template_key="padrao") is False
+    assert family_has_mesa_review_advisory(catalog_family_key="geral") is False
+    assert family_has_mesa_review_advisory(template_key="padrao") is False
+    assert family_requires_separate_mesa_review(catalog_family_key="nr13_inspecao_caldeira") is True
 
     nr35_guardrail = resolve_high_risk_family_guardrail(
         catalog_family_key="nr35_inspecao_linha_de_vida"
@@ -112,7 +110,7 @@ def test_familia_simples_sem_mesa_continua_em_self_review(
     assert corpo["mobile_chat_first_governance"]["separate_mesa_required"] is False
 
 
-def test_familia_alto_risco_sem_mesa_bloqueia_self_review_generico(
+def test_familia_alto_risco_sem_mesa_mantem_chat_com_aviso_de_mesa(
     ambiente_critico,
 ) -> None:
     client = ambiente_critico["client"]
@@ -131,40 +129,29 @@ def test_familia_alto_risco_sem_mesa_bloqueia_self_review_generico(
     csrf = _login_app_inspetor(client, "inspetor@empresa-a.test")
     resposta_preview = client.get(f"/app/api/laudo/{laudo_id}/finalizacao-preview")
 
-    assert resposta_preview.status_code == 422
-    detalhe = resposta_preview.json()["detail"]
-    assert detalhe["code"] == "high_risk_mesa_required_unavailable"
-    assert detalhe["family_key"] == "nr13_inspecao_caldeira"
-    assert detalhe["review_mode_requested"] == "mesa_required"
-    assert detalhe["required_capability"] == "inspector_send_to_mesa"
-    assert detalhe["guardrail"] == "separate_mesa_required"
-    assert "NR13 Caldeira exige Revisão Técnica" in detalhe["message"]
+    assert resposta_preview.status_code == 200
+    preview = resposta_preview.json()
+    assert preview["primary_action"] == "approve_without_mesa"
+    assert preview["review_mode_final_preview"] == "mobile_autonomous"
+    assert preview["review_mode_final_reason"] == "tenant_without_mesa"
+    assert preview["mobile_chat_first_governance"]["separate_mesa_required"] is False
+    assert preview["mobile_chat_first_governance"]["self_review_allowed"] is True
+    assert preview["review_advisories"][0]["code"] == "high_risk_mesa_recommended"
+    assert preview["review_advisories"][0]["family_key"] == "nr13_inspecao_caldeira"
+    assert preview["review_advisories"][0]["guardrail"] == "separate_mesa_recommended"
+    assert "NR13 Caldeira recomenda Revisão Técnica" in preview["review_advisories"][0]["message"]
 
     resposta_finalizar = client.post(
         f"/app/api/laudo/{laudo_id}/finalizar",
         headers={"X-CSRF-Token": csrf},
     )
     assert resposta_finalizar.status_code == 422
-
-    with SessionLocal() as banco:
-        laudo = banco.get(Laudo, laudo_id)
-        assert laudo is not None
-        assert laudo.status_revisao == StatusRevisao.RASCUNHO.value
-        assert (
-            banco.scalar(
-                select(ApprovedCaseSnapshot).where(ApprovedCaseSnapshot.laudo_id == laudo_id)
-            )
-            is None
-        )
-        assert (
-            banco.scalar(
-                select(EmissaoOficialLaudo).where(EmissaoOficialLaudo.laudo_id == laudo_id)
-            )
-            is None
-        )
+    detalhe = resposta_finalizar.json()["detail"]
+    assert detalhe["codigo"] == "GATE_QUALIDADE_REPROVADO"
+    assert detalhe["action_plan"]["cta_label"] == "Voltar ao chat"
 
 
-def test_familia_alto_risco_com_policy_mobile_autonomous_e_mesa_forca_handoff(
+def test_familia_alto_risco_com_policy_mobile_autonomous_nao_forca_handoff(
     ambiente_critico,
 ) -> None:
     client = ambiente_critico["client"]
@@ -186,12 +173,11 @@ def test_familia_alto_risco_com_policy_mobile_autonomous_e_mesa_forca_handoff(
 
     assert resposta.status_code == 200
     corpo = resposta.json()
-    assert corpo["primary_action"] == "send_to_mesa"
-    assert corpo["review_mode_final_preview"] == "mesa_required"
-    assert corpo["review_mode_final_reason"] == "high_risk_family_requires_mesa"
-    assert corpo["mobile_chat_first_governance"]["review_governance_mode"] == (
-        "separate_mesa_required"
-    )
-    assert corpo["mobile_chat_first_governance"]["separate_mesa_required"] is True
-    assert corpo["mobile_chat_first_governance"]["self_review_allowed"] is False
-    assert corpo["chat_review_tools"]["title"] == "Revisão Técnica"
+    assert corpo["primary_action"] == "approve_without_mesa"
+    assert corpo["review_mode_final_preview"] == "mobile_autonomous"
+    assert corpo["review_mode_final_reason"] is None
+    assert corpo["review_advisories"][0]["code"] == "high_risk_mesa_recommended"
+    assert corpo["mobile_chat_first_governance"]["review_governance_mode"] == "self_review_allowed"
+    assert corpo["mobile_chat_first_governance"]["separate_mesa_required"] is False
+    assert corpo["mobile_chat_first_governance"]["self_review_allowed"] is True
+    assert corpo["chat_review_tools"]["title"] == "Aprovação interna"

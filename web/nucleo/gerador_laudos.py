@@ -71,6 +71,16 @@ _SUBSTITUICOES_UNICODE: dict[str, str] = {
     "\U0001f52c": "[DIAGNOSTICO]",
 }
 
+_PDF_INK = (9, 24, 39)
+_PDF_NAVY = (15, 43, 70)
+_PDF_BLUE = (20, 89, 130)
+_PDF_CYAN = (40, 183, 211)
+_PDF_ORANGE = (244, 123, 32)
+_PDF_ICE = (246, 249, 252)
+_PDF_PANEL = (232, 241, 248)
+_PDF_LINE = (204, 218, 232)
+_PDF_MUTED = (98, 114, 135)
+
 # ==========================================
 # TEMPLATE DO DOCUMENTO TARIEL.IA
 # ==========================================
@@ -81,33 +91,43 @@ class PDF_TARIEL(FPDF):
 
     def header(self) -> None:
         if self.page_no() > 1:
-            self.set_font("helvetica", "I", 8)
-            self.set_text_color(150, 150, 150)
+            self.set_fill_color(*_PDF_INK)
+            self.rect(0, 0, self.w, 12, style="F")
+            self.set_fill_color(*_PDF_CYAN)
+            self.rect(0, 0, 38, 12, style="F")
+            self.set_xy(10, 16)
+            self.set_font("helvetica", "B", 9)
+            self.set_text_color(*_PDF_NAVY)
+            self.cell(46, 6, "Tariel.ia", new_x=XPos.RIGHT, new_y=YPos.TOP)
+            self.set_font("helvetica", "", 8)
+            self.set_text_color(*_PDF_MUTED)
             self.cell(
                 0,
-                10,
-                "Tariel.ia - Continuacao do Laudo Tecnico",
+                6,
+                "Laudo tecnico NR | continuidade",
                 new_x=XPos.LMARGIN,
                 new_y=YPos.NEXT,
                 align="R",
             )
-            self.line(10, 20, 200, 20)
-            self.ln(5)
+            self.set_draw_color(*_PDF_LINE)
+            self.line(10, self.get_y() + 2, 200, self.get_y() + 2)
+            self.ln(7)
 
     def footer(self) -> None:
         self.set_y(-15)
-        self.set_font("helvetica", "I", 8)
-        self.set_text_color(128, 128, 128)
+        self.set_font("helvetica", "", 8)
+        self.set_text_color(*_PDF_MUTED)
+        self.set_draw_color(*_PDF_LINE)
         self.line(10, self.get_y(), 200, self.get_y())
         self.cell(
             0,
             10,
-            f"Documento Tecnico | Tariel.ia | Pagina {self.page_no()} / {{nb}}",
+            f"Tariel.ia | Documento tecnico | Pagina {self.page_no()} / {{nb}}",
             align="C",
         )
 
     def linha_metadado(self, rotulo: str, valor: str) -> None:
-        self.set_text_color(0, 0, 0)
+        self.set_text_color(*_PDF_INK)
         self.set_font("helvetica", "B", 10)
         self.cell(48, 6, str(rotulo)[:50], new_x=XPos.RIGHT, new_y=YPos.TOP)
         self.set_font("helvetica", "", 10)
@@ -118,6 +138,52 @@ class PDF_TARIEL(FPDF):
             new_x=XPos.LMARGIN,
             new_y=YPos.NEXT,
         )
+
+    def secao_hibrida(self, titulo: str) -> None:
+        if self.get_y() > 260:
+            self.add_page()
+        y = self.get_y()
+        self.set_fill_color(*_PDF_CYAN)
+        self.rect(self.l_margin, y + 1, 2.4, 8.5, style="F")
+        self.set_font("helvetica", "B", 12)
+        self.set_text_color(*_PDF_NAVY)
+        self.set_xy(self.l_margin + 6, y)
+        self.cell(
+            0,
+            10,
+            GeradorLaudos._sanitizar_texto_para_pdf(str(titulo or "")),
+            new_x=XPos.LMARGIN,
+            new_y=YPos.NEXT,
+        )
+        self.set_draw_color(*_PDF_LINE)
+        self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+        self.ln(3)
+        self.set_text_color(0, 0, 0)
+
+    def card_metrica(
+        self,
+        *,
+        x: float,
+        y: float,
+        largura: float,
+        altura: float,
+        rotulo: str,
+        valor: str,
+        accent: tuple[int, int, int] = _PDF_BLUE,
+    ) -> None:
+        self.set_fill_color(248, 251, 253)
+        self.set_draw_color(*_PDF_LINE)
+        self.rect(x, y, largura, altura, style="DF")
+        self.set_fill_color(*accent)
+        self.rect(x + 5, y + 6, 5, altura - 12, style="F")
+        self.set_xy(x + 16, y + 7)
+        self.set_font("helvetica", "B", 12)
+        self.set_text_color(*_PDF_INK)
+        self.cell(largura - 20, 6, GeradorLaudos._sanitizar_texto_para_pdf(valor), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.set_xy(x + 16, y + altura - 11)
+        self.set_font("helvetica", "", 8)
+        self.set_text_color(*_PDF_MUTED)
+        self.cell(largura - 20, 5, GeradorLaudos._sanitizar_texto_para_pdf(rotulo), new_x=XPos.LMARGIN, new_y=YPos.TOP)
 
 
 class PDF_MESA_PENDENCIAS(FPDF):
@@ -304,22 +370,10 @@ class GeradorLaudos:
     @staticmethod
     def _construir_pdf_texto(pdf: PDF_TARIEL, dados: dict, citacoes: Optional[list]) -> None:
         """Desenha o PDF tradicional baseado no texto livre da IA."""
-        # Título do Parecer
-        pdf.set_font("helvetica", "B", 12)
-        pdf.set_fill_color(244, 123, 32)
-        pdf.set_text_color(255, 255, 255)
-        pdf.cell(
-            0,
-            10,
-            "  PARECER TECNICO E DIRETRIZES DE ENGENHARIA",
-            new_x=XPos.LMARGIN,
-            new_y=YPos.NEXT,
-            fill=True,
-        )
-        pdf.ln(5)
+        pdf.secao_hibrida("Parecer Tecnico e Diretrizes de Engenharia")
 
         # Corpo
-        pdf.set_text_color(0, 0, 0)
+        pdf.set_text_color(*_PDF_INK)
         pdf.set_font("helvetica", "", 11)
         texto_seguro = GeradorLaudos._sanitizar_texto_para_pdf(dados["diagnostico_ia"])
         pdf.multi_cell(0, 6, texto_seguro, markdown=True)
@@ -336,17 +390,7 @@ class GeradorLaudos:
         if isinstance(info_gerais, dict):
             possui_info = any(str(valor or "").strip() for valor in info_gerais.values())
             if possui_info:
-                pdf.set_font("helvetica", "B", 10)
-                pdf.set_fill_color(235, 240, 246)
-                pdf.set_text_color(15, 43, 70)
-                pdf.cell(
-                    0,
-                    8,
-                    "  INFORMACOES GERAIS DA INSPECAO",
-                    new_x=XPos.LMARGIN,
-                    new_y=YPos.NEXT,
-                    fill=True,
-                )
+                pdf.secao_hibrida("Informacoes Gerais da Inspecao")
 
                 campos_info = [
                     ("Responsavel pela inspecao", info_gerais.get("responsavel_pela_inspecao")),
@@ -372,7 +416,9 @@ class GeradorLaudos:
                         continue
 
                     pdf.set_font("helvetica", "B", 8)
-                    pdf.cell(52, 6, f"{rotulo}:", border=1)
+                    pdf.set_fill_color(*_PDF_ICE)
+                    pdf.set_draw_color(*_PDF_LINE)
+                    pdf.cell(52, 6, f"{rotulo}:", border=1, fill=True)
                     pdf.set_font("helvetica", "", 8)
                     pdf.cell(
                         138,
@@ -386,19 +432,9 @@ class GeradorLaudos:
 
         # 2. Resumo Executivo
         if "resumo_executivo" in json_dados:
-            pdf.set_font("helvetica", "B", 11)
-            pdf.set_fill_color(240, 245, 250)
-            pdf.set_text_color(15, 43, 70)
-            pdf.cell(
-                0,
-                8,
-                "  RESUMO DA INSPECÃO (IA)",
-                new_x=XPos.LMARGIN,
-                new_y=YPos.NEXT,
-                fill=True,
-            )
+            pdf.secao_hibrida("Resumo Executivo da Inspecao")
             pdf.set_font("helvetica", "", 10)
-            pdf.set_text_color(0, 0, 0)
+            pdf.set_text_color(*_PDF_INK)
             resumo = GeradorLaudos._sanitizar_texto_para_pdf(json_dados["resumo_executivo"])
             pdf.multi_cell(0, 6, resumo)
             pdf.ln(5)
@@ -406,19 +442,10 @@ class GeradorLaudos:
         # 3. Bloco TRRF (texto corrido)
         trrf_observacoes = str(json_dados.get("trrf_observacoes") or "").strip()
         if trrf_observacoes:
-            pdf.set_font("helvetica", "B", 10)
-            pdf.set_fill_color(245, 245, 245)
-            pdf.set_text_color(15, 43, 70)
-            pdf.cell(
-                0,
-                8,
-                "  TRRF - TEMPO REQUERIDO DE RESISTENCIA AO FOGO",
-                new_x=XPos.LMARGIN,
-                new_y=YPos.NEXT,
-                fill=True,
-            )
+            pdf.secao_hibrida("TRRF - Tempo Requerido de Resistencia ao Fogo")
             pdf.set_font("helvetica", "", 8)
-            pdf.set_text_color(0, 0, 0)
+            pdf.set_text_color(*_PDF_INK)
+            pdf.set_draw_color(*_PDF_LINE)
             pdf.multi_cell(
                 0,
                 6,
@@ -444,27 +471,27 @@ class GeradorLaudos:
 
             # Título da Tabela
             pdf.ln(4)
-            pdf.set_font("helvetica", "B", 10)
-            pdf.set_fill_color(15, 43, 70)
-            pdf.set_text_color(255, 255, 255)
-            pdf.cell(0, 8, f"  {titulo}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, fill=True)
+            pdf.secao_hibrida(titulo)
 
             # Cabeçalho da Tabela
             pdf.set_font("helvetica", "B", 8)
-            pdf.set_fill_color(220, 220, 220)
-            pdf.set_text_color(0, 0, 0)
-            pdf.cell(110, 8, " Item / Verificacao", border=1)
-            pdf.cell(20, 8, " Condicao", align="C", border=1)
+            pdf.set_fill_color(*_PDF_PANEL)
+            pdf.set_draw_color(*_PDF_LINE)
+            pdf.set_text_color(*_PDF_NAVY)
+            pdf.cell(110, 8, " Item / Verificacao", border=1, fill=True)
+            pdf.cell(20, 8, " Condicao", align="C", border=1, fill=True)
             pdf.cell(
                 60,
                 8,
                 " Localizacao / Observacao",
                 border=1,
+                fill=True,
                 new_x=XPos.LMARGIN,
                 new_y=YPos.NEXT,
             )
 
             pdf.set_font("helvetica", "", 8)
+            pdf.set_text_color(*_PDF_INK)
             mapa_verificacao = MAPA_VERIFICACOES_CBMGO.get(chave_secao, {})
             chaves_ordenadas = [chave for chave in mapa_verificacao if chave in conteudo_secao]
             chaves_ordenadas.extend(chave for chave in conteudo_secao.keys() if chave not in mapa_verificacao)
@@ -521,12 +548,12 @@ class GeradorLaudos:
 
                     # Colore a condição
                     if cond == "C":
-                        pdf.set_text_color(0, 128, 0)
+                        pdf.set_text_color(22, 125, 78)
                     elif cond == "NC":
-                        pdf.set_text_color(200, 0, 0)
+                        pdf.set_text_color(190, 52, 52)
 
                     pdf.cell(20, alt_linha, cond, border=1, align="C")
-                    pdf.set_text_color(0, 0, 0)  # Volta pro preto
+                    pdf.set_text_color(*_PDF_INK)
 
                     pdf.set_xy(x_inicio + 130, y_inicio)
                     pdf.multi_cell(60, 6, detalhe, border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
@@ -537,17 +564,7 @@ class GeradorLaudos:
             possui_assinatura = any(str(valor or "").strip() for valor in assinaturas.values())
             if possui_assinatura:
                 pdf.ln(4)
-                pdf.set_font("helvetica", "B", 10)
-                pdf.set_fill_color(245, 245, 245)
-                pdf.set_text_color(15, 43, 70)
-                pdf.cell(
-                    0,
-                    8,
-                    "  COLETA DE ASSINATURAS",
-                    new_x=XPos.LMARGIN,
-                    new_y=YPos.NEXT,
-                    fill=True,
-                )
+                pdf.secao_hibrida("Coleta de Assinaturas")
 
                 campos_assinaturas = [
                     ("Responsavel pela inspecao", assinaturas.get("responsavel_pela_inspecao")),
@@ -590,34 +607,79 @@ class GeradorLaudos:
         pdf.add_page()
         pdf.set_auto_page_break(auto=True, margin=20)
 
-        pdf.set_font("helvetica", "B", 18)
-        pdf.set_text_color(15, 43, 70)
-
         # Decide o título baseado no tipo de laudo
-        titulo_laudo = "CHECKLIST DE INSPECÃO (CBM-GO)" if dados_validados.get("dados_formulario") else "LAUDO TECNICO DE INSPECÃO"
-        pdf.cell(0, 10, titulo_laudo, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+        titulo_laudo = (
+            "CHECKLIST DE INSPECAO (CBM-GO)"
+            if dados_validados.get("dados_formulario")
+            else "LAUDO TECNICO DE INSPECAO"
+        )
 
-        pdf.set_font("helvetica", "I", 10)
-        pdf.set_text_color(100, 100, 100)
+        pdf.set_fill_color(*_PDF_INK)
+        pdf.rect(0, 0, pdf.w, 68, style="F")
+        pdf.set_fill_color(*_PDF_BLUE)
+        pdf.rect(0, 0, 58, 68, style="F")
+        pdf.set_fill_color(*_PDF_CYAN)
+        pdf.rect(0, 64, pdf.w, 4, style="F")
+        pdf.set_xy(16, 14)
+        pdf.set_font("helvetica", "B", 9)
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(0, 5, "TARIEL.IA", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_xy(16, 26)
+        pdf.set_font("helvetica", "B", 23)
+        pdf.multi_cell(124, 10, cls._sanitizar_texto_para_pdf(titulo_laudo))
+        pdf.set_x(16)
+        pdf.set_font("helvetica", "", 10)
+        pdf.set_text_color(225, 233, 240)
+        pdf.multi_cell(126, 5.5, "Diagnostico assistido por IA com rastreabilidade operacional.")
+        pdf.set_xy(150, 18)
+        pdf.set_fill_color(255, 255, 255)
+        pdf.set_draw_color(184, 205, 222)
+        pdf.rect(148, 16, 46, 36, style="DF")
+        pdf.set_xy(154, 23)
+        pdf.set_font("helvetica", "B", 8)
+        pdf.set_text_color(*_PDF_MUTED)
+        pdf.cell(34, 5, "STATUS", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+        pdf.set_xy(154, 32)
+        pdf.set_font("helvetica", "B", 10)
+        pdf.set_text_color(*_PDF_NAVY)
+        pdf.cell(34, 6, "PRELIMINAR", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+        pdf.set_xy(154, 42)
+        pdf.set_font("helvetica", "", 6.8)
+        pdf.set_text_color(*_PDF_MUTED)
+        pdf.cell(34, 5, cls._sanitizar_texto_para_pdf(codigo_hash[:22]), align="C")
+
+        pdf.set_y(82)
+        pdf.set_fill_color(248, 251, 253)
+        pdf.set_draw_color(*_PDF_LINE)
+        pdf.rect(10, 82, 190, 42, style="DF")
+        pdf.set_xy(18, 92)
+        pdf.set_font("helvetica", "B", 10)
+        pdf.set_text_color(*_PDF_NAVY)
+        pdf.cell(54, 6, "Cliente", new_x=XPos.RIGHT, new_y=YPos.TOP)
+        pdf.set_font("helvetica", "", 10)
+        pdf.cell(0, 6, cls._sanitizar_texto_para_pdf(dados_validados["empresa_contratante"][:90]), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_x(18)
+        pdf.set_font("helvetica", "B", 10)
+        pdf.cell(54, 6, "Contexto", new_x=XPos.RIGHT, new_y=YPos.TOP)
+        pdf.set_font("helvetica", "", 10)
+        pdf.cell(0, 6, cls._sanitizar_texto_para_pdf(dados_validados["setor"].upper()), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_x(18)
+        pdf.set_font("helvetica", "B", 10)
+        pdf.cell(54, 6, "Responsavel", new_x=XPos.RIGHT, new_y=YPos.TOP)
+        pdf.set_font("helvetica", "", 10)
+        pdf.cell(0, 6, cls._sanitizar_texto_para_pdf(dados_validados["responsavel_tecnico"][:90]), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_x(18)
+        pdf.set_font("helvetica", "B", 10)
+        pdf.cell(54, 6, "Data / hash", new_x=XPos.RIGHT, new_y=YPos.TOP)
+        pdf.set_font("helvetica", "", 10)
         pdf.cell(
             0,
-            5,
-            "Diagnostico Assistido por Inteligencia Artificial (Tariel.ia)",
+            6,
+            cls._sanitizar_texto_para_pdf(f"{dados_validados['data_inspecao']} | {codigo_hash}"),
             new_x=XPos.LMARGIN,
             new_y=YPos.NEXT,
-            align="C",
         )
-        pdf.line(10, pdf.get_y() + 2, 200, pdf.get_y() + 2)
-        pdf.ln(12)
-
-        pdf.linha_metadado("Contratante:", dados_validados["empresa_contratante"])
-        pdf.linha_metadado("Setor / Contexto:", dados_validados["setor"].upper())
-        pdf.linha_metadado("Responsavel:", dados_validados["responsavel_tecnico"])
-        pdf.linha_metadado(
-            "Data / Validacao:",
-            f"{dados_validados['data_inspecao']}  |  Hash: {codigo_hash}",
-        )
-        pdf.ln(8)
+        pdf.ln(10)
 
         # ── 2. DECISÃO (MAESTRO) ──
         if dados_validados.get("dados_formulario"):
@@ -635,11 +697,11 @@ class GeradorLaudos:
 
         responsavel_seguro = cls._sanitizar_texto_para_pdf(dados_validados["responsavel_tecnico"])
         pdf.set_font("helvetica", "B", 11)
-        pdf.set_text_color(0, 0, 0)
+        pdf.set_text_color(*_PDF_INK)
         pdf.cell(0, 6, "_" * 52, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
         pdf.cell(0, 6, responsavel_seguro, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
         pdf.set_font("helvetica", "", 9)
-        pdf.set_text_color(100, 100, 100)
+        pdf.set_text_color(*_PDF_MUTED)
         pdf.cell(
             0,
             6,

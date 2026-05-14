@@ -330,17 +330,21 @@
             return;
         }
 
-        inputAnexo.setAttribute("accept", "image/jpeg,image/png,image/webp,image/gif");
+        inputAnexo.setAttribute(
+            "accept",
+            "image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        );
+        inputAnexo.setAttribute("multiple", "multiple");
         btnAnexo.dataset.anexoBindSource = "hardware";
         inputAnexo.dataset.anexoBindSource = "hardware";
 
         btnAnexo.addEventListener("click", () => inputAnexo.click());
 
         inputAnexo.addEventListener("change", async function () {
-            const arquivo = this.files?.[0];
+            const arquivos = Array.from(this.files || []);
             this.value = "";
-            if (!arquivo) return;
-            await processarImagemAuditoria(arquivo);
+            if (!arquivos.length) return;
+            await processarArquivosAuditoria(arquivos);
         });
     }
 
@@ -353,49 +357,88 @@
         "image/jpeg", "image/jpg", "image/png",
         "image/webp", "image/gif",
     ]);
+    const TIPOS_DOCUMENTO_PERMITIDOS = new Set([
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]);
+    const LIMITE_IMAGENS_CHAT = 10;
 
     let _processandoImagem = false;
 
     async function processarImagemAuditoria(arquivo) {
-        if (!arquivo) return;
+        return processarArquivosAuditoria([arquivo].filter(Boolean));
+    }
+
+    async function processarArquivosAuditoria(arquivosEntrada = []) {
+        const arquivos = Array.from(arquivosEntrada || []).filter(Boolean);
+        if (!arquivos.length) return;
 
         if (_processandoImagem) {
-            _toast("Aguarde o processamento da imagem anterior.", "aviso");
+            _toast("Aguarde o processamento dos anexos anteriores.", "aviso");
             return;
         }
 
-        if (!TIPOS_IMAGEM_PERMITIDOS.has(arquivo.type)) {
-            _toast("Apenas evidências fotográficas são aceitas (PNG, JPG, WebP).", "erro");
+        const documento = arquivos.find((arquivo) => TIPOS_DOCUMENTO_PERMITIDOS.has(arquivo.type));
+        if (documento) {
+            if (arquivos.length > 1) {
+                _toast("Para documentos, envie um arquivo por vez.", "aviso");
+            }
+            const fnDoc = window.TarielAPI?.prepararArquivoParaEnvio
+                ?? window.prepararArquivoParaEnvio;
+            if (typeof fnDoc !== "function") {
+                log("error", "prepararArquivoParaEnvio não encontrada. api.js carregado?");
+                _toast("Erro interno: módulo de envio não carregado.", "erro");
+                return;
+            }
+            await fnDoc(documento);
             return;
         }
 
-        if (arquivo.size > 10 * 1024 * 1024) {
-            _toast("Imagem muito grande (máx. 10MB). Reduza o tamanho antes de enviar.", "aviso");
+        const imagens = arquivos.filter((arquivo) => TIPOS_IMAGEM_PERMITIDOS.has(arquivo.type));
+        if (!imagens.length) {
+            _toast("Apenas imagens PNG, JPG, WebP, GIF ou documentos PDF/DOCX são aceitos.", "erro");
             return;
         }
 
-        const assinaturaValida = await _verificarAssinaturaMagica(arquivo);
-        if (!assinaturaValida) {
-            _toast("Arquivo inválido ou corrompido. Envie uma imagem real.", "erro");
-            return;
+        if (imagens.length !== arquivos.length) {
+            _toast("Alguns arquivos foram ignorados por não serem imagens válidas.", "aviso");
         }
 
         _processandoImagem = true;
 
         try {
-            const [coordenadas, imagemBase64] = await Promise.all([
-                obterLocalizacaoGPS(),
-                _lerArquivoComoBase64(arquivo),
-            ]);
+            const imagensValidas = [];
+
+            for (const arquivo of imagens.slice(0, LIMITE_IMAGENS_CHAT)) {
+                if (arquivo.size > 10 * 1024 * 1024) {
+                    _toast(`${_sanitizarNomeArquivo(arquivo.name)} excede 10MB e foi ignorada.`, "aviso");
+                    continue;
+                }
+
+                const assinaturaValida = await _verificarAssinaturaMagica(arquivo);
+                if (!assinaturaValida) {
+                    _toast(`${_sanitizarNomeArquivo(arquivo.name)} parece inválida e foi ignorada.`, "aviso");
+                    continue;
+                }
+
+                imagensValidas.push(arquivo);
+            }
+
+            if (imagens.length > LIMITE_IMAGENS_CHAT) {
+                _toast("Você pode anexar até 10 imagens por mensagem.", "aviso");
+            }
+
+            if (!imagensValidas.length) {
+                _toast("Nenhuma imagem válida foi encontrada.", "erro");
+                return;
+            }
+
+            const coordenadas = await obterLocalizacaoGPS();
 
             const dataHora = new Date().toLocaleString("pt-BR");
-
-            // ALTERAÇÃO: api.js aceita apenas (arquivo) — imagemBase64 é gerado
-            // internamente pelo FileReader em prepararArquivoParaEnvio.
-            // hardware.js não precisa passar imagemBase64 separadamente.
-            // Se no futuro api.js aceitar base64 pré-computado, basta adicionar
-            // o segundo argumento aqui.
-            const fn = window.TarielAPI?.prepararArquivoParaEnvio
+            const fn = window.TarielAPI?.prepararArquivosParaEnvio
+                ?? window.prepararArquivosParaEnvio
+                ?? window.TarielAPI?.prepararArquivoParaEnvio
                 ?? window.prepararArquivoParaEnvio;
 
             if (typeof fn !== "function") {
@@ -404,25 +447,28 @@
                 return;
             }
 
-            fn(arquivo);
+            await fn(imagensValidas);
 
-            // Estampa após preview ser adicionado ao DOM
             requestAnimationFrame(() => {
                 _aplicarEstampaAuditoria(dataHora, coordenadas);
             });
 
             const campo = _el("campo-mensagem");
             if (campo && campo.value.trim() === "") {
-                const nomeSeguro = _sanitizarNomeArquivo(arquivo.name);
-                campo.value = `Analisar evidência fotográfica: ${nomeSeguro}`;
+                if (imagensValidas.length === 1) {
+                    const nomeSeguro = _sanitizarNomeArquivo(imagensValidas[0].name);
+                    campo.value = `Analisar evidência fotográfica: ${nomeSeguro}`;
+                } else {
+                    campo.value = `Analisar ${imagensValidas.length} evidências fotográficas anexadas.`;
+                }
                 campo.dispatchEvent(new Event("input"));
             }
 
             campo?.focus();
 
         } catch (erro) {
-            log("error", "Erro ao processar imagem:", erro);
-            _toast("Erro ao processar a imagem. Tente novamente.", "erro");
+            log("error", "Erro ao processar imagens:", erro);
+            _toast("Erro ao processar as imagens. Tente novamente.", "erro");
         } finally {
             _processandoImagem = false;
         }
@@ -456,9 +502,14 @@
     function _aplicarEstampaAuditoria(dataHora, coordenadas) {
         const previewContainer = _el("preview-anexo");
         const areaMsgs = _el("area-mensagens");
+        const textoAuditoria = `Tariel.ia  ${dataHora}  GPS: ${coordenadas}`;
 
-        const imgAlvo = previewContainer?.querySelector(".preview-thumb")
-            ?? areaMsgs?.lastElementChild?.querySelector(".img-anexo");
+        previewContainer?.querySelectorAll(".preview-thumb").forEach((thumb) => {
+            thumb.dataset.auditStamp = textoAuditoria;
+            thumb.title = [thumb.title, textoAuditoria].filter(Boolean).join(" • ");
+        });
+
+        const imgAlvo = areaMsgs?.lastElementChild?.querySelector(".img-anexo");
 
         if (!imgAlvo) return;
 
@@ -490,7 +541,7 @@
             wordBreak: "break-all",
         });
 
-        estampa.textContent = `Tariel.ia  ${dataHora}  GPS: ${coordenadas}`;
+        estampa.textContent = textoAuditoria;
         container.appendChild(estampa);
     }
 
@@ -533,6 +584,7 @@
 
     window.HardwareTariel = {
         processarImagemAuditoria,
+        processarArquivosAuditoria,
         obterLocalizacaoGPS,
         pararGravacao,
         // ALTERAÇÃO: exibirToast removido daqui — usa window.exibirToast de ui.js
@@ -540,5 +592,6 @@
 
     // Retrocompatibilidade
     window.processarImagemAuditoria = processarImagemAuditoria;
+    window.processarArquivosAuditoria = processarArquivosAuditoria;
 
 })();

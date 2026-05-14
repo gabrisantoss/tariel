@@ -6,10 +6,21 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+if (-not $env:JAVA_HOME) {
+    $env:JAVA_HOME = [System.Environment]::GetEnvironmentVariable("JAVA_HOME", "User")
+}
+if (-not $env:ANDROID_HOME) {
+    $env:ANDROID_HOME = [System.Environment]::GetEnvironmentVariable("ANDROID_HOME", "User")
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$androidSdk = Join-Path $env:LOCALAPPDATA "Android\Sdk"
+$androidSdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA "Android\Sdk" }
 $adb = Join-Path $androidSdk "platform-tools\adb.exe"
 $maestroCandidates = @(
+    (Join-Path $env:USERPROFILE ".maestro\bin\maestro.bat"),
+    (Join-Path $env:USERPROFILE ".maestro\bin\maestro.exe"),
+    (Join-Path $env:USERPROFILE ".maestro\bin\maestro"),
     (Join-Path $env:LOCALAPPDATA "Programs\maestro\maestro\bin\maestro.exe"),
     (Join-Path $env:LOCALAPPDATA "Programs\maestro\maestro\bin\maestro.bat"),
     (Join-Path $env:LOCALAPPDATA "Programs\maestro\maestro\bin\maestro")

@@ -63,6 +63,7 @@
                 limparFluxoNovoChatFocado: dependencies.limparFluxoNovoChatFocado,
                 atualizarEstadoModoEntrada: dependencies.atualizarEstadoModoEntrada,
                 estado: dependencies.estado,
+                sincronizarEstadoInspector: dependencies.sincronizarEstadoInspector,
                 resetarFiltrosHistoricoWorkspace: dependencies.resetarFiltrosHistoricoWorkspace,
                 definirWorkspaceStage: dependencies.definirWorkspaceStage,
                 aplicarContextoVisualWorkspace: dependencies.aplicarContextoVisualWorkspace,

@@ -5,6 +5,7 @@ jest.mock("./observability", () => ({
 import {
   API_BASE_URL,
   construirHeaders,
+  extrairMensagemErro,
   fetchComObservabilidade,
   pingApi,
   readRuntimeEnv,
@@ -53,6 +54,25 @@ describe("apiCore", () => {
     expect(headers.get("X-Mesa-Client-Trace-Id")).toBeTruthy();
     expect(headers.get("traceparent")).toMatch(
       /^00-[0-9a-f]{32}-[0-9a-f]{16}-0[01]$/,
+    );
+  });
+
+  it("traduz erros de validacao FastAPI quando o historico fica grande", () => {
+    expect(
+      extrairMensagemErro(
+        {
+          detail: [
+            {
+              loc: ["body", "historico", 0, "texto"],
+              msg: "String should have at most 8000 characters",
+              type: "string_too_long",
+            },
+          ],
+        },
+        "Nao foi possivel enviar.",
+      ),
+    ).toBe(
+      "O histórico desta conversa ficou grande demais para reenviar. O app encurta esse contexto automaticamente; tente enviar novamente.",
     );
   });
 

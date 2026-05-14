@@ -58,7 +58,13 @@ export const chatThreadMessageStyles = {
     maxWidth: "100%",
   },
   messageBubbleIncomingAssistant: {
-    maxWidth: "92%",
+    maxWidth: "100%",
+    borderRadius: 0,
+    borderWidth: 0,
+    borderColor: "transparent",
+    backgroundColor: "transparent",
+    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
   messageBubbleIncoming: {
     backgroundColor: colors.surfaceCanvas,

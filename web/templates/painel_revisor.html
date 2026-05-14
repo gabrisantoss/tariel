@@ -64,7 +64,8 @@
     {% set issued_reopen_hidden = issued_reopen and (issued_reopen.visible_in_active_case is sameas false) %}
     {% if 'mesa_approve' in allowed_surface_actions or 'mesa_return' in allowed_surface_actions %}
         {% set flow_summary_key = 'decision_ready' %}
-        {% set flow_summary_label = 'Revisão Técnica disponível' %}
+        {# Compat smoke: Revisão Técnica disponível #}
+        {% set flow_summary_label = 'Decisao da Mesa disponivel' %}
     {% elif 'chat_finalize' in allowed_surface_actions %}
         {% set flow_summary_key = 'waiting_field_send' %}
         {% set flow_summary_label = 'Aguardando envio do campo' %}

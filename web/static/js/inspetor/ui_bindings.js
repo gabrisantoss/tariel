@@ -84,7 +84,7 @@
             const label = el.btnIniciarLaudoChatLivre.querySelector("span:last-child");
             const icon = el.btnIniciarLaudoChatLivre.querySelector(".material-symbols-rounded");
             if (!laudoId) {
-                if (label) label.textContent = "Criar laudo pelo chat";
+                if (label) label.textContent = "Laudo";
                 if (icon) icon.textContent = "description";
                 el.btnIniciarLaudoChatLivre.setAttribute("aria-label", "Criar novo laudo a partir do chat livre");
                 return;
@@ -278,6 +278,7 @@
                 inserirTextoNoComposer = () => false,
                 irParaMensagemPrincipal = async () => {},
                 limparAnexoMesaWidget = () => {},
+                limparContextoChatLivrePersonalizado = () => false,
                 limparContextoFixadoWorkspace = () => {},
                 normalizarFiltroChat = (valor) => String(valor || "").trim().toLowerCase(),
                 normalizarFiltroTipoHistorico = (valor) => String(valor || "").trim().toLowerCase(),
@@ -314,6 +315,7 @@
                     "accept",
                     tipo === "photo" ? "image/*" : INPUT_ANEXO_ACCEPT_PADRAO
                 );
+                inputAnexo.multiple = true;
                 inputAnexo.click();
             }
 
@@ -339,6 +341,10 @@
                 if (!expandido) {
                     rolarParaHistoricoHome();
                 }
+            });
+            el.btnLimparContextoChatLivre?.addEventListener("click", () => {
+                limparContextoChatLivrePersonalizado();
+                focarComposerInspector();
             });
             el.btnWorkspaceCopyVerification?.addEventListener("click", async () => {
                 const verificationUrl = String(
@@ -497,15 +503,173 @@
                     definirBotaoPreviewCarregando(false);
                 }
             });
+            const definirRootWorkspaceAtivoDireto = (root, ativo) => {
+                if (!root) return;
+                const ativoBoolean = !!ativo;
+                root.dataset.active = ativoBoolean ? "true" : "false";
+                root.setAttribute("aria-hidden", String(!ativoBoolean));
+                if (ativoBoolean) {
+                    root.removeAttribute("hidden");
+                } else {
+                    root.setAttribute("hidden", "");
+                }
+                try {
+                    root.inert = !ativoBoolean;
+                } catch (_) {
+                    if (ativoBoolean) {
+                        root.removeAttribute("inert");
+                    } else {
+                        root.setAttribute("inert", "");
+                    }
+                }
+            };
+
+            const limparModoNrDireto = () => {
+                const painel = el.painelChat || document.getElementById("painel-chat");
+                [document.body, painel].forEach((alvo) => {
+                    if (!alvo?.dataset) return;
+                    delete alvo.dataset.nrVisualMode;
+                    delete alvo.dataset.nrVisualTitle;
+                    delete alvo.dataset.nrVisualBadge;
+                });
+
+                const tituloWorkspace = el.workspaceTituloLaudo || document.getElementById("workspace-titulo-laudo");
+                if (tituloWorkspace) {
+                    tituloWorkspace.textContent = "Tariel";
+                    tituloWorkspace.dataset.nrTitleActive = "false";
+                }
+
+                const tituloModo = el.workspaceNrModeTitle || document.getElementById("workspace-nr-mode-title");
+                if (tituloModo) {
+                    tituloModo.textContent = "";
+                    tituloModo.hidden = true;
+                    tituloModo.setAttribute("aria-hidden", "true");
+                }
+
+                const campo = el.campoMensagem || document.getElementById("campo-mensagem");
+                if (campo) {
+                    campo.placeholder = "Peça ao Tariel";
+                }
+            };
+
+            const forcarLandingChatLivreDireto = ({ limparTimeline = false } = {}) => {
+                const painel = el.painelChat || document.getElementById("painel-chat");
+                const shell = document.querySelector('[data-inspector-region="workspace-shell"]');
+                const assistantRoot = document.querySelector('[data-workspace-view-root="assistant_landing"]');
+                const assistantLanding = el.workspaceAssistantLanding || document.getElementById("workspace-assistant-landing");
+
+                estado.freeChatTemplateContext = null;
+                estado.laudoAtualId = null;
+                estado.estadoRelatorio = "sem_relatorio";
+                estado.workspaceStage = "assistant";
+                estado.freeChatConversationActive = false;
+                ctx.actions?.sincronizarEstadoInspector?.(
+                    {
+                        laudoAtualId: null,
+                        estadoRelatorio: "sem_relatorio",
+                        forceHomeLanding: false,
+                        modoInspecaoUI: "workspace",
+                        workspaceStage: "assistant",
+                        inspectorScreen: "assistant_landing",
+                        inspectorBaseScreen: "assistant_landing",
+                        threadTab: "conversa",
+                        overlayOwner: "",
+                        assistantLandingFirstSendPending: false,
+                        freeChatConversationActive: false,
+                    },
+                    {
+                        persistirStorage: false,
+                        syncScreen: false,
+                    }
+                );
+
+                if (shell?.dataset) {
+                    shell.dataset.workspaceView = "assistant_landing";
+                    shell.dataset.active = "true";
+                    shell.removeAttribute("hidden");
+                    shell.setAttribute("aria-hidden", "false");
+                    try {
+                        shell.inert = false;
+                    } catch (_) {
+                        shell.removeAttribute("inert");
+                    }
+                }
+
+                if (painel?.dataset) {
+                    painel.dataset.laudoAtualId = "";
+                    painel.dataset.estadoRelatorio = "sem_relatorio";
+                    painel.dataset.workspaceStage = "assistant";
+                    painel.dataset.freeChatConversationActive = "false";
+                }
+
+                document.querySelectorAll("[data-workspace-view-root]").forEach((root) => {
+                    definirRootWorkspaceAtivoDireto(root, root === assistantRoot);
+                });
+                if (assistantLanding) {
+                    assistantLanding.removeAttribute("hidden");
+                    assistantLanding.setAttribute("aria-hidden", "false");
+                }
+
+                const rodape = el.rodapeEntrada || document.querySelector(".rodape-entrada");
+                if (rodape) {
+                    rodape.removeAttribute("hidden");
+                    rodape.setAttribute("aria-hidden", "false");
+                }
+                const threadNav = document.querySelector(".thread-nav");
+                if (threadNav) {
+                    threadNav.hidden = true;
+                    threadNav.setAttribute("aria-hidden", "true");
+                }
+
+                if (limparTimeline) {
+                    document
+                        .getElementById("area-mensagens")
+                        ?.querySelectorAll(".linha-mensagem:not(#indicador-digitando), .controle-historico-antigo, .skeleton-carregamento")
+                        .forEach((node) => node.remove());
+                }
+
+                limparModoNrDireto();
+            };
+
+            const abrirChatLivrePeloBotao = (botao, event = null) => {
+                event?.preventDefault?.();
+                event?.stopImmediatePropagation?.();
+                limparContextoChatLivrePersonalizado({
+                    silencioso: true,
+                    sincronizarThread: false,
+                });
+                PERF?.begin?.("transition.novo_chat", {
+                    origem: botao?.dataset?.inspectorEntry || botao?.id || botao?.dataset?.action || "chat_free_entry",
+                });
+                abrirChatLivreInspector({
+                    origem: botao?.dataset?.inspectorEntry || botao?.id || botao?.dataset?.action || "chat_free_entry",
+                    forcarLanding: true,
+                });
+                forcarLandingChatLivreDireto({ limparTimeline: true });
+                document.dispatchEvent(new CustomEvent("tariel:toggle-sidebar", {
+                    detail: {
+                        aberta: false,
+                        origem: "chat_livre_landing",
+                    },
+                    bubbles: true,
+                }));
+                focarComposerInspector();
+            };
+
+            if (document.body?.dataset.openAssistantChatCaptureBound !== "true") {
+                document.body.dataset.openAssistantChatCaptureBound = "true";
+                document.addEventListener("click", (event) => {
+                    const botao = event.target?.closest?.('[data-action="open-assistant-chat"]');
+                    if (!botao) return;
+                    abrirChatLivrePeloBotao(botao, event);
+                }, true);
+            }
+
             el.botoesAbrirChatLivre.forEach((botao) => {
+                if (!botao || botao.dataset.openAssistantChatBound === "true") return;
+                botao.dataset.openAssistantChatBound = "true";
                 botao.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    PERF?.begin?.("transition.novo_chat", {
-                        origem: botao.dataset.inspectorEntry || botao.id || botao.dataset.action || "chat_free_entry",
-                    });
-                    abrirChatLivreInspector({
-                        origem: botao.dataset.inspectorEntry || botao.id || botao.dataset.action || "chat_free_entry",
-                    });
+                    abrirChatLivrePeloBotao(botao, event);
                 });
             });
             el.inputBuscaHistorico?.addEventListener("input", () => {
@@ -674,6 +838,26 @@
                 } finally {
                     definirBotaoPreviewCarregando(false);
                 }
+            });
+            el.workspacePreviewActionButtons?.forEach((botao) => {
+                botao.addEventListener("click", async () => {
+                    if (!obterLaudoAtivoIdSeguro()) {
+                        mostrarToast("Inicie um laudo antes de gerar prévia.", "aviso", 2200);
+                        return;
+                    }
+                    definirBotaoPreviewCarregando(true);
+                    try {
+                        await abrirPreviewWorkspace();
+                    } catch (erro) {
+                        mostrarToast(
+                            String(erro?.message || "").trim() || "Não foi possível gerar a pré-visualização agora.",
+                            "aviso",
+                            2600
+                        );
+                    } finally {
+                        definirBotaoPreviewCarregando(false);
+                    }
+                });
             });
             el.btnAnexo?.addEventListener("click", () => {
                 abrirSeletorAnexo("file");
@@ -937,6 +1121,7 @@
                     event?.detail?.status || "pronto",
                     event?.detail?.texto || ""
                 );
+                sincronizarCabecalhoNrAtiva();
             });
             document.addEventListener("tariel:prompt-enviado", (event) => {
                 const laudoId = obterLaudoAtivoIdSeguro();
@@ -947,6 +1132,7 @@
                 registrarPromptHistorico(event?.detail?.texto || "");
                 armarPrimeiroEnvioNovoChatPendente();
                 promoverPrimeiraMensagemNovoChatSePronta({ forcar: true, focarComposer: true });
+                sincronizarCabecalhoNrAtiva();
             });
             document.addEventListener("tariel:executar-comando-slash", (event) => {
                 const comando = String(event?.detail?.comando || "").trim().toLowerCase();
@@ -971,41 +1157,388 @@
                 }
             });
 
-            el.botoesAcoesRapidas.forEach((botao) => {
-                botao.addEventListener("click", async () => {
-                    const tipo = botao.dataset.tipo;
-                    if (!tipo) return;
-                    const chatGuiado = String(botao.dataset.chatGuided || "").trim() === "true";
+            const fecharSeletorNrDoBotao = (botao) => {
+                const seletorNr = botao?.closest?.("[data-guided-nr-picker]");
+                if (seletorNr && "open" in seletorNr) {
+                    seletorNr.open = false;
+                }
+            };
 
-                    const estadoRelatorio = obterEstadoRelatorioAtualSeguro();
+            const normalizarTextoModoNrAcao = (valor = "") => String(valor || "")
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[\s-]+/g, "_");
 
-                    if (chatGuiado) {
-                        const prePromptAplicado = aplicarPrePromptDaAcaoRapida(botao);
-                        if (prePromptAplicado) {
-                            const seletorNr = botao.closest("[data-guided-nr-picker]");
-                            if (seletorNr && "open" in seletorNr) {
-                                seletorNr.open = false;
-                            }
-                            focarComposerInspector();
-                            mostrarToast("Roteiro da NR aplicado ao composer.", "sucesso", 1800);
+            const resolverModoVisualNrAcao = (botao, contexto = null) => {
+                const fonte = [
+                    contexto?.runtimeTipo,
+                    contexto?.templateKey,
+                    contexto?.badge,
+                    contexto?.title,
+                    botao?.dataset?.runtimeTipo,
+                    botao?.dataset?.tipo,
+                    botao?.dataset?.badge,
+                    botao?.dataset?.titulo,
+                    botao?.dataset?.preprompt,
+                ].map(normalizarTextoModoNrAcao).join(" ");
+
+                if (!fonte || fonte.includes("padrao")) return "";
+                if (fonte.includes("nr35") || fonte.includes("linha_vida") || fonte.includes("altura")) return "nr35";
+                if (fonte.includes("nr33") || fonte.includes("confin")) return "nr33";
+                if (fonte.includes("nr20") || fonte.includes("inflam") || fonte.includes("combust")) return "nr20";
+                if (fonte.includes("nr13") || fonte.includes("caldeira") || fonte.includes("vaso")) return "nr13";
+                if (fonte.includes("nr12") || fonte.includes("maquina")) return "nr12";
+                if (fonte.includes("spda")) return "spda";
+                if (fonte.includes("loto") || fonte.includes("bloqueio")) return "loto";
+                if (fonte.includes("pie") || fonte.includes("prontuario_eletrico")) return "pie";
+                if (fonte.includes("rti") || fonte.includes("nr10_rti")) return "rti";
+                return "";
+            };
+
+            const obterTituloAcaoRapida = (botao) => String(
+                botao?.dataset?.titulo
+                || botao?.querySelector?.(".workspace-guided-nr-card__copy strong, .portal-model-card__header strong, strong")?.textContent
+                || botao?.textContent
+                || "NR"
+            ).trim().replace(/\s+/g, " ");
+
+            const criarContextoChatGuiadoFallback = (botao) => {
+                const titulo = obterTituloAcaoRapida(botao);
+                const runtimeTipo = String(botao?.dataset?.runtimeTipo || botao?.dataset?.tipo || "padrao").trim() || "padrao";
+                const badge = String(botao?.dataset?.badge || titulo || "IA").trim() || "IA";
+                const preprompt = String(botao?.dataset?.preprompt || "").trim();
+                if (!titulo && !preprompt) return null;
+
+                return {
+                    kind: "free_chat_template",
+                    templateKey: runtimeTipo,
+                    runtimeTipo,
+                    title: titulo || badge,
+                    badge,
+                    icon: String(botao?.dataset?.icone || "assignment").trim() || "assignment",
+                    meta: String(botao?.dataset?.meta || "").trim(),
+                    preprompt,
+                    subtitle: `Chat livre • ${titulo || badge}`,
+                    placeholder: `Peça ao Tariel sobre ${(titulo || badge).toLowerCase()}, evidências, riscos ou não conformidades`,
+                    contextTitle: `Contexto ativo: ${titulo || badge}`,
+                    contextStatus: `As próximas respostas vão priorizar ${titulo || badge} como contexto técnico principal.`,
+                };
+            };
+
+            const resolverTituloModoNrVisual = (modo = "") => {
+                const modoNormalizado = String(modo || "").trim().toLowerCase();
+                const titulos = {
+                    rti: "RTI",
+                    pie: "PIE",
+                    spda: "SPDA",
+                    loto: "LOTO",
+                    nr12: "NR12 Máquinas",
+                    nr13: "NR13 Integridade",
+                    nr20: "NR20 Inflamáveis",
+                    nr33: "NR33 Espaço Confinado",
+                    nr35: "NR35 Linha de Vida",
+                };
+                return titulos[modoNormalizado] || "";
+            };
+
+            const aplicarModoVisualNrDireto = (botao, contexto = null) => {
+                const contextoSeguro = contexto || criarContextoChatGuiadoFallback(botao);
+                const modo = resolverModoVisualNrAcao(botao, contextoSeguro);
+                let titulo = String(contextoSeguro?.title || obterTituloAcaoRapida(botao) || "").trim();
+                if (!titulo && modo) {
+                    titulo = resolverTituloModoNrVisual(modo);
+                }
+                const chaveAtiva = String(
+                    contextoSeguro?.runtimeTipo
+                    || contextoSeguro?.templateKey
+                    || botao?.dataset?.runtimeTipo
+                    || botao?.dataset?.tipo
+                    || ""
+                ).trim().toLowerCase();
+
+                [document.body, el.painelChat].forEach((alvo) => {
+                    if (!alvo?.dataset) return;
+                    if (modo) {
+                        alvo.dataset.nrVisualMode = modo;
+                        if (titulo) {
+                            alvo.dataset.nrVisualTitle = titulo;
                         }
-                        return;
-                    }
-
-                    if (estadoRelatorio !== "relatorio_ativo") {
-                        abrirNovaInspecaoComScreenSync({
-                            tipoPrefill: tipo,
-                            prePrompt: String(botao.dataset.preprompt || "").trim(),
-                        });
-                        return;
-                    }
-
-                    const prePromptAplicado = aplicarPrePromptDaAcaoRapida(botao);
-                    if (prePromptAplicado) {
-                        mostrarToast("Pré-prompt aplicado no campo de mensagem.", "sucesso", 1800);
+                        if (contextoSeguro?.badge) {
+                            alvo.dataset.nrVisualBadge = String(contextoSeguro.badge || "").trim();
+                        }
+                    } else {
+                        delete alvo.dataset.nrVisualMode;
+                        delete alvo.dataset.nrVisualTitle;
+                        delete alvo.dataset.nrVisualBadge;
                     }
                 });
-            });
+
+                const tituloModo = el.workspaceNrModeTitle || document.getElementById("workspace-nr-mode-title");
+                if (tituloModo) {
+                    tituloModo.hidden = true;
+                    tituloModo.setAttribute("aria-hidden", "true");
+                    tituloModo.textContent = "";
+                }
+
+                const tituloWorkspace = el.workspaceTituloLaudo || document.getElementById("workspace-titulo-laudo");
+                if (tituloWorkspace) {
+                    tituloWorkspace.textContent = modo && titulo ? `Tariel está no modo ${titulo}` : "Tariel";
+                    tituloWorkspace.dataset.nrTitleActive = modo && titulo ? "true" : "false";
+                    if (modo && titulo) {
+                        tituloWorkspace.dataset.nrModeLabel = titulo;
+                    } else {
+                        delete tituloWorkspace.dataset.nrModeLabel;
+                    }
+                }
+
+                const statusBadge = el.workspaceStatusBadge || document.getElementById("workspace-status-badge");
+                if (statusBadge && contextoSeguro?.badge) {
+                    statusBadge.textContent = String(contextoSeguro.badge || "").trim().toUpperCase();
+                }
+
+                document.querySelectorAll(".btn-acao-rapida[data-chat-guided='true']").forEach((item) => {
+                    const chaveItem = String(item.dataset.runtimeTipo || item.dataset.tipo || "").trim().toLowerCase();
+                    const ativo = !!chaveAtiva && chaveItem === chaveAtiva;
+                    item.dataset.contextActive = ativo ? "true" : "false";
+                    item.setAttribute("aria-pressed", ativo ? "true" : "false");
+                });
+
+                const campo = el.campoMensagem || document.getElementById("campo-mensagem");
+                if (contextoSeguro?.placeholder && campo) {
+                    campo.placeholder = contextoSeguro.placeholder;
+                }
+            };
+
+            const resolverModoNrPersistidoAtivo = () => {
+                const placeholder = String(el.campoMensagem?.placeholder || "").trim();
+                const modoPorPlaceholder = resolverModoVisualNrAcao(null, {
+                    runtimeTipo: placeholder,
+                    templateKey: placeholder,
+                    title: placeholder,
+                    preprompt: placeholder,
+                });
+                const modo = String(
+                    document.body?.dataset?.nrVisualMode
+                    || el.painelChat?.dataset?.nrVisualMode
+                    || modoPorPlaceholder
+                    || ""
+                ).trim().toLowerCase();
+                const titulo = String(
+                    document.body?.dataset?.nrVisualTitle
+                    || el.painelChat?.dataset?.nrVisualTitle
+                    || resolverTituloModoNrVisual(modo)
+                    || ""
+                ).trim();
+                const badge = String(
+                    document.body?.dataset?.nrVisualBadge
+                    || el.painelChat?.dataset?.nrVisualBadge
+                    || ""
+                ).trim();
+
+                return { modo, titulo, badge };
+            };
+
+            const sincronizarCabecalhoNrAtiva = () => {
+                const contexto = estado.freeChatTemplateContext;
+                if (contexto && typeof contexto === "object") {
+                    aplicarModoVisualNrDireto(null, contexto);
+                    return true;
+                }
+
+                const {
+                    modo: modoPersistido,
+                    titulo: tituloPersistido,
+                    badge: badgePersistido,
+                } = resolverModoNrPersistidoAtivo();
+                if (!tituloPersistido || !modoPersistido) return false;
+
+                const tituloWorkspace = el.workspaceTituloLaudo || document.getElementById("workspace-titulo-laudo");
+                if (tituloWorkspace) {
+                    tituloWorkspace.textContent = `Tariel está no modo ${tituloPersistido}`;
+                    tituloWorkspace.dataset.nrTitleActive = "true";
+                    tituloWorkspace.dataset.nrModeLabel = tituloPersistido;
+                }
+                const tituloModo = el.workspaceNrModeTitle || document.getElementById("workspace-nr-mode-title");
+                if (tituloModo) {
+                    tituloModo.hidden = true;
+                    tituloModo.setAttribute("aria-hidden", "true");
+                    tituloModo.textContent = "";
+                }
+                const statusBadge = el.workspaceStatusBadge || document.getElementById("workspace-status-badge");
+                if (statusBadge) {
+                    if (badgePersistido) {
+                        statusBadge.textContent = badgePersistido.toUpperCase();
+                    }
+                }
+                return true;
+            };
+
+            if (el.workspaceTituloLaudo && el.workspaceTituloLaudo.dataset.nrTitleObserverBound !== "true") {
+                el.workspaceTituloLaudo.dataset.nrTitleObserverBound = "true";
+                const observarTituloNrAtivo = () => {
+                    const {
+                        modo: modoPersistido,
+                        titulo: tituloPersistido,
+                    } = resolverModoNrPersistidoAtivo();
+                    if (!tituloPersistido) return;
+                    const tituloWorkspace = el.workspaceTituloLaudo || document.getElementById("workspace-titulo-laudo");
+                    if (!tituloWorkspace) return;
+                    const tituloEsperado = `Tariel está no modo ${tituloPersistido}`;
+                    if (String(tituloWorkspace.textContent || "").trim() === tituloEsperado) return;
+                    if (typeof window.requestAnimationFrame === "function") {
+                        window.requestAnimationFrame(() => sincronizarCabecalhoNrAtiva());
+                    } else {
+                        sincronizarCabecalhoNrAtiva();
+                    }
+                };
+                if (typeof MutationObserver === "function") {
+                    new MutationObserver(observarTituloNrAtivo).observe(el.workspaceTituloLaudo, {
+                        childList: true,
+                        characterData: true,
+                        subtree: true,
+                    });
+                    [document.body, el.painelChat].forEach((alvo) => {
+                        if (!alvo) return;
+                        new MutationObserver(observarTituloNrAtivo).observe(alvo, {
+                            attributes: true,
+                            attributeFilter: ["data-nr-visual-mode", "data-nr-visual-title", "data-nr-visual-badge"],
+                        });
+                    });
+                    if (el.campoMensagem) {
+                        new MutationObserver(observarTituloNrAtivo).observe(el.campoMensagem, {
+                            attributes: true,
+                            attributeFilter: ["placeholder"],
+                        });
+                    }
+                }
+                sincronizarCabecalhoNrAtiva();
+            }
+
+            const aplicarContextoChatGuiadoSeguro = (botao) => {
+                const contextoFallback = criarContextoChatGuiadoFallback(botao);
+                if (!contextoFallback) return false;
+
+                estado.freeChatTemplateContext = contextoFallback;
+                estado.laudoAtualId = null;
+                estado.estadoRelatorio = "sem_relatorio";
+                estado.workspaceStage = "assistant";
+                estado.freeChatConversationActive = false;
+                try {
+                    ctx.actions?.sincronizarEstadoInspector?.(
+                        {
+                            laudoAtualId: null,
+                            estadoRelatorio: "sem_relatorio",
+                            forceHomeLanding: false,
+                            modoInspecaoUI: "workspace",
+                            workspaceStage: "assistant",
+                            inspectorScreen: "assistant_landing",
+                            inspectorBaseScreen: "assistant_landing",
+                            threadTab: "conversa",
+                            assistantLandingFirstSendPending: false,
+                            freeChatConversationActive: false,
+                        },
+                        {
+                            persistirStorage: false,
+                            syncScreen: false,
+                        }
+                    );
+                } catch (erro) {
+                    console.warn("Falha ao sincronizar estado da NR; mantendo modo visual direto.", erro);
+                }
+
+                try {
+                    ctx.actions?.atualizarContextoWorkspaceAtivo?.();
+                } catch (erro) {
+                    console.warn("Falha ao sincronizar contexto da NR; mantendo modo visual direto.", erro);
+                }
+                aplicarModoVisualNrDireto(botao, contextoFallback);
+                sincronizarCabecalhoNrAtiva();
+                mostrarToast(`${contextoFallback.title} agora guia este chat livre.`, "sucesso", 2200);
+                return true;
+            };
+
+            const processarBotaoAcaoRapida = async (botao) => {
+                const tipo = botao?.dataset?.tipo;
+                if (!tipo) return;
+
+                const chatGuiado = String(botao.dataset.chatGuided || "").trim() === "true";
+                const snapshotAtual = ctx.actions?.obterSnapshotEstadoInspectorAtual?.() || {};
+                const screenBaseAtual = String(
+                    snapshotAtual.inspectorBaseScreen
+                    || ctx.actions?.resolveInspectorBaseScreen?.()
+                    || ""
+                ).trim();
+                const estadoRelatorio = obterEstadoRelatorioAtualSeguro();
+
+                if (chatGuiado) {
+                    try {
+                        abrirChatLivreInspector({
+                            origem: screenBaseAtual === "portal_dashboard" ? "portal-open-chat" : "guided-nr-card",
+                            forcarLanding: true,
+                        });
+                    } catch (erro) {
+                        console.warn("Falha ao abrir chat livre antes de aplicar NR.", erro);
+                    }
+
+                    const contextoAplicado = aplicarContextoChatGuiadoSeguro(botao);
+                    if (contextoAplicado) {
+                        fecharSeletorNrDoBotao(botao);
+                        focarComposerInspector();
+                    }
+                    return;
+                }
+
+                if (estadoRelatorio !== "relatorio_ativo") {
+                    abrirNovaInspecaoComScreenSync({
+                        tipoPrefill: tipo,
+                        prePrompt: String(botao.dataset.preprompt || "").trim(),
+                    });
+                    return;
+                }
+
+                const prePromptAplicado = aplicarPrePromptDaAcaoRapida(botao);
+                if (prePromptAplicado) {
+                    mostrarToast("Pré-prompt aplicado no campo de mensagem.", "sucesso", 1800);
+                }
+            };
+
+            const TEMPO_DEBOUNCE_ACAO_RAPIDA_MS = 650;
+            const ultimaExecucaoAcaoRapida = new WeakMap();
+
+            const tratarEventoBotaoAcaoRapida = async (event, options = {}) => {
+                const botao = event.target?.closest?.(".btn-acao-rapida");
+                if (!botao) return;
+
+                const somenteChatGuiado = options.somenteChatGuiado === true;
+                const chatGuiado = String(botao.dataset.chatGuided || "").trim() === "true";
+                if (somenteChatGuiado && !chatGuiado) return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation?.();
+                if (botao.dataset.quickActionProcessing === "true") return;
+
+                const agora = Date.now();
+                const ultimaExecucao = ultimaExecucaoAcaoRapida.get(botao) || 0;
+                if (agora - ultimaExecucao < TEMPO_DEBOUNCE_ACAO_RAPIDA_MS) return;
+                ultimaExecucaoAcaoRapida.set(botao, agora);
+
+                botao.dataset.quickActionProcessing = "true";
+                try {
+                    await processarBotaoAcaoRapida(botao);
+                } catch (erro) {
+                    console.warn("Falha ao processar ação rápida.", erro);
+                    mostrarToast("Não consegui abrir essa NR agora. Tente novamente em instantes.", "aviso", 2400);
+                } finally {
+                    delete botao.dataset.quickActionProcessing;
+                }
+            };
+
+            document.addEventListener("click", (event) => {
+                void tratarEventoBotaoAcaoRapida(event);
+            }, true);
 
             el.btnMesaWidgetToggle?.addEventListener("click", () => {
                 if (!mesaAvaliadoraDisponivelParaUsuario()) {

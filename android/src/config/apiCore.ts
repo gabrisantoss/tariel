@@ -211,8 +211,54 @@ export function extrairMensagemErro(
     if (typeof detalhe === "string" && detalhe.trim()) {
       return detalhe.trim();
     }
+    if (Array.isArray(detalhe)) {
+      const mensagens = detalhe
+        .map((item) => extrairMensagemErroValidacao(item))
+        .filter((item): item is string => Boolean(item));
+      const mensagemHistoricoGrande = mensagens.find((mensagem) =>
+        /historico.*grande|history.*long|limite.*api/i.test(mensagem),
+      );
+      if (mensagemHistoricoGrande) {
+        return mensagemHistoricoGrande;
+      }
+      if (mensagens.length) {
+        return mensagens.slice(0, 2).join(" ");
+      }
+    }
   }
   return fallback;
+}
+
+function extrairMensagemErroValidacao(item: unknown): string | null {
+  if (typeof item === "string" && item.trim()) {
+    return item.trim();
+  }
+  if (!item || typeof item !== "object") {
+    return null;
+  }
+
+  const mensagem = Reflect.get(item, "msg");
+  const tipo = Reflect.get(item, "type");
+  const local = Reflect.get(item, "loc");
+  const textoMensagem = typeof mensagem === "string" ? mensagem.trim() : "";
+  const textoTipo = typeof tipo === "string" ? tipo.trim() : "";
+  const textoLocal = Array.isArray(local)
+    ? local.map((parte) => String(parte)).join(".")
+    : "";
+  const erroHistoricoGrande =
+    /historico/i.test(textoLocal) &&
+    /(too_long|max_length|string_too_long|length|long)/i.test(
+      `${textoMensagem} ${textoTipo}`,
+    );
+
+  if (erroHistoricoGrande) {
+    return "O histórico desta conversa ficou grande demais para reenviar. O app encurta esse contexto automaticamente; tente enviar novamente.";
+  }
+
+  if (textoMensagem) {
+    return textoLocal ? `${textoLocal}: ${textoMensagem}` : textoMensagem;
+  }
+  return null;
 }
 
 export async function lerJsonSeguro<T>(response: Response): Promise<T | null> {

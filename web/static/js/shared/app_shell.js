@@ -402,8 +402,9 @@
         );
 
         if (inputAnexo) {
-            inputAnexo.accept = "image/png,image/jpeg,image/jpg,image/webp";
+            inputAnexo.accept = "image/png,image/jpeg,image/jpg,image/webp,image/gif";
             inputAnexo.dataset.apenasImagens = "true";
+            inputAnexo.multiple = true;
         }
 
         [btnAnexo, ...botoesAnexoComposer].filter(Boolean).forEach((botao) => {

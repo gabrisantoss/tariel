@@ -90,9 +90,10 @@
 
     if (inputAnexo) {
         inputAnexo.accept =
-            "image/png,image/jpeg,image/jpg,image/webp,"
+            "image/png,image/jpeg,image/jpg,image/webp,image/gif,"
             + "application/pdf,"
             + "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        inputAnexo.multiple = true;
     }
 
     // =========================================================================
@@ -409,6 +410,23 @@
         campoMensagem.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
+    function normalizarImagensPendentes(valor) {
+        const itens = Array.isArray(valor) ? valor : (valor ? [valor] : []);
+        const imagens = [];
+
+        itens.forEach((item) => {
+            const base64Validado = validarPrefixoBase64(item);
+            if (base64Validado) imagens.push(base64Validado);
+        });
+
+        return imagens.slice(0, 10);
+    }
+
+    function valorImagemParaEnvio(imagens = []) {
+        if (!Array.isArray(imagens) || imagens.length === 0) return null;
+        return imagens.length === 1 ? imagens[0] : imagens.slice(0, 10);
+    }
+
     function resetarEstadoLocal({
         limparLaudoAtual = false,
         limparEntrada = true,
@@ -659,6 +677,50 @@
         return partes.join(" ").replace(/\s+/g, " ").trim();
     }
 
+    function clonarContextoChatLivrePersonalizado(contexto = null) {
+        if (!contexto || typeof contexto !== "object") return null;
+
+        return {
+            kind: String(contexto.kind || "free_chat_template").trim() || "free_chat_template",
+            templateKey: String(
+                contexto.templateKey || contexto.runtimeTipo || contexto.tipo || "padrao"
+            ).trim() || "padrao",
+            runtimeTipo: String(
+                contexto.runtimeTipo || contexto.templateKey || contexto.tipo || "padrao"
+            ).trim() || "padrao",
+            title: String(contexto.title || contexto.titulo || "").trim(),
+            badge: String(contexto.badge || "").trim(),
+            icon: String(contexto.icon || contexto.icone || "").trim(),
+            meta: String(contexto.meta || "").trim(),
+            preprompt: String(contexto.preprompt || "").trim(),
+            subtitle: String(contexto.subtitle || "").trim(),
+            placeholder: String(contexto.placeholder || "").trim(),
+            contextTitle: String(contexto.contextTitle || "").trim(),
+            contextStatus: String(contexto.contextStatus || "").trim(),
+        };
+    }
+
+    function obterContextoChatLivrePersonalizadoAtivo() {
+        try {
+            return clonarContextoChatLivrePersonalizado(
+                window.TarielInspectorState?.obterContextoChatLivrePersonalizadoAtivo?.() || null
+            );
+        } catch (erro) {
+            log("warn", "Contexto do chat livre indisponível durante sincronização.", erro);
+            return null;
+        }
+    }
+
+    function aplicarContextoChatLivrePersonalizado(contexto = null, options = {}) {
+        if (typeof window.TarielInspectorState?.aplicarContextoChatLivrePersonalizado === "function") {
+            return window.TarielInspectorState.aplicarContextoChatLivrePersonalizado(contexto, options);
+        }
+        if (!contexto && typeof window.TarielInspectorState?.limparContextoChatLivrePersonalizado === "function") {
+            return window.TarielInspectorState.limparContextoChatLivrePersonalizado(options);
+        }
+        return false;
+    }
+
     function montarThreadChatLivreSnapshot({ threadId = null, mensagens = historicoConversa, pinado = false } = {}) {
         const itens = clonarMensagensThreadLivre(mensagens);
         if (!itens.some((item) => item.papel === "usuario")) {
@@ -681,6 +743,7 @@
             last_role: String(ultimaMensagem?.papel || "").trim().toLowerCase() === "assistente" ? "assistente" : "usuario",
             search_text: construirBuscaThreadLivre(itens, { title, preview }),
             pinado: !!pinado,
+            free_chat_template_context: obterContextoChatLivrePersonalizadoAtivo(),
             messages: itens.slice(-MAX_HISTORICO_LOCAL),
         };
     }
@@ -731,6 +794,11 @@
         if (activeFreeChatThreadId === alvo) {
             activeFreeChatThreadId = null;
             historicoConversa = [];
+            aplicarContextoChatLivrePersonalizado(null, {
+                silencioso: true,
+                sincronizarThread: false,
+                origem: "free_chat_thread_removed",
+            });
         }
         emitirEventos("tariel:free-chat-thread-removed", { threadId: alvo });
         return true;
@@ -1207,6 +1275,14 @@
             },
             { persistirStorage: false }
         );
+        aplicarContextoChatLivrePersonalizado(
+            thread.free_chat_template_context || null,
+            {
+                silencioso: true,
+                sincronizarThread: false,
+                origem: "free_chat_thread_restore",
+            }
+        );
 
         emitirEstadoRelatorio({
             estado_normalizado: "sem_relatorio",
@@ -1314,8 +1390,15 @@
         renderizarMarkdown,
         renderizarCitacoes: _renderizarCitacoes,
         renderizarConfiancaIA,
-
-            getModoAtual: obterModoAtualSeguro,
+        getModoAtual: obterModoAtualSeguro,
+        getPreferenciasIAMobile: () => {
+            try {
+                return String(window.TarielInspectorState?.obterPreferenciasIAMobileChatAtiva?.() || "").trim();
+            } catch (erro) {
+                log("warn", "Preferências internas do chat livre indisponíveis.", erro);
+                return "";
+            }
+        },
         });
     } catch (erro) {
         log("error", "Falha ao iniciar TarielChatNetwork.", erro);
@@ -1440,7 +1523,8 @@
     // =========================================================================
 
     window.TarielAPI = {
-        limparHistoricoChat() {
+        limparHistoricoChat(opcoes = {}) {
+            const emitirEstadoRelatorioAoLimpar = opcoes?.emitirEstadoRelatorio !== false;
             resetarEstadoLocal({
                 limparLaudoAtual: true,
                 limparEntrada: true,
@@ -1451,15 +1535,18 @@
                 telaBoasVindas.style.removeProperty("display");
             }
 
-            emitirEstadoRelatorio({
-                estado_normalizado: "sem_relatorio",
-                laudo_id: null,
-            });
+            if (emitirEstadoRelatorioAoLimpar) {
+                emitirEstadoRelatorio({
+                    estado_normalizado: "sem_relatorio",
+                    laudo_id: null,
+                });
+            }
         },
 
         preencherEntrada: preencherCampoMensagem,
 
         prepararArquivoParaEnvio: (...args) => ChatNetwork.prepararArquivoParaEnvio(...args),
+        prepararArquivosParaEnvio: (...args) => ChatNetwork.prepararArquivosParaEnvio?.(...args),
         limparPreview: (...args) => ChatNetwork.limparPreview(...args),
         iniciarRelatorio: (...args) => iniciarRelatorioWrapper(...args),
         finalizarRelatorio: (...args) => finalizarRelatorioWrapper(...args),
@@ -1499,6 +1586,7 @@
     window.limparHistoricoChat = window.TarielAPI.limparHistoricoChat;
     window.limparPreview = window.TarielAPI.limparPreview;
     window.prepararArquivoParaEnvio = window.TarielAPI.prepararArquivoParaEnvio;
+    window.prepararArquivosParaEnvio = window.TarielAPI.prepararArquivosParaEnvio;
     window.iniciarRelatorio = window.TarielAPI.iniciarRelatorio;
     window.finalizarRelatorio = window.TarielAPI.finalizarRelatorio;
     window.cancelarRelatorio = window.TarielAPI.cancelarRelatorio;
@@ -2076,20 +2164,30 @@
         const textoDocParaEnviar = textoDocumentoPendente;
         const nomeDocParaEnviar = nomeDocumentoPendente;
         const tmpId = `tmp-${Date.now()}`;
+        const imagensParaEnviar = normalizarImagensPendentes(imagemBase64Pendente);
+        const imagemParaEnviar = valorImagemParaEnvio(imagensParaEnviar);
 
-        adicionarMensagemInspetor(texto, imagemBase64Pendente, nomeDocParaEnviar, tmpId);
+        adicionarMensagemInspetor(texto, imagemParaEnviar, nomeDocParaEnviar, tmpId);
 
-        const textoHistorico = texto || (nomeDocParaEnviar ? `[Documento: ${nomeDocParaEnviar}]` : "");
+        const textoHistorico =
+            texto ||
+            (nomeDocParaEnviar
+                ? `[Documento: ${nomeDocParaEnviar}]`
+                : (imagensParaEnviar.length > 1
+                    ? `[${imagensParaEnviar.length} imagens enviadas]`
+                    : (imagensParaEnviar.length === 1 ? "[Imagem enviada]" : "")));
         if (textoHistorico) {
             adicionarAoHistorico("usuario", textoHistorico);
-            sincronizarThreadChatLivreAtiva({ selecionar: true });
+            try {
+                sincronizarThreadChatLivreAtiva({ selecionar: true });
+            } catch (erro) {
+                log("warn", "Falha ao sincronizar thread antes do envio.", erro);
+            }
             emitirEventos("tariel:prompt-enviado", {
                 texto,
                 laudoId: laudoAtualId,
             });
         }
-
-        const imagemParaEnviar = imagemBase64Pendente;
 
         campoMensagem.value = "";
         campoMensagem.style.height = "auto";
@@ -2109,7 +2207,11 @@
             tmpId,
             false
         );
-        sincronizarThreadChatLivreAtiva({ selecionar: true });
+        try {
+            sincronizarThreadChatLivreAtiva({ selecionar: true });
+        } catch (erro) {
+            log("warn", "Falha ao sincronizar thread depois do envio.", erro);
+        }
     }
 
     if (PERF?.enabled) {

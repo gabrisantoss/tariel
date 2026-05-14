@@ -42,9 +42,24 @@ make mobile-ci
 make ci
 ```
 
+No Windows, use o launcher PowerShell equivalente:
+
+```powershell
+.\make.ps1 help
+.\make.ps1 doctor
+.\make.ps1 web-dev
+.\make.ps1 verify
+.\make.ps1 web-ci
+.\make.ps1 mobile-ci
+.\make.ps1 mesa-smoke
+```
+
+Setup Windows detalhado: `docs/WINDOWS_SETUP.md`.
+
 Leitura rápida:
 
 - `make verify`: baseline local atual
+- `.\make.ps1 verify`: baseline local atual sem depender de `/bin/bash`
 - `make release-verify-local`: gate forte local antes de promoção
 - `make release-verify`: gate completo de promoção, incluindo a lane real já modelada em `release-gate-real`
 - `make smoke-mobile`: lane real do Android; materializa `android/android` via preflight oficial se o projeto nativo ainda nao existir e usa SQLite temporario auditado para backend local

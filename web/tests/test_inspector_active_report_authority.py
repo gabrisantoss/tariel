@@ -89,7 +89,7 @@ def test_home_forcado_preserva_laudo_ativo_na_sessao(ambiente_critico) -> None:
     assert status.json()["laudo_id"] == laudo_ativo
 
 
-def test_raiz_app_sem_query_abre_home_e_limpa_contexto_ativo(ambiente_critico) -> None:
+def test_raiz_app_sem_query_abre_chat_livre_e_limpa_contexto_ativo(ambiente_critico) -> None:
     client = ambiente_critico["client"]
     SessionLocal = ambiente_critico["SessionLocal"]
     ids = ambiente_critico["ids"]
@@ -109,7 +109,10 @@ def test_raiz_app_sem_query_abre_home_e_limpa_contexto_ativo(ambiente_critico) -
 
     resposta = client.get("/app/")
     assert resposta.status_code == 200
-    assert re.search(r'id="tela-boas-vindas"[^>]*data-active="true"', resposta.text)
+    assert re.search(r'id="tela-boas-vindas"[^>]*data-active="false"[\s\S]*?hidden inert', resposta.text)
+    assert re.search(r'id="workspace-assistant-landing"[\s\S]*?aria-label="Chat livre com o assistente"', resposta.text)
+    assert re.search(r'data-inspecao-ui="workspace"', resposta.text)
+    assert re.search(r'data-inspector-screen="assistant_landing"', resposta.text)
 
     boot = _extrair_boot_app(resposta.text)
     assert boot["laudoAtivoId"] is None

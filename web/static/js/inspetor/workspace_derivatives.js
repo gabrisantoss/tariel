@@ -194,8 +194,25 @@
             return resumo;
         }
 
+        function espelharEmptyStateConversaNoDataset(mostrar) {
+            const valor = mostrar ? "true" : "false";
+            document.body.dataset.workspaceConversationEmptyVisible = valor;
+            if (el.painelChat) {
+                el.painelChat.dataset.workspaceConversationEmptyVisible = valor;
+            }
+            if (el.workspaceScreenRoot) {
+                el.workspaceScreenRoot.dataset.workspaceConversationEmptyVisible = valor;
+            }
+            if (el.workspaceConversationViewRoot) {
+                el.workspaceConversationViewRoot.dataset.workspaceConversationEmptyVisible = valor;
+            }
+        }
+
         function atualizarEmptyStateHonestoConversa() {
-            if (!el.workspaceConversationEmpty) return;
+            if (!el.workspaceConversationEmpty) {
+                espelharEmptyStateConversaNoDataset(false);
+                return;
+            }
 
             const snapshot = ctx.actions.obterSnapshotEstadoInspectorAtual?.() || {};
             const tabAtual = normalizarThreadTab(snapshot.threadTab);
@@ -211,6 +228,7 @@
 
             el.workspaceConversationEmpty.hidden = !mostrar;
             el.workspaceConversationEmpty.setAttribute("aria-hidden", String(!mostrar));
+            espelharEmptyStateConversaNoDataset(mostrar);
         }
 
         function extrairMetaLinhaWorkspace(linha) {

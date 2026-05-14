@@ -75,7 +75,7 @@
         function resumoCanalOperacional(canal) {
             if (canal === "chat") return "Chat";
             if (canal === "mesa") return "Revisão Técnica";
-            return "Portal Cliente";
+            return "Portal da Empresa";
         }
 
         function htmlBarrasHistorico(serie, tone) {
@@ -540,8 +540,8 @@
             }
             return {
                 tone: "aprovado",
-                badge: "Operação estável",
-                acao: "A conta está liberada e a equipe principal já está pronta para operar.",
+                badge: "Conta liberada",
+                acao: "Equipe e plano estão prontos. Acompanhe indicadores e revise acessos conforme a operação crescer.",
             };
         }
 

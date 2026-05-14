@@ -5,18 +5,32 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
 import pathlib
 import subprocess
+import sys
 from typing import Any
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 WEB_ROOT = REPO_ROOT / "web"
 ARTIFACTS_ROOT = REPO_ROOT / "artifacts" / "document_phase_acceptance"
-WEB_PYTHON = (
-    WEB_ROOT / ".venv-linux" / "bin" / "python"
-    if (WEB_ROOT / ".venv-linux" / "bin" / "python").exists()
-    else pathlib.Path("python3")
-)
+ROOT_PYTHON = pathlib.Path(sys.executable)
+
+
+def resolve_web_python() -> pathlib.Path:
+    configured = str(os.getenv("PYTHON_BIN") or "").strip()
+    if configured:
+        return pathlib.Path(configured)
+    linux_venv_python = WEB_ROOT / ".venv-linux" / "bin" / "python"
+    if linux_venv_python.exists():
+        return linux_venv_python
+    windows_venv_python = WEB_ROOT / ".venv" / "Scripts" / "python.exe"
+    if windows_venv_python.exists():
+        return windows_venv_python
+    return ROOT_PYTHON
+
+
+WEB_PYTHON = resolve_web_python()
 
 
 def now_slug() -> str:
@@ -123,7 +137,7 @@ def main() -> int:
     results.append(
         run_command(
             name="document_hard_gate_10g",
-            command=["python3", "scripts/run_document_hard_gate_10g_validation.py"],
+            command=[str(ROOT_PYTHON), "scripts/run_document_hard_gate_10g_validation.py"],
             cwd=REPO_ROOT,
             artifacts_dir=artifacts_dir,
         )
@@ -131,7 +145,7 @@ def main() -> int:
     results.append(
         run_command(
             name="document_hard_gate_10i",
-            command=["python3", "scripts/run_document_hard_gate_10i_validation.py"],
+            command=[str(ROOT_PYTHON), "scripts/run_document_hard_gate_10i_validation.py"],
             cwd=REPO_ROOT,
             artifacts_dir=artifacts_dir,
         )

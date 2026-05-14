@@ -144,7 +144,7 @@ Do ponto de vista de produto, a arquitetura-alvo desejada é:
 - `Admin Geral` não deve ter acesso automático ao conteúdo técnico detalhado do cliente como comportamento padrão.
 - O sistema deve manter compatibilidade entre web e Android quando ambos atuarem no fluxo do inspetor.
 - O roadmap técnico futuro não pode quebrar contratos de negócio sem decisão explícita de produto.
-- O produto deve suportar operação com mesa obrigatória, mesa opcional ou sem mesa conforme pacote ou política do tenant.
+- O produto deve suportar operação sem mesa, com mesa opcional ou com mesa exigida explicitamente por pacote/política do tenant.
 - A política do tenant deve governar quem pode aprovar e emitir: `Inspetor`, `Mesa Avaliadora` ou ambos, sempre com validação humana.
 - Casos em andamento não podem trocar silenciosamente de versão de template ou pré-laudo.
 - Fotos são a evidência padrão do chat; documentos adicionais dependem de família, template e política do tenant.
@@ -160,8 +160,8 @@ Do ponto de vista de produto, a arquitetura-alvo desejada é:
 2. `IA como assistente, humano como autoridade final`
    O sistema deve amplificar produtividade e qualidade, não terceirizar responsabilidade profissional.
 
-3. `Revisão explícita é parte do produto`
-   A mesa não é um acessório operacional; ela é parte constitutiva do fluxo de confiança do sistema.
+3. `Revisão explícita é capacidade do produto, não centro obrigatório`
+   A Mesa Avaliadora é uma ferramenta forte de revisão humana, mas o fluxo principal deve continuar funcionando pelo app mobile e pelo chat web quando o tenant tiver aprovação interna liberada.
 
 4. `Governança não é visibilidade irrestrita`
    Camadas administrativas precisam de controle e métricas, mas não de acesso automático a tudo.
@@ -180,7 +180,7 @@ Do ponto de vista de produto, a arquitetura-alvo desejada é:
 
 ## Decisões já suficientemente estáveis para orientar arquitetura futura
 
-- `Chat Inspetor` e `Mesa Avaliadora` fazem parte do mesmo fluxo de caso técnico.
+- `Chat Inspetor`, app mobile e `Mesa Avaliadora` fazem parte do mesmo fluxo de caso técnico, mas mobile/chat são o caminho principal e Mesa é camada opcional governada por pacote.
 - `App Android` é foco estratégico principal, enquanto o inspetor web continua superfície oficial complementar.
 - O `App Android` é centrado em um chat com IA que pode ou não virar laudo.
 - O núcleo obrigatório do mobile para qualquer tenant inclui IA, histórico, configurações/personalização e geração de relatório genérico.

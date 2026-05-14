@@ -1,0 +1,73 @@
+<section
+    id="workspace-finalization-stage"
+    class="workspace-finalization-stage"
+    aria-label="Finalização do laudo"
+>
+    <header class="workspace-finalization-hero">
+        <div class="workspace-finalization-hero__copy">
+            <span class="workspace-finalization-hero__eyebrow">Finalizar</span>
+            <h3>Fechar o caso com segurança</h3>
+            <p>Revise pendências, gere a prévia e registre a decisão humana antes do documento final.</p>
+        </div>
+        <div class="workspace-finalization-hero__actions">
+            <button
+                type="button"
+                class="technical-record-btn technical-record-btn--ghost"
+                data-workspace-preview-action
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+                <span>Ver prévia</span>
+            </button>
+            <button
+                type="button"
+                class="technical-record-btn technical-record-btn--primary"
+                data-finalizar-inspecao
+                data-inspector-entry="workspace-finalization-primary"
+                aria-label="Finalizar laudo"
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">task_alt</span>
+                <span>Finalizar</span>
+            </button>
+        </div>
+    </header>
+
+    <section class="workspace-finalization-grid" aria-label="Resumo antes da finalização">
+        <article class="workspace-finalization-card workspace-finalization-card--focus">
+            <span class="workspace-finalization-card__eyebrow">Próxima ação</span>
+            <strong>Validar prévia e finalizar pelo fluxo permitido</strong>
+            <p>O servidor ainda aplica o gate técnico, permissões do tenant e política de revisão antes de concluir.</p>
+        </article>
+
+        <article class="workspace-finalization-card">
+            <span class="workspace-finalization-card__eyebrow">Status e pendências</span>
+            <strong>Resolver bloqueios ou justificar override humano</strong>
+            <p>Pendências abertas continuam sendo tratadas no chat, em correções ou na revisão quando ela estiver disponível.</p>
+            <div class="workspace-finalization-card__actions">
+                <button type="button" class="technical-inline-action" data-workspace-channel-tab="correcoes">
+                    <span class="material-symbols-rounded" aria-hidden="true">rule_settings</span>
+                    <span>Correções</span>
+                </button>
+                <button type="button" class="technical-inline-action" data-workspace-channel-tab="anexos">
+                    <span class="material-symbols-rounded" aria-hidden="true">attach_file</span>
+                    <span>Anexos</span>
+                </button>
+            </div>
+        </article>
+
+        <article class="workspace-finalization-card">
+            <span class="workspace-finalization-card__eyebrow">Documento e auditoria</span>
+            <strong>Prévia operacional antes da emissão final</strong>
+            <p>Use a prévia para conferir conteúdo, evidências e revisão humana antes de fechar o ciclo atual.</p>
+            <div class="workspace-finalization-card__actions">
+                <button type="button" class="technical-inline-action" data-workspace-channel-tab="conversa">
+                    <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+                    <span>Voltar ao chat</span>
+                </button>
+                <button type="button" class="technical-inline-action" data-workspace-channel-tab="mesa">
+                    <span class="material-symbols-rounded" aria-hidden="true">verified_user</span>
+                    <span>Revisão</span>
+                </button>
+            </div>
+        </article>
+    </section>
+</section>

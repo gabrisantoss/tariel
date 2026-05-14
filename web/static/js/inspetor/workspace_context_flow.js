@@ -23,6 +23,121 @@
         }
     }
 
+    function definirRootAtivoLocal(root, ativo) {
+        if (!root) return;
+        const deveAtivar = !!ativo;
+        root.dataset.active = deveAtivar ? "true" : "false";
+        root.setAttribute("aria-hidden", String(!deveAtivar));
+        if (deveAtivar) {
+            root.removeAttribute("hidden");
+        } else {
+            root.setAttribute("hidden", "");
+        }
+        try {
+            root.inert = !deveAtivar;
+        } catch (_) {
+            if (deveAtivar) {
+                root.removeAttribute("inert");
+            } else {
+                root.setAttribute("inert", "");
+            }
+        }
+    }
+
+    function limparModoNrVisualDom() {
+        const documentRef = global.document;
+        const painel = documentRef?.getElementById?.("painel-chat");
+        [documentRef?.body, painel].forEach((alvo) => {
+            if (!alvo?.dataset) return;
+            delete alvo.dataset.nrVisualMode;
+            delete alvo.dataset.nrVisualTitle;
+            delete alvo.dataset.nrVisualBadge;
+        });
+
+        const titulo = documentRef?.getElementById?.("workspace-titulo-laudo");
+        if (titulo) {
+            titulo.textContent = "Tariel";
+            titulo.dataset.nrTitleActive = "false";
+        }
+
+        const tituloModo = documentRef?.getElementById?.("workspace-nr-mode-title");
+        if (tituloModo) {
+            tituloModo.textContent = "";
+            tituloModo.hidden = true;
+            tituloModo.setAttribute("aria-hidden", "true");
+        }
+
+        const campo = documentRef?.getElementById?.("campo-mensagem");
+        if (campo) {
+            campo.placeholder = "Peça ao Tariel";
+        }
+    }
+
+    function limparTimelineChatLivreDom() {
+        const documentRef = global.document;
+        const areaMensagens = documentRef?.getElementById?.("area-mensagens");
+        if (!areaMensagens) return;
+        areaMensagens
+            .querySelectorAll(".linha-mensagem:not(#indicador-digitando), .controle-historico-antigo, .skeleton-carregamento")
+            .forEach((node) => node.remove());
+    }
+
+    function forcarLandingAssistenteDom() {
+        const documentRef = global.document;
+        const shell = documentRef?.querySelector?.('[data-inspector-region="workspace-shell"]');
+        const painel = documentRef?.getElementById?.("painel-chat");
+        const roots = {
+            assistant: documentRef?.querySelector?.('[data-workspace-view-root="assistant_landing"]'),
+            history: documentRef?.querySelector?.('[data-workspace-view-root="inspection_history"]'),
+            record: documentRef?.querySelector?.('[data-workspace-view-root="inspection_record"]'),
+            conversation: documentRef?.querySelector?.('[data-workspace-view-root="inspection_conversation"]'),
+            mesa: documentRef?.querySelector?.('[data-workspace-view-root="inspection_mesa"]'),
+            corrections: documentRef?.querySelector?.('[data-workspace-view-root="inspection_corrections"]'),
+            finalization: documentRef?.querySelector?.('[data-workspace-view-root="inspection_finalization"]'),
+        };
+        const assistantLanding = documentRef?.getElementById?.("workspace-assistant-landing");
+
+        if (shell?.dataset) {
+            shell.dataset.workspaceView = "assistant_landing";
+            shell.dataset.active = "true";
+            shell.removeAttribute("hidden");
+            shell.setAttribute("aria-hidden", "false");
+            try {
+                shell.inert = false;
+            } catch (_) {
+                shell.removeAttribute("inert");
+            }
+        }
+
+        if (painel?.dataset) {
+            painel.dataset.laudoAtualId = "";
+            painel.dataset.estadoRelatorio = "sem_relatorio";
+            painel.dataset.workspaceStage = "assistant";
+            painel.dataset.freeChatConversationActive = "false";
+        }
+
+        definirRootAtivoLocal(roots.assistant, true);
+        ["history", "record", "conversation", "mesa", "corrections", "finalization"].forEach((key) => {
+            definirRootAtivoLocal(roots[key], false);
+        });
+        if (assistantLanding) {
+            assistantLanding.removeAttribute("hidden");
+            assistantLanding.setAttribute("aria-hidden", "false");
+        }
+
+        const rodape = documentRef?.querySelector?.(".rodape-entrada");
+        if (rodape) {
+            rodape.removeAttribute("hidden");
+            rodape.setAttribute("aria-hidden", "false");
+        }
+
+        const threadNav = documentRef?.querySelector?.(".thread-nav");
+        if (threadNav) {
+            threadNav.hidden = true;
+            threadNav.setAttribute("aria-hidden", "true");
+        }
+    }
+
     function detailPossuiContextoVisual(detail = {}) {
         const payload = detail && typeof detail === "object" ? detail : {};
         const card = payload?.laudo_card || payload?.laudoCard || payload?.card || {};
@@ -165,25 +280,49 @@
 
     function exibirLandingAssistenteIA(options = {}, dependencies = {}) {
         const limparTimeline = !!options.limparTimeline;
+        const limparContextoChatLivre = options.limparContextoChatLivre === true;
         dependencies.definirRetomadaHomePendente?.(null);
         dependencies.limparFluxoNovoChatFocado?.();
         dependencies.atualizarEstadoModoEntrada?.({}, { reset: true });
+        if (limparContextoChatLivre && dependencies.estado) {
+            dependencies.estado.freeChatTemplateContext = null;
+        }
         dependencies.estado.contextoFixado = [];
         dependencies.estado.chatStatusIA = {
             status: "pronto",
-            texto: "Assistente pronto",
+            texto: "Tariel pronto",
         };
+        dependencies.sincronizarEstadoInspector?.({
+            laudoAtualId: null,
+            estadoRelatorio: "sem_relatorio",
+            forceHomeLanding: false,
+            modoInspecaoUI: "workspace",
+            workspaceStage: "assistant",
+            inspectorScreen: "assistant_landing",
+            inspectorBaseScreen: "assistant_landing",
+            threadTab: "conversa",
+            overlayOwner: "",
+            assistantLandingFirstSendPending: false,
+            freeChatConversationActive: false,
+        }, {
+            persistirStorage: false,
+            syncScreen: false,
+        });
 
         if (limparTimeline) {
             if (typeof global.TarielAPI?.limparHistoricoChat === "function") {
-                global.TarielAPI.limparHistoricoChat();
+                global.TarielAPI.limparHistoricoChat({ emitirEstadoRelatorio: false });
             } else {
                 global.TarielAPI?.limparAreaMensagens?.();
             }
+            limparTimelineChatLivreDom();
         }
 
         dependencies.resetarFiltrosHistoricoWorkspace?.();
         dependencies.definirWorkspaceStage?.("assistant");
+        if (limparContextoChatLivre) {
+            limparModoNrVisualDom();
+        }
         dependencies.aplicarContextoVisualWorkspace?.(dependencies.obterContextoVisualAssistente?.());
         dependencies.definirModoInspecaoUI?.("workspace");
         dependencies.atualizarThreadWorkspace?.("conversa");
@@ -191,17 +330,19 @@
         dependencies.fecharSlashCommandPalette?.();
         dependencies.renderizarResumoOperacionalMesa?.();
         dependencies.renderizarSugestoesComposer?.();
-        dependencies.atualizarStatusChatWorkspace?.("pronto", "Assistente pronto");
+        dependencies.atualizarStatusChatWorkspace?.("pronto", "Tariel pronto");
+        forcarLandingAssistenteDom();
     }
 
     function abrirChatLivreInspector(options = {}, dependencies = {}) {
         const origemNormalizada = String(options.origem || "chat_free_entry").trim() || "chat_free_entry";
+        const forcarLanding = options.forcarLanding === true;
         const snapshotAtual = dependencies.obterSnapshotEstadoInspectorAtual?.();
-        if (dependencies.redirecionarEntradaParaReemissaoWorkspace?.({ origem: origemNormalizada })) {
+        if (!forcarLanding && dependencies.redirecionarEntradaParaReemissaoWorkspace?.({ origem: origemNormalizada })) {
             return false;
         }
         const veioDoPortal = dependencies.origemChatLivreEhPortal?.(origemNormalizada);
-        if (!veioDoPortal && !dependencies.entradaChatLivreDisponivel?.(snapshotAtual)) {
+        if (!forcarLanding && !veioDoPortal && !dependencies.entradaChatLivreDisponivel?.(snapshotAtual)) {
             dependencies.sincronizarVisibilidadeAcoesChatLivre?.(snapshotAtual);
             dependencies.mostrarToast?.(
                 "O chat livre só fica disponível quando não existe laudo ativo.",
@@ -225,23 +366,30 @@
             modoInspecaoUI: "workspace",
             workspaceStage: "assistant",
             threadTab: "conversa",
+            inspectorScreen: "assistant_landing",
+            inspectorBaseScreen: "assistant_landing",
             overlayOwner: "",
             assistantLandingFirstSendPending: false,
             freeChatConversationActive: false,
         }, {
             persistirStorage: false,
         });
-        dependencies.exibirLandingAssistenteIA?.({ limparTimeline: true });
+        dependencies.exibirLandingAssistenteIA?.({
+            limparTimeline: true,
+            limparContextoChatLivre: true,
+        });
         limparURLNovoChat(global);
-
-        const screenFinal = dependencies.sincronizarInspectorScreen?.();
+        const screenFinal = forcarLanding
+            ? "assistant_landing"
+            : dependencies.sincronizarInspectorScreen?.();
+        forcarLandingAssistenteDom();
         dependencies.focarComposerInspector?.();
         dependencies.emitirEventoTariel?.("tariel:assistant-chat-opened", {
             origem: origemNormalizada,
             screen: screenFinal,
         });
 
-        return screenFinal === "assistant_landing";
+        return forcarLanding || screenFinal === "assistant_landing";
     }
 
     function promoverPortalParaChatNoModoFoco(options = {}, dependencies = {}) {
@@ -269,7 +417,7 @@
         dependencies.estado.contextoFixado = [];
         dependencies.estado.chatStatusIA = {
             status: "pronto",
-            texto: "Assistente pronto",
+            texto: "Tariel pronto",
         };
         dependencies.resetarFiltrosHistoricoWorkspace?.();
         dependencies.definirWorkspaceStage?.("assistant");
@@ -279,7 +427,7 @@
         dependencies.renderizarResumoOperacionalMesa?.();
         dependencies.limparPainelPendencias?.();
         dependencies.fecharSlashCommandPalette?.();
-        dependencies.atualizarStatusChatWorkspace?.("pronto", "Assistente pronto");
+        dependencies.atualizarStatusChatWorkspace?.("pronto", "Tariel pronto");
     }
 
     global.TarielInspectorWorkspaceContextFlow = {

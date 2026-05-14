@@ -14,14 +14,12 @@ export interface ThreadHeaderControlsProps {
   chatHasActiveCase: boolean;
   darkMode?: boolean;
   densityScale?: number;
-  finalizacaoDisponivel: boolean;
   fontScale?: number;
   headerSafeTopInset: number;
   keyboardVisible: boolean;
   mesaAcessoPermitido: boolean;
   onOpenNewChat: () => void;
   onOpenHistory: () => void;
-  onOpenFinalizarTab: () => void;
   onOpenSettings: () => void;
   notificacoesNaoLidas: number;
   filaOfflineTotal: number;
@@ -37,14 +35,12 @@ export function ThreadHeaderControls({
   chatHasActiveCase,
   darkMode = false,
   densityScale = 1,
-  finalizacaoDisponivel,
   fontScale = 1,
   headerSafeTopInset,
   keyboardVisible,
   mesaAcessoPermitido,
   onOpenNewChat,
   onOpenHistory,
-  onOpenFinalizarTab,
   onOpenSettings,
   notificacoesNaoLidas,
   filaOfflineTotal,
@@ -481,52 +477,6 @@ export function ThreadHeaderControls({
                     </Text>
                   </View>
                 ) : null}
-              </Pressable>
-            ) : null}
-            {finalizacaoDisponivel ? (
-              <Pressable
-                accessibilityLabel={t("Abrir aba Finalizar")}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: vendoFinalizacao }}
-                onPress={onOpenFinalizarTab}
-                style={[
-                  styles.threadTab,
-                  darkMode ? styles.threadTabDark : null,
-                  compactHeader ? styles.threadTabCompact : null,
-                  {
-                    minHeight: 40 * densityScale,
-                    paddingVertical: 9 * densityScale,
-                  },
-                  vendoFinalizacao ? styles.threadTabActive : null,
-                  vendoFinalizacao && darkMode
-                    ? styles.threadTabActiveDark
-                    : null,
-                  vendoFinalizacao ? { borderColor: accentBorderColor } : null,
-                ]}
-                testID="finalizar-tab-button"
-              >
-                <MaterialCommunityIcons
-                  color={
-                    vendoFinalizacao ? tabActiveIconColor : tabIdleIconColor
-                  }
-                  name="check-decagram-outline"
-                  size={16}
-                />
-                <Text
-                  style={[
-                    styles.threadTabText,
-                    darkMode ? styles.threadTabTextDark : null,
-                    compactHeader ? styles.threadTabTextCompact : null,
-                    vendoFinalizacao ? styles.threadTabTextActive : null,
-                    vendoFinalizacao && darkMode
-                      ? styles.threadTabTextActiveDark
-                      : null,
-                    vendoFinalizacao ? { color: visibleAccentColor } : null,
-                    { fontSize: 13 * fontScale, lineHeight: 17 * fontScale },
-                  ]}
-                >
-                  {t("Finalizar")}
-                </Text>
               </Pressable>
             ) : null}
           </View>

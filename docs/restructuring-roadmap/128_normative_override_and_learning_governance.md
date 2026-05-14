@@ -330,7 +330,7 @@ Em nivel de laudo, recomenda-se tambem:
 - `web/nucleo/inspetor/confianca_ia.py`
   - ja produz sinais de validacao humana e pode alimentar criticidade/gates;
 - `web/app/domains/chat/gate_helpers.py`
-  - precisa decidir quando conflito normativo derruba autonomia e exige Mesa;
+  - precisa decidir quando conflito normativo derruba autonomia e recomenda Mesa;
 - `web/app/domains/chat/report_finalize_stream_shadow.py`
   - ponto natural para consolidar o veredito final estruturado do caso.
 

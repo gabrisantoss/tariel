@@ -51,10 +51,11 @@ describe("buildThreadHeaderControlsProps", () => {
     );
 
     expect(props.chatHasActiveCase).toBe(true);
-    expect(props.finalizacaoDisponivel).toBe(false);
+    expect("finalizacaoDisponivel" in props).toBe(false);
+    expect("onOpenFinalizarTab" in props).toBe(false);
   });
 
-  it("mantém Finalizar disponível no chat guiado formal", () => {
+  it("não expõe Finalizar mesmo no chat guiado formal", () => {
     const props = buildThreadHeaderControlsProps(
       buildHeaderInput({
         laudoId: 45,
@@ -75,7 +76,9 @@ describe("buildThreadHeaderControlsProps", () => {
       }),
     );
 
-    expect(props.finalizacaoDisponivel).toBe(true);
+    expect(props.chatHasActiveCase).toBe(true);
+    expect("finalizacaoDisponivel" in props).toBe(false);
+    expect("onOpenFinalizarTab" in props).toBe(false);
   });
 
   it("não usa composer para corrigir PDF do chat livre", async () => {

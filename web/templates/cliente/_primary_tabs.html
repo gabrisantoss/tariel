@@ -2,15 +2,15 @@
 {% set _admin_secao = cliente_admin_section_inicial | default("overview") %}
 {% set _path = request.url.path if request is defined else "" %}
 {% set _current_key = "home" %}
-{% set _tab_title = "Visão geral" %}
-{% set _tab_desc = "Organização, equipe e plano" %}
+{% set _tab_title = "Início" %}
+{% set _tab_desc = "Ações, equipe e plano" %}
 {% if _path.startswith("/cliente/organizacao/equipe") %}
     {% set _current_key = "equipe" %}
-    {% set _tab_title = "Equipe e usuários" %}
+    {% set _tab_title = "Equipe e acessos" %}
     {% set _tab_desc = "Perfis, convites e acessos" %}
 {% elif _path.startswith("/cliente/plano") %}
     {% set _current_key = "plano" %}
-    {% set _tab_title = "Plano e assinatura" %}
+    {% set _tab_title = "Plano" %}
     {% set _tab_desc = "Uso, limites e contratação" %}
 {% elif _path.startswith("/cliente/documentos") or _tab_inicial == "documentos" %}
     {% set _current_key = "documentos" %}
@@ -22,11 +22,11 @@
     {% set _tab_desc = "Chamados e histórico da conta" %}
 {% elif _admin_secao == "team" %}
     {% set _current_key = "equipe" %}
-    {% set _tab_title = "Equipe e usuários" %}
+    {% set _tab_title = "Equipe e acessos" %}
     {% set _tab_desc = "Perfis, convites e acessos" %}
 {% elif _admin_secao == "capacity" %}
     {% set _current_key = "plano" %}
-    {% set _tab_title = "Plano e assinatura" %}
+    {% set _tab_title = "Plano" %}
     {% set _tab_desc = "Uso, limites e contratação" %}
 {% elif _admin_secao == "support" %}
     {% set _current_key = "suporte" %}
@@ -42,7 +42,8 @@
 
         <div class="cliente-tabs__current">
             <div class="cliente-management-breadcrumb" aria-label="Local atual">
-                <span>Portal Cliente</span>
+                <span>Portal da Empresa</span>
+                <span hidden>Portal Cliente</span>
                 <span aria-hidden="true">/</span>
                 <strong id="cliente-shell-current-title">{{ _tab_title | e }}</strong>
             </div>
@@ -68,7 +69,7 @@
         <div class="cliente-tabs__actions">
             <a class="cliente-management-action" href="/cliente/dashboard">
                 <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
-                <span>Dashboard</span>
+                <span>Indicadores</span>
             </a>
             <button
                 id="cliente-areas-toggle"
@@ -92,19 +93,19 @@
     </div>
 
     <div class="cliente-management-links" aria-label="Áreas de gestão">
-        <a id="tab-admin" class="cliente-management-link{% if _current_key == 'home' %} is-active{% endif %}" href="{{ cliente_surface_routes.admin | default('/cliente/home') | e }}" data-surface-title="Visão geral" data-surface-desc="Organização, equipe e plano">
+        <a id="tab-admin" class="cliente-management-link{% if _current_key == 'home' %} is-active{% endif %}" href="{{ cliente_surface_routes.admin | default('/cliente/home') | e }}" data-surface-title="Início" data-surface-desc="Ações, equipe e plano">
             <span class="material-symbols-rounded" aria-hidden="true">home</span>
-            <span>Visão geral</span>
+            <span>Início</span>
             <small id="tab-admin-count">0</small>
         </a>
-        <a id="tab-equipe" class="cliente-management-link{% if _current_key == 'equipe' %} is-active{% endif %}" href="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}" data-surface-title="Equipe e usuários" data-surface-desc="Perfis, convites e acessos">
+        <a id="tab-equipe" class="cliente-management-link{% if _current_key == 'equipe' %} is-active{% endif %}" href="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}" data-surface-title="Equipe e acessos" data-surface-desc="Perfis, convites e permissões">
             <span class="material-symbols-rounded" aria-hidden="true">groups</span>
-            <span>Equipe e usuários</span>
+            <span>Equipe e acessos</span>
             <small id="tab-equipe-count">0</small>
         </a>
-        <a id="tab-plano" class="cliente-management-link{% if _current_key == 'plano' %} is-active{% endif %}" href="{{ cliente_surface_routes.plano | default('/cliente/plano') | e }}" data-surface-title="Plano e assinatura" data-surface-desc="Uso, limites e contratação">
+        <a id="tab-plano" class="cliente-management-link{% if _current_key == 'plano' %} is-active{% endif %}" href="{{ cliente_surface_routes.plano | default('/cliente/plano') | e }}" data-surface-title="Plano" data-surface-desc="Uso, limites e contratação">
             <span class="material-symbols-rounded" aria-hidden="true">credit_card</span>
-            <span>Plano e assinatura</span>
+            <span>Plano</span>
             <small id="tab-plano-count">{{ empresa.plano_ativo | default('Plano', true) | e }}</small>
         </a>
         <a id="tab-documentos" class="cliente-management-link{% if _current_key == 'documentos' %} is-active{% endif %}" href="{{ cliente_surface_routes.documentos | default('/cliente/documentos') | e }}" data-surface-title="Documentos" data-surface-desc="Laudos emitidos">
@@ -122,9 +123,9 @@
     <div id="cliente-areas-menu" class="cliente-areas-menu cliente-management-menu" role="menu" hidden>
         <ul class="cliente-areas-list" role="none">
             <li role="none">
-                <a class="cliente-management-menu-link{% if _current_key == 'home' %} is-active{% endif %}" href="{{ cliente_surface_routes.admin | default('/cliente/home') | e }}" role="menuitem">Visão geral</a>
-                <a class="cliente-management-menu-link{% if _current_key == 'equipe' %} is-active{% endif %}" href="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}" role="menuitem">Equipe e usuários</a>
-                <a class="cliente-management-menu-link{% if _current_key == 'plano' %} is-active{% endif %}" href="{{ cliente_surface_routes.plano | default('/cliente/plano') | e }}" role="menuitem">Plano e assinatura</a>
+                <a class="cliente-management-menu-link{% if _current_key == 'home' %} is-active{% endif %}" href="{{ cliente_surface_routes.admin | default('/cliente/home') | e }}" role="menuitem">Início</a>
+                <a class="cliente-management-menu-link{% if _current_key == 'equipe' %} is-active{% endif %}" href="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}" role="menuitem">Equipe e acessos</a>
+                <a class="cliente-management-menu-link{% if _current_key == 'plano' %} is-active{% endif %}" href="{{ cliente_surface_routes.plano | default('/cliente/plano') | e }}" role="menuitem">Plano</a>
                 <a class="cliente-management-menu-link{% if _current_key == 'documentos' %} is-active{% endif %}" href="{{ cliente_surface_routes.documentos | default('/cliente/documentos') | e }}" role="menuitem">Documentos</a>
                 <a class="cliente-management-menu-link{% if _current_key == 'suporte' %} is-active{% endif %}" href="{{ cliente_surface_routes.suporte | default('/cliente/suporte') | e }}" role="menuitem">Suporte</a>
             </li>

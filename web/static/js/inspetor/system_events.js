@@ -208,7 +208,9 @@
             const onEstadoRelatorio = (event) => {
                 const detail = event?.detail || {};
                 registrarUltimoPayloadStatusRelatorioWorkspace(detail);
-                const estadoRelatorio = normalizarEstadoRelatorio(detail.estado);
+                const estadoRelatorio = normalizarEstadoRelatorio(
+                    detail.estado_normalizado ?? detail.estado
+                );
                 const laudoId = Number(detail?.laudo_id ?? detail?.laudoId ?? 0) || null;
                 const snapshotAtual = obterSnapshotEstadoInspectorAtual();
                 const laudoIdEfetivo =

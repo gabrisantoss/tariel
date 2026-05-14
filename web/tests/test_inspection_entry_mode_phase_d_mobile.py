@@ -315,6 +315,9 @@ def test_chat_guiado_vincula_evidencia_ao_bundle_do_caso_e_registra_mesa(
     assert draft["mesa_handoff"]["review_mode"] == "mesa_required"
     assert draft["mesa_handoff"]["reason_code"] == "policy_review_mode"
     assert "[pre_laudo_operacional]" in prompt_capturado["mensagem"]
+    assert "[foco_template_guiado]" in prompt_capturado["mensagem"]
+    assert "NR35 Linha de Vida" in prompt_capturado["mensagem"]
+    assert "Foco normativo obrigatorio" in prompt_capturado["mensagem"]
     assert "Contexto da vistoria" in prompt_capturado["mensagem"]
     assert resposta_mensagens.json()["pre_laudo_summary"]["status"] in prompt_capturado["mensagem"]
     for pergunta in resposta_mensagens.json()["pre_laudo_summary"]["next_questions"]:

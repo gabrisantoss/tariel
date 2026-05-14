@@ -26,6 +26,7 @@
             normalizado === "correction" ||
             normalizado === "corrections"
         ) return "correcoes";
+        if (normalizado === "finalizar" || normalizado === "finalizacao" || normalizado === "finalização" || normalizado === "finish") return "finalizar";
         if (normalizado === "mesa") return "mesa";
         return "conversa";
     }

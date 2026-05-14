@@ -726,7 +726,7 @@ describe("buildThreadContextState", () => {
     );
   });
 
-  it("expõe a finalização canônica do caso quando o chat permite encerrar", () => {
+  it("não expõe Finalizar caso como ação principal do chat", () => {
     const onOpenQualityGate = jest.fn();
     const state = buildThreadContextState(
       criarInput({
@@ -754,20 +754,13 @@ describe("buildThreadContextState", () => {
       }) as never,
     );
 
-    expect(state.threadActions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          key: "chat-quality-gate",
-          label: "Finalizar caso",
-          onPress: expect.any(Function),
-        }),
-      ]),
-    );
-    const action = state.threadActions.find(
-      (item) => item.key === "chat-quality-gate",
-    );
-    action?.onPress();
-    expect(onOpenQualityGate).toHaveBeenCalled();
+    expect(
+      state.threadActions.find((item) => item.key === "chat-quality-gate"),
+    ).toBeUndefined();
+    expect(
+      state.threadActions.find((item) => item.label === "Finalizar caso"),
+    ).toBeUndefined();
+    expect(onOpenQualityGate).not.toHaveBeenCalled();
   });
 
   it("mostra a prontidão do pre-laudo por blocos no contexto do caso", () => {
@@ -967,13 +960,11 @@ describe("buildThreadContextState", () => {
           label: "Abrir Revisão",
           onPress: onOpenMesaTab,
         }),
-        expect.objectContaining({
-          key: "chat-quality-gate",
-          label: "Finalizar caso",
-          onPress: expect.any(Function),
-        }),
       ]),
     );
+    expect(
+      state.threadActions.find((item) => item.key === "chat-quality-gate"),
+    ).toBeUndefined();
   });
 
   it("mostra emissão governada em curso quando o PDF já entrou no trilho oficial", () => {

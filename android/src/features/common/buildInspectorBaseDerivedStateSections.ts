@@ -97,7 +97,7 @@ export function buildInspectorConversationDerivedState(
 
   const conversaAtiva = conversa;
   const vendoMesa = abaAtiva === "mesa";
-  const vendoFinalizacao = abaAtiva === "finalizar";
+  const vendoFinalizacao = false;
   const mensagensVisiveis = conversaAtiva?.mensagens || [];
   const usuarioSessao = session?.bootstrap.usuario;
   const mobileChatFirstGovernance =

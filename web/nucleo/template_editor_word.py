@@ -92,16 +92,16 @@ def estilo_editor_padrao() -> dict[str, Any]:
             "margens_mm": {"top": 18, "right": 14, "bottom": 18, "left": 14},
         },
         "tipografia": {
-            "font_family": "Inter, 'Segoe UI', Arial, sans-serif",
+            "font_family": "Aptos, 'Segoe UI', Arial, sans-serif",
             "font_size_px": 12,
-            "line_height": 1.45,
+            "line_height": 1.5,
         },
         "tema": {
-            "primaria": "#17324d",
-            "secundaria": "#55697a",
-            "acento": "#b6813a",
-            "suave": "#eef3f7",
-            "borda": "#c5d2dc",
+            "primaria": "#0f2b46",
+            "secundaria": "#627287",
+            "acento": "#28b7d3",
+            "suave": "#f6f9fc",
+            "borda": "#ccdae8",
         },
         "cabecalho_texto": "",
         "rodape_texto": "",
@@ -651,12 +651,14 @@ def montar_html_documento_editor(
       right: 0;
       height: 14mm;
       font-size: 10px;
-      border-bottom: 1px solid var(--tariel-border);
-      color: var(--tariel-secondary);
+      border-bottom: 0;
+      color: #e8f1f8;
       padding: 2mm 4mm;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      background: #fff;
+      background:
+        linear-gradient(90deg, #28b7d3 0 30mm, transparent 30mm),
+        linear-gradient(135deg, #091827, var(--tariel-primary));
     }}
     .tariel-footer {{
       position: fixed;
@@ -668,7 +670,7 @@ def montar_html_documento_editor(
       border-top: 1px solid var(--tariel-border);
       color: var(--tariel-secondary);
       padding: 2mm 4mm;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.94);
     }}
     .tariel-body p {{
       margin: 0 0 10px;
@@ -687,8 +689,9 @@ def montar_html_documento_editor(
       color: var(--tariel-primary);
       font-size: 16px;
       margin-top: 18px;
-      padding-bottom: 4px;
-      border-bottom: 2px solid var(--tariel-border);
+      padding: 0 0 6px 12px;
+      border-left: 4px solid var(--tariel-accent);
+      border-bottom: 1px solid var(--tariel-border);
       letter-spacing: 0.03em;
       text-transform: uppercase;
     }}
@@ -726,7 +729,7 @@ def montar_html_documento_editor(
     .tariel-body blockquote {{
       margin: 0 0 10px;
       padding: 10px 14px;
-      border-left: 4px solid var(--tariel-primary);
+      border-left: 4px solid var(--tariel-accent);
       background: var(--tariel-soft);
       color: var(--tariel-primary);
     }}
@@ -767,7 +770,7 @@ def montar_html_documento_editor(
     .tariel-body .doc-lead {{
       margin-bottom: 14px;
       padding: 10px 12px;
-      border-left: 4px solid var(--tariel-primary);
+      border-left: 4px solid var(--tariel-accent);
       background: var(--tariel-soft);
       color: #24323f;
     }}
@@ -823,7 +826,7 @@ def montar_html_documento_editor(
       padding: 14px;
       border: 1px solid var(--tariel-border);
       border-radius: 16px;
-      background: linear-gradient(135deg, rgba(23, 50, 77, 0.05), rgba(182, 129, 58, 0.08));
+      background: linear-gradient(135deg, rgba(40, 183, 211, 0.10), rgba(15, 43, 70, 0.06));
       page-break-inside: avoid;
     }}
     .tariel-verification-copy {{
@@ -886,13 +889,62 @@ def montar_html_documento_editor(
       page-break-inside: avoid;
     }}
     .tariel-body .doc-cover-shell {{
+      position: relative;
       display: grid;
       align-content: center;
       gap: 12px;
-      min-height: 112mm;
-      margin-bottom: 18px;
-      padding: 16mm 0 12mm;
-      border-bottom: 2px solid rgba(23, 50, 77, 0.18);
+      min-height: 100mm;
+      margin-bottom: 20px;
+      padding: 18mm 16mm 14mm;
+      border: 1px solid rgba(40, 183, 211, 0.24);
+      border-radius: 24px;
+      background:
+        linear-gradient(90deg, rgba(20, 89, 130, 0.72), rgba(9, 24, 39, 0.08) 42%),
+        radial-gradient(circle at 88% 18%, rgba(40, 183, 211, 0.28), transparent 30%),
+        linear-gradient(135deg, #091827, #0f2b46);
+      color: #fff;
+      overflow: hidden;
+    }}
+    .tariel-body .doc-cover-shell::before {{
+      content: "TARIEL.IA";
+      position: absolute;
+      top: 12mm;
+      left: 16mm;
+      color: rgba(255, 255, 255, 0.72);
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+    }}
+    .tariel-body .doc-cover-shell::after {{
+      content: "";
+      position: absolute;
+      right: 16mm;
+      bottom: 16mm;
+      width: 42mm;
+      height: 42mm;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 18px;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.92) 10%,
+          transparent 10% 20%,
+          rgba(255, 255, 255, 0.92) 20% 30%,
+          transparent 30% 42%,
+          rgba(255, 255, 255, 0.92) 42% 52%,
+          transparent 52%
+        ),
+        linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.92) 10%,
+          transparent 10% 20%,
+          rgba(255, 255, 255, 0.92) 20% 30%,
+          transparent 30% 42%,
+          rgba(255, 255, 255, 0.92) 42% 52%,
+          transparent 52%
+        );
+      opacity: 0.18;
     }}
     .tariel-body .doc-title {{
       margin-bottom: 0;
@@ -901,6 +953,11 @@ def montar_html_documento_editor(
       line-height: 1.08;
       letter-spacing: 0.005em;
     }}
+    .tariel-body .doc-cover-shell .doc-title {{
+      color: #fff;
+      max-width: 70%;
+      margin-top: 12mm;
+    }}
     .tariel-body .doc-subtitle {{
       margin: 0;
       color: var(--tariel-secondary);
@@ -908,6 +965,10 @@ def montar_html_documento_editor(
       font-size: 12px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }}
+    .tariel-body .doc-cover-shell .doc-subtitle {{
+      color: rgba(232, 241, 248, 0.86);
+      max-width: 62%;
     }}
     .tariel-body .doc-identity-bar {{
       display: flex;
@@ -928,6 +989,11 @@ def montar_html_documento_editor(
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }}
+    .tariel-body .doc-cover-shell .doc-chip {{
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.10);
+      color: rgba(255, 255, 255, 0.88);
+    }}
     .tariel-body .doc-opening-panel {{
       padding: 16px 18px;
       border: 1px solid rgba(23, 50, 77, 0.12);
@@ -936,11 +1002,19 @@ def montar_html_documento_editor(
         linear-gradient(180deg, rgba(23, 50, 77, 0.04), rgba(23, 50, 77, 0.01)),
         #fff;
     }}
+    .tariel-body .doc-cover-shell .doc-opening-panel {{
+      max-width: 64%;
+      border-color: rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.10);
+    }}
     .tariel-body .doc-opening-copy {{
       margin: 0;
       color: #273545;
       font-size: 13px;
       line-height: 1.65;
+    }}
+    .tariel-body .doc-cover-shell .doc-opening-copy {{
+      color: rgba(255, 255, 255, 0.88);
     }}
     .tariel-body .doc-section {{
       display: grid;
@@ -953,7 +1027,8 @@ def montar_html_documento_editor(
     }}
     .tariel-body .doc-section-heading {{
       margin: 0;
-      padding: 0 0 7px;
+      padding: 0 0 7px 12px;
+      border-left: 4px solid var(--tariel-accent);
       border-bottom: 1px solid rgba(23, 50, 77, 0.14);
       font-size: 16px;
       letter-spacing: 0.08em;
@@ -1054,7 +1129,7 @@ def montar_html_documento_editor(
       border-top: 0;
     }}
     .tariel-body .doc-table-head {{
-      background: linear-gradient(180deg, rgba(23, 50, 77, 0.08), rgba(23, 50, 77, 0.04));
+      background: linear-gradient(180deg, rgba(40, 183, 211, 0.12), rgba(15, 43, 70, 0.04));
     }}
     .tariel-body .doc-table-head-copy {{
       margin: 0;
@@ -1096,10 +1171,10 @@ def montar_html_documento_editor(
       display: grid;
       gap: 10px;
       padding: 16px;
-      border: 1px solid rgba(159, 111, 47, 0.26);
+      border: 1px solid rgba(244, 123, 32, 0.26);
       border-radius: 18px;
       background:
-        linear-gradient(180deg, rgba(159, 111, 47, 0.08), rgba(23, 50, 77, 0.02)),
+        linear-gradient(180deg, rgba(244, 123, 32, 0.08), rgba(15, 43, 70, 0.02)),
         #fff;
     }}
     .tariel-body .doc-status-chip {{
@@ -1439,28 +1514,34 @@ def _gerar_pdf_fallback_documental(
     pdf.set_author("Tariel.ia")
     pdf.add_page()
 
-    pdf.set_draw_color(204, 214, 222)
-    pdf.set_fill_color(243, 246, 248)
-    pdf.set_text_color(96, 114, 132)
-    pdf.set_font("helvetica", "B", 9)
-    pdf.cell(
-        0,
-        7,
-        _latin1_text(view_model.get("eyebrow") or "Tariel | Documento Tecnico"),
-        new_x=XPos.LMARGIN,
-        new_y=YPos.NEXT,
-    )
-    pdf.ln(1)
-
-    pdf.set_text_color(23, 50, 77)
-    pdf.set_font("helvetica", "B", 18)
+    pdf.set_fill_color(9, 24, 39)
+    pdf.rect(0, 0, pdf.w, 62, style="F")
+    pdf.set_fill_color(20, 89, 130)
+    pdf.rect(0, 0, 56, 62, style="F")
+    pdf.set_fill_color(40, 183, 211)
+    pdf.rect(0, 58, pdf.w, 4, style="F")
+    pdf.set_xy(16, 13)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("helvetica", "B", 8)
+    pdf.cell(0, 5, "TARIEL.IA", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_xy(16, 24)
+    pdf.set_font("helvetica", "B", 21)
     pdf.multi_cell(
-        0,
+        124,
         9,
         _latin1_text(view_model.get("title") or "Laudo Tecnico Tariel"),
         new_x=XPos.LMARGIN,
         new_y=YPos.NEXT,
     )
+    pdf.set_xy(150, 18)
+    pdf.set_draw_color(184, 205, 222)
+    pdf.set_fill_color(255, 255, 255)
+    pdf.rect(148, 16, 46, 30, style="DF")
+    pdf.set_xy(154, 23)
+    pdf.set_text_color(96, 114, 132)
+    pdf.set_font("helvetica", "B", 8)
+    pdf.cell(34, 5, _latin1_text(view_model.get("eyebrow") or "Documento Tecnico"), align="C")
+    pdf.set_y(74)
     subtitle = str(view_model.get("subtitle") or "").strip()
     if subtitle:
         pdf.set_text_color(96, 114, 132)
@@ -1491,7 +1572,11 @@ def _gerar_pdf_fallback_documental(
 
     for section in list(view_model.get("sections") or []):
         pdf.ln(4)
-        pdf.set_text_color(23, 50, 77)
+        y_secao = pdf.get_y()
+        pdf.set_fill_color(40, 183, 211)
+        pdf.rect(pdf.l_margin, y_secao + 1, 2.4, 8.5, style="F")
+        pdf.set_x(pdf.l_margin + 6)
+        pdf.set_text_color(15, 43, 70)
         pdf.set_font("helvetica", "B", 12)
         pdf.multi_cell(
             0,
@@ -1500,6 +1585,9 @@ def _gerar_pdf_fallback_documental(
             new_x=XPos.LMARGIN,
             new_y=YPos.NEXT,
         )
+        pdf.set_draw_color(204, 218, 232)
+        pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
+        pdf.ln(2)
         intro = str(section.get("intro") or "").strip()
         if intro:
             pdf.set_text_color(96, 114, 132)
@@ -1593,10 +1681,17 @@ def _gerar_pdf_fallback_texto(
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("helvetica", "B", 14)
+    pdf.set_fill_color(9, 24, 39)
+    pdf.rect(0, 0, pdf.w, 42, style="F")
+    pdf.set_fill_color(40, 183, 211)
+    pdf.rect(0, 38, pdf.w, 4, style="F")
+    pdf.set_xy(16, 13)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("helvetica", "B", 18)
     pdf.cell(0, 8, "Documento Tecnico Tariel", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.ln(3)
+    pdf.set_y(56)
     pdf.set_font("helvetica", "", 11)
+    pdf.set_text_color(9, 24, 39)
     pdf.multi_cell(0, 6, _latin1_text(texto))
     verification = public_verification if isinstance(public_verification, dict) else {}
     verification_url = str(verification.get("verification_url") or "").strip()

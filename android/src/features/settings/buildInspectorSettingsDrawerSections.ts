@@ -294,7 +294,10 @@ export function buildInspectorSecuritySectionProps(
 
 export function buildInspectorSupportAndSystemSectionProps(
   input: InspectorSettingsSupportAndSystemSectionInput &
-    Pick<InspectorSettingsOverviewSectionInput, "planoResumoConfiguracao">,
+    Pick<
+      InspectorSettingsOverviewSectionInput,
+      "handleAbrirCentralAtividade" | "planoResumoConfiguracao"
+    >,
 ): Pick<
   SettingsDrawerPanelBuilderInput,
   "supportSectionProps" | "systemSectionProps"
@@ -325,6 +328,7 @@ export function buildInspectorSupportAndSystemSectionProps(
     systemSectionProps: {
       appBuildChannel: input.appBuildChannel,
       appVersionLabel: input.appVersionLabel,
+      onAbrirCentralAtividade: input.handleAbrirCentralAtividade,
       onPermissoes: input.handlePermissoes,
       onSobreApp: input.handleAbrirSobreApp,
       resumoPermissoes: input.resumoPermissoes,

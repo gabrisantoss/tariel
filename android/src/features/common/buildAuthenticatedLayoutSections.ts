@@ -10,7 +10,6 @@ import type { ThreadConversationPaneProps } from "../chat/ThreadConversationPane
 import {
   hasCaseSurfaceAction,
   hasFreeChatDocumentReviewFlow,
-  hasFormalCaseWorkflow,
 } from "../chat/caseLifecycle";
 import { guidedInspectionEmptyStateImageSource } from "../chat/guidedInspectionEmptyStateAssets";
 import { guidedInspectionAccentColorForTemplate } from "../chat/guidedInspectionPresentation";
@@ -236,32 +235,10 @@ export function buildThreadConversationPaneProps(
 export function buildThreadHeaderControlsProps(
   input: AuthenticatedLayoutInput,
 ): ThreadHeaderControlsPanelProps {
-  const freeChatDocumentReviewFlow = hasFreeChatDocumentReviewFlow({
-    conversation: input.conversaAtiva,
-    entryModeEffective:
-      input.conversaAtiva?.entryModeEffective ||
-      input.conversaAtiva?.laudoCard?.entry_mode_effective,
-    workflowMode: input.conversaAtiva?.caseWorkflowMode,
-  });
-  const finalizacaoDisponivel = Boolean(
-    input.conversaAtiva?.laudoId &&
-    !freeChatDocumentReviewFlow &&
-    hasFormalCaseWorkflow({
-      allowedSurfaceActions: input.conversaAtiva?.allowedSurfaceActions,
-      conversation: input.conversaAtiva,
-      entryModeEffective:
-        input.conversaAtiva?.entryModeEffective ||
-        input.conversaAtiva?.laudoCard?.entry_mode_effective,
-      lifecycleStatus: input.conversaAtiva?.caseLifecycleStatus,
-      workflowMode: input.conversaAtiva?.caseWorkflowMode,
-    }),
-  );
-
   return {
     accentColor: input.accentColor,
     chatHasActiveCase: Boolean(input.conversaAtiva?.laudoId),
     darkMode: input.settingsPrintDarkMode,
-    finalizacaoDisponivel,
     filaOfflineTotal: input.filaOfflineOrdenada.length,
     densityScale: input.densityScale,
     fontScale: input.fontScale,
@@ -274,7 +251,6 @@ export function buildThreadHeaderControlsProps(
       void input.handleAbrirNovoChat();
     },
     onOpenChatTab: () => input.setAbaAtiva("chat"),
-    onOpenFinalizarTab: () => input.setAbaAtiva("finalizar"),
     onOpenHistory: input.handleAbrirHistorico,
     onOpenMesaTab: () => input.setAbaAtiva("mesa"),
     onOpenSettings: input.handleAbrirConfiguracoes,

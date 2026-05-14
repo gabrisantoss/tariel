@@ -51,23 +51,23 @@
             sincronizarVisibilidadeMesaGovernada();
 
             if (stage === "assistant") {
-                caption = "Canal IA";
-                status = "Conversa em foco";
+                caption = "Chat";
+                status = "IA";
             } else if (tab === "historico") {
-                caption = "Histórico da conversa";
-                status = "Mensagens anteriores no mesmo chat";
+                caption = "Histórico";
+                status = "Conversas";
             } else if (tab === "anexos") {
-                caption = "Evidências e anexos do laudo";
-                status = "Arquivos e provas em um só lugar";
+                caption = "Anexos";
+                status = "Evidências";
             } else if (tab === "correcoes") {
-                caption = "Correções estruturadas do laudo";
-                status = "Ajustes guiados no documento";
+                caption = "Correções";
+                status = "Laudo";
             } else if (tab === "mesa") {
-                caption = "Canal Revisão Técnica";
-                status = "Troca com a Revisão Técnica";
+                caption = "Revisão";
+                status = "Mesa";
             } else {
-                caption = "Canal IA";
-                status = "Conversa e coleta no mesmo fluxo";
+                caption = "Chat";
+                status = "IA";
             }
 
             if (el.workspaceNavCaption) {
@@ -114,13 +114,30 @@
             const evidencias = ctx.actions.contarEvidenciasWorkspace?.() || 0;
             const pendencias = Number(estado.qtdPendenciasAbertas || 0) || 0;
             const resumoMesa = ctx.actions.obterResumoOperacionalMesa?.() || {};
+            const laudoAtivo = !!obterLaudoAtivoIdSeguro();
+            const contextoChatLivre = !laudoAtivo
+                && estado.freeChatTemplateContext
+                && typeof estado.freeChatTemplateContext === "object"
+                ? estado.freeChatTemplateContext
+                : null;
+            const conversaLivrePersonalizada =
+                !!contextoChatLivre
+                && (stage === "assistant" || ctx.actions.conversaWorkspaceModoChatAtivo?.());
             const statusAtual = stage === "assistant"
-                ? "Chat livre"
-                : String(
-                    estado.workspaceVisualContext?.statusBadge ||
-                    el.workspaceStatusBadge?.textContent ||
-                    "Em coleta"
-                ).trim() || "Em coleta";
+                ? (
+                    conversaLivrePersonalizada
+                        ? `Chat ${String(contextoChatLivre.title || "livre").trim()}`
+                        : "Chat livre"
+                )
+                : (
+                    conversaLivrePersonalizada
+                        ? `Chat ${String(contextoChatLivre.title || "livre").trim()}`
+                        : String(
+                            estado.workspaceVisualContext?.statusBadge ||
+                            el.workspaceStatusBadge?.textContent ||
+                            "Em coleta"
+                        ).trim() || "Em coleta"
+                );
 
             if (el.workspaceSummaryState) {
                 el.workspaceSummaryState.textContent = statusAtual;
@@ -137,11 +154,12 @@
                     : "Mesa fora do plano";
             }
             if (el.workspaceModeChip) {
-                const laudoAtivo = !!obterLaudoAtivoIdSeguro();
                 const nomeTemplate = NOMES_TEMPLATES?.[estado.tipoTemplateAtivo] || NOMES_TEMPLATES?.padrao || "Laudo";
                 let modo = "Chat livre";
                 if (tab === "correcoes") {
                     modo = "Correções";
+                } else if (conversaLivrePersonalizada) {
+                    modo = `Chat ${String(contextoChatLivre.title || "livre").trim()}`;
                 } else if (stage !== "assistant" && laudoAtivo) {
                     modo = estado.tipoTemplateAtivo === "padrao"
                         ? "Laudo livre"

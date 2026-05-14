@@ -11,8 +11,13 @@
             marcarForcaTelaInicial,
         } = dependencies;
         const preservarContexto = options.preservarContexto !== false;
-        const homeDestino = String(destino || "/app/?home=1").trim() || "/app/?home=1";
+        const homeDestino = String(destino || "/").trim() || "/";
         let desativou = true;
+
+        if (homeDestino === "/" || homeDestino.startsWith("/#")) {
+            windowRef.location.assign(homeDestino);
+            return;
+        }
 
         if (!preservarContexto) {
             desativou = await desativarContextoAtivoParaHome?.();
@@ -35,7 +40,7 @@
     }
 
     function processarAcaoHome(detail = {}, dependencies = {}) {
-        const destino = String(detail?.destino || "/app/?home=1").trim() || "/app/?home=1";
+        const destino = String(detail?.destino || "/").trim() || "/";
         return dependencies.navegarParaHome?.(destino, {
             preservarContexto: detail?.preservarContexto !== false,
         });
@@ -99,6 +104,129 @@
     function aplicarPrePromptDaAcaoRapida(botao, dependencies = {}) {
         const texto = String(botao?.dataset?.preprompt || "").trim();
         return dependencies.inserirTextoNoComposer?.(texto);
+    }
+
+    function inferirBadgeContextoChatLivrePersonalizado(payload = {}) {
+        const candidatos = [
+            payload.badge,
+            payload.title,
+            payload.runtimeTipo,
+            payload.tipo,
+            payload.preprompt,
+        ];
+
+        for (const candidato of candidatos) {
+            const texto = String(candidato || "").trim();
+            if (!texto) continue;
+            const correspondencia = texto.match(/\bnr\s*-?\s*(\d{1,2})\b/i);
+            if (correspondencia?.[1]) {
+                return `NR${correspondencia[1]}`;
+            }
+        }
+
+        const fallback = String(
+            payload.title || payload.runtimeTipo || payload.tipo || "IA"
+        ).trim().toUpperCase();
+        return fallback.length > 12 ? fallback.slice(0, 12).trim() : fallback;
+    }
+
+    function normalizarContextoChatLivrePersonalizado(payload = {}, dependencies = {}) {
+        const normalizarTipoTemplate =
+            dependencies.normalizarTipoTemplate
+            || ((valor) => String(valor || "padrao").trim().toLowerCase() || "padrao");
+        const runtimeTipo = normalizarTipoTemplate(
+            payload.runtimeTipo
+            || payload.runtime_tipo
+            || payload.templateKey
+            || payload.tipo
+            || "padrao"
+        );
+        const title = String(
+            payload.title
+            || payload.titulo
+            || payload.label
+            || payload.nome
+            || runtimeTipo
+        ).trim();
+        const preprompt = String(payload.preprompt || payload.prePrompt || "").trim();
+
+        if (!title && !preprompt) {
+            return null;
+        }
+
+        const badge = inferirBadgeContextoChatLivrePersonalizado({
+            ...payload,
+            runtimeTipo,
+            title,
+            preprompt,
+        });
+        const titleLower = title.toLowerCase();
+
+        return {
+            kind: "free_chat_template",
+            templateKey: runtimeTipo,
+            runtimeTipo,
+            title,
+            badge,
+            icon: String(payload.icon || payload.icone || "assignment").trim() || "assignment",
+            meta: String(payload.meta || "").trim(),
+            preprompt,
+            subtitle: `Chat livre • ${title}`,
+            placeholder: `Peça ao Tariel sobre ${titleLower}, evidências, riscos ou não conformidades`,
+            contextTitle: `Contexto ativo: ${title}`,
+            contextStatus: `As próximas respostas vão priorizar ${title} como contexto técnico principal.`,
+        };
+    }
+
+    function contextosChatLivrePersonalizadosSaoIguais(a, b, dependencies = {}) {
+        const contextoA = normalizarContextoChatLivrePersonalizado(a, dependencies);
+        const contextoB = normalizarContextoChatLivrePersonalizado(b, dependencies);
+        if (!contextoA && !contextoB) return true;
+        if (!contextoA || !contextoB) return false;
+        return contextoA.runtimeTipo === contextoB.runtimeTipo
+            && String(contextoA.title || "").trim() === String(contextoB.title || "").trim()
+            && String(contextoA.preprompt || "").trim() === String(contextoB.preprompt || "").trim();
+    }
+
+    function criarContextoChatLivrePersonalizadoDoBotao(botao, dependencies = {}) {
+        if (!botao?.dataset) return null;
+        return normalizarContextoChatLivrePersonalizado(
+            {
+                tipo: botao.dataset.tipo,
+                runtime_tipo: botao.dataset.runtimeTipo,
+                titulo: botao.dataset.titulo,
+                badge: botao.dataset.badge,
+                preprompt: botao.dataset.preprompt,
+                icone: botao.dataset.icone,
+                meta: botao.dataset.meta,
+            },
+            dependencies
+        );
+    }
+
+    function montarPreferenciasOcultasChatLivrePersonalizado(contexto = {}, dependencies = {}) {
+        const contextoNormalizado = normalizarContextoChatLivrePersonalizado(contexto, dependencies);
+        if (!contextoNormalizado) return "";
+
+        return [
+            "[preferencias_ia_mobile]",
+            `Modo fixo desta conversa: chat livre personalizado para ${contextoNormalizado.title}.`,
+            `Contexto normativo principal: ${contextoNormalizado.badge || contextoNormalizado.runtimeTipo || contextoNormalizado.title}.`,
+            `Atue com foco tecnico principal em ${contextoNormalizado.title}.`,
+            "Considere esta NR e este contexto como referencia prioritaria da conversa enquanto o modo estiver ativo.",
+            "Priorize perguntas, checklist, evidencias, riscos, nao conformidades, terminologia, documentacao obrigatoria e criterios de conformidade ligados a esse contexto.",
+            contextoNormalizado.preprompt
+                ? `Diretriz base: ${contextoNormalizado.preprompt}`
+                : "",
+            contextoNormalizado.meta
+                ? `Escopo operacional esperado: ${contextoNormalizado.meta}`
+                : "",
+            "Se o usuario for ambiguo, interprete primeiro pelo escopo dessa NR antes de generalizar.",
+            "So amplie para outras normas ou temas se o usuario pedir explicitamente ou se isso for indispensavel para nao induzir erro tecnico.",
+            "[/preferencias_ia_mobile]",
+        ]
+            .filter(Boolean)
+            .join("\n");
     }
 
     function obterLaudoAtivoIdSeguro(dependencies = {}) {
@@ -252,10 +380,15 @@
         limparForcaTelaInicial,
         homeForcadoAtivo,
         aplicarPrePromptDaAcaoRapida,
+        contextosChatLivrePersonalizadosSaoIguais,
+        criarContextoChatLivrePersonalizadoDoBotao,
         extrairMensagemErroHTTP,
         inserirTextoNoComposer,
+        inferirBadgeContextoChatLivrePersonalizado,
         marcarForcaTelaInicial,
+        montarPreferenciasOcultasChatLivrePersonalizado,
         normalizarConexaoMesaWidget,
+        normalizarContextoChatLivrePersonalizado,
         obterHeadersComCSRF,
         obterLaudoAtivoIdSeguro,
         obterTipoTemplateDoPayload,

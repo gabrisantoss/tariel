@@ -15,26 +15,15 @@
                     <span class="material-symbols-rounded" aria-hidden="true">left_panel_close</span>
                 </button>
 
-                <a
-                    href="/app/?home=1"
-                    class="btn-secundario btn-home-cabecalho technical-record-back technical-record-back--subtle"
-                    data-action="go-home"
-                    data-home-destino="/app/?home=1"
-                    aria-label="Voltar para a tela inicial do chat"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">west</span>
-                    <span>Início</span>
-                </a>
-
                 <div class="technical-record-ident">
-                    <h2 id="workspace-titulo-laudo">Assistente Tariel IA</h2>
-                    <p id="workspace-subtitulo-laudo">Conversa inicial • nenhum laudo ativo</p>
+                    <h2 id="workspace-titulo-laudo">Tariel</h2>
+                    <p id="workspace-subtitulo-laudo">Chat técnico</p>
                     <span
                         id="workspace-mode-chip"
                         class="workspace-mode-chip"
                         aria-label="Modo atual do workspace"
                     >
-                        Chat livre
+                        IA
                     </span>
                 </div>
             </div>
@@ -153,7 +142,7 @@
                 data-inspector-entry="workspace-header-new-inspection"
                 {% if not workspace_assistant_inicial %}hidden{% endif %}
             >
-                Nova Inspeção
+                Nova inspeção
             </button>
             <button
                 type="button"
@@ -181,10 +170,11 @@
                 class="technical-record-btn technical-record-btn--primary"
                 data-finalizar-inspecao
                 data-inspector-entry="workspace-header-finalize"
+                aria-label="Finalizar laudo"
                 {% if workspace_assistant_inicial %}hidden{% endif %}
             >
                 <span class="material-symbols-rounded" aria-hidden="true">send</span>
-                <span>Finalizar laudo</span>
+                <span>Finalizar</span>
             </button>
         </div>
     </div>

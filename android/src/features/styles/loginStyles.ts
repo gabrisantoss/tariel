@@ -10,10 +10,10 @@ import {
 export const loginStyles = {
   loginScrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxxl,
-    paddingBottom: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   loginScrollContentKeyboardVisible: {
     justifyContent: "flex-start",
@@ -21,8 +21,12 @@ export const loginStyles = {
     paddingBottom: spacing.xl,
   },
   loginScreen: {
-    flex: 1,
-    justifyContent: "center",
+    width: "100%",
+    justifyContent: "flex-start",
+    paddingTop: spacing.xxl,
+  },
+  loginScreenKeyboardVisible: {
+    paddingTop: spacing.md,
   },
   brandStageCompact: {
     alignItems: "center",
@@ -54,26 +58,26 @@ export const loginStyles = {
     width: "100%",
     maxWidth: 420,
     alignSelf: "center",
-    gap: spacing.xl,
+    gap: spacing.lg,
   },
   loginHero: {
     alignItems: "center",
-    gap: spacing.lg,
+    marginBottom: -2,
   },
   loginIdentityMark: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
+    width: 90,
+    height: 90,
+    borderRadius: 28,
     backgroundColor: colors.ink900,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    ...shadows.card,
   },
   loginIdentityLogo: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 16,
+    width: 108,
+    height: 108,
+    margin: -9,
+    borderRadius: 34,
   },
   loginIdentityCore: {
     width: 14,

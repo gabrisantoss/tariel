@@ -98,7 +98,7 @@ def save_command_artifact(path: pathlib.Path, command: list[str], completed: sub
 
 def run_boot_import_check(artifacts_dir: pathlib.Path) -> None:
     command = [
-        "python3",
+        str(pathlib.Path(sys.executable)),
         "-c",
         "import main; main.create_app(); print('boot_import_ok')",
     ]

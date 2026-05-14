@@ -157,7 +157,7 @@ resolve_android_sdk_tool() {
   esac
 
   for candidate in "${candidates[@]}"; do
-    if [[ -n "$candidate" && -x "$candidate" ]]; then
+    if [[ -n "$candidate" && ( -x "$candidate" || "$candidate" == *.bat || "$candidate" == *.cmd ) && -f "$candidate" ]]; then
       printf '%s\n' "$candidate"
       return 0
     fi

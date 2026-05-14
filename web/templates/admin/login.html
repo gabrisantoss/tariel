@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f4f7fb">
     <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="no-referrer">
-    <title>Portal Admin-CEO • tariel.ia</title>
+    <title>Gestão Tariel • tariel.ia</title>
     <script src="/static/js/shared/theme_bootstrap.js"></script>
     <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,13 +16,16 @@
     <link rel="stylesheet" href="/static/css/admin/admin_login.css?v={{ v_app if v_app is defined else '' }}">
     <link rel="stylesheet" href="/static/css/shared/official_visual_system.css?v={{ v_app if v_app is defined else '' }}">
     <link rel="stylesheet" href="/static/css/shared/auth_login_standard.css?v={{ v_app if v_app is defined else '' }}">
+    <link rel="stylesheet" href="/static/css/shared/auth_login_unified.css?v={{ v_app if v_app is defined else '' }}">
 </head>
-<body class="auth-shell auth-shell--admin" data-login-ok="{{ '1' if login_sucesso else '0' }}">
+<body class="auth-shell auth-shell--admin auth-shell--standard-login" data-login-ok="{{ '1' if login_sucesso else '0' }}">
     <main class="auth-layout auth-layout--split">
         <section class="auth-hero" aria-hidden="true">
             <div class="auth-hero-placeholder"></div>
             <img src="/static/img/logo-horizontal-dark.png" alt="tariel.ia">
-            <span class="auth-hero-label">Admin-CEO</span>
+            <div class="auth-portal-identity">
+                <strong class="auth-portal-identity__title">Gestão Tariel</strong>
+            </div>
         </section>
 
         <section class="auth-card">
@@ -30,9 +33,7 @@
                 <div class="auth-inline-banner" id="aviso-rate" role="alert" aria-live="assertive"></div>
 
                 <div class="auth-intro">
-                    <span class="auth-context-badge">Admin-CEO</span>
-                    <strong class="auth-intro__title">Login</strong>
-                    <p class="auth-intro__copy">Acesso restrito do Admin-CEO da Tariel.ia para gestão da plataforma e contas autorizadas.</p>
+                    <strong class="auth-intro__title">Gestão Tariel</strong>
                 </div>
 
                 {% if erro %}
@@ -63,7 +64,7 @@
                             <input type="checkbox" name="lembrar" value="true">
                             <span>Lembrar acesso</span>
                         </label>
-                        <button class="auth-helper-link auth-link-button" type="button" data-auth-support-action data-auth-support-context="do Admin-CEO" data-auth-support-message="Para recuperar senha do Admin-CEO, fale com a Tariel pelo canal administrativo autorizado.">
+                        <button class="auth-helper-link auth-link-button" type="button" data-auth-support-action data-auth-support-context="da Gestão Tariel" data-auth-support-message="Para recuperar senha da Gestão Tariel, fale com a Tariel pelo canal administrativo autorizado.">
                             Esqueci a senha
                         </button>
                     </div>
@@ -73,17 +74,16 @@
 
                 {% set provider_urls = identity_provider_urls if identity_provider_urls is defined else {} %}
                 <div class="auth-provider-group">
-                    <p class="auth-provider-title">Entrar com conta corporativa</p>
-                    <div class="auth-provider-actions" aria-label="Entrar com conta corporativa">
-                        <button class="auth-provider-button auth-provider-button--google" type="button" data-provider-link="Google" data-provider-url="{{ provider_urls.get('google', '/auth/social/admin/google/start') | e }}" data-provider-feedback-message="Login com Google no Admin-CEO exige provedor corporativo configurado e conta autorizada." aria-label="Entrar com Google">
+                    <div class="auth-provider-actions" aria-label="Contas corporativas">
+                        <button class="auth-provider-button auth-provider-button--google" type="button" data-provider-link="Google" data-provider-url="{{ provider_urls.get('google', '/auth/social/admin/google/start') | e }}" data-provider-feedback-message="Login com Google na Gestão Tariel exige provedor corporativo configurado e conta autorizada." aria-label="Entrar com Google">
                             <span class="auth-provider-mark" aria-hidden="true">G</span>
                             <span>Google</span>
                         </button>
-                        <button class="auth-provider-button auth-provider-button--apple" type="button" data-provider-link="Apple" data-provider-feedback-message="Login com Apple no Admin-CEO sera liberado quando o provedor corporativo estiver configurado." aria-label="Entrar com Apple">
+                        <button class="auth-provider-button auth-provider-button--apple" type="button" data-provider-link="Apple" data-provider-feedback-message="Login com Apple na Gestão Tariel sera liberado quando o provedor corporativo estiver configurado." aria-label="Entrar com Apple">
                             <span class="auth-provider-mark" aria-hidden="true">A</span>
                             <span>Apple</span>
                         </button>
-                        <button class="auth-provider-button auth-provider-button--microsoft" type="button" data-provider-link="Microsoft" data-provider-url="{{ provider_urls.get('microsoft', '/auth/social/admin/microsoft/start') | e }}" data-provider-feedback-message="Login com Microsoft no Admin-CEO exige provedor corporativo configurado e conta autorizada." aria-label="Entrar com Microsoft">
+                        <button class="auth-provider-button auth-provider-button--microsoft" type="button" data-provider-link="Microsoft" data-provider-url="{{ provider_urls.get('microsoft', '/auth/social/admin/microsoft/start') | e }}" data-provider-feedback-message="Login com Microsoft na Gestão Tariel exige provedor corporativo configurado e conta autorizada." aria-label="Entrar com Microsoft">
                             <span class="auth-provider-mark auth-provider-mark--microsoft" aria-hidden="true">
                                 <span></span><span></span><span></span><span></span>
                             </span>
@@ -93,16 +93,6 @@
                 </div>
                 <p class="auth-provider-feedback" data-auth-feedback hidden aria-live="polite"></p>
 
-                <nav class="auth-portal-switcher" aria-label="Escolher outro portal">
-                    <span class="auth-portal-switcher__label">Portais de acesso</span>
-                    <div class="auth-portal-switcher__links">
-                        <a class="auth-portal-option" href="/cliente/login">Admin Cliente</a>
-                        <a class="auth-portal-option" href="/app/login">Inspeção IA</a>
-                        <a class="auth-portal-option" href="/revisao/login">Revisão Técnica</a>
-                    </div>
-                </nav>
-
-                <p class="auth-access-note">Quer um acesso? Fale com a Tariel.</p>
             </div>
         </section>
     </main>

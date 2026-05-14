@@ -53,9 +53,11 @@ Ele está na fase de:
 - o caso pode operar em `análise livre`, `laudo guiado` e `laudo com mesa`;
 - o ownership do caso é híbrido por estado;
 - no Inspetor Web, o centro do produto deve ser o chat; templates, checklist, aprendizado visual, edição de laudo e finalização rodam como contexto interno ao redor da conversa;
+- o mapa mestre atual do produto esta em `docs/product-canonical-vision/05_master_product_map_2026-05-10.md` e deve guiar cortes de escopo por perfil, MVP e camada opcional;
+- a auditoria mobile vs Chat Web esta em `docs/product-canonical-vision/06_mobile_vs_web_chat_audit_2026-05-10.md` e define que o proximo corte visual do Inspetor Web deve espelhar `Chat`/`Revisao`/`Finalizar`, deixando historico, anexos, correcoes, preview e readiness como contexto secundario;
 - `Chat guiado` deve parecer uma forma de orientar o composer, não um módulo separado ou checklist exposto;
 - em fluxo guiado, a correção deve acontecer por checkpoint e campos, sem um segundo chat redundante;
-- quando a `Mesa` estiver ausente por política do tenant, o inspetor web deve usar uma aba dedicada de `Correções`, separada do `Chat`, com edição estruturada por bloco e assistente textual apenas como apoio;
+- quando a `Mesa` estiver ausente por política do tenant, o inspetor web e o mobile devem continuar capazes de fechar o caso pelo chat/fluxo interno com aprovação humana autorizada, desde que o gate técnico da coleta esteja completo;
 - a aprovação final humana continua obrigatória.
 - a IA pode preencher pré-laudo e sugerir correções, mas sua atuação principal fica na trilha interna do caso;
 - a Tariel monta análise e rascunho; validação, correção técnica, ART e assinatura continuam humanas;
@@ -90,7 +92,7 @@ Ele está na fase de:
 - `Admin Geral` opera a plataforma com menor acesso possível ao conteúdo técnico;
 - o protocolo excepcional do `Admin Geral` agora é fechado: aprovação, justificativa, step-up, janela temporária e escopo mínimo auditável;
 - `Admin CEO` governa criação, edição e liberação de templates e pré-laudos;
-- a mesa pode ser obrigatória, opcional ou ausente, conforme política comercial.
+- a mesa é uma capacidade opcional de revisão humana; ela só deve ser obrigatória quando o contrato/política do tenant declarar isso explicitamente, nunca como dependência universal do produto.
 - a continuidade cross-surface entre mobile, inspetor web e mesa web passa a ser governada por grants e links do tenant, sem depender de sessão única real por padrão;
 - retenção mínima, autoria obrigatória e trilha de IA/override humano agora têm baseline canônico;
 - a matriz comercial passa a ser lida por eixos de capacidade por tenant, não só por volume.
@@ -114,7 +116,7 @@ Ele está na fase de:
 - grants multiportal do tenant agora também governam as jornadas offline do app, incluindo mesa, fila local, notificações e cache persistido;
 - configurações, ajuda e suporte do app Android agora também respeitam os grants reais do usuário, ocultando sinais de `mesa` quando o tenant não libera esse portal e exibindo o resumo governado do acesso ativo;
 - fluxo nativo de `mesa` no app agora devolve com contexto canônico de revisão, incluindo bloco prioritário, ação requerida e sinalizações críticas;
-- jornada guiada do app agora abre a `Mesa` nativa quando o handoff exigir revisão humana e o checklist já estiver concluído;
+- jornada guiada do app pode abrir a `Mesa` nativa quando o tenant contratar essa revisão, mas o fluxo mobile/chat-first continua sendo o caminho principal do produto;
 - app Android agora executa `quality gate` nativo antes da finalização, com `override humano` justificado, trilha interna e envio para fila offline quando necessário;
 - finalização governada do caso agora pode ser retomada da fila offline do app sem perder o contexto do gate ou a justificativa humana;
 - contas multiportal governadas pelo tenant agora exibem troca explícita de superfície entre `Admin-Cliente`, `Inspetor` e `Mesa` nos portais web;
@@ -238,7 +240,7 @@ Ele está na fase de:
 1. decidir e aplicar a configuração real do Render para disco persistente/envs production-ready quando houver autorização operacional para plano/disco;
 2. manter `make release-verify-local` como umbrella target mínimo de promoção local, preservando `make verify` como baseline rápida e `make release-verify` como gate completo com a lane real pré-deploy;
 3. continuar a extração dos hotspots `admin/client_routes.py`, `chat_index_page.js`, `mesa/service.py` e superfícies do portal cliente, usando os novos logs críticos para priorizar gargalos reais;
-4. consolidar o pacote `docs/product-canonical-vision/`;
+4. consolidar o pacote `docs/product-canonical-vision/` usando o mapa mestre como filtro de escopo;
 5. refletir a matriz comercial por eixos nas superfícies administrativas e nos entitlements;
 6. continuar a fronteira transacional explícita do backend nos serviços de Mesa/Revisor com `flush` e side effects;
 7. limpar visualmente `Finalizar`, `Configurações` e `Histórico` no app Android;

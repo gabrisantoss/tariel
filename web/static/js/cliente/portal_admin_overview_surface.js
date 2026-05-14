@@ -194,13 +194,13 @@
             limparElemento(container);
             container.appendChild(criarStageBriefOverviewNode({
                 tone: prioridade.tone || "aprovado",
-                eyebrow: "Próximo foco",
-                title: prioridade.badge || "Conta sob controle",
-                detail: prioridade.acao || "A operação da conta segue visível em uma régua única de capacidade, equipe e suporte.",
+                eyebrow: "Próxima ação",
+                title: prioridade.badge || "Conta liberada",
+                detail: prioridade.acao || "Use esta central para cuidar de acessos, plano, documentos e suporte da empresa.",
                 metrics: [
-                    { label: "Casos monitorados", value: formatarInteiro(totalCasos) },
-                    { label: "Casos abertos", value: formatarInteiro(casosAbertos) },
-                    { label: "Revisões em curso", value: formatarInteiro(revisoesAtivas) },
+                    { label: "Monitorados", value: formatarInteiro(totalCasos) },
+                    { label: "Abertos", value: formatarInteiro(casosAbertos) },
+                    { label: "Em revisão", value: formatarInteiro(revisoesAtivas) },
                 ],
                 actions: [
                     {
@@ -212,7 +212,7 @@
                         origem: "admin",
                     },
                     {
-                        label: "Abrir capacidade",
+                        label: "Gerenciar plano",
                         ghost: true,
                         act: "abrir-prioridade",
                         kind: "admin-section",
@@ -237,19 +237,19 @@
             [
                 {
                     accent: "live",
-                    label: "Etapas concluídas",
+                    label: "Configuração",
                     value: `${formatarInteiro(Number(progress.completed || 0))}/${formatarInteiro(Number(progress.total || steps.length || 0))}`,
-                    meta: "Onboarding operacional da conta até a primeira rotina real.",
+                    meta: "Preparação da conta para a rotina real.",
                 },
                 {
                     accent: nextStep ? "waiting" : "done",
-                    label: "Próximo passo",
+                    label: "Próxima ação",
                     value: nextStep?.title || "Conta pronta para operar",
-                    meta: nextStep?.detail || "Equipe, casos e leitura executiva já estão minimamente estruturados.",
+                    meta: nextStep?.detail || "Equipe, casos e leitura principal já estão estruturados.",
                 },
                 {
                     accent: "aberto",
-                    label: "Equipe e casos",
+                    label: "Equipe",
                     value: formatarInteiro((state.bootstrap?.usuarios || []).length),
                     meta: `${formatarInteiro((state.bootstrap?.chat?.laudos || []).length)} casos carregados neste bootstrap.`,
                 },

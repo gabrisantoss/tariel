@@ -44,6 +44,84 @@ body.pagina-chat-dashboard-v2 .technical-composer-attachment-clip {
     margin-top: 6px;
 }
 
+body.pagina-chat-dashboard-v2 .preview-anexo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+body.pagina-chat-dashboard-v2 .preview-anexo:empty {
+    display: none;
+}
+
+body.pagina-chat-dashboard-v2 .preview-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+}
+
+body.pagina-chat-dashboard-v2 .preview-item--image {
+    width: 76px;
+    height: 58px;
+    overflow: visible;
+    border: 1px solid rgba(186, 201, 217, 0.95);
+    border-radius: 12px;
+    background: rgba(236, 245, 252, 0.82);
+    box-shadow: 0 8px 18px rgba(15, 42, 66, 0.10);
+}
+
+body.pagina-chat-dashboard-v2 .preview-thumb {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+body.pagina-chat-dashboard-v2 .btn-remover-preview {
+    position: absolute;
+    top: -11px;
+    right: -11px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    background: #111827;
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 8px 18px rgba(15, 42, 66, 0.26);
+    cursor: pointer;
+}
+
+body.pagina-chat-dashboard-v2 .btn-remover-preview:hover {
+    background: #8A1024;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+body.pagina-chat-dashboard-v2 .chip-documento-preview {
+    min-height: 38px;
+    gap: 8px;
+    padding: 8px 36px 8px 10px;
+    border: 1px solid rgba(186, 201, 217, 0.95);
+    border-radius: 12px;
+    background: rgba(248, 251, 253, 0.96);
+    color: var(--vf-text, #172334);
+}
+
 body.pagina-chat-dashboard-v2 .technical-composer-clip-btn,
 body.pagina-chat-dashboard-v2 .mesa-widget-action-btn {
     display: inline-flex;
@@ -148,6 +226,43 @@ body.pagina-chat-dashboard-v2 .workspace-assistant-landing__headline-subquestion
     line-height: 1.2;
     letter-spacing: -0.02em;
     text-wrap: balance;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-assistant-landing__mode-title {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: fit-content;
+    max-width: min(100%, 520px);
+    min-height: 0;
+    margin: 5px auto 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: color-mix(in srgb, var(--nr-mode-accent, var(--vf-accent)) 86%, var(--vf-text) 14%);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    text-align: center;
+    text-transform: none;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-assistant-landing__mode-title::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--nr-mode-accent, var(--vf-accent));
+    box-shadow: 0 0 0 5px var(--nr-mode-accent-soft, rgba(31, 94, 142, 0.08));
+}
+
+body.pagina-chat-dashboard-v2 .workspace-assistant-landing__mode-title[hidden] {
+    display: none !important;
 }
 
 body.pagina-chat-dashboard-v2 [data-workspace-user-greeting-name] {
@@ -373,11 +488,16 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistan
 }
 
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .technical-composer-main {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
     gap: 10px;
     min-width: 0;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .preview-anexo {
+    width: 100%;
+    justify-content: flex-start;
 }
 
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .container-textarea {
@@ -544,6 +664,25 @@ body.pagina-chat-dashboard-v2 #area-mensagens .img-anexo {
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-imagens-enviadas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: 8px;
+    width: min(100%, 360px);
+    margin-top: 8px;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-imagens-enviadas .img-anexo {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 96px;
+    max-height: none;
+    margin-top: 0;
+    border-radius: 14px;
+    object-fit: cover;
+}
+
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .img-anexo,
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--user .img-anexo {
     margin-left: auto;
@@ -559,11 +698,16 @@ body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused
 body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card:has(.img-anexo) {
     width: auto !important;
     max-width: min(100%, 388px);
+    padding: 0 !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
 }
 
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-card:has(.img-anexo),
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] .workspace-message-row--user .workspace-message-card:has(.img-anexo) {
-    background: rgba(240, 245, 250, 0.4) !important;
+    background: transparent !important;
 }
 
 body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--assistant .workspace-message-card:has(.img-anexo),
@@ -3805,6 +3949,7 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid:not([data-workspace-view="ass
 body.pagina-chat-dashboard-v2 .thread-nav,
 body.pagina-chat-dashboard-v2 .workspace-channel-stage,
 body.pagina-chat-dashboard-v2 .workspace-mesa-stage,
+body.pagina-chat-dashboard-v2 .workspace-finalization-stage,
 body.pagina-chat-dashboard-v2 [data-workspace-history-root] {
     width: min(100%, var(--workspace-thread-column-max, 920px));
     max-width: var(--workspace-thread-column-max, 920px);
@@ -3840,6 +3985,11 @@ body.pagina-chat-dashboard-v2 .thread-nav-inner {
     width: auto;
     padding: 0;
     border: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 body.pagina-chat-dashboard-v2 .thread-tabs {
@@ -3848,6 +3998,46 @@ body.pagina-chat-dashboard-v2 .thread-tabs {
     border: 1px solid var(--tariel-clean-border) !important;
     border-radius: 12px !important;
     background: rgba(255, 255, 255, 0.92) !important;
+}
+
+body.pagina-chat-dashboard-v2 .thread-primary-flow {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid rgba(31, 94, 142, 0.18);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.94);
+}
+
+body.pagina-chat-dashboard-v2 .thread-tabs--primary {
+    padding: 0;
+    border: 0 !important;
+    background: transparent !important;
+}
+
+body.pagina-chat-dashboard-v2 .thread-tabs--secondary {
+    border-color: rgba(31, 94, 142, 0.10) !important;
+    background: rgba(255, 255, 255, 0.68) !important;
+}
+
+body.pagina-chat-dashboard-v2 .thread-tabs--secondary .thread-tab {
+    min-height: 30px;
+    padding: 0 9px;
+    font-size: 12px;
+    color: rgba(74, 92, 108, 0.84) !important;
+}
+
+body.pagina-chat-dashboard-v2 .thread-tab--finalize {
+    min-height: 34px;
+    border: 0 !important;
+    background: linear-gradient(135deg, #0f3148, #1f5e8e) !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(31, 94, 142, 0.18) !important;
+}
+
+body.pagina-chat-dashboard-v2 .thread-tab--finalize[hidden] {
+    display: none !important;
 }
 
 body.pagina-chat-dashboard-v2 .thread-tab {
@@ -3868,6 +4058,114 @@ body.pagina-chat-dashboard-v2 .thread-tab.ativo {
     background: #edf5fb !important;
     color: var(--tariel-clean-accent) !important;
     box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .thread-tabs--secondary .thread-tab[aria-selected="true"],
+body.pagina-chat-dashboard-v2 .thread-tabs--secondary .thread-tab.ativo {
+    background: rgba(237, 245, 251, 0.76) !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_finalization"] .technical-record-header__actions #btn-workspace-preview,
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_finalization"] .technical-record-header__actions #btn-finalizar-inspecao {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-stage {
+    display: grid;
+    gap: 16px;
+    margin: 0 auto;
+    padding: 10px 0 28px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-hero,
+body.pagina-chat-dashboard-v2 .workspace-finalization-card {
+    border: 1px solid rgba(31, 94, 142, 0.12);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-hero__copy,
+body.pagina-chat-dashboard-v2 .workspace-finalization-card {
+    display: grid;
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-hero__eyebrow,
+body.pagina-chat-dashboard-v2 .workspace-finalization-card__eyebrow {
+    color: var(--tariel-clean-accent);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-hero h3,
+body.pagina-chat-dashboard-v2 .workspace-finalization-card strong {
+    margin: 0;
+    color: var(--tariel-clean-text);
+    letter-spacing: -0.02em;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-hero h3 {
+    font-size: clamp(22px, 2.8vw, 34px);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-hero p,
+body.pagina-chat-dashboard-v2 .workspace-finalization-card p {
+    margin: 0;
+    color: var(--tariel-clean-muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-hero__actions,
+body.pagina-chat-dashboard-v2 .workspace-finalization-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-card {
+    padding: 16px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-finalization-card--focus {
+    border-color: rgba(31, 94, 142, 0.2);
+    background:
+        radial-gradient(circle at 16% 0%, rgba(31, 94, 142, 0.12), transparent 36%),
+        rgba(255, 255, 255, 0.96);
+}
+
+@media (max-width: 900px) {
+    body.pagina-chat-dashboard-v2 .workspace-finalization-hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    body.pagina-chat-dashboard-v2 .workspace-finalization-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+body.pagina-chat-dashboard-v2 .workspace-entry-helper,
+body.pagina-chat-dashboard-v2 .dica-composer,
+body.pagina-chat-dashboard-v2 #btn-previa-chat[hidden] {
+    display: none !important;
 }
 
 body.pagina-chat-dashboard-v2 .thread-tab__icon {
@@ -4108,23 +4406,28 @@ body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-d
     backdrop-filter: blur(8px);
 }
 
-body.pagina-chat-dashboard-v2 .chat-thread-surface:has(.workspace-view-root--conversation[data-active="true"] #workspace-conversation-empty:not([hidden])) .workspace-view-stack {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] .workspace-view-stack,
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] .workspace-view-stack {
     flex: 0 0 auto;
 }
 
-body.pagina-chat-dashboard-v2 .chat-thread-surface:has(.workspace-view-root--conversation[data-active="true"] #workspace-conversation-empty:not([hidden])) .rodape-entrada[data-conversation-variant="technical"] {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"] {
     margin-top: 12px;
 }
 
-body.pagina-chat-dashboard-v2:has(#workspace-conversation-empty:not([hidden])) .workspace-view-stack {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] .workspace-view-stack,
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] .workspace-view-stack {
     flex: 0 0 auto;
 }
 
-body.pagina-chat-dashboard-v2:has(#workspace-conversation-empty:not([hidden])) #area-mensagens[data-conversation-variant="technical"] {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] #area-mensagens[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] #area-mensagens[data-conversation-variant="technical"] {
     padding-bottom: 18px;
 }
 
-body.pagina-chat-dashboard-v2:has(#workspace-conversation-empty:not([hidden])) .rodape-entrada[data-conversation-variant="technical"] {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"] {
     margin-top: 8px;
 }
 
@@ -4132,7 +4435,8 @@ body.pagina-chat-dashboard-v2 .workspace-entry-helper {
     display: none;
 }
 
-body.pagina-chat-dashboard-v2:has(#workspace-conversation-empty:not([hidden])) .workspace-entry-helper {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] .workspace-entry-helper,
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] .workspace-entry-helper {
     display: grid;
     gap: 10px;
     padding: 14px 16px;
@@ -4179,7 +4483,8 @@ body.pagina-chat-dashboard-v2 .workspace-entry-helper__tokens span {
     font-weight: 700;
 }
 
-body.pagina-chat-dashboard-v2:has(#workspace-conversation-empty:not([hidden])) .rodape-entrada[data-conversation-variant="technical"] .pilula-entrada {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"] .pilula-entrada,
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"] .pilula-entrada {
     border-color: rgba(31, 94, 142, 0.16) !important;
     border-radius: 20px !important;
     box-shadow: 0 18px 38px rgba(15, 23, 42, 0.07) !important;
@@ -4637,6 +4942,138 @@ body.pagina-chat-dashboard-v2 .inspetor-portal__signal {
     font-weight: 700;
 }
 
+body.pagina-chat-dashboard-v2 .portal-home-focus {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-focus-card,
+body.pagina-chat-dashboard-v2 .portal-home-governance-inline {
+    position: relative;
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid rgba(31, 94, 142, 0.12);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 249, 253, 0.98));
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+}
+
+body.pagina-chat-dashboard-v2 button.portal-home-focus-card {
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 180ms ease-out, box-shadow 180ms ease-out, transform 180ms ease-out;
+}
+
+body.pagina-chat-dashboard-v2 button.portal-home-focus-card:hover,
+body.pagina-chat-dashboard-v2 button.portal-home-focus-card:focus-visible {
+    border-color: rgba(31, 94, 142, 0.26);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-focus-card__eyebrow {
+    display: inline-flex;
+    width: fit-content;
+    min-height: 24px;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(31, 94, 142, 0.08);
+    color: var(--vf-accent);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-focus-card strong {
+    color: var(--vf-text);
+    font-size: 17px;
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-focus-card p {
+    margin: 0;
+    color: var(--vf-text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-focus-card__meta,
+body.pagina-chat-dashboard-v2 .portal-home-focus-card__steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-focus-card__meta span,
+body.pagina-chat-dashboard-v2 .portal-home-focus-card__steps span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid rgba(31, 94, 142, 0.1);
+    border-radius: 999px;
+    background: rgba(31, 94, 142, 0.05);
+    color: #46627f;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-focus-card--continue {
+    border-color: rgba(31, 94, 142, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(191, 219, 254, 0.24), transparent 38%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(239, 246, 252, 0.98));
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-focus-card--guide {
+    align-content: start;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-governance-inline {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    margin-top: 12px;
+    background: linear-gradient(180deg, rgba(255, 248, 235, 0.98), rgba(255, 252, 247, 0.98));
+    border-color: rgba(201, 142, 36, 0.18);
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-governance-inline .material-symbols-rounded {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: rgba(201, 142, 36, 0.12);
+    color: #a36a1a;
+    font-size: 18px;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-governance-inline__copy {
+    display: grid;
+    gap: 4px;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-governance-inline__copy strong {
+    color: #3f2b08;
+    font-size: 14px;
+    line-height: 1.25;
+}
+
+body.pagina-chat-dashboard-v2 .portal-home-governance-inline__copy span {
+    color: rgba(92, 61, 14, 0.76);
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
 body.pagina-chat-dashboard-v2 .inspetor-portal__hero-panel {
     position: relative;
     display: grid;
@@ -4839,6 +5276,30 @@ body.pagina-chat-dashboard-v2 .portal-model-card:hover::before {
     transform: translateY(0);
 }
 
+body.pagina-chat-dashboard-v2 .portal-model-card[data-context-active="true"],
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-card[data-context-active="true"] {
+    border-color: rgba(31, 94, 142, 0.32) !important;
+    background:
+        radial-gradient(circle at top right, rgba(191, 219, 254, 0.2), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(238, 246, 252, 0.98)) !important;
+    box-shadow:
+        0 0 0 3px rgba(31, 94, 142, 0.08),
+        0 16px 32px rgba(15, 23, 42, 0.08) !important;
+    transform: translateY(-1px);
+}
+
+body.pagina-chat-dashboard-v2 .portal-model-card[data-context-active="true"]::before,
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-card[data-context-active="true"]::before {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+body.pagina-chat-dashboard-v2 .portal-model-card[data-context-active="true"] .portal-model-card__icon,
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-card[data-context-active="true"] .workspace-guided-nr-card__icon {
+    background: rgba(31, 94, 142, 0.14);
+    color: var(--vf-accent);
+}
+
 body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-assistant-landing {
     padding-top: 40px;
 }
@@ -4969,6 +5430,10 @@ body.pagina-chat-dashboard-v2 .workspace-operational-pill span:last-child {
         grid-template-columns: minmax(0, 1fr);
     }
 
+    body.pagina-chat-dashboard-v2 .portal-home-focus {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     body.pagina-chat-dashboard-v2 .inspetor-portal__copy h1 {
         max-width: 14ch;
     }
@@ -4991,6 +5456,12 @@ body.pagina-chat-dashboard-v2 .workspace-operational-pill span:last-child {
     body.pagina-chat-dashboard-v2 .inspetor-portal__hero-panel {
         padding: 16px;
         border-radius: 18px;
+    }
+
+    body.pagina-chat-dashboard-v2 .portal-home-focus-card,
+    body.pagina-chat-dashboard-v2 .portal-home-governance-inline {
+        padding: 14px;
+        border-radius: 16px;
     }
 
     body.pagina-chat-dashboard-v2 .inspetor-portal__hero-metrics,
@@ -5291,6 +5762,11 @@ body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"][data-wo
     display: none !important;
 }
 
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-thread-surface {
+    overflow: visible !important;
+    padding-top: 0;
+}
+
 body.pagina-chat-dashboard-v2 .rodape-entrada[data-conversation-variant="technical"] .rodape-entrada__contexto {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -5326,9 +5802,201 @@ body.pagina-chat-dashboard-v2 .rodape-entrada[data-conversation-variant="technic
 
 body.pagina-chat-dashboard-v2[data-history-real-count="1"] #area-mensagens[data-conversation-variant="technical"],
 body.pagina-chat-dashboard-v2[data-history-real-count="2"] #area-mensagens[data-conversation-variant="technical"] {
-    justify-content: flex-end;
-    padding-top: 20px;
-    padding-bottom: 44px;
+    justify-content: flex-start;
+    scroll-padding-top: 24px;
+    padding-top: 24px;
+    padding-bottom: 172px;
+}
+
+/* Chat livre deve se comportar como uma conversa de IA, nao como cockpit tecnico. */
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"][data-workspace-rail-visible="false"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] {
+    height: auto !important;
+    min-height: 100%;
+    align-items: start;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-record-header,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .thread-nav,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-channel-toolbar {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-thread-surface {
+    overflow: visible !important;
+    padding-top: 0;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-dashboard-thread,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-view-stack,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-view-root--conversation,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-channel-stage--ia {
+    flex: 0 0 auto;
+    height: auto !important;
+    min-height: auto;
+    overflow: visible !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-channel-stage--ia {
+    width: min(100%, 960px);
+    max-width: 960px;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] {
+    width: min(100%, 920px);
+    max-width: 920px;
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible !important;
+    padding: 28px 24px 176px;
+    gap: 24px;
+    scrollbar-gutter: stable;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"]::-webkit-scrollbar {
+    width: 8px;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"]::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"]::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: rgba(69, 96, 122, 0.32);
+    background-clip: content-box;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row {
+    width: 100%;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--assistant .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--typing .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--system .workspace-message-shell {
+    max-width: 780px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-shell {
+    width: auto;
+    max-width: min(560px, 72%);
+    margin-left: auto;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-avatar {
+    display: none;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--assistant .workspace-message-card,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--typing .workspace-message-card,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--system .workspace-message-card {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-card {
+    width: auto;
+    padding: 12px 17px !important;
+    border: 1px solid rgba(166, 189, 210, 0.34) !important;
+    border-radius: 24px !important;
+    background: #edf4fa !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-meta {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-meta {
+    display: none;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-body {
+    color: var(--tariel-clean-text) !important;
+    font-size: 16px;
+    line-height: 1.72;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-ia .avatar,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-sistema .avatar,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-meta,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .nome-remetente,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .bloco-confianca-ia {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-ia .conteudo-mensagem,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-sistema .conteudo-mensagem {
+    max-width: 780px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .conteudo-mensagem,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .conteudo-mensagem {
+    width: auto !important;
+    max-width: min(560px, 72%) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-ia .corpo-texto,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-sistema .corpo-texto {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .corpo-texto,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .corpo-texto {
+    width: auto !important;
+    padding: 12px 17px !important;
+    border: 1px solid rgba(166, 189, 210, 0.34) !important;
+    border-radius: 24px !important;
+    background: #edf4fa !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-ia .corpo-texto > :first-child,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-sistema .corpo-texto > :first-child {
+    margin-top: 0;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-ia .corpo-texto > :last-child,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-sistema .corpo-texto > :last-child {
+    margin-bottom: 0;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada__contexto,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada__acoes,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .composer-suggestions,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .dica-composer {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada {
+    width: min(100%, 920px);
+    max-width: 920px;
+    padding: 0 24px 24px;
 }
 
 body.pagina-chat-dashboard-v2 .inspetor-search-field {
@@ -5780,4 +6448,1298 @@ body.pagina-chat-dashboard-v2 .workspace-guided-nr-card__copy small {
     body.pagina-chat-dashboard-v2 .workspace-guided-nr-summary__badge {
         justify-self: start;
     }
+}
+
+/* Espelho mobile: chat primeiro, ferramentas sem manual na tela. */
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-assistant-landing__headline-question {
+    max-width: 12ch;
+    font-size: clamp(32px, 5.4vw, 58px);
+    line-height: 0.98;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-entry-helper,
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .dica-composer,
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-guided-nr-summary__copy small,
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-guided-nr-summary__chips {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .rodape-entrada {
+    width: min(100%, 760px);
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-composer-entry-panel {
+    margin-top: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-guided-nr-summary {
+    min-height: 54px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-guided-nr-summary > .material-symbols-rounded {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    font-size: 18px;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-guided-nr-summary__copy strong {
+    font-size: 13px;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-guided-nr-summary__badge {
+    min-height: 22px;
+    padding: 0 8px;
+    font-size: 9.5px;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-record-ident p,
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-mode-chip {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .thread-nav-status {
+    min-width: 0;
+    padding-inline: 8px;
+}
+
+body.pagina-chat-dashboard-v2 #workspace-conversation-empty.technical-chat-empty--conversation {
+    width: min(100%, 720px);
+    margin-inline: auto;
+    gap: 12px;
+    padding: 18px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__eyebrow,
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__copy p,
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__tips,
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__starter > span:last-child {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__copy strong {
+    font-size: clamp(20px, 2.4vw, 26px);
+}
+
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__action,
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__starter {
+    display: flex;
+    min-height: 58px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 16px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__action .material-symbols-rounded,
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__starter .material-symbols-rounded {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+    font-size: 18px;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__starter strong,
+body.pagina-chat-dashboard-v2 .workspace-conversation-empty__action--primary > span:last-child {
+    font-size: 13px;
+    line-height: 1.15;
+}
+
+/* Modo IA: aproxima landing e chat livre da cadencia visual do Gemini. */
+body.pagina-chat-dashboard-v2 .workspace-assistant-landing__greeting-name {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--tariel-clean-text);
+    font-size: clamp(19px, 1.8vw, 27px);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-assistant-landing__greeting-name::before {
+    content: "Olá, ";
+}
+
+body.pagina-chat-dashboard-v2 .workspace-assistant-landing__greeting-name::after {
+    content: "!";
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-assistant-landing__headline-question {
+    max-width: 14ch;
+    font-size: clamp(42px, 5.7vw, 66px);
+    font-weight: 500;
+    letter-spacing: -0.065em;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-assistant-landing__hero {
+    gap: 4px;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .rodape-entrada {
+    width: min(100%, 880px);
+    max-width: 880px;
+    margin-top: 18px;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .pilula-entrada,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .pilula-entrada {
+    min-height: 126px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid rgba(184, 199, 215, 0.68) !important;
+    border-radius: 36px !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    box-shadow: 0 26px 70px rgba(15, 23, 42, 0.12) !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada {
+    padding: 0 0 4px !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .container-textarea,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .container-textarea {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] #campo-mensagem,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #campo-mensagem {
+    padding: 8px 0 6px;
+    color: #111827;
+    font-size: 18px;
+    line-height: 1.55;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] #campo-mensagem::placeholder,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #campo-mensagem::placeholder {
+    color: #6b7280;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .technical-composer-attachment-clip,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-composer-attachment-clip {
+    gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .technical-composer-clip-btn,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-composer-clip-btn {
+    min-height: 34px;
+    padding: 0 10px;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: #4b5563 !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .technical-composer-clip-btn:hover,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-composer-clip-btn:hover {
+    background: rgba(31, 94, 142, 0.08) !important;
+    color: var(--vf-accent) !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .technical-composer-icon-btn,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-composer-icon-btn {
+    border: 0 !important;
+    background: rgba(15, 23, 42, 0.04) !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .technical-send-btn,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-send-btn {
+    width: 56px;
+    min-width: 56px;
+    height: 56px;
+    border-radius: 18px !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-dashboard-thread::before {
+    content: "Tariel";
+    width: min(100%, 920px);
+    margin: 12px auto 4px;
+    padding: 0 24px;
+    color: #344256;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.01em;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .free-chat-report-start {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada {
+    position: sticky;
+    bottom: 18px;
+    z-index: 18;
+    margin-top: 10px;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] {
+    padding-top: 22px;
+    padding-bottom: 28px;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .conteudo-mensagem,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .conteudo-mensagem {
+    max-width: min(48ch, 64%) !important;
+}
+
+/* Conversa livre sem bolhas: preserva alinhamento, remove o bloco atras do texto. */
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-card,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .corpo-texto,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-card,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat[data-laudo-atual-id=""][data-inspecao-ui="workspace"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat[data-laudo-atual-id=""][data-inspecao-ui="workspace"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .corpo-texto {
+    padding: 2px 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .corpo-texto,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .corpo-texto,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2 #painel-chat[data-laudo-atual-id=""][data-inspecao-ui="workspace"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-body {
+    color: var(--tariel-clean-text) !important;
+    font-weight: 600;
+}
+
+/* Historico sem card de conversa: mantem o eixo e remove a placa visual. */
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_history"] .workspace-history-card,
+body.pagina-chat-dashboard-v2 .workspace-view-root--history .workspace-history-card {
+    padding: 8px 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_history"] .workspace-history-card[data-history-role],
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_history"] .workspace-history-card[data-history-type],
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_history"] .workspace-history-card[data-history-governance],
+body.pagina-chat-dashboard-v2 .workspace-view-root--history .workspace-history-card[data-history-role],
+body.pagina-chat-dashboard-v2 .workspace-view-root--history .workspace-history-card[data-history-type],
+body.pagina-chat-dashboard-v2 .workspace-view-root--history .workspace-history-card[data-history-governance] {
+    border-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* A conversa livre deve rolar como Gemini: historico cresce, composer fica flutuando. */
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat[data-inspecao-ui="workspace"] .inspetor-main,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] #painel-chat[data-inspecao-ui="workspace"] .inspetor-main,
+body.pagina-chat-dashboard-v2 #painel-chat[data-laudo-atual-id=""][data-inspecao-ui="workspace"] .inspetor-main,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"][data-inspecao-ui="workspace"] .inspetor-main {
+    overflow-y: auto !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"],
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"],
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] {
+    height: auto !important;
+    min-height: 100%;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-dashboard-thread,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-thread-surface,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-view-stack,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-view-root--conversation,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-channel-stage--ia,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-dashboard-thread,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-thread-surface,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-view-stack,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-view-root--conversation,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-channel-stage--ia,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-dashboard-thread,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .chat-thread-surface,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-view-stack,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-view-root--conversation,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .workspace-channel-stage--ia {
+    flex: 0 0 auto;
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] {
+    flex: 0 0 auto;
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    padding-bottom: clamp(188px, 24vh, 260px) !important;
+}
+
+body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] .inspetor-sidebar-edge-toggle,
+body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] .inspetor-rail-edge-toggle,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .inspetor-sidebar-edge-toggle,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .inspetor-rail-edge-toggle,
+body.pagina-chat-dashboard-v2 #painel-chat[data-inspector-screen="assistant_landing"] .inspetor-sidebar-edge-toggle,
+body.pagina-chat-dashboard-v2 #painel-chat[data-inspector-screen="assistant_landing"] .inspetor-rail-edge-toggle,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .inspetor-sidebar-edge-toggle,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .inspetor-rail-edge-toggle {
+    display: none !important;
+}
+
+@media (min-width: 1200px) {
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"],
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] {
+        --shell-nav-w: 90px;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean {
+        position: sticky;
+        z-index: 50;
+        width: var(--shell-nav-w);
+        max-width: var(--shell-nav-w);
+        padding: 18px 10px !important;
+        overflow: visible;
+        transition:
+            width 180ms ease,
+            max-width 180ms ease,
+            box-shadow 180ms ease;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:hover,
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:focus-within,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:hover,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:focus-within {
+        width: 316px;
+        max-width: 316px;
+        box-shadow: 24px 0 48px rgba(15, 23, 42, 0.1) !important;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-sidebar__meta,
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-search-field,
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-sidebar-recentes,
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-user-card__copy,
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-user-card__chevron,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-sidebar__meta,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-search-field,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-sidebar-recentes,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-user-card__copy,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-user-card__chevron {
+        display: none !important;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-sidebar__top,
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-sidebar__footer,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-sidebar__top,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-sidebar__footer {
+        align-items: center;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-primary-btn--sidebar,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-primary-btn--sidebar {
+        width: 52px;
+        min-width: 52px;
+        min-height: 52px;
+        justify-content: center;
+        padding: 0 !important;
+        border-radius: 18px !important;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-primary-btn--sidebar span:not(.material-symbols-rounded),
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-primary-btn--sidebar span:not(.material-symbols-rounded) {
+        display: none !important;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-user-card--settings,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #painel-chat .inspetor-sidebar.inspetor-sidebar--clean:not(:hover):not(:focus-within) .inspetor-user-card--settings {
+        width: 52px;
+        min-width: 52px;
+        height: 52px;
+        justify-content: center;
+        padding: 0 !important;
+        border-radius: 18px !important;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-view="assistant_landing"] .inspetor-sidebar-edge-toggle,
+    body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .inspetor-sidebar-edge-toggle {
+        left: 72px;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail,
+    body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail {
+        position: fixed;
+        inset: 0 0 0 auto;
+        z-index: 48;
+        display: flex !important;
+        width: min(360px, calc(100vw - var(--shell-nav-w, 90px) - 96px));
+        min-width: 292px;
+        max-width: 360px;
+        padding: 18px 18px 18px 28px;
+        border: 0;
+        opacity: 1 !important;
+        overflow: visible !important;
+        pointer-events: auto !important;
+        transform: translateX(calc(100% - 18px));
+        transition:
+            transform 190ms ease,
+            filter 190ms ease;
+        visibility: visible !important;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail::before,
+    body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 -22px;
+        width: 42px;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail::after,
+    body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 14px;
+        height: 58px;
+        border-radius: 999px;
+        border: 1px solid rgba(186, 201, 217, 0.92);
+        background:
+            radial-gradient(circle, rgba(15, 23, 42, 0.96) 0 1.6px, transparent 1.8px) center calc(50% - 10px) / 4px 4px no-repeat,
+            radial-gradient(circle, rgba(15, 23, 42, 0.96) 0 1.6px, transparent 1.8px) center 50% / 4px 4px no-repeat,
+            radial-gradient(circle, rgba(15, 23, 42, 0.96) 0 1.6px, transparent 1.8px) center calc(50% + 10px) / 4px 4px no-repeat,
+            linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 252, 0.96));
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        transform: translateY(-50%);
+        transition:
+            opacity 150ms ease,
+            transform 150ms ease;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail:hover,
+    body.pagina-chat-dashboard-v2[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail:focus-within,
+    body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail:hover,
+    body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail:focus-within {
+        filter: drop-shadow(-22px 0 46px rgba(15, 23, 42, 0.14));
+        transform: translateX(0);
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail:hover::after,
+    body.pagina-chat-dashboard-v2[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail:focus-within::after,
+    body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail:hover::after,
+    body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail:focus-within::after {
+        opacity: 0;
+    }
+
+    body.pagina-chat-dashboard-v2[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail__panel,
+    body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-rail-hover-available="true"] .chat-dashboard-grid[data-workspace-rail-visible="false"] .chat-dashboard-rail__panel {
+        top: 18px;
+        width: 100%;
+        max-height: calc(100dvh - 36px);
+        border-radius: 24px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 252, 0.98)),
+            var(--vf-surface-muted) !important;
+        box-shadow: 0 22px 56px rgba(15, 23, 42, 0.12) !important;
+    }
+}
+
+@media (max-width: 767px) {
+    body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="assistant_landing"] .workspace-assistant-landing__headline-question {
+        max-width: 10ch;
+        font-size: clamp(30px, 10vw, 42px);
+    }
+
+    body.pagina-chat-dashboard-v2 .workspace-conversation-empty__actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Chat sem bolhas: texto solto como assistentes modernos, sem placa atras da fala. */
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .texto-msg,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .texto-msg-origem,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-inspetor .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-inspetor .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-ia .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-ia .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-sistema .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-sistema .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-origem-mesa .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-origem-mesa .corpo-texto {
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .corpo-texto {
+    padding: 2px 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card,
+body.pagina-chat-dashboard-v2 #area-mensagens .corpo-texto,
+body.pagina-chat-dashboard-v2 #area-mensagens .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .texto-msg,
+body.pagina-chat-dashboard-v2 #area-mensagens .texto-msg-origem {
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card,
+body.pagina-chat-dashboard-v2 #area-mensagens .corpo-texto {
+    padding: 2px 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-inspetor .texto-msg {
+    color: var(--tariel-clean-text) !important;
+    font-weight: 600;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row--assistant .workspace-message-body,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .mensagem-ia .texto-msg {
+    color: var(--tariel-clean-text) !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .workspace-message-card::before,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .workspace-message-card::after,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .corpo-texto::before,
+body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .corpo-texto::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Historico segue a mesma linguagem: conteudo separado, sem cartao visual. */
+body.pagina-chat-dashboard-v2 #painel-chat .workspace-history-card,
+body.pagina-chat-dashboard-v2 #painel-chat [data-history-timeline] .workspace-history-card,
+body.pagina-chat-dashboard-v2 #painel-chat .chat-thread-results .workspace-history-card,
+body.pagina-chat-dashboard-v2 #painel-chat #chat-thread-results .workspace-history-card {
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card,
+body.pagina-chat-dashboard-v2 [data-history-timeline] .workspace-history-card,
+body.pagina-chat-dashboard-v2 .chat-thread-results .workspace-history-card,
+body.pagina-chat-dashboard-v2 #chat-thread-results .workspace-history-card {
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+/* Historico lateral sem bolhas: lista textual, sem card ativo/hover. */
+body.pagina-chat-dashboard-v2 #barra-historico .inspetor-sidebar-report,
+body.pagina-chat-dashboard-v2 #lista-historico .inspetor-sidebar-report,
+body.pagina-chat-dashboard-v2 #lista-historico .item-historico,
+body.pagina-chat-dashboard-v2 .inspetor-sidebar-recentes__lista .inspetor-sidebar-report,
+body.pagina-chat-dashboard-v2 .inspetor-sidebar-recentes__lista .item-historico {
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 #barra-historico .inspetor-sidebar-report:hover,
+body.pagina-chat-dashboard-v2 #barra-historico .inspetor-sidebar-report.ativo,
+body.pagina-chat-dashboard-v2 #lista-historico .inspetor-sidebar-report:hover,
+body.pagina-chat-dashboard-v2 #lista-historico .inspetor-sidebar-report.ativo,
+body.pagina-chat-dashboard-v2 #lista-historico .item-historico:hover,
+body.pagina-chat-dashboard-v2 #lista-historico .item-historico.ativo {
+    transform: none !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 #lista-historico .inspetor-sidebar-report::before,
+body.pagina-chat-dashboard-v2 #lista-historico .inspetor-sidebar-report::after,
+body.pagina-chat-dashboard-v2 #lista-historico .item-historico::before,
+body.pagina-chat-dashboard-v2 #lista-historico .item-historico::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Hard reset final: nenhuma camada da fala pode voltar a desenhar bolha/card. */
+#area-mensagens > .linha-mensagem,
+#area-mensagens .linha-mensagem,
+#area-mensagens .workspace-message-row,
+#area-mensagens .mensagem,
+#area-mensagens .mensagem-ia,
+#area-mensagens .mensagem-inspetor,
+#area-mensagens .mensagem-usuario,
+#area-mensagens .mensagem-sistema,
+#area-mensagens .mensagem-origem-mesa,
+#area-mensagens .conteudo-mensagem,
+#area-mensagens .workspace-message-shell,
+#area-mensagens .corpo-texto,
+#area-mensagens .workspace-message-card,
+#area-mensagens .texto-msg,
+#area-mensagens .texto-msg-origem,
+#area-mensagens .workspace-message-body,
+#area-mensagens .bloco-texto-solto {
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+#area-mensagens .corpo-texto,
+#area-mensagens .workspace-message-card {
+    padding: 0 !important;
+}
+
+#area-mensagens > .linha-mensagem,
+#area-mensagens .linha-mensagem,
+#area-mensagens .workspace-message-row,
+#area-mensagens .conteudo-mensagem,
+#area-mensagens .workspace-message-shell,
+#area-mensagens .corpo-texto,
+#area-mensagens .workspace-message-card {
+    overflow: visible !important;
+}
+
+#area-mensagens .linha-mensagem::before,
+#area-mensagens .linha-mensagem::after,
+#area-mensagens .workspace-message-row::before,
+#area-mensagens .workspace-message-row::after,
+#area-mensagens .conteudo-mensagem::before,
+#area-mensagens .conteudo-mensagem::after,
+#area-mensagens .workspace-message-shell::before,
+#area-mensagens .workspace-message-shell::after,
+#area-mensagens .corpo-texto::before,
+#area-mensagens .corpo-texto::after,
+#area-mensagens .workspace-message-card::before,
+#area-mensagens .workspace-message-card::after,
+#area-mensagens .texto-msg::before,
+#area-mensagens .texto-msg::after,
+#area-mensagens .workspace-message-body::before,
+#area-mensagens .workspace-message-body::after {
+    display: none !important;
+    content: none !important;
+    border: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* Hard reset final do historico: itens continuam separados, mas sem placas. */
+.workspace-history-card,
+[data-history-timeline] .workspace-history-card,
+.chat-thread-results .workspace-history-card,
+#chat-thread-results .workspace-history-card,
+#barra-historico .inspetor-sidebar-report,
+#lista-historico .inspetor-sidebar-report,
+#lista-historico .item-historico,
+.inspetor-sidebar-recentes__lista .inspetor-sidebar-report,
+.inspetor-sidebar-recentes__lista .item-historico {
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+.workspace-history-card::before,
+.workspace-history-card::after,
+#barra-historico .inspetor-sidebar-report::before,
+#barra-historico .inspetor-sidebar-report::after,
+#lista-historico .inspetor-sidebar-report::before,
+#lista-historico .inspetor-sidebar-report::after,
+#lista-historico .item-historico::before,
+#lista-historico .item-historico::after,
+.inspetor-sidebar-recentes__lista .inspetor-sidebar-report::before,
+.inspetor-sidebar-recentes__lista .inspetor-sidebar-report::after,
+.inspetor-sidebar-recentes__lista .item-historico::before,
+.inspetor-sidebar-recentes__lista .item-historico::after {
+    display: none !important;
+    content: none !important;
+    border: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* Override final: no chat livre, a fala do usuario volta a ser uma pilula compacta. */
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens .workspace-message-row--user .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens .workspace-message-row--user .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens .workspace-message-row--user .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-inspetor .conteudo-mensagem,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-usuario .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-inspetor .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-usuario .conteudo-mensagem {
+    display: inline-grid !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: min(32ch, calc(100% - 32px)) !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: end !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens .workspace-message-row--user .workspace-message-card,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens .workspace-message-row--user .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens .workspace-message-row--user .workspace-message-card,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-inspetor .corpo-texto,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-usuario .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-inspetor .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-usuario .corpo-texto {
+    display: inline-flex !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    align-items: center !important;
+    padding: 8px 14px !important;
+    border-radius: 999px !important;
+    background: rgba(231, 241, 248, 0.98) !important;
+    background-image: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-inspetor .texto-msg,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-usuario .texto-msg,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-inspetor .texto-msg,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens .mensagem-usuario .texto-msg {
+    display: inline !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+}
+
+/* Override final mesmo fora do estado de chat livre: usuario fica com pilula compacta. */
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user {
+    justify-content: flex-end !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .conteudo-mensagem {
+    display: inline-grid !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: min(30ch, calc(100% - 32px)) !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: end !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-card,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .corpo-texto,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .corpo-texto {
+    display: inline-flex !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    align-items: center !important;
+    padding: 8px 14px !important;
+    border-radius: 999px !important;
+    background: rgba(231, 241, 248, 0.98) !important;
+    background-image: none !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .texto-msg,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .texto-msg {
+    display: inline !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+}
+
+/* Override final com a mesma especificidade dos estados technical/free-chat. */
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user {
+    justify-content: flex-end !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-shell,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .conteudo-mensagem,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .conteudo-mensagem {
+    display: inline-grid !important;
+    width: fit-content !important;
+    min-width: 0 !important;
+    max-width: min(30ch, calc(100% - 32px)) !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    grid-template-columns: minmax(0, max-content) !important;
+    justify-items: end !important;
+    justify-self: end !important;
+    align-items: start !important;
+    gap: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-avatar,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-meta,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-avatar,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-meta,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-avatar,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-meta,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .mensagem-meta,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .mensagem-meta,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .mensagem-meta,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .mensagem-meta {
+    display: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-card,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-card,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-card,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .corpo-texto,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .corpo-texto,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .corpo-texto {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 0 !important;
+    width: fit-content !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 8px 14px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: rgba(231, 241, 248, 0.98) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2[data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .texto-msg,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .texto-msg,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-inspetor .texto-msg,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] #area-mensagens[data-conversation-variant="technical"] .mensagem-usuario .texto-msg {
+    display: inline-block !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 30ch !important;
+    text-align: left !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    line-height: 1.42 !important;
+}
+
+/* Sidebar esquerda: remove qualquer canto escuro residual e puxa para azul claro. */
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar__top,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar__masthead,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar__masthead--chat {
+    background:
+        linear-gradient(180deg, rgba(240, 247, 253, 0.99), rgba(231, 241, 248, 0.99)) !important;
+    background-color: rgba(236, 245, 252, 0.99) !important;
+    background-image: linear-gradient(180deg, rgba(240, 247, 253, 0.99), rgba(231, 241, 248, 0.99)) !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar__masthead,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar__masthead--chat,
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar__meta {
+    border-color: rgba(188, 210, 228, 0.92) !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar__meta {
+    color: #18324a !important;
+}
+
+body.pagina-chat-dashboard-v2 #painel-chat .inspetor-sidebar.inspetor-sidebar--clean .inspetor-sidebar__meta-pill {
+    border-color: rgba(140, 177, 208, 0.32) !important;
+    background: rgba(201, 223, 241, 0.84) !important;
+    color: #1f4f78 !important;
+}
+
+/* Composer dock: mascara historicos antigos somente dentro da conversa. */
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 30 !important;
+    padding-top: 14px !important;
+    padding-bottom: 18px !important;
+    background:
+        linear-gradient(180deg, rgba(246, 250, 253, 0.88) 0%, #f6fafd 34%, #f6fafd 100%) !important;
+    box-shadow:
+        0 -18px 34px rgba(246, 250, 253, 0.96),
+        0 -1px 0 rgba(188, 204, 219, 0.35) !important;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    isolation: isolate;
+    overflow: visible !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada::before,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada::before,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada::before {
+    content: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada::after,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada::after {
+    content: "";
+    position: absolute;
+    right: -48px;
+    bottom: -118px;
+    left: -48px;
+    z-index: 0;
+    height: 136px;
+    pointer-events: none;
+    border-radius: 0 0 28px 28px;
+    background:
+        linear-gradient(180deg, rgba(246, 250, 253, 0.98) 0%, #f6fafd 38%, #f6fafd 100%);
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada > * {
+    position: relative;
+    z-index: 1;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid:not([data-workspace-view="inspection_conversation"]) .rodape-entrada {
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid:not([data-workspace-view="inspection_conversation"]) .rodape-entrada::before {
+    content: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid:not([data-workspace-view="inspection_conversation"]) .rodape-entrada::after {
+    content: none !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"] {
+    padding-bottom: clamp(190px, 24vh, 280px) !important;
+    scroll-padding-bottom: clamp(190px, 24vh, 280px);
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="technical"]::after,
+body.pagina-chat-dashboard-v2 #area-mensagens[data-conversation-variant="focused"]::after {
+    content: "";
+    display: block;
+    flex: 0 0 clamp(110px, 16vh, 190px);
+    min-height: clamp(110px, 16vh, 190px);
+    width: 100%;
+    pointer-events: none;
+}
+
+/* Rail: remove os cards legados de contexto e revisao do painel lateral. */
+body.pagina-chat-dashboard-v2 #workspace-context-card,
+body.pagina-chat-dashboard-v2 .technical-record-card--context,
+body.pagina-chat-dashboard-v2 .technical-record-card--mesa {
+    display: none !important;
+}
+
+/* Modos sutis por NR: apenas cor de ambiente e acento, sem alterar layout. */
+body.pagina-chat-dashboard-v2[data-nr-visual-mode] {
+    --nr-mode-accent: #1f5e8e;
+    --nr-mode-accent-soft: rgba(31, 94, 142, 0.1);
+    --nr-mode-accent-wash: rgba(31, 94, 142, 0.055);
+    --nr-mode-accent-wash-strong: rgba(31, 94, 142, 0.105);
+    --nr-mode-border: rgba(31, 94, 142, 0.24);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="rti"] {
+    --nr-mode-accent: #176d8b;
+    --nr-mode-accent-soft: rgba(23, 109, 139, 0.11);
+    --nr-mode-accent-wash: rgba(23, 109, 139, 0.055);
+    --nr-mode-accent-wash-strong: rgba(23, 109, 139, 0.11);
+    --nr-mode-border: rgba(23, 109, 139, 0.25);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="pie"] {
+    --nr-mode-accent: #3d5f9c;
+    --nr-mode-accent-soft: rgba(61, 95, 156, 0.11);
+    --nr-mode-accent-wash: rgba(61, 95, 156, 0.055);
+    --nr-mode-accent-wash-strong: rgba(61, 95, 156, 0.105);
+    --nr-mode-border: rgba(61, 95, 156, 0.24);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="spda"] {
+    --nr-mode-accent: #2d6f8f;
+    --nr-mode-accent-soft: rgba(45, 111, 143, 0.11);
+    --nr-mode-accent-wash: rgba(45, 111, 143, 0.06);
+    --nr-mode-accent-wash-strong: rgba(45, 111, 143, 0.11);
+    --nr-mode-border: rgba(45, 111, 143, 0.25);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="loto"] {
+    --nr-mode-accent: #8b6832;
+    --nr-mode-accent-soft: rgba(139, 104, 50, 0.12);
+    --nr-mode-accent-wash: rgba(139, 104, 50, 0.06);
+    --nr-mode-accent-wash-strong: rgba(139, 104, 50, 0.12);
+    --nr-mode-border: rgba(139, 104, 50, 0.25);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr12"] {
+    --nr-mode-accent: #2c7666;
+    --nr-mode-accent-soft: rgba(44, 118, 102, 0.11);
+    --nr-mode-accent-wash: rgba(44, 118, 102, 0.055);
+    --nr-mode-accent-wash-strong: rgba(44, 118, 102, 0.11);
+    --nr-mode-border: rgba(44, 118, 102, 0.25);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr13"] {
+    --nr-mode-accent: #52677f;
+    --nr-mode-accent-soft: rgba(82, 103, 127, 0.12);
+    --nr-mode-accent-wash: rgba(82, 103, 127, 0.06);
+    --nr-mode-accent-wash-strong: rgba(82, 103, 127, 0.115);
+    --nr-mode-border: rgba(82, 103, 127, 0.25);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr20"] {
+    --nr-mode-accent: #9a6630;
+    --nr-mode-accent-soft: rgba(154, 102, 48, 0.12);
+    --nr-mode-accent-wash: rgba(154, 102, 48, 0.055);
+    --nr-mode-accent-wash-strong: rgba(154, 102, 48, 0.11);
+    --nr-mode-border: rgba(154, 102, 48, 0.25);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr33"] {
+    --nr-mode-accent: #6f6b43;
+    --nr-mode-accent-soft: rgba(111, 107, 67, 0.12);
+    --nr-mode-accent-wash: rgba(111, 107, 67, 0.055);
+    --nr-mode-accent-wash-strong: rgba(111, 107, 67, 0.11);
+    --nr-mode-border: rgba(111, 107, 67, 0.25);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr35"] {
+    --nr-mode-accent: #217f97;
+    --nr-mode-accent-soft: rgba(33, 127, 151, 0.11);
+    --nr-mode-accent-wash: rgba(33, 127, 151, 0.055);
+    --nr-mode-accent-wash-strong: rgba(33, 127, 151, 0.11);
+    --nr-mode-border: rgba(33, 127, 151, 0.25);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) .inspetor-main {
+    background:
+        radial-gradient(circle at 56% 9%, var(--nr-mode-accent-wash-strong), transparent 31%),
+        radial-gradient(circle at 12% 82%, var(--nr-mode-accent-wash), transparent 29%),
+        linear-gradient(180deg, rgba(251, 253, 255, 0.98), rgba(244, 248, 252, 0.99)) !important;
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) .workspace-guided-nr-summary__badge,
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) .workspace-assistant-entry-card__badge {
+    background: var(--nr-mode-accent-soft);
+    color: var(--nr-mode-accent);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) .portal-model-card[data-context-active="true"],
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) .workspace-guided-nr-card[data-context-active="true"] {
+    border-color: var(--nr-mode-border) !important;
+    background:
+        radial-gradient(circle at top right, var(--nr-mode-accent-wash-strong), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(242, 247, 251, 0.98)) !important;
+    box-shadow:
+        0 0 0 3px var(--nr-mode-accent-soft),
+        0 16px 32px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) .portal-model-card[data-context-active="true"] .portal-model-card__icon,
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) .workspace-guided-nr-card[data-context-active="true"] .workspace-guided-nr-card__icon {
+    background: var(--nr-mode-accent-soft);
+    color: var(--nr-mode-accent);
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) .technical-record-header__backline,
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) .workspace-rail-card__eyebrow {
+    color: var(--nr-mode-accent);
+}
+
+/* Mantem os atalhos de NR clicaveis mesmo com mascaras visuais do composer. */
+body.pagina-chat-dashboard-v2 .workspace-composer-entry-panel,
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-picker,
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-summary,
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-grid,
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-card,
+body.pagina-chat-dashboard-v2 .portal-model-list,
+body.pagina-chat-dashboard-v2 .portal-model-card {
+    pointer-events: auto !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-composer-entry-panel,
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-picker,
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-grid,
+body.pagina-chat-dashboard-v2 .portal-model-list {
+    position: relative;
+    z-index: 45;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-guided-nr-card,
+body.pagina-chat-dashboard-v2 .portal-model-card {
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+/* Titulo do chat tambem assume a identidade visual da NR ativa. */
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) #workspace-titulo-laudo {
+    display: inline-flex;
+    gap: 8px;
+    width: fit-content;
+    max-width: min(100%, 420px);
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    padding: 0 0 5px;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 2px solid var(--nr-mode-border, rgba(31, 94, 142, 0.2));
+    border-radius: 0;
+    background: transparent;
+    color: var(--nr-mode-accent, var(--vf-accent)) !important;
+    box-shadow: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.pagina-chat-dashboard-v2 #workspace-titulo-laudo[data-nr-title-active="true"] {
+    display: inline-flex;
+    gap: 8px;
+    width: fit-content;
+    max-width: min(100%, 420px);
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    padding: 0 0 5px;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 2px solid var(--nr-mode-border, rgba(31, 94, 142, 0.2));
+    border-radius: 0;
+    background: transparent;
+    color: var(--nr-mode-accent, var(--vf-accent)) !important;
+    box-shadow: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode]:not([data-nr-visual-mode=""]) #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    color: var(--nr-mode-accent, var(--vf-accent));
+    font-weight: 700;
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="rti"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode="rti"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    content: " • RTI";
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="pie"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode="pie"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    content: " • PIE";
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="spda"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode="spda"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    content: " • SPDA";
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="loto"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode="loto"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    content: " • LOTO";
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr12"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode="nr12"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    content: " • NR12 Maquinas";
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr13"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode="nr13"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    content: " • NR13 Integridade";
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr20"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode="nr20"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    content: " • NR20 Inflamaveis";
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr33"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode="nr33"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    content: " • NR33 Espaco Confinado";
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode="nr35"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after,
+body.pagina-chat-dashboard-v2 #painel-chat[data-nr-visual-mode="nr35"] #workspace-titulo-laudo:not([data-nr-title-active="true"])::after {
+    content: " • NR35 Linha de Vida";
+}
+
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) #workspace-status-badge,
+body.pagina-chat-dashboard-v2[data-nr-visual-mode]:not([data-nr-visual-mode=""]) #workspace-mode-chip {
+    border-color: var(--nr-mode-border, rgba(31, 94, 142, 0.2)) !important;
+    background: var(--nr-mode-accent-soft, rgba(31, 94, 142, 0.08)) !important;
+    color: var(--nr-mode-accent, var(--vf-accent)) !important;
 }

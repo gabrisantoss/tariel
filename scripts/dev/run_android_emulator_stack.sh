@@ -3,6 +3,8 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
+PYTHON_RUNNER="$(resolve_web_python)"
+
 MODE="boot"
 WITH_API=0
 SKIP_ADB_REVERSE=0
@@ -101,7 +103,7 @@ record_lane_status() {
   local serial="$4"
   local requested_apk="$5"
 
-  python3 - "$LANE_STATE_FILE" "$REPO_ROOT" "$status" "$detail" "$MODE" "$avd_name" "$serial" "$WITH_API" "$SKIP_ADB_REVERSE" "$requested_apk" <<'PY'
+  "$PYTHON_RUNNER" - "$LANE_STATE_FILE" "$REPO_ROOT" "$status" "$detail" "$MODE" "$avd_name" "$serial" "$WITH_API" "$SKIP_ADB_REVERSE" "$requested_apk" <<'PY'
 import json
 import pathlib
 import sys
@@ -136,7 +138,7 @@ state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", 
 PY
 
   if [[ "$MODE" == "maestro-smoke" || "$MODE" == "maestro-suite" ]]; then
-    python3 - "$MAESTRO_STATE_FILE" "$REPO_ROOT" "$status" "$detail" "$MODE" "$avd_name" "$serial" "$WITH_API" "$SKIP_ADB_REVERSE" "$requested_apk" <<'PY'
+    "$PYTHON_RUNNER" - "$MAESTRO_STATE_FILE" "$REPO_ROOT" "$status" "$detail" "$MODE" "$avd_name" "$serial" "$WITH_API" "$SKIP_ADB_REVERSE" "$requested_apk" <<'PY'
 import json
 import pathlib
 import sys

@@ -6,12 +6,12 @@ O objetivo desta etapa não é propor refatoração imediata nem autorizar mudan
 
 ## Resumo executivo
 
-O Tariel é um sistema multiportal para inspeções técnicas assistidas por IA, revisão técnica humana e governança operacional por empresa.
+O Tariel é um sistema mobile/chat-first para inspeções técnicas assistidas por IA, com revisão técnica humana opcional e governança operacional por empresa.
 
 O núcleo do produto não é apenas um chat, nem apenas um gerador de laudos. O núcleo é a gestão de um mesmo caso técnico ao longo de quatro camadas:
 
 1. `Chat Inspetor`: espaço operacional em que a inspeção acontece, com conversa, evidências, contexto normativo e construção assistida do laudo.
-2. `Mesa Avaliadora`: espaço de revisão, comentário, validação, ajustes e aprovação do mesmo caso técnico.
+2. `Mesa Avaliadora`: camada opcional de revisão, comentário, validação, ajustes e aprovação do mesmo caso técnico.
 3. `Admin Cliente`: espaço de gestão restrita à própria empresa para usuários, operação e acompanhamento da empresa cliente.
 4. `Admin Geral`: espaço de operação da plataforma, empresas, planos, billing e governança SaaS.
 
@@ -31,6 +31,9 @@ A visão-alvo do sistema é operar um mesmo caso técnico com continuidade entre
 - `01_scope_and_goals.md`: escopo do produto, metas, princípios e arquitetura-alvo em alto nível.
 - `02_open_questions.md`: dúvidas abertas e decisões pendentes antes de mudanças técnicas ou de produto maiores.
 - `03_foundational_decisions_2026-04-12.md`: decisões fundamentais normalizadas a partir das respostas diretas do produto.
+- `04_product_north_star_and_identity_2026-05-10.md`: norte de produto e identidade para tecnologia, futuro, profissionalismo, acessibilidade e grande capacidade operacional.
+- `05_master_product_map_2026-05-10.md`: mapa mestre para separar caminho principal, superfícies, MVP, camadas opcionais e ordem de execução.
+- `06_mobile_vs_web_chat_audit_2026-05-10.md`: auditoria pratica para espelhar o modelo mental do mobile no Chat Web do Inspetor.
 
 ## Como usar estes documentos
 
@@ -48,8 +51,11 @@ Sequência recomendada de leitura:
 1. Ler este `README.md` para alinhar vocabulário e objetivos.
 2. Ler `01_scope_and_goals.md` para fixar o escopo canônico do produto.
 3. Ler `03_foundational_decisions_2026-04-12.md` para entender as decisões já fechadas.
-4. Ler `02_open_questions.md` para identificar o que ainda não está encerrado.
-5. Só então abrir propostas de arquitetura, refatoração ou roadmap técnico.
+4. Ler `04_product_north_star_and_identity_2026-05-10.md` para alinhar identidade, escopo de superfície e priorização.
+5. Ler `05_master_product_map_2026-05-10.md` para decidir o que pertence ao caminho principal, ao MVP, a pacote opcional ou a futuro.
+6. Ler `06_mobile_vs_web_chat_audit_2026-05-10.md` antes de mexer no layout, navegacao ou composer do Chat Web do Inspetor.
+7. Ler `02_open_questions.md` para identificar o que ainda não está encerrado.
+8. Só então abrir propostas de arquitetura, refatoração ou roadmap técnico.
 
 ## Regras de uso deste pacote
 

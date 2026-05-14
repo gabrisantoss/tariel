@@ -30,6 +30,7 @@ from app.domains.chat.corrections import (
     construir_contexto_correcao_estruturada_chat_para_ia,
     registrar_correcao_estruturada_chat,
 )
+from app.domains.chat.guided_template_prompt import build_guided_template_prompt_context
 from app.domains.chat.laudo_access_helpers import obter_laudo_do_inspetor
 from app.domains.chat.laudo_state_helpers import (
     laudo_permite_edicao_inspetor,
@@ -787,6 +788,15 @@ def persist_chat_user_message(
             else None
         ),
     )
+    guided_template_prompt_context = build_guided_template_prompt_context(
+        laudo=prepared.laudo,
+        guided_draft=(
+            prepared.guided_inspection_draft
+            or getattr(prepared.laudo, "guided_inspection_draft_json", None)
+        ),
+        guided_context=prepared.guided_inspection_context,
+        report_pack_draft=report_pack_draft if isinstance(report_pack_draft, dict) else None,
+    )
     if report_context_included and pre_laudo_prompt_context:
         if mensagem_base_para_ia:
             mensagem_base_para_ia = (
@@ -794,6 +804,13 @@ def persist_chat_user_message(
             )
         else:
             mensagem_base_para_ia = pre_laudo_prompt_context
+    if guided_template_prompt_context:
+        if mensagem_base_para_ia:
+            mensagem_base_para_ia = (
+                f"{guided_template_prompt_context}\n\n{mensagem_base_para_ia}"
+            )
+        else:
+            mensagem_base_para_ia = guided_template_prompt_context
     if report_context_included and contexto_correcao_visual_pendente:
         if mensagem_base_para_ia:
             mensagem_base_para_ia = (

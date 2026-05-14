@@ -429,7 +429,7 @@ Checkpoint PR H: o teste `web/tests/test_company_with_mesa_premium_pr_h.py` cobr
 
 ### PR I - Guardrails para familia de alto risco
 
-Generalizar o padrao de familia que exige Mesa/signatario/validator estrito, usando NR35 como referencia sem acoplar a uma familia unica.
+Generalizar o padrao de familia que recomenda Mesa/signatario/validator estrito, usando NR35 como referencia sem acoplar a uma familia unica.
 
 Impacto: venda segura por familia tecnica.
 

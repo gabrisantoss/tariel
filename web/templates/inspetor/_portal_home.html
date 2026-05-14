@@ -1,5 +1,6 @@
 {% from "inspetor/_macros.html" import render_portal_recent %}
 {% set hero_operational_items = portal_operational_summary["items"] | default([], true) %}
+{% set hero_primary_recent = laudos_portal_cards[0] if laudos_portal_cards else none %}
 
 <section
     id="tela-boas-vindas"
@@ -25,6 +26,76 @@
                 </a>
                 {% endfor %}
             </div>
+
+            <div class="portal-home-focus" aria-label="Resumo operacional do portal">
+                {% if hero_primary_recent %}
+                <button
+                    type="button"
+                    class="portal-home-focus-card portal-home-focus-card--continue"
+                    {% if hero_primary_recent.id %}data-home-laudo-id="{{ hero_primary_recent.id | int }}"{% endif %}
+                    data-home-template="{{ hero_primary_recent.tipo | default('padrao', true) | e }}"
+                    data-home-title="{{ hero_primary_recent.workspace_title | default(hero_primary_recent.titulo, true) | e }}"
+                    data-home-subtitle="{{ hero_primary_recent.workspace_subtitle | default(hero_primary_recent.subtitulo, true) | e }}"
+                    data-home-status="{{ hero_primary_recent.workspace_status | default(hero_primary_recent.badge, true) | e }}"
+                    data-entry-mode-preference="{{ hero_primary_recent.entry_mode_preference | default('', true) | e }}"
+                    data-entry-mode-effective="{{ hero_primary_recent.entry_mode_effective | default('', true) | e }}"
+                    data-entry-mode-reason="{{ hero_primary_recent.entry_mode_reason | default('', true) | e }}"
+                    aria-label="Continuar {{ hero_primary_recent.titulo | e }}"
+                >
+                    <span class="portal-home-focus-card__eyebrow">Continuar trabalho</span>
+                    <strong>{{ hero_primary_recent.titulo }}</strong>
+                    <p>{{ hero_primary_recent.subtitulo }}</p>
+                    <div class="portal-home-focus-card__meta">
+                        {% if hero_primary_recent.tempo %}
+                        <span>{{ hero_primary_recent.tempo }}</span>
+                        {% endif %}
+                        {% if hero_primary_recent.evidencias %}
+                        <span>{{ hero_primary_recent.evidencias }}</span>
+                        {% endif %}
+                        {% if hero_primary_recent.badge %}
+                        <span>{{ hero_primary_recent.badge }}</span>
+                        {% endif %}
+                    </div>
+                </button>
+                {% else %}
+                <div class="portal-home-focus-card portal-home-focus-card--guide">
+                    <span class="portal-home-focus-card__eyebrow">Ponto de partida</span>
+                    <strong>Nenhum caso em andamento</strong>
+                    <p>Abra um chat guiado por NR ou inicie uma nova inspeção para estruturar a coleta com contexto técnico.</p>
+                </div>
+                {% endif %}
+
+                <div class="portal-home-focus-card portal-home-focus-card--steps">
+                    <span class="portal-home-focus-card__eyebrow">Próximo melhor caminho</span>
+                    <strong>{{ portal_operational_summary.primary_action_label | default("Escolha a próxima frente", true) }}</strong>
+                    <p>
+                        {% if portal_operational_summary.visible %}
+                            {{ portal_operational_summary.primary_action_detail | default("Continue o caso mais crítico ou abra uma nova frente com base técnica definida.", true) }}
+                        {% else %}
+                            {{ portal_operational_summary.empty_message | default("Sem casos ativos. Use o portal para abrir um chat contextualizado ou iniciar uma inspeção.", true) }}
+                        {% endif %}
+                    </p>
+                    <div class="portal-home-focus-card__steps" aria-hidden="true">
+                        <span>Escolha um modelo técnico</span>
+                        <span>Contextualize a coleta</span>
+                        <span>Continue o laudo com evidências</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if portal_governance_summary.visible %}
+            <article
+                id="portal-governance-summary"
+                class="portal-home-governance-inline"
+                aria-label="Resumo de governança documental"
+            >
+                <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+                <div class="portal-home-governance-inline__copy">
+                    <strong id="portal-governance-summary-title">{{ portal_governance_summary.label | default('', true) }}</strong>
+                    <span id="portal-governance-summary-detail">{{ portal_governance_summary.detail | default('', true) }}</span>
+                </div>
+            </article>
+            {% endif %}
         </div>
 
         <div class="inspetor-portal__hero-panel" aria-label="Resumo operacional do portal">
@@ -81,30 +152,6 @@
             </div>
         </div>
     </header>
-
-    <section class="portal-stat-grid" aria-label="Indicadores principais">
-        {% for card in cards_status %}
-        <article class="portal-stat-card portal-stat-card--{{ card.status }}">
-            <span class="portal-stat-card__icon material-symbols-rounded" aria-hidden="true">{{ card.icone }}</span>
-            <div class="portal-stat-card__copy">
-                <strong>{{ card.valor }}</strong>
-                <span>{{ card.label }}</span>
-            </div>
-        </article>
-        {% endfor %}
-        <article
-            id="portal-governance-summary"
-            class="portal-stat-card portal-stat-card--warning"
-            aria-label="Resumo de governança documental"
-            {% if not portal_governance_summary.visible %}hidden{% endif %}
-        >
-            <span class="portal-stat-card__icon material-symbols-rounded" aria-hidden="true">warning</span>
-            <div class="portal-stat-card__copy">
-                <strong id="portal-governance-summary-title">{{ portal_governance_summary.label | default('', true) }}</strong>
-                <span id="portal-governance-summary-detail">{{ portal_governance_summary.detail | default('', true) }}</span>
-            </div>
-        </article>
-    </section>
 
     <div class="portal-divider" aria-hidden="true"></div>
 
@@ -196,10 +243,16 @@
                 <button
                     type="button"
                     class="portal-model-card btn-acao-rapida portal-model-card--{{ modelo.status }}"
+                    data-chat-guided="true"
                     data-tipo="{{ modelo.tipo | e }}"
+                    data-titulo="{{ modelo.titulo | e }}"
+                    data-badge="{{ modelo.badge | default('', true) | e }}"
                     data-runtime-tipo="{{ modelo.runtime_tipo | default(modelo.tipo, true) | e }}"
                     data-preprompt="{{ modelo.preprompt | e }}"
-                    aria-label="{{ modelo.titulo }}"
+                    data-icone="{{ modelo.icone | default('', true) | e }}"
+                    data-meta="{{ modelo.meta | default('', true) | e }}"
+                    data-inspector-entry="portal-guided-nr"
+                    aria-label="Abrir chat contextualizado em {{ modelo.titulo | e }}"
                 >
                     <span class="portal-model-card__icon material-symbols-rounded" aria-hidden="true">{{ modelo.icone }}</span>
                     <div class="portal-model-card__body">

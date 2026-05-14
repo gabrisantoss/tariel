@@ -249,6 +249,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     workspace_conversation_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_conversation.html").read_text(encoding="utf-8")
     workspace_mesa_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_mesa.html").read_text(encoding="utf-8")
     workspace_corrections_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_corrections.html").read_text(encoding="utf-8")
+    workspace_finalization_html = (raiz / "templates" / "inspetor" / "workspace" / "_inspection_finalization.html").read_text(encoding="utf-8")
     workspace_rail_html = (raiz / "templates" / "inspetor" / "workspace" / "_workspace_context_rail.html").read_text(encoding="utf-8")
     preparar_emissao_html = (raiz / "templates" / "inspetor" / "preparar_emissao.html").read_text(encoding="utf-8")
     mesa_widget_html = (raiz / "templates" / "inspetor" / "_mesa_widget.html").read_text(encoding="utf-8")
@@ -265,20 +266,25 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     workspace_status_payload_js = (raiz / "static" / "js" / "inspetor" / "workspace_status_payload.js").read_text(encoding="utf-8")
     workspace_mesa_status_js = (raiz / "static" / "js" / "inspetor" / "workspace_mesa_status.js").read_text(encoding="utf-8")
     workspace_runtime_state_js = (raiz / "static" / "js" / "inspetor" / "workspace_runtime_state.js").read_text(encoding="utf-8")
+    workspace_derivatives_js = (raiz / "static" / "js" / "inspetor" / "workspace_derivatives.js").read_text(encoding="utf-8")
+    workspace_context_flow_js = (raiz / "static" / "js" / "inspetor" / "workspace_context_flow.js").read_text(encoding="utf-8")
     state_snapshots_js = (raiz / "static" / "js" / "inspetor" / "state_snapshots.js").read_text(encoding="utf-8")
     state_authority_js = (raiz / "static" / "js" / "inspetor" / "state_authority.js").read_text(encoding="utf-8")
     system_events_js = (raiz / "static" / "js" / "inspetor" / "system_events.js").read_text(encoding="utf-8")
+    reboot_css = (raiz / "static" / "css" / "inspetor" / "reboot.css").read_text(encoding="utf-8")
     workspace_states_css = (raiz / "static" / "css" / "inspetor" / "workspace_states.css").read_text(encoding="utf-8")
     workspace_rail_css = (raiz / "static" / "css" / "inspetor" / "workspace_rail.css").read_text(encoding="utf-8")
     visual_refinements_css = (raiz / "static" / "css" / "inspetor" / "visual_refinements.css").read_text(encoding="utf-8")
+    shared_app_shell_css = (raiz / "static" / "css" / "shared" / "app_shell.css").read_text(encoding="utf-8")
     shared_api_js = (raiz / "static" / "js" / "shared" / "api.js").read_text(encoding="utf-8")
+    shared_chat_render_js = (raiz / "static" / "js" / "shared" / "chat-render.js").read_text(encoding="utf-8")
     auth_mobile_support_py = (raiz / "app" / "domains" / "chat" / "auth_mobile_support.py").read_text(encoding="utf-8")
 
     assert not (raiz / "templates" / "base.html").exists()
     assert 'id="btn-toggle-ui"' in inspetor_base_html
     assert 'id="icone-toggle-ui"' in inspetor_base_html
     assert 'id="btn-shell-home"' in inspetor_base_html
-    assert 'id="btn-shell-profile"' in inspetor_base_html
+    assert 'id="btn-shell-profile"' not in inspetor_base_html
 
     assert '{% include "inspetor/_portal_main.html" %}' in index_html
     assert '{% include "inspetor/modals/_nova_inspecao.html" %}' in index_html
@@ -293,6 +299,7 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert '{% include "inspetor/workspace/_inspection_record.html" %}' in workspace_html
     assert '{% include "inspetor/workspace/_inspection_conversation.html" %}' in workspace_html
     assert '{% include "inspetor/workspace/_inspection_mesa.html" %}' in workspace_html
+    assert '{% include "inspetor/workspace/_inspection_finalization.html" %}' in workspace_html
     assert '{% include "inspetor/workspace/_workspace_context_rail.html" %}' in workspace_html
     assert 'id="btn-anexo"' in workspace_html
     assert 'class="workspace-composer-compat-action"' in workspace_html
@@ -304,10 +311,13 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'class="technical-composer-icon-btn"' in workspace_html
     assert "workspace-assistant-primary-action" not in workspace_html
     assert "workspace-guided-nr-picker" in workspace_html
-    assert "workspace-guided-nr-summary__chips" in workspace_html
+    assert "workspace-guided-nr-summary__chips" not in workspace_html
     assert "workspace-guided-nr-card" in workspace_html
     assert "workspace-guided-nr-card__badge" not in workspace_html
     assert "Perguntas e evidências" not in workspace_html
+    assert 'id="btn-previa-chat"' in workspace_html
+    assert 'id="btn-previa-chat"\n                            class="workspace-context-actions__button"\n                            hidden' in workspace_html
+    assert 'class="workspace-entry-helper" aria-label="Guia rápido para abrir a conversa" hidden' in workspace_html
     assert "workspace-operational-strip" not in workspace_assistant_html
     assert "workspace-assistant-landing__headline-subquestion" not in workspace_assistant_html
     assert "workspace-assistant-landing__lead" not in workspace_assistant_html
@@ -318,8 +328,8 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "workspace-service-launcher" not in workspace_assistant_html
     assert 'id="rodape-contexto-titulo"' in workspace_html
     assert 'id="rodape-contexto-status"' in workspace_html
-    assert 'class="btn-secundario btn-home-cabecalho technical-record-back technical-record-back--subtle"' in workspace_header_html
-    assert 'data-action="go-home"' in workspace_header_html
+    assert "technical-record-back" not in workspace_header_html
+    assert 'id="btn-workspace-toggle-left-sidebar"' in workspace_header_html
     assert 'id="workspace-titulo-laudo"' in workspace_header_html
     assert 'id="workspace-status-badge"' in workspace_header_html
     assert 'class="workspace-chat-summary"' in workspace_header_html
@@ -343,11 +353,17 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="workspace-nav-caption"' in workspace_toolbar_html
     assert 'id="workspace-nav-status"' in workspace_toolbar_html
     assert "Conversa atual" in workspace_toolbar_html
+    assert 'aria-label="Fluxo principal da inspeção"' in workspace_toolbar_html
+    assert "thread-primary-flow" in workspace_toolbar_html
+    assert "thread-tabs--secondary" in workspace_toolbar_html
     assert 'data-tab="conversa"' in workspace_toolbar_html
+    assert 'data-tab="mesa"' in workspace_toolbar_html
+    assert 'data-tab="finalizar"' in workspace_toolbar_html
+    assert "thread-tab--finalize" in workspace_toolbar_html
     assert 'data-tab="historico"' in workspace_toolbar_html
     assert 'data-tab="anexos"' in workspace_toolbar_html
-    assert 'data-tab="mesa"' not in workspace_toolbar_html
-    assert 'id="workspace-tab-badge-mesa"' not in workspace_toolbar_html
+    assert 'data-tab="correcoes"' in workspace_toolbar_html
+    assert 'id="workspace-tab-badge-mesa"' in workspace_toolbar_html
     assert 'data-workspace-channel-tab="mesa"' not in workspace_conversation_html
     assert "Revisão Técnica" not in workspace_conversation_html
     assert 'criarBotaoAcaoWorkspace("support_agent", "Mesa", "enviar-mesa"' not in chat_index_js
@@ -361,7 +377,14 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert 'id="workspace-mesa-pending-list"' in workspace_mesa_html
     assert 'id="workspace-mesa-attachments-title"' in workspace_mesa_html
     assert 'id="workspace-mesa-attachments-list"' in workspace_mesa_html
-    assert 'id="workspace-mesa-card-mode"' in workspace_rail_html
+    assert 'id="workspace-finalization-stage"' in workspace_finalization_html
+    assert 'data-workspace-preview-action' in workspace_finalization_html
+    assert 'data-finalizar-inspecao' in workspace_finalization_html
+    assert 'data-workspace-channel-tab="correcoes"' in workspace_finalization_html
+    assert 'data-workspace-channel-tab="anexos"' in workspace_finalization_html
+    assert 'data-workspace-channel-tab="conversa"' in workspace_finalization_html
+    assert 'data-workspace-channel-tab="mesa"' in workspace_finalization_html
+    assert 'id="workspace-mesa-card-mode"' not in workspace_rail_html
     assert "Canal principal na aba Revisão Técnica" not in workspace_rail_html
     assert "Use a aba <strong>Mesa</strong>" not in workspace_rail_html
     assert 'data-rail-thread-tab="mesa"' not in workspace_rail_html
@@ -380,6 +403,9 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "mesaCanalParaleloLiberadoNoAmbiente" in (
         raiz / "static" / "js" / "inspetor" / "workspace_runtime_screen.js"
     ).read_text(encoding="utf-8")
+    assert "inspection_finalization" in (
+        raiz / "static" / "js" / "inspetor" / "workspace_runtime_screen.js"
+    ).read_text(encoding="utf-8")
     assert "mesaCanalParaleloLiberadoNoAmbiente" in (
         raiz / "static" / "js" / "inspetor" / "workspace_screen.js"
     ).read_text(encoding="utf-8")
@@ -389,6 +415,8 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "mesaWidgetFallbackDevAtivo" in (
         raiz / "static" / "js" / "inspetor" / "mesa_widget.js"
     ).read_text(encoding="utf-8")
+    assert "workspaceFinalizationViewRoot" in workspace_page_elements_js
+    assert "workspacePreviewActionButtons" in workspace_page_elements_js
     assert "workspaceTabBadgeMesa" in workspace_page_elements_js
     assert "workspaceMesaEmptyState" in workspace_page_elements_js
     assert "workspaceMesaEventDecisionTitle" in workspace_page_elements_js
@@ -427,7 +455,9 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert "Resolver pendências antes de finalizar" not in chat_painel_relatorio_js
     assert 'id="workspace-assistant-landing"' in workspace_assistant_html
     assert 'data-workspace-user-greeting-name' in workspace_assistant_html
+    assert "workspace-assistant-landing__greeting-name" in workspace_assistant_html
     assert "Por onde começamos?" in workspace_assistant_html
+    assert "Olá, sou Tariel. Como posso te ajudar?" not in workspace_assistant_html
     assert 'id="workspace-assistant-governance"' in workspace_assistant_html
     assert 'id="workspace-assistant-governance-title"' in workspace_assistant_html
     assert 'id="workspace-assistant-governance-detail"' in workspace_assistant_html
@@ -487,12 +517,12 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert '|| !!freeChatConversationActiveInfo.value' in state_authority_js
     assert 'if (fluxoNovoChatAtivo) {' in system_events_js
     assert 'promoverPrimeiraMensagemNovoChatSePronta({ forcar: true });' in system_events_js
-    assert 'id="btn-mesa-widget-toggle"' in workspace_rail_html
-    assert 'data-mesa-toggle-label' in workspace_rail_html
+    assert 'id="btn-mesa-widget-toggle"' not in workspace_rail_html
+    assert 'data-mesa-toggle-label' not in workspace_rail_html
     assert 'data-rail-toggle="progress"' in workspace_rail_html
-    assert 'data-rail-toggle="context"' in workspace_rail_html
+    assert 'data-rail-toggle="context"' not in workspace_rail_html
     assert 'data-rail-toggle="pendencias"' in workspace_rail_html
-    assert 'data-rail-toggle="mesa"' in workspace_rail_html
+    assert 'data-rail-toggle="mesa"' not in workspace_rail_html
     assert 'data-rail-toggle="pinned"' in workspace_rail_html
     assert 'id="workspace-activity-list"' in workspace_rail_html
     assert "inspetor-runtime-compat" not in workspace_html
@@ -556,6 +586,87 @@ def test_templates_chat_mantem_controles_essenciais_de_ui() -> None:
     assert ".workspace-mesa-panel__meta" in workspace_states_css
     assert ".inspetor-sidebar-report:hover .inspetor-sidebar-report__actions > .btn-deletar-laudo" in visual_refinements_css
     assert ".btn-deletar-laudo:focus-visible" in visual_refinements_css
+    assert "scroll-padding-top: 24px;" in visual_refinements_css
+    assert "padding-bottom: 172px;" in visual_refinements_css
+    assert (
+        'data-history-real-count="1"] '
+        '#area-mensagens[data-conversation-variant="technical"]::before'
+    ) not in visual_refinements_css
+    assert (
+        'data-free-chat-conversation-active="true"] '
+        '.chat-dashboard-grid[data-workspace-view="inspection_conversation"]'
+        '[data-workspace-rail-visible="false"]'
+    ) in visual_refinements_css
+    assert (
+        'data-free-chat-conversation-active="true"] '
+        '.chat-dashboard-grid[data-workspace-view="inspection_conversation"] '
+        ".chat-dashboard-rail"
+    ) not in visual_refinements_css
+    assert (
+        'data-free-chat-conversation-active="true"] '
+        '#area-mensagens[data-conversation-variant="technical"]'
+    ) in visual_refinements_css
+    assert "max-width: 920px;" in visual_refinements_css
+    assert "background: transparent !important;" in visual_refinements_css
+    assert ".bloco-confianca-ia" in visual_refinements_css
+    assert ".mensagem-ia .corpo-texto" in visual_refinements_css
+    assert "overflow: visible !important;" in visual_refinements_css
+    assert "height: auto !important;" in visual_refinements_css
+    assert "max-height: none !important;" in visual_refinements_css
+    assert '#painel-chat[data-inspecao-ui="workspace"] .inspetor-main' in visual_refinements_css
+    assert 'data-laudo-atual-id=""] .chat-dashboard-grid[data-workspace-view="inspection_conversation"]' in visual_refinements_css
+    assert "padding-bottom: clamp(188px, 24vh, 260px) !important;" in visual_refinements_css
+    assert 'data-workspace-view="assistant_landing"] .inspetor-sidebar-edge-toggle' in visual_refinements_css
+    assert 'data-workspace-view="assistant_landing"] .inspetor-rail-edge-toggle' in visual_refinements_css
+    assert '#painel-chat[data-inspector-screen="assistant_landing"] .inspetor-sidebar-edge-toggle' in visual_refinements_css
+    assert "data-workspace-rail-hover-available" in visual_refinements_css
+    assert "translateX(calc(100% - 18px))" in visual_refinements_css
+    assert "Conversa livre sem bolhas: preserva alinhamento, remove o bloco atras do texto." in visual_refinements_css
+    assert "#painel-chat[data-laudo-atual-id=\"\"][data-inspecao-ui=\"workspace\"]" in visual_refinements_css
+    assert ".workspace-message-card" in visual_refinements_css
+    assert "padding: 2px 0 !important;" in visual_refinements_css
+    assert "background-image: none !important;" in visual_refinements_css
+    assert "Historico sem card de conversa: mantem o eixo e remove a placa visual." in visual_refinements_css
+    assert 'data-workspace-view="inspection_history"] .workspace-history-card' in visual_refinements_css
+    assert "Peça ao Tariel" in chat_index_js
+    assert "chat-dashboard-thread::before" in visual_refinements_css
+    assert "--shell-nav-w: 90px;" in visual_refinements_css
+    assert "20260513_guided_nr_title_v5" in inspetor_base_html
+    assert "20260513_chat_livre_landing_v5" in index_html
+    assert "body.pagina-chat-dashboard-v2:has" not in visual_refinements_css
+    assert "body.pagina-chat-dashboard-v2:has" in shared_app_shell_css
+    assert "chat-thread-surface:has" not in visual_refinements_css
+    assert "chat-thread-surface:has" not in workspace_states_css
+    assert 'data-workspace-conversation-empty-visible="true"]' in visual_refinements_css
+    assert 'data-workspace-conversation-empty-visible="true"]' in workspace_states_css
+    assert "workspaceConversationEmptyVisible" in workspace_derivatives_js
+    assert 'document.body.dataset.workspaceConversationEmptyVisible = "false"' in shared_chat_render_js
+    assert "Chat sem bolhas: texto solto como assistentes modernos" in visual_refinements_css
+    assert "body.pagina-chat-dashboard-v2 #painel-chat #area-mensagens .workspace-message-row .workspace-message-card" in visual_refinements_css
+    assert "background-color: transparent !important;" in visual_refinements_css
+    assert "Historico segue a mesma linguagem: conteudo separado, sem cartao visual." in visual_refinements_css
+    assert "Historico lateral sem bolhas: lista textual, sem card ativo/hover." in visual_refinements_css
+    assert "body.pagina-chat-dashboard-v2 #barra-historico .inspetor-sidebar-report" in visual_refinements_css
+    assert "body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card" in visual_refinements_css
+    assert "Hard reset final: nenhuma camada da fala pode voltar a desenhar bolha/card." in visual_refinements_css
+    assert "#area-mensagens > .linha-mensagem" in visual_refinements_css
+    assert "#area-mensagens .workspace-message-shell" in visual_refinements_css
+    assert "Hard reset final do historico: itens continuam separados, mas sem placas." in visual_refinements_css
+    assert "Reset de bolhas na camada base: vence cards antigos com !important em layers posteriores." in reboot_css
+    assert "body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card" in reboot_css
+    assert "body.pagina-chat-dashboard-v2 .workspace-history-card" in reboot_css
+    assert "/static/css/inspetor/reboot.css?v={{ v_app }}&ui_rev=20260511_auto_user_pill" in inspetor_base_html
+    assert "Conversa ChatGPT-like: IA como texto solto, usuario como pilula compacta." in reboot_css
+    assert "Composer ChatGPT-like: uma capsula principal, sem borda interna no textarea." in reboot_css
+    assert "max-width: min(640px, calc(100% - 96px)) !important;" in reboot_css
+    assert "width: fit-content !important;" in reboot_css
+    assert "display: inline-flex !important;" in reboot_css
+    assert "white-space: pre-wrap !important;" in reboot_css
+    assert "border-radius: 999px !important;" in reboot_css
+    assert "width: min(100%, 960px) !important;" in reboot_css
+    assert "limparHistoricoChat({ emitirEstadoRelatorio: false })" in workspace_context_flow_js
+    assert "emitirEstadoRelatorioAoLimpar" in shared_api_js
+    assert "detail.estado_normalizado ?? detail.estado" in system_events_js
     assert "function promoverConversaLivreNoPrimeiroEnvio()" in shared_api_js
     assert 'workspaceStage: "inspection"' in shared_api_js
     assert 'freeChatConversationActive: true' in shared_api_js
@@ -1341,22 +1452,44 @@ def test_templates_cliente_explicitam_abas_e_formularios_principais() -> None:
     portal_mesa_bundle_js = portal_mesa_surface_js + "\n" + mesa_page_js + "\n" + portal_mesa_js
 
     assert 'action="/cliente/login"' in login_cliente
-    assert "Acesso do cliente" in login_cliente
+    assert "Portal da Empresa" in login_cliente
+    assert '<strong class="auth-portal-identity__title">Portal da Empresa</strong>' in login_cliente
+    assert '<strong class="auth-intro__title">Portal da Empresa</strong>' in login_cliente
+    assert '<strong class="auth-intro__title">Login</strong>' not in login_cliente
+    assert "auth-intro__copy" not in login_cliente
+    assert "Admin Cliente" not in login_cliente
     assert "/static/css/cliente/cliente_auth.css?v={{ v_app }}" in login_cliente
+    assert "/static/css/shared/auth_login_unified.css?v={{ v_app }}" in login_cliente
     assert "/static/css/shared/auth_shell.css?v={{ v_app }}" not in login_cliente
     assert "Continuar com Google" not in login_cliente
     assert "Continuar com Microsoft" not in login_cliente
     assert "Esqueceu a senha?" not in login_cliente
     assert "/admin/login" not in login_cliente
-    assert "/revisao/login" in login_cliente
+    assert "auth-portal-switcher" not in login_cliente
+    assert "Portais de acesso" not in login_cliente
 
     assert 'action="/app/login"' in login_app
-    assert "Portal do Inspetor" in login_app
+    assert "Inspeção IA" in login_app
+    assert '<strong class="auth-portal-identity__title">Inspeção IA</strong>' in login_app
+    assert '<strong class="auth-intro__title">Inspeção IA</strong>' in login_app
+    assert '<strong class="auth-intro__title">Login</strong>' not in login_app
+    assert "auth-intro__copy" not in login_app
+    assert "Portal do Inspetor" not in login_app
     assert "/static/css/admin/admin_auth_shell.css?v={{ v_app }}" in login_app
     assert "/static/css/cliente/cliente_auth.css?v={{ v_app }}" in login_app
+    assert "/static/css/shared/auth_login_unified.css?v={{ v_app }}" in login_app
     assert "/static/css/shared/auth_shell.css?v={{ v_app }}" not in login_app
-    assert 'class="auth-shell auth-shell--cliente auth-shell--portal"' in login_app
+    assert 'class="auth-shell auth-shell--cliente auth-shell--portal auth-shell--standard-login"' in login_app
     assert "auth-provider-actions" in login_app
+    assert "auth-portal-switcher" not in login_app
+    assert "Portais de acesso" not in login_app
+
+    for login_template in (login_cliente, login_app):
+        assert "auth-portal-identity__eyebrow" not in login_template
+        assert "auth-portal-identity__copy" not in login_template
+        assert "auth-context-badge" not in login_template
+        assert "auth-provider-title" not in login_template
+        assert "Entrar com conta corporativa" not in login_template
 
     assert 'class="cliente-tabs-shell"' in portal_cliente_main
     assert '{% include "cliente/_primary_tabs.html" %}' in portal_cliente_main
@@ -1930,7 +2063,7 @@ def test_ux_product_language_padroniza_documentos_do_portal_cliente() -> None:
         "Pendências do caso",
         "Não incluído no pacote",
         "Depende da família/template",
-        "Família exige Revisão Técnica",
+        "Família recomenda Revisão Técnica",
     ):
         assert termo in linguagem_doc
 
@@ -2220,7 +2353,7 @@ def test_ux_g_admin_ceo_fluxo_guiado_governanca() -> None:
         "Pacote oficial",
         "Não incluído no pacote",
         "Depende da família/template",
-        "Família exige Revisão Técnica",
+        "Família recomenda Revisão Técnica",
         "Signatário governado",
         "Detalhes técnicos da liberação",
     ):
@@ -2318,9 +2451,13 @@ def test_portais_principais_referenciam_marca_nos_templates_de_login() -> None:
     raiz = Path(__file__).resolve().parents[1]
     logo_dark = raiz / "static" / "img" / "logo-horizontal-dark.png"
     logo_light = raiz / "static" / "img" / "logo-horizontal-light.png"
+    login_panel = raiz / "static" / "img" / "auth-login-panel-sophisticated-v3.webp"
+    login_background = raiz / "static" / "img" / "auth-login-page-sophisticated-v3.webp"
 
     assert logo_dark.exists()
     assert logo_light.exists()
+    assert login_panel.exists()
+    assert login_background.exists()
 
     login_admin = (raiz / "templates" / "admin" / "login.html").read_text(encoding="utf-8")
     login_cliente = (raiz / "templates" / "login_cliente.html").read_text(encoding="utf-8")
@@ -2331,12 +2468,41 @@ def test_portais_principais_referenciam_marca_nos_templates_de_login() -> None:
     dashboard = (raiz / "templates" / "admin" / "dashboard.html").read_text(encoding="utf-8")
     clientes = (raiz / "templates" / "admin" / "clientes.html").read_text(encoding="utf-8")
     detalhe = (raiz / "templates" / "admin" / "cliente_detalhe.html").read_text(encoding="utf-8")
+    auth_login_css = (raiz / "static" / "css" / "shared" / "auth_login_unified.css").read_text(encoding="utf-8")
 
     assert "/static/img/logo-horizontal-dark.png" in login_admin
     assert "/static/img/logo-horizontal-dark.png" in login_cliente
     assert "/static/img/logo-horizontal-dark.png" in login_app
     assert "Revisão Técnica" in login_revisor
-    assert "/static/img/logo-horizontal-dark.png" not in login_revisor
+    assert "/static/img/logo-horizontal-dark.png" in login_revisor
+    assert "/static/css/shared/auth_login_unified.css" in login_admin
+    assert "/static/css/shared/auth_login_unified.css" in login_cliente
+    assert "/static/css/shared/auth_login_unified.css" in login_app
+    assert "/static/css/shared/auth_login_unified.css" in login_revisor
+    assert "/static/img/auth-login-panel-sophisticated-v3.webp" in auth_login_css
+    assert "/static/img/auth-login-page-sophisticated-v3.webp" in auth_login_css
+    assert '<strong class="auth-portal-identity__title">Portal da Empresa</strong>' in login_cliente
+    assert '<strong class="auth-portal-identity__title">Inspeção IA</strong>' in login_app
+    assert '<strong class="auth-portal-identity__title">Revisão Técnica</strong>' in login_revisor
+    assert '<strong class="auth-portal-identity__title">Gestão Tariel</strong>' in login_admin
+    assert '<strong class="auth-intro__title">Portal da Empresa</strong>' in login_cliente
+    assert '<strong class="auth-intro__title">Inspeção IA</strong>' in login_app
+    assert '<strong class="auth-intro__title">Revisão Técnica</strong>' in login_revisor
+    assert '<strong class="auth-intro__title">Gestão Tariel</strong>' in login_admin
+    assert '<strong class="auth-intro__title">Login</strong>' not in login_admin
+    assert '<strong class="auth-intro__title">Login</strong>' not in login_cliente
+    assert '<strong class="auth-intro__title">Login</strong>' not in login_app
+    assert '<strong class="auth-intro__title">Login</strong>' not in login_revisor
+    assert "auth-intro__copy" not in login_admin
+    assert "auth-intro__copy" not in login_cliente
+    assert "auth-intro__copy" not in login_app
+    assert "auth-intro__copy" not in login_revisor
+    for login_template in (login_admin, login_cliente, login_app, login_revisor):
+        assert "auth-portal-identity__eyebrow" not in login_template
+        assert "auth-portal-identity__copy" not in login_template
+        assert "auth-context-badge" not in login_template
+        assert "auth-provider-title" not in login_template
+        assert "Entrar com conta corporativa" not in login_template
     assert "/static/img/logo-horizontal-dark.png" in trocar_senha
     assert "/static/css/admin/admin_auth_shell.css" in trocar_senha
     assert "/static/img/logo-horizontal-dark.png" in portal_cliente
@@ -2360,11 +2526,13 @@ def test_nomenclatura_admin_ceo_e_admin_cliente_fica_clara_nos_portais() -> None
     routes_admin = (raiz / "app" / "domains" / "admin" / "routes.py").read_text(encoding="utf-8")
     security = (raiz / "app" / "shared" / "security.py").read_text(encoding="utf-8")
 
-    assert "Portal Admin-CEO" in login_admin
-    assert "Admin-CEO da Tariel.ia" in login_admin
-    assert "Acesso do cliente" in login_cliente
+    assert "Gestão Tariel" in login_admin
+    assert "Admin-CEO" not in login_admin
+    assert "Portal da Empresa" in login_cliente
+    assert "Admin Cliente" not in login_cliente
     assert "Admin-CEO" not in login_cliente
-    assert "Portal do Inspetor" in login_app
+    assert "Inspeção IA" in login_app
+    assert "Portal do Inspetor" not in login_app
     assert "Painel Admin-CEO" in dashboard_admin
     assert "Empresas assinantes" in clientes_admin
     assert "Administradores da empresa (" in detalhe_cliente
@@ -2547,7 +2715,9 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     assert "simulacaoFerramentasLocal" in workspace_rail_js
     assert "function limparURLNovoChat" in workspace_context_flow_js
     assert 'url.searchParams.delete("aba");' in workspace_context_flow_js
-    assert 'dependencies.exibirLandingAssistenteIA?.({ limparTimeline: true });' in workspace_context_flow_js
+    assert "dependencies.exibirLandingAssistenteIA?.({" in workspace_context_flow_js
+    assert "limparTimeline: true" in workspace_context_flow_js
+    assert "limparContextoChatLivre: true" in workspace_context_flow_js
     assert 'id="btn-workspace-toggle-left-sidebar"' in workspace_header_html
     assert 'id="btn-workspace-toggle-right-rail"' in workspace_header_html
     assert 'id="btn-sidebar-edge-toggle"' in portal_main_html
@@ -2563,6 +2733,8 @@ def test_localhost_pode_simular_ferramentas_governadas_no_inspetor() -> None:
     assert 'document.dispatchEvent(new CustomEvent("tariel:toggle-workspace-rail"' in shared_ui_js
     assert "botaoShellGlobal" in workspace_rail_js
     assert "typeof estado.workspaceRailExpanded !== \"boolean\"" in workspace_rail_js
+    assert "railHoverDisponivel" in workspace_rail_js
+    assert "workspaceRailHoverAvailable" in workspace_rail_js
     assert "const botaoBordaDisponivel = !layoutCompacto && workspaceViewSuportaRail?.(view);" in workspace_rail_js
     assert "--workspace-thread-column-max: 1320px;" in workspace_chrome_css
     assert ".inspetor-sidebar-edge-toggle" in reboot_css

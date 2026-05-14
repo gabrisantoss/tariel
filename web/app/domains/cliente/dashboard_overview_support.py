@@ -150,7 +150,7 @@ def build_tenant_commercial_overview_cliente(
             label="Revisão interna",
             available=self_review_allowed,
             detail_available="Aprovação interna disponível para famílias que permitem aprovação interna.",
-            detail_unavailable="Revisão interna não está liberada neste pacote ou a família exige revisão separada.",
+            detail_unavailable="Revisão interna não está liberada neste pacote ou a família recomenda revisão separada.",
             depends_on_family=True,
             chips=["Self-review", "Governança"],
         ),

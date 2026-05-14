@@ -7,7 +7,9 @@ import datetime as dt
 import json
 import os
 import pathlib
+import shutil
 import subprocess
+import sys
 from typing import Any
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -22,10 +24,22 @@ def resolve_web_python() -> pathlib.Path:
         return pathlib.Path(configured)
     if (WEB_ROOT / ".venv-linux" / "bin" / "python").exists():
         return WEB_ROOT / ".venv-linux" / "bin" / "python"
-    return pathlib.Path("python3")
+    if (WEB_ROOT / ".venv" / "Scripts" / "python.exe").exists():
+        return WEB_ROOT / ".venv" / "Scripts" / "python.exe"
+    return pathlib.Path(sys.executable)
 
 
 WEB_PYTHON = resolve_web_python()
+
+
+def resolve_executable(name: str) -> str:
+    resolved = shutil.which(name)
+    if resolved:
+        return resolved
+    return name
+
+
+NPM_BIN = resolve_executable("npm")
 
 
 def now_slug() -> str:
@@ -59,13 +73,21 @@ def run_command(
     cwd: pathlib.Path,
     artifacts_dir: pathlib.Path,
 ) -> dict[str, Any]:
-    completed = subprocess.run(
-        command,
-        cwd=str(cwd),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=str(cwd),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        completed = subprocess.CompletedProcess(
+            command,
+            127,
+            stdout="",
+            stderr=str(exc),
+        )
     write_text(
         artifacts_dir / f"{name}.txt",
         "\n".join(
@@ -157,7 +179,7 @@ def main() -> int:
         results.append(
             run_command(
                 name="android_install_dependencies",
-                command=["npm", "ci"],
+                command=[NPM_BIN, "ci"],
                 cwd=ANDROID_ROOT,
                 artifacts_dir=artifacts_dir,
             )
@@ -166,7 +188,7 @@ def main() -> int:
         run_command(
             name="android_observability_tests",
             command=[
-                "npm",
+                NPM_BIN,
                 "run",
                 "test",
                 "--",
@@ -181,8 +203,17 @@ def main() -> int:
     results.append(
         run_command(
             name="contract_check",
-            command=["make", "contract-check"],
-            cwd=REPO_ROOT,
+            command=[
+                str(WEB_PYTHON),
+                "-m",
+                "pytest",
+                "-q",
+                "tests/test_transaction_contract.py",
+                "tests/test_tenant_access.py",
+                "tests/test_v2_android_public_contract.py",
+                "tests/test_v2_admin_contract_catalogs.py",
+            ],
+            cwd=WEB_ROOT,
             artifacts_dir=artifacts_dir,
         )
     )

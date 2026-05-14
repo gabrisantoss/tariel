@@ -698,7 +698,7 @@ def test_previa_finalizacao_com_servicos_revisor_expoe_emissao_oficial_neutra(
     assert "official_issue_create" in corpo["chat_review_tools"]["available_case_actions"]
 
 
-def test_previa_finalizacao_nr35_sem_mesa_continua_bloqueada_por_familia(
+def test_previa_finalizacao_nr35_sem_mesa_aprova_no_chat_com_aviso_de_mesa(
     ambiente_critico,
 ) -> None:
     client = ambiente_critico["client"]
@@ -730,10 +730,13 @@ def test_previa_finalizacao_nr35_sem_mesa_continua_bloqueada_por_familia(
     _login_app_inspetor(client, "inspetor@empresa-a.test")
     resposta = client.get(f"/app/api/laudo/{laudo_id}/finalizacao-preview")
 
-    assert resposta.status_code == 422
-    detalhe = resposta.json()["detail"]
-    assert detalhe["code"] == "nr35_mesa_required_unavailable"
-    assert detalhe["required_capability"] == "inspector_send_to_mesa"
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["primary_action"] == "approve_without_mesa"
+    assert corpo["review_mode_final_preview"] == "mobile_autonomous"
+    assert corpo["review_mode_final_reason"] == "tenant_without_mesa"
+    assert corpo["review_advisories"][0]["code"] == "nr35_mesa_recommended"
+    assert corpo["review_advisories"][0]["recommended_capability"] == "inspector_send_to_mesa"
 
 
 def test_inspetor_com_servicos_da_mesa_abre_preparacao_de_emissao_governada(

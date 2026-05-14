@@ -471,19 +471,22 @@ body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-layout="thread
     color: var(--vf-text-muted) !important;
 }
 
-body.pagina-chat-dashboard-v2 .chat-thread-surface:has(.workspace-view-root--conversation[data-active="true"] #workspace-conversation-empty:not([hidden])) #area-mensagens[data-conversation-variant="technical"] {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] #area-mensagens[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] #area-mensagens[data-conversation-variant="technical"] {
     flex: 0 0 auto;
     overflow: visible;
     margin-top: 12px;
     padding-bottom: 22px;
 }
 
-body.pagina-chat-dashboard-v2 .chat-thread-surface:has(.workspace-view-root--conversation[data-active="true"] #workspace-conversation-empty:not([hidden])) .workspace-view-root--conversation {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] .workspace-view-root--conversation,
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] .workspace-view-root--conversation {
     flex: 0 0 auto;
     overflow: visible;
 }
 
-body.pagina-chat-dashboard-v2 .chat-thread-surface:has(.workspace-view-root--conversation[data-active="true"] #workspace-conversation-empty:not([hidden])) .rodape-entrada[data-conversation-variant="technical"] {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"] {
     position: static;
     margin-top: 10px;
     padding-bottom: 8px;
@@ -1217,12 +1220,14 @@ body.pagina-chat-dashboard-v2 #workspace-conversation-empty.technical-chat-empty
     color: var(--vf-text-muted) !important;
 }
 
-body.pagina-chat-dashboard-v2 .chat-thread-surface:has(.workspace-view-root--conversation[data-active="true"] #workspace-conversation-empty:not([hidden])) #area-mensagens[data-conversation-variant="technical"] {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] #area-mensagens[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] #area-mensagens[data-conversation-variant="technical"] {
     margin-top: 8px;
     padding-bottom: 14px;
 }
 
-body.pagina-chat-dashboard-v2 .chat-thread-surface:has(.workspace-view-root--conversation[data-active="true"] #workspace-conversation-empty:not([hidden])) .rodape-entrada[data-conversation-variant="technical"] {
+body.pagina-chat-dashboard-v2[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"],
+body.pagina-chat-dashboard-v2 #painel-chat[data-workspace-conversation-empty-visible="true"] .rodape-entrada[data-conversation-variant="technical"] {
     margin-top: 6px;
     padding-bottom: 18px;
 }

@@ -2206,3 +2206,390 @@ body[data-cliente-tab-inicial] .cliente-management-home .metric-card {
         padding: 18px;
     }
 }
+
+/* Home do Portal da Empresa: central mais integrada e com menos blocos soltos. */
+body[data-cliente-tab-inicial] .cliente-tabs-shell {
+    padding: 0 32px;
+    background: rgba(255, 255, 255, 0.94);
+}
+
+body[data-cliente-tab-inicial] .cliente-management-tabs .cliente-tabs__bar {
+    grid-template-columns: 132px minmax(280px, 1fr) minmax(280px, auto) auto;
+    gap: 20px;
+    min-height: 92px;
+    padding: 14px 0;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-tabs .cliente-tabs__current h1 {
+    font-size: 23px;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-tabs .cliente-tabs__current p {
+    margin: 0;
+    font-size: 12px;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-breadcrumb {
+    color: #5e7288;
+    font-size: 11px;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-breadcrumb span:first-child {
+    color: #0f5f46;
+}
+
+.cliente-management-breadcrumb [hidden] {
+    display: none !important;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-top-context {
+    justify-content: flex-end;
+    max-width: 460px;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-top-context > span {
+    min-height: 32px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.78);
+}
+
+body[data-cliente-tab-inicial] .cliente-management-top-context > span:nth-child(2) {
+    display: none;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-tabs .cliente-tabs__actions {
+    gap: 8px;
+    padding: 0;
+    border: 0;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-tabs .cliente-tabs__actions > .cliente-management-action:first-child {
+    background: #174f76;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-links {
+    gap: 18px;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-link {
+    min-height: 50px;
+    font-size: 12px;
+}
+
+body[data-cliente-tab-inicial] .cliente-management-link small {
+    min-width: auto;
+    padding: 2px 7px;
+}
+
+body[data-cliente-tab-inicial] .panel--admin {
+    padding: 26px 40px 38px;
+}
+
+.cliente-management-home-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    gap: 24px;
+}
+
+.cliente-management-command-center,
+.cliente-management-area-hub,
+.cliente-management-overview-actions,
+.cliente-management-side-card {
+    border: 1px solid rgba(66, 94, 122, 0.15);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: 0 18px 40px rgba(34, 52, 72, 0.08);
+}
+
+.cliente-management-command-center {
+    overflow: hidden;
+}
+
+.cliente-management-command-center .cliente-management-brief .stage-brief-card {
+    grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 0.72fr) minmax(160px, auto);
+    min-height: 138px;
+    padding: 22px 26px;
+    border: 0;
+    border-radius: 0;
+    background:
+        linear-gradient(135deg, rgba(246, 251, 249, 0.98) 0%, rgba(232, 244, 239, 0.94) 100%) !important;
+    box-shadow: none;
+}
+
+.cliente-management-command-center .stage-brief-card__copy {
+    gap: 7px;
+}
+
+.cliente-management-command-center .stage-brief-card__eyebrow,
+.cliente-management-area-hub__head .cliente-management-kicker {
+    color: #0f5f46;
+}
+
+.cliente-management-command-center .cliente-management-brief .stage-brief-card__copy strong {
+    font-size: 25px;
+}
+
+.cliente-management-command-center .cliente-management-brief .stage-brief-card__copy p {
+    max-width: 58ch;
+}
+
+.cliente-management-command-center .stage-brief-card__metrics {
+    align-content: stretch;
+}
+
+.cliente-management-command-center .context-block {
+    min-height: 78px;
+    border-color: rgba(66, 94, 122, 0.13);
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.cliente-management-command-center .stage-brief-card__actions {
+    align-content: center;
+}
+
+.cliente-management-command-center .stage-brief-card__actions .btn {
+    min-height: 40px;
+}
+
+.cliente-management-command-center .cliente-management-metrics {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    border-top: 1px solid rgba(66, 94, 122, 0.12);
+    background: rgba(248, 251, 253, 0.78);
+}
+
+.cliente-management-command-center .cliente-management-metrics .metric-card {
+    min-height: 92px;
+    border-width: 0 1px 0 0 !important;
+    border-color: rgba(66, 94, 122, 0.11) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.cliente-management-command-center .cliente-management-metrics .metric-card:last-child {
+    border-right: 0 !important;
+}
+
+.cliente-management-command-center .cliente-management-metrics .metric-card strong {
+    font-size: 24px;
+}
+
+.cliente-management-area-hub {
+    display: grid;
+    gap: 0;
+    overflow: hidden;
+}
+
+.cliente-management-area-hub__head {
+    display: grid;
+    align-items: start;
+    justify-content: start;
+    gap: 4px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(66, 94, 122, 0.12);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 253, 0.82));
+}
+
+.cliente-management-area-hub__head h3 {
+    margin: 0;
+    color: var(--cliente-text);
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.cliente-management-card-grid--areas {
+    grid-template-columns: 1fr;
+    gap: 0;
+}
+
+.cliente-management-card-grid--areas .cliente-management-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: start;
+    min-height: 0;
+    padding: 16px 20px;
+    border-width: 0 0 1px;
+    border-color: rgba(66, 94, 122, 0.11);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.cliente-management-card-grid--areas .cliente-management-card:last-child {
+    border-bottom: 0;
+}
+
+.cliente-management-card-grid--areas .cliente-management-card__head {
+    grid-column: 1;
+    align-items: center;
+}
+
+.cliente-management-card-grid--areas .cliente-management-card__head > .material-symbols-rounded {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+    border-radius: 10px;
+    background: rgba(36, 92, 147, 0.08);
+    font-size: 21px;
+}
+
+.cliente-management-card-grid--areas .cliente-management-card__head > div > span {
+    font-size: 17px;
+}
+
+.cliente-management-card-grid--areas .cliente-management-card__body,
+.cliente-management-card-grid--areas .cliente-management-plan-line,
+.cliente-management-card-grid--areas .cliente-management-card__note,
+.cliente-management-card-grid--areas .cliente-management-request {
+    grid-column: 1 / -1;
+}
+
+.cliente-management-card-grid--areas .cliente-management-card__body {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cliente-management-card-grid--areas .metric-card,
+.cliente-management-card-grid--areas .cliente-management-plan-line {
+    min-height: 68px;
+    border-radius: 12px !important;
+}
+
+.cliente-management-card-grid--areas .cliente-management-card__link {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    margin-top: 0;
+    white-space: nowrap;
+}
+
+#cliente-management-habilitacao-card {
+    align-items: start;
+}
+
+#cliente-management-habilitacao-card .cliente-management-request {
+    width: 100%;
+}
+
+#cliente-management-habilitacao-card .cliente-management-card__link {
+    align-self: start;
+}
+
+.cliente-management-side-stack {
+    position: sticky;
+    top: 18px;
+    gap: 14px;
+}
+
+.cliente-management-overview-actions,
+.cliente-management-side-card {
+    padding: 18px;
+    box-shadow: 0 14px 34px rgba(34, 52, 72, 0.075);
+}
+
+.cliente-management-overview-actions {
+    gap: 16px;
+}
+
+.cliente-management-overview-actions h4 {
+    font-size: 20px;
+}
+
+.cliente-management-shortcuts {
+    border-radius: 12px;
+}
+
+.cliente-management-shortcuts a {
+    min-height: 62px;
+}
+
+.cliente-management-side-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+    border-radius: 14px;
+}
+
+.cliente-management-side-card > .material-symbols-rounded {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+}
+
+.cliente-management-side-card--focus {
+    border-color: rgba(35, 128, 92, 0.18);
+    background: linear-gradient(135deg, rgba(246, 251, 248, 0.98), rgba(232, 244, 239, 0.9));
+}
+
+@media (max-width: 1180px) {
+    body[data-cliente-tab-inicial] .cliente-management-tabs .cliente-tabs__bar {
+        grid-template-columns: 116px minmax(240px, 1fr) auto;
+    }
+
+    body[data-cliente-tab-inicial] .cliente-management-top-context {
+        display: none;
+    }
+
+    .cliente-management-home-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .cliente-management-side-stack {
+        position: static;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .cliente-management-overview-actions {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 900px) {
+    .cliente-management-command-center .cliente-management-brief .stage-brief-card,
+    .cliente-management-card-grid--areas .cliente-management-card {
+        grid-template-columns: 1fr;
+    }
+
+    .cliente-management-card-grid--areas .cliente-management-card__body,
+    .cliente-management-card-grid--areas .cliente-management-plan-line,
+    .cliente-management-card-grid--areas .cliente-management-card__note,
+    .cliente-management-card-grid--areas .cliente-management-request,
+    .cliente-management-card-grid--areas .cliente-management-card__link {
+        grid-column: 1;
+    }
+
+    .cliente-management-card-grid--areas .cliente-management-card__link {
+        justify-self: start;
+        grid-row: auto;
+    }
+
+    .cliente-management-command-center .cliente-management-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cliente-management-side-stack {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    body[data-cliente-tab-inicial] .cliente-tabs-shell {
+        padding: 0 10px;
+    }
+
+    body[data-cliente-tab-inicial] .panel--admin {
+        padding: 18px 10px 28px;
+    }
+
+    .cliente-management-area-hub__head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .cliente-management-command-center .cliente-management-metrics,
+    .cliente-management-card-grid--areas .cliente-management-card__body {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cliente-management-card-grid--areas .cliente-management-card__body .metric-card strong {
+    font-size: 16px;
+}

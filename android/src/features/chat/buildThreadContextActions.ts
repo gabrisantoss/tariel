@@ -81,22 +81,6 @@ export function buildThreadContextActions(params: {
   vendoMesa: boolean;
 }) {
   const threadActions: ThreadContextStateResult["threadActions"] = [];
-  const qualityGateAction =
-    !params.vendoMesa &&
-    params.conversaAtiva?.laudoId &&
-    params.activeCaseFormalWorkflow &&
-    params.canChatFinalize
-      ? {
-          key: "chat-quality-gate",
-          label: "Finalizar caso",
-          tone: "success" as const,
-          icon: "check-decagram-outline" as const,
-          onPress: () => {
-            void params.onOpenQualityGate();
-          },
-          testID: "chat-quality-gate-button",
-        }
-      : null;
   const openMesaFromFinalizationAction =
     params.vendoFinalizacao &&
     params.mesaDisponivel &&
@@ -178,9 +162,6 @@ export function buildThreadContextActions(params: {
         stopTone: "muted",
       });
     } else {
-      if (qualityGateAction) {
-        threadActions.push(qualityGateAction);
-      }
       if (!params.vendoFinalizacao) {
         threadActions.push({
           key: "guided-resume",
@@ -205,15 +186,6 @@ export function buildThreadContextActions(params: {
     )
   ) {
     threadActions.push(openMesaFromFinalizationAction);
-  }
-
-  if (qualityGateAction && params.modoGuiadoAtivo) {
-    const hasActionAlready = threadActions.some(
-      (item) => item.key === qualityGateAction.key,
-    );
-    if (!hasActionAlready) {
-      threadActions.push(qualityGateAction);
-    }
   }
 
   return threadActions;

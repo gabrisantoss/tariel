@@ -82,6 +82,16 @@ LOW_INFORMATION_CHAT_LINES = {
     "evidência visual capturada do chat",
 }
 
+PDF_COLOR_INK = (9, 24, 39)
+PDF_COLOR_NAVY = (15, 43, 70)
+PDF_COLOR_BLUE = (20, 89, 130)
+PDF_COLOR_CYAN = (40, 183, 211)
+PDF_COLOR_ORANGE = (244, 123, 32)
+PDF_COLOR_ICE = (246, 249, 252)
+PDF_COLOR_PANEL = (232, 241, 248)
+PDF_COLOR_LINE = (204, 218, 232)
+PDF_COLOR_MUTED = (98, 114, 135)
+
 
 def _clean_report_markup(value: Any) -> str:
     text = str(value or "").replace("\r\n", "\n").replace("\r", "\n")
@@ -215,27 +225,20 @@ class _FreeChatReportPdf(FPDF):
         if page_mode in {"cover", "back"}:
             return
 
-        self.set_font("helvetica", "B", 14)
-        self.set_text_color(15, 43, 70)
-        self.cell(
-            0,
-            8,
-            _pdf_text(f"Tariel.ia | {REPORT_TITLE}"),
-            new_x=XPos.LMARGIN,
-            new_y=YPos.NEXT,
-        )
-        self.set_font("helvetica", "", 9)
-        self.set_text_color(90, 90, 90)
-        self.cell(
-            0,
-            5,
-            _pdf_text(REPORT_SUBTITLE),
-            new_x=XPos.LMARGIN,
-            new_y=YPos.NEXT,
-        )
-        self.set_draw_color(210, 220, 232)
-        self.line(12, self.get_y() + 1, 198, self.get_y() + 1)
-        self.ln(6)
+        self.set_fill_color(*PDF_COLOR_INK)
+        self.rect(0, 0, self.w, 12, style="F")
+        self.set_fill_color(*PDF_COLOR_CYAN)
+        self.rect(0, 0, 38, 12, style="F")
+        self.set_xy(12, 16)
+        self.set_font("helvetica", "B", 9)
+        self.set_text_color(*PDF_COLOR_NAVY)
+        self.cell(46, 6, _pdf_text("Tariel.ia"), new_x=XPos.RIGHT, new_y=YPos.TOP)
+        self.set_font("helvetica", "", 8)
+        self.set_text_color(*PDF_COLOR_MUTED)
+        self.cell(0, 6, _pdf_text(REPORT_TITLE), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="R")
+        self.set_draw_color(*PDF_COLOR_LINE)
+        self.line(12, self.get_y() + 2, 198, self.get_y() + 2)
+        self.ln(7)
 
     def footer(self) -> None:
         page_mode = self._page_modes.get(self.page_no(), self._next_page_mode)
@@ -243,12 +246,14 @@ class _FreeChatReportPdf(FPDF):
             return
 
         self.set_y(-12)
-        self.set_font("helvetica", "I", 8)
-        self.set_text_color(120, 120, 120)
+        self.set_font("helvetica", "", 8)
+        self.set_text_color(*PDF_COLOR_MUTED)
+        self.set_draw_color(*PDF_COLOR_LINE)
+        self.line(12, self.get_y() - 2, 198, self.get_y() - 2)
         self.cell(
             0,
             5,
-            _pdf_text(f"Página {self.page_no()}"),
+            _pdf_text(f"Tariel.ia | Pagina {self.page_no()} | rastreabilidade tecnica"),
             new_x=XPos.RIGHT,
             new_y=YPos.TOP,
             align="C",
@@ -1128,19 +1133,69 @@ def _build_cover_highlights(
 
 
 def _write_section_title(pdf: FPDF, title: str) -> None:
-    pdf.set_fill_color(15, 43, 70)
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("helvetica", "B", 11)
-    pdf.cell(
-        0,
-        8,
-        _pdf_text(f" {title}"),
-        new_x=XPos.LMARGIN,
-        new_y=YPos.NEXT,
-        fill=True,
-    )
-    pdf.ln(1.5)
+    y = pdf.get_y()
+    if y > 264:
+        pdf.add_page()
+        y = pdf.get_y()
+    pdf.set_fill_color(*PDF_COLOR_CYAN)
+    pdf.rect(pdf.l_margin, y + 1, 2.4, 8.5, style="F")
+    pdf.set_font("helvetica", "B", 12)
+    pdf.set_text_color(*PDF_COLOR_NAVY)
+    pdf.set_xy(pdf.l_margin + 6, y)
+    pdf.cell(0, 10, _pdf_text(title), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_draw_color(*PDF_COLOR_LINE)
+    pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
+    pdf.ln(3)
     pdf.set_text_color(0, 0, 0)
+
+
+def _write_small_label(pdf: FPDF, text: str, *, x: float, y: float, width: float) -> None:
+    pdf.set_xy(x, y)
+    pdf.set_font("helvetica", "B", 7.5)
+    pdf.set_text_color(*PDF_COLOR_MUTED)
+    pdf.cell(width, 4, _pdf_text(text.upper()), new_x=XPos.LMARGIN, new_y=YPos.TOP)
+
+
+def _write_metric_card(
+    pdf: FPDF,
+    *,
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+    label: str,
+    value: str,
+    accent: tuple[int, int, int] = PDF_COLOR_BLUE,
+) -> None:
+    pdf.set_fill_color(248, 251, 253)
+    pdf.set_draw_color(*PDF_COLOR_LINE)
+    pdf.rect(x, y, width, height, style="DF")
+    pdf.set_fill_color(*accent)
+    pdf.rect(x + 6, y + 7, 6, height - 14, style="F")
+    pdf.set_xy(x + 18, y + 7)
+    pdf.set_font("helvetica", "B", 13)
+    pdf.set_text_color(*PDF_COLOR_INK)
+    pdf.cell(width - 24, 7, _pdf_text(value), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_xy(x + 18, y + height - 12)
+    pdf.set_font("helvetica", "", 8)
+    pdf.set_text_color(*PDF_COLOR_MUTED)
+    pdf.cell(width - 24, 5, _pdf_text(label), new_x=XPos.LMARGIN, new_y=YPos.TOP)
+
+
+def _draw_fake_qr(pdf: FPDF, *, x: float, y: float, size: float) -> None:
+    cell = size / 7
+    pattern = {
+        (0, 0), (0, 1), (0, 2), (1, 0), (2, 0), (2, 1), (2, 2),
+        (0, 4), (0, 5), (0, 6), (1, 6), (2, 4), (2, 5), (2, 6),
+        (4, 0), (5, 0), (6, 0), (6, 1), (4, 2), (5, 2), (6, 2),
+        (3, 3), (4, 4), (5, 3), (3, 5), (6, 6),
+    }
+    pdf.set_fill_color(255, 255, 255)
+    pdf.set_draw_color(186, 205, 222)
+    pdf.rect(x, y, size, size, style="DF")
+    pdf.set_fill_color(*PDF_COLOR_INK)
+    for row, col in pattern:
+        pdf.rect(x + col * cell + 0.3, y + row * cell + 0.3, cell - 0.6, cell - 0.6, style="F")
 
 
 def _content_width(pdf: FPDF) -> float:
@@ -1248,6 +1303,84 @@ def _write_metadata_in_box(
     return current_y
 
 
+def _write_operational_snapshot(
+    pdf: FPDF,
+    *,
+    transcript: list[_TranscriptItem],
+    evidences: list[_VisualEvidenceItem],
+    findings: list[str],
+    recommendations: list[str],
+) -> None:
+    y = pdf.get_y()
+    if y > 220:
+        pdf.add_page()
+        y = pdf.get_y()
+    _write_small_label(pdf, "pulso da inspeção", x=pdf.l_margin, y=y, width=70)
+    pdf.set_xy(pdf.l_margin, y + 7)
+    pdf.set_font("helvetica", "B", 14)
+    pdf.set_text_color(*PDF_COLOR_INK)
+    pdf.cell(0, 8, _pdf_text("Resumo operacional Tariel"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    card_y = pdf.get_y() + 4
+    gap = 5
+    card_w = (_content_width(pdf) - (gap * 2)) / 3
+    _write_metric_card(
+        pdf,
+        x=pdf.l_margin,
+        y=card_y,
+        width=card_w,
+        height=28,
+        label="registros analisados",
+        value=str(len(transcript)),
+        accent=PDF_COLOR_BLUE,
+    )
+    _write_metric_card(
+        pdf,
+        x=pdf.l_margin + card_w + gap,
+        y=card_y,
+        width=card_w,
+        height=28,
+        label="evidencias visuais",
+        value=str(len(evidences)),
+        accent=PDF_COLOR_CYAN,
+    )
+    _write_metric_card(
+        pdf,
+        x=pdf.l_margin + (card_w + gap) * 2,
+        y=card_y,
+        width=card_w,
+        height=28,
+        label="pontos consolidados",
+        value=str(len(findings)),
+        accent=PDF_COLOR_ORANGE,
+    )
+    pdf.set_y(card_y + 38)
+    box_y = pdf.get_y()
+    pdf.set_fill_color(*PDF_COLOR_ICE)
+    pdf.set_draw_color(*PDF_COLOR_LINE)
+    pdf.rect(pdf.l_margin, box_y, _content_width(pdf), 32, style="DF")
+    next_step = recommendations[0] if recommendations else "Manter validação técnica responsável antes da decisão final."
+    dominant_finding = findings[0] if findings else "Sem achado crítico predominante consolidado."
+    _write_small_label(pdf, "achado predominante", x=pdf.l_margin + 7, y=box_y + 5, width=70)
+    _write_block_in_box(
+        pdf,
+        _truncate_text_block(dominant_finding, limit=150),
+        x=pdf.l_margin + 7,
+        y=box_y + 12,
+        width=78,
+        line_height=4.8,
+    )
+    _write_small_label(pdf, "próximo passo", x=pdf.l_margin + 96, y=box_y + 5, width=70)
+    _write_block_in_box(
+        pdf,
+        _truncate_text_block(next_step, limit=150),
+        x=pdf.l_margin + 96,
+        y=box_y + 12,
+        width=82,
+        line_height=4.8,
+    )
+    pdf.set_y(card_y + 76)
+
+
 def _write_transcript(pdf: FPDF, transcript: list[_TranscriptItem]) -> None:
     if not transcript:
         pdf.set_font("helvetica", "", 10)
@@ -1321,29 +1454,36 @@ def _render_cover_page(
     evidences: list[_VisualEvidenceItem],
 ) -> None:
     pdf.add_mode_page("cover")
-    pdf.set_fill_color(15, 43, 70)
-    pdf.rect(0, 0, pdf.w, 56, style="F")
+    pdf.set_fill_color(*PDF_COLOR_INK)
+    pdf.rect(0, 0, pdf.w, 72, style="F")
+    pdf.set_fill_color(*PDF_COLOR_BLUE)
+    pdf.rect(0, 0, 64, 72, style="F")
+    pdf.set_fill_color(*PDF_COLOR_CYAN)
+    pdf.rect(0, 68, pdf.w, 4, style="F")
     pdf.set_text_color(255, 255, 255)
-    pdf.set_xy(16, 18)
-    pdf.set_font("helvetica", "B", 24)
+    pdf.set_xy(16, 14)
+    pdf.set_font("helvetica", "B", 9)
+    pdf.cell(0, 5, _pdf_text("TARIEL.IA"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_xy(16, 26)
+    pdf.set_font("helvetica", "B", 25)
     pdf.multi_cell(0, 11, _pdf_text(REPORT_TITLE))
-    pdf.ln(2)
     pdf.set_x(16)
     pdf.set_font("helvetica", "", 11)
     pdf.set_text_color(228, 233, 239)
-    pdf.multi_cell(170, 6, _pdf_text(REPORT_SUBTITLE))
-    pdf.ln(2)
-    pdf.set_x(16)
+    pdf.multi_cell(122, 6, _pdf_text(REPORT_SUBTITLE))
+    pdf.set_xy(152, 18)
+    _draw_fake_qr(pdf, x=154, y=18, size=28)
+    pdf.set_xy(154, 50)
     pdf.set_font("helvetica", "B", 10)
     pdf.set_text_color(255, 233, 208)
-    pdf.cell(0, 6, _pdf_text(REPORT_STATUS_LABEL), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(42, 6, _pdf_text(REPORT_STATUS_LABEL), new_x=XPos.LMARGIN, new_y=YPos.TOP, align="C")
 
     pdf.set_text_color(15, 43, 70)
-    pdf.set_fill_color(245, 247, 250)
-    pdf.set_draw_color(210, 220, 232)
-    pdf.rect(16, 78, 82, 90, style="DF")
-    pdf.rect(104, 78, 90, 90, style="DF")
-    pdf.set_xy(24, 88)
+    pdf.set_fill_color(248, 251, 253)
+    pdf.set_draw_color(*PDF_COLOR_LINE)
+    pdf.rect(16, 88, 82, 86, style="DF")
+    pdf.rect(104, 88, 90, 86, style="DF")
+    pdf.set_xy(24, 98)
     pdf.set_font("helvetica", "B", 11)
     pdf.cell(0, 6, _pdf_text("Identificação do Documento"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     _write_metadata_in_box(
@@ -1351,12 +1491,12 @@ def _render_cover_page(
         laudo=laudo,
         usuario=usuario,
         x=24,
-        y=97,
+        y=107,
         width=66,
         line_height=5.0,
     )
 
-    pdf.set_xy(112, 88)
+    pdf.set_xy(112, 98)
     pdf.set_font("helvetica", "B", 11)
     pdf.cell(0, 6, _pdf_text("Resumo Executivo"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font("helvetica", "", 9.5)
@@ -1365,7 +1505,7 @@ def _render_cover_page(
         transcript=transcript,
         evidences=evidences,
     )
-    current_y = 97.0
+    current_y = 107.0
     for item in highlights:
         current_y = _write_block_in_box(
             pdf,
@@ -1376,21 +1516,54 @@ def _render_cover_page(
             line_height=5.0,
         ) + 1.4
 
+    _write_metric_card(
+        pdf,
+        x=16,
+        y=186,
+        width=54,
+        height=30,
+        label="Registros",
+        value=str(len(transcript)),
+        accent=PDF_COLOR_BLUE,
+    )
+    _write_metric_card(
+        pdf,
+        x=78,
+        y=186,
+        width=54,
+        height=30,
+        label="Evidencias",
+        value=str(len(evidences)),
+        accent=PDF_COLOR_CYAN,
+    )
+    _write_metric_card(
+        pdf,
+        x=140,
+        y=186,
+        width=54,
+        height=30,
+        label="Status",
+        value="Preliminar",
+        accent=PDF_COLOR_ORANGE,
+    )
+
     pdf.set_fill_color(248, 250, 252)
     pdf.set_draw_color(221, 229, 238)
-    pdf.rect(16, 176, 178, 28, style="DF")
-    pdf.set_xy(24, 184)
+    pdf.rect(16, 228, 178, 32, style="DF")
+    pdf.set_xy(24, 236)
     pdf.set_font("helvetica", "B", 10)
     pdf.set_text_color(15, 43, 70)
     pdf.cell(0, 6, _pdf_text("Diretriz de leitura"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.ln(1)
     pdf.set_font("helvetica", "", 9.5)
-    _write_block(
+    _write_block_in_box(
         pdf,
         _pdf_text(
             "Este laudo organiza o conteúdo em objetivo e escopo, base de análise, achados, conclusão, recomendações, "
             "referências técnicas e anexos de evidência, preservando a rastreabilidade em apêndice próprio."
         ),
+        x=24,
+        y=247,
+        width=162,
         line_height=5.2,
     )
 
@@ -1401,18 +1574,23 @@ def _render_summary_page(
     outline: list[_ReportOutlineEntry],
 ) -> None:
     pdf.add_mode_page("summary")
+    pdf.set_fill_color(*PDF_COLOR_INK)
+    pdf.rect(0, 0, pdf.w, 44, style="F")
+    pdf.set_fill_color(*PDF_COLOR_CYAN)
+    pdf.rect(0, 40, pdf.w, 4, style="F")
+    pdf.set_xy(16, 18)
     pdf.set_font("helvetica", "B", 18)
-    pdf.set_text_color(15, 43, 70)
+    pdf.set_text_color(255, 255, 255)
     pdf.cell(
         0,
         10,
-        _pdf_text("Sumário"),
+        _pdf_text("Sumario | Mapa do Documento"),
         new_x=XPos.LMARGIN,
         new_y=YPos.NEXT,
     )
-    pdf.ln(4)
+    pdf.set_y(58)
     pdf.set_font("helvetica", "", 11)
-    pdf.set_text_color(45, 45, 45)
+    pdf.set_text_color(*PDF_COLOR_INK)
     for index, entry in enumerate(outline, start=1):
         title = entry.title
         page_label = str(entry.page)
@@ -1432,8 +1610,12 @@ def _render_back_cover(
     usuario: Usuario,
 ) -> None:
     pdf.add_mode_page("back")
-    pdf.set_fill_color(15, 43, 70)
+    pdf.set_fill_color(*PDF_COLOR_INK)
     pdf.rect(0, 0, pdf.w, pdf.h, style="F")
+    pdf.set_fill_color(*PDF_COLOR_BLUE)
+    pdf.rect(0, 0, 58, pdf.h, style="F")
+    pdf.set_fill_color(*PDF_COLOR_CYAN)
+    pdf.rect(58, 0, 3, pdf.h, style="F")
     pdf.set_xy(18, 48)
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("helvetica", "B", 20)
@@ -1567,6 +1749,16 @@ def _render_report_body(
         transcript=transcript,
         evidences=evidences,
     )
+
+    _register_outline_entry(outline, "Resumo Operacional Tariel", pdf.page_no())
+    _write_operational_snapshot(
+        pdf,
+        transcript=transcript,
+        evidences=evidences,
+        findings=findings,
+        recommendations=recommendations,
+    )
+    pdf.ln(2)
 
     _register_outline_entry(outline, "Identificação e Contexto", pdf.page_no())
     _write_section_title(pdf, "Identificação e Contexto")
@@ -1998,45 +2190,69 @@ def _render_editable_cover_page(
     usuario: Usuario,
 ) -> None:
     pdf.add_mode_page("cover")
-    pdf.set_fill_color(15, 43, 70)
-    pdf.rect(0, 0, pdf.w, 64, style="F")
-    pdf.set_xy(16, 18)
+    pdf.set_fill_color(*PDF_COLOR_INK)
+    pdf.rect(0, 0, pdf.w, 72, style="F")
+    pdf.set_fill_color(*PDF_COLOR_BLUE)
+    pdf.rect(0, 0, 64, 72, style="F")
+    pdf.set_fill_color(*PDF_COLOR_CYAN)
+    pdf.rect(0, 68, pdf.w, 4, style="F")
+    pdf.set_xy(16, 14)
     pdf.set_text_color(255, 255, 255)
+    pdf.set_font("helvetica", "B", 9)
+    pdf.cell(0, 5, _pdf_text("TARIEL.IA"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_xy(16, 26)
     pdf.set_font("helvetica", "B", 24)
     pdf.multi_cell(0, 11, _pdf_text(document.get("title") or REPORT_TITLE))
-    pdf.ln(2)
     pdf.set_x(16)
     pdf.set_font("helvetica", "", 11)
     pdf.set_text_color(228, 233, 239)
-    pdf.multi_cell(170, 6, _pdf_text(document.get("subtitle") or REPORT_SUBTITLE))
-    pdf.ln(2)
-    pdf.set_x(16)
+    pdf.multi_cell(122, 6, _pdf_text(document.get("subtitle") or REPORT_SUBTITLE))
+    _draw_fake_qr(pdf, x=154, y=18, size=28)
+    pdf.set_xy(154, 50)
     pdf.set_font("helvetica", "B", 10)
     pdf.set_text_color(255, 233, 208)
     pdf.cell(
-        0,
+        42,
         6,
-        _pdf_text("Versão revisada pelo inspetor"),
+        _pdf_text("Revisado pelo inspetor"),
         new_x=XPos.LMARGIN,
-        new_y=YPos.NEXT,
+        new_y=YPos.TOP,
+        align="C",
     )
 
-    pdf.set_xy(18, 88)
-    pdf.set_text_color(15, 43, 70)
-    pdf.set_font("helvetica", "B", 13)
+    pdf.set_fill_color(248, 251, 253)
+    pdf.set_draw_color(*PDF_COLOR_LINE)
+    pdf.rect(16, 88, 82, 96, style="DF")
+    pdf.rect(104, 88, 90, 96, style="DF")
+    pdf.set_xy(24, 98)
+    pdf.set_text_color(*PDF_COLOR_NAVY)
+    pdf.set_font("helvetica", "B", 12)
     pdf.cell(0, 7, _pdf_text("Identificação"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.ln(2)
-    pdf.set_font("helvetica", "", 10)
+    current_y = 108.0
+    pdf.set_font("helvetica", "", 9.5)
     for line in _metadata_text_lines(laudo=laudo, usuario=usuario):
-        _write_block(pdf, line)
-    pdf.ln(8)
-    pdf.set_font("helvetica", "", 10)
-    _write_block(
+        current_y = _write_block_in_box(
+            pdf,
+            line,
+            x=24,
+            y=current_y,
+            width=66,
+            line_height=5.0,
+        ) + 0.8
+    pdf.set_xy(112, 98)
+    pdf.set_font("helvetica", "B", 12)
+    pdf.cell(0, 7, _pdf_text("Reemissão controlada"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_font("helvetica", "", 9.5)
+    _write_block_in_box(
         pdf,
         _pdf_text(
             "Este PDF foi reemitido a partir do editor de revisão do chat livre. "
             "O histórico anterior permanece preservado na aba Revisar."
         ),
+        x=112,
+        y=110,
+        width=74,
+        line_height=5.2,
     )
 
 

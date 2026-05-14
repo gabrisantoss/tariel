@@ -143,7 +143,7 @@ describe("ActivityCenterModal", () => {
       "activity-center-item-status-1",
     ]);
     expect(getAllByText("Reemissão recomendada").length).toBeGreaterThan(0);
-    expect(getByText("Ver emissão oficial")).toBeTruthy();
+    expect(getAllByText("Abrir caso").length).toBeGreaterThan(0);
     expect(getByText("1 atualização da Mesa Avaliadora")).toBeTruthy();
     expect(getByText("1 status do caso")).toBeTruthy();
     expect(

@@ -34,7 +34,7 @@
 
         estado.chatStatusIA = {
             status: normalizado,
-            texto: String(texto || "").trim() || "Assistente pronto",
+            texto: String(texto || "").trim() || "Tariel pronto",
         };
     }
 

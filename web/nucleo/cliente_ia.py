@@ -43,6 +43,7 @@ _MAX_OCR_CHARS = 2_000
 _MAX_OCR_MULTI_IMAGEM_CHARS = 600
 _MAX_DOCUMENTO_CHARS = 40_000
 _MAX_IMAGENS_PROMPT = 10
+_MAX_CONTINUACOES_STREAM = 1
 
 _PREFIXOS_DATAURL_VALIDOS = frozenset(
     [
@@ -198,6 +199,16 @@ Diretrizes:
         modo_normalizado = cls._normalizar_modo(modo)
         return cls._INSTRUCAO_SISTEMA + _CONFIG_MODO[modo_normalizado]["instrucao_extra"]
 
+    @staticmethod
+    def _chunk_finalizou_por_limite_saida(pedaco: Any) -> bool:
+        candidatos = getattr(pedaco, "candidates", None) or []
+        for candidato in candidatos:
+            motivo = getattr(candidato, "finish_reason", None)
+            nome_motivo = str(getattr(motivo, "name", motivo) or "").upper()
+            if "MAX_TOKEN" in nome_motivo or "MAX_TOKENS" in nome_motivo:
+                return True
+        return False
+
     # =========================================================================
     # HELPERS DE IMAGEM / OCR
     # =========================================================================
@@ -296,7 +307,8 @@ Diretrizes:
                 "Se forem aleatorias, duplicadas, ruins ou de temas diferentes e o usuario nao definiu foco, "
                 "nao gere laudo longo: responda curto pedindo foco ou agrupamento. "
                 "Quando houver tema comum, sintetize em no maximo 5 achados tecnicos e 3 recomendacoes. "
-                "Nao descreva foto por foto em paragrafo longo; use apenas o que sustenta conclusao tecnica."
+                "Nao descreva foto por foto em paragrafo longo; use apenas o que sustenta conclusao tecnica. "
+                "Com muitas fotos, prefira uma resposta executiva completa e curta a um texto longo que possa cortar."
             )
 
         return (
@@ -732,8 +744,20 @@ Diretrizes:
         texto_completo: list[str] = []
         tokens_input = 0
         tokens_output = 0
+        continuacoes_realizadas = 0
+        resposta_parcial_por_limite = False
 
-        try:
+        def _stream_contents(
+            contents_alvo: list[types.Content],
+            *,
+            tentativa_continuacao: int = 0,
+        ) -> Generator[str, None, bool]:
+            nonlocal tokens_input, tokens_output
+
+            finalizou_por_limite = False
+            tokens_input_chamada = 0
+            tokens_output_chamada = 0
+
             with medir_operacao(
                 "ai",
                 "gemini.generate_content_stream.chat",
@@ -745,11 +769,12 @@ Diretrizes:
                     "image_count": len(imagens_prompt),
                     "has_document": bool(texto_documento),
                     "historico_itens": len(historico_validado),
+                    "auto_continuation_attempt": tentativa_continuacao,
                 },
             ):
                 respostas = self.cliente.models.generate_content_stream(
                     model=_MODELO_GEMINI,
-                    contents=contents,
+                    contents=contents_alvo,
                     config=types.GenerateContentConfig(
                         system_instruction=self._instrucao_para_modo(modo_seguro),
                         temperature=0.2,
@@ -758,15 +783,93 @@ Diretrizes:
                 )
 
                 for pedaco in respostas:
+                    if self._chunk_finalizou_por_limite_saida(pedaco):
+                        finalizou_por_limite = True
+
                     usage = getattr(pedaco, "usage_metadata", None)
                     if usage:
-                        tokens_input = getattr(usage, "prompt_token_count", 0) or tokens_input
-                        tokens_output = getattr(usage, "candidates_token_count", 0) or tokens_output
+                        tokens_input_chamada = getattr(usage, "prompt_token_count", 0) or tokens_input_chamada
+                        tokens_output_chamada = getattr(usage, "candidates_token_count", 0) or tokens_output_chamada
 
                     texto_chunk = getattr(pedaco, "text", None)
                     if texto_chunk:
                         texto_completo.append(texto_chunk)
                         yield texto_chunk
+
+            tokens_input += tokens_input_chamada
+            tokens_output += tokens_output_chamada
+            return finalizou_por_limite
+
+        def _contents_para_continuacao() -> list[types.Content]:
+            texto_parcial = "".join(texto_completo).strip()
+            if not texto_parcial:
+                return []
+
+            trecho_final = texto_parcial[-16_000:]
+            return [
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part.from_text(
+                            text=(
+                                "[Continuação automática de resposta técnica]\n"
+                                f"Setor: {setor_seguro.upper()}\n"
+                                f"Mensagem original do inspetor: {self._texto_seguro(texto_original, 1000)}"
+                            )
+                        )
+                    ],
+                ),
+                types.Content(
+                    role="model",
+                    parts=[
+                        types.Part.from_text(
+                            text=(
+                                "Trecho final da resposta anterior já entregue:\n\n"
+                                f"{trecho_final}"
+                            )
+                        )
+                    ],
+                ),
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part.from_text(
+                            text=(
+                                "Continue exatamente de onde a resposta parou, sem repetir o que já foi dito. "
+                                "Feche frases, listas, referências normativas e recomendações pendentes. "
+                                "Se não houver conteúdo essencial restante, finalize de forma objetiva."
+                            )
+                        )
+                    ],
+                ),
+            ]
+
+        try:
+            finalizou_por_limite = yield from _stream_contents(contents)
+
+            while finalizou_por_limite and continuacoes_realizadas < _MAX_CONTINUACOES_STREAM:
+                continuacoes_realizadas += 1
+                logger.warning(
+                    "Stream Gemini atingiu limite de saída; continuando automaticamente. empresa_id=%s tentativa=%s",
+                    empresa_id,
+                    continuacoes_realizadas,
+                )
+                contents_continuacao = _contents_para_continuacao()
+                if not contents_continuacao:
+                    break
+                finalizou_por_limite = yield from _stream_contents(
+                    contents_continuacao,
+                    tentativa_continuacao=continuacoes_realizadas,
+                )
+
+            resposta_parcial_por_limite = finalizou_por_limite
+            if resposta_parcial_por_limite:
+                aviso_limite = (
+                    "\n\n**Resposta parcial:** a análise ficou extensa e atingiu o limite de saída da IA. "
+                    'Para continuar de onde parou, envie "continuar".'
+                )
+                texto_completo.append(aviso_limite)
+                yield aviso_limite
 
         except ClientError as e:
             status = getattr(e, "status_code", None)
@@ -802,6 +905,8 @@ Diretrizes:
                 "custo_reais": str(custo_reais),
                 "modelo": _MODELO_GEMINI,
                 "modo": modo_seguro,
+                "auto_continuations": continuacoes_realizadas,
+                "partial_by_output_limit": resposta_parcial_por_limite,
             },
             ensure_ascii=False,
         )

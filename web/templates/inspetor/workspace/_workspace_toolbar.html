@@ -1,34 +1,62 @@
 {% set workspace_tab_inicial = "conversa" %}
-{% set workspace_nav_caption_inicial = "Canal do assistente" if workspace_tab_inicial == "conversa" else "Workspace tecnico do laudo" %}
-{% set workspace_nav_status_inicial = "Canal ativo" if workspace_tab_inicial == "conversa" else "Leitura e ação separadas" %}
+{% set workspace_nav_caption_inicial = "Chat" if workspace_tab_inicial == "conversa" else "Laudo" %}
+{% set workspace_nav_status_inicial = "IA" if workspace_tab_inicial == "conversa" else "Operação" %}
 
-<div class="thread-nav" data-workspace-toolbar-nav data-component-slice="workspace-chrome" aria-label="Canais e seções da conversa">
+<div class="thread-nav" data-workspace-toolbar-nav data-component-slice="workspace-chrome" aria-label="Fluxo principal da inspeção">
     <div class="thread-nav-shell">
         <div class="thread-nav-copy">
             <div class="thread-nav-copy__row">
-                <strong id="workspace-nav-caption">Conversa atual</strong>
+                <strong id="workspace-nav-caption">
+                    {{ workspace_nav_caption_inicial }}
+                    <span class="sr-only">Conversa atual</span>
+                </strong>
                 <span id="workspace-nav-status" class="thread-nav-status">{{ workspace_nav_status_inicial }}</span>
             </div>
         </div>
 
         <div class="thread-nav-inner">
-            <div class="thread-tabs" role="tablist" aria-label="Seções do laudo">
-                <button
-                    type="button"
-                    class="thread-tab{% if workspace_tab_inicial == 'conversa' %} ativo{% endif %}"
-                    role="tab"
-                    aria-selected="{{ 'true' if workspace_tab_inicial == 'conversa' else 'false' }}"
-                    data-tab="conversa"
-                >
-                    <span class="thread-tab__icon material-symbols-rounded" aria-hidden="true">forum</span>
-                    <span class="thread-tab__label">Assistente</span>
-                </button>
+            <div class="thread-primary-flow" aria-label="Fluxo principal do caso">
+                <div class="thread-tabs thread-tabs--primary" role="tablist" aria-label="Fluxo principal">
+                    <button
+                        type="button"
+                        class="thread-tab{% if workspace_tab_inicial == 'conversa' %} ativo{% endif %}"
+                        role="tab"
+                        aria-selected="{{ 'true' if workspace_tab_inicial == 'conversa' else 'false' }}"
+                        data-tab="conversa"
+                    >
+                        <span class="thread-tab__icon material-symbols-rounded" aria-hidden="true">forum</span>
+                        <span class="thread-tab__label">Chat</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="thread-tab{% if workspace_tab_inicial == 'mesa' %} ativo{% endif %}"
+                        role="tab"
+                        aria-selected="{{ 'true' if workspace_tab_inicial == 'mesa' else 'false' }}"
+                        data-tab="mesa"
+                    >
+                        <span class="thread-tab__icon material-symbols-rounded" aria-hidden="true">verified_user</span>
+                        <span class="thread-tab__label">Revisão</span>
+                        <span id="workspace-tab-badge-mesa" class="thread-tab__badge" hidden>0</span>
+                    </button>
+                </div>
 
                 <button
                     type="button"
-                    class="thread-tab{% if workspace_tab_inicial == 'historico' %} ativo{% endif %}"
+                    class="thread-tab thread-tab--finalize{% if workspace_tab_inicial == 'finalizar' %} ativo{% endif %}"
                     role="tab"
-                    aria-selected="{{ 'true' if workspace_tab_inicial == 'historico' else 'false' }}"
+                    aria-selected="{{ 'true' if workspace_tab_inicial == 'finalizar' else 'false' }}"
+                    data-tab="finalizar"
+                >
+                    <span class="thread-tab__icon material-symbols-rounded" aria-hidden="true">task_alt</span>
+                    <span class="thread-tab__label">Finalizar</span>
+                </button>
+            </div>
+
+            <div class="thread-tabs thread-tabs--secondary" role="group" aria-label="Apoios do caso">
+                <button
+                    type="button"
+                    class="thread-tab thread-tab--secondary{% if workspace_tab_inicial == 'historico' %} ativo{% endif %}"
                     data-tab="historico"
                 >
                     <span class="thread-tab__icon material-symbols-rounded" aria-hidden="true">history</span>
@@ -37,9 +65,7 @@
 
                 <button
                     type="button"
-                    class="thread-tab"
-                    role="tab"
-                    aria-selected="false"
+                    class="thread-tab thread-tab--secondary"
                     data-tab="anexos"
                 >
                     <span class="thread-tab__icon material-symbols-rounded" aria-hidden="true">attach_file</span>
@@ -48,9 +74,7 @@
 
                 <button
                     type="button"
-                    class="thread-tab"
-                    role="tab"
-                    aria-selected="false"
+                    class="thread-tab thread-tab--secondary"
                     data-tab="correcoes"
                 >
                     <span class="thread-tab__icon material-symbols-rounded" aria-hidden="true">rule_settings</span>

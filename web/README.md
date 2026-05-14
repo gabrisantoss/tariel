@@ -45,11 +45,35 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+Atalho equivalente no Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
 3. Configurar variáveis de ambiente:
 
 ```bash
 cp .env.example .env
 ```
+
+No Windows, se voce nao tiver PostgreSQL/Redis local, copie `.env.example`
+para `.env` e use SQLite/memoria para subir a aplicacao rapidamente:
+
+```powershell
+Copy-Item .env.example .env
+(Get-Content .env) `
+  -replace '^DATABASE_URL=.*', 'DATABASE_URL=sqlite:///./tariel_dev.sqlite3' `
+  -replace '^REVISOR_REALTIME_BACKEND=.*', 'REVISOR_REALTIME_BACKEND=memory' `
+  -replace '^REVISOR_REALTIME_FAIL_CLOSED_ON_STARTUP=.*', 'REVISOR_REALTIME_FAIL_CLOSED_ON_STARTUP=0' |
+  Set-Content .env -Encoding UTF8
+```
+
+Na raiz do repositorio, o atalho `.\make.ps1 web-dev` tambem sobe o FastAPI
+com SQLite local em `.test-artifacts/runtime/tariel-windows-dev.sqlite3` e
+bootstrap de banco em background.
 
 Segurança: nunca versione `.env` nem credenciais JSON (`visao_wf.local.json`/equivalentes).
 O `.env.example` já vem apontando para a stack local madura: `postgresql:///tariel_dev` e `redis://127.0.0.1:6379/0`.

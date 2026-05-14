@@ -28,6 +28,7 @@ interface SettingsSystemSectionProps {
   resumoPermissoes: string;
   appBuildChannel: string;
   appVersionLabel: string;
+  onAbrirCentralAtividade?: () => void;
   onPermissoes: () => void;
   onSobreApp: () => void;
 }
@@ -137,6 +138,7 @@ export function SettingsAdvancedResourcesSection({
 export function SettingsSystemSection({
   resumoPermissoes,
   appVersionLabel,
+  onAbrirCentralAtividade = () => undefined,
   onPermissoes,
   onSobreApp,
 }: SettingsSystemSectionProps) {
@@ -153,6 +155,14 @@ export function SettingsSystemSection({
         testID="settings-system-permissions-center-row"
         title="Permissões"
         value={resumoPermissoes}
+      />
+      <SettingsPressRow
+        description="Eventos recentes, entregas e sinais operacionais do app."
+        icon="bell-badge-outline"
+        onPress={onAbrirCentralAtividade}
+        testID="settings-system-activity-center-row"
+        title="Central de atividades"
+        value="Abrir"
       />
       <SettingsPressRow
         description="Versão, termos, privacidade e licenças."

@@ -86,6 +86,17 @@
                 >
                     {% include "inspetor/workspace/_inspection_corrections.html" %}
                 </section>
+
+                <section
+                    class="workspace-view-root workspace-view-root--finalization"
+                    data-workspace-view-root="inspection_finalization"
+                    data-active="false"
+                    aria-hidden="true"
+                    hidden
+                    inert
+                >
+                    {% include "inspetor/workspace/_inspection_finalization.html" %}
+                </section>
             </div>
 
             <footer
@@ -93,11 +104,19 @@
                 data-conversation-variant="technical"
                 {% if not workspace_assistant_inicial %}hidden{% endif %}
             >
-                <div class="rodape-entrada__contexto" hidden aria-hidden="true">
+                <div class="rodape-entrada__contexto" hidden aria-hidden="true" id="rodape-contexto-chat-livre">
                     <div class="rodape-entrada__contexto-copy">
                         <strong id="rodape-contexto-titulo"></strong>
+                        <span id="rodape-contexto-status" class="rodape-entrada__contexto-status"></span>
                     </div>
-                    <span id="rodape-contexto-status" class="rodape-entrada__contexto-status"></span>
+                    <button
+                        type="button"
+                        id="btn-limpar-contexto-chat-livre"
+                        class="portal-link-button"
+                        hidden
+                    >
+                        Remover contexto
+                    </button>
                 </div>
 
                 <div class="rodape-entrada__composer">
@@ -110,7 +129,7 @@
                             aria-label="Iniciar novo laudo a partir do chat livre"
                         >
                             <span class="material-symbols-rounded" aria-hidden="true">description</span>
-                            <span>Criar laudo pelo chat</span>
+                            <span>Laudo</span>
                         </button>
                     </div>
 
@@ -131,6 +150,7 @@
                             type="file"
                             id="input-anexo"
                             accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            multiple
                             hidden
                             aria-hidden="true"
                             tabindex="-1"
@@ -160,6 +180,14 @@
                         </button>
 
                         <div class="technical-composer-main">
+                            <div
+                                id="preview-anexo"
+                                class="preview-anexo"
+                                role="status"
+                                aria-label="Pré-visualização do arquivo"
+                                aria-live="polite"
+                            ></div>
+
                             <div class="container-textarea">
                                 <textarea
                                     id="campo-mensagem"
@@ -213,38 +241,25 @@
                         </div>
                     </div>
 
-                    <div
-                        id="preview-anexo"
-                        class="preview-anexo"
-                        role="status"
-                        aria-label="Pré-visualização do arquivo"
-                        aria-live="polite"
-                    ></div>
-
                     <div class="workspace-context-actions" aria-label="Ações rápidas do laudo no chat">
                         <button
                             type="button"
                             id="btn-previa-chat"
                             class="workspace-context-actions__button"
+                            hidden
                         >
                             <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
                             <span>Ver prévia</span>
                         </button>
                     </div>
 
-                    <section class="workspace-composer-entry-panel" aria-label="Atalhos depois do composer">
+                    <section class="workspace-composer-entry-panel" aria-label="Ferramentas rápidas do chat">
                         {% if modelos_portal %}
                         <details class="workspace-guided-nr-picker" data-guided-nr-picker>
                             <summary class="workspace-guided-nr-summary" data-inspector-entry="assistant-guided-nr-picker">
                                 <span class="material-symbols-rounded" aria-hidden="true">assignment</span>
                                 <span class="workspace-guided-nr-summary__copy">
-                                    <strong>Inspeção guiada</strong>
-                                    <small>Escolha a NR e abra o roteiro.</small>
-                                    <span class="workspace-guided-nr-summary__chips" aria-label="NRs liberadas">
-                                        {% for modelo in modelos_portal[:6] %}
-                                        <span>{{ modelo.titulo | e }}</span>
-                                        {% endfor %}
-                                    </span>
+                                    <strong>NR</strong>
                                 </span>
                                 <span class="workspace-guided-nr-summary__badge">Escolher</span>
                             </summary>
@@ -256,8 +271,12 @@
                                     class="workspace-guided-nr-card btn-acao-rapida"
                                     data-chat-guided="true"
                                     data-tipo="{{ modelo.tipo | e }}"
+                                    data-titulo="{{ modelo.titulo | e }}"
+                                    data-badge="{{ modelo.badge | default('', true) | e }}"
                                     data-runtime-tipo="{{ modelo.runtime_tipo | default(modelo.tipo, true) | e }}"
                                     data-preprompt="{{ modelo.preprompt | e }}"
+                                    data-icone="{{ modelo.icone | default('', true) | e }}"
+                                    data-meta="{{ modelo.meta | default('', true) | e }}"
                                     aria-label="Abrir roteiro {{ modelo.titulo | e }}"
                                 >
                                     <span class="workspace-guided-nr-card__icon material-symbols-rounded" aria-hidden="true">{{ modelo.icone }}</span>
@@ -271,7 +290,7 @@
                         {% endif %}
                     </section>
 
-                    <section class="workspace-entry-helper" aria-label="Guia rápido para abrir a conversa">
+                    <section class="workspace-entry-helper" aria-label="Guia rápido para abrir a conversa" hidden>
                         <div class="workspace-entry-helper__copy">
                             <span class="workspace-entry-helper__eyebrow">Boa primeira mensagem</span>
                             <p>Inclua ativo ou TAG, local, anomalia observada e quais evidências já estão com você.</p>

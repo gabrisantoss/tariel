@@ -6,6 +6,7 @@ Base mobile separada do produto para o app do inspetor, construída com React Na
 
 - Auditoria de settings: [docs/mobile-settings-audit.md](./docs/mobile-settings-audit.md)
 - Plano de refatoração do app shell: [docs/inspector-mobile-refactor-plan.md](./docs/inspector-mobile-refactor-plan.md)
+- Teste iOS usando Windows: [docs/ios-testing-windows.md](./docs/ios-testing-windows.md)
 - Fechamento operacional da Fase 08: [../docs/restructuring-roadmap/117_phase8_mobile_closure.md](../docs/restructuring-roadmap/117_phase8_mobile_closure.md)
 
 ## Rodar localmente
@@ -18,11 +19,36 @@ npm install
 npm run start
 ```
 
+No Windows PowerShell:
+
+```powershell
+cd android
+Copy-Item .env.example .env
+npm ci
+npm run start
+```
+
+Para Android nativo no Windows, instale/baixe Android Studio, Android SDK,
+`platform-tools`, `emulator`, uma imagem de sistema e Maestro. O setup usado
+nesta maquina ficou em:
+
+- `ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk`
+- AVD: `tariel_api36`
+- Maestro CLI: `%USERPROFILE%\.maestro\bin`
+
+O launcher da raiz tambem cobre os alvos principais:
+
+```powershell
+.\make.ps1 mobile-ci
+.\make.ps1 smoke-mobile
+```
+
 ## Requisito de Node
 
 - Use `Node 22.13.1` para o workspace mobile.
 - O arquivo [`android/.nvmrc`](./.nvmrc) fixa essa versão.
 - Os alvos mobile do `Makefile` carregam `android/.nvmrc` quando `nvm` está disponível, evitando o runtime `22.12.x`.
+- No Windows sem `nvm`, Node `>=24` tambem satisfaz o `engines` do `package.json`.
 
 ## Comandos principais
 
@@ -120,7 +146,15 @@ cd android
 npm run eas:build:android:preview
 npm run eas:build:android:production
 npm run eas:submit:android:production
+npm run eas:build:ios:development
+npm run eas:build:ios:preview
+npm run eas:build:ios:production
+npm run eas:submit:ios:production
 ```
+
+No Windows, o simulador oficial de iPhone nao fica disponivel porque depende do Xcode/macOS.
+Para teste iOS nesta maquina, use iPhone fisico com Expo Go, EAS Development Build, EAS Preview ou TestFlight.
+O passo a passo fica em [docs/ios-testing-windows.md](./docs/ios-testing-windows.md).
 
 ## Rodando como app Android real
 

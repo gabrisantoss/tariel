@@ -374,9 +374,6 @@ export function ThreadConversationChatSurface({
                   style={[
                     styles.messageBubble,
                     styles.messageBubbleIncomingShell,
-                    !mensagemEhEngenharia
-                      ? styles.messageBubbleIncomingAssistant
-                      : null,
                     mensagemEhEngenharia
                       ? styles.messageBubbleEngineering
                       : styles.messageBubbleIncoming,
@@ -385,6 +382,9 @@ export function ThreadConversationChatSurface({
                       : null,
                     darkMode && !mensagemEhEngenharia
                       ? styles.messageBubbleIncomingDark
+                      : null,
+                    !mensagemEhEngenharia
+                      ? styles.messageBubbleIncomingAssistant
                       : null,
                     mensagemDestacada ? styles.messageBubbleReferenced : null,
                     dynamicMessageBubbleStyle,

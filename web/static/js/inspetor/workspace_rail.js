@@ -7,8 +7,6 @@
             resolveInspectorScreen,
             resolveWorkspaceView,
             workspaceViewSuportaRail,
-            obterSnapshotEstadoInspectorAtual,
-            conversaWorkspaceModoChatAtivo,
         } = dependencies;
         const screenAtual = screen || estado.inspectorScreen || resolveInspectorScreen?.();
         if (screenAtual === "new_inspection") {
@@ -16,11 +14,6 @@
         }
 
         const simulacaoFerramentasLocal = !!global.TARIEL?.devInspectorToolSimulation;
-        const snapshot = obterSnapshotEstadoInspectorAtual?.();
-        if (!simulacaoFerramentasLocal && conversaWorkspaceModoChatAtivo?.(screenAtual, snapshot)) {
-            return false;
-        }
-
         const view = resolveWorkspaceView?.(screenAtual);
         if (simulacaoFerramentasLocal && workspaceViewSuportaRail?.(view)) {
             if (typeof estado.workspaceRailExpanded !== "boolean") {
@@ -214,33 +207,46 @@
             resolveInspectorScreen,
             resolveWorkspaceView,
             resolveWorkspaceRailVisibility: resolveRailVisibility,
+            workspaceViewSuportaRail,
             sincronizarAcordeoesRailWorkspace: syncAccordionState,
         } = dependencies;
         const screenAtual = screen || estado.inspectorScreen || resolveInspectorScreen?.();
         const view = resolveWorkspaceView?.(screenAtual);
         const railVisivel = !!resolveRailVisibility?.(screenAtual);
+        const railHoverDisponivel = !railVisivel
+            && !!workspaceViewSuportaRail?.(view)
+            && (
+                view === "assistant_landing" ||
+                !!estado.freeChatConversationActive ||
+                el.painelChat?.dataset?.freeChatConversationActive === "true" ||
+                docRef?.body?.dataset?.freeChatConversationActive === "true"
+            );
         const layout = railVisivel ? "thread-with-rail" : "thread-only";
 
         if (docRef?.body) {
             docRef.body.dataset.workspaceView = view;
             docRef.body.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
+            docRef.body.dataset.workspaceRailHoverAvailable = railHoverDisponivel ? "true" : "false";
         }
 
         if (el.painelChat) {
             el.painelChat.dataset.workspaceView = view;
             el.painelChat.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
+            el.painelChat.dataset.workspaceRailHoverAvailable = railHoverDisponivel ? "true" : "false";
         }
 
         if (el.workspaceScreenRoot) {
             el.workspaceScreenRoot.dataset.workspaceView = view;
             el.workspaceScreenRoot.dataset.workspaceLayout = layout;
             el.workspaceScreenRoot.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
+            el.workspaceScreenRoot.dataset.workspaceRailHoverAvailable = railHoverDisponivel ? "true" : "false";
         }
 
         if (el.chatDashboardRail) {
-            el.chatDashboardRail.hidden = !railVisivel;
+            el.chatDashboardRail.hidden = !railVisivel && !railHoverDisponivel;
             el.chatDashboardRail.dataset.workspaceRailVisible = railVisivel ? "true" : "false";
-            el.chatDashboardRail.setAttribute("aria-hidden", String(!railVisivel));
+            el.chatDashboardRail.dataset.workspaceRailHoverAvailable = railHoverDisponivel ? "true" : "false";
+            el.chatDashboardRail.setAttribute("aria-hidden", String(!railVisivel && !railHoverDisponivel));
         }
 
         syncAccordionState?.(view);

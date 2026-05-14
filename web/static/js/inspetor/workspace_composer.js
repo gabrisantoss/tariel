@@ -495,19 +495,8 @@
         if (!el.composerSuggestions) return;
 
         if (dependencies.resolveWorkspaceView?.() === "assistant_landing") {
-            el.composerSuggestions.innerHTML = sugestoesEntrada
-                .slice(0, 3)
-                .map((sugestao) => `
-                    <button
-                        type="button"
-                        class="composer-suggestion composer-suggestion--entry"
-                        data-suggestion-text="${escaparHtml(sugestao.prompt)}"
-                        data-suggestion-priority="${escaparHtml(sugestao.prioridade || "secondary")}"
-                    >
-                        <span>${escaparHtml(sugestao.titulo)}</span>
-                    </button>
-                `)
-                .join("");
+            void sugestoesEntrada;
+            el.composerSuggestions.innerHTML = "";
             return;
         }
 
@@ -522,10 +511,7 @@
             "composer-suggestion",
             governancaActionKey === "reissue" ? "composer-suggestion--warning" : "",
         ].filter(Boolean).join(" ");
-        const sugestoes = comandos
-            .filter((comando) => comando.sugestao)
-            .filter((comando) => governancaActionKey !== "mesa" || comando.id !== "mesa")
-            .slice(0, resumoGovernanca.visible ? 2 : 3);
+        void comandos;
         const sugestoesMarkup = [];
 
         if (resumoGovernanca.visible && governancaActionKey) {
@@ -541,17 +527,10 @@
             `);
         }
 
-        sugestoesMarkup.push(...sugestoes.map((comando) => `
-                <button
-                    type="button"
-                    class="composer-suggestion"
-                    data-suggestion-command="${escaparHtml(comando.id)}"
-                >
-                    <span class="material-symbols-rounded" aria-hidden="true">${escaparHtml(comando.icone)}</span>
-                    <span>${escaparHtml(comando.titulo)}</span>
-                </button>
-            `));
-
+        if (!resumoGovernanca.visible) {
+            el.composerSuggestions.innerHTML = "";
+            return;
+        }
         el.composerSuggestions.innerHTML = sugestoesMarkup.join("");
     }
 

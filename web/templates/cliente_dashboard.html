@@ -91,69 +91,74 @@
     </header>
 
     <main class="cliente-dashboard">
-        <section class="dashboard-overview" aria-labelledby="dashboard-overview-title">
-            <div class="dashboard-overview__copy">
-                <span class="dashboard-kicker">{{ empresa.nome_fantasia | e }}</span>
-                <h1 id="dashboard-overview-title">Visão geral</h1>
-                <div class="dashboard-chip-row">
-                    <span class="hero-chip">Plano {{ empresa_resumo.get("plano_ativo", empresa.plano_ativo) | e }}</span>
-                    <span class="hero-chip">Base {{ (empresa_resumo.get("cidade_estado") or empresa.cidade_estado or "não informada") | e }}</span>
-                    <span class="hero-chip">CNPJ {{ empresa_resumo.get("cnpj", empresa.cnpj) | e }}</span>
+        <section class="dashboard-command" aria-labelledby="dashboard-overview-title">
+            <div class="dashboard-command__header">
+                <div class="dashboard-command__copy">
+                    <span class="dashboard-kicker">Portal da Empresa</span>
+                    <h1 id="dashboard-overview-title">{{ empresa.nome_fantasia | e }}</h1>
+                    <div class="dashboard-meta-list" aria-label="Dados da empresa">
+                        <span>Plano {{ empresa_resumo.get("plano_ativo", empresa.plano_ativo) | e }}</span>
+                        <span>{{ (empresa_resumo.get("cidade_estado") or empresa.cidade_estado or "Base não informada") | e }}</span>
+                        <span>CNPJ {{ empresa_resumo.get("cnpj", empresa.cnpj) | e }}</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-period" aria-label="Período do dashboard">
+                    {% for option in period_options %}
+                    <a href="{{ option.get('href', '/cliente/dashboard') | e }}" class="{% if option.get('active') %}is-active{% endif %}" {% if option.get('active') %}aria-current="page"{% endif %}>
+                        {{ option.get("label", "Período") | e }}
+                    </a>
+                    {% endfor %}
                 </div>
             </div>
 
-            <div class="dashboard-period" aria-label="Período do dashboard">
-                {% for option in period_options %}
-                <a href="{{ option.get('href', '/cliente/dashboard') | e }}" class="{% if option.get('active') %}is-active{% endif %}" {% if option.get('active') %}aria-current="page"{% endif %}>
-                    {{ option.get("label", "Período") | e }}
-                </a>
-                {% endfor %}
-            </div>
-
-            <aside class="dashboard-status-card">
-                <small>Status</small>
-                <strong>{{ status_title | e }}</strong>
+            <div class="dashboard-command__status">
                 <div>
+                    <small>Status operacional</small>
+                    <strong>{{ status_title | e }}</strong>
+                </div>
+                <div class="dashboard-command__pills" aria-label="Resumo do período">
                     <span>{% if empresa_resumo.get("uso_percentual") is none %}Uso livre{% else %}Uso {{ empresa_resumo.get("uso_percentual") }}%{% endif %}</span>
                     <span>{{ period_total_casos }} caso(s) em {{ period_label | e }}</span>
+                    <span>{{ total_usuarios }} pessoas na equipe</span>
                 </div>
-            </aside>
+            </div>
+
+            <div class="dashboard-metrics dashboard-metrics--command" aria-label="Indicadores principais">
+                <article class="dashboard-metric">
+                    <small>Laudos</small>
+                    <strong>{{ period_laudos_count }}</strong>
+                    <span>{{ period_label | e }}</span>
+                </article>
+                <article class="dashboard-metric">
+                    <small>Abertos</small>
+                    <strong>{{ period_casos_abertos }}</strong>
+                    <span>{{ period_total_casos }} no período</span>
+                </article>
+                <article class="dashboard-metric dashboard-metric--attention">
+                    <small>Pendências</small>
+                    <strong>{{ period_mesa_pendente + period_mesa_revisao }}</strong>
+                    <span>{{ period_mesa_pendente }} aguardando mesa</span>
+                </article>
+                <article class="dashboard-metric">
+                    <small>Equipe</small>
+                    <strong>{{ total_usuarios }}</strong>
+                    <span>{{ admins_total }} gestão, {{ inspetores_total }} campo, {{ revisores_total }} revisão</span>
+                </article>
+                <article class="dashboard-metric">
+                    <small>Documentos</small>
+                    <strong>{{ period_documentos_emitidos }}</strong>
+                    <span>Emitidos em {{ period_label | e }}</span>
+                </article>
+                <article class="dashboard-metric">
+                    <small>Plano</small>
+                    <strong>{% if empresa_resumo.get("uso_percentual") is none %}Livre{% else %}{{ empresa_resumo.get("uso_percentual") }}%{% endif %}</strong>
+                    <span>{{ empresa_resumo.get("capacidade_badge", "Operação monitorada") | e }}</span>
+                </article>
+            </div>
         </section>
 
-        <section class="dashboard-metrics" aria-label="Indicadores principais">
-            <article class="dashboard-metric">
-                <small>Laudos no período</small>
-                <strong>{{ period_laudos_count }}</strong>
-                <span>{{ period_label | e }}</span>
-            </article>
-            <article class="dashboard-metric">
-                <small>Casos abertos</small>
-                <strong>{{ period_casos_abertos }}</strong>
-                <span>{{ period_total_casos }} caso(s) no período</span>
-            </article>
-            <article class="dashboard-metric dashboard-metric--attention">
-                <small>Pendências</small>
-                <strong>{{ period_mesa_pendente + period_mesa_revisao }}</strong>
-                <span>{{ period_mesa_pendente }} aguardando mesa</span>
-            </article>
-            <article class="dashboard-metric">
-                <small>Equipe ativa</small>
-                <strong>{{ total_usuarios }}</strong>
-                <span>{{ admins_total }} admin, {{ inspetores_total }} inspetor(es), {{ revisores_total }} revisor(es)</span>
-            </article>
-            <article class="dashboard-metric">
-                <small>Documentos</small>
-                <strong>{{ period_documentos_emitidos }}</strong>
-                <span>Emitidos em {{ period_label | e }}</span>
-            </article>
-            <article class="dashboard-metric">
-                <small>Uso do plano</small>
-                <strong>{% if empresa_resumo.get("uso_percentual") is none %}Livre{% else %}{{ empresa_resumo.get("uso_percentual") }}%{% endif %}</strong>
-                <span>{{ empresa_resumo.get("capacidade_badge", "Operação monitorada") | e }}</span>
-            </article>
-        </section>
-
-        <section class="dashboard-insights" aria-label="Análises do dashboard">
+        <section class="dashboard-operations" aria-label="Operação e pontos de atenção">
             <article class="dashboard-panel dashboard-panel--flow">
                 <div class="dashboard-panel__head">
                     <span class="dashboard-kicker">Operação</span>
@@ -202,6 +207,9 @@
                 {% endif %}
             </article>
 
+        </section>
+
+        <section class="dashboard-insights dashboard-insights--secondary" aria-label="Análises complementares">
             <article class="dashboard-panel dashboard-panel--usage">
                 <div class="dashboard-panel__head">
                     <span class="dashboard-kicker">Contrato</span>

@@ -18,7 +18,7 @@ Este documento define a camada de tradução entre estados técnicos do Tariel e
 | Faltas de evidência, correção ou decisão | Pendências do caso | Itens que bloqueiam avanço operacional ou emissão. | Inspeção IA, Mobile, Revisão Técnica, Portal Cliente status. | Blockers, missing_evidence cru. |
 | Capability ausente no contrato | Não incluído no pacote | Recurso não contratado para o tenant atual. | Portal Cliente recursos, botões desabilitados. | Sem permissão quando for limite comercial. |
 | Regra depende de família, template ou release | Depende da família/template | Disponibilidade varia pela governança da família. | Recursos, ajuda contextual, bloqueios. | Erro genérico. |
-| Família de alto risco exige Revisão Técnica | Família exige Revisão Técnica | A família não pode finalizar por aprovação interna no pacote atual. | Inspeção IA, Mobile, Portal Cliente, bloqueio NR35/alto risco. | nr35_mesa_required_unavailable cru. |
+| Família de alto risco recomenda Revisão Técnica | Família recomenda Revisão Técnica | A família deve destacar revisão separada como caminho recomendado, sem bloquear aprovação interna autorizada quando o gate técnico estiver completo. | Inspeção IA, Mobile, Portal Cliente, avisos NR35/alto risco. | nr35_mesa_required_unavailable cru. |
 
 ## Estados e Badges
 
@@ -33,7 +33,7 @@ Este documento define a camada de tradução entre estados técnicos do Tariel e
 | Reemissão recomendada | Emissão ativa divergiu do estado atual. | Âmbar |
 | Substituído | Emissão antiga preservada no histórico. | Cinza |
 | Bloqueado por pacote | Recurso ausente no contrato. | Cinza/âmbar |
-| Bloqueado por família | Família exige governança que o pacote atual não fornece. | Vermelho/âmbar |
+| Atenção por família | Família recomenda governança adicional ou revisão separada. | Âmbar |
 
 ## Regras de Layout
 

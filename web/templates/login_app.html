@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f3f6f9">
     <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="no-referrer">
-    <title>Portal do Inspetor • tariel.ia</title>
+    <title>Inspeção IA • tariel.ia</title>
     <script src="/static/js/shared/theme_bootstrap.js"></script>
     <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,21 +16,22 @@
     <link rel="stylesheet" href="/static/css/cliente/cliente_auth.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/shared/official_visual_system.css?v={{ v_app }}">
     <link rel="stylesheet" href="/static/css/shared/auth_login_standard.css?v={{ v_app }}">
+    <link rel="stylesheet" href="/static/css/shared/auth_login_unified.css?v={{ v_app }}">
 </head>
-<body class="auth-shell auth-shell--cliente auth-shell--portal">
+<body class="auth-shell auth-shell--cliente auth-shell--portal auth-shell--standard-login">
     <main class="auth-layout auth-layout--split">
         <section class="auth-hero" aria-hidden="true">
             <div class="auth-hero-placeholder"></div>
             <img src="/static/img/logo-horizontal-dark.png" alt="tariel.ia">
-            <span class="auth-hero-label">Portal do Inspetor</span>
+            <div class="auth-portal-identity">
+                <strong class="auth-portal-identity__title">Inspeção IA</strong>
+            </div>
         </section>
 
         <section class="auth-card">
             <div class="auth-card-shell auth-login-standard">
                 <div class="auth-intro">
-                    <span class="auth-context-badge">Portal do Inspetor</span>
-                    <strong class="auth-intro__title">Login</strong>
-                    <p class="auth-intro__copy">Acesso operacional para conversar com a Tariel e registrar inspeções.</p>
+                    <strong class="auth-intro__title">Inspeção IA</strong>
                 </div>
 
                 {% if erro %}
@@ -57,7 +58,7 @@
                             <input type="checkbox" name="lembrar" value="true">
                             <span>Lembrar acesso</span>
                         </label>
-                        <button class="auth-helper-link auth-link-button" type="button" data-auth-support-action data-auth-support-context="do Portal do Inspetor" data-auth-support-message="Para recuperar senha do Portal do Inspetor, fale com o administrador da empresa.">
+                        <button class="auth-helper-link auth-link-button" type="button" data-auth-support-action data-auth-support-context="da Inspeção IA" data-auth-support-message="Para recuperar senha da Inspeção IA, fale com o administrador da empresa.">
                             Esqueci a senha
                         </button>
                     </div>
@@ -66,17 +67,16 @@
                 </form>
 
                 <div class="auth-provider-group">
-                    <p class="auth-provider-title">Entrar com conta corporativa</p>
-                    <div class="auth-provider-actions" aria-label="Entrar com conta corporativa">
-                        <button class="auth-provider-button auth-provider-button--google" type="button" data-provider-link="Google" data-provider-url="/auth/social/app/google/start" data-provider-feedback-message="Login com Google no Portal do Inspetor sera liberado para contas autorizadas da empresa." aria-label="Entrar com Google">
+                    <div class="auth-provider-actions" aria-label="Contas corporativas">
+                        <button class="auth-provider-button auth-provider-button--google" type="button" data-provider-link="Google" data-provider-url="/auth/social/app/google/start" data-provider-feedback-message="Login com Google na Inspeção IA sera liberado para contas autorizadas da empresa." aria-label="Entrar com Google">
                             <span class="auth-provider-mark" aria-hidden="true">G</span>
                             <span>Google</span>
                         </button>
-                        <button class="auth-provider-button auth-provider-button--apple" type="button" data-provider-link="Apple" data-provider-feedback-message="Login com Apple no Portal do Inspetor sera liberado para contas autorizadas da empresa." aria-label="Entrar com Apple">
+                        <button class="auth-provider-button auth-provider-button--apple" type="button" data-provider-link="Apple" data-provider-feedback-message="Login com Apple na Inspeção IA sera liberado para contas autorizadas da empresa." aria-label="Entrar com Apple">
                             <span class="auth-provider-mark" aria-hidden="true">A</span>
                             <span>Apple</span>
                         </button>
-                        <button class="auth-provider-button auth-provider-button--microsoft" type="button" data-provider-link="Microsoft" data-provider-url="/auth/social/app/microsoft/start" data-provider-feedback-message="Login com Microsoft no Portal do Inspetor sera liberado para contas autorizadas da empresa." aria-label="Entrar com Microsoft">
+                        <button class="auth-provider-button auth-provider-button--microsoft" type="button" data-provider-link="Microsoft" data-provider-url="/auth/social/app/microsoft/start" data-provider-feedback-message="Login com Microsoft na Inspeção IA sera liberado para contas autorizadas da empresa." aria-label="Entrar com Microsoft">
                             <span class="auth-provider-mark auth-provider-mark--microsoft" aria-hidden="true">
                                 <span></span><span></span><span></span><span></span>
                             </span>
@@ -86,16 +86,6 @@
                 </div>
                 <p class="auth-provider-feedback" data-auth-feedback hidden aria-live="polite"></p>
 
-                <nav class="auth-portal-switcher" aria-label="Escolher outro portal">
-                    <span class="auth-portal-switcher__label">Portais de acesso</span>
-                    <div class="auth-portal-switcher__links">
-                        <a class="auth-portal-option" href="/cliente/login">Admin Cliente</a>
-                        <a class="auth-portal-option is-active" href="/app/login" aria-current="page">Inspeção IA</a>
-                        <a class="auth-portal-option" href="/revisao/login">Revisão Técnica</a>
-                    </div>
-                </nav>
-
-                <p class="auth-access-note">Precisa de acesso ou apoio no primeiro login? Fale com o administrador da empresa.</p>
             </div>
         </section>
     </main>

@@ -261,6 +261,14 @@ body.mesa-widget-aberto .shell-action-btn {
     font-size: 18px !important;
 }
 
+.shell-action-btn .shell-action-emoji {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    line-height: 1;
+}
+
 .shell-action-btn-secundario {
     opacity: 0;
     pointer-events: none;
@@ -400,11 +408,45 @@ body.pagina-chat-dashboard-v2 .shell-quick-actions {
 
 body.pagina-chat-dashboard-v2:has(#painel-chat[data-inspecao-ui="workspace"]) .shell-quick-actions {
     top: 20px;
-    right: 24px;
+    right: 64px;
     bottom: auto;
     flex-direction: row;
     align-items: center;
     gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2[data-inspecao-ui="workspace"] .shell-quick-actions {
+    top: 20px;
+    right: 64px;
+    bottom: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+body.pagina-chat-dashboard-v2:has(#painel-chat[data-inspecao-ui="workspace"]) #btn-shell-home {
+    order: 10;
+}
+
+body.pagina-chat-dashboard-v2[data-inspecao-ui="workspace"] #btn-shell-home {
+    order: 10;
+}
+
+body.pagina-chat-dashboard-v2:has(#painel-chat[data-inspecao-ui="workspace"]) #btn-shell-home.shell-action-btn-secundario:not([hidden]) {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+}
+
+body.pagina-chat-dashboard-v2[data-inspecao-ui="workspace"] #btn-shell-home.shell-action-btn-secundario,
+body.pagina-chat-dashboard-v2[data-inspecao-ui="workspace"] #btn-shell-profile.shell-action-btn-secundario {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+}
+
+body.pagina-chat-dashboard-v2[data-inspecao-ui="workspace"] #btn-shell-home[hidden] {
+    display: flex !important;
 }
 
 body.pagina-chat-dashboard-v2 .shell-action-btn {
@@ -465,6 +507,11 @@ body.pagina-chat-dashboard-v2 .shell-profile-avatar {
     overflow: hidden;
 }
 
+body.pagina-chat-dashboard-v2 .shell-profile-avatar__icon {
+    font-size: 22px !important;
+    color: #F8FAFC;
+}
+
 body.pagina-chat-dashboard-v2 .shell-profile-avatar img {
     width: 100%;
     height: 100%;
@@ -481,6 +528,14 @@ body.pagina-chat-dashboard-v2 .shell-profile-avatar img {
 
     body.pagina-chat-dashboard-v2:has(#painel-chat[data-inspecao-ui="workspace"]) .shell-quick-actions {
         top: auto;
+        bottom: calc(128px + env(safe-area-inset-bottom));
+        right: 12px;
+        flex-direction: column;
+    }
+
+    body.pagina-chat-dashboard-v2[data-inspecao-ui="workspace"] .shell-quick-actions {
+        top: auto;
+        right: 12px;
         bottom: calc(128px + env(safe-area-inset-bottom));
         flex-direction: column;
     }

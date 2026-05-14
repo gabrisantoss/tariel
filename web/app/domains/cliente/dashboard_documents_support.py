@@ -37,7 +37,7 @@ _DOCUMENT_STATUS_UI_LABELS = {
     "reissue": "Reemissão recomendada",
     "superseded": "Substituído",
     "package_blocked": "Bloqueado por pacote",
-    "family_blocked": "Bloqueado por família",
+    "family_blocked": "Atenção por família",
 }
 
 
@@ -148,7 +148,7 @@ def build_document_ui_language(
         "case_pending_label": "Pendências do caso",
         "package_not_included_label": "Não incluído no pacote",
         "family_dependent_label": "Depende da família/template",
-        "family_requires_mesa_label": "Família exige Revisão Técnica",
+        "family_requires_mesa_label": "Família recomenda Revisão Técnica",
         "audit_label": "Auditoria",
         "package_resources_label": "Recursos do pacote",
         "issue_state_label": issue_state_label,

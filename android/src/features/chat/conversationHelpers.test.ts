@@ -350,6 +350,22 @@ describe("conversationHelpers", () => {
       { papel: "usuario", texto: "Evidência enviada" },
     ]);
 
+    const historicoComRelatorioLongo = montarHistoricoParaEnvio([
+      {
+        papel: "assistente",
+        texto: `Relatorio gerado\n${"A".repeat(9_000)}\nFim do relatorio`,
+      },
+    ] as any);
+
+    expect(historicoComRelatorioLongo).toHaveLength(1);
+    expect(historicoComRelatorioLongo[0].texto.length).toBeLessThanOrEqual(
+      7_500,
+    );
+    expect(historicoComRelatorioLongo[0].texto).toContain(
+      "Histórico anterior encurtado automaticamente pelo app",
+    );
+    expect(historicoComRelatorioLongo[0].texto).toContain("Fim do relatorio");
+
     expect(
       sanitizarTextoMensagemChat(
         "[Erro] 400 INVALIDARGUMENT: {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALIDARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID'}]}}",

@@ -16,17 +16,6 @@
             </div>
             <div class="workspace-rail-card__body workspace-rail-card__body--navigation">
                 <div class="workspace-rail-top-actions" aria-label="Ações principais da conversa">
-                    <a
-                        href="/app/?home=1"
-                        class="technical-record-btn technical-record-btn--ghost workspace-rail-top-actions__home"
-                        data-action="go-home"
-                        data-home-destino="/app/?home=1"
-                        aria-label="Voltar para a tela inicial do chat"
-                    >
-                        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
-                        <span>Início</span>
-                    </a>
-
                     <span class="technical-record-status-pill workspace-rail-status-pill">Tudo em um só lugar</span>
 
                     <button
@@ -164,60 +153,6 @@
             </div>
         </section>
 
-        <section id="workspace-context-card" class="technical-record-card technical-record-card--context">
-            <div class="technical-record-card__header">
-                <h3>Contexto rápido</h3>
-                <div class="technical-record-card__header-meta">
-                    <button type="button" class="workspace-rail-toggle" data-rail-toggle="context" aria-expanded="false">
-                        <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
-                    </button>
-                </div>
-            </div>
-            <div class="workspace-rail-card__body" data-rail-body="context" hidden>
-                <span class="workspace-rail-card__eyebrow">Base do caso</span>
-                <p class="workspace-rail-card__description">Modelo, operação e resumo do que já foi entendido.</p>
-
-                <div class="technical-record-card__actions-inline">
-                    <button type="button" id="btn-workspace-context-copy" class="portal-link-button">Copiar resumo</button>
-                    <button type="button" id="btn-workspace-context-clear" class="portal-link-button">Limpar lembretes</button>
-                </div>
-
-                <div class="workspace-context-grid">
-                    <article class="workspace-context-kpi">
-                        <span>Modelo</span>
-                        <strong id="workspace-context-template">Caldeira Industrial</strong>
-                    </article>
-                    <article class="workspace-context-kpi">
-                        <span>Evidências</span>
-                        <strong id="workspace-context-evidencias">0</strong>
-                    </article>
-                    <article class="workspace-context-kpi">
-                        <span>Pendências</span>
-                        <strong id="workspace-context-pendencias">0</strong>
-                    </article>
-                    <article class="workspace-context-kpi" hidden aria-hidden="true">
-                        <span></span>
-                        <strong id="workspace-context-mesa">Canal disponível</strong>
-                    </article>
-                </div>
-
-                <dl class="workspace-context-facts">
-                    <div>
-                        <dt>Equipamento</dt>
-                        <dd id="workspace-context-equipment">Caldeira B-202</dd>
-                    </div>
-                    <div>
-                        <dt>Operação</dt>
-                        <dd id="workspace-context-operation">Petrobras - REPLAN</dd>
-                    </div>
-                    <div>
-                        <dt>Última síntese</dt>
-                        <dd id="workspace-context-summary">A ultima resposta consolidada do assistente aparecera aqui.</dd>
-                    </div>
-                </dl>
-            </div>
-        </section>
-
         <section id="painel-pendencias-mesa" class="technical-record-card technical-record-card--pendencias" aria-live="polite">
             <div class="technical-record-card__header">
                 <h3>Ajustes solicitados</h3>
@@ -291,51 +226,6 @@
                 >
                     Carregar mais
                 </button>
-            </div>
-        </section>
-
-        <section class="technical-record-card technical-record-card--mesa">
-            <div class="technical-record-card__header">
-                <h3>Revisão</h3>
-                <div class="technical-record-card__header-meta">
-                    <button
-                        type="button"
-                        id="btn-mesa-widget-toggle"
-                        class="technical-record-btn btn-mesa-widget-toggle"
-                        data-inspector-entry="rail-open-mesa"
-                        aria-expanded="false"
-                    >
-                        <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
-                        <span class="label-btn-mesa-widget" data-mesa-toggle-label>Abrir revisão</span>
-                    </button>
-                    <button type="button" class="workspace-rail-toggle" data-rail-toggle="mesa" aria-expanded="false">
-                        <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
-                    </button>
-                </div>
-            </div>
-            <div class="workspace-rail-card__body" data-rail-body="mesa" hidden>
-                <span class="workspace-rail-card__eyebrow">Revisão técnica</span>
-                <p class="workspace-rail-card__description" id="workspace-mesa-card-text">Acompanhe revisão, pendências e respostas institucionais em um painel separado. Este botão só vira canal paralelo em <strong>dev</strong>.</p>
-                <p id="workspace-mesa-card-mode" class="workspace-rail-card__description workspace-rail-card__description--mesa-dev" hidden>
-                    Em desenvolvimento, este botão permanece como atalho paralelo. No fluxo principal, prefira o painel de revisão.
-                </p>
-
-                <div class="workspace-mesa-card__chips">
-                    <span id="workspace-mesa-card-status" class="workspace-mesa-card-chip">Canal disponível</span>
-                    <span id="workspace-mesa-card-unread" class="workspace-mesa-card-chip workspace-mesa-card-chip--alert" hidden>0 novas</span>
-                </div>
-
-                <div class="technical-record-card__actions">
-                    <button
-                        type="button"
-                        id="btn-rail-finalizar-inspecao"
-                        class="technical-record-btn technical-record-btn--outline"
-                        data-finalizar-inspecao
-                            data-inspector-entry="rail-finalize"
-                        >
-                            Finalizar laudo
-                        </button>
-                </div>
             </div>
         </section>
 

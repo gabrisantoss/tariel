@@ -3,6 +3,8 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
+PYTHON_RUNNER="$(resolve_web_python)"
+
 OUTPUT_MODE="table"
 REQUIRE_BOOT=0
 REQUESTED_AVD=""
@@ -230,7 +232,7 @@ elif [[ "$REQUIRE_BOOT" == "1" && "$BOOT_COMPLETED" != "1" ]]; then
   OVERALL_DETAIL="emulador encontrado, mas o boot ainda nao concluiu"
 fi
 
-JSON_PAYLOAD="$(python3 - "$TMP_FILE" "$STATE_FILE" "$REPO_ROOT" "$OVERALL_STATUS" "$OVERALL_DETAIL" "$REQUIRE_BOOT" "$SELECTED_AVD" "$SELECTED_SERIAL" "$ANDROID_STUDIO_PATH" "$ANDROID_SDK_ROOT_PATH" <<'PY'
+JSON_PAYLOAD="$("$PYTHON_RUNNER" - "$TMP_FILE" "$STATE_FILE" "$REPO_ROOT" "$OVERALL_STATUS" "$OVERALL_DETAIL" "$REQUIRE_BOOT" "$SELECTED_AVD" "$SELECTED_SERIAL" "$ANDROID_STUDIO_PATH" "$ANDROID_SDK_ROOT_PATH" <<'PY'
 import json
 import pathlib
 import sys

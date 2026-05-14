@@ -22,7 +22,16 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.tarielia.inspetor",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "Permita que o Tariel Inspetor use a câmera para registrar evidências da inspeção.",
+        "NSMicrophoneUsageDescription": "Permita que o Tariel Inspetor acesse o microfone quando recursos de voz estiverem disponíveis.",
+        "NSPhotoLibraryUsageDescription": "Permita que o Tariel Inspetor acesse imagens para anexar evidências ao laudo.",
+        "NSPhotoLibraryAddUsageDescription": "Permita que o Tariel Inspetor salve ou compartilhe arquivos relacionados à inspeção."
+      }
     },
     "android": {
       "package": "com.tarielia.inspetor",

@@ -10,21 +10,28 @@
 >
     <div class="cliente-management-home-layout">
         <div class="cliente-management-overview-main">
-            <div id="admin-executive-brief" class="admin-stage-brief cliente-management-brief"></div>
-            <div id="admin-resumo-geral" class="summary-grid cliente-management-metrics"></div>
+            <section class="cliente-management-command-center" aria-label="Central operacional">
+                <div id="admin-executive-brief" class="admin-stage-brief cliente-management-brief"></div>
+                <div id="admin-resumo-geral" class="summary-grid cliente-management-metrics"></div>
+            </section>
 
-            <div class="cliente-management-card-grid cliente-management-card-grid--areas">
+            <section class="cliente-management-area-hub" aria-label="Áreas da conta">
+                <div class="cliente-management-area-hub__head">
+                    <span class="cliente-management-kicker">Áreas da conta</span>
+                    <h3>Gerencie o essencial em um só lugar</h3>
+                </div>
+                <div class="cliente-management-card-grid cliente-management-card-grid--areas">
                 <article class="cliente-management-card">
                     <div class="cliente-management-card__head">
                         <span class="material-symbols-rounded" aria-hidden="true">groups</span>
                         <div>
-                            <span>Equipe e usuários</span>
-                            <strong>Usuários, perfis e convites</strong>
+                            <span>Equipe e acessos</span>
+                            <strong>Perfis, convites e permissões</strong>
                         </div>
                     </div>
                     <div id="admin-guided-onboarding-summary" class="summary-grid cliente-management-card__body"></div>
                     <a class="cliente-management-card__link" href="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}">
-                        <span>Abrir equipe</span>
+                        <span>Gerenciar equipe</span>
                         <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
                     </a>
                 </article>
@@ -33,7 +40,7 @@
                     <div class="cliente-management-card__head">
                         <span class="material-symbols-rounded" aria-hidden="true">credit_card</span>
                         <div>
-                            <span>Plano e assinatura</span>
+                            <span>Plano</span>
                             <strong>Uso, limites e contratação</strong>
                         </div>
                     </div>
@@ -64,7 +71,7 @@
                         <strong id="cliente-management-documentos-total">0</strong>
                     </div>
                     <a class="cliente-management-card__link" href="{{ cliente_surface_routes.documentos | default('/cliente/documentos') | e }}">
-                        <span>Abrir documentos</span>
+                        <span>Gerenciar documentos</span>
                         <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
                     </a>
                 </article>
@@ -182,21 +189,22 @@
                         <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
                     </a>
                 </article>
-            </div>
+                </div>
+            </section>
         </div>
 
-        <aside class="cliente-management-side-stack" aria-label="Atalhos e próximos passos">
-            <section class="cliente-management-overview-actions" aria-label="Ações rápidas">
+        <aside class="cliente-management-side-stack" aria-label="Atalhos e contexto da conta">
+            <section class="cliente-management-overview-actions" aria-label="Atalhos da conta">
                 <div>
-                    <span class="cliente-management-kicker">Ações rápidas</span>
-                    <h4>Ir direto para</h4>
+                    <span class="cliente-management-kicker">Atalhos</span>
+                    <h4>Ações da conta</h4>
                 </div>
                 <div class="cliente-management-shortcuts">
                     <a href="{{ cliente_surface_routes.equipe | default('/cliente/organizacao/equipe') | e }}">
                         <span class="material-symbols-rounded" aria-hidden="true">groups</span>
                         <span>
-                            <strong>Configurar equipe</strong>
-                            <small>Convide usuários e defina perfis de acesso.</small>
+                            <strong>Gerenciar equipe</strong>
+                            <small>Convites, perfis e permissões.</small>
                         </span>
                         <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
                     </a>
@@ -211,20 +219,20 @@
                     <a href="{{ cliente_surface_routes.suporte | default('/cliente/suporte') | e }}">
                         <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
                         <span>
-                            <strong>Suporte</strong>
-                            <small>Abrir atendimento da conta.</small>
+                            <strong>Abrir suporte</strong>
+                            <small>Atendimento e histórico da conta.</small>
                         </span>
                         <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
                     </a>
                 </div>
             </section>
 
-            <section class="cliente-management-side-card cliente-management-side-card--focus" aria-label="Próximo passo recomendado">
+            <section class="cliente-management-side-card cliente-management-side-card--focus" aria-label="Próxima ação recomendada">
                 <span class="material-symbols-rounded" aria-hidden="true">track_changes</span>
                 <div>
-                    <small>Próximo passo</small>
-                    <strong>Operação estável</strong>
-                    <p>Mantenha os indicadores em dia e revise acessos quando sua equipe crescer.</p>
+                    <small>Próxima ação</small>
+                    <strong>Conta liberada</strong>
+                    <p>Acompanhe indicadores e revise acessos quando a equipe crescer.</p>
                 </div>
             </section>
 

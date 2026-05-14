@@ -101,7 +101,12 @@ export function LoginScreen({
             ]}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.loginScreen}>
+            <View
+              style={[
+                styles.loginScreen,
+                keyboardVisible ? styles.loginScreenKeyboardVisible : null,
+              ]}
+            >
               {automationDiagnosticsEnabled ? (
                 <View
                   accessible

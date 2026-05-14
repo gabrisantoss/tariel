@@ -2482,3 +2482,236 @@ body.pagina-chat-dashboard-v2 .mesa-widget-lista {
         font-size: 12px;
     }
 }
+
+/* Reset de bolhas na camada base: vence cards antigos com !important em layers posteriores. */
+body.pagina-chat-dashboard-v2 #area-mensagens > .linha-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .linha-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-ia,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-inspetor,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-usuario,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-sistema,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-origem-mesa,
+body.pagina-chat-dashboard-v2 #area-mensagens .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens .corpo-texto,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card,
+body.pagina-chat-dashboard-v2 #area-mensagens .texto-msg,
+body.pagina-chat-dashboard-v2 #area-mensagens .texto-msg-origem,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body,
+body.pagina-chat-dashboard-v2 #area-mensagens .bloco-texto-solto {
+    min-height: 0 !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .corpo-texto,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card {
+    padding: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens > .linha-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .linha-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row,
+body.pagina-chat-dashboard-v2 #area-mensagens .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens .corpo-texto,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card {
+    overflow: visible !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .linha-mensagem::before,
+body.pagina-chat-dashboard-v2 #area-mensagens .linha-mensagem::after,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row::before,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row::after,
+body.pagina-chat-dashboard-v2 #area-mensagens .conteudo-mensagem::before,
+body.pagina-chat-dashboard-v2 #area-mensagens .conteudo-mensagem::after,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-shell::before,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-shell::after,
+body.pagina-chat-dashboard-v2 #area-mensagens .corpo-texto::before,
+body.pagina-chat-dashboard-v2 #area-mensagens .corpo-texto::after,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card::before,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-card::after,
+body.pagina-chat-dashboard-v2 #area-mensagens .texto-msg::before,
+body.pagina-chat-dashboard-v2 #area-mensagens .texto-msg::after,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body::before,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-body::after {
+    display: none !important;
+    content: none !important;
+    border: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card,
+body.pagina-chat-dashboard-v2 [data-history-timeline] .workspace-history-card,
+body.pagina-chat-dashboard-v2 .chat-thread-results .workspace-history-card,
+body.pagina-chat-dashboard-v2 #chat-thread-results .workspace-history-card,
+body.pagina-chat-dashboard-v2 #barra-historico .inspetor-sidebar-report,
+body.pagina-chat-dashboard-v2 #lista-historico .inspetor-sidebar-report,
+body.pagina-chat-dashboard-v2 #lista-historico .item-historico,
+body.pagina-chat-dashboard-v2 .inspetor-sidebar-recentes__lista .inspetor-sidebar-report,
+body.pagina-chat-dashboard-v2 .inspetor-sidebar-recentes__lista .item-historico {
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+}
+
+body.pagina-chat-dashboard-v2 .workspace-history-card::before,
+body.pagina-chat-dashboard-v2 .workspace-history-card::after,
+body.pagina-chat-dashboard-v2 #barra-historico .inspetor-sidebar-report::before,
+body.pagina-chat-dashboard-v2 #barra-historico .inspetor-sidebar-report::after,
+body.pagina-chat-dashboard-v2 #lista-historico .inspetor-sidebar-report::before,
+body.pagina-chat-dashboard-v2 #lista-historico .inspetor-sidebar-report::after,
+body.pagina-chat-dashboard-v2 #lista-historico .item-historico::before,
+body.pagina-chat-dashboard-v2 #lista-historico .item-historico::after,
+body.pagina-chat-dashboard-v2 .inspetor-sidebar-recentes__lista .inspetor-sidebar-report::before,
+body.pagina-chat-dashboard-v2 .inspetor-sidebar-recentes__lista .inspetor-sidebar-report::after,
+body.pagina-chat-dashboard-v2 .inspetor-sidebar-recentes__lista .item-historico::before,
+body.pagina-chat-dashboard-v2 .inspetor-sidebar-recentes__lista .item-historico::after {
+    display: none !important;
+    content: none !important;
+    border: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* Conversa ChatGPT-like: IA como texto solto, usuario como pilula compacta. */
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row--assistant .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row--typing .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-ia .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-sistema .conteudo-mensagem {
+    width: 100% !important;
+    max-width: min(800px, 100%) !important;
+    margin-right: auto !important;
+    margin-left: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row--user .workspace-message-shell,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-inspetor .conteudo-mensagem,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-usuario .conteudo-mensagem {
+    width: fit-content !important;
+    min-width: 0 !important;
+    max-width: min(640px, calc(100% - 96px)) !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: end !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row--user .corpo-texto,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-inspetor .corpo-texto,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-usuario .corpo-texto {
+    display: inline-flex !important;
+    width: fit-content !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    align-items: center !important;
+    padding: 10px 16px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: rgba(231, 241, 248, 0.98) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row--user .workspace-message-body,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-inspetor .texto-msg,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-usuario .texto-msg {
+    display: block !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    color: var(--tariel-clean-text, #172232) !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    line-height: 1.45 !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+}
+
+body.pagina-chat-dashboard-v2 #area-mensagens .workspace-message-row--assistant .workspace-message-body,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-ia .texto-msg,
+body.pagina-chat-dashboard-v2 #area-mensagens .mensagem-sistema .texto-msg {
+    color: var(--tariel-clean-text, #172232) !important;
+    font-size: 16px !important;
+    line-height: 1.7 !important;
+}
+
+/* Composer ChatGPT-like: uma capsula principal, sem borda interna no textarea. */
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .rodape-entrada {
+    width: min(100%, 960px) !important;
+    max-width: 960px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+    padding: 0 0 24px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .pilula-entrada,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .pilula-entrada,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .pilula-entrada {
+    min-height: 86px !important;
+    padding: 12px 14px 12px 18px !important;
+    border: 1px solid rgba(188, 204, 219, 0.88) !important;
+    border-radius: 28px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    background-image: none !important;
+    box-shadow: 0 18px 44px rgba(15, 34, 52, 0.1) !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .container-textarea,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .container-textarea,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .container-textarea {
+    min-height: 42px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .container-textarea:focus-within,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .container-textarea:focus-within,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .container-textarea:focus-within {
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #campo-mensagem,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #campo-mensagem,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] #campo-mensagem {
+    min-height: 42px !important;
+    padding: 8px 0 !important;
+    font-size: 18px !important;
+    line-height: 1.45 !important;
+}
+
+body.pagina-chat-dashboard-v2 .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-composer-icon-btn,
+body.pagina-chat-dashboard-v2[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-composer-icon-btn,
+body.pagina-chat-dashboard-v2 #painel-chat[data-free-chat-conversation-active="true"] .chat-dashboard-grid[data-workspace-view="inspection_conversation"] .technical-composer-icon-btn {
+    border: 0 !important;
+    background: rgba(244, 248, 251, 0.92) !important;
+    box-shadow: none !important;
+}

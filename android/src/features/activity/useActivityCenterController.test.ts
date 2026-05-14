@@ -317,7 +317,7 @@ describe("useActivityCenterController", () => {
         body: item.titulo,
         createdAt: "2026-03-26T18:00:00.000Z",
         unread: true,
-        targetThread: "finalizar",
+        targetThread: "chat",
       }),
     });
 
@@ -340,7 +340,7 @@ describe("useActivityCenterController", () => {
       {
         id: "status:91:critical",
         kind: "alerta_critico",
-        targetThread: "finalizar",
+        targetThread: "chat",
       },
     ]);
   });

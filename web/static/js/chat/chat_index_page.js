@@ -247,36 +247,36 @@
     ]);
 
     const CONTEXTO_WORKSPACE_ASSISTENTE = Object.freeze({
-        title: "Assistente Tariel IA",
-        subtitle: "Conversa inicial • nenhum laudo ativo",
-        statusBadge: "CHAT LIVRE",
+        title: "Tariel",
+        subtitle: "Chat técnico",
+        statusBadge: "IA",
     });
 
     const COPY_WORKSPACE_STAGE = Object.freeze({
         assistant: {
-            eyebrow: "Chat livre",
-            headline: "No que voce esta pensando hoje?",
+            eyebrow: "Tariel IA",
+            headline: "Por onde começamos?",
             description:
-                "Use o assistente para iniciar uma conversa, estruturar contexto ou abrir uma inspeção quando fizer sentido.",
-            placeholder: "Descreva ativo, TAG ou pendência técnica",
-            contextTitle: "Envie a primeira mensagem",
-            contextStatus: "O assistente responde e ajuda a estruturar o proximo passo.",
+                "Chat técnico para perguntas, evidências e geração NR editável.",
+            placeholder: "Peça ao Tariel",
+            contextTitle: "Chat",
+            contextStatus: "Tariel responde e estrutura o próximo passo.",
         },
         inspection: {
-            eyebrow: "Sessão técnica em andamento",
+            eyebrow: "Inspeção",
             headline: "Registro Técnico",
             description:
                 "Documente evidências, anexe arquivos e interaja com o assistente técnico.",
             placeholder: "Descreva a evidência, anexe arquivos ou use / para comandos",
         },
         focusedConversation: {
-            eyebrow: "Chat livre",
-            headline: "Conversa com a IA",
+            eyebrow: "Tariel IA",
+            headline: "Chat",
             description:
-                "Continue a conversa normalmente. O fluxo funcional do laudo segue o comportamento atual em segundo plano.",
-            placeholder: "Escreva a continuação da conversa",
-            contextTitle: "Conversa com a IA",
-            contextStatus: "A conversa segue focada no histórico e no composer.",
+                "Continue a conversa normalmente.",
+            placeholder: "Peça ao Tariel",
+            contextTitle: "Chat",
+            contextStatus: "Histórico e composer em foco.",
         },
     });
 
@@ -298,6 +298,7 @@
         overlayOwner: "",
         assistantLandingFirstSendPending: false,
         freeChatConversationActive: false,
+        freeChatTemplateContext: null,
         workspaceVisualContext: { ...CONTEXTO_WORKSPACE_ASSISTENTE },
         contextoVisualPorLaudo: {},
         ultimoStatusRelatorioPayload: null,
@@ -357,7 +358,7 @@
         chatResultados: 0,
         chatStatusIA: {
             status: "pronto",
-            texto: "Assistente pronto",
+            texto: "Tariel pronto",
         },
         atualizandoPainelWorkspaceDerivado: false,
         atualizarPainelWorkspaceDerivadoPendente: false,
@@ -2454,6 +2455,7 @@
                 resolveInspectorScreen,
                 resolveWorkspaceView,
                 resolveWorkspaceRailVisibility,
+                workspaceViewSuportaRail,
                 sincronizarAcordeoesRailWorkspace,
             }
         ) || false;
@@ -2525,7 +2527,7 @@
         }) || (estado.inspectorScreen || resolveInspectorBaseScreen());
     }
 
-    async function navegarParaHome(destino = "/app/?home=1", { preservarContexto = true } = {}) {
+    async function navegarParaHome(destino = "/", { preservarContexto = true } = {}) {
         return InspectorWorkspaceUtils.navegarParaHome?.(
             destino,
             { preservarContexto },
@@ -2601,6 +2603,138 @@
         ) || false;
     }
 
+    function normalizarContextoChatLivrePersonalizado(contexto = null) {
+        return InspectorWorkspaceUtils.normalizarContextoChatLivrePersonalizado?.(
+            contexto,
+            {
+                normalizarTipoTemplate,
+            }
+        ) || null;
+    }
+
+    function obterContextoChatLivrePersonalizadoAtivo() {
+        try {
+            const snapshotAtual = obterSnapshotEstadoInspectorAtual();
+            const screenBaseAtual = String(
+                snapshotAtual?.inspectorBaseScreen || resolveInspectorBaseScreen()
+            ).trim();
+            const superficieChatLivre =
+                screenBaseAtual === "assistant_landing"
+                || screenBaseAtual === "portal_dashboard"
+                || snapshotAtual?.freeChatConversationActive === true;
+
+            if (!superficieChatLivre && obterLaudoAtivoIdSeguro()) {
+                return null;
+            }
+        } catch (_) {
+            // Se a tela ainda estiver sincronizando, nao bloqueia o envio do chat livre.
+        }
+        return normalizarContextoChatLivrePersonalizado(estado.freeChatTemplateContext);
+    }
+
+    function obterPreferenciasIAMobileChatAtiva() {
+        return InspectorWorkspaceUtils.montarPreferenciasOcultasChatLivrePersonalizado?.(
+            obterContextoChatLivrePersonalizadoAtivo(),
+            {
+                normalizarTipoTemplate,
+            }
+        ) || "";
+    }
+
+    function aplicarContextoChatLivrePersonalizado(contexto = null, options = {}) {
+        const silencioso = options.silencioso === true;
+        const normalizado = contexto
+            ? normalizarContextoChatLivrePersonalizado(contexto)
+            : null;
+        const snapshotAtual = obterSnapshotEstadoInspectorAtual();
+        const screenBaseAtual = String(
+            snapshotAtual?.inspectorBaseScreen || resolveInspectorBaseScreen()
+        ).trim();
+        const conversaLivreAtiva = snapshotAtual?.freeChatConversationActive === true;
+        const superficieChatLivre =
+            screenBaseAtual === "assistant_landing"
+            || screenBaseAtual === "portal_dashboard"
+            || conversaLivreAtiva;
+        const igualAoAtual = InspectorWorkspaceUtils.contextosChatLivrePersonalizadosSaoIguais?.(
+            estado.freeChatTemplateContext,
+            normalizado,
+            {
+                normalizarTipoTemplate,
+            }
+        );
+
+        if (!normalizado) {
+            if (!estado.freeChatTemplateContext) {
+                return false;
+            }
+
+            estado.freeChatTemplateContext = null;
+            atualizarContextoWorkspaceAtivo();
+            if (!obterLaudoAtivoIdSeguro() && options.sincronizarThread !== false) {
+                window.TarielAPI?.sincronizarThreadChatLivreAtiva?.({ selecionar: false });
+            }
+            if (!silencioso) {
+                mostrarToast("Chat livre voltou ao contexto geral.", "info", 1800);
+            }
+            return true;
+        }
+
+        if (
+            normalizado
+            && superficieChatLivre
+            && (obterLaudoAtivoIdSeguro() || obterEstadoRelatorioAtualSeguro() === "relatorio_ativo")
+        ) {
+            sincronizarEstadoInspector(
+                {
+                    laudoAtualId: null,
+                    estadoRelatorio: "sem_relatorio",
+                    forceHomeLanding: false,
+                    modoInspecaoUI: "workspace",
+                    workspaceStage: conversaLivreAtiva ? "inspection" : "assistant",
+                    threadTab: "conversa",
+                    assistantLandingFirstSendPending: false,
+                    freeChatConversationActive: !!conversaLivreAtiva,
+                },
+                {
+                    persistirStorage: false,
+                }
+            );
+        }
+
+        estado.freeChatTemplateContext = normalizado;
+        atualizarContextoWorkspaceAtivo();
+        if (!obterLaudoAtivoIdSeguro() && options.sincronizarThread !== false) {
+            window.TarielAPI?.sincronizarThreadChatLivreAtiva?.({ selecionar: false });
+        }
+        if (!silencioso) {
+            mostrarToast(
+                igualAoAtual
+                    ? `${normalizado.title} continua ativo neste chat livre.`
+                    : `${normalizado.title} agora guia este chat livre.`,
+                "sucesso",
+                2200
+            );
+        }
+        return true;
+    }
+
+    function limparContextoChatLivrePersonalizado(options = {}) {
+        return aplicarContextoChatLivrePersonalizado(null, options);
+    }
+
+    function aplicarContextoChatLivrePersonalizadoDaAcaoRapida(botao) {
+        const contexto = InspectorWorkspaceUtils.criarContextoChatLivrePersonalizadoDoBotao?.(
+            botao,
+            {
+                normalizarTipoTemplate,
+            }
+        );
+        if (!contexto) return false;
+        return aplicarContextoChatLivrePersonalizado(contexto, {
+            origem: "guided_nr_card",
+        });
+    }
+
     function obterLaudoAtivoIdSeguro() {
         return InspectorWorkspaceUtils.obterLaudoAtivoIdSeguro?.(
             {
@@ -2665,9 +2799,9 @@
 
     function criarContextoVisualPadraoInspetor() {
         return {
-            title: "Assistente Tariel IA",
-            subtitle: "Conversa inicial • nenhum laudo ativo",
-            statusBadge: "CHAT LIVRE",
+            title: "Tariel",
+            subtitle: "Chat técnico",
+            statusBadge: "IA",
         };
     }
 
@@ -2972,6 +3106,7 @@
     function atualizarCopyWorkspaceStage(stage = "inspection") {
         InspectorWorkspaceStage.atualizarCopyWorkspaceStage?.(stage, {
             COPY_WORKSPACE_STAGE,
+            estado,
             modoEntradaEvidenceFirstAtivo,
             conversaWorkspaceModoChatAtivo,
             el,
@@ -3104,15 +3239,16 @@
         });
     }
 
-    function exibirLandingAssistenteIA({ limparTimeline = false } = {}) {
+    function exibirLandingAssistenteIA({ limparTimeline = false, limparContextoChatLivre = false } = {}) {
         InspectorWorkspaceOrchestration.exibirLandingAssistenteIA?.(
-            { limparTimeline },
+            { limparTimeline, limparContextoChatLivre },
             {
                 InspectorWorkspaceContextFlow,
                 definirRetomadaHomePendente,
                 limparFluxoNovoChatFocado,
                 atualizarEstadoModoEntrada,
                 estado,
+                sincronizarEstadoInspector,
                 resetarFiltrosHistoricoWorkspace,
                 definirWorkspaceStage,
                 aplicarContextoVisualWorkspace,
@@ -3128,9 +3264,9 @@
         );
     }
 
-    function abrirChatLivreInspector({ origem = "chat_free_entry" } = {}) {
-        return InspectorWorkspaceOrchestration.abrirChatLivreInspector?.(
-            { origem },
+    function abrirChatLivreInspector({ origem = "chat_free_entry", forcarLanding = false } = {}) {
+        const abriu = InspectorWorkspaceOrchestration.abrirChatLivreInspector?.(
+            { origem, forcarLanding },
             {
                 InspectorWorkspaceContextFlow,
                 obterSnapshotEstadoInspectorAtual,
@@ -3150,6 +3286,198 @@
                 emitirEventoTariel,
             }
         ) || false;
+        if (abriu) {
+            limparContextoChatLivrePersonalizado({
+                silencioso: true,
+                sincronizarThread: false,
+            });
+        }
+        return abriu;
+    }
+
+    function definirRootAtivoChatLivre(root, ativo) {
+        if (!root) return;
+        const ativoBoolean = !!ativo;
+        root.dataset.active = ativoBoolean ? "true" : "false";
+        root.setAttribute("aria-hidden", String(!ativoBoolean));
+        if (ativoBoolean) {
+            root.removeAttribute("hidden");
+        } else {
+            root.setAttribute("hidden", "");
+        }
+        try {
+            root.inert = !ativoBoolean;
+        } catch (_) {
+            if (ativoBoolean) {
+                root.removeAttribute("inert");
+            } else {
+                root.setAttribute("inert", "");
+            }
+        }
+    }
+
+    function limparModoNrVisualChatLivre() {
+        const painel = el.painelChat || document.getElementById("painel-chat");
+        [document.body, painel].forEach((alvo) => {
+            if (!alvo?.dataset) return;
+            delete alvo.dataset.nrVisualMode;
+            delete alvo.dataset.nrVisualTitle;
+            delete alvo.dataset.nrVisualBadge;
+        });
+
+        const tituloWorkspace = el.workspaceTituloLaudo || document.getElementById("workspace-titulo-laudo");
+        if (tituloWorkspace) {
+            tituloWorkspace.textContent = "Tariel";
+            tituloWorkspace.dataset.nrTitleActive = "false";
+        }
+
+        const tituloModo = el.workspaceNrModeTitle || document.getElementById("workspace-nr-mode-title");
+        if (tituloModo) {
+            tituloModo.textContent = "";
+            tituloModo.hidden = true;
+            tituloModo.setAttribute("aria-hidden", "true");
+        }
+    }
+
+    function forcarLandingChatLivreDom({ limparTimeline = true } = {}) {
+        const painel = el.painelChat || document.getElementById("painel-chat");
+        const portalRoot = document.querySelector('[data-screen-root="portal"]');
+        const workspaceRoot = document.querySelector('[data-screen-root="workspace"]');
+        const workspaceShell = document.querySelector('[data-inspector-region="workspace-shell"]');
+        const assistantRoot = document.querySelector('[data-workspace-view-root="assistant_landing"]');
+        const rodape = el.rodapeEntrada || document.querySelector(".rodape-entrada");
+        const areaMensagens = el.areaMensagens || document.getElementById("area-mensagens");
+        const campo = el.campoMensagem || document.getElementById("campo-mensagem");
+        const threadNav = el.threadNav || document.querySelector(".thread-nav");
+
+        estado.freeChatTemplateContext = null;
+        estado.laudoAtualId = null;
+        estado.estadoRelatorio = "sem_relatorio";
+        estado.forceHomeLanding = false;
+        estado.modoInspecaoUI = "workspace";
+        estado.workspaceStage = "assistant";
+        estado.inspectorScreen = "assistant_landing";
+        estado.inspectorBaseScreen = "assistant_landing";
+        estado.threadTab = "conversa";
+        estado.overlayOwner = "";
+        estado.assistantLandingFirstSendPending = false;
+        estado.freeChatConversationActive = false;
+
+        sincronizarEstadoInspector?.(
+            {
+                laudoAtualId: null,
+                estadoRelatorio: "sem_relatorio",
+                forceHomeLanding: false,
+                modoInspecaoUI: "workspace",
+                workspaceStage: "assistant",
+                inspectorScreen: "assistant_landing",
+                inspectorBaseScreen: "assistant_landing",
+                threadTab: "conversa",
+                overlayOwner: "",
+                assistantLandingFirstSendPending: false,
+                freeChatConversationActive: false,
+            },
+            {
+                persistirStorage: false,
+                syncScreen: false,
+            }
+        );
+
+        if (painel?.dataset) {
+            painel.dataset.inspecaoUi = "workspace";
+            painel.dataset.workspaceStage = "assistant";
+            painel.dataset.inspectorScreen = "assistant_landing";
+            painel.dataset.threadTab = "conversa";
+            painel.dataset.laudoAtualId = "";
+            painel.dataset.estadoRelatorio = "sem_relatorio";
+            painel.dataset.freeChatConversationActive = "false";
+        }
+
+        definirRootAtivoChatLivre(portalRoot, false);
+        definirRootAtivoChatLivre(workspaceRoot, true);
+        if (workspaceShell?.dataset) {
+            workspaceShell.dataset.workspaceView = "assistant_landing";
+            workspaceShell.dataset.workspaceLayout = "thread-only";
+            workspaceShell.dataset.workspaceRailVisible = "false";
+        }
+
+        document.querySelectorAll("[data-workspace-view-root]").forEach((root) => {
+            definirRootAtivoChatLivre(root, root === assistantRoot);
+        });
+
+        if (rodape) {
+            rodape.removeAttribute("hidden");
+            rodape.setAttribute("aria-hidden", "false");
+        }
+        if (threadNav) {
+            threadNav.hidden = true;
+            threadNav.setAttribute("aria-hidden", "true");
+        }
+        if (limparTimeline) {
+            areaMensagens
+                ?.querySelectorAll(".linha-mensagem:not(#indicador-digitando), .controle-historico-antigo, .skeleton-carregamento")
+                .forEach((node) => node.remove());
+            window.TarielAPI?.limparHistoricoChat?.({ emitirEstadoRelatorio: false });
+        }
+        limparModoNrVisualChatLivre();
+        if (campo) {
+            campo.placeholder = "Peça ao Tariel";
+        }
+    }
+
+    function instalarFallbackBotaoChatLivre() {
+        if (document.documentElement.dataset.chatLivreLandingFallbackBound === "true") return;
+        document.documentElement.dataset.chatLivreLandingFallbackBound = "true";
+
+        const processarAberturaChatLivre = (event) => {
+            const botao = event.target?.closest?.('[data-action="open-assistant-chat"]');
+            if (!botao) return;
+
+            const agora = Date.now();
+            const ate = Number(document.documentElement.dataset.chatLivreLandingHandlingUntil || 0) || 0;
+            if (ate > agora) {
+                event.preventDefault?.();
+                event.stopImmediatePropagation?.();
+                return;
+            }
+            document.documentElement.dataset.chatLivreLandingHandlingUntil = String(agora + 450);
+
+            event.preventDefault?.();
+            event.stopImmediatePropagation?.();
+
+            limparContextoChatLivrePersonalizado({
+                silencioso: true,
+                sincronizarThread: false,
+            });
+
+            try {
+                abrirChatLivreInspector({
+                    origem: botao.dataset?.inspectorEntry || botao.id || "chat_free_entry",
+                    forcarLanding: true,
+                });
+            } catch (_) {}
+
+            const aplicar = () => forcarLandingChatLivreDom({ limparTimeline: true });
+            aplicar();
+            window.requestAnimationFrame?.(aplicar);
+            window.setTimeout(aplicar, 80);
+            window.setTimeout(aplicar, 240);
+
+            document.dispatchEvent(new CustomEvent("tariel:toggle-sidebar", {
+                detail: {
+                    aberta: false,
+                    origem: "chat_livre_landing",
+                },
+                bubbles: true,
+            }));
+
+            window.setTimeout(() => {
+                focarComposerInspector?.();
+            }, 90);
+        };
+
+        document.addEventListener("pointerdown", processarAberturaChatLivre, true);
+        document.addEventListener("click", processarAberturaChatLivre, true);
     }
 
     function promoverPortalParaChatNoModoFoco({ origem = "focus_mode_toggle" } = {}) {
@@ -3321,6 +3649,8 @@
         abrirNovaInspecaoComScreenSync,
         abrirPreviewWorkspace,
         abrirReemissaoWorkspace,
+        aplicarContextoChatLivrePersonalizado,
+        aplicarContextoChatLivrePersonalizadoDaAcaoRapida,
         aplicarEstadoAcordeaoRailWorkspace,
         aplicarMatrizVisibilidadeInspector,
         aplicarHighlightComposer,
@@ -3366,6 +3696,7 @@
         exibirInterfaceInspecaoAtiva,
         fluxoNovoChatFocadoAtivoOuPendente,
         homeForcadoAtivo,
+        limparContextoChatLivrePersonalizado,
         limparContextoFixadoWorkspace,
         limparObserversInspector: ctx.actions.limparObserversInspector,
         montarResumoContextoIAWorkspace,
@@ -3377,8 +3708,10 @@
         normalizarLaudoAtualId,
         normalizarEstadoRelatorio,
         normalizarThreadTab,
+        obterContextoChatLivrePersonalizadoAtivo,
         obterEstadoRelatorioAtualSeguro,
         obterLaudoIdDaURLInspector,
+        obterPreferenciasIAMobileChatAtiva,
         obterRetomadaHomePendente,
         obterSnapshotEstadoInspectorAtual,
         obterTextoDeApoioComposer,
@@ -3425,6 +3758,14 @@
         inicializarObservadorSidebarHistorico: ctx.actions.inicializarObservadorSidebarHistorico,
         inicializarObservadorWorkspace: ctx.actions.inicializarObservadorWorkspace,
     });
+
+    window.TarielInspectorState = Object.assign(window.TarielInspectorState || {}, {
+        aplicarContextoChatLivrePersonalizado,
+        limparContextoChatLivrePersonalizado,
+        obterContextoChatLivrePersonalizadoAtivo,
+        obterPreferenciasIAMobileChatAtiva,
+    });
+
     function bindEventosModal() {
         InspectorWorkspacePageBoot.bindEventosModal?.({ ctx });
     }
@@ -3500,6 +3841,8 @@
     abrirChatLivreInspector = perfInstrumentation.abrirChatLivreInspector || abrirChatLivreInspector;
     abrirNovaInspecaoComScreenSync = perfInstrumentation.abrirNovaInspecaoComScreenSync || abrirNovaInspecaoComScreenSync;
     boot = perfInstrumentation.boot || boot;
+
+    instalarFallbackBotaoChatLivre();
 
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", boot, { once: true });

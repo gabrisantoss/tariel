@@ -17,16 +17,6 @@
 >
     <div class="inspetor-sidebar__top">
         <div class="inspetor-sidebar__masthead inspetor-sidebar__masthead--chat">
-            <div class="inspetor-sidebar__meta" aria-label="Resumo da operação atual">
-                <span class="inspetor-sidebar__meta-pill">
-                    {{ "Caso ativo" if laudo_selecionado_id else "Pronto para iniciar" }}
-                </span>
-                <strong>{{ empresa_label }}</strong>
-                <span>
-                    {{ conversas_total }} {{ "conversa disponível" if conversas_total == 1 else "conversas disponíveis" }}
-                </span>
-            </div>
-
             <button
                 type="button"
                 id="btn-sidebar-open-assistant-chat"
@@ -179,11 +169,12 @@
                     <a
                         href="/app/?home=1"
                         class="inspetor-account-menu__item"
+                        data-action="go-home"
                         data-profile-menu-action="home"
                         role="menuitem"
                     >
-                        <span class="material-symbols-rounded" aria-hidden="true">home</span>
-                        <span>Página inicial</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
+                        <span>Portal do Inspetor</span>
                     </a>
                 </div>
 

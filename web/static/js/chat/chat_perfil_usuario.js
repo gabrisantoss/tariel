@@ -194,6 +194,30 @@
         return avatar;
     }
 
+    function renderAvatarShell(target, { foto = "" } = {}) {
+        if (!target) return;
+
+        const fotoLimpa = String(foto || "").trim();
+        target.classList.toggle("possui-foto", !!fotoLimpa);
+        target.innerHTML = "";
+
+        if (fotoLimpa) {
+            const img = document.createElement("img");
+            img.src = fotoLimpa;
+            img.alt = "";
+            img.loading = "lazy";
+            img.decoding = "async";
+            target.appendChild(img);
+            return;
+        }
+
+        const icon = document.createElement("span");
+        icon.className = "material-symbols-rounded shell-profile-avatar__icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = "person";
+        target.appendChild(icon);
+    }
+
     function aplicarPerfilNoShell(perfil) {
         if (!el.btnShellProfile) return;
 
@@ -201,8 +225,7 @@
         const nome = String(dados.nome_completo || "Usuário").trim() || "Usuário";
         const avatar = obterAvatarShell();
 
-        renderAvatar(avatar, {
-            nome,
+        renderAvatarShell(avatar, {
             foto: dados.foto_perfil_url || "",
         });
 

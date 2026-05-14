@@ -93,6 +93,7 @@
             renderizarConfiancaIA = () => {},
 
             getModoAtual = () => "detalhado",
+            getPreferenciasIAMobile = () => "",
         } = config;
 
         // =========================================================
@@ -148,6 +149,7 @@
         const MIN_REPORT_GENERATION_UI_MS = 3000;
         const CACHE_STATUS_RELATORIO_MS = 700;
         const JANELA_SUPRESSAO_ESTADO_RELATORIO_MS = 900;
+        const LIMITE_IMAGENS_CHAT = 10;
         const PERF = sharedGlobals.perf;
 
         // =========================================================
@@ -162,6 +164,178 @@
             ultimaMutacaoEstadoMs: 0,
         };
         let removerListenerComandoSistema = null;
+
+        function normalizarListaArquivosPendentes(valor) {
+            if (!valor) return [];
+            if (Array.isArray(valor)) return valor.filter(Boolean);
+            if (typeof FileList !== "undefined" && valor instanceof FileList) {
+                return Array.from(valor).filter(Boolean);
+            }
+            return [valor].filter(Boolean);
+        }
+
+        function normalizarListaImagensBase64(valor) {
+            const itens = Array.isArray(valor) ? valor : (valor ? [valor] : []);
+            const normalizados = [];
+
+            itens.forEach((item) => {
+                const base64Validado = validarPrefixoBase64(item);
+                if (base64Validado) normalizados.push(base64Validado);
+            });
+
+            return normalizados.slice(0, LIMITE_IMAGENS_CHAT);
+        }
+
+        function valorImagemParaCompat(imagens = []) {
+            if (!Array.isArray(imagens) || imagens.length === 0) return null;
+            return imagens.length === 1 ? imagens[0] : imagens.slice(0, LIMITE_IMAGENS_CHAT);
+        }
+
+        function lerArquivoComoDataURL(arquivo) {
+            return new Promise((resolve, reject) => {
+                const leitor = new FileReader();
+                leitor.onload = (event) => resolve(event.target?.result || "");
+                leitor.onerror = () => reject(new Error("Erro ao ler o arquivo."));
+                leitor.onabort = () => reject(new Error("Leitura do arquivo cancelada."));
+                leitor.readAsDataURL(arquivo);
+            });
+        }
+
+        function renderizarPreviewImagensPendentes(imagens = [], arquivos = []) {
+            if (!previewContainer) {
+                atualizarEstadoBotao();
+                campoMensagem?.focus();
+                return;
+            }
+
+            previewContainer.innerHTML = "";
+
+            const imagensValidas = normalizarListaImagensBase64(imagens);
+            imagensValidas.forEach((base64, indice) => {
+                const item = document.createElement("div");
+                item.className = "preview-item preview-item--image";
+
+                const thumb = document.createElement("img");
+                thumb.src = base64;
+                thumb.alt = `Imagem anexada ${indice + 1}`;
+                thumb.className = "preview-thumb";
+                const nomeArquivo = arquivos[indice]?.name;
+                if (nomeArquivo) thumb.title = nomeArquivo;
+
+                const btnRemover = document.createElement("button");
+                btnRemover.type = "button";
+                btnRemover.className = "btn-remover-preview";
+                btnRemover.setAttribute("aria-label", `Remover imagem ${indice + 1}`);
+                btnRemover.textContent = "×";
+                btnRemover.addEventListener("click", () => removerImagemPendente(indice));
+
+                item.appendChild(thumb);
+                item.appendChild(btnRemover);
+                previewContainer.appendChild(item);
+            });
+
+            atualizarEstadoBotao();
+            campoMensagem?.focus();
+        }
+
+        function atualizarImagensPendentes(imagens = [], arquivos = []) {
+            const imagensValidas = normalizarListaImagensBase64(imagens);
+            const arquivosValidos = normalizarListaArquivosPendentes(arquivos).slice(0, imagensValidas.length);
+
+            if (!imagensValidas.length) {
+                limparPreview();
+                return;
+            }
+
+            setArquivoPendente(arquivosValidos.length === 1 ? arquivosValidos[0] : arquivosValidos);
+            setImagemBase64Pendente(valorImagemParaCompat(imagensValidas));
+            setTextoDocumentoPendente(null);
+            setNomeDocumentoPendente(null);
+            renderizarPreviewImagensPendentes(imagensValidas, arquivosValidos);
+        }
+
+        function removerImagemPendente(indiceRemover) {
+            const imagens = normalizarListaImagensBase64(getImagemBase64Pendente?.());
+            const arquivos = normalizarListaArquivosPendentes(getArquivoPendente?.());
+            const proximasImagens = imagens.filter((_, indice) => indice !== indiceRemover);
+            const proximosArquivos = arquivos.filter((_, indice) => indice !== indiceRemover);
+            atualizarImagensPendentes(proximasImagens, proximosArquivos);
+        }
+
+        async function carregarImagensParaEnvio(arquivosEntrada = []) {
+            const arquivos = normalizarListaArquivosPendentes(arquivosEntrada).filter((arquivo) =>
+                MIME_IMAGENS.has(arquivo?.type)
+            );
+
+            if (!arquivos.length) return;
+
+            const imagensAtuais = normalizarListaImagensBase64(getImagemBase64Pendente?.());
+            const arquivosAtuais = normalizarListaArquivosPendentes(getArquivoPendente?.()).slice(0, imagensAtuais.length);
+            const espacosDisponiveis = Math.max(0, LIMITE_IMAGENS_CHAT - imagensAtuais.length);
+
+            if (espacosDisponiveis <= 0) {
+                mostrarToast("Você já anexou o limite de 10 imagens.", "aviso");
+                return;
+            }
+
+            const arquivosSelecionados = arquivos.slice(0, espacosDisponiveis);
+            if (arquivos.length > espacosDisponiveis) {
+                mostrarToast("Mantive apenas as 10 primeiras imagens anexadas.", "aviso");
+            }
+
+            const arquivosDentroDoLimite = [];
+            arquivosSelecionados.forEach((arquivo) => {
+                if (arquivo.size > LIMITE_IMG_BYTES) {
+                    mostrarToast(`${arquivo.name} excede 10 MB e foi ignorada.`, "aviso");
+                    return;
+                }
+                arquivosDentroDoLimite.push(arquivo);
+            });
+
+            if (!arquivosDentroDoLimite.length) return;
+
+            try {
+                const resultados = await Promise.all(
+                    arquivosDentroDoLimite.map((arquivo) => lerArquivoComoDataURL(arquivo))
+                );
+                const imagensNovas = resultados
+                    .map((resultado) => validarPrefixoBase64(resultado))
+                    .filter(Boolean);
+
+                if (!imagensNovas.length) {
+                    mostrarToast("Nenhuma imagem válida foi encontrada.", "erro");
+                    return;
+                }
+
+                atualizarImagensPendentes(
+                    [...imagensAtuais, ...imagensNovas],
+                    [...arquivosAtuais, ...arquivosDentroDoLimite]
+                );
+            } catch (erro) {
+                mostrarToast("Erro ao ler uma das imagens. Tente novamente.", "erro");
+                log("error", "FileReader falhou ao processar imagens.", erro);
+            }
+        }
+
+        async function prepararArquivosParaEnvio(entrada) {
+            const arquivos = normalizarListaArquivosPendentes(entrada);
+            if (!arquivos.length) return;
+
+            const documento = arquivos.find((arquivo) => MIME_DOCUMENTOS.has(arquivo?.type));
+            if (documento) {
+                if (arquivos.length > 1) {
+                    mostrarToast("Para documentos, envie um arquivo por vez.", "aviso");
+                }
+                return prepararArquivoParaEnvio(documento);
+            }
+
+            const imagens = arquivos.filter((arquivo) => MIME_IMAGENS.has(arquivo?.type));
+            if (imagens.length !== arquivos.length) {
+                mostrarToast("Alguns arquivos foram ignorados. Use PNG, JPG, WebP, GIF, PDF ou DOCX.", "aviso");
+            }
+
+            return carregarImagensParaEnvio(imagens);
+        }
 
         // =========================================================
         // HELPERS COMPARTILHADOS (UTIL MODULE)
@@ -698,14 +872,17 @@
         function prepararArquivoParaEnvio(arquivo) {
             if (!arquivo) return;
 
+            if (Array.isArray(arquivo) || (typeof FileList !== "undefined" && arquivo instanceof FileList)) {
+                return prepararArquivosParaEnvio(arquivo);
+            }
+
             if (MIME_DOCUMENTOS.has(arquivo.type)) {
                 if (arquivo.size > LIMITE_DOC_BYTES) {
                     mostrarToast("Documento muito grande, máx. 15 MB.", "aviso");
                     return;
                 }
 
-                carregarDocumento(arquivo);
-                return;
+                return carregarDocumento(arquivo);
             }
 
             if (!MIME_IMAGENS.has(arquivo.type)) {
@@ -716,66 +893,7 @@
                 return;
             }
 
-            if (arquivo.size > LIMITE_IMG_BYTES) {
-                mostrarToast("Imagem muito grande, máx. 10 MB.", "aviso");
-                return;
-            }
-
-            limparPreview();
-
-            const leitor = new FileReader();
-
-            leitor.onload = (event) => {
-                const resultado = event.target?.result;
-                const base64Validado = validarPrefixoBase64(resultado);
-
-                if (!base64Validado) {
-                    mostrarToast("Arquivo inválido. Tente uma imagem diferente.", "erro");
-                    return;
-                }
-
-                setArquivoPendente(arquivo);
-                setImagemBase64Pendente(base64Validado);
-                setTextoDocumentoPendente(null);
-                setNomeDocumentoPendente(null);
-
-                if (!previewContainer) {
-                    atualizarEstadoBotao();
-                    campoMensagem?.focus();
-                    return;
-                }
-
-                previewContainer.innerHTML = "";
-
-                const item = document.createElement("div");
-                item.className = "preview-item";
-
-                const thumb = document.createElement("img");
-                thumb.src = base64Validado;
-                thumb.alt = "Preview da evidência";
-                thumb.className = "preview-thumb";
-
-                const btnRemover = document.createElement("button");
-                btnRemover.type = "button";
-                btnRemover.className = "btn-remover-preview";
-                btnRemover.setAttribute("aria-label", "Remover imagem");
-                btnRemover.textContent = "×";
-                btnRemover.addEventListener("click", limparPreview);
-
-                item.appendChild(thumb);
-                item.appendChild(btnRemover);
-                previewContainer.appendChild(item);
-
-                atualizarEstadoBotao();
-                campoMensagem?.focus();
-            };
-
-            leitor.onerror = () => {
-                mostrarToast("Erro ao ler o arquivo. Tente novamente.", "erro");
-                log("error", "FileReader falhou ao processar imagem.");
-            };
-
-            leitor.readAsDataURL(arquivo);
+            return carregarImagensParaEnvio([arquivo]);
         }
 
         // =========================================================
@@ -1501,7 +1619,7 @@
                 await sincronizarEstadoRelatorio();
             } catch (_) {}
 
-            emitirStatusChat("pronto", "Assistente pronto para a próxima interação.");
+            emitirStatusChat("pronto", "Tariel pronto.");
 
             return {
                 ok: true,
@@ -1595,7 +1713,8 @@
             tmpId = null,
             invisivel = false
         ) {
-            if (!mensagem && !dadosImagem && !textoDocumento) return null;
+            const imagensParaEnviar = normalizarListaImagensBase64(dadosImagem);
+            if (!mensagem && !imagensParaEnviar.length && !textoDocumento) return null;
 
             setIaRespondendo(true);
             atualizarEstadoBotao();
@@ -1604,14 +1723,14 @@
                 "respondendo",
                 pedidoRelatorioLivre
                     ? "Gerando relatório técnico..."
-                    : "Assistente analisando evidências e contexto..."
+                    : "Tariel analisando..."
             );
 
             if (!invisivel) {
                 mostrarDigitando(
                     pedidoRelatorioLivre
                         ? "Gerando relatório técnico..."
-                        : "Assistente analisando evidências e contexto..."
+                        : "Tariel analisando..."
                 );
             }
 
@@ -1638,10 +1757,11 @@
             let confiancaPendente = null;
             let streamCompleto = false;
             let statusFinalChat = "pronto";
-            let textoStatusFinal = "Assistente pronto para a próxima interação.";
+            let textoStatusFinal = "Tariel pronto.";
             const requestStartedAtMs = Date.now();
 
             const modoAtual = obterModoAtualSeguro();
+            const preferenciasIAMobile = String(getPreferenciasIAMobile?.() || "").trim();
 
             try {
                 const response = await fetch(ROTAS.CHAT, {
@@ -1651,10 +1771,12 @@
                     headers: criarHeadersSSE(),
                     body: JSON.stringify({
                         mensagem: mensagem || "",
-                        dados_imagem: dadosImagem ? validarPrefixoBase64(dadosImagem) : "",
+                        dados_imagem: imagensParaEnviar[0] || "",
+                        dados_imagens: imagensParaEnviar,
                         setor: sanitizarSetor(setor || "geral"),
                         historico: (getHistoricoConversa?.() || []).slice(-20),
                         modo: modoAtual,
+                        preferencias_ia_mobile: preferenciasIAMobile,
                         texto_documento: textoDocumento || "",
                         nome_documento: nomeDocumento || "",
                         laudo_id: getLaudoAtualId?.() ? Number(getLaudoAtualId()) : null,
@@ -1940,11 +2062,12 @@
         async function processarEnvio() {
             const texto = String(campoMensagem?.value || "").trim();
             const imagemBase64Pendente = getImagemBase64Pendente?.();
+            const imagensBase64Pendentes = normalizarListaImagensBase64(imagemBase64Pendente);
             const textoDocumentoPendente = getTextoDocumentoPendente?.();
             const nomeDocumentoPendente = getNomeDocumentoPendente?.();
 
             const temTexto = !!texto;
-            const temImagemPronta = !!imagemBase64Pendente;
+            const temImagemPronta = imagensBase64Pendentes.length > 0;
             const temDocumentoPronto = !!textoDocumentoPendente;
 
             if (!temTexto && !temImagemPronta && !temDocumentoPronto) return null;
@@ -1977,7 +2100,7 @@
             ocultarBoasVindas();
 
             const tmpId = `tmp-${Date.now()}`;
-            const imagemParaEnviar = imagemBase64Pendente;
+            const imagemParaEnviar = valorImagemParaCompat(imagensBase64Pendentes);
             const textoDocParaEnviar = textoDocumentoPendente;
             const nomeDocParaEnviar = nomeDocumentoPendente;
 
@@ -2048,6 +2171,7 @@
         // =========================================================
         const apiPublica = {
             prepararArquivoParaEnvio,
+            prepararArquivosParaEnvio,
             limparPreview,
             sincronizarEstadoRelatorio,
             iniciarRelatorio,

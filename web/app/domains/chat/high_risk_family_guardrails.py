@@ -1,4 +1,4 @@
-"""Guardrails centrais para familias que exigem revisao separada."""
+"""Sinais centrais para familias que recomendam revisao separada."""
 
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ class HighRiskFamilyGuardrail:
     message: str
     required_capability: str = "inspector_send_to_mesa"
     fallback_surface: str = "mesa"
-    requires_separate_mesa_review: bool = True
+    recommends_separate_mesa_review: bool = True
 
     def unavailable_detail(self, *, requested_review_mode: str | None = None) -> dict[str, Any]:
         return {
@@ -60,6 +60,24 @@ class HighRiskFamilyGuardrail:
             "family_key": self.family_key,
             "family_label": self.family_label,
             "guardrail": "separate_mesa_required",
+        }
+
+    def advisory_detail(self, *, requested_review_mode: str | None = None) -> dict[str, Any]:
+        code = (
+            "nr35_mesa_recommended"
+            if self.code == "nr35_mesa_required_unavailable"
+            else "high_risk_mesa_recommended"
+        )
+        return {
+            "code": code,
+            "message": self.message,
+            "review_mode_requested": str(requested_review_mode or "mesa_optional").strip()
+            or "mesa_optional",
+            "recommended_capability": self.required_capability,
+            "fallback_surface": self.fallback_surface,
+            "family_key": self.family_key,
+            "family_label": self.family_label,
+            "guardrail": "separate_mesa_recommended",
         }
 
 
@@ -129,7 +147,7 @@ def resolve_high_risk_family_guardrail(
     catalog_family_key: str | None = None,
     report_pack_family: str | None = None,
 ) -> HighRiskFamilyGuardrail | None:
-    """Return the strict review guardrail for modeled high-risk families."""
+    """Return the review advisory for modeled high-risk families."""
 
     if is_nr35_linha_vida_context(
         payload=payload,
@@ -141,8 +159,8 @@ def resolve_high_risk_family_guardrail(
             family_label=_HIGH_RISK_FAMILY_LABELS[NR35_FAMILY_KEY],
             code="nr35_mesa_required_unavailable",
             message=(
-                "O piloto NR35 Linha de Vida exige Revisão Técnica antes de "
-                "emissao oficial."
+                "NR35 Linha de Vida recomenda Revisão Técnica antes de "
+                "aprovacao final ou emissao oficial."
             ),
         )
 
@@ -165,13 +183,13 @@ def resolve_high_risk_family_guardrail(
         family_label=family_label,
         code="high_risk_mesa_required_unavailable",
         message=(
-            f"{family_label} exige Revisão Técnica antes de aprovacao final "
+            f"{family_label} recomenda Revisão Técnica antes de aprovacao final "
             "ou emissao oficial."
         ),
     )
 
 
-def family_requires_separate_mesa_review(
+def family_has_mesa_review_advisory(
     *,
     payload: dict[str, Any] | None = None,
     template_key: str | None = None,
@@ -189,8 +207,26 @@ def family_requires_separate_mesa_review(
     )
 
 
+def family_requires_separate_mesa_review(
+    *,
+    payload: dict[str, Any] | None = None,
+    template_key: str | None = None,
+    catalog_family_key: str | None = None,
+    report_pack_family: str | None = None,
+) -> bool:
+    """Compatibilidade legada: alto risco recomenda Mesa, mas nao a torna universal."""
+
+    return family_has_mesa_review_advisory(
+        payload=payload,
+        template_key=template_key,
+        catalog_family_key=catalog_family_key,
+        report_pack_family=report_pack_family,
+    )
+
+
 __all__ = [
     "HighRiskFamilyGuardrail",
+    "family_has_mesa_review_advisory",
     "family_requires_separate_mesa_review",
     "resolve_high_risk_family_guardrail",
 ]

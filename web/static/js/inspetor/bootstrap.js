@@ -81,7 +81,7 @@
             filtrarSidebarHistorico("");
             inicializarObservadorSidebarHistorico();
             renderizarSugestoesComposer();
-            atualizarStatusChatWorkspace("pronto", "Assistente pronto");
+            atualizarStatusChatWorkspace("pronto", "Tariel pronto");
 
             if (el.btnMesaWidgetToggle && el.painelMesaWidget) {
                 document.body.classList.add("pagina-chat-mesa");
