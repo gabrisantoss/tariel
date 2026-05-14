@@ -417,10 +417,35 @@ function Invoke-Target {
             Invoke-Checked "contract-check" { Invoke-WebPython -m pytest -q tests/test_transaction_contract.py tests/test_tenant_access.py tests/test_v2_android_public_contract.py tests/test_v2_admin_contract_catalogs.py }
         }
         "document-contract-check" {
+            $documentContractRuntimeDir = Join-Path $script:Root ".test-artifacts\runtime\document-contract-check"
+            $documentContractProfileDir = Join-Path $documentContractRuntimeDir "perfis"
+            $documentContractMesaDir = Join-Path $documentContractRuntimeDir "mesa_anexos"
+            $documentContractLearningDir = Join-Path $documentContractRuntimeDir "aprendizados_ia"
+            New-Item -ItemType Directory -Path $documentContractProfileDir -Force | Out-Null
+            New-Item -ItemType Directory -Path $documentContractMesaDir -Force | Out-Null
+            New-Item -ItemType Directory -Path $documentContractLearningDir -Force | Out-Null
             Invoke-Checked "document-contract-check import pypdf" {
-                Invoke-WebPython -c "import importlib.util, sys; modulo = importlib.util.find_spec('pypdf'); print('pypdf: ok' if modulo else 'pypdf: missing'); sys.exit(0 if modulo else 1)"
+                Invoke-WithEnv @{
+                    AMBIENTE = "dev"
+                    TARIEL_UPLOADS_STORAGE_MODE = "local_fs"
+                    PASTA_UPLOADS_PERFIS = $documentContractProfileDir
+                    PASTA_ANEXOS_MESA = $documentContractMesaDir
+                    PASTA_APRENDIZADOS_VISUAIS_IA = $documentContractLearningDir
+                } {
+                    Invoke-WebPython -c "import importlib.util, sys; modulo = importlib.util.find_spec('pypdf'); print('pypdf: ok' if modulo else 'pypdf: missing'); sys.exit(0 if modulo else 1)"
+                }
             }
-            Invoke-Checked "document-contract-check pytest" { Invoke-WebPython -m pytest -q tests/test_free_chat_report_pdf.py }
+            Invoke-Checked "document-contract-check pytest" {
+                Invoke-WithEnv @{
+                    AMBIENTE = "dev"
+                    TARIEL_UPLOADS_STORAGE_MODE = "local_fs"
+                    PASTA_UPLOADS_PERFIS = $documentContractProfileDir
+                    PASTA_ANEXOS_MESA = $documentContractMesaDir
+                    PASTA_APRENDIZADOS_VISUAIS_IA = $documentContractLearningDir
+                } {
+                    Invoke-WebPython -m pytest -q tests/test_free_chat_report_pdf.py
+                }
+            }
         }
         "smoke-web" {
             Invoke-Checked "smoke-web" { Invoke-WebPython -m pytest -q tests/test_smoke.py tests/test_regras_rotas_criticas.py }

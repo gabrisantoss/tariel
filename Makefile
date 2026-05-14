@@ -98,8 +98,9 @@ contract-check: ## Valida contratos sensíveis do backend e mobile público
 	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q tests/test_transaction_contract.py tests/test_tenant_access.py tests/test_v2_android_public_contract.py tests/test_v2_admin_contract_catalogs.py
 
 document-contract-check: ## Valida o PDF do chat livre; requer `pypdf` no Python do workspace web
-	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -c "import importlib.util, sys; modulo = importlib.util.find_spec('pypdf'); print('pypdf: ok' if modulo else 'pypdf: missing'); sys.exit(0 if modulo else 1)"
-	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q tests/test_free_chat_report_pdf.py
+	mkdir -p .test-artifacts/runtime/document-contract-check/perfis .test-artifacts/runtime/document-contract-check/mesa_anexos .test-artifacts/runtime/document-contract-check/aprendizados_ia
+	cd web && AMBIENTE=dev TARIEL_UPLOADS_STORAGE_MODE=local_fs PASTA_UPLOADS_PERFIS=../.test-artifacts/runtime/document-contract-check/perfis PASTA_ANEXOS_MESA=../.test-artifacts/runtime/document-contract-check/mesa_anexos PASTA_APRENDIZADOS_VISUAIS_IA=../.test-artifacts/runtime/document-contract-check/aprendizados_ia PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -c "import importlib.util, sys; modulo = importlib.util.find_spec('pypdf'); print('pypdf: ok' if modulo else 'pypdf: missing'); sys.exit(0 if modulo else 1)"
+	cd web && AMBIENTE=dev TARIEL_UPLOADS_STORAGE_MODE=local_fs PASTA_UPLOADS_PERFIS=../.test-artifacts/runtime/document-contract-check/perfis PASTA_ANEXOS_MESA=../.test-artifacts/runtime/document-contract-check/mesa_anexos PASTA_APRENDIZADOS_VISUAIS_IA=../.test-artifacts/runtime/document-contract-check/aprendizados_ia PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q tests/test_free_chat_report_pdf.py
 
 smoke-web: ## Executa smoke crítico do inspetor e fluxos web
 	cd web && PYTHONPATH=. $(WEB_PYTHON_IN_WEB) -m pytest -q tests/test_smoke.py tests/test_regras_rotas_criticas.py

@@ -2,7 +2,7 @@
 
 Arquivo de trabalho para tarefas longas, confusas ou multissuperfície.
 
-Atualizado em `2026-05-11`.
+Atualizado em `2026-05-14`.
 
 ## Quando usar
 
@@ -59,6 +59,8 @@ Atualizado em `2026-05-11`.
 ### `PKT-WINDOWS-LOCAL-RUNTIME-01` - Conversao operacional para Windows
 
 - `status`: concluido localmente em `2026-05-08`; objetivo foi preparar esta copia para rodar no Windows sem depender do `Makefile` Bash como unico caminho operacional
+- `checkpoint 2026-05-14`: branch `codex/sync-verify-fix-20260514` consolidada para sincronizacao com GitHub; `.\make.ps1 verify`, `.\make.ps1 hygiene-check` e `.\make.ps1 release-verify-local` foram repetidos antes do PR draft para garantir baseline, gate forte e higiene local no Windows
+- `checkpoint 2026-05-14`: `.gitignore` passou a ignorar artefatos locais do Codex, Metro e `uvicorn` (`.codex-logs/`, `.codex-screens/`, `local-mobile-metro*.log`, `web/uvicorn-*.log`) para evitar ruido operacional e sync acidental de logs temporarios
 - `checkpoint 2026-05-08`: instalado ambiente de maquina com Git, Python 3.12, Node/npm, JDK 17, Android Studio, Android SDK/API 36, AVD `tariel_api36`, Maestro CLI, Redis local e Playwright Chromium
 - `checkpoint 2026-05-08`: criado `make.ps1` na raiz como launcher PowerShell para os alvos principais (`doctor`, `web-ci`, `mobile-ci`, `mesa-smoke`, `verify`, gates de release e operacao)
 - `checkpoint 2026-05-08`: documentado setup em `docs/WINDOWS_SETUP.md` e atualizados `README.md`, `web/README.md` e `android/README.md` com caminhos Windows

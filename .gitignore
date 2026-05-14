@@ -72,6 +72,10 @@ android/expo-mobile.log
 android/expo-mobile.pid
 android/expo-mobile-metro.pid
 android/assets/*preview*.png
+.codex-logs/
+.codex-screens/
+local-mobile-metro*.log
+web/uvicorn-*.log
 picker-*.png
 scripts/*keyboard-layout.png
 web/static/uploads/
