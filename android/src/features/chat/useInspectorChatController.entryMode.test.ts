@@ -753,6 +753,48 @@ describe("useInspectorChatController entry mode", () => {
     );
   });
 
+  it("abre o quality gate quando o chat guiado pede para gerar o PDF", async () => {
+    const draft = createGuidedInspectionDraft();
+    const params = criarParams({
+      conversation: {
+        laudoId: 88,
+        estado: "relatorio_ativo",
+        statusCard: "aberto",
+        permiteEdicao: true,
+        permiteReabrir: false,
+        laudoCard: criarLaudoCard(),
+        modo: "detalhado",
+        mensagens: [],
+      },
+      guidedInspectionDraft: draft,
+      message: "Pode gerar o PDF dessa inspeção",
+    });
+
+    const { result } = renderHook(() =>
+      useInspectorChatController<OfflinePendingMessage, MobileReadCache>(
+        params,
+      ),
+    );
+
+    await act(async () => {
+      await result.current.actions.handleEnviarMensagem();
+    });
+
+    expect(sendInspectorMessageFlow).not.toHaveBeenCalled();
+    expect(params.setMessage).toHaveBeenCalledWith("");
+    expect(params.setQualityGateVisible).toHaveBeenCalledWith(true);
+    expect(params.setQualityGateLaudoId).toHaveBeenCalledWith(88);
+    expect(carregarGateQualidadeLaudoMobile).toHaveBeenCalledWith(
+      "token-123",
+      88,
+    );
+    expect(params.setQualityGatePayload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        codigo: "GATE_QUALIDADE_OK",
+      }),
+    );
+  });
+
   it("guarda o snapshot guiado quando a evidencia entra na fila offline local", async () => {
     (gateHeavyTransfer as jest.Mock).mockResolvedValue({
       allowed: false,

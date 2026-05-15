@@ -314,6 +314,7 @@ export function useInspectorChatController<
       carregarConversaAtual,
       carregarConversaPorLaudoId,
       carregarListaLaudos,
+      onOpenQualityGate: qualityGateController.handleAbrirQualityGate,
     });
   const {
     abrirReferenciaNoChat,

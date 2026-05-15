@@ -97,6 +97,7 @@ interface CreateInspectorChatMessageControllerParams<
     accessToken: string,
     silencioso?: boolean,
   ) => Promise<MobileLaudoCard[]>;
+  onOpenQualityGate: () => Promise<void>;
 }
 
 type MessageConversationMutationCurrent = {
@@ -218,6 +219,24 @@ function aplicarRespostaAssistente(
   });
 }
 
+function normalizarTextoComando(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+export function mensagemSolicitaEncerramentoPdfGuiado(value: string): boolean {
+  const texto = normalizarTextoComando(value);
+  const solicitaArtefato = /\b(pdf|laudo|relatorio|documento)\b/.test(texto);
+  const solicitaFechamento =
+    /\b(baixar|baixa|baixe|concluir|conclui|conclua|criar|cria|crie|emitir|emita|encerrar|encerra|encerre|fazer|faz|faca|fechar|fecha|feche|finalizar|finaliza|finalize|gerar|gera|gere|montar|monta|monte)\b/.test(
+      texto,
+    );
+
+  return solicitaArtefato && solicitaFechamento;
+}
+
 export function createInspectorChatMessageController<
   TOfflineItem extends OfflinePendingMessage,
 >({
@@ -225,6 +244,7 @@ export function createInspectorChatMessageController<
   carregarConversaAtual,
   carregarConversaPorLaudoId,
   carregarListaLaudos,
+  onOpenQualityGate,
 }: CreateInspectorChatMessageControllerParams<TOfflineItem>) {
   async function handleEnviarMensagem() {
     const current = paramsRef.current;
@@ -234,6 +254,20 @@ export function createInspectorChatMessageController<
 
     const snapshotConversa = current.conversation;
     const creatingNewCase = !snapshotConversa?.laudoId;
+    const textoMensagem = current.message.trim();
+    if (
+      current.guidedInspectionDraft &&
+      snapshotConversa?.laudoId &&
+      !current.attachmentDraft &&
+      current.podeEditarConversaNoComposer(snapshotConversa) &&
+      mensagemSolicitaEncerramentoPdfGuiado(textoMensagem)
+    ) {
+      current.setMessage("");
+      current.setErrorConversation("");
+      await onOpenQualityGate();
+      return;
+    }
+
     const gateAnexo = await gateHeavyTransfer({
       wifiOnlySync: current.wifiOnlySync,
       requiresHeavyTransfer: Boolean(current.attachmentDraft),
