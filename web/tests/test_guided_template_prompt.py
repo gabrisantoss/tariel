@@ -61,4 +61,5 @@ def test_contexto_guiado_ancora_prompt_na_nr_escolhida(
     assert "Checklist mobile de referencia" in prompt
     assert "Responda como especialista dessa NR/familia" in prompt
     assert "mesma inspecao, local e empresa" in prompt
-    assert "conjunto integrado" in prompt
+    assert "lotes de fotos do mesmo caso como conjunto integrado" in prompt
+    assert "imagens-chave para ilustrar o laudo/PDF" in prompt

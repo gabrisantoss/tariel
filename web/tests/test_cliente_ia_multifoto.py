@@ -48,8 +48,9 @@ def test_cliente_ia_monta_pacote_visual_guiado_como_mesma_inspecao() -> None:
 
     assert len(imagens) == 10
     assert any("[Pacote visual ordenado: 10 fotos]" in texto for texto in textos)
-    assert any("mesma inspecao, ao mesmo local e a mesma empresa" in texto for texto in textos)
+    assert any("demais lotes da mesma conversa" in texto for texto in textos)
     assert any("vistoria unica e integrada" in texto for texto in textos)
+    assert any("imagens-chave para ilustrar o laudo/PDF" in texto for texto in textos)
     assert not any("no maximo 5 achados tecnicos" in texto for texto in textos)
     assert "[Foto 1 de 10]" in textos
     assert "[Foto 10 de 10]" in textos

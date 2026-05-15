@@ -2,7 +2,7 @@
 
 Arquivo de trabalho para tarefas longas, confusas ou multissuperfície.
 
-Atualizado em `2026-05-14`.
+Atualizado em `2026-05-15`.
 
 ## Quando usar
 
@@ -13,6 +13,13 @@ Atualizado em `2026-05-14`.
 - correção crítica com risco de regressão.
 
 ## Estado atual
+
+### `PKT-MOBILE-GUIDED-MULTIPHOTO-01` - Lotes guiados e encerramento de PDF
+
+- `status`: em andamento localmente em `2026-05-15`; objetivo e tratar lotes sucessivos de fotos da inspecao guiada como evidencias da mesma empresa/local/caso, sem forcar analise foto a foto, e proteger o encerramento/PDF com confirmacao explicita no mobile
+- `checkpoint 2026-05-15`: prompts de inspecao guiada reforcam que lotes diferentes pertencem ao mesmo caso salvo aviso contrario, consolidam achados no conjunto, pedem imagens-chave para ilustrar o laudo/PDF e mantem lacunas como pendencias de coleta
+- `checkpoint 2026-05-15`: mobile passa a pedir confirmacao antes de encerrar a inspecao guiada; ao cancelar, o quality gate fecha e o inspetor volta a complementar fotos/contexto antes do PDF
+- `validacao 2026-05-15`: `cd web && .\.venv\Scripts\python.exe -m pytest tests/test_cliente_ia_multifoto.py tests/test_guided_template_prompt.py tests/test_inspection_entry_mode_phase_d_mobile.py::test_chat_guiado_vincula_evidencia_ao_bundle_do_caso_e_registra_mesa -q` (`16 passed`); `cd android && npm test -- --runInBand src/features/chat/useInspectorChatController.entryMode.test.ts` (`22 passed`); `cd android && npm run typecheck`; `cd android && npm run lint`; `cd android && npx prettier --check src/features/chat/inspectorChatQualityGateController.ts src/features/chat/useInspectorChatController.entryMode.test.ts`; `git diff --check`
 
 ### `PKT-MESA-OPTIONAL-CHAT-FIRST-01` - Recentralizacao mobile/chat e Mesa opcional
 

@@ -13,6 +13,7 @@ import type {
 } from "../../types/mobile";
 import { hasMobileUserPortal } from "../common/mobileUserAccess";
 import type { MobileSessionState } from "../session/sessionTypes";
+import type { GuidedInspectionDraft } from "../inspection/guidedInspection";
 import type { ChatAiRequestConfig } from "./preferences";
 import {
   QUALITY_GATE_OVERRIDE_MIN_REASON_LENGTH,
@@ -27,6 +28,7 @@ type QualityGateControllerCurrent<TOfflineItem extends OfflinePendingMessage> =
     activeThread: ActiveThread;
     session: MobileSessionState | null;
     conversation: ChatState | null;
+    guidedInspectionDraft: GuidedInspectionDraft | null;
     laudoMesaCarregado: number | null;
     qualityGateLaudoId: number | null;
     qualityGatePayload: MobileQualityGateResponse | null;
@@ -93,6 +95,39 @@ interface CreateInspectorChatQualityGateControllerParams<
     laudoCard?: MobileLaudoCard | null,
   ) => void;
   abrirLaudoPorId: (accessToken: string, laudoId: number) => Promise<void>;
+}
+
+function confirmarEncerramentoInspecaoGuiada(): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value: boolean) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve(value);
+    };
+
+    Alert.alert(
+      "Encerrar inspeção guiada?",
+      "Ao confirmar, a coleta guiada será encerrada, o composer ficará bloqueado para novas mensagens e a conversa ficará disponível para baixar ou acompanhar o PDF. Se ainda falta foto, contexto ou observação, escolha Não.",
+      [
+        {
+          text: "Não, continuar",
+          style: "cancel",
+          onPress: () => finish(false),
+        },
+        {
+          text: "Sim, encerrar e gerar PDF",
+          onPress: () => finish(true),
+        },
+      ],
+      {
+        cancelable: true,
+        onDismiss: () => finish(false),
+      },
+    );
+  });
 }
 
 export function createInspectorChatQualityGateController<
@@ -242,6 +277,14 @@ export function createInspectorChatQualityGateController<
         `Informe uma justificativa interna com pelo menos ${QUALITY_GATE_OVERRIDE_MIN_REASON_LENGTH} caracteres.`,
       );
       return;
+    }
+
+    if (current.guidedInspectionDraft) {
+      const confirmed = await confirmarEncerramentoInspecaoGuiada();
+      if (!confirmed) {
+        fecharQualityGate(false);
+        return;
+      }
     }
 
     current.setQualityGateSubmitting(true);

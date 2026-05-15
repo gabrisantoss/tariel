@@ -1626,4 +1626,72 @@ describe("useInspectorChatController entry mode", () => {
 
     alertSpy.mockRestore();
   });
+
+  it("pede confirmacao antes de encerrar uma inspecao guiada e cancela sem finalizar", async () => {
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(((
+      title,
+      message,
+      buttons,
+    ) => {
+      buttons?.[0]?.onPress?.();
+    }) as typeof Alert.alert);
+    const payload: MobileQualityGateResponse = {
+      codigo: "approved",
+      aprovado: true,
+      mensagem: "Caso pronto para finalizar.",
+      tipo_template: "nr35_linha_vida",
+      template_nome: "NR-35 Linha de Vida",
+      resumo: {
+        evidencias: 4,
+      },
+      itens: [],
+      faltantes: [],
+      roteiro_template: null,
+      report_pack_draft: null,
+      review_mode_sugerido: "mobile_autonomous",
+      human_override_policy: null,
+    };
+    const params = criarParams({
+      conversation: {
+        laudoId: 144,
+        estado: "relatorio_ativo",
+        statusCard: "aberto",
+        permiteEdicao: true,
+        permiteReabrir: false,
+        laudoCard: criarLaudoCard({
+          id: 144,
+          report_pack_draft: null,
+        }),
+        modo: "detalhado",
+        mensagens: [],
+      },
+      guidedInspectionDraft: createGuidedInspectionDraft("nr35_linha_vida"),
+      qualityGateLaudoId: 144,
+      qualityGatePayload: payload,
+    });
+
+    const { result } = renderHook(() =>
+      useInspectorChatController<OfflinePendingMessage, MobileReadCache>(
+        params,
+      ),
+    );
+
+    await act(async () => {
+      await result.current.actions.handleConfirmarQualityGate();
+    });
+
+    expect(alertSpy).toHaveBeenCalledWith(
+      "Encerrar inspeção guiada?",
+      expect.stringContaining("composer ficará bloqueado"),
+      expect.any(Array),
+      expect.objectContaining({ cancelable: true }),
+    );
+    expect(
+      (alertSpy.mock.calls[0][2] || []).map((button) => button.text),
+    ).toEqual(["Não, continuar", "Sim, encerrar e gerar PDF"]);
+    expect(finalizarLaudoMobile).not.toHaveBeenCalled();
+    expect(params.setQualityGateVisible).toHaveBeenCalledWith(false);
+
+    alertSpy.mockRestore();
+  });
 });
