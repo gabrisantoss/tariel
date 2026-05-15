@@ -202,6 +202,8 @@ def build_guided_template_prompt_context(
         [
             "- Responda como especialista dessa NR/familia, nao como inspecao generica.",
             "- Priorize perguntas, criterios, evidencias, riscos e recomendacoes conectados a esse escopo.",
+            "- Quando o inspetor enviar multiplas fotos nesta inspecao guiada, considere por padrao que pertencem a mesma inspecao, local e empresa, salvo aviso contrario.",
+            "- Analise lotes de fotos como conjunto integrado: cruze evidencias entre imagens, consolide achados e aponte lacunas sem tratar cada foto como caso separado.",
             "- Se o usuario trouxer outro tema, sinalize a mudanca de escopo antes de abandonar a NR selecionada.",
             "- Nao invente medicoes, certificados, fotos, ART, responsaveis ou conformidades nao informados.",
             "- Quando faltar dado, faca no maximo 1 ou 2 perguntas objetivas para a proxima lacuna relevante.",

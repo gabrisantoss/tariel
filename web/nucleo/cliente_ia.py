@@ -299,6 +299,19 @@ Diretrizes:
 
     @staticmethod
     def _instrucao_pacote_visual(total_imagens: int, contexto: str) -> str:
+        if contexto == "inspecao_guiada":
+            return (
+                f"[Pacote visual ordenado: {total_imagens} fotos]\n"
+                "Este pacote veio de uma inspecao guiada: considere, por padrao, "
+                "que todas as fotos pertencem a mesma inspecao, ao mesmo local e a mesma empresa, "
+                "salvo se o usuario informar o contrario. "
+                "Analise o conjunto como uma vistoria unica e integrada, cruzando evidencias entre as fotos. "
+                "Cite Foto 1, Foto 2 etc. quando sustentar um achado, mas nao trate cada imagem como caso isolado. "
+                "Entregue uma analise tecnica completa do lote: contexto observado, conformidades, nao conformidades, "
+                "riscos, evidencias usadas, pendencias de coleta e proximos passos. "
+                "Se houver fotos duplicadas ou pouco claras, preserve as evidencias uteis e marque somente essas lacunas "
+                "como insuficientes; nao descarte o pacote inteiro quando houver tema comum."
+            )
         if contexto == "chat":
             return (
                 f"[Pacote visual ordenado: {total_imagens} fotos]\n"
@@ -318,6 +331,16 @@ Diretrizes:
             "Se houver fotos aleatorias, duplicadas ou insuficientes, ignore-as para conclusoes tecnicas "
             "ou marque a evidencia como insuficiente no campo adequado."
         )
+
+    @staticmethod
+    def _contexto_pacote_visual_para_mensagem(mensagem: Optional[str]) -> str:
+        texto = str(mensagem or "").lower()
+        if (
+            "[foco_template_guiado]" in texto
+            or "esta conversa veio de uma inspecao guiada" in texto
+        ):
+            return "inspecao_guiada"
+        return "chat"
 
     def _montar_partes_imagens(
         self,
@@ -512,12 +535,15 @@ Diretrizes:
 
         texto_base = mensagem_truncada or "[Sem texto digitado pelo usuário]"
         partes.append(types.Part.from_text(text=f"[Setor: {setor_seguro.upper()}]\n\n{texto_base}"))
+        contexto_pacote_visual = self._contexto_pacote_visual_para_mensagem(
+            mensagem_truncada
+        )
 
         partes.extend(
             self._montar_partes_imagens(
                 dados_imagem=dados_imagem,
                 dados_imagens=dados_imagens,
-                contexto="chat",
+                contexto=contexto_pacote_visual,
             )
         )
 

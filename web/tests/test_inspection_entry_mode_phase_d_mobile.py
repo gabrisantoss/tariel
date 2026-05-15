@@ -319,6 +319,8 @@ def test_chat_guiado_vincula_evidencia_ao_bundle_do_caso_e_registra_mesa(
     assert "NR35 Linha de Vida" in prompt_capturado["mensagem"]
     assert "Foco normativo obrigatorio" in prompt_capturado["mensagem"]
     assert "Contexto da vistoria" in prompt_capturado["mensagem"]
+    assert "mesma inspecao, local e empresa" in prompt_capturado["mensagem"]
+    assert "conjunto integrado" in prompt_capturado["mensagem"]
     assert resposta_mensagens.json()["pre_laudo_summary"]["status"] in prompt_capturado["mensagem"]
     for pergunta in resposta_mensagens.json()["pre_laudo_summary"]["next_questions"]:
         assert pergunta in prompt_capturado["mensagem"]
