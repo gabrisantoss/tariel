@@ -29,6 +29,31 @@ import {
   lerJsonSeguro,
 } from "./apiCore";
 
+export const CHAT_IMAGE_PAYLOAD_LIMIT = 10;
+export const CHAT_SEND_BASE_TIMEOUT_MS = 90_000;
+export const CHAT_SEND_TIMEOUT_PER_IMAGE_MS = 9_000;
+export const CHAT_SEND_MAX_TIMEOUT_MS = 180_000;
+
+function resolverChatSendTimeoutMs(imageCount: number): number {
+  const normalizedImageCount =
+    Number.isFinite(imageCount) && imageCount > 0 ? Math.round(imageCount) : 0;
+  return Math.min(
+    CHAT_SEND_MAX_TIMEOUT_MS,
+    CHAT_SEND_BASE_TIMEOUT_MS +
+      normalizedImageCount * CHAT_SEND_TIMEOUT_PER_IMAGE_MS,
+  );
+}
+
+function erroDeTimeoutChat(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  return (
+    String(error.name || "").toLowerCase() === "aborterror" ||
+    /request timed out|timeout|abort/i.test(String(error.message || ""))
+  );
+}
+
 function extrairEventosSse(raw: string): Record<string, unknown>[] {
   return raw
     .split(/\r?\n\r?\n/g)
@@ -287,38 +312,55 @@ export async function enviarMensagemChatMobile(
 ): Promise<MobileChatSendResult> {
   const modo = normalizarModoChat(payload.modo);
   const dadosImagens = Array.isArray(payload.dadosImagens)
-    ? payload.dadosImagens.filter((item) => String(item || "").trim())
+    ? payload.dadosImagens
+        .filter((item) => String(item || "").trim())
+        .slice(0, CHAT_IMAGE_PAYLOAD_LIMIT)
     : [];
-  const response = await fetchComObservabilidade(
-    "chat_send",
-    buildApiUrl("/app/api/chat"),
-    {
-      method: "POST",
-      headers: construirHeaders(accessToken, {
-        "Content-Type": "application/json",
-      }),
-      body: JSON.stringify({
-        mensagem: payload.mensagem,
-        preferencias_ia_mobile: payload.preferenciasIaMobile || "",
-        dados_imagem: dadosImagens.length ? "" : payload.dadosImagem || "",
-        dados_imagens: dadosImagens,
-        setor: (payload.setor || "geral").trim() || "geral",
-        texto_documento: payload.textoDocumento || "",
-        nome_documento: payload.nomeDocumento || "",
-        laudo_id: payload.laudoId ?? undefined,
-        iniciar_laudo: payload.iniciarLaudo === true || undefined,
-        learning_opt_in: Boolean(payload.learningOptIn),
-        tone: String(payload.tone || "").trim() || undefined,
-        guided_inspection_draft: payload.guidedInspectionDraft || undefined,
-        guided_inspection_context: payload.guidedInspectionContext || undefined,
-        modo,
-        historico: (payload.historico || []).map((item) => ({
-          papel: item.papel,
-          texto: item.texto,
-        })),
-      }),
-    },
-  );
+  let response: Response;
+  try {
+    response = await fetchComObservabilidade(
+      "chat_send",
+      buildApiUrl("/app/api/chat"),
+      {
+        method: "POST",
+        headers: construirHeaders(accessToken, {
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          mensagem: payload.mensagem,
+          preferencias_ia_mobile: payload.preferenciasIaMobile || "",
+          dados_imagem: dadosImagens.length ? "" : payload.dadosImagem || "",
+          dados_imagens: dadosImagens,
+          setor: (payload.setor || "geral").trim() || "geral",
+          texto_documento: payload.textoDocumento || "",
+          nome_documento: payload.nomeDocumento || "",
+          laudo_id: payload.laudoId ?? undefined,
+          iniciar_laudo: payload.iniciarLaudo === true || undefined,
+          learning_opt_in: Boolean(payload.learningOptIn),
+          tone: String(payload.tone || "").trim() || undefined,
+          guided_inspection_draft: payload.guidedInspectionDraft || undefined,
+          guided_inspection_context:
+            payload.guidedInspectionContext || undefined,
+          modo,
+          historico: (payload.historico || []).map((item) => ({
+            papel: item.papel,
+            texto: item.texto,
+          })),
+        }),
+      },
+      undefined,
+      {
+        timeoutMs: resolverChatSendTimeoutMs(dadosImagens.length),
+      },
+    );
+  } catch (error) {
+    if (erroDeTimeoutChat(error)) {
+      throw new Error(
+        "A IA demorou demais para responder com esse pacote de imagens. O rascunho foi preservado; tente reenviar com menos fotos ou em uma conexão mais estável.",
+      );
+    }
+    throw error;
+  }
 
   const contentType = response.headers.get("content-type") || "";
   if (!response.ok) {

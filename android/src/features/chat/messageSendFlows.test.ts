@@ -412,4 +412,79 @@ describe("sendInspectorMessageFlow", () => {
     expect(carregarConversaPorLaudoId).not.toHaveBeenCalled();
     expect(carregarConversaAtual).not.toHaveBeenCalled();
   });
+
+  it("libera o composer e restaura rascunho quando envio com muitas imagens expira", async () => {
+    const anexoAtual: ComposerAttachment = {
+      kind: "image_set",
+      label: "10 fotos selecionadas",
+      resumo: "Fotos prontas",
+      imagens: Array.from({ length: 10 }, (_, index) => ({
+        kind: "image" as const,
+        dadosImagem: `base64-image-${index + 1}`,
+        fileUri: `file:///tmp/foto-${index + 1}.jpg`,
+        label: `foto-${index + 1}.jpg`,
+        mimeType: "image/jpeg",
+        previewUri: `file:///tmp/foto-${index + 1}-preview.jpg`,
+        resumo: "Fotos prontas",
+      })),
+    };
+    const erroTimeout =
+      "A IA demorou demais para responder com esse pacote de imagens.";
+    (enviarMensagemChatMobile as jest.Mock).mockRejectedValueOnce(
+      new Error(erroTimeout),
+    );
+    const onSetEnviandoMensagem = jest.fn();
+    const onSetErroConversa = jest.fn();
+    const onRestoreDraft = jest.fn();
+    const onReverterConversa = jest.fn();
+
+    await sendInspectorMessageFlow({
+      mensagem: "analisar pacote completo",
+      anexoAtual,
+      snapshotConversa: {
+        estado: "relatorio_ativo",
+        laudoCard: null,
+        laudoId: 42,
+        mensagens: [],
+        modo: "detalhado",
+        permiteEdicao: true,
+        permiteReabrir: false,
+        statusCard: "aberto",
+      },
+      guidedInspectionDraft: null,
+      aiRequestConfig,
+      sessionAccessToken: "token-123",
+      statusApi: "online",
+      podeEditarConversaNoComposer: () => true,
+      textoFallbackAnexo: () => "10 fotos enviadas",
+      normalizarModoChat: () => "detalhado",
+      inferirSetorConversa: () => "geral",
+      montarHistoricoParaEnvio: jest.fn(() => []),
+      criarMensagemAssistenteServidor: () => null,
+      carregarConversaAtual: jest.fn(),
+      carregarConversaPorLaudoId: jest.fn(),
+      carregarListaLaudos: jest.fn(),
+      erroSugereModoOffline: () => false,
+      criarItemFilaOffline: jest.fn(),
+      onSetMensagem: jest.fn(),
+      onSetAnexoRascunho: jest.fn(),
+      onSetErroConversa,
+      onSetEnviandoMensagem,
+      onApplyOptimisticMessage: jest.fn(),
+      onApplyAssistantResponse: jest.fn(),
+      onReverterConversa,
+      onQueueOfflineItem: jest.fn(),
+      onSetStatusOffline: jest.fn(),
+      onRestoreDraft,
+    });
+
+    expect(onSetEnviandoMensagem).toHaveBeenNthCalledWith(1, true);
+    expect(onSetEnviandoMensagem).toHaveBeenLastCalledWith(false);
+    expect(onReverterConversa).toHaveBeenCalledTimes(1);
+    expect(onRestoreDraft).toHaveBeenCalledWith(
+      "analisar pacote completo",
+      anexoAtual,
+    );
+    expect(onSetErroConversa).toHaveBeenLastCalledWith(erroTimeout);
+  });
 });

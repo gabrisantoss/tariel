@@ -3,6 +3,8 @@ jest.mock("./observability", () => ({
 }));
 
 import {
+  CHAT_IMAGE_PAYLOAD_LIMIT,
+  CHAT_SEND_MAX_TIMEOUT_MS,
   carregarGateQualidadeLaudoMobile,
   enviarMensagemChatMobile,
   finalizarLaudoMobile,
@@ -178,7 +180,7 @@ describe("chatApi", () => {
     });
   });
 
-  it("envia ate 10 imagens no payload do chat", async () => {
+  it("envia no maximo 10 imagens no payload do chat", async () => {
     fetchMock.mockResolvedValue(
       criarResposta(
         JSON.stringify({
@@ -192,12 +194,46 @@ describe("chatApi", () => {
     await enviarMensagemChatMobile("token-123", {
       mensagem: "Registrar fotos",
       laudoId: 78,
-      dadosImagens: ["img-1", "img-2"],
+      dadosImagens: Array.from(
+        { length: CHAT_IMAGE_PAYLOAD_LIMIT + 2 },
+        (_, index) => `img-${index + 1}`,
+      ),
     });
 
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body || "{}"));
     expect(body.dados_imagem).toBe("");
-    expect(body.dados_imagens).toEqual(["img-1", "img-2"]);
+    expect(body.dados_imagens).toHaveLength(CHAT_IMAGE_PAYLOAD_LIMIT);
+    expect(body.dados_imagens[0]).toBe("img-1");
+    expect(body.dados_imagens[CHAT_IMAGE_PAYLOAD_LIMIT - 1]).toBe(
+      `img-${CHAT_IMAGE_PAYLOAD_LIMIT}`,
+    );
+  });
+
+  it("interrompe envio de chat que fica pendurado com muitas imagens", async () => {
+    jest.useFakeTimers();
+    fetchMock.mockImplementation((_url: string, init?: RequestInit) => {
+      const signal = init?.signal;
+      return new Promise((_resolve, reject) => {
+        signal?.addEventListener("abort", () => {
+          reject(signal.reason || new Error("aborted"));
+        });
+      });
+    });
+
+    const envio = enviarMensagemChatMobile("token-123", {
+      mensagem: "Registrar fotos",
+      laudoId: 78,
+      dadosImagens: Array.from(
+        { length: CHAT_IMAGE_PAYLOAD_LIMIT },
+        (_, index) => `img-${index + 1}`,
+      ),
+    });
+
+    await Promise.resolve();
+    jest.advanceTimersByTime(CHAT_SEND_MAX_TIMEOUT_MS);
+
+    await expect(envio).rejects.toThrow("A IA demorou demais");
+    jest.useRealTimers();
   });
 
   it("envia preferencias de IA em campo interno separado do texto visivel", async () => {
