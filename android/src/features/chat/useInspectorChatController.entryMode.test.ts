@@ -85,6 +85,16 @@ function criarCacheLeitura(
   };
 }
 
+function criarDeferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+  return { promise, reject, resolve };
+}
+
 function criarParams(
   overrides?: Partial<
     Parameters<
@@ -335,6 +345,137 @@ describe("useInspectorChatController entry mode", () => {
     });
   });
 
+  it("mantem o laudo do historico selecionado enquanto o detalhe carrega", async () => {
+    const laudoCard = criarLaudoCard({
+      id: 77,
+      titulo: "Laudo histórico 77",
+    });
+    const historicoDeferred = criarDeferred<{
+      estado: string;
+      laudo_id: number;
+      status_card: string;
+      permite_edicao: boolean;
+      permite_reabrir: boolean;
+      laudo_card: MobileLaudoCard;
+      modo: string;
+      itens: [];
+      cursor_proximo: null;
+      tem_mais: boolean;
+      limite: number;
+    }>();
+    const params = criarParams();
+    (carregarMensagensLaudo as jest.Mock).mockReturnValueOnce(
+      historicoDeferred.promise,
+    );
+
+    const { result } = renderHook(() =>
+      useInspectorChatController<OfflinePendingMessage, MobileReadCache>(
+        params,
+      ),
+    );
+
+    let selecaoPromise!: Promise<void>;
+    await act(async () => {
+      selecaoPromise = result.current.actions.handleSelecionarLaudo(laudoCard);
+      await Promise.resolve();
+    });
+
+    expect(params.setThreadHomeVisible).toHaveBeenCalledWith(false);
+    expect(params.setConversation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        laudoId: 77,
+        laudoCard: expect.objectContaining({ id: 77 }),
+      }),
+    );
+
+    historicoDeferred.resolve({
+      estado: "relatorio_ativo",
+      laudo_id: 77,
+      status_card: "aberto",
+      permite_edicao: true,
+      permite_reabrir: false,
+      laudo_card: laudoCard,
+      modo: "detalhado",
+      itens: [],
+      cursor_proximo: null,
+      tem_mais: false,
+      limite: 50,
+    });
+    await act(async () => {
+      await selecaoPromise;
+    });
+  });
+
+  it("ignora refresh atrasado iniciado antes da seleção do histórico", async () => {
+    const statusDeferred = criarDeferred<{
+      estado: string;
+      laudo_id: null;
+      status_card: string;
+      permite_edicao: boolean;
+      permite_reabrir: boolean;
+      laudo_card: null;
+      modo: string;
+    }>();
+    const params = criarParams({
+      conversation: null,
+    });
+    (carregarStatusLaudo as jest.Mock).mockReturnValueOnce(
+      statusDeferred.promise,
+    );
+
+    const { result, rerender } = renderHook(
+      (currentParams: typeof params) =>
+        useInspectorChatController<OfflinePendingMessage, MobileReadCache>(
+          currentParams,
+        ),
+      { initialProps: params },
+    );
+
+    let refreshPromise!: Promise<ChatState | null>;
+    await act(async () => {
+      refreshPromise = result.current.actions.carregarConversaAtual(
+        "token-123",
+        true,
+      );
+      await Promise.resolve();
+    });
+
+    const conversaSelecionada: ChatState = {
+      laudoId: 88,
+      estado: "relatorio_ativo",
+      statusCard: "aberto",
+      permiteEdicao: true,
+      permiteReabrir: false,
+      laudoCard: criarLaudoCard(),
+      modo: "detalhado",
+      mensagens: [],
+    };
+    rerender({
+      ...params,
+      conversation: conversaSelecionada,
+    });
+
+    statusDeferred.resolve({
+      estado: "sem_relatorio",
+      laudo_id: null,
+      status_card: "aberto",
+      permite_edicao: true,
+      permite_reabrir: false,
+      laudo_card: null,
+      modo: "detalhado",
+    });
+
+    let retorno: ChatState | null = null;
+    await act(async () => {
+      retorno = await refreshPromise;
+    });
+
+    expect(retorno).toBe(conversaSelecionada);
+    expect(params.setConversation).not.toHaveBeenCalledWith(
+      expect.objectContaining({ laudoId: null }),
+    );
+  });
+
   it("na inicializacao da sessao hidrata a lista sem autoabrir o caso atual", async () => {
     const params = criarParams({
       conversation: null,
@@ -464,6 +605,60 @@ describe("useInspectorChatController entry mode", () => {
       tipoTemplate: "nr13",
     });
     expect(cacheAtual.guidedInspectionDrafts?.["laudo:109"]).toEqual(draft);
+  });
+
+  it("restaura o draft canonico de laudo guiado mesmo quando o card ainda vem chat_first", async () => {
+    const draft = createGuidedInspectionDraft("nr35_linha_vida");
+    const laudoCard = criarLaudoCard({
+      id: 207,
+      tipo_template: "nr35_linha_vida",
+      case_workflow_mode: "laudo_guiado",
+      entry_mode_effective: "chat_first",
+      entry_mode_reason: "default_product_fallback",
+    });
+    const params = criarParams();
+    (carregarMensagensLaudo as jest.Mock).mockResolvedValue({
+      estado: "relatorio_ativo",
+      laudo_id: 207,
+      status_card: "aberto",
+      permite_edicao: true,
+      permite_reabrir: false,
+      laudo_card: laudoCard,
+      modo: "detalhado",
+      guided_inspection_draft: {
+        template_key: draft.templateKey,
+        template_label: draft.templateLabel,
+        started_at: draft.startedAt,
+        current_step_index: draft.currentStepIndex,
+        completed_step_ids: draft.completedStepIds,
+        checklist: draft.checklist.map((item) => ({
+          id: item.id,
+          title: item.title,
+          prompt: item.prompt,
+          evidence_hint: item.evidenceHint,
+        })),
+      },
+      itens: [],
+      cursor_proximo: null,
+      tem_mais: false,
+      limite: 50,
+    });
+
+    const { result } = renderHook(() =>
+      useInspectorChatController<OfflinePendingMessage, MobileReadCache>(
+        params,
+      ),
+    );
+
+    await act(async () => {
+      await result.current.actions.handleSelecionarLaudo(laudoCard);
+    });
+
+    expect(params.startGuidedInspection).toHaveBeenCalledWith({
+      draft,
+      ignoreActiveConversation: true,
+      tipoTemplate: "nr35_linha_vida",
+    });
   });
 
   it("mescla o bundle remoto do draft guiado sem perder o progresso local", async () => {

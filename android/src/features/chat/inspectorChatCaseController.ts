@@ -90,6 +90,53 @@ type InspectorChatCaseControllerCurrent<
   criarConversaNova: () => ChatState;
 };
 
+function criarConversaPreviewDoHistorico<
+  TCacheLeitura extends ChatCaseCacheState,
+>(
+  current: InspectorChatCaseControllerCurrent<TCacheLeitura>,
+  card: MobileLaudoCard,
+): ChatState {
+  return current.normalizarConversa({
+    laudo_id: card.id,
+    estado: "relatorio_ativo",
+    status_card: card.status_card || "aberto",
+    permite_edicao: Boolean(card.permite_edicao),
+    permite_reabrir: Boolean(card.permite_reabrir),
+    case_lifecycle_status: card.case_lifecycle_status,
+    case_workflow_mode: card.case_workflow_mode,
+    active_owner_role: card.active_owner_role,
+    allowed_next_lifecycle_statuses: card.allowed_next_lifecycle_statuses,
+    allowed_lifecycle_transitions: card.allowed_lifecycle_transitions,
+    allowed_surface_actions: card.allowed_surface_actions,
+    entry_mode_preference: card.entry_mode_preference,
+    entry_mode_effective: card.entry_mode_effective,
+    entry_mode_reason: card.entry_mode_reason,
+    laudo_card: card,
+    report_pack_draft: card.report_pack_draft || null,
+    modo: "detalhado",
+    itens: [],
+    cursor_proximo: null,
+    tem_mais: false,
+    limite: 0,
+  });
+}
+
+function devePreservarSelecaoMaisRecente<
+  TCacheLeitura extends ChatCaseCacheState,
+>(
+  paramsRef: MutableRefObject<
+    InspectorChatCaseControllerCurrent<TCacheLeitura>
+  >,
+  requestLaudoId: number | null,
+): ChatState | null {
+  const latestConversation = paramsRef.current.conversation;
+  const latestLaudoId = latestConversation?.laudoId ?? null;
+  if (latestLaudoId && latestLaudoId !== requestLaudoId) {
+    return latestConversation;
+  }
+  return null;
+}
+
 interface CreateInspectorChatCaseControllerParams<
   TCacheLeitura extends ChatCaseCacheState,
 > {
@@ -182,6 +229,7 @@ export function createInspectorChatCaseController<
     silencioso = false,
   ): Promise<ChatState | null> {
     const current = paramsRef.current;
+    const requestLaudoId = current.conversation?.laudoId ?? null;
     if (silencioso) {
       current.setSyncConversation(true);
     } else {
@@ -205,6 +253,14 @@ export function createInspectorChatCaseController<
           historico.guided_inspection_draft,
         );
         proximaConversa = current.normalizarConversa(historico);
+      }
+
+      const conversaMaisRecente = devePreservarSelecaoMaisRecente(
+        paramsRef,
+        requestLaudoId,
+      );
+      if (conversaMaisRecente) {
+        return conversaMaisRecente;
       }
 
       current.setConversation(proximaConversa);
@@ -330,20 +386,29 @@ export function createInspectorChatCaseController<
         historico.guided_inspection_draft,
       );
       const proximaConversa = current.normalizarConversa(historico);
-      current.setThreadHomeVisible(false);
-      current.setConversation(proximaConversa);
-      current.setUsandoCacheOffline(false);
-      current.setCacheLeitura((estadoAtual) => ({
+      const latest = paramsRef.current;
+      const conversaMaisRecente = devePreservarSelecaoMaisRecente(
+        paramsRef,
+        laudoId,
+      );
+      if (conversaMaisRecente) {
+        return;
+      }
+
+      latest.setThreadHomeVisible(false);
+      latest.setConversation(proximaConversa);
+      latest.setUsandoCacheOffline(false);
+      latest.setCacheLeitura((estadoAtual) => ({
         ...estadoAtual,
         conversaAtual: proximaConversa,
         conversasPorLaudo: {
           ...estadoAtual.conversasPorLaudo,
-          [current.chaveCacheLaudo(laudoId)]: proximaConversa,
+          [latest.chaveCacheLaudo(laudoId)]: proximaConversa,
         },
         updatedAt: new Date().toISOString(),
       }));
-      current.setMensagensMesa([]);
-      current.setLaudoMesaCarregado(null);
+      latest.setMensagensMesa([]);
+      latest.setLaudoMesaCarregado(null);
       restaurarContextoGuiadoDoCaso(
         proximaConversa.laudoId,
         proximaConversa.laudoCard,
@@ -400,23 +465,32 @@ export function createInspectorChatCaseController<
         historico.guided_inspection_draft,
       );
       const proximaConversa = current.normalizarConversa(historico);
-      current.setThreadHomeVisible(false);
-      current.setConversation(proximaConversa);
-      current.setUsandoCacheOffline(false);
-      current.setCacheLeitura((estadoAtual) => ({
+      const latest = paramsRef.current;
+      const conversaMaisRecente = devePreservarSelecaoMaisRecente(
+        paramsRef,
+        laudoId,
+      );
+      if (conversaMaisRecente) {
+        return conversaMaisRecente;
+      }
+
+      latest.setThreadHomeVisible(false);
+      latest.setConversation(proximaConversa);
+      latest.setUsandoCacheOffline(false);
+      latest.setCacheLeitura((estadoAtual) => ({
         ...estadoAtual,
         conversaAtual: proximaConversa,
         conversasPorLaudo: {
           ...estadoAtual.conversasPorLaudo,
-          [current.chaveCacheLaudo(laudoId)]: proximaConversa,
+          [latest.chaveCacheLaudo(laudoId)]: proximaConversa,
         },
         updatedAt: new Date().toISOString(),
       }));
-      if (proximaConversa.laudoId !== current.laudoMesaCarregado) {
-        current.setMensagensMesa([]);
-        current.setErroMesa("");
-        current.setMensagemMesa("");
-        current.setLaudoMesaCarregado(null);
+      if (proximaConversa.laudoId !== latest.laudoMesaCarregado) {
+        latest.setMensagensMesa([]);
+        latest.setErroMesa("");
+        latest.setMensagemMesa("");
+        latest.setLaudoMesaCarregado(null);
       }
       restaurarContextoGuiadoDoCaso(
         proximaConversa.laudoId,
@@ -451,6 +525,7 @@ export function createInspectorChatCaseController<
     }
 
     current.setThreadHomeVisible(false);
+    current.setConversation(criarConversaPreviewDoHistorico(current, card));
     await abrirLaudoPorId(current.session.accessToken, card.id);
   }
 

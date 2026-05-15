@@ -119,8 +119,13 @@ export function restaurarContextoGuiadoDoCaso<
     preference: params.entryModePreference,
     rememberLastCaseMode: params.rememberLastCaseMode,
   });
+  const workflowMode = String(params.laudoCard?.case_workflow_mode || "")
+    .trim()
+    .toLowerCase();
+  const casoGuiadoCanonico =
+    Boolean(restoredDraft) || workflowMode === "laudo_guiado";
 
-  if (entryMode.effective !== "evidence_first") {
+  if (entryMode.effective !== "evidence_first" && !casoGuiadoCanonico) {
     params.clearGuidedInspectionDraft();
     return entryMode;
   }
